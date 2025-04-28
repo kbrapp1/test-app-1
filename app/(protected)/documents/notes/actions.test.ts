@@ -1,0 +1,293 @@
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { addNote, deleteNote, editNote, updateNoteOrder } from './actions';
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+// Define a reusable structure for the mocks
+const mockMatcher = {
+    match: vi.fn(),
+};
+const mockQueryBuilder = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn(),
+    delete: vi.fn(() => mockMatcher),
+    update: vi.fn(() => mockMatcher),
+    upsert: vi.fn(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn(),
+    // Include match here as well, although delete/update return the specific matcher object
+    match: mockMatcher.match, 
+};
+const mockAuth = {
+    getUser: vi.fn(),
+};
+const mockSupabaseClient = {
+    auth: mockAuth,
+    from: vi.fn(() => mockQueryBuilder),
+};
+
+// Mock Supabase server client factory
+vi.mock('@/lib/supabase/server', () => ({
+    createClient: vi.fn(() => mockSupabaseClient),
+}));
+
+// Mock revalidatePath
+vi.mock('next/cache', () => ({
+    revalidatePath: vi.fn(),
+}));
+
+// --- Test Setup --- (Keep helpers)
+const mockUser = { id: 'test-user-id', email: 'test@example.com' };
+const mockFormData = (data: Record<string, string>): FormData => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined) { // Ensure undefined doesn't cause issues
+             formData.append(key, value);
+        }
+    });
+    return formData;
+};
+
+describe('Notes Server Actions', () => {
+    // Define mock variables accessible in the scope
+    let mockGetUser: Mock;
+    let mockFrom: Mock;
+    let mockInsert: Mock;
+    let mockDelete: Mock;
+    let mockUpdate: Mock;
+    let mockUpsert: Mock;
+    let mockMatch: Mock;
+    let mockMaybeSingle: Mock;
+
+    beforeEach(() => {
+        // Reset all mocks defined in the mock factory structure
+        vi.clearAllMocks(); // Clears call history etc.
+
+        // Re-assign mocks from the central structure for clarity
+        mockGetUser = mockAuth.getUser;
+        mockFrom = mockSupabaseClient.from;
+        mockInsert = mockQueryBuilder.insert;
+        mockDelete = mockQueryBuilder.delete;
+        mockUpdate = mockQueryBuilder.update;
+        mockUpsert = mockQueryBuilder.upsert;
+        mockMatch = mockMatcher.match;
+        mockMaybeSingle = mockQueryBuilder.maybeSingle;
+        
+        // Default happy paths
+        mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+        mockInsert.mockResolvedValue({ error: null });
+        mockMatch.mockResolvedValue({ error: null }); // Match resolves successfully by default
+        mockUpsert.mockResolvedValue({ error: null });
+        mockMaybeSingle.mockResolvedValue({ data: { position: 0 }, error: null });
+    });
+
+    // --- addNote Tests --- 
+    describe('addNote', () => {
+        it('should add a note successfully', async () => {
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockFrom).toHaveBeenCalledWith('notes');
+            expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+                title: 'Test Note',
+                content: 'Test Content',
+                user_id: mockUser.id,
+                position: 1, // Assuming default max position was 0
+                color_class: 'bg-yellow-200'
+            }));
+            expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
+            expect(result).toEqual({ success: true, message: 'Note added successfully.' });
+        });
+
+        it('should return validation error if title is missing', async () => {
+            const formData = mockFormData({ content: 'Test Content' }); // No title
+            const result = await addNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Note title cannot be empty.' });
+            expect(mockInsert).not.toHaveBeenCalled();
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should return auth error if user is not found', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+        });
+
+         it('should return auth error if getUser throws', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('Auth failed') });
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+        });
+
+        it('should return insert error if Supabase insert fails', async () => {
+            const dbError = new Error('DB insert failed');
+            mockInsert.mockResolvedValueOnce({ error: dbError });
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Failed to save the note. Please try again.' });
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should handle error when fetching max position', async () => {
+            const posError = new Error('Failed fetching position');
+            mockMaybeSingle.mockResolvedValueOnce({ data: null, error: posError }); // Simulate error fetching position
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+
+            expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ position: 0 }));
+            expect(result).toEqual({ success: true, message: 'Note added successfully.' }); // Should still succeed if insert works
+        });
+    });
+
+    // --- deleteNote Tests --- 
+    describe('deleteNote', () => {
+        it('should delete a note successfully', async () => {
+            const formData = mockFormData({ note_id: 'note-123' });
+            const result = await deleteNote(null, formData);
+
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockFrom).toHaveBeenCalledWith('notes');
+            expect(mockDelete).toHaveBeenCalled();
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id });
+            expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
+            expect(result).toEqual({ success: true, message: 'Note deleted.' });
+        });
+
+        it('should return error if note_id is missing', async () => {
+            const formData = mockFormData({});
+            const result = await deleteNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Note ID missing.' });
+        });
+
+        it('should return auth error if user is not found', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+            const formData = mockFormData({ note_id: 'note-123' });
+            const result = await deleteNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+        });
+
+        it('should return delete error if Supabase delete fails', async () => {
+            const dbError = new Error('DB delete failed');
+            mockMatch.mockResolvedValueOnce({ error: dbError }); // Mock error at the match step
+            const formData = mockFormData({ note_id: 'note-123' });
+            const result = await deleteNote(null, formData);
+            expect(mockDelete).toHaveBeenCalled(); 
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id });
+            expect(result).toEqual({ success: false, message: 'Failed to delete the note. Please try again.' });
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+    });
+
+     // --- editNote Tests --- 
+    describe('editNote', () => {
+        const validFormData = {
+            note_id: 'note-456',
+            title: 'Updated Title',
+            content: 'Updated Content',
+            color_class: 'bg-blue-200'
+        };
+
+        it('should edit a note successfully', async () => {
+            const formData = mockFormData(validFormData);
+            const result = await editNote(null, formData);
+
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockFrom).toHaveBeenCalledWith('notes');
+            expect(mockUpdate).toHaveBeenCalledWith({
+                title: 'Updated Title',
+                content: 'Updated Content',
+                color_class: 'bg-blue-200'
+            });
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id });
+            expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
+            expect(result).toEqual({ success: true, message: 'Note updated successfully.' });
+        });
+
+        it.each([
+            ['note_id', { ...validFormData, note_id: '' }, 'Note ID missing.'],
+            ['title', { ...validFormData, title: '' }, 'Note title cannot be empty.'],
+            ['content', { ...validFormData, content: undefined }, 'Note content missing.'],
+            ['color_class', { ...validFormData, color_class: '' }, 'Color selection missing.'],
+        ])('should return validation error if %s is missing', async (_, data, expectedMessage) => {
+            const formData = mockFormData(data as Record<string, string>); // Use helper, ensures undefined is handled
+            const result = await editNote(null, formData);
+            expect(result).toEqual({ success: false, message: expectedMessage });
+            expect(mockUpdate).not.toHaveBeenCalled();
+            expect(mockMatch).not.toHaveBeenCalled(); // Match shouldn't be called either
+        });
+
+
+        it('should return auth error if user is not found', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+            const formData = mockFormData(validFormData);
+            const result = await editNote(null, formData);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+        });
+
+        it('should return update error if Supabase update fails', async () => {
+            const dbError = new Error('DB update failed');
+            mockMatch.mockResolvedValueOnce({ error: dbError }); // Mock error at the match step
+            const formData = mockFormData(validFormData);
+            const result = await editNote(null, formData);
+            expect(mockUpdate).toHaveBeenCalled();
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id });
+            expect(result).toEqual({ success: false, message: 'Failed to update the note. Please try again.' });
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+    });
+
+    // --- updateNoteOrder Tests --- 
+    describe('updateNoteOrder', () => {
+        const orderedIds = ['note-3', 'note-1', 'note-2'];
+
+        it('should update note order successfully', async () => {
+            const result = await updateNoteOrder(orderedIds);
+
+            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockFrom).toHaveBeenCalledWith('notes');
+            expect(mockUpsert).toHaveBeenCalledWith(
+                [
+                    { id: 'note-3', user_id: mockUser.id, position: 0 },
+                    { id: 'note-1', user_id: mockUser.id, position: 1 },
+                    { id: 'note-2', user_id: mockUser.id, position: 2 },
+                ],
+                { onConflict: 'id' }
+            );
+            expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
+            expect(result).toEqual({ success: true, message: 'Note order updated.' });
+        });
+
+        it('should return validation error for invalid input', async () => {
+            const result = await updateNoteOrder(null as any); // Test non-array input
+            expect(result).toEqual({ success: false, message: 'Invalid order data.' });
+            expect(mockUpsert).not.toHaveBeenCalled();
+        });
+
+        it('should return auth error if user is not found', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+            const result = await updateNoteOrder(orderedIds);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+        });
+
+        it('should return update error if Supabase upsert fails', async () => {
+            const dbError = new Error('DB upsert failed');
+            mockUpsert.mockResolvedValueOnce({ error: dbError });
+            const result = await updateNoteOrder(orderedIds);
+            expect(result).toEqual({ success: false, message: 'Failed to update note order. Please try again.' });
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should handle unexpected errors during upsert', async () => {
+            const unexpectedError = new Error('Something unexpected happened');
+            mockUpsert.mockImplementationOnce(() => { throw unexpectedError; }); // Throw error 
+            const result = await updateNoteOrder(orderedIds);
+            expect(result).toEqual({ success: false, message: 'An unexpected error occurred while updating note order.' });
+            expect(revalidatePath).not.toHaveBeenCalled();
+        });
+    });
+}); 
