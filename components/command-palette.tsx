@@ -7,6 +7,7 @@ import {
   Sun,
   Moon,
   Laptop,
+  UploadCloudIcon,
 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -61,12 +62,25 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/* Documents Commands */}
+        <CommandGroup heading="Documents">
           <CommandItem
             onSelect={() => runCommand(() => router.push('/documents/notes'))}
             value="Go to Notes Document Section"
           >
-             <span className="mr-2 h-4 w-4">📝</span>
-             <span>Notes</span>
+            <span className="mr-2 h-4 w-4">📝</span>
+            <span>Notes</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/dam/upload'))}
+            value="Go to Asset Library Upload DAM"
+          >
+            <UploadCloudIcon className="mr-2 h-4 w-4" />
+            <span>Asset Library</span>
           </CommandItem>
         </CommandGroup>
 

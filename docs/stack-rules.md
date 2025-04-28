@@ -29,6 +29,7 @@ _General Rule: Use the versions specified in `package.json`. Avoid manual instal
     *   `cmdk` (`^1.0.4`): Command menu component.
     *   `date-fns` (`^4.1.0`): Modern date utility library.
     *   `react-day-picker` (`^8.10.1`): Date picker component.
+    *   `react-dropzone` (`^14.x.x`): Simplifies drag-and-drop file uploads.
     *   `vaul` (`^0.9.6`): Drawer component.
     *   `@dnd-kit/*` (`~6-10`): Drag and drop toolkit.
     *   `@tanstack/react-table` (`^8.21.3`): Headless UI for building tables and datagrids.

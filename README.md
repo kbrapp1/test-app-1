@@ -1,12 +1,14 @@
-# Full-Stack Start (Scaffold Project)
+# Ironmark DAM & App Features
 
-This project is a scaffold for building full-stack applications using a modern tech stack. It provides a solid foundation with authentication, basic layout, UI components, theming, and common tooling configured.
+This project is a full-stack application incorporating features like Digital Asset Management (DAM), note-taking, and user settings, built using a modern tech stack.
 
-**Goals of this Scaffold:**
+This document provides an overview of the application's features, setup, and development practices.
 
-1.  **Act as a Base:** Quickly start new projects with essential features already implemented.
-2.  **Modular & Removable:** Allow easy removal of features or components not needed for a specific project.
-3.  **Provide UX Examples:** Showcase common UX patterns and components (`shadcn/ui`, Command Palette, etc.).
+**Goals:**
+
+1.  Develop and test a robust Digital Asset Management system.
+2.  Integrate other useful internal tools and features as needed.
+3.  Maintain a clean, well-tested, and modern codebase.
 
 ## Table of Contents
 
@@ -21,18 +23,16 @@ This project is a scaffold for building full-stack applications using a modern t
 *   [Project Structure](#project-structure)
 *   [Core Features](#core-features)
     *   [Authentication](#authentication)
-    *   [Routing](#routing)
+    *   [Routing & Navigation](#routing--navigation)
+    *   [Notes CRUD Feature](#notes-crud-feature)
+    *   [Digital Asset Management (DAM)](#digital-asset-management-dam)
     *   [UI & Theming](#ui--theming)
     *   [Command Palette](#command-palette)
     *   [Navigation Configuration](#navigation-configuration)
-    *   [Notes CRUD Example](#notes-crud-example)
     *   [Storybook Component Development](#storybook-component-development)
 *   [Testing](#testing)
 *   [Linting & Formatting](#linting--formatting)
 *   [Available Scripts](#available-scripts)
-*   [Removing Optional Features](#removing-optional-features)
-    *   [Removing the Command Palette](#removing-the-command-palette)
-    *   [Removing Example UI Blocks (Data Table/Chart)](#removing-example-ui-blocks-data-tablechart)
 *   [Learn More](#learn-more)
 
 ## Technology Stack
@@ -127,14 +127,22 @@ This scaffold includes functionality to restrict user signups to specific email 
           EXECUTE FUNCTION public.check_email_domain();
         ```
 
-#### Notes Table Schema (Required for Notes Feature)
+#### Database Table Setup (Required for Notes & DAM Features)
 
-If you intend to use the Notes CRUD example feature (located at `/documents/notes`), you need to create the `notes` table. Run the following SQL in your Supabase SQL Editor. This script creates the table with all necessary columns, enables Row Level Security (RLS), sets up policies, and adds a trigger to update the `updated_at` timestamp.
+If you intend to use the Notes CRUD example feature (`/documents/notes`) and/or the upcoming Digital Asset Management (DAM) feature, you need to set up the necessary database tables and storage. **Run the following consolidated SQL script in your Supabase SQL Editor.** This script creates the `notes` and `assets` tables, enables Row Level Security (RLS), sets up basic policies, and adds necessary triggers.
 
 ```sql
--- Consolidated Notes Table Creation
+-- Consolidated SQL Setup for Notes and DAM Assets
+
+-- Ensure necessary extensions are enabled (usually are by default on Supabase)
+CREATE EXTENSION IF NOT EXISTS moddatetime;
+-- pgcrypto provides gen_random_uuid() which is used as default for UUID PKs
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- 1. Notes Table Setup
 CREATE TABLE public.notes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    -- Ensure user_id is NOT NULL if RLS relies on it
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     title TEXT,
     content TEXT,
@@ -144,26 +152,62 @@ CREATE TABLE public.notes (
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Enable Row Level Security
+-- Enable Row Level Security for Notes
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies: Allow users full access to their own notes only
-CREATE POLICY "Allow individual select access" ON public.notes FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Allow individual insert access" ON public.notes FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Allow individual update access" ON public.notes FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Allow individual delete access" ON public.notes FOR DELETE USING (auth.uid() = user_id);
+-- RLS Policies for Notes: Allow users full access to their own notes only
+CREATE POLICY "Notes: Allow individual select access" ON public.notes FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Notes: Allow individual insert access" ON public.notes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Notes: Allow individual update access" ON public.notes FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Notes: Allow individual delete access" ON public.notes FOR DELETE USING (auth.uid() = user_id);
 
--- Trigger to automatically update 'updated_at' timestamp on modification
--- Requires the 'moddatetime' extension to be enabled (usually enabled by default)
--- You can enable it via SQL: CREATE EXTENSION IF NOT EXISTS moddatetime;
+-- Trigger for Notes: automatically update 'updated_at' timestamp
 CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.notes FOR EACH ROW EXECUTE FUNCTION moddatetime (updated_at);
 
--- Note: The 'position' column is intentionally left without a default value in the schema.
--- The application logic ('addNote' server action) calculates and assigns the correct 
+-- 2. Assets Table Setup (For DAM)
+CREATE TABLE public.assets (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    -- Making user_id NOT NULL simplifies initial RLS. Handle anonymous uploads if needed later.
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name TEXT NOT NULL,
+    storage_path TEXT NOT NULL UNIQUE, -- Ensure storage path is unique
+    mime_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+    -- No updated_at needed for assets currently
+);
+
+-- Enable Row Level Security for Assets
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Assets: Allow users full access to their own assets only
+-- Assumes assets are always tied to a user (user_id is NOT NULL)
+CREATE POLICY "Assets: Allow individual select access" ON public.assets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Assets: Allow individual insert access" ON public.assets FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Consider if updates are needed. If only metadata updates, add policy. If file replace, different logic.
+-- CREATE POLICY "Assets: Allow individual update access" ON public.assets FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Assets: Allow individual delete access" ON public.assets FOR DELETE USING (auth.uid() = user_id);
+
+-- Grant usage on the public schema if needed (usually default)
+GRANT USAGE ON SCHEMA public TO authenticated, service_role;
+-- Grant specific permissions on tables
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.notes TO authenticated;
+GRANT SELECT, INSERT, DELETE ON public.assets TO authenticated; -- Note: Update permission omitted for now
+-- Service role usually has bypass RLS implicitly, but explicit grants can be clearer
+GRANT ALL ON public.notes TO service_role;
+GRANT ALL ON public.assets TO service_role;
+
+
+-- Note: The 'position' column in 'notes' is intentionally left without a default value.
+-- The application logic ('addNote' server action) calculates and assigns the correct
 -- initial position when a new note is created.
 ```
 
-**Optional: Update Existing Data (If Upgrading Schema)**
+**Also Required for DAM:**
+
+*   **Create Storage Bucket:** Manually create a Storage Bucket named `assets` via the Supabase Dashboard (Storage -> Buckets -> Create Bucket). For Phase 1, you can set it to **Public**. *Remember to review security implications later.* 
+
+**Optional: Update Existing Notes Data (If Upgrading Schema)**
 
 If you previously created the `notes` table *without* the `position` or `color_class` columns and have existing data, run the following SQL **after** the script above to populate these columns for your old notes:
 
@@ -215,9 +259,9 @@ For a detailed overview of the project structure, including key files and their 
     *   Each subsection (profile, password, etc.) is its own page (`/settings/profile/page.tsx`, etc.).
     *   Includes a **Danger Zone** example (`components/settings/danger-zone.tsx`) demonstrating safe handling of destructive actions using `AlertDialog` for confirmation.
 
-### Notes CRUD Example
+### Notes CRUD Feature
 
-*   Provides a full CRUD (Create, Read, Update, Delete) example for managing simple text notes.
+*   Provides full CRUD (Create, Read, Update, Delete) functionality for managing simple text notes.
 *   Located under `/documents/notes`.
 *   **Data Fetching:** Notes are fetched in the `page.tsx` Server Component, ordered by their `position`.
 *   **Display:** Uses `NoteList` and `NoteListItem` components to display notes in a responsive grid.
@@ -230,10 +274,19 @@ For a detailed overview of the project structure, including key files and their 
 *   **UI Patterns:**
     *   Demonstrates `useActionState` for handling form state and feedback.
 
+### Digital Asset Management (DAM)
+
+*   Feature set for uploading, viewing, and managing digital assets.
+*   Located under `/dam`.
+*   **Upload:** Component (`AssetUploader`) allows file selection and drag-and-drop, using a Server Action (`uploadAssets`) for backend processing and Supabase Storage integration.
+*   **Gallery:** Component (`AssetGallery`) displays uploaded assets fetched from the database.
+*   **Delete:** Functionality implemented within `AssetThumbnail` using a Server Action (`deleteAsset`) with confirmation dialog.
+*   Refer to `docs/DAM_Build_Steps_Phase1.md` for detailed implementation steps.
+
 ### UI & Theming
 
 *   Built with Tailwind CSS and shadcn/ui components.
-*   Dark/Light/System theme switching provided by `next-themes`.
+*   Dark/Light/System/Ironmark theme switching provided by `next-themes`.
     *   Theme toggled via `components/theme-toggle.tsx`.
     *   Theme also controllable via the Command Palette.
 *   Global styles in `styles/globals.css`.
@@ -244,7 +297,6 @@ For a detailed overview of the project structure, including key files and their 
 *   Uses `cmdk` and `shadcn/ui` Dialog.
 *   Provides quick access to navigation and theme switching.
 *   State managed by `AppProviders` and `PaletteContext`.
-*   See "Removing Optional Features" below for removal instructions.
 
 ### Navigation Configuration
 
@@ -296,33 +348,6 @@ For a detailed overview of the project structure, including key files and their 
 *   `pnpm test:watch`: Runs main application tests in interactive watch mode.
 *   `pnpm run storybook`: Starts the Storybook development server.
 *   `pnpm run build-storybook`: Builds Storybook for static deployment (if needed).
-
-## Removing Optional Features
-
-This section details how to remove optional features if not needed for your project.
-
-### Removing the Command Palette
-
-1.  **Delete Component:** Delete `components/command-palette.tsx`.
-2.  **Delete Context:** Delete `context/palette-context.tsx`.
-3.  **Update Providers:** Edit `components/app-providers.tsx`:
-    *   Remove the `paletteOpen` and `setOpen` state variables.
-    *   Remove the import for `PaletteProvider`.
-    *   Remove the `<PaletteProvider>` wrapper around `{children}`.
-    *   Remove the import and rendering of `<CommandPalette />`.
-4.  **Update Header:** Edit `components/site-header.tsx`:
-    *   Remove the import for `usePalette`.
-    *   Remove the `const { setOpen: setPaletteOpen } = usePalette();` line.
-    *   Remove the search icon `<Button>` component.
-
-### Removing Example UI Blocks (Data Table/Chart)
-
-*(These steps assume the component `components/data-table.tsx` exists)*
-
-1.  **Identify Component Files:** Locate the component file (`components/data-table.tsx`).
-2.  **Remove from Pages:** Find where this component is imported and used in your `app/` directory (e.g., likely within `/dashboard`) and remove the import and usage.
-3.  **Delete Component Files:** Delete the component file itself.
-4.  **Delete Tests:** Delete the corresponding test file (if any exist).
 
 ## Learn More
 

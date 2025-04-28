@@ -1,5 +1,16 @@
 import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
+import React from 'react'; // Import React for createElement
+
+// --- Mock next/image to unoptimize it for tests ---
+vi.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    // Use React.createElement instead of JSX
+    return React.createElement('img', props);
+  },
+}));
+// --------------------------------------------------
 
 // Suppress console.log messages during tests
 vi.spyOn(console, 'log').mockImplementation(() => {});

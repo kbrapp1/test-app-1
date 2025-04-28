@@ -82,6 +82,45 @@ body {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  .ironmark {
+    /* Ironmark Theme Variables */
+    /* Using HSL values derived from #F0F0F0, #231F20, #E6332A, #4BC9F0 */
+    --background: 0 0% 94.1%; /* ironmark-gray */
+    --foreground: 300 5.3% 13.1%; /* ironmark-dark */
+    --card: 0 0% 100%; /* white for better contrast */
+    --card-foreground: 300 5.3% 13.1%; /* ironmark-dark */
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 300 5.3% 13.1%; /* ironmark-dark */
+    --primary: 2.8 79.5% 53.1%; /* ironmark-red */
+    --primary-foreground: 0 0% 94.1%; /* ironmark-gray (text on red) */
+    --secondary: 192.9 86.1% 61.8%; /* ironmark-blue */
+    --secondary-foreground: 300 5.3% 13.1%; /* ironmark-dark (text on blue) */
+    --muted: 0 0% 96%; /* lighter gray */
+    --muted-foreground: 300 5% 40%; /* darker gray */
+    --accent: 192.9 86.1% 61.8%; /* ironmark-blue */
+    --accent-foreground: 300 5.3% 13.1%; /* ironmark-dark */
+    --destructive: 2.8 79.5% 53.1%; /* ironmark-red */
+    --destructive-foreground: 0 0% 94.1%; /* ironmark-gray */
+    --border: 0 0% 85%; /* darker gray for borders */
+    --input: 0 0% 85%; /* darker gray for input */
+    --ring: 192.9 86.1% 61.8%; /* ironmark-blue for focus rings */
+    /* Chart colors - reusing light theme for now */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem; /* keep existing radius */
+    /* Sidebar with light background */
+    --sidebar-background: 0 0% 98%; /* light gray bg (like light theme) */
+    --sidebar-foreground: 300 5.3% 13.1%; /* ironmark-dark text */
+    --sidebar-primary: 2.8 79.5% 53.1%; /* ironmark-red (selected item bg) */
+    --sidebar-primary-foreground: 0 0% 98%; /* light text on red */
+    --sidebar-accent: 192.9 86.1% 61.8%; /* ironmark-blue (hover/accent bg) */
+    --sidebar-accent-foreground: 300 5.3% 13.1%; /* ironmark-dark text on blue */
+    --sidebar-border: 220 13% 91%; /* light gray border (like light theme) */
+    --sidebar-ring: 192.9 86.1% 61.8%; /* ironmark-blue (focus ring) */
+  }
 }
 
 @layer base {

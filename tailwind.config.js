@@ -61,6 +61,10 @@ module.exports = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        'ironmark-red': '#E6332A',
+        'ironmark-blue': '#4BC9F0',
+        'ironmark-dark': '#231F20',
+        'ironmark-gray': '#F0F0F0',
       },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",

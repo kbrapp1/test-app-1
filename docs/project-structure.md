@@ -1,6 +1,6 @@
 # Project Structure Overview
 
-This document provides a high-level overview of the main directories and their purpose within the `full-stack-start` scaffold project.
+This document provides a high-level overview of the main directories and their purpose within this full-stack application project.
 
 ## Core Structure Diagram
 
@@ -15,6 +15,10 @@ This document provides a high-level overview of the main directories and their p
 |   |   |   `-- notes/        # Notes CRUD example route (/documents/notes).
 |   |   |       |-- page.tsx  # Displays notes, handles initial fetch.
 |   |   |       `-- actions.ts # Server Actions for notes CRUD & reordering.
+|   |   |-- dam/              # Digital Asset Management section.
+|   |   |   |-- page.tsx      # Asset Gallery page (/dam).
+|   |   |   `-- upload/       # Asset Upload page route (/dam/upload).
+|   |   |       `-- page.tsx
 |   |   |-- settings/         # Settings section root.
 |   |   |   |-- layout.tsx    # Settings sub-navigation layout.
 |   |   |   |-- page.tsx      # Redirects /settings to /settings/profile.
@@ -41,6 +45,10 @@ This document provides a high-level overview of the main directories and their p
 |   |-- ui/                   # Base UI components (from shadcn/ui).
 |   |   `-- empty-state.tsx   # Component for displaying empty lists.
 |   |-- auth/                 # Authentication forms (login, signup).
+|   |-- dam/                  # Components specific to the DAM feature.
+|   |   |-- AssetGallery.tsx    # Renders the grid of assets.
+|   |   |-- AssetThumbnail.tsx  # Renders individual asset, handles delete.
+|   |   `-- AssetUploader.tsx   # UI for uploading assets.
 |   |-- settings/             # Settings related components.
 |   |   |-- profile-form.tsx
 |   |   |-- password-form.tsx
@@ -62,6 +70,9 @@ This document provides a high-level overview of the main directories and their p
 |-- hooks/                    # Custom React hooks (e.g., useToast, useMobile).
 |
 |-- lib/                      # Core logic, utilities, external service integrations.
+|   |-- actions/              # Server Actions.
+|   |   |-- dam.ts            # Actions for Digital Asset Management (upload, delete).
+|   |   `-- notes.ts          # Actions for Notes feature (add, edit, delete, reorder).
 |   |-- config/               # Config files (e.g., navigation structure).
 |   |-- supabase/             # Supabase client setup (client, server).
 |   `-- utils.ts              # General utility functions.
@@ -95,17 +106,23 @@ This document provides a high-level overview of the main directories and their p
 
 *   `app/layout.tsx`: The main root layout, includes `<html>`, `<body>`, and global providers like ThemeProvider, Toaster.
 *   `app/(protected)/layout.tsx`: Main layout for authenticated routes (header, sidebar).
+*   `app/(protected)/dam/page.tsx`: Server Component for the main Asset Gallery view.
+*   `app/(protected)/dam/upload/page.tsx`: Page containing the `AssetUploader` component.
+*   `app/(protected)/documents/notes/page.tsx`: Server Component that fetches and displays notes (ordered by `position`), using the `NoteList` component. Includes the `AddNoteDialog`.
 *   `app/(protected)/settings/layout.tsx`: Specific layout for the settings section, providing internal navigation.
 *   `app/(protected)/settings/page.tsx`: Redirects users from `/settings` to `/settings/profile`.
 *   `app/(protected)/settings/[section]/page.tsx`: Individual pages for each settings section (profile, password, etc.).
-*   `app/(protected)/documents/notes/page.tsx`: Server Component that fetches and displays notes (ordered by `position`), using the `NoteList` component. Includes the `AddNoteDialog`.
-*   `app/(protected)/documents/notes/actions.ts`: Contains Server Actions (`addNote`, `editNote`, `deleteNote`, `updateNoteOrder`) for managing notes data in Supabase.
+*   `components/dam/AssetGallery.tsx`: Server Component that fetches asset data from Supabase and renders the gallery grid using `AssetThumbnail`.
+*   `components/dam/AssetThumbnail.tsx`: Client Component that displays an individual asset image and includes the delete button and confirmation dialog logic.
+*   `components/dam/AssetUploader.tsx`: Client Component providing the UI for file selection, drag-and-drop, and triggering the upload action.
 *   `components/notes/note-list.tsx`: Client Component that manages note state for D&D, renders `NoteListItem` components, handles D&D context and `onDragEnd` logic.
 *   `components/notes/note-list-item.tsx`: Client Component for displaying a single note, acting as a D&D item (`useSortable`), handling edit state toggle, rendering `NoteEditForm` or display view, and rendering the color picker.
 *   `components/notes/note-edit-form.tsx`: Client Component containing the form fields, state (`useActionState`), and logic for submitting note edits.
 *   `components/notes/add-note-dialog.tsx`: Client Component managing the dialog state for adding a note.
 *   `components/notes/add-note-form.tsx`: Client Component containing the form fields and logic for submitting a new note via a Server Action.
-*   `components/ui/empty-state.tsx`: Reusable component to display when there is no data (e.g., no notes).
+*   `components/ui/empty-state.tsx`: Reusable component to display when there is no data (e.g., no notes, no assets).
+*   `lib/actions/dam.ts`: Contains Server Actions (`uploadAssets`, `deleteAsset`) for managing digital assets in Supabase Storage and the database.
+*   `lib/actions/notes.ts`: Contains Server Actions (`addNote`, `editNote`, `deleteNote`, `updateNoteOrder`) for managing notes data in Supabase.
 *   `middleware.ts`: Enforces authentication, redirecting users based on login status and target route.
 *   `lib/supabase/client.ts`: Creates the client-side Supabase instance.
 *   `lib/supabase/server.ts`: Creates the server-side Supabase instance (used by Server Components/Actions).

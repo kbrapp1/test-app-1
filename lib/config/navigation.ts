@@ -13,7 +13,8 @@ import {
     FileIcon,
     CameraIcon,
     FileTextIcon,
-    FileCodeIcon
+    FileCodeIcon,
+    UploadCloudIcon,
 } from "lucide-react";
 
 // Define the types for navigation items
@@ -85,6 +86,11 @@ export const navDocumentsItems: DocumentItem[] = [
         name: "Notes",
         url: "/documents/notes", // Point to the new page
         icon: FileTextIcon, // Use an appropriate icon
+    },
+    {
+        name: "Asset Library",
+        url: "/dam", // Corrected link to the gallery page
+        icon: UploadCloudIcon, // Use an appropriate icon for assets/uploads
     },
 ];
 

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AppProviders } from "@/components/app-providers"
-import { Toaster } from "@/components/ui/toaster"
+// Toaster now rendered by AppProviders
+// import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -18,7 +19,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <AppProviders>{children}</AppProviders>
-        <Toaster />
+        {/* <Toaster /> */}{/* Removed as it's now in AppProviders */}
       </body>
     </html>
   )

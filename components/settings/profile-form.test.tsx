@@ -137,12 +137,9 @@ describe('ProfileForm', () => {
     const errorMessage = 'Failed to update profile';
     render(<ProfileForm />);
 
-    // Mock the getUser call inside onSubmit
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null }); 
-    // Mock failed update
+    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
     mockUpdateUser.mockResolvedValue({ error: { message: errorMessage } });
 
-    // Wait for form to be ready
     await waitFor(() => {
       expect(screen.getByDisplayValue(mockUser.user_metadata.name)).toBeInTheDocument();
     });
@@ -150,12 +147,12 @@ describe('ProfileForm', () => {
     const nameInput = screen.getByLabelText(/Name/i);
     const submitButton = screen.getByRole('button', { name: /Update Profile/i });
 
-    // Change name and submit
+    // Add focus before clearing and typing
+    nameInput.focus();
     await user.clear(nameInput);
     await user.type(nameInput, newName);
     await user.click(submitButton);
 
-    // Check if updateUser was called
     await waitFor(() => {
       expect(mockUpdateUser).toHaveBeenCalledTimes(1);
       expect(mockUpdateUser).toHaveBeenCalledWith({
@@ -163,7 +160,6 @@ describe('ProfileForm', () => {
       });
     });
 
-    // Check for error toast
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
       variant: "destructive",
       title: "Error updating profile",
