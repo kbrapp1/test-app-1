@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import Link from 'next/link'
 import { NavSecondary } from './nav-secondary'
 import type { LucideIcon, LucideProps } from 'lucide-react'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 // Mock next/link to inspect its props (same as NavMain)
 vi.mock('next/link', () => ({
@@ -34,6 +35,11 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
   }
 })
 
+// Helper function to wrap component with provider
+const renderWithProvider = (ui: React.ReactElement) => {
+  return render(<SidebarProvider>{ui}</SidebarProvider>);
+};
+
 describe('NavSecondary', () => {
   const defaultItems = [
     { title: 'Settings', url: '/settings', icon: MockDynamicIcon as LucideIcon },
@@ -41,7 +47,7 @@ describe('NavSecondary', () => {
   ];
 
   it('should render items wrapped in Links with correct legacyBehavior and href', () => {
-    render(<NavSecondary items={defaultItems} />)
+    renderWithProvider(<NavSecondary items={defaultItems} />)
 
     defaultItems.forEach(item => {
        // Find the list item containing the title
@@ -67,7 +73,7 @@ describe('NavSecondary', () => {
   })
 
   it('should render nothing inside the menu when items prop is empty', () => {
-    render(<NavSecondary items={[]} />)
+    renderWithProvider(<NavSecondary items={[]} />)
     // Check that no mocked links are present
     expect(screen.queryByTestId('next-link')).not.toBeInTheDocument()
     // Check that no dynamic icons are present
@@ -76,7 +82,7 @@ describe('NavSecondary', () => {
 
   it('should pass additional props to SidebarGroup', () => {
     const testClassName = "my-custom-class"
-    render(<NavSecondary items={defaultItems} className={testClassName} />)
+    renderWithProvider(<NavSecondary items={defaultItems} className={testClassName} />)
     const sidebarGroup = screen.getByTestId('sidebar-group-mock');
     expect(sidebarGroup).toHaveClass(testClassName);
   })
