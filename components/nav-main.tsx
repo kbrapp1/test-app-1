@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavMain({
@@ -21,6 +22,8 @@ export function NavMain({
     icon?: LucideIcon
   }[]
 }) {
+  const { setOpenMobile } = useSidebar()
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -29,6 +32,7 @@ export function NavMain({
             <SidebarMenuButton
               tooltip="Quick Create"
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              onClick={() => setOpenMobile(false)}
             >
               <PlusCircleIcon />
               <span>Quick Create</span>
@@ -42,13 +46,15 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              {/* Revert to legacyBehavior */}
               <Link href={item.url} passHref legacyBehavior>
-                <a> { /* Required child for legacyBehavior */}
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
+                <a>
+                  <SidebarMenuButton 
+                    tooltip={item.title}
+                    onClick={() => setOpenMobile(false)} 
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
                 </a>
               </Link>
             </SidebarMenuItem>

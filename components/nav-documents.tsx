@@ -23,7 +23,7 @@ export function NavDocuments({
     icon: LucideIcon
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -33,7 +33,10 @@ export function NavDocuments({
           <SidebarMenuItem key={item.name}>
             <Link href={item.url} passHref legacyBehavior>
               <a>
-                <SidebarMenuButton tooltip={item.name}>
+                <SidebarMenuButton 
+                  tooltip={item.name}
+                  onClick={() => setOpenMobile(false)}
+                >
                 <item.icon />
                 <span>{item.name}</span>
                 </SidebarMenuButton>

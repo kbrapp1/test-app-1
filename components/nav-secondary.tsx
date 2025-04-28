@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 export function NavSecondary({
@@ -22,6 +23,8 @@ export function NavSecondary({
     icon: LucideIcon
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+  const { setOpenMobile } = useSidebar()
+
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
@@ -31,7 +34,10 @@ export function NavSecondary({
               {/* Revert to legacyBehavior */}
               <Link href={item.url} passHref legacyBehavior>
                 <a> { /* Required child for legacyBehavior */}
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton 
+                    tooltip={item.title}
+                    onClick={() => setOpenMobile(false)}
+                  >
                   <item.icon />
                   <span>{item.title}</span>
                   </SidebarMenuButton>

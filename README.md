@@ -19,6 +19,7 @@ This document provides an overview of the application's features, setup, and dev
     *   [Environment Variables](#environment-variables)
     *   [Database Setup (Required)](#database-setup-required)
         *   [Supabase Domain Restrictions](#supabase-domain-restrictions)
+    *   [Supabase Email Redirects (Post-Deployment)](#supabase-email-redirects-post-deployment)
     *   [Running the Application](#running-the-application)
 *   [Project Structure](#project-structure)
 *   [Core Features](#core-features)
@@ -126,6 +127,18 @@ This scaffold includes functionality to restrict user signups to specific email 
           FOR EACH ROW
           EXECUTE FUNCTION public.check_email_domain();
         ```
+
+#### Supabase Email Redirects (Post-Deployment)
+
+**Important:** After deploying your application (e.g., to Vercel), you need to configure Supabase to use your deployment URL in confirmation emails.
+
+1.  Go to your Supabase Project Dashboard.
+2.  Navigate to **Authentication** -> **URL Configuration**.
+3.  Set the **Site URL** field to your main deployment URL (e.g., `https://your-project-name.vercel.app` or your custom domain).
+4.  Ensure your deployment URL (and optionally `http://localhost:3000` for local testing) is listed under **Redirect URLs**.
+5.  Save the changes.
+
+Failure to do this will result in email confirmation links redirecting back to `localhost:3000` instead of your live application.
 
 #### Database Table Setup (Required for Notes & DAM Features)
 
