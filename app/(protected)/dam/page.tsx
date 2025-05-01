@@ -8,7 +8,7 @@ import { AssetGallery } from "@/components/dam/AssetGallery";
 export const dynamic = 'force-dynamic';
 
 export default function DamGalleryPage() {
-    return (
+  return (
         <div className="container mx-auto p-4">
             <div className="mb-4 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Asset Library</h1>
@@ -21,9 +21,9 @@ export default function DamGalleryPage() {
                 </Link>
             </div>
             {/* Using a simple fallback for now */}
-            <Suspense fallback={<p className="text-center">Loading assets...</p>}>
-                <AssetGallery />
-            </Suspense>
-        </div>
-    );
+      <Suspense fallback={<p className="text-center">Loading assets...</p>}>
+        <AssetGallery />
+      </Suspense>
+    </div>
+  );
 }

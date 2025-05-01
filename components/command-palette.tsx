@@ -72,8 +72,8 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
             onSelect={() => runCommand(() => router.push('/documents/notes'))}
             value="Go to Notes Document Section"
           >
-            <span className="mr-2 h-4 w-4">📝</span>
-            <span>Notes</span>
+             <span className="mr-2 h-4 w-4">📝</span>
+             <span>Notes</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push('/dam/upload'))}

@@ -212,7 +212,7 @@ GRANT ALL ON public.assets TO service_role;
 
 
 -- Note: The 'position' column in 'notes' is intentionally left without a default value.
--- The application logic ('addNote' server action) calculates and assigns the correct
+-- The application logic ('addNote' server action) calculates and assigns the correct 
 -- initial position when a new note is created.
 ```
 

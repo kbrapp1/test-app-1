@@ -61,7 +61,7 @@ export const navMainItems: NavItem[] = [
     },
     {
         title: "Team",
-        url: "#", // Placeholder URL
+        url: "/team", // Updated to point to the Team page
         icon: UsersIcon,
     },
 ];

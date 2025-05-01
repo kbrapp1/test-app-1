@@ -52,9 +52,9 @@ export function NavMain({
                     tooltip={item.title}
                     onClick={() => setOpenMobile(false)} 
                   >
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
+                {item.icon && <item.icon />}
+                <span>{item.title}</span>
+              </SidebarMenuButton>
                 </a>
               </Link>
             </SidebarMenuItem>
