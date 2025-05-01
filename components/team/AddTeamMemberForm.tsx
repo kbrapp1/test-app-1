@@ -24,7 +24,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gi
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // Match API route limit (or intended limit)
 
 // Use superRefine for conditional logic based on file presence, type, and size
-export const refinedFileSchema = z
+const refinedFileSchema = z
   .custom<FileList | undefined>((val) => val === undefined || val instanceof FileList, {
     message: "Expected a FileList or undefined", // Base type check
   })

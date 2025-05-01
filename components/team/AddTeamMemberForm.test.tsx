@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AddTeamMemberForm } from './AddTeamMemberForm';
-import { refinedFileSchema } from './AddTeamMemberForm';
 import {
   Dialog,
   DialogContent,
@@ -93,10 +92,33 @@ describe('AddTeamMemberForm', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    // Skipped due to JSDOM/testing-library limitation: File input type validation cannot be reliably tested in this environment.
-    // The browser and manual testing confirm the logic works, but the test environment does not propagate the error as expected.
+    // Skipped due to JSDOM + file input + Zod/RHF incompatibility: file type validation does not work reliably in test environment.
     it.skip('shows validation error for invalid file type', async () => {
-        // See above for explanation. If JSDOM or React Hook Form improves file input simulation, re-enable this test.
+        renderFormInDialog();
+        const primaryImageInput = screen.getByLabelText(/Primary Image/i);
+        const submitButton = screen.getByRole('button', { name: /Add Member/i });
+        const file = createMockFile('test.txt', 1024, 'text/plain');
+        
+        await userEvent.upload(primaryImageInput, file);
+        await userEvent.click(submitButton);
+
+        // Use a function matcher for the error message
+        const expectedMsg = 'Invalid file type';
+        let found = false;
+        try {
+            await waitFor(() => {
+                expect(
+                    screen.getByText((content) => content.includes(expectedMsg))
+                ).toBeInTheDocument();
+            }, { timeout: 2000 });
+            found = true;
+        } catch (e) {
+            // Print the DOM for debugging
+            // eslint-disable-next-line no-console
+            console.log(screen.debug());
+            throw e;
+        }
+        expect(found).toBe(true);
     });
 
     it('shows validation error for file size exceeding limit', async () => {
