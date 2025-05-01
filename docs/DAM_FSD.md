@@ -1,5 +1,7 @@
 # Functional Specification Document: Digital Asset Management (DAM)
 
+> **Note:** This document covers the DAM (Digital Asset Management) system. For the Team section (team member directory with photos), see the project structure and README documentation. The Team section is a separate feature for managing and displaying team members.
+
 ## 1. Introduction
 
 This document outlines the functional requirements for the Digital Asset Management (DAM) system within this application. The goal is to provide a comprehensive system to upload, organize, discover, and manage digital assets (images, videos, documents), built incrementally through planned phases. A key objective throughout development is to deliver a modern, highly interactive, and performant user experience ('FANG-like' quality).

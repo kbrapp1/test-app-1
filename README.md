@@ -31,6 +31,7 @@ This document provides an overview of the application's features, setup, and dev
     *   [Command Palette](#command-palette)
     *   [Navigation Configuration](#navigation-configuration)
     *   [Storybook Component Development](#storybook-component-development)
+    *   [Team Section](#team-section)
 *   [Testing](#testing)
 *   [Linting & Formatting](#linting--formatting)
 *   [Available Scripts](#available-scripts)
@@ -236,6 +237,84 @@ WITH ordered_notes AS (
 UPDATE public.notes n SET position = o.calculated_position FROM ordered_notes o WHERE n.id = o.id AND n.user_id = o.user_id AND n.position IS NULL;
 ```
 
+#### Team Section Setup
+
+To enable the Team section (team member directory with photos), you must set up the following in Supabase:
+
+1. **Create the `team_members` Table**
+
+```sql
+CREATE TABLE public.team_members (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    title TEXT NOT NULL,
+    primary_image_path TEXT NOT NULL,
+    secondary_image_path TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+```
+
+2. **Enable Row Level Security (RLS) and Add Policies**
+
+```sql
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+
+-- Allow all authenticated users to view team members
+CREATE POLICY "Allow select for authenticated" ON public.team_members
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Allow all authenticated users to add team members
+CREATE POLICY "Allow insert for authenticated" ON public.team_members
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+```
+
+3. **Create the `team-images` Storage Bucket**
+
+- Go to **Storage** in the Supabase dashboard.
+- Create a new bucket named `team-images`.
+- Set it to **public** for read access (or configure as needed).
+
+4. **Set Storage Bucket Policies**
+
+In the Supabase dashboard, go to the `team-images` bucket and add a policy like:
+
+- **Allow authenticated users to upload to `public/*`:**
+
+```sql
+CREATE POLICY "Authenticated upload to public" ON storage.objects
+    FOR INSERT
+    WITH CHECK (
+        bucket_id = 'team-images'
+        AND auth.role() = 'authenticated'
+        AND (storage.foldername(name))[1] = 'public'
+    );
+```
+
+- **Allow public read access to `public/*`:**
+
+```sql
+CREATE POLICY "Public read access to public" ON storage.objects
+    FOR SELECT
+    USING (
+        bucket_id = 'team-images'
+        AND (storage.foldername(name))[1] = 'public'
+    );
+```
+
+5. **Troubleshooting**
+
+If you see errors like:
+- `new row violates row-level security policy for table "team_members"`
+- 403 errors when uploading images
+
+Double-check:
+- RLS is enabled and policies above are applied to `team_members`.
+- The `team-images` bucket exists and has the correct policies.
+
+---
+
+(Reference this section from the Team Section feature description as well.)
+
 ### Running the Application
 
     ```bash
@@ -309,67 +388,4 @@ For a detailed overview of the project structure, including key files and their 
 *   Triggered by `Cmd+K` / `Ctrl+K` or the search icon in the header.
 *   Uses `cmdk` and `shadcn/ui` Dialog.
 *   Provides quick access to navigation and theme switching.
-*   State managed by `AppProviders` and `PaletteContext`.
-
-### Navigation Configuration
-
-*   Sidebar navigation structure (Main, Documents, Secondary) is defined in `lib/config/navigation.ts`.
-*   Modify this file to add, remove, or change sidebar links.
-*   The `AppSidebar` component renders the navigation based on this configuration.
-
-### Storybook Component Development
-
-*   Storybook is integrated for isolated component development and visualization.
-*   Run Storybook locally with `pnpm run storybook` (usually opens on `http://localhost:6006`).
-*   Stories are located alongside components (e.g., `components/ui/button.stories.tsx`) or in the root `stories/` directory.
-*   It's configured with Tailwind CSS and Theme support.
-*   Refer to the [Storybook Documentation](https://storybook.js.org/docs/) for writing stories.
-
-## Testing
-
-*   Uses Vitest for running tests and assertions.
-*   Uses React Testing Library (`@testing-library/react`, `@testing-library/user-event`) for component testing.
-*   Component tests (`*.test.tsx`) are co-located with their components.
-*   Unit tests (`*.test.ts`) for logic like middleware.
-*   Run tests with `pnpm test` or `pnpm test:watch`.
-*   Includes tests for navigation components (`NavMain`, `NavSecondary`, `NavDocuments`), verifying correct link rendering.
-*   Includes tests for the `SettingsLayout` and basic rendering of settings sub-pages.
-*   Includes tests for core forms (Login, Signup, Profile, Password) and their interactions.
-*   Includes tests for the Notes feature components and Server Actions (`app/(protected)/documents/notes/actions.test.ts`).
-*   **Storybook Tests:**
-    *   Storybook integration includes `@storybook/experimental-addon-test`.
-    *   A separate Vitest workspace configuration (`vitest.workspace.ts`) was created for Storybook tests.
-    *   Run Storybook-specific tests (if any are added within stories) using `npx vitest --project=storybook`.
-
-## Linting & Formatting
-
-*   ESLint and Prettier are configured for code consistency.
-*   Run linter with `pnpm run lint`.
-*   Formatting should ideally be handled by editor extensions on save.
-*   `pnpm test`: Runs tests once (main application tests via `vitest.config.ts`).
-*   `pnpm test:watch`: Runs main application tests in interactive watch mode.
-*   `pnpm run storybook`: Starts the Storybook development server.
-*   `pnpm run build-storybook`: Builds Storybook for static deployment (if needed).
-
-## Available Scripts
-
-*   `pnpm run dev`: Runs the app in development mode.
-*   `pnpm run build`: Builds the app for production.
-*   `pnpm run start`: Starts the production server.
-*   `pnpm run lint`: Runs the linter.
-*   `pnpm test`: Runs tests once (main application tests via `vitest.config.ts`).
-*   `pnpm test:watch`: Runs main application tests in interactive watch mode.
-*   `pnpm run storybook`: Starts the Storybook development server.
-*   `pnpm run build-storybook`: Builds Storybook for static deployment (if needed).
-
-## Learn More
-
-To learn more about the technologies used, take a look at the following resources:
-
-*   [Next.js Documentation](https://nextjs.org/docs)
-*   [React Documentation](https://react.dev/)
-*   [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-*   [shadcn/ui Documentation](https://ui.shadcn.com/docs)
-*   [Supabase Documentation](https://supabase.com/docs)
-*   [Vitest Documentation](https://vitest.dev/guide/)
-*   [Storybook Documentation](https://storybook.js.org/docs/) 
+*   State managed by `

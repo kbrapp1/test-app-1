@@ -34,19 +34,21 @@ export async function middleware(request: NextRequest) {
   let user = null;
   try {
     // Refresh session - important to do before accessing user data
-    const { data } = await supabase.auth.getUser()
-    user = data.user;
+    const { data, error: getUserError } = await supabase.auth.getUser()
+    // If there was an error fetching the user OR the user is null, treat as unauthenticated
+    if (getUserError || !data.user) {
+      // Log the specific error for debugging, but treat any error as potentially invalid session
+      if (getUserError) {
+        console.warn(`Middleware: Error fetching user: ${getUserError.message}. Session potentially invalid.`);
+      }
+      user = null; // Ensure user is null if fetch failed or returned no user
+    } else {
+       user = data.user; // Set user only if fetch was successful and user exists
+    }
   } catch (error: any) {
-    // console.error("Middleware getUser Error:", error); // Removed generic error log
-    // Check if it's the specific invalid refresh token error
-    if (error.name === 'AuthApiError' && error.message.includes('Invalid Refresh Token')) {
-      console.warn('Middleware: Invalid refresh token detected, redirecting to login.');
-      // Clear potentially invalid cookies by redirecting (browser handles clearing on response)
-      // Or explicitly try to clear cookies on the redirect response if needed, though often not necessary
-      return NextResponse.redirect(new URL('/login', request.url));
-    } 
-    // For other unexpected errors during getUser, we might still want to log or handle them
-    // but for now, we just let the user be treated as null.
+    // Catch unexpected errors during the try block itself (e.g., network issues)
+    console.error("Middleware: Unexpected error during getUser try block:", error);
+    user = null; // Ensure user is null on unexpected errors
   }
 
   // --- Remove Debug Logging --- 
@@ -65,21 +67,18 @@ export async function middleware(request: NextRequest) {
   // console.log(`[Middleware] Checking redirect condition: !user (${!user}), !publicRoutes.includes(${pathname}) (${!publicRoutes.includes(pathname)})`);
   // --- End Debug Logging ---
 
-  // If user is not logged in and trying to access a protected route
+  // If user is not authenticated (user is null) and trying to access a protected route
   if (!user && !publicRoutes.includes(pathname)) {
-    // Check if the path is the root, allow it even if user is null (it might be a public landing page)
-    // Or handle root protection differently if needed.
-    // For this specific project, assuming root should redirect to login if not logged in.
-    if (pathname === '/') {
-        return NextResponse.redirect(new URL('/login', request.url))
-    } else {
-        // For any other non-public route without a user, redirect to login
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
+    // Redirect to login, adding the intended destination as a query param
+    const redirectUrl = new URL('/login', request.url)
+    redirectUrl.searchParams.set('redirect_to', pathname) // Pass the original path
+    console.log(`Middleware: No user, redirecting to login for protected route: ${pathname}`);
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // If user is logged in and trying to access root, login, or signup pages
+  // If user IS authenticated and trying to access root, login, or signup pages
   if (user && authRoutes.includes(pathname)) {
+      console.log(`Middleware: User logged in, redirecting from auth route ${pathname} to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr' // We will mock this
+import { createServerClient, type CookieOptions } from '@supabase/ssr' // We will mock this
 import { middleware, config } from './middleware' // Import the middleware function AND config
+import { cookies } from 'next/headers'
 
 // Mock environment variables
 vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://test-supabase.co')
@@ -57,16 +58,20 @@ describe('Middleware', () => {
 
   it('should redirect unauthenticated user from /dashboard to /login', async () => {
     // Arrange
+    const request = new NextRequest('http://localhost:3000/dashboard')
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null })
-      const request = createMockRequest('/dashboard')
 
     // Act
     const response = await middleware(request)
 
     // Assert
-    expect(response?.status).toBe(307)
-    expect(response?.url).toBe('http://localhost:3000/login')
-    expect(NextResponse.redirect).toHaveBeenCalledWith(new URL('/login', request.url))
+    expect(response?.status).toBe(307) // 307 is Temporary Redirect
+    // Updated assertion to include the query parameter
+    const expectedRedirectUrl = new URL('/login', request.url)
+    expectedRedirectUrl.searchParams.set('redirect_to', '/dashboard')
+    expect(response?.url).toBe(expectedRedirectUrl.toString())
+    // Check if NextResponse.redirect was called with the correct URL object
+    expect(NextResponse.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
     })
 
   it('should allow unauthenticated user to access /login', async () => {
@@ -131,18 +136,24 @@ describe('Middleware', () => {
 
   it('should redirect user with invalid refresh token from /dashboard to /login', async () => {
     // Arrange
-    const error = { name: 'AuthApiError', message: 'Invalid Refresh Token' }
-    mockGetUser.mockRejectedValue(error) // Simulate getUser throwing the specific error
-    const request = createMockRequest('/dashboard')
+    const request = new NextRequest('http://localhost:3000/dashboard')
+    const mockError = { name: 'AuthApiError', message: 'Invalid Refresh Token' }
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: mockError })
+    vi.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console.warn for this test
 
     // Act
     const response = await middleware(request)
 
     // Assert
     expect(response?.status).toBe(307)
-    expect(response?.url).toBe('http://localhost:3000/login')
-    expect(NextResponse.redirect).toHaveBeenCalledWith(new URL('/login', request.url))
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid refresh token detected')) // Check for warning log
+    // Updated assertion to include the query parameter
+    const expectedRedirectUrl = new URL('/login', request.url)
+    expectedRedirectUrl.searchParams.set('redirect_to', '/dashboard')
+    expect(response?.url).toBe(expectedRedirectUrl.toString())
+    // Check if NextResponse.redirect was called with the correct URL object
+    expect(NextResponse.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid Refresh Token'));
+    (console.warn as Mock).mockRestore(); // Restore console.warn
   })
 
   // Add more tests as needed, e.g., for other public routes or specific error conditions

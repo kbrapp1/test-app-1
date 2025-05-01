@@ -1,5 +1,7 @@
 # Digital Asset Management (DAM) - Feature Roadmap
 
+> **Note:** This roadmap is specific to the DAM (Digital Asset Management) feature. For information about the Team section (team member directory with photos), see the project structure and README documentation. The Team section is a separate feature for managing and displaying team members.
+
 This document outlines a potential phased roadmap for enhancing the Digital Asset Management (DAM) system beyond the initial Phase 1 implementation. The order and specific features within each phase can be adjusted based on evolving priorities.
 
 ## Phase 1: Foundation (Completed)

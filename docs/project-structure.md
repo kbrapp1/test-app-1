@@ -32,6 +32,9 @@ This document provides a high-level overview of the main directories and their p
 |   |   |   |   `-- page.tsx
 |   |   |   |-- danger/       # Placeholder danger zone page & route.
 |   |   |   |   `-- page.tsx
+|   |   |   |-- team/         # Team section (view/add team members)
+|   |   |   |   |-- page.tsx  # Team page (protected route, shows team members)
+|   |   |   |   `-- (other files)
 |   |   |   `-- layout.tsx    # Main protected area layout (header, sidebar).
 |   |   `-- layout.tsx        # Root layout (html, body, global providers).
 |   |-- api/                  # API routes (optional).
@@ -63,6 +66,12 @@ This document provides a high-level overview of the main directories and their p
 |   |   `-- add-note-form.tsx   # Form for creating a new note.
 |   |-- context/              # React Context providers (e.g., Command Palette).
 |   |-- hooks/                # Custom React hooks (e.g., useToast, useMobile).
+|   |-- team/                 # Components for Team feature
+|   |   |-- AddTeamMemberForm.tsx      # Form for adding a team member
+|   |   |-- AddTeamMemberDialog.tsx    # Dialog for the add form
+|   |   |-- TeamMemberCard.tsx         # Card for displaying a team member
+|   |   |-- TeamMemberList.tsx         # List/grid of team members
+|   |   `-- (tests, etc.)
 |   `-- ... (Shared components like sidebar, header, data-table, etc.)
 |
 |-- context/                  # React Context providers (e.g., Command Palette).
@@ -112,6 +121,7 @@ This document provides a high-level overview of the main directories and their p
 *   `app/(protected)/settings/layout.tsx`: Specific layout for the settings section, providing internal navigation.
 *   `app/(protected)/settings/page.tsx`: Redirects users from `/settings` to `/settings/profile`.
 *   `app/(protected)/settings/[section]/page.tsx`: Individual pages for each settings section (profile, password, etc.).
+*   `app/(protected)/team/page.tsx`: Server Component for the Team page (shows all team members, protected route).
 *   `components/dam/AssetGallery.tsx`: Server Component that fetches asset data from Supabase and renders the gallery grid using `AssetThumbnail`.
 *   `components/dam/AssetThumbnail.tsx`: Client Component that displays an individual asset image and includes the delete button and confirmation dialog logic.
 *   `components/dam/AssetUploader.tsx`: Client Component providing the UI for file selection, drag-and-drop, and triggering the upload action.
@@ -132,6 +142,10 @@ This document provides a high-level overview of the main directories and their p
 *   `components/auth/login-form.tsx` / `signup-form.tsx`: Components handling user login/signup logic.
 *   `components/settings/profile-form.tsx` / `password-form.tsx`: Components handling settings updates.
 *   `hooks/use-toast.ts`: Hook and function for triggering toast notifications.
+*   `components/team/AddTeamMemberForm.tsx`: Form for adding a new team member (name, title, images).
+*   `components/team/AddTeamMemberDialog.tsx`: Dialog/modal for the add form.
+*   `components/team/TeamMemberCard.tsx`: Card UI for displaying a team member (with hover effect).
+*   `components/team/TeamMemberList.tsx`: Renders the list/grid of team members.
 
 ## Detailed Directory Contents
 
