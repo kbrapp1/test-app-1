@@ -113,7 +113,9 @@ describe('ProfileForm', () => {
     const submitButton = screen.getByRole('button', { name: /Update Profile/i });
 
     // Change name and submit
+    // Ensure input is cleared reliably before typing
     await user.clear(nameInput);
+    fireEvent.change(nameInput, { target: { value: '' } }); // Explicitly set value to empty
     await user.type(nameInput, newName);
     await user.click(submitButton);
 

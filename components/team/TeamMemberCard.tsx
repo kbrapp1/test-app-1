@@ -20,8 +20,8 @@ export function TeamMemberCard({ member }: TeamMemberCardProps) {
     <div> 
       {/* Ensure group class is present */}
       <div 
-        // Replace fixed height with aspect-square 
-        className="group relative overflow-hidden rounded-t-3xl aspect-square" 
+        // Change rounding to a larger arbitrary value
+        className="group relative overflow-hidden rounded-tr-[4rem] aspect-square" 
         // Remove mouse handlers for src swapping
         // onMouseEnter={() => setCurrentImageUrl(member.secondary_image_url)}
         // onMouseLeave={() => setCurrentImageUrl(member.primary_image_url)}

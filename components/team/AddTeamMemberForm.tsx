@@ -18,27 +18,54 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 
 // Define the schema for client-side validation
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // Match API route limit (or intended limit)
 
-// Custom file schema validation making sure it's a File object
-const fileSchema = z
-  .custom<File>((val) => val instanceof File, 'Image is required.')
-  .refine((file) => file.size > 0, 'Image is required.') // Ensure file is not empty
-  .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
-  .refine(
-    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-    '.jpg, .jpeg, .png, .webp and .gif files are accepted.'
-  );
+// Use superRefine for conditional logic based on file presence, type, and size
+export const refinedFileSchema = z
+  .custom<FileList | undefined>((val) => val === undefined || val instanceof FileList, {
+    message: "Expected a FileList or undefined", // Base type check
+  })
+  .superRefine((fileList, ctx) => {
+    // 1. Required check
+    if (!fileList || fileList.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Image is required.",
+      });
+      return; // Stop validation if no file
+    }
+
+    // We know fileList[0] exists now
+    const file = fileList[0];
+
+    // 2. Type check
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid file type. Only ${ACCEPTED_IMAGE_TYPES.map(t => t.split('/')[1]).join(', ')} are allowed.`,
+      });
+      return; // <-- RETURN HERE if type is invalid
+    }
+
+    // 3. Size check (only runs if type is valid)
+    if (file.size > MAX_FILE_SIZE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `File too large. Max size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+      });
+      // Optional: return here too, though it's the last check
+      return; 
+    }
+  });
 
 const teamMemberFormSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
-  title: z.string().min(1, { message: 'Title is required' }),
-  primaryImage: fileSchema,
-  secondaryImage: fileSchema,
+  name: z.string().min(1, { message: "Name is required" }),
+  title: z.string().min(1, { message: "Title is required" }),
+  primaryImage: refinedFileSchema,
+  secondaryImage: refinedFileSchema,
 });
 
 type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;
@@ -50,56 +77,22 @@ interface AddTeamMemberFormProps {
 export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [primaryPreview, setPrimaryPreview] = useState<string | null>(null);
-  const [secondaryPreview, setSecondaryPreview] = useState<string | null>(null);
-
-  // Refs for resetting file inputs
-  const primaryInputRef = useRef<HTMLInputElement>(null);
-  const secondaryInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<TeamMemberFormValues>({
     resolver: zodResolver(teamMemberFormSchema),
     defaultValues: {
       name: '',
       title: '',
-      // Default values for files are tricky in RHF, handle via onChange logic
+      primaryImage: undefined,
+      secondaryImage: undefined,
     },
-    mode: 'onChange', // Validate on change to enable/disable submit button correctly
+    mode: 'onSubmit', // Validate on submit (default, better for testing required fields)
   });
 
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    field: 'primaryImage' | 'secondaryImage'
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      form.setValue(field, file, { shouldValidate: true }); // Trigger validation
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        if (field === 'primaryImage') {
-          setPrimaryPreview(result);
-        } else {
-          setSecondaryPreview(result);
-        }
-      };
-      reader.readAsDataURL(file);
-    } else {
-        // Clear the value and preview if no file is selected or selection is cancelled
-        // Use any to bypass TypeScript's type checking for undefined
-        form.setValue(field, undefined as any, { shouldValidate: true });
-        if (field === 'primaryImage') {
-          setPrimaryPreview(null);
-        } else {
-          setSecondaryPreview(null);
-        }
-    }
-  };
-
   const onSubmit = async (values: TeamMemberFormValues) => {
-    // Although schema validates, double-check File instances just in case
-    if (!(values.primaryImage instanceof File) || !(values.secondaryImage instanceof File)) {
-        toast({ title: 'Error', description: 'Both primary and secondary images must be valid files.', variant: 'destructive'});
+    // Check FileList and get the File object
+    if (!values.primaryImage?.[0] || !values.secondaryImage?.[0]) {
+        toast({ title: 'Error', description: 'Both primary and secondary images must be provided.', variant: 'destructive'});
         return;
     }
 
@@ -108,8 +101,9 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
     const formData = new FormData();
     formData.append('name', values.name);
     formData.append('title', values.title);
-    formData.append('primaryImage', values.primaryImage);
-    formData.append('secondaryImage', values.secondaryImage);
+    // Append the actual File object from the FileList
+    formData.append('primaryImage', values.primaryImage[0]);
+    formData.append('secondaryImage', values.secondaryImage[0]);
 
     try {
       const response = await fetch('/api/team/upload', {
@@ -121,17 +115,7 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
 
       if (response.ok && result.success) {
         toast({ title: 'Success', description: 'Team member added successfully.' });
-        form.reset({ name: '', title: '' }); // Reset text fields
-        setPrimaryPreview(null); // Clear previews
-        setSecondaryPreview(null);
-         // Reset file input elements visually
-        if (primaryInputRef.current) primaryInputRef.current.value = '';
-        if (secondaryInputRef.current) secondaryInputRef.current.value = '';
-        // Need to clear the file value in RHF state after reset if not done automatically
-        form.setValue('primaryImage', undefined as any, { shouldValidate: false });
-        form.setValue('secondaryImage', undefined as any, { shouldValidate: false });
-
-
+        form.reset(); // Reset should now clear registered file inputs too
         onSuccess?.(); // Call the success callback if provided (e.g., to close a dialog)
       } else {
         // Handle specific validation errors if provided by API
@@ -182,82 +166,40 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
             </FormItem>
           )}
         />
-        {/* RHF doesn't bind directly to file inputs well. Handle onChange manually */}
-        <FormField
-          control={form.control}
-          name="primaryImage"
-          render={({ fieldState }) => ( // Only need fieldState for error message
-            <FormItem>
-              <FormLabel>Primary Image</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                  ref={primaryInputRef}
-                  onChange={(e) => handleFileChange(e, 'primaryImage')}
-                  />
-              </FormControl>
-               {primaryPreview && (
-                <div className="mt-2">
-                  <Image
-                    src={primaryPreview}
-                    alt="Primary image preview"
-                    width={100}
-                    height={100}
-                    className="object-cover rounded"
-                  />
-                </div>
-              )}
-              <FormMessage>
-                 {/* Display error message from RHF state */}
-                 {fieldState.error?.message}
-              </FormMessage>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="secondaryImage"
-           render={({ fieldState }) => ( // Only need fieldState for error message
-            <FormItem>
-              <FormLabel>Secondary (Hover) Image</FormLabel>
-              <FormControl>
-                 <Input
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                  ref={secondaryInputRef}
-                  onChange={(e) => handleFileChange(e, 'secondaryImage')}
-                  />
-              </FormControl>
-                {secondaryPreview && (
-                <div className="mt-2">
-                  <Image
-                    src={secondaryPreview}
-                    alt="Secondary image preview"
-                    width={100}
-                    height={100}
-                    className="object-cover rounded"
-                  />
-                </div>
-              )}
-               <FormMessage>
-                   {/* Display error message from RHF state */}
-                   {fieldState.error?.message}
-               </FormMessage>
-            </FormItem>
-          )}
-        />
+        {/* Simplify file inputs using form.register */}
+        <FormItem>
+          <FormLabel>Primary Image</FormLabel>
+          <FormControl>
+            <Input 
+              type="file"
+              accept={ACCEPTED_IMAGE_TYPES.join(',')}
+              {...form.register('primaryImage')} 
+            />
+          </FormControl>
+          <FormMessage>{form.formState.errors.primaryImage?.message}</FormMessage>
+        </FormItem>
+        
+        <FormItem>
+          <FormLabel>Secondary (Hover) Image</FormLabel>
+          <FormControl>
+            <Input 
+              type="file"
+              accept={ACCEPTED_IMAGE_TYPES.join(',')}
+              {...form.register('secondaryImage')} 
+            />
+          </FormControl>
+           <FormMessage>{form.formState.errors.secondaryImage?.message}</FormMessage>
+        </FormItem>
 
         <div className="flex justify-end space-x-2 pt-4">
             <DialogClose asChild>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" disabled={isLoading}>
                     Cancel
                 </Button>
             </DialogClose>
-            <Button type="submit" disabled={isLoading || !form.formState.isValid}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Adding...' : 'Add Member'}
-            </Button>
+          </Button>
         </div>
       </form>
     </Form>
