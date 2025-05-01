@@ -6,6 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
+  DialogClose
+} from '@/components/ui/dialog';
+import {
   Form,
   FormControl,
   FormField,
@@ -246,9 +249,16 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
           )}
         />
 
-        <Button type="submit" disabled={isLoading || !form.formState.isValid}>
-          {isLoading ? 'Adding...' : 'Add Member'}
-        </Button>
+        <div className="flex justify-end space-x-2 pt-4">
+            <DialogClose asChild>
+                <Button type="button" variant="outline">
+                    Cancel
+                </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isLoading || !form.formState.isValid}>
+            {isLoading ? 'Adding...' : 'Add Member'}
+            </Button>
+        </div>
       </form>
     </Form>
   );
