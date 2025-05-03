@@ -33,6 +33,9 @@ export async function middleware(request: NextRequest) {
 
   let user = null;
   try {
+    // Log cookies received by the middleware
+    console.log("Middleware received cookies:", request.cookies.getAll());
+
     // Fetch user from session on the server
     const { data, error } = await supabase.auth.getUser();
     if (error) {
