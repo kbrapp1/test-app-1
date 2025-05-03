@@ -23,13 +23,13 @@ This document outlines the step-by-step process for implementing the Digital Ass
 *   **[X] Step 2.1: Update Database Schema for Folders & Tags**
     *   **Task:**
         1.  **Add `folder_id` to `assets` table:**
-            *   Column: `folder_id` (uuid, nullable, foreign key potentially to a new `folders` table, or self-referencing if folders are just special assets). *Decision: For simplicity, let's assume a new `folders` table for now.*
+            *   Column: `folder_id` (uuid, nullable, foreign key to the new `folders` table). This links an asset to the specific folder it resides in.
         2.  **Create `folders` table:**
             *   Columns:
                 *   `id` (uuid, primary key, default: `uuid_generate_v4()`)
                 *   `user_id` (uuid, foreign key to `auth.users.id`)
                 *   `name` (text, not null)
-                *   `parent_folder_id` (uuid, nullable, foreign key to `folders.id` for hierarchy)
+                *   `parent_folder_id` (uuid, nullable, foreign key to `folders.id`). This column enables the **hierarchical structure (subfolders)** by linking a folder to its parent. A `null` value indicates a root-level folder.
                 *   `created_at` (timestamp with time zone, default: `now()`)
         3.  **Create `tags` table:**
             *   Columns:
@@ -53,7 +53,7 @@ This document outlines the step-by-step process for implementing the Digital Ass
         2.  **Dialog:** On button click, open a `<Dialog>` prompting for the folder name using an `<Input>` and a submit button.
         3.  **Server Action:** Create `async function createFolder(name: string, parentFolderId?: string)` in `lib/actions/dam.ts`.
             *   Get `user_id`.
-            *   Insert row into `folders` table with `name`, `user_id`, and `parent_folder_id` (if provided, represents current view).
+            *   Insert row into `folders` table with `name`, `user_id`, and `parent_folder_id`. `parentFolderId` should be the ID of the folder currently being viewed, allowing creation of **subfolders**. If creating in the root, `parentFolderId` will be `null` or undefined.
             *   Handle errors.
             *   `revalidatePath('/dam')` (or specific folder path if applicable).
             *   Return success/error status.
@@ -66,16 +66,17 @@ This document outlines the step-by-step process for implementing the Digital Ass
 
 *   **[X] Step 2.3: Update Gallery to Display Folders & Handle Navigation**
     *   **Task:**
-        1.  **Fetch Folders:** Modify `AssetGallery.tsx` (or its data fetching logic) to fetch folders alongside assets, potentially based on the current `parent_folder_id` (from URL param or state).
+        1.  **Fetch Folders:** Modify `AssetGallery.tsx` (or its data fetching logic) to fetch folders alongside assets, based on the current `parent_folder_id` (from URL param or state, `null` for root).
         2.  **Render Folders:** Create a `components/dam/FolderThumbnail.tsx` component to display folders visually distinct from assets. Render these alongside assets in the gallery grid.
-        3.  **Navigation:** Make `FolderThumbnail` components interactive (e.g., clickable). Clicking a folder should navigate the user "into" that folder (e.g., update URL query parameter `?folderId=...`, trigger refetch/re-render of `AssetGallery` with the new `folderId`).
-        4.  **Breadcrumbs:** Add breadcrumb navigation (e.g., using `shadcn/ui` Breadcrumb) above the gallery to show the current folder path and allow navigation back up the hierarchy.
+        3.  **Navigation:** Make `FolderThumbnail` components interactive (e.g., clickable). Clicking a folder should navigate the user "into" that folder (e.g., update URL query parameter `?folderId=...`, trigger refetch/re-render of `AssetGallery` with the new `folderId` as the `parent_folder_id` for the next fetch), enabling navigation through the **folder hierarchy**.
+        4.  **Breadcrumbs:** Add breadcrumb navigation (e.g., using `shadcn/ui` Breadcrumb) above the gallery to show the current folder path (**reflecting the hierarchy**) and allow navigation back up level by level (or directly to root).
     *   **Testing:**
-        1.  Visit `/dam`. Verify both assets and created folders (Step 2.2) are displayed.
-        2.  Click a folder. Verify the view updates to show the contents of that folder (initially empty). Verify breadcrumbs update.
-        4.  Use breadcrumbs to navigate back up.
+        1.  Visit `/dam`. Verify both assets and created folders (Step 2.2) are displayed at the root level.
+        2.  Click a folder. Verify the view updates to show the contents of that folder (initially empty). Verify breadcrumbs update showing the parent folder.
+        3.  Create a subfolder within the current folder. Verify it appears. Click into the subfolder. Verify breadcrumbs update further.
+        4.  Use breadcrumbs to navigate back up one level, and then back to the root.
 
-*   **[ ] Step 2.4: Implement Asset Moving (Drag & Drop / Menu)**
+*   **[X] Step 2.4: Implement Asset Moving (Drag & Drop / Menu)**
     *   **Task:**
         1.  **UI:** Decide on mechanism:
             *   *Option A (Drag & Drop):* Make assets (`AssetThumbnail`) and folders draggable/droppable using a library like `dnd-kit`.

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { UploadCloud } from 'lucide-react';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
-import { AssetGallery } from "@/components/dam/AssetGallery";
+import { AssetGalleryClient } from '@/components/dam/AssetGalleryClient';
 import { FolderSidebar, Folder, HierarchicalFolder } from '@/components/dam/folder-sidebar';
 import { DamBreadcrumbs, type BreadcrumbItemData } from '@/components/dam/dam-breadcrumbs';
 // TODO: Import Breadcrumb component when created
@@ -21,10 +21,12 @@ async function fetchFolders(supabase: any): Promise<Folder[]> {
     return []; // Handle error or redirect appropriately
   }
 
+  // Fetch only ROOT folders
   const { data: folders, error: foldersError } = await supabase
     .from('folders')
     .select('*')
     .eq('user_id', user.id)
+    .is('parent_folder_id', null) // Only get top-level folders
     .order('name', { ascending: true });
 
   if (foldersError) {
@@ -65,6 +67,34 @@ function buildFolderHierarchy(folders: Folder[]): HierarchicalFolder[] {
   rootFolders.forEach(sortChildren);
 
   return rootFolders;
+}
+
+// Optimized function to fetch breadcrumb path using a recursive CTE
+async function fetchBreadcrumbPathRecursive(supabase: any, folderId: string | null): Promise<BreadcrumbItemData[]> {
+  const path: BreadcrumbItemData[] = [{ id: null, name: 'Root', href: '/dam' }];
+
+  if (!folderId) {
+    return path;
+  }
+
+  const { data, error } = await supabase.rpc('get_folder_path', { p_folder_id: folderId });
+
+  if (error) {
+    console.error('Error fetching folder path via RPC:', error);
+    // Fallback or specific error handling
+    path.push({ id: folderId, name: 'Error', href: `/dam?folderId=${folderId}` });
+    return path;
+  }
+
+  // The RPC function returns the path in the correct order (Root -> ... -> Current)
+  // Skip the first item if it's the root, as we add it manually
+  const rpcPath = (data || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    href: `/dam?folderId=${p.id}`
+  }));
+
+  return [...path, ...rpcPath];
 }
 
 // Function to fetch breadcrumb path
@@ -125,21 +155,20 @@ export default async function DamGalleryPage({ searchParams }: DamGalleryPagePro
     }
   );
 
-  // Fetch folders data server-side
+  // Fetch folders data server-side - ONLY ROOT FOLDERS
   const folders = await fetchFolders(supabase);
-  const hierarchicalFolders = buildFolderHierarchy(folders);
 
   // Determine the current folder ID from searchParams asynchronously
   const { folderId } = await searchParams!;
   const currentFolderId = typeof folderId === 'string' ? folderId : null;
 
-  // Fetch breadcrumb data based on currentFolderId
-  const breadcrumbPath = await fetchBreadcrumbPath(supabase, currentFolderId);
+  // Use the optimized recursive fetch
+  const breadcrumbPath = await fetchBreadcrumbPathRecursive(supabase, currentFolderId);
 
   return (
     <div className="flex h-full">
-      {/* Folder Sidebar */}
-      <FolderSidebar folders={hierarchicalFolders} currentFolderId={currentFolderId} />
+      {/* Folder Sidebar - Pass only root folders */}
+      <FolderSidebar initialFolders={folders} currentFolderId={currentFolderId} />
 
       {/* Main Content Area */}
       <main className="flex-1 p-4 overflow-auto">
@@ -154,11 +183,10 @@ export default async function DamGalleryPage({ searchParams }: DamGalleryPagePro
                     </Button>
                 </Link>
             </div>
-        {/* Asset Gallery */}
-      <Suspense fallback={<p className="text-center">Loading assets...</p>}>
-          {/* Pass selected folder ID to AssetGallery */}
-          <AssetGallery currentFolderId={currentFolderId} />
-      </Suspense>
+        {/* Client Asset Gallery with caching */}
+        <div className="mt-4">
+          <AssetGalleryClient currentFolderId={currentFolderId} />
+        </div>
       </main>
     </div>
   );

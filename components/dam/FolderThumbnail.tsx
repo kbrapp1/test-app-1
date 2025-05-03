@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link'; // Import Link
 import { Folder as FolderIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation'; // Import router for prefetch
 import { useDroppable } from '@dnd-kit/core'; // Import useDroppable
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
 import { type Folder } from './folder-sidebar'; // Reuse Folder type
@@ -12,8 +13,8 @@ interface FolderThumbnailProps {
 }
 
 export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
-  // Remove router initialization
-  // const router = useRouter(); 
+  // Initialize router for prefetch on hover
+  const router = useRouter();
 
   // --- DND Setup ---
   const { 

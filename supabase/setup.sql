@@ -102,7 +102,7 @@ FOREIGN KEY (parent_folder_id)
 REFERENCES public.folders (id)
 ON DELETE SET NULL; -- Or use ON DELETE CASCADE
 
--- Add index for parent_folder_id (idempotent)
+-- Index for quickly finding subfolders within a specific parent folder
 CREATE INDEX IF NOT EXISTS idx_folders_parent_folder_id ON public.folders (parent_folder_id);
 
 -- Add comment to the column (idempotent)
@@ -136,8 +136,8 @@ CREATE TABLE IF NOT EXISTS public.assets (
 -- Ensure the folder_id column exists before creating the index (for idempotency)
 ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES public.folders(id) ON DELETE SET NULL;
 
--- Add index for folder_id to improve query performance
-CREATE INDEX IF NOT EXISTS assets_folder_id_idx ON public.assets(folder_id);
+-- Index for quickly finding assets within a specific folder
+CREATE INDEX IF NOT EXISTS idx_assets_folder_id ON public.assets (folder_id);
 
 -- Create tags table
 CREATE TABLE IF NOT EXISTS public.tags (
@@ -199,6 +199,50 @@ DROP POLICY IF EXISTS "Assets: Allow individual delete access" ON public.assets;
 CREATE POLICY "Assets: Allow individual delete access" ON public.assets FOR DELETE USING (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Assets: Allow individual update access" ON public.assets;
 CREATE POLICY "Assets: Allow individual update access" ON public.assets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================================
+-- RPC FUNCTIONS
+-- ============================================================================
+
+-- Function to get the folder path recursively for breadcrumbs
+CREATE OR REPLACE FUNCTION public.get_folder_path(p_folder_id uuid)
+RETURNS TABLE(id uuid, name text, depth int)
+LANGUAGE sql
+STABLE
+AS $$
+  WITH RECURSIVE folder_hierarchy AS (
+    -- Base case: the starting folder
+    SELECT 
+      f.id, 
+      f.name, 
+      f.parent_folder_id, 
+      0 AS depth -- Start depth at 0
+    FROM public.folders f
+    WHERE f.id = p_folder_id
+
+    UNION ALL
+
+    -- Recursive step: find the parent of the current folder
+    SELECT 
+      f.id, 
+      f.name, 
+      f.parent_folder_id, 
+      fh.depth + 1 -- Increment depth
+    FROM public.folders f
+    JOIN folder_hierarchy fh ON f.id = fh.parent_folder_id
+    WHERE fh.parent_folder_id IS NOT NULL -- Stop when we reach the root (parent is null)
+  )
+  -- Select the path, ordering by depth descending to get Root -> ... -> Current
+  SELECT 
+    fh.id, 
+    fh.name,
+    fh.depth
+  FROM folder_hierarchy fh
+  ORDER BY fh.depth DESC;
+$$;
+
+-- Grant execute permission to the authenticated role
+GRANT EXECUTE ON FUNCTION public.get_folder_path(uuid) TO authenticated;
 
 -- ============================================================================
 -- TEAM MEMBERS TABLE SETUP

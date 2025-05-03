@@ -1,7 +1,7 @@
 'use client';
 
 // Make sure all necessary hooks and components are imported
-import React, { useMemo, useState, useEffect } from 'react'; 
+import React, { useMemo, useState, useEffect, CSSProperties } from 'react'; 
 import { useRouter } from 'next/navigation';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -10,15 +10,16 @@ import { FolderThumbnail } from './FolderThumbnail';
 import { Folder } from './folder-sidebar'; 
 import { moveAsset } from '@/lib/actions/dam'; 
 import { useToast } from '@/hooks/use-toast';
+import { FixedSizeGrid } from 'react-window';
 
 // Define types (or import from shared location)
-interface Asset { 
+export interface Asset { 
     id: string; name: string; storage_path: string; mime_type: string; 
     size: number; created_at: string; user_id: string | null; folder_id: string | null; 
 }
 interface GalleryItem extends Asset { type: 'asset'; publicUrl: string; }
 interface FolderItem extends Folder { type: 'folder'; }
-type CombinedItem = GalleryItem | FolderItem;
+export type CombinedItem = GalleryItem | FolderItem; // Export for use in client caching component
 
 // Props interface
 interface AssetGridProps {
@@ -91,33 +92,79 @@ export function AssetGrid({ combinedItems, assets, folders }: AssetGridProps) {
         );
     }
 
-    // Restore DND wrappers and original map logic
+    // For small galleries, use CSS grid to preserve styling
+    const VIRTUALIZE_THRESHOLD = 30;
+    if (combinedItems.length <= VIRTUALIZE_THRESHOLD) {
+        // Restore DND wrappers for consistent behavior/styling
+        return (
+            <DndContext 
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext items={itemIds} strategy={verticalListSortingStrategy} disabled={true}>
+                    {/* Use auto-fit columns with a minimum width to prevent squishing */}
+                    <div className="grid grid-cols-[repeat(auto-fit,150px)] gap-4">
+                        {combinedItems.map((item, index) => (
+                            item.type === 'folder' ? (
+                                <FolderThumbnail key={item.id} folder={item as FolderItem} />
+                            ) : (
+                                <AssetThumbnail
+                                    key={item.id}
+                                    src={item.publicUrl}
+                                    alt={item.name}
+                                    assetId={item.id}
+                                    storagePath={item.storage_path}
+                                    folderId={item.folder_id}
+                                    type={item.type}
+                                    isPriority={index < PRIORITY_THRESHOLD && item.mime_type.startsWith('image/')}
+                                />
+                            )
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
+        );
+    }
+
+    // Virtualized grid rendering for performance
+    const COLS = 6;
+    const CELL_SIZE = 150;
+    const rowCount = Math.ceil(combinedItems.length / COLS);
     return (
-        <DndContext 
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+        <FixedSizeGrid
+            columnCount={COLS}
+            rowCount={rowCount}
+            columnWidth={CELL_SIZE}
+            rowHeight={CELL_SIZE}
+            height={CELL_SIZE * 3}
+            width={CELL_SIZE * COLS}
         >
-            <SortableContext items={itemIds} strategy={verticalListSortingStrategy} disabled={true}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                     {combinedItems.map((item, index) => {
-                        // console.log(`[Client] Rendering item: ${item.id} (${item.type})`); // Keep commented out for now
-                         return item.type === 'folder' ? (
-                             <FolderThumbnail key={item.id} folder={item as FolderItem} />
-                         ) : (
-                             <AssetThumbnail
-                                 key={item.id}
-                                 src={item.publicUrl}
-                                 alt={item.name}
-                                 assetId={item.id}
-                                 storagePath={item.storage_path}
-                                 folderId={item.folder_id}
-                                 type={item.type}
-                                 isPriority={index < PRIORITY_THRESHOLD && item.mime_type.startsWith('image/')} 
-                             />
-                         );
-                     })}
-                 </div>
-             </SortableContext>
-         </DndContext>
+            {({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: CSSProperties }) => {
+                const index = rowIndex * COLS + columnIndex;
+                if (index >= combinedItems.length) return null;
+                const item = combinedItems[index];
+                return (
+                    // Outer div keeps positioning and size from react-window
+                    <div style={style} key={item.id}>
+                        {/* Inner wrapper for padding and full size */}
+                        <div style={{ padding: '0.5rem', boxSizing: 'border-box', width: '100%', height: '100%' }}>
+                            {item.type === 'folder' ? (
+                                <FolderThumbnail folder={item as FolderItem} />
+                            ) : (
+                                <AssetThumbnail
+                                    src={item.publicUrl}
+                                    alt={item.name}
+                                    assetId={item.id}
+                                    storagePath={item.storage_path}
+                                    folderId={item.folder_id}
+                                    type={item.type}
+                                    isPriority={index < PRIORITY_THRESHOLD && item.mime_type.startsWith('image/')}
+                                />
+                            )}
+                        </div>
+                    </div>
+                );
+            }}
+        </FixedSizeGrid>
     );
 }
