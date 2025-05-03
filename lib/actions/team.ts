@@ -3,16 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-
-// TODO: Define this type, perhaps in types/team.ts
-export interface TeamMember {
-  id: string;
-  name: string;
-  title: string;
-  primary_image_url: string;
-  secondary_image_url: string;
-  created_at: string;
-}
+import type { TeamMember } from '@/types/team';
 
 export async function getTeamMembers(): Promise<TeamMember[]> {
   const supabase = createClient();

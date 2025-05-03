@@ -33,22 +33,20 @@ export async function middleware(request: NextRequest) {
 
   let user = null;
   try {
-    // Refresh session - important to do before accessing user data
-    const { data, error: getUserError } = await supabase.auth.getUser()
-    // If there was an error fetching the user OR the user is null, treat as unauthenticated
-    if (getUserError || !data.user) {
-      // Log the specific error for debugging, but treat any error as potentially invalid session
-      if (getUserError) {
-        console.warn(`Middleware: Error fetching user: ${getUserError.message}. Session potentially invalid.`);
+    // Fetch user from session on the server
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      // Suppress the expected 'Auth session missing' on logout
+      if (!error.message.includes('Auth session missing')) {
+        console.warn(`Middleware: Error fetching user: ${error.message}. Session potentially invalid.`);
       }
-      user = null; // Ensure user is null if fetch failed or returned no user
+      user = null;
     } else {
-       user = data.user; // Set user only if fetch was successful and user exists
+      user = data.user;
     }
-  } catch (error: any) {
-    // Catch unexpected errors during the try block itself (e.g., network issues)
-    console.error("Middleware: Unexpected error during getUser try block:", error);
-    user = null; // Ensure user is null on unexpected errors
+  } catch (err: any) {
+    console.error("Middleware: Unexpected error fetching user:", err);
+    user = null;
   }
 
   // --- Remove Debug Logging --- 

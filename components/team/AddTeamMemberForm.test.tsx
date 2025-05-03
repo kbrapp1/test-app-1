@@ -12,10 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import React from 'react';
-
-// --- Constants matching the component --- 
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+// Import constants from the shared schema file
+import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/schemas/team';
 
 // --- Mocks ---
 // Mock useToast

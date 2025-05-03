@@ -1,8 +1,21 @@
+// Keep server-only imports
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
-import { AssetThumbnail } from './AssetThumbnail'; // Import the new component
 
-// Define type for asset data (adjust based on actual table columns)
+// Remove client-side imports
+// import { useMemo } from 'react';
+// import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+// import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+// import { AssetThumbnail } from './AssetThumbnail'; 
+// import { FolderThumbnail } from './FolderThumbnail'; 
+// import { moveAsset } from '@/lib/actions/dam';
+// import { useToast } from '@/hooks/use-toast';
+
+// Import the new Client Component
+import { AssetGrid } from './AssetGrid';
+
+// Keep shared types or move to a dedicated types file
+import { Folder } from './folder-sidebar'; 
 interface Asset {
     id: string;
     name: string;
@@ -11,71 +24,80 @@ interface Asset {
     size: number;
     created_at: string;
     user_id: string | null;
-    // Add other fields as needed
+    folder_id: string | null; 
+}
+interface GalleryItem extends Asset {
+    type: 'asset';
+    publicUrl: string;
+}
+interface FolderItem extends Folder {
+    type: 'folder';
+}
+type CombinedItem = GalleryItem | FolderItem; // This type might be needed by AssetGrid, consider exporting it from here or a types file
+
+// --- Main AssetGallery Server Component --- 
+interface AssetGalleryProps {
+    currentFolderId: string | null;
 }
 
-export async function AssetGallery() {
-    // const cookieStore = cookies(); // Not needed for server client creation
-    const supabase = createClient(); // No argument needed for server client
+export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
+    // console.log(`[Server] AssetGallery fetching for folderId: ${currentFolderId}`); // Log folder ID
+    
+    const supabase = createClient(); 
 
-    // --- 1. Fetch Asset Records ---
-    // TODO: Add user_id filter if authentication is implemented and needed
-    const { data: assets, error } = await supabase
-        .from('assets')
-        .select('*')
-        .order('created_at', { ascending: false });
+    // --- Fetch Folders --- (Existing logic)
+    let folderQuery = supabase.from('folders').select('*');
+    if (currentFolderId === null) { folderQuery = folderQuery.is('parent_folder_id', null); } 
+    else { folderQuery = folderQuery.eq('parent_folder_id', currentFolderId); }
+    const { data: foldersData, error: foldersError } = await folderQuery.order('name', { ascending: true });
+    if (foldersError) {
+        // console.error('Error fetching folders:', foldersError);
+        return <p className="text-red-500">Error loading folders: {foldersError.message}</p>;
+    }
+    const folders: FolderItem[] = (foldersData || []).map(f => ({ ...f, type: 'folder' }));
 
-    if (error) {
-        console.error('Error fetching assets:', error);
-        // Consider returning a more user-friendly error component
-        return <p className="text-red-500">Error loading assets: {error.message}</p>;
+    // --- Fetch Assets --- (Existing logic)
+    let assetQuery = supabase.from('assets').select('*');
+    if (currentFolderId === null) { assetQuery = assetQuery.is('folder_id', null); } 
+    else { assetQuery = assetQuery.eq('folder_id', currentFolderId); }
+    const { data: assetsData, error: assetsError } = await assetQuery.order('created_at', { ascending: false });
+    if (assetsError) {
+        // console.error('Error fetching assets:', assetsError);
+        return <p className="text-red-500">Error loading assets: {assetsError.message}</p>;
     }
 
-    if (!assets || assets.length === 0) {
-        return <p>No assets found.</p>;
-    }
-
-    // --- 2. Generate Public URLs ---
-    // We need to do this for each asset
-    const assetsWithUrls = assets.map((asset: Asset) => {
-        const { data } = supabase
-            .storage
-            .from('assets') // Ensure this matches your bucket name
-            .getPublicUrl(asset.storage_path);
-
+    // --- Generate Public URLs for Assets --- (Existing logic)
+    const assetsWithUrls: GalleryItem[] = (assetsData || []).map((asset: Asset) => {
+        const { data: urlData } = supabase.storage.from('assets').getPublicUrl(asset.storage_path);
         return {
             ...asset,
-            publicUrl: data?.publicUrl || '/placeholder.png', // Fallback URL
+            type: 'asset',
+            publicUrl: urlData?.publicUrl || '/placeholder.png',
         };
     });
 
-    // --- 3. Render Gallery ---
-    const PRIORITY_THRESHOLD = 4; // Prioritize the first N images
-    return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {assetsWithUrls.map((asset: Asset & { publicUrl: string }, index: number) => (
-                <div key={asset.id} className="aspect-square relative border rounded-md overflow-hidden group">
-                   <AssetThumbnail
-                        src={asset.publicUrl}
-                        alt={asset.name}
-                        assetId={asset.id}
-                        storagePath={asset.storage_path}
-                        isPriority={index < PRIORITY_THRESHOLD} // Pass the priority flag
-                    />
-                   {/* Remove the direct Image rendering */}
-                   {/*
-                    <Image
-                        src={asset.publicUrl}
-                        alt={asset.name}
-                        fill
-                        sizes="..."
-                        className="..."
-                        onError={...}
-                    />
-                    */}
-                   {/* Remove hover overlay comment as button handles interaction */}
-                </div>
-            ))}
-        </div>
-    );
+    // --- Combine Data --- (Existing logic)
+    const combinedItems: CombinedItem[] = [...folders, ...assetsWithUrls];
+    
+    // Log the combined items fetched by the server
+    // console.log(`[Server] AssetGallery fetched ${combinedItems.length} items for folderId: ${currentFolderId}`, combinedItems.map(i => ({ id: i.id, type: i.type, name: i.name }))); 
+
+    if (combinedItems.length === 0) {
+        // console.log(`[Server] AssetGallery rendering empty message for folderId: ${currentFolderId}`);
+        return <p>This folder is empty.</p>;
+    }
+
+    // --- Render the Client Component Wrapper ---
+    // console.log(`[Server] AssetGallery rendering AssetGrid for folderId: ${currentFolderId}`);
+    // Transform assets for the AssetGrid mock to pick up expected props
+    const assetPropsForGrid = assetsWithUrls.map(asset => ({
+        src: asset.publicUrl,
+        alt: asset.name,
+        assetId: asset.id,
+        storagePath: asset.storage_path,
+        folderId: asset.folder_id,
+        type: asset.type,
+    }));
+    // Pass transformed assets and original folders to AssetGrid
+    return <AssetGrid combinedItems={combinedItems} assets={assetPropsForGrid} folders={folders} />;
 } 

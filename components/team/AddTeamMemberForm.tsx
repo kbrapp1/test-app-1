@@ -3,7 +3,6 @@
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   DialogClose
@@ -18,57 +17,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-
-// Define the schema for client-side validation
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // Match API route limit (or intended limit)
-
-// Use superRefine for conditional logic based on file presence, type, and size
-const refinedFileSchema = z
-  .custom<FileList | undefined>((val) => val === undefined || val instanceof FileList, {
-    message: "Expected a FileList or undefined", // Base type check
-  })
-  .superRefine((fileList, ctx) => {
-    // 1. Required check
-    if (!fileList || fileList.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Image is required.",
-      });
-      return; // Stop validation if no file
-    }
-
-    // We know fileList[0] exists now
-    const file = fileList[0];
-
-    // 2. Type check
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid file type. Only ${ACCEPTED_IMAGE_TYPES.map(t => t.split('/')[1]).join(', ')} are allowed.`,
-      });
-      return; // <-- RETURN HERE if type is invalid
-    }
-
-    // 3. Size check (only runs if type is valid)
-    if (file.size > MAX_FILE_SIZE) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `File too large. Max size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
-      });
-      // Optional: return here too, though it's the last check
-      return; 
-    }
-  });
-
-const teamMemberFormSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  title: z.string().min(1, { message: "Title is required" }),
-  primaryImage: refinedFileSchema,
-  secondaryImage: refinedFileSchema,
-});
-
-type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;
+import {
+  teamMemberFormSchema, 
+  type TeamMemberFormValues, 
+  ACCEPTED_IMAGE_TYPES
+} from '@/lib/schemas/team';
 
 interface AddTeamMemberFormProps {
   onSuccess?: () => void; // Optional callback for when submission is successful
@@ -86,7 +39,7 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
       primaryImage: undefined,
       secondaryImage: undefined,
     },
-    mode: 'onSubmit', // Validate on submit (default, better for testing required fields)
+    mode: 'onSubmit',
   });
 
   const onSubmit = async (values: TeamMemberFormValues) => {
@@ -115,10 +68,9 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
 
       if (response.ok && result.success) {
         toast({ title: 'Success', description: 'Team member added successfully.' });
-        form.reset(); // Reset should now clear registered file inputs too
-        onSuccess?.(); // Call the success callback if provided (e.g., to close a dialog)
+        form.reset();
+        onSuccess?.();
       } else {
-        // Handle specific validation errors if provided by API
         let errorMessage = result.error || 'Failed to add team member.';
         if (result.details) {
              errorMessage = `Validation failed: ${JSON.stringify(result.details)}`;
@@ -166,7 +118,6 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
             </FormItem>
           )}
         />
-        {/* Simplify file inputs using form.register */}
         <FormItem>
           <FormLabel>Primary Image</FormLabel>
           <FormControl>

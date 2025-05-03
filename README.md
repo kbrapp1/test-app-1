@@ -91,43 +91,19 @@ This project requires environment variables for Supabase integration.
 
 ### Database Setup (Required)
 
-#### Supabase Domain Restrictions
+For a complete database setup, including tables, Row Level Security (RLS) policies, and necessary triggers for all features (Domain Restriction, Notes, DAM, Team Section), run the SQL script located at [`supabase/setup.sql`](mdc:supabase/setup.sql) in your Supabase project's SQL Editor (**SQL Editor** -> **New query**).
 
-This scaffold includes functionality to restrict user signups to specific email domains (e.g., `@yourcompany.com`). This is enforced using a PostgreSQL function and trigger.
+**Key components created by the script:**
 
-**You MUST manually create this function and trigger** in your Supabase project using the SQL Editor (**Database** -> **SQL Editor** -> **New query**):
+-   **Domain Restriction:** A function and trigger to ensure only users with allowed email domains can sign up.
+-   **Notes Feature:** `notes` table with policies for user-specific CRUD.
+-   **DAM Feature:** `folders`, `assets`, `tags`, and `asset_tags` tables with appropriate policies.
+-   **Team Section:** `team_members` table with policies.
+-   **Required Extensions:** `moddatetime` and `pgcrypto`.
 
-*   **Step 1: Create the function (Customize Allowed Domains!)**
-        ```sql
-        -- Function to check email domain against an allowed list
-        CREATE OR REPLACE FUNCTION public.check_email_domain()
-        RETURNS TRIGGER AS $$
-        DECLARE
-      -- !!! CUSTOMIZE THIS LIST !!!
-      allowed_domains TEXT[] := ARRAY['vistaonemarketing.com', 'ironmarkusa.com'];
-          email_domain TEXT;
-        BEGIN
-          email_domain := split_part(NEW.email, '@', 2);
-          IF NOT (email_domain = ANY(allowed_domains)) THEN
-            RAISE EXCEPTION 'Email domain % is not allowed. Please use a valid company email.', email_domain;
-          END IF;
-          RETURN NEW;
-        END;
-        $$ LANGUAGE plpgsql SECURITY DEFINER;
-        ```
-    *(**Important:** Update the `allowed_domains` array!)*
+**Important: You must still manually create Storage Buckets & Policies via the Dashboard.**
 
-*   **Step 2: Create the trigger**
-        ```sql
-        -- Remove existing trigger first (optional, safe to run)
-        DROP TRIGGER IF EXISTS before_user_insert_check_domain ON auth.users;
-
-    -- Create the trigger
-        CREATE TRIGGER before_user_insert_check_domain
-          BEFORE INSERT ON auth.users
-          FOR EACH ROW
-          EXECUTE FUNCTION public.check_email_domain();
-        ```
+See the [Supabase Storage Setup Guide](docs/supabase-storage-setup.md) for detailed step-by-step instructions on creating the required `assets` and `team-images` buckets and applying the necessary security policies.
 
 #### Supabase Email Redirects (Post-Deployment)
 
@@ -140,176 +116,6 @@ This scaffold includes functionality to restrict user signups to specific email 
 5.  Save the changes.
 
 Failure to do this will result in email confirmation links redirecting back to `localhost:3000` instead of your live application.
-
-#### Database Table Setup (Required for Notes & DAM Features)
-
-If you intend to use the Notes CRUD example feature (`/documents/notes`) and/or the upcoming Digital Asset Management (DAM) feature, you need to set up the necessary database tables and storage. **Run the following consolidated SQL script in your Supabase SQL Editor.** This script creates the `notes` and `assets` tables, enables Row Level Security (RLS), sets up basic policies, and adds necessary triggers.
-
-```sql
--- Consolidated SQL Setup for Notes and DAM Assets
-
--- Ensure necessary extensions are enabled (usually are by default on Supabase)
-CREATE EXTENSION IF NOT EXISTS moddatetime;
--- pgcrypto provides gen_random_uuid() which is used as default for UUID PKs
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- 1. Notes Table Setup
-CREATE TABLE public.notes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    -- Ensure user_id is NOT NULL if RLS relies on it
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    title TEXT,
-    content TEXT,
-    position INTEGER, -- Column for drag-and-drop ordering
-    color_class TEXT DEFAULT 'bg-yellow-200', -- Column for note color, default yellow
-    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
-);
-
--- Enable Row Level Security for Notes
-ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for Notes: Allow users full access to their own notes only
-CREATE POLICY "Notes: Allow individual select access" ON public.notes FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Notes: Allow individual insert access" ON public.notes FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Notes: Allow individual update access" ON public.notes FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Notes: Allow individual delete access" ON public.notes FOR DELETE USING (auth.uid() = user_id);
-
--- Trigger for Notes: automatically update 'updated_at' timestamp
-CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.notes FOR EACH ROW EXECUTE FUNCTION moddatetime (updated_at);
-
--- 2. Assets Table Setup (For DAM)
-CREATE TABLE public.assets (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    -- Making user_id NOT NULL simplifies initial RLS. Handle anonymous uploads if needed later.
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    name TEXT NOT NULL,
-    storage_path TEXT NOT NULL UNIQUE, -- Ensure storage path is unique
-    mime_type TEXT NOT NULL,
-    size INTEGER NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
-    -- No updated_at needed for assets currently
-);
-
--- Enable Row Level Security for Assets
-ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for Assets: Allow users full access to their own assets only
--- Assumes assets are always tied to a user (user_id is NOT NULL)
-CREATE POLICY "Assets: Allow individual select access" ON public.assets FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Assets: Allow individual insert access" ON public.assets FOR INSERT WITH CHECK (auth.uid() = user_id);
--- Consider if updates are needed. If only metadata updates, add policy. If file replace, different logic.
--- CREATE POLICY "Assets: Allow individual update access" ON public.assets FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Assets: Allow individual delete access" ON public.assets FOR DELETE USING (auth.uid() = user_id);
-
--- Grant usage on the public schema if needed (usually default)
-GRANT USAGE ON SCHEMA public TO authenticated, service_role;
--- Grant specific permissions on tables
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.notes TO authenticated;
-GRANT SELECT, INSERT, DELETE ON public.assets TO authenticated; -- Note: Update permission omitted for now
--- Service role usually has bypass RLS implicitly, but explicit grants can be clearer
-GRANT ALL ON public.notes TO service_role;
-GRANT ALL ON public.assets TO service_role;
-
-
--- Note: The 'position' column in 'notes' is intentionally left without a default value.
--- The application logic ('addNote' server action) calculates and assigns the correct 
--- initial position when a new note is created.
-```
-
-**Also Required for DAM:**
-
-*   **Create Storage Bucket:** Manually create a Storage Bucket named `assets` via the Supabase Dashboard (Storage -> Buckets -> Create Bucket). For Phase 1, you can set it to **Public**. *Remember to review security implications later.* 
-
-**Optional: Update Existing Notes Data (If Upgrading Schema)**
-
-If you previously created the `notes` table *without* the `position` or `color_class` columns and have existing data, run the following SQL **after** the script above to populate these columns for your old notes:
-
-```sql
--- Set default color for existing notes that don't have one
-UPDATE public.notes SET color_class = 'bg-yellow-200' WHERE color_class IS NULL;
-
--- Calculate and set initial position for existing notes based on creation date
-WITH ordered_notes AS (
-  SELECT id, user_id, row_number() OVER (PARTITION BY user_id ORDER BY created_at ASC) - 1 AS calculated_position
-  FROM public.notes
-)
-UPDATE public.notes n SET position = o.calculated_position FROM ordered_notes o WHERE n.id = o.id AND n.user_id = o.user_id AND n.position IS NULL;
-```
-
-#### Team Section Setup
-
-To enable the Team section (team member directory with photos), you must set up the following in Supabase:
-
-1. **Create the `team_members` Table**
-
-```sql
-CREATE TABLE public.team_members (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL,
-    title TEXT NOT NULL,
-    primary_image_path TEXT NOT NULL,
-    secondary_image_path TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
-);
-```
-
-2. **Enable Row Level Security (RLS) and Add Policies**
-
-```sql
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-
--- Allow all authenticated users to view team members
-CREATE POLICY "Allow select for authenticated" ON public.team_members
-    FOR SELECT USING (auth.role() = 'authenticated');
-
--- Allow all authenticated users to add team members
-CREATE POLICY "Allow insert for authenticated" ON public.team_members
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-```
-
-3. **Create the `team-images` Storage Bucket**
-
-- Go to **Storage** in the Supabase dashboard.
-- Create a new bucket named `team-images`.
-- Set it to **public** for read access (or configure as needed).
-
-4. **Set Storage Bucket Policies**
-
-In the Supabase dashboard, go to the `team-images` bucket and add a policy like:
-
-- **Allow authenticated users to upload to `public/*`:**
-
-```sql
-CREATE POLICY "Authenticated upload to public" ON storage.objects
-    FOR INSERT
-    WITH CHECK (
-        bucket_id = 'team-images'
-        AND auth.role() = 'authenticated'
-        AND (storage.foldername(name))[1] = 'public'
-    );
-```
-
-- **Allow public read access to `public/*`:**
-
-```sql
-CREATE POLICY "Public read access to public" ON storage.objects
-    FOR SELECT
-    USING (
-        bucket_id = 'team-images'
-        AND (storage.foldername(name))[1] = 'public'
-    );
-```
-
-5. **Troubleshooting**
-
-If you see errors like:
-- `new row violates row-level security policy for table "team_members"`
-- 403 errors when uploading images
-
-Double-check:
-- RLS is enabled and policies above are applied to `team_members`.
-- The `team-images` bucket exists and has the correct policies.
 
 ---
 

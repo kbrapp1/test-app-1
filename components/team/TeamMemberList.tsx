@@ -1,4 +1,4 @@
-import { TeamMember } from '@/lib/actions/team';
+import type { TeamMember } from '@/types/team';
 import { TeamMemberCard } from './TeamMemberCard';
 
 interface TeamMemberListProps {

@@ -1,26 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server'; // Using server client suitable for Route Handlers
-import { z } from 'zod';
+// Removed direct z import
+// Import shared schema and constants
+import {
+  teamMemberApiSchema,
+  ACCEPTED_IMAGE_TYPES,
+  MAX_FILE_SIZE
+} from '@/lib/schemas/team';
 
-// Define the schema for validation within the API route
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // Use the intended 10MB limit here
-
-const fileSchema = z
-  .instanceof(File, { message: 'Image is required.' })
-  .refine((file) => file.size > 0, 'Image is required.')
-  .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
-  .refine(
-    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-    '.jpg, .jpeg, .png, .webp and .gif files are accepted.'
-  );
-
-const TeamMemberApiSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
-  title: z.string().min(1, { message: 'Title is required' }),
-  primaryImage: fileSchema,
-  secondaryImage: fileSchema,
-});
+// Remove local schema definitions
+// const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+// const MAX_FILE_SIZE = 10 * 1024 * 1024; // Use the intended 10MB limit here
+// const fileSchema = z ... (removed)
+// const TeamMemberApiSchema = z.object({...}); (removed)
 
 // Configure Route Segment options, including increased body size limit
 // Note: This might need adjustment based on deployment environment (Vercel, etc.)
@@ -77,7 +69,7 @@ export async function POST(req: NextRequest) {
   };
 
   // --- Validation ---
-  const validatedFields = TeamMemberApiSchema.safeParse(rawFormData);
+  const validatedFields = teamMemberApiSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
     console.error('API Validation Error:', validatedFields.error.flatten().fieldErrors);

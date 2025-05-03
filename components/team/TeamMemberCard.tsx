@@ -3,7 +3,7 @@
 // Remove useState if no longer needed for image src
 // import { useState } from 'react'; 
 import Image from 'next/image';
-import { TeamMember } from '@/lib/actions/team';
+import type { TeamMember } from '@/types/team';
 // Remove Card imports if no longer needed
 // import { Card, CardContent, CardHeader } from '@/components/ui/card'; 
 

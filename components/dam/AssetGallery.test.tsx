@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouterProvider } from 'next-router-mock/MemoryRouterProvider';
 import { AssetGallery } from './AssetGallery'; // Use named import
 
 // Mock the Supabase server client
@@ -15,22 +16,82 @@ vi.mock('next/cache', () => ({
     revalidatePath: vi.fn(),
 }));
 
+// Mock the server actions module
+vi.mock('@/lib/actions/dam', () => ({
+    deleteAsset: vi.fn(), // Mock specific actions if needed, otherwise an empty object might suffice
+    // Add mocks for other actions if AssetGallery uses them indirectly
+}));
 
-// Define mock asset data
+// Mock child thumbnail components
+vi.mock('./AssetThumbnail', () => ({
+    AssetThumbnail: (props: any) => <div data-testid="mock-asset-thumbnail" {...props}>Mock Asset</div>
+}));
+vi.mock('./FolderThumbnail', () => ({
+    FolderThumbnail: (props: any) => <div data-testid="mock-folder-thumbnail" {...props}>Mock Folder</div>
+}));
+
+// Mock AssetGrid as well, since AssetGallery renders it
+vi.mock('./AssetGrid', () => ({
+    // AssetGrid expects assets, folders, currentFolderId, etc.
+    // We can make it a simple mock that just displays children or a placeholder
+    AssetGrid: (props: any) => (
+        <div data-testid="mock-asset-grid">
+            {/* Render mock thumbnails based on props to allow checking props */}
+            {props.folders?.map((folder: any) => <div key={folder.id} data-testid="mock-folder-thumb-from-grid" {...folder}>Mock Folder</div>)}
+            {props.assets?.map((asset: any) => <div key={asset.id} data-testid="mock-asset-thumb-from-grid" {...asset}>Mock Asset</div>)}
+            {!props.folders?.length && !props.assets?.length && <div>Grid Empty</div>}
+        </div>
+    )
+}));
+
+// Define mock asset data - ADD folder_id
 const mockAssets = [
-    { id: 'uuid-1', name: 'image1.png', storage_path: 'user/path/image1.png', mime_type: 'image/png', size: 1024, created_at: new Date().toISOString(), user_id: 'user-abc' },
-    { id: 'uuid-2', name: 'image2.jpg', storage_path: 'user/path/image2.jpg', mime_type: 'image/jpeg', size: 2048, created_at: new Date().toISOString(), user_id: 'user-abc' },
+    { id: 'uuid-1', name: 'image1.png', storage_path: 'user/path/image1.png', mime_type: 'image/png', size: 1024, created_at: new Date().toISOString(), user_id: 'user-abc', folder_id: null },
+    { id: 'uuid-2', name: 'image2.jpg', storage_path: 'user/path/image2.jpg', mime_type: 'image/jpeg', size: 2048, created_at: new Date().toISOString(), user_id: 'user-abc', folder_id: null },
 ];
 
 // Define mock Supabase client functions
 const mockSupabase = {
-    from: vi.fn().mockReturnThis(), // Allows chaining .select, .order etc.
-    select: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue({ data: [], error: null }), // Default to no assets
+    // Mock 'from' to return specific mock objects based on table name
+    from: vi.fn().mockImplementation((tableName: string) => {
+        if (tableName === 'assets') {
+            return mockAssetsQuery;
+        } else if (tableName === 'folders') {
+            return mockFoldersQuery;
+        } else if (tableName === 'storage.assets') { // Handle storage bucket
+            return mockStorageFrom;
+        }
+        // Default fallback (though we should cover all expected tables)
+        return {
+            select: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue({ data: [], error: null }),
+            eq: vi.fn().mockReturnThis(),
+            is: vi.fn().mockReturnThis(),
+        };
+    }),
     storage: {
-        from: vi.fn().mockReturnThis(),
-        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'http://mock.url/image.jpg' } }),
+        from: vi.fn().mockReturnThis(), // Keep this for initial storage access
+        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'http://mock.url/default.jpg' } })
     }
+};
+
+// Specific mock objects for asset and folder queries
+const mockAssetsQuery = {
+    select: vi.fn().mockReturnThis(),
+    order: vi.fn().mockResolvedValue({ data: [], error: null }), // Default: no assets
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+};
+const mockFoldersQuery = {
+    select: vi.fn().mockReturnThis(),
+    order: vi.fn().mockResolvedValue({ data: [], error: null }), // Default: no folders
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+};
+
+// Mock object for storage.from('assets')
+const mockStorageFrom = {
+    getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'http://mock.url/default.jpg' } })
 };
 
 // Import the mocked createClient function after the mock setup
@@ -46,83 +107,190 @@ describe('AssetGallery Component', () => {
         // Setup the mock createClient to return our mock Supabase instance
         (createClient as Mock).mockReturnValue(mockSupabase);
 
-        // Reset the specific mock implementations for Supabase methods if needed
-        // Default setup: returns empty assets array
-        mockSupabase.from.mockReturnThis();
-        mockSupabase.select.mockReturnThis();
-        mockSupabase.order.mockResolvedValue({ data: [], error: null });
-        mockSupabase.storage.from.mockReturnThis();
-        mockSupabase.storage.getPublicUrl.mockReturnValue({ data: { publicUrl: 'http://mock.url/default.jpg' } });
+        // Reset individual mocks on the query objects
+        mockAssetsQuery.select.mockReturnThis();
+        mockAssetsQuery.eq.mockReturnThis();
+        mockAssetsQuery.is.mockReturnThis();
 
+        mockFoldersQuery.select.mockReturnThis();
+        mockFoldersQuery.eq.mockReturnThis();
+        mockFoldersQuery.is.mockReturnThis();
+
+        // Reset storage mocks
+        // The outer storage mock setup
+        mockSupabase.storage.from.mockImplementation((bucketName: string) => {
+             if (bucketName === 'assets') {
+                 return mockStorageFrom;
+             }
+             return { getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'http://mock.url/error.jpg' } }) }; // Default/error case
+         });
+        // Reset the specific mock on the returned object
+        mockStorageFrom.getPublicUrl.mockReturnValue({ data: { publicUrl: 'http://mock.url/default.jpg' } });
     });
 
     it('should render without crashing', async () => {
-        // Since AssetGallery is likely an async Server Component, rendering involves promises
-        const GalleryComponent = await AssetGallery();
-        const { container } = render(GalleryComponent);
-        // Basic check if the component renders anything
+        const GalleryServerComponent = await AssetGallery({ currentFolderId: null });
+        const { container } = render(<MemoryRouterProvider>{GalleryServerComponent}</MemoryRouterProvider>);
         expect(container).toBeInTheDocument();
     });
 
     // --- Add more tests here ---
 
     it('should display "No assets found" message when there are no assets', async () => {
-        // Ensure the mock returns an empty array (default beforeEach setup)
-        const GalleryComponent = await AssetGallery();
-        render(GalleryComponent);
-
-        // Use findByText which waits for the element to appear
-        expect(await screen.findByText(/no assets found/i)).toBeInTheDocument();
+        const GalleryServerComponent = await AssetGallery({ currentFolderId: null });
+        render(<MemoryRouterProvider>{GalleryServerComponent}</MemoryRouterProvider>);
+        expect(await screen.findByText(/this folder is empty/i)).toBeInTheDocument();
     });
 
-    it('should fetch assets and call getPublicUrl for each', async () => {
-        // Setup mock to return assets
-        mockSupabase.order.mockResolvedValueOnce({ data: mockAssets, error: null });
-        // Setup mock for getPublicUrl to return distinct URLs if needed, or use the default
-        mockSupabase.storage.getPublicUrl
+    it('should fetch assets and folders and render AssetGrid', async () => {
+        // Setup mock data 
+        const mockAssetsResult = { data: mockAssets, error: null };
+        const mockFoldersResult = { data: [], error: null };
+        
+        // --- Simplified Mock Setup for this test ---
+        const specificMockAssetsQuery = {
+            select: vi.fn().mockReturnThis(),
+            is: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue(mockAssetsResult) // Mock order directly
+        };
+        const specificMockFoldersQuery = {
+            select: vi.fn().mockReturnThis(),
+            is: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue(mockFoldersResult)
+        };
+
+        // Temporarily override the main 'from' mock for this test
+        const originalFromMock = mockSupabase.from;
+        (mockSupabase.from as Mock).mockImplementation((tableName: string) => {
+            if (tableName === 'assets') return specificMockAssetsQuery;
+            if (tableName === 'folders') return specificMockFoldersQuery;
+            // Basic fallback
+            return { select: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: [], error: null }) };
+        });
+        // --- End Simplified Mock Setup ---
+
+        // Setup URL mocks
+        mockStorageFrom.getPublicUrl
             .mockReturnValueOnce({ data: { publicUrl: 'http://mock.url/image1.png' } })
             .mockReturnValueOnce({ data: { publicUrl: 'http://mock.url/image2.jpg' } });
 
-        const GalleryComponent = await AssetGallery();
-        render(GalleryComponent);
+        // Fetch the Server Component part
+        const GalleryServerComponent = await AssetGallery({ currentFolderId: null });
+        
+        // Render within the router provider
+        render(<MemoryRouterProvider>{GalleryServerComponent}</MemoryRouterProvider>);
 
-        // Wait for images to potentially render (adjust query based on actual render)
+        // Wait for the client component wrapper (mocked AssetGrid) to render
         await waitFor(() => {
-            expect(screen.getAllByRole('img')).toHaveLength(mockAssets.length);
+            // Just check if the mock grid itself is rendered
+            expect(screen.getByTestId('mock-asset-grid')).toBeInTheDocument(); 
         });
 
-        // Verify Supabase calls
-        expect(createClient).toHaveBeenCalledTimes(1);
-        expect(mockSupabase.from).toHaveBeenCalledWith('assets');
-        expect(mockSupabase.select).toHaveBeenCalledWith('*');
-        expect(mockSupabase.order).toHaveBeenCalledWith('created_at', { ascending: false });
+        // Verify Supabase calls from the Server Component part
+        expect(mockSupabase.from).toHaveBeenCalledWith('folders');
+        expect(specificMockFoldersQuery.select).toHaveBeenCalledWith('*');
+        expect(specificMockFoldersQuery.is).toHaveBeenCalledWith('parent_folder_id', null);
+        expect(specificMockFoldersQuery.order).toHaveBeenCalledWith('name', { ascending: true });
 
-        // Verify getPublicUrl calls
+        expect(mockSupabase.from).toHaveBeenCalledWith('assets');
+        expect(specificMockAssetsQuery.select).toHaveBeenCalledWith('*');
+        expect(specificMockAssetsQuery.is).toHaveBeenCalledWith('folder_id', null);
+        expect(specificMockAssetsQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
+
         expect(mockSupabase.storage.from).toHaveBeenCalledWith('assets');
-        expect(mockSupabase.storage.getPublicUrl).toHaveBeenCalledTimes(mockAssets.length);
-        expect(mockSupabase.storage.getPublicUrl).toHaveBeenCalledWith(mockAssets[0].storage_path);
-        expect(mockSupabase.storage.getPublicUrl).toHaveBeenCalledWith(mockAssets[1].storage_path);
+        expect(mockStorageFrom.getPublicUrl).toHaveBeenCalledTimes(mockAssets.length);
+        expect(mockStorageFrom.getPublicUrl).toHaveBeenCalledWith(mockAssets[0].storage_path);
+        expect(mockStorageFrom.getPublicUrl).toHaveBeenCalledWith(mockAssets[1].storage_path);
+
+        // Check that the mocked AssetGrid component was rendered 
+        // (implying data was passed, even if we can't easily check internal rendering)
+        const mockGrid = await screen.findByTestId('mock-asset-grid');
+        expect(mockGrid).toBeInTheDocument();
+
+        // We can no longer reliably check props passed to the internal divs 
+        // of the mocked AssetGrid easily with this setup.
+        // Commenting out the detailed prop checks for now.
+        /*
+        const thumbnails = await screen.findAllByTestId('mock-asset-thumb-from-grid');
+        expect(thumbnails).toHaveLength(mockAssets.length);
+
+        // Check props passed to the mocked AssetThumbnail (now divs within the mocked grid)
+        expect(thumbnails[0]).toHaveAttribute('src', 'http://mock.url/image1.png');
+        expect(thumbnails[0]).toHaveAttribute('alt', mockAssets[0].name);
+        expect(thumbnails[0]).toHaveAttribute('assetId', mockAssets[0].id);
+        expect(thumbnails[0]).toHaveAttribute('storagePath', mockAssets[0].storage_path);
+        // Check folderId (should be null as per updated mock data)
+        // Note: getAttribute might return "null" as a string, or the attribute might be absent.
+        // Let's check for absence or string "null". Adjust if needed.
+        const folderIdAttr = thumbnails[0].getAttribute('folderId');
+        expect([null, 'null']).toContain(folderIdAttr);
+        expect(thumbnails[0]).toHaveAttribute('type', 'asset');
+
+        expect(thumbnails[1]).toHaveAttribute('src', 'http://mock.url/image2.jpg');
+        const folderIdAttr1 = thumbnails[1].getAttribute('folderId');
+        expect([null, 'null']).toContain(folderIdAttr1);
+        */
     });
 
-     it('should render the correct number of asset images', async () => {
-        // Setup mock to return assets
-        mockSupabase.order.mockResolvedValueOnce({ data: mockAssets, error: null });
-        // Add the mock setup for getPublicUrl for this specific test
-        mockSupabase.storage.getPublicUrl
+     it('should pass correct props to AssetThumbnail within AssetGrid', async () => {
+        // Setup mock data
+        const mockAssetsResult = { data: mockAssets, error: null };
+        const mockFoldersResult = { data: [], error: null };
+
+        // --- Simplified Mock Setup for this test ---
+        const specificMockAssetsQuery = {
+            select: vi.fn().mockReturnThis(),
+            is: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue(mockAssetsResult) // Mock order directly
+        };
+        const specificMockFoldersQuery = {
+            select: vi.fn().mockReturnThis(),
+            is: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockResolvedValue(mockFoldersResult)
+        };
+
+        // Temporarily override the main 'from' mock for this test
+        const originalFromMock = mockSupabase.from;
+        (mockSupabase.from as Mock).mockImplementation((tableName: string) => {
+            if (tableName === 'assets') return specificMockAssetsQuery;
+            if (tableName === 'folders') return specificMockFoldersQuery;
+             // Basic fallback
+            return { select: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: [], error: null }) };
+        });
+         // --- End Simplified Mock Setup ---
+
+        // Setup URL mocks
+        mockStorageFrom.getPublicUrl
             .mockReturnValueOnce({ data: { publicUrl: 'http://mock.url/image1.png' } })
             .mockReturnValueOnce({ data: { publicUrl: 'http://mock.url/image2.jpg' } });
 
-        const GalleryComponent = await AssetGallery();
-        render(GalleryComponent);
+        const GalleryServerComponent = await AssetGallery({ currentFolderId: null });
+        
+        // Render within the router provider
+        render(<MemoryRouterProvider>{GalleryServerComponent}</MemoryRouterProvider>);
 
-        // Use findAllByRole which waits for the elements
-        const images = await screen.findAllByRole('img');
-        expect(images).toHaveLength(mockAssets.length);
+        const thumbnails = await screen.findAllByTestId('mock-asset-thumb-from-grid');
+        expect(thumbnails).toHaveLength(mockAssets.length);
 
-        // Optionally check src attributes
-        expect(images[0]).toHaveAttribute('src', 'http://mock.url/image1.png');
-        expect(images[1]).toHaveAttribute('src', 'http://mock.url/image2.jpg');
+        // Check props passed to the mocked AssetThumbnail
+        expect(thumbnails[0]).toHaveAttribute('src', 'http://mock.url/image1.png');
+        expect(thumbnails[0]).toHaveAttribute('alt', mockAssets[0].name);
+        expect(thumbnails[0]).toHaveAttribute('assetId', mockAssets[0].id);
+        expect(thumbnails[0]).toHaveAttribute('storagePath', mockAssets[0].storage_path);
+        // Check folderId (should be null as per updated mock data)
+        // Note: getAttribute might return "null" as a string, or the attribute might be absent.
+        // Let's check for absence or string "null". Adjust if needed.
+        const folderIdAttr = thumbnails[0].getAttribute('folderId');
+        expect([null, 'null']).toContain(folderIdAttr);
+        expect(thumbnails[0]).toHaveAttribute('type', 'asset');
+
+        expect(thumbnails[1]).toHaveAttribute('src', 'http://mock.url/image2.jpg');
+        const folderIdAttr1 = thumbnails[1].getAttribute('folderId');
+        expect([null, 'null']).toContain(folderIdAttr1);
     });
-
 
 }); 

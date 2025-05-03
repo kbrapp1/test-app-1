@@ -19,6 +19,98 @@ export async function uploadAssets(formData: FormData): Promise<UploadResult> {
 }
 */
 
+// --- Move Asset Action ---
+export async function moveAsset(
+    assetId: string,
+    targetFolderId: string | null
+): Promise<{ success: boolean; error?: string }> {
+    if (!assetId) {
+        return { success: false, error: 'Missing asset ID.' };
+    }
+    
+    // Note: targetFolderId can legitimately be null (moving to root)
+
+    try {
+        const supabase = createClient();
+
+        // --- Authorization Check ---
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            console.error('Move asset error: User not authenticated', userError);
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 1. Verify user owns the asset
+        const { data: assetData, error: fetchError } = await supabase
+            .from('assets')
+            .select('user_id, folder_id') // Select existing folder_id too
+            .eq('id', assetId)
+            .single();
+
+        if (fetchError) {
+            console.error(`Move asset error: Error fetching asset ${assetId}:`, fetchError);
+            return { success: false, error: `Error finding asset: ${fetchError.message}` };
+        }
+        if (!assetData) {
+             console.error(`Move asset error: Asset ${assetId} not found.`);
+             return { success: false, error: 'Asset not found.' };
+        }
+        if (assetData.user_id !== user.id) {
+            console.error(`Move asset error: User ${user.id} not authorized for asset ${assetId} owned by ${assetData.user_id}`);
+            return { success: false, error: 'User not authorized to move this asset' };
+        }
+        
+        // Prevent moving to the same folder (no-op)
+        if (assetData.folder_id === targetFolderId) {
+            console.log(`Move asset info: Asset ${assetId} is already in the target folder (${targetFolderId ?? 'root'}). No action taken.`);
+            return { success: true }; // Indicate success as no change was needed
+        }
+        // --- End Authorization Check ---
+        
+        // 2. Optional: Verify target folder exists and user owns it (if not null)
+        if (targetFolderId !== null) {
+             const { data: folderData, error: folderError } = await supabase
+                .from('folders')
+                .select('user_id')
+                .eq('id', targetFolderId)
+                .single();
+
+            if (folderError || !folderData) {
+                console.error(`Move asset error: Target folder ${targetFolderId} not found or error fetching:`, folderError);
+                return { success: false, error: 'Target folder not found.' };
+            }
+            if (folderData.user_id !== user.id) {
+                 console.error(`Move asset error: User ${user.id} not authorized for target folder ${targetFolderId}.`);
+                 return { success: false, error: 'User not authorized for target folder.' };
+            }
+        }
+
+        // 3. Update the asset's folder_id
+        console.log(`Attempting to move asset ${assetId} to folder ${targetFolderId ?? 'root'} (User: ${user.id})`);
+        const { error: updateError } = await supabase
+            .from('assets')
+            .update({ folder_id: targetFolderId })
+            .match({ id: assetId, user_id: user.id }); // Match user_id again for safety
+
+        if (updateError) {
+            console.error(`Database update error for asset ${assetId} (User: ${user.id}):`, updateError.message);
+            return { success: false, error: `Failed to update asset folder: ${updateError.message}` };
+        }
+
+        console.log(`Successfully moved asset: ID=${assetId} to Folder=${targetFolderId ?? 'root'} (User: ${user.id})`);
+
+        // 4. Revalidate ONLY the base path. Rely on client router.refresh() for view update.
+        revalidatePath('/dam');
+        console.log(`Revalidated: /dam`);
+
+        return { success: true };
+
+    } catch (err: any) {
+        console.error('Unexpected error during asset move:', err);
+        return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
 // --- Delete Action ---
 export async function deleteAsset(assetId: string, storagePath: string): Promise<{ success: boolean; error?: string }> {
     if (!assetId || !storagePath) {
