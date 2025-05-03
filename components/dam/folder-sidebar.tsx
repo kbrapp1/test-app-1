@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Folder as FolderIcon, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { NewFolderDialog } from './new-folder-dialog'; // Import the dialog component
 // Assuming CombinedItem type is available or defined elsewhere if needed for API response
 // import type { CombinedItem } from './AssetGrid'; 
 
@@ -80,7 +81,7 @@ const FolderItem: React.FC<FolderItemProps> = ({
             variant="ghost" 
             size="sm" 
             onClick={handleToggleExpand}
-            className="p-1 h-auto mr-1" // Adjust padding/size
+            className="p-1 h-4 w-4 mr-1 flex items-center justify-center" // Fixed height/width, ensure centering
             disabled={isLoading} // Disable while loading
         >
           {isLoading ? (
@@ -97,20 +98,18 @@ const FolderItem: React.FC<FolderItemProps> = ({
           <span className="truncate font-medium" title={folder.name}>{folder.name}</span>
         </Link>
       </div>
-      {/* Render Children Recursively */}
-      {isExpanded && children && (
-        <div className="mt-1">
-          {children.map(child => (
-            <FolderItem 
-              key={child.id} 
-              folder={child} 
-              level={level + 1} 
-              currentFolderId={currentFolderId}
-              onFetchChildren={onFetchChildren}
-            />
-          ))}
-        </div>
-      )}
+      {/* Render Children Recursively - Keep div, conditionally render content */}
+      <div className="mt-1"> {/* REMOVED pl-4, indent handled by parent style */}
+        {isExpanded && children && children.map(child => (
+          <FolderItem 
+            key={child.id} 
+            folder={child} 
+            level={level + 1} 
+            currentFolderId={currentFolderId}
+            onFetchChildren={onFetchChildren}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -149,7 +148,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({ initialFolders = [
             variant="ghost" 
             size="sm" 
             onClick={() => setIsRootExpanded(!isRootExpanded)}
-            className="p-1 h-auto mr-1" // Adjust padding/size
+            className="p-1 h-4 w-4 mr-1 flex items-center justify-center" // Fixed height/width, ensure centering
         >
           {isRootExpanded ? (
             <ChevronDown className="h-4 w-4" />
@@ -166,7 +165,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({ initialFolders = [
 
      {/* Conditionally Render Root Folders based on isRootExpanded */}
      {isRootExpanded && (
-       <div className="mt-1 pl-4"> {/* Add slight indent for children of Root */}
+       <div className="mt-1 pl-4"> {/* Restore indent for children of Root */}
          {initialFolders.map(folder => (
            <FolderItem 
              key={folder.id} 
@@ -180,13 +179,10 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({ initialFolders = [
      )}
 
       {/* Optional: Add New Folder Button */}
-      {/* 
       <div className="mt-auto pt-4 border-t">
-          <Button variant="outline" className="w-full">
-              New Folder
-          </Button>
-      </div> 
-      */}
+          {/* Pass currentFolderId to know where to create the folder */}
+          <NewFolderDialog currentFolderId={currentFolderId} /> 
+      </div>
     </aside>
   );
 }; 
