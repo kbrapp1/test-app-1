@@ -9,39 +9,58 @@ interface AssetGalleryClientProps {
 }
 
 export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentFolderId }) => {
-  const cacheRef = useRef<Map<string | null, CombinedItem[]>>(new Map());
   const [items, setItems] = useState<CombinedItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Function to fetch data from API
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Add timestamp to bust browser cache, but we'll still cache on the client side
+      const timestamp = new Date().getTime();
+      const res = await fetch(`/api/dam?folderId=${currentFolderId ?? ''}&_=${timestamp}`, { 
+        cache: 'no-store' // Ensure we get fresh data
+      });
+      
+      if (!res.ok) {
+        throw new Error(`API returned status ${res.status}`);
+      }
+      
+      const data: CombinedItem[] = await res.json();
+      setItems(data);
+    } catch (e) {
+      console.error('Error fetching folder items:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
+    
     const load = async () => {
-      console.log(`[Client Cache] Checking cache for folder: ${currentFolderId}`);
-      // Check in-memory cache first
-      if (cacheRef.current.has(currentFolderId)) {
-        console.log(`[Client Cache] Cache HIT for folder: ${currentFolderId}`);
-        setItems(cacheRef.current.get(currentFolderId)!);
-      } else {
-        console.log(`[Client Cache] Cache MISS for folder: ${currentFolderId}, fetching from API...`);
-        setLoading(true);
-        try {
-          const res = await fetch(`/api/dam?folderId=${currentFolderId ?? ''}`, { cache: 'force-cache', next: { revalidate: 60 } });
-          const data: CombinedItem[] = await res.json();
-          cacheRef.current.set(currentFolderId, data);
-          if (!cancelled) setItems(data);
-        } catch (e) {
-          console.error('Error fetching folder items:', e);
-        } finally {
-          if (!cancelled) setLoading(false);
-        }
-      }
+      if (!cancelled) await fetchData();
     };
+    
     load();
+    
     return () => { cancelled = true; };
   }, [currentFolderId]);
 
-  if (loading) return <p className="text-center">Loading...</p>;
-  if (items.length === 0) return <p>This folder is empty.</p>;
+  if (loading) return (
+    <div className="text-center p-8">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4"></div>
+      <p>Loading assets...</p>
+    </div>
+  );
+  
+  if (items.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p>This folder is empty.</p>
+      </div>
+    );
+  }
 
   return <AssetGrid combinedItems={items} />;
 }; 

@@ -35,9 +35,15 @@ export async function middleware(request: NextRequest) {
   try {
     // Log cookies received by the middleware
     console.log("Middleware received cookies:", request.cookies.getAll());
+    // Log env vars used by middleware's client
+    console.log("Middleware Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log("Middleware Supabase Anon Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 10) + '...' : 'MISSING'); // Log only prefix
 
     // Fetch user from session on the server
     const { data, error } = await supabase.auth.getUser();
+    // Log the raw result from getUser
+    console.log("Middleware getUser() result:", { data: data ? { user: data.user ? { id: data.user.id, email: data.user.email } : null } : null, error });
+
     if (error) {
       // Check for errors and handle specific cases
       if (error.code === 'refresh_token_not_found') {
