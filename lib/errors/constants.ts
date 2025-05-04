@@ -1,4 +1,3 @@
-
 /**
  * Defines a standardized system for application errors, including severity levels
  * (ErrorSeverity), unique error codes (ErrorCodes), default user messages
@@ -49,10 +48,16 @@ export const ErrorCodes = {
   UNEXPECTED_ERROR: 'UNEXPECTED_ERROR',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 
-  // External Service Errors (502)
+  // External Service Errors (502, 503, 504)
   EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
   API_ERROR: 'API_ERROR',
   INTEGRATION_ERROR: 'INTEGRATION_ERROR',
+  SERVER_UNAVAILABLE: 'SERVER_UNAVAILABLE', // e.g., 503
+  NETWORK_ERROR: 'NETWORK_ERROR', // e.g., 504 Gateway Timeout or network issue
+  DATABASE_TIMEOUT: 'DATABASE_TIMEOUT', // Specific DB timeout
+
+  // Rate Limit Errors (429)
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
 } as const;
 
 /**

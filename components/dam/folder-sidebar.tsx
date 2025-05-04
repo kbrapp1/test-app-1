@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Folder as FolderIcon, ChevronRight, ChevronDown } from 'lucide-react';
+import { Folder as FolderIcon, ChevronRight, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NewFolderDialog } from './new-folder-dialog'; // Import the dialog component
+import { useToast } from '@/components/ui/use-toast';
 // Assuming CombinedItem type is available or defined elsewhere if needed for API response
 // import type { CombinedItem } from './AssetGrid'; 
 
@@ -46,6 +47,8 @@ const FolderItem: React.FC<FolderItemProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [children, setChildren] = useState<FetchedChild[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const { toast } = useToast();
 
   const handleToggleExpand = async () => {
     const currentlyExpanded = isExpanded;
@@ -54,14 +57,19 @@ const FolderItem: React.FC<FolderItemProps> = ({
     // Fetch children only if expanding and haven't fetched yet
     if (!currentlyExpanded && children === null) {
       setIsLoading(true);
+      setHasError(false); // Reset error state
       try {
         const fetchedChildren = await onFetchChildren(folder.id);
         // Filter for folders only if API returns mixed types
         setChildren(fetchedChildren.filter(item => item.type === 'folder') as FetchedChild[]); 
       } catch (error) {
-        console.error(`Error fetching children for folder ${folder.id}:`, error);
-        // Optionally set children to an empty array or show an error state
-        setChildren([]); 
+        setHasError(true);
+        setChildren([]); // Set empty array to prevent repeated fetches
+        toast({
+          variant: "destructive",
+          title: "Failed to load subfolders",
+          description: `Could not load subfolders for "${folder.name}". Please try again.`
+        });
       } finally {
         setIsLoading(false);
       }
@@ -86,6 +94,8 @@ const FolderItem: React.FC<FolderItemProps> = ({
         >
           {isLoading ? (
             <span className="animate-spin h-4 w-4">⏳</span> // Simple spinner
+          ) : hasError ? (
+            <AlertCircle className="h-4 w-4 text-red-500" />
           ) : isExpanded ? (
             <ChevronDown className="h-4 w-4" />
           ) : (
@@ -117,20 +127,24 @@ const FolderItem: React.FC<FolderItemProps> = ({
 // --- Main Folder Sidebar Component ---
 export const FolderSidebar: React.FC<FolderSidebarProps> = ({ initialFolders = [], currentFolderId }) => {
   const [isRootExpanded, setIsRootExpanded] = useState(true); // Start expanded
+  const { toast } = useToast();
 
   // Function to fetch children for a specific folder ID
   const fetchChildren = async (folderId: string): Promise<FetchedChild[]> => {
-      console.log(`Fetching children for folder: ${folderId}`);
-      const res = await fetch(`/api/dam?folderId=${folderId}`); // Use existing API route
-      if (!res.ok) {
-          throw new Error(`API request failed with status ${res.status}`);
+      try {
+          const res = await fetch(`/api/dam?folderId=${folderId}`); // Use existing API route
+          if (!res.ok) {
+              throw new Error(`API request failed with status ${res.status}`);
+          }
+          const data = await res.json();
+          // Assuming the API returns CombinedItem[] or similar, filter if needed
+          // For now, let's assume it returns items with a 'type' property
+          const folderChildren = data.filter((item: any) => item.type === 'folder');
+          return folderChildren as FetchedChild[]; // Cast or validate type
+      } catch (error) {
+          // Let the calling code handle the error
+          throw error;
       }
-      const data = await res.json();
-      // Assuming the API returns CombinedItem[] or similar, filter if needed
-      // For now, let's assume it returns items with a 'type' property
-      const folderChildren = data.filter((item: any) => item.type === 'folder');
-      console.log(`Fetched ${folderChildren.length} children for folder: ${folderId}`);
-      return folderChildren as FetchedChild[]; // Cast or validate type
   };
 
   return (

@@ -18,6 +18,7 @@ import {
   getUserPermissions 
 } from '@/lib/auth/authorization';
 import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
 export type AuthHelpers = {
   // Role checks
@@ -44,6 +45,7 @@ export function useUser() {
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
   const { toast } = useToast();
+  const router = useRouter();
   
   // Memoized auth helpers that update when the user changes
   const auth = useMemo<AuthHelpers>(() => ({
@@ -70,7 +72,7 @@ export function useUser() {
   useEffect(() => {
     let isMounted = true;
 
-    // Reusable sign-out handler with toast notification
+    // Reusable sign-out handler with toast notification and redirect
     const handleSignOut = async (reason: string) => {
       if (!isMounted) return;
       console.warn(`Signing out due to: ${reason}`);
@@ -79,15 +81,23 @@ export function useUser() {
         description: reason,
         variant: "destructive",
       });
-      await new Promise(resolve => setTimeout(resolve, 500)); 
+      // Redirect immediately after showing toast
+      router.push('/login'); 
+
+      // Still attempt sign out, but don't necessarily wait for it
       try {
         await supabase.auth.signOut();
       } catch (signOutError) {
         console.error("Error during sign out:", signOutError);
+        // If signout fails, ensure state is cleared (onAuthStateChange might not fire)
         if (isMounted) {
             setUser(null);
             setIsLoading(false);
         }
+      }
+      // Explicitly set loading to false if mounted after initiating sign out/redirect
+      if (isMounted) {
+          setIsLoading(false);
       }
     };
 
@@ -153,7 +163,7 @@ export function useUser() {
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, [supabase, toast]);
+  }, [supabase, toast, router]);
 
   return { user, isLoading, auth };
 } 

@@ -89,7 +89,6 @@ export function AssetUploader() {
             sonnerToast.success("Upload Successful", { description: `${result.data?.length || 0} file(s) uploaded.` });
             setFiles([]);
         } catch (err: any) {
-            console.error('Upload failed:', err);
             const errorMessage = err.message || 'An unknown error occurred during upload.';
             sonnerToast.error("Upload Failed", { description: errorMessage });
             setError(errorMessage);

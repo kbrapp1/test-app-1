@@ -21,6 +21,10 @@ import {
   DatabaseError,
   ExternalServiceError,
 } from './base';
+import { 
+  ErrorCodes,
+  ErrorSeverity 
+} from './constants';
 
 /**
  * Standard error response structure returned by API endpoints
@@ -152,4 +156,24 @@ export const ErrorFactory = {
   unexpected(message = 'An unexpected error occurred', context?: Record<string, unknown>) {
     return new AppError(message, 'UNEXPECTED_ERROR', 500, context);
   },
-}; 
+};
+
+/**
+ * Checks if an error code represents a potentially retriable condition.
+ * 
+ * @param code The error code string.
+ * @returns True if the error might be retriable, false otherwise.
+ */
+export function isRetriableError(code: string | undefined): boolean {
+  if (!code) return false;
+  
+  // Define specific codes that indicate temporary issues (e.g., network timeout, server overload)
+  const retriableCodes: string[] = [
+    ErrorCodes.NETWORK_ERROR,
+    ErrorCodes.SERVER_UNAVAILABLE,
+    ErrorCodes.RATE_LIMIT_EXCEEDED, // Could be retriable after a delay
+    ErrorCodes.DATABASE_TIMEOUT,
+  ];
+  
+  return retriableCodes.includes(code);
+} 

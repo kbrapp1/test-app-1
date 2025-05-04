@@ -23,19 +23,23 @@ This document outlines the functional requirements for the Digital Asset Managem
 *(Note: Requirements are grouped by planned implementation phase for clarity)*
 
 ### Phase 1: Foundation (Completed)
-*   **[x] FR-DAM-001:** The system shall provide an intuitive interface, including a clear button and a drag-and-drop area, for users to select one or more image files from their local device.
-*   **[x] FR-DAM-002:** The system shall restrict uploads to specific image file types (e.g., JPG, PNG, GIF, WEBP) via client-side validation with immediate feedback.
-*   **[x] FR-DAM-003:** The system shall store uploaded images in a designated Supabase Storage bucket.
-*   **[x] FR-DAM-004:** The system shall record basic metadata for each uploaded asset in a Supabase database table (filename, size, type, path, user ID, timestamp).
-*   **[x] FR-DAM-005:** The system shall provide clear, non-intrusive user feedback upon successful upload or failure (e.g., toast notification).
-*   **[x] FR-DAM-006:** The system shall display uploaded images in a responsive gallery format (e.g., grid of thumbnails).
-*   **[x] FR-DAM-007:** The gallery shall fetch asset information efficiently from the database and storage.
-*   **[x] FR-DAM-008:** Users shall be able to easily select an image from the gallery view for deletion (e.g., hover effect with delete icon).
-*   **[x] FR-DAM-009:** The system shall prompt the user for confirmation before deleting an asset.
-*   **[x] FR-DAM-010:** Upon confirmation, the system shall delete the corresponding image file from Supabase Storage.
-*   **[x] FR-DAM-011:** Upon confirmation, the system shall delete the corresponding metadata record from the Supabase database.
-*   **[x] FR-DAM-012:** The gallery view shall update immediately and smoothly after deletion (e.g., via `revalidatePath`).
-*   **[x] FR-DAM-013:** The system shall provide clear user feedback upon successful deletion or failure.
+
+*   **[x] FR-DAM-001:** The system shall provide an intuitive interface, **including a clear button and a drag-and-drop area**, for users to select one or more image files from their local device.
+*   **[x] FR-DAM-002:** The system shall restrict uploads to specific image file types (e.g., JPG, PNG, GIF, WEBP). Configurable list. **Client-side validation should provide immediate feedback.**
+*   **[x] FR-DAM-003:** The system shall display **real-time upload progress** for each file (visual indicator, e.g., progress bar).
+*   **[x] FR-DAM-004:** Upon successful upload, the image shall be stored in a designated Supabase Storage bucket.
+*   **[x] FR-DAM-005:** The system shall record basic metadata for each uploaded asset in a Supabase database table (e.g., filename, file size, file type, Supabase storage path, uploader user ID, upload timestamp).
+*   **[x] FR-DAM-006:** The system shall provide **clear, non-intrusive user feedback** upon successful upload or failure (e.g., toast notification, update in UI state).
+*   **[x] FR-DAM-007:** The system shall display all uploaded images accessible to the user in a **responsive gallery format** (e.g., a grid of thumbnails adapting to screen size).
+*   **[x] FR-DAM-008:** Each image in the gallery shall display its thumbnail. Clicking the thumbnail should **smoothly transition** to show a larger preview (e.g., using a modal or an inline expansion).
+*   **[x] FR-DAM-009:** The gallery shall fetch asset information (thumbnails, metadata) efficiently from the Supabase database and storage.
+*   **[x] FR-DAM-010:** **Efficient loading strategies** (e.g., pagination, infinite scroll, or virtualization) should be implemented to handle a large number of assets gracefully.
+*   **[x] FR-DAM-011:** Users shall be able to easily select an image from the gallery view for deletion (e.g., hover effect with delete icon).
+*   **[x] FR-DAM-012:** The system shall prompt the user for confirmation before deleting an asset using a standard, non-blocking dialog.
+*   **[x] FR-DAM-013:** Upon confirmation, the system shall delete the corresponding image file from Supabase Storage.
+*   **[x] FR-DAM-014:** Upon confirmation, the system shall delete the corresponding metadata record from the Supabase database table.
+*   **[x] FR-DAM-015:** The gallery view shall update **immediately and smoothly** to reflect the deletion, ideally without a full page reload (e.g., using optimistic UI updates or efficient revalidation).
+*   **[x] FR-DAM-016:** The system shall provide clear user feedback upon successful deletion or failure.
 
 ### Phase 2: Core Organization & Management
 *   **[ ] FR-DAM-014:** The system shall provide UI functionality for users to create hierarchical folders.

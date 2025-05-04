@@ -131,8 +131,7 @@ describe('deleteAsset Server Action', () => {
         expect(mockSupabase.storage.remove).toHaveBeenCalledWith([mockStoragePath]);
         expect(mockSupabase.match).toHaveBeenCalledWith({ id: mockAssetId, user_id: mockUserId });
         expect(revalidatePath).toHaveBeenCalledWith('/dam');
-        // We expect console.error to have been called for the storage error
-        expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Storage deletion error'), storageError.message);
+        // Note: We no longer log to console as part of error handling
     });
 
     it('should successfully delete asset, remove from storage, and revalidate path', async () => {

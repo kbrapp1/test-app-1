@@ -3,11 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Note } from '@/types/notes';
+import { ErrorCodes } from '@/lib/errors/constants'; // Import error codes
 
 // Type for Server Action Response
 interface ActionResult {
     success: boolean;
     message: string;
+    code?: string; // Add optional error code
 }
 
 // Server Action for adding notes 
@@ -17,51 +19,97 @@ export async function addNote(prevState: any, formData: FormData): Promise<Actio
     const defaultColor = 'bg-yellow-200'; // Define default color
 
     if (!title) {
-        return { success: false, message: 'Note title cannot be empty.' };
+        return { 
+            success: false, 
+            message: 'Note title cannot be empty.', 
+            code: ErrorCodes.VALIDATION_ERROR 
+        };
     }
 
     const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-        console.error('Auth Error (Add Note):', userError?.message);
-        // Return a user-friendly message, log the specific error
-        return { success: false, message: 'Authentication error. Please log in again.' };
+    let user;
+    try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) {
+            console.error('Auth Error (Add Note):', userError?.message || 'User not found');
+            return { 
+                success: false, 
+                message: 'Authentication error. Please log in again.',
+                code: ErrorCodes.UNAUTHORIZED 
+            };
+        }
+        user = userData.user;
+    } catch (error) {
+        // Catch if supabase.auth.getUser() itself throws (e.g., network issue)
+        console.error('Unexpected Auth Error (Add Note):', error);
+        return { 
+            success: false, 
+            message: 'Could not verify authentication. Please try again.', 
+            // Consider specific code like NETWORK_ERROR if detectable
+            code: ErrorCodes.UNEXPECTED_ERROR 
+        };
     }
 
     // Get the highest current position
-    const { data: maxPosData, error: maxPosError } = await supabase
-        .from('notes')
-        .select('position')
-        .eq('user_id', user.id)
-        .order('position', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    try {
+        const { data: maxPosData, error: maxPosError } = await supabase
+            .from('notes')
+            .select('position')
+            .eq('user_id', user.id)
+            .order('position', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-    if (maxPosError) {
-        console.error('Error fetching max position:', maxPosError);
-        // This error might not need to be fatal for the user, but log it.
-        // We continue assuming position 0. No user-facing message needed here unless critical.
-    }
-    const nextPosition = (maxPosData?.position ?? -1) + 1;
+        if (maxPosError) {
+            console.error('Error fetching max position:', maxPosError);
+            // Treat DB errors during position fetch as potentially critical or retriable
+            const code = maxPosError.message.includes('timeout') 
+                ? ErrorCodes.DATABASE_TIMEOUT 
+                : ErrorCodes.DATABASE_ERROR;
+            return { 
+                success: false, 
+                message: 'Failed to prepare note saving. Please try again.', 
+                code: code 
+            };
+        }
+        const nextPosition = (maxPosData?.position ?? -1) + 1;
 
-    const { error: insertError } = await supabase
-        .from('notes')
-        .insert({ 
-            title: title,
-            content: content, 
-            user_id: user.id, 
-            position: nextPosition, // Set the position
-            color_class: defaultColor // Set default color on creation
-        });
+        const { error: insertError } = await supabase
+            .from('notes')
+            .insert({ 
+                title: title,
+                content: content, 
+                user_id: user.id, 
+                position: nextPosition, // Set the position
+                color_class: defaultColor // Set default color on creation
+            });
 
-    if (insertError) {
-        console.error('Insert Error (Add Note):', insertError.message);
-        // Return a generic user-friendly message, log the specific error
-        return { success: false, message: 'Failed to save the note. Please try again.' };
+        if (insertError) {
+            console.error('Insert Error (Add Note):', insertError.message);
+            // Determine if it's a timeout or generic DB error
+            const code = insertError.message.includes('timeout') 
+                ? ErrorCodes.DATABASE_TIMEOUT 
+                : insertError.code === '23505' // Handle potential duplicate errors (e.g., unique constraint)
+                    ? ErrorCodes.DUPLICATE_ENTRY
+                    : ErrorCodes.DATABASE_ERROR;
+            return { 
+                success: false, 
+                message: 'Failed to save the note. Please try again.', 
+                code: code 
+            };
+        }
+    } catch (dbError) {
+        // Catch unexpected errors during DB operations
+        console.error('Unexpected DB Operation Error (Add Note):', dbError);
+        return {
+            success: false,
+            message: 'A database error occurred while saving the note.',
+            code: ErrorCodes.DATABASE_ERROR
+        };
     }
 
     revalidatePath('/documents/notes');
+    // Success case doesn't need a code
     return { success: true, message: 'Note added successfully.' };
 }
 

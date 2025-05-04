@@ -7,20 +7,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ToastAction } from "@/components/ui/toast";
 import { Loader2 } from 'lucide-react';
+import { isRetriableError } from '@/lib/errors/factory';
 
 // Assuming addNote action is passed as a prop or imported
 // For this example, let's assume it's passed as a prop `serverAction`
 
 // Type for the Server Action function signature expected by useFormState
-type AddNoteAction = (prevState: any, formData: FormData) => Promise<{
+type AddNoteAction = (
+    prevState: any, 
+    formData: FormData
+) => Promise<{
     success: boolean;
     message: string;
+    code?: string;
 }>;
 
-const initialState = {
+const initialState: Awaited<ReturnType<AddNoteAction>> = {
   success: false,
   message: '',
+  code: undefined,
 };
 
 // Separate component for the submit button to use useFormStatus
@@ -53,17 +60,36 @@ export function AddNoteForm({ addNoteAction, onFormSuccess }: AddNoteFormProps) 
 
   useEffect(() => {
     if (state?.message) {
-      toast({
-        title: state.success ? 'Success' : 'Error',
-        description: state.message,
-        variant: state.success ? 'default' : 'destructive',
-      });
       if (state.success) {
+        toast({
+          title: 'Success',
+          description: state.message,
+          variant: 'default',
+        });
         formRef.current?.reset();
         onFormSuccess?.();
+      } else {
+        const isRetryable = isRetriableError(state.code);
+        toast({
+          title: 'Error',
+          description: state.message,
+          variant: 'destructive',
+          action: isRetryable ? (
+            <ToastAction 
+              altText="Retry"
+              onClick={() => {
+                  if (formRef.current) {
+                      formAction(new FormData(formRef.current));
+                  }
+              }}
+            >
+              Retry
+            </ToastAction>
+          ) : undefined,
+        });
       }
     }
-  }, [state, toast, onFormSuccess]);
+  }, [state, toast, onFormSuccess, formAction]);
 
   useEffect(() => {
      setTimeout(() => textareaRef.current?.focus(), 100);

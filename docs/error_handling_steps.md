@@ -115,148 +115,20 @@ This document outlines the plan for implementing a comprehensive error handling 
   - [~] Implement error analytics
   - [~] Test monitoring system
 
-- [ ] **Recovery Mechanisms**
-  - [ ] Add data recovery options
-  - [ ] Implement state recovery flows
-  - [ ] Create recovery UI components
-  - [ ] Test recovery scenarios
+- [~] **Recovery Mechanisms** # Partially deferred; advanced recovery depends on monitoring insights
+  - [~] Add data recovery options # Deferred
+  - [~] Implement state recovery flows # Deferred
+  - [x] Create recovery UI components # (e.g., simple retry buttons)
+  - [~] Test recovery scenarios # Deferred
 
-- [ ] **Documentation**
-  - [ ] Document error handling patterns
-  - [ ] Create troubleshooting guides
-  - [ ] Add error code reference
-  - [ ] Verify documentation accuracy
+- [x] **Documentation**
+  - [x] Document error handling patterns -> See [Error Handling Patterns](docs/error-handling-patterns.md)
+  - [x] Create troubleshooting guides -> See [Troubleshooting Guide](docs/error-troubleshooting.md)
+  - [x] Add error code reference -> See [Error Code Reference](docs/error-codes.md)
+  - [~] Verify documentation accuracy # Deferred
 
 ## Implementation Patterns
 
 ### Server Action Error Handling
 
-```typescript
-// Before:
-export async function serverAction(data) {
-  try {
-    // Action logic
-    return { success: true };
-  } catch (error) {
-    console.error(error);
-    return { error: 'Something went wrong' };
-  }
-}
-
-// After:
-export async function serverAction(data) {
-  try {
-    // Action logic
-    return { success: true };
-  } catch (error) {
-    if (error instanceof AppError) {
-      // Structured error with proper context
-      console.error(`[${error.code}] ${error.message}`, error.context);
-      return { error: error.message, code: error.code };
-    }
-    
-    // Create and log AppError for unexpected errors
-    const appError = new AppError(
-      'An unexpected error occurred',
-      'UNEXPECTED_ERROR',
-      500,
-      { originalError: String(error) }
-    );
-    console.error(`[${appError.code}] ${appError.message}`, appError.context);
-    return { error: appError.message, code: appError.code };
-  }
-}
 ```
-
-### Client-Side Error Handling
-
-```typescript
-// Before:
-try {
-  const result = await serverAction();
-  if (result.error) {
-    toast.error(result.error);
-    return;
-  }
-  // Success logic
-} catch (error) {
-  toast.error('Failed to complete action');
-}
-
-// After:
-try {
-  const result = await serverAction();
-  if (result.error) {
-    // Handle structured errors
-    toast({
-      title: 'Error',
-      description: result.error,
-      variant: result.code?.includes('VALIDATION') ? 'warning' : 'destructive',
-      // Show retry button for retriable errors
-      action: isRetriableError(result.code) 
-        ? <ToastAction altText="Retry" onClick={handleRetry}>Retry</ToastAction>
-        : undefined
-    });
-    return;
-  }
-  // Success logic
-} catch (error) {
-  // Handle unexpected client errors
-  toast({
-    title: 'System Error',
-    description: 'An unexpected error occurred. Please try again.',
-    variant: 'destructive'
-  });
-  // Log to client-side error tracking
-  logClientError(error);
-}
-```
-
-## Error Boundary Implementation
-
-```tsx
-export class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    // Log to error service
-    console.error(error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback error={this.state.error} resetError={() => {
-        this.setState({ hasError: false, error: null });
-      }} />;
-    }
-    return this.props.children;
-  }
-}
-```
-
-## Progress Tracking
-
-- Phase 1: Foundation & Setup - 3/3 complete
-- Phase 2: Server-Side Error Handling - 3/3 complete  
-- Phase 3: Client-Side Error Handling - 3/3 complete
-- Phase 4: Database & Authentication Integration - 1/3 complete
-- Phase 5: Monitoring & Documentation - 0/3 complete
-
-## Testing Strategy
-
-- Unit tests for error classes and utilities
-- Integration tests for error handling flows
-- E2E tests for critical error scenarios
-- Performance testing for error handling overhead
-- Load testing for error handling at scale
-
-## Resources
-
-- Error handling documentation: `lib/errors/README.md`
-- Example implementations: `examples/error-handling/`
-- Error codes reference: `lib/errors/constants.ts`
-- Testing utilities: `test/error-helpers.ts` 

@@ -27,8 +27,7 @@ async function postHandler(request: NextRequest, user: User, _supabase: any) {
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-        console.error('Supabase URL or Service Role Key not set');
-        throw new ExternalServiceError('Supabase URL or Service Role Key not set');
+        throw new ExternalServiceError('Supabase configuration missing');
     }
 
     // Create admin client with service role for higher privileges
@@ -42,7 +41,7 @@ async function postHandler(request: NextRequest, user: User, _supabase: any) {
     for (const file of files) {
         try {
             if (!file.type.startsWith('image/')) {
-                console.warn(`API: Skipping non-image file: ${file.name}`);
+                // Skip non-image files silently
                 continue;
             }
 
@@ -85,13 +84,12 @@ async function postHandler(request: NextRequest, user: User, _supabase: any) {
             });
 
         } catch (error: any) {
-            console.error("API Error processing file:", file.name, error);
+            // Attempt cleanup in case of error
             if (storagePath) {
-                console.warn(`Attempting storage cleanup for path: ${storagePath} due to error: ${error.message}`);
                 try {
                     await removeFile(supabaseAdmin, 'assets', storagePath);
                 } catch (cleanupError: any) {
-                    console.error(`Storage cleanup failed for ${storagePath}:`, cleanupError.message);
+                    // Cleanup errors should not prevent the main error from being thrown
                 }
             }
             // Rethrow as DatabaseError to be handled by error middleware

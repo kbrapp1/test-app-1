@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { addNote, deleteNote, editNote, updateNoteOrder } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { ErrorCodes } from '@/lib/errors/constants';
 
 // Define a reusable structure for the mocks
 const mockMatcher = {
@@ -105,7 +106,11 @@ describe('Notes Server Actions', () => {
         it('should return validation error if title is missing', async () => {
             const formData = mockFormData({ content: 'Test Content' }); // No title
             const result = await addNote(null, formData);
-            expect(result).toEqual({ success: false, message: 'Note title cannot be empty.' });
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Note title cannot be empty.',
+                code: ErrorCodes.VALIDATION_ERROR 
+            });
             expect(mockInsert).not.toHaveBeenCalled();
             expect(revalidatePath).not.toHaveBeenCalled();
         });
@@ -114,33 +119,50 @@ describe('Notes Server Actions', () => {
             mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
-            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Authentication error. Please log in again.',
+                code: ErrorCodes.UNAUTHORIZED 
+            });
         });
 
-         it('should return auth error if getUser throws', async () => {
-            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('Auth failed') });
+        it('should return auth error if getUser throws', async () => {
+            mockGetUser.mockRejectedValueOnce(new Error('Auth fetch failed'));
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
-            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Could not verify authentication. Please try again.', 
+                code: ErrorCodes.UNEXPECTED_ERROR 
+            });
         });
 
         it('should return insert error if Supabase insert fails', async () => {
-            const dbError = new Error('DB insert failed');
-            mockInsert.mockResolvedValueOnce({ error: dbError });
+            mockInsert.mockReturnValueOnce({ error: new Error('Insert failed') });
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
-            expect(result).toEqual({ success: false, message: 'Failed to save the note. Please try again.' });
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Failed to save the note. Please try again.',
+                code: ErrorCodes.DATABASE_ERROR
+            });
             expect(revalidatePath).not.toHaveBeenCalled();
         });
 
         it('should handle error when fetching max position', async () => {
-            const posError = new Error('Failed fetching position');
-            mockMaybeSingle.mockResolvedValueOnce({ data: null, error: posError }); // Simulate error fetching position
+            mockGetUser.mockResolvedValueOnce({ data: { user: { id: 'test-user-id' } }, error: null });
+            mockMaybeSingle.mockReturnValueOnce({ data: null, error: new Error('DB connection failed') });
+            
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
-
-            expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ position: 0 }));
-            expect(result).toEqual({ success: true, message: 'Note added successfully.' }); // Should still succeed if insert works
+            
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Failed to prepare note saving. Please try again.', 
+                code: ErrorCodes.DATABASE_ERROR
+            });
+            expect(mockInsert).not.toHaveBeenCalled(); 
+            expect(revalidatePath).not.toHaveBeenCalled();
         });
     });
 

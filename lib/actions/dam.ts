@@ -36,7 +36,6 @@ export async function moveAsset(
         // --- Authorization Check ---
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            console.error('Move asset error: User not authenticated', userError);
             return { success: false, error: 'User not authenticated' };
         }
 
@@ -48,21 +47,17 @@ export async function moveAsset(
             .single();
 
         if (fetchError) {
-            console.error(`Move asset error: Error fetching asset ${assetId}:`, fetchError);
             return { success: false, error: `Error finding asset: ${fetchError.message}` };
         }
         if (!assetData) {
-             console.error(`Move asset error: Asset ${assetId} not found.`);
              return { success: false, error: 'Asset not found.' };
         }
         if (assetData.user_id !== user.id) {
-            console.error(`Move asset error: User ${user.id} not authorized for asset ${assetId} owned by ${assetData.user_id}`);
             return { success: false, error: 'User not authorized to move this asset' };
         }
         
         // Prevent moving to the same folder (no-op)
         if (assetData.folder_id === targetFolderId) {
-            console.log(`Move asset info: Asset ${assetId} is already in the target folder (${targetFolderId ?? 'root'}). No action taken.`);
             return { success: true }; // Indicate success as no change was needed
         }
         // --- End Authorization Check ---
@@ -76,37 +71,29 @@ export async function moveAsset(
                 .single();
 
             if (folderError || !folderData) {
-                console.error(`Move asset error: Target folder ${targetFolderId} not found or error fetching:`, folderError);
                 return { success: false, error: 'Target folder not found.' };
             }
             if (folderData.user_id !== user.id) {
-                 console.error(`Move asset error: User ${user.id} not authorized for target folder ${targetFolderId}.`);
                  return { success: false, error: 'User not authorized for target folder.' };
             }
         }
 
         // 3. Update the asset's folder_id
-        console.log(`Attempting to move asset ${assetId} to folder ${targetFolderId ?? 'root'} (User: ${user.id})`);
         const { error: updateError } = await supabase
             .from('assets')
             .update({ folder_id: targetFolderId })
             .match({ id: assetId, user_id: user.id }); // Match user_id again for safety
 
         if (updateError) {
-            console.error(`Database update error for asset ${assetId} (User: ${user.id}):`, updateError.message);
             return { success: false, error: `Failed to update asset folder: ${updateError.message}` };
         }
 
-        console.log(`Successfully moved asset: ID=${assetId} to Folder=${targetFolderId ?? 'root'} (User: ${user.id})`);
-
         // 4. Revalidate ONLY the base path. Rely on client router.refresh() for view update.
         revalidatePath('/dam');
-        console.log(`Revalidated: /dam`);
 
         return { success: true };
 
     } catch (err: any) {
-        console.error('Unexpected error during asset move:', err);
         return { success: false, error: err.message || 'An unexpected error occurred.' };
     }
 }
@@ -123,7 +110,6 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
         // --- Authorization Check ---
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-             console.error('Delete asset error: User not authenticated');
              return { success: false, error: 'User not authenticated' };
              // throw new Error('User not authenticated'); // Alternatively throw
         }
@@ -135,18 +121,15 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
             .single(); // Expect only one row
 
         if (fetchError) {
-            console.error(`Delete asset error: Error fetching asset ${assetId}:`, fetchError);
             return { success: false, error: `Error finding asset: ${fetchError.message}` };
             // throw new Error(`Asset not found or error fetching: ${fetchError.message}`);
         }
         if (!assetData) {
-             console.error(`Delete asset error: Asset ${assetId} not found.`);
              return { success: false, error: 'Asset not found.' };
             // throw new Error('Asset not found');
         }
         // Handle case where user_id might be null if assets can be anonymous
         if (assetData.user_id && assetData.user_id !== user.id) {
-            console.error(`Delete asset error: User ${user.id} not authorized for asset ${assetId} owned by ${assetData.user_id}`);
             return { success: false, error: 'User not authorized to delete this asset' };
             // throw new Error('User not authorized to delete this asset');
         }
@@ -154,12 +137,9 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
         // Option 1: Allow deletion by any authenticated user (current logic implicitly does this if check passes)
         // Option 2: Disallow deletion by anyone if user_id is null
         // if (!assetData.user_id) {
-        //     console.error(`Delete asset error: Attempt to delete asset ${assetId} with null user_id.`);
         //     return { success: false, error: 'Cannot delete assets without an owner.' };
         // }
         // --- End Authorization Check ---
-
-        console.log(`Attempting to delete asset: ID=${assetId}, Path=${storagePath}, User=${user.id}`);
 
         // 1. Delete from Storage
         const { error: storageError } = await supabase.storage
@@ -168,7 +148,6 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
 
         if (storageError) {
             // Log the error but attempt DB deletion anyway, as the record might be orphaned
-            console.error(`Storage deletion error for path ${storagePath} (User: ${user.id}):`, storageError.message);
             // Optionally return failure here if storage deletion is critical
         }
 
@@ -179,12 +158,9 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
             .match({ id: assetId, user_id: user.id }); // Match both id and user_id
 
         if (dbError) {
-            console.error(`Database deletion error for ID ${assetId} (User: ${user.id}):`, dbError.message);
             // If storage delete succeeded but DB failed, we have an orphaned file.
             return { success: false, error: `Failed to delete database record: ${dbError.message}` };
         }
-
-        console.log(`Successfully deleted asset: ID=${assetId} (User: ${user.id})`);
 
         // 3. Revalidate the gallery path
         revalidatePath('/dam'); // Revalidate the main gallery page
@@ -192,7 +168,6 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
         return { success: true };
 
     } catch (err: any) {
-        console.error('Unexpected error during asset deletion:', err);
         return { success: false, error: err.message || 'An unexpected error occurred.' };
     }
 } 
