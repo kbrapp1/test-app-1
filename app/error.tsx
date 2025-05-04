@@ -9,9 +9,8 @@ export default function Error({ error, reset }: {
     reset: () => void;
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service (e.g., Sentry, LogRocket)
-        // In a real app, you'd integrate with a service here.
-        console.error(error);
+        // Logging removed - External logging setup deferred
+        // console.error(error);
     }, [error]);
 
     return (

@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverActions: {
-    bodySizeLimit: 10485760, // 10MB in bytes
+  experimental: {
+    serverActions: {
+      bodySizeLimit: 10485760, // 10MB in bytes
+    },
   },
   // Restore other settings
   eslint: {

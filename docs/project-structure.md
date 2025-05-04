@@ -72,6 +72,16 @@ This document provides a high-level overview of the main directories and their p
 |   |   |-- TeamMemberCard.tsx         # Card for displaying a team member
 |   |   |-- TeamMemberList.tsx         # List/grid of team members
 |   |   `-- (tests, etc.)
+|   |-- forms/                # Standardized form components
+|   |   |-- FormWrapper.tsx     # Main form component that handles validation and submission
+|   |   |-- TextField.tsx       # Standard text input field
+|   |   |-- SelectField.tsx     # Dropdown select field
+|   |   |-- CheckboxField.tsx   # Checkbox input field
+|   |   |-- TextareaField.tsx   # Multi-line text input
+|   |   |-- SwitchField.tsx     # Toggle switch field
+|   |   |-- CustomField.tsx     # Custom field wrapper
+|   |   `-- index.ts            # Re-exports all form components
+|   |-- error-boundary.tsx    # React error boundary for catching UI errors
 |   `-- ... (Shared components like sidebar, header, data-table, etc.)
 |
 |-- context/                  # React Context providers (e.g., Command Palette).
@@ -84,6 +94,21 @@ This document provides a high-level overview of the main directories and their p
 |   |   `-- notes.ts          # Actions for Notes feature (add, edit, delete, reorder).
 |   |-- config/               # Config files (e.g., navigation structure).
 |   |-- supabase/             # Supabase client setup (client, server).
+|   |-- errors/               # Error handling system.
+|   |   |-- base.ts           # Base error classes (AppError, ValidationError, etc.)
+|   |   |-- constants.ts      # Error codes, messages, and severity levels
+|   |   |-- factory.ts        # Factory functions for creating error instances
+|   |   |-- client.tsx        # Client-side error handling utilities
+|   |   `-- __tests__/        # Tests for error classes and utilities
+|   |-- middleware/           # Middleware for API routes and server actions.
+|   |   |-- error.ts          # Error handling middleware
+|   |   `-- __tests__/        # Middleware tests
+|   |-- logging/              # Logging service.
+|   |   `-- index.ts          # Logger implementation with different log levels
+|   |-- forms/                # Form handling utilities.
+|   |   |-- validation.ts     # Zod validation schemas
+|   |   |-- useFormWithValidation.ts # Custom form hook
+|   |   `-- error-handling.ts # Form error handling utilities
 |   `-- utils.ts              # General utility functions.
 |
 |-- public/                   # Static assets (images, fonts, etc.).
@@ -95,6 +120,17 @@ This document provides a high-level overview of the main directories and their p
 |-- .storybook/             # Storybook configuration and stories (for UI component development & testing).
 |
 |-- docs/                     # Project documentation (you are here!).
+|   |-- project-structure.md  # This file
+|   |-- form-system-migration.md # Migration guide for the standardized form system
+|   |-- error_handling_steps.md # Implementation plan for error handling system
+|   |-- settings-page-steps.md
+|   |-- deployment_steps.md
+|   |-- stack-rules.md
+|   |-- quick-tips.md
+|   |-- test-instructions.md
+|   |-- scaffold-checklist.md # Added/Updated
+|   |-- types/notes.ts        # Added for shared Note/ColorOption types
+|   `-- (other docs)
 |
 |-- .env.example              # Environment variable template.
 |-- .env.local                # Local environment variables (Gitignored).
@@ -131,6 +167,15 @@ This document provides a high-level overview of the main directories and their p
 *   `components/notes/add-note-dialog.tsx`: Client Component managing the dialog state for adding a note.
 *   `components/notes/add-note-form.tsx`: Client Component containing the form fields and logic for submitting a new note via a Server Action.
 *   `components/ui/empty-state.tsx`: Reusable component to display when there is no data (e.g., no notes, no assets).
+*   `components/forms/FormWrapper.tsx`: Core component for form handling, validation, and error display.
+*   `components/error-boundary.tsx`: React error boundary for handling UI rendering errors gracefully.
+*   `lib/errors/base.ts`: Defines base error classes including AppError, ValidationError, AuthorizationError, etc.
+*   `lib/errors/factory.ts`: Factory functions for creating standardized error instances.
+*   `lib/errors/client.tsx`: Client-side error handling utilities
+*   `lib/middleware/error.ts`: Error handling middleware for API routes and server actions.
+*   `lib/logging/index.ts`: Centralized logging service with different log levels.
+*   `lib/forms/validation.ts`: Reusable Zod validation schemas for form fields.
+*   `lib/forms/error-handling.ts`: Utilities for handling form validation errors.
 *   `lib/actions/dam.ts`: Contains Server Actions (`uploadAssets`, `deleteAsset`) for managing digital assets in Supabase Storage and the database.
 *   `lib/actions/notes.ts`: Contains Server Actions (`addNote`, `editNote`, `deleteNote`, `updateNoteOrder`) for managing notes data in Supabase.
 *   `middleware.ts`: Enforces authentication, redirecting users based on login status and target route.
@@ -200,6 +245,19 @@ This document provides a high-level overview of the main directories and their p
 *   `toggle.tsx`: Single toggle button.
 *   `tooltip.tsx`: Tooltip popover on hover.
 
+### `lib/errors/` (Error Handling System)
+
+*   `base.ts`: Defines the core error class hierarchy:
+    * `AppError`: Base error class with code, status code, and context
+    * `ValidationError`: For input validation errors (400)
+    * `AuthorizationError`: For permission issues (403)
+    * `NotFoundError`: For missing resources (404)
+    * `DatabaseError`: For database operation failures (500)
+    * `ExternalServiceError`: For third-party service failures (502)
+*   `constants.ts`: Defines error codes, messages, and severity levels
+*   `factory.ts`: Factory functions for creating error instances
+*   `client.tsx`: Client-side error handling utilities
+
 ### `public/` (Static Assets)
 
 *   `ironmark-logo.png`
@@ -213,6 +271,8 @@ This document provides a high-level overview of the main directories and their p
 ### `docs/` (Project Documentation)
 
 *   `project-structure.md` (This file)
+*   `form-system-migration.md` (Standardized form system migration guide)
+*   `error_handling_steps.md` (Error handling system implementation plan)
 *   `settings-page-steps.md`
 *   `deployment_steps.md`
 *   `stack-rules.md`
@@ -228,6 +288,8 @@ This document provides a high-level overview of the main directories and their p
 *   **Components:** Feature-specific components (like `settings/` or `notes/`) are grouped in subdirectories. Base UI components from `shadcn/ui` are in `components/ui/`. Test files (`*.test.tsx`) are often colocated with the component they test.
 *   **Testing:** Unit/integration tests (`*.test.ts(x)`, `*.spec.ts(x)`) often use Vitest and live alongside the code they test or in the root. End-to-end tests might live in a dedicated `tests/` directory.
 *   **Types:** Shared types (like `Note`, `ColorOption`) live in the `types/` directory.
+*   **Error Handling:** Structured error handling system with custom error classes, middleware, and client utilities. Errors are categorized by type and severity with appropriate HTTP status codes.
+*   **Forms:** Standardized form system with reusable components, validation schemas, and consistent error handling patterns.
 
 ## Excluded Folders (for brevity)
 

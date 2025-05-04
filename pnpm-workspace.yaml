@@ -3,3 +3,6 @@ onlyBuiltDependencies:
   - sharp
   - supabase
   - unrs-resolver
+
+ignoredBuiltDependencies:
+  - '@sentry/cli'

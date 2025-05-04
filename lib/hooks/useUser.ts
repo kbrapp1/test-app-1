@@ -17,6 +17,7 @@ import {
   hasAnyPermission, 
   getUserPermissions 
 } from '@/lib/auth/authorization';
+import { useToast } from '@/components/ui/use-toast';
 
 export type AuthHelpers = {
   // Role checks
@@ -42,6 +43,7 @@ export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
+  const { toast } = useToast();
   
   // Memoized auth helpers that update when the user changes
   const auth = useMemo<AuthHelpers>(() => ({
@@ -68,6 +70,27 @@ export function useUser() {
   useEffect(() => {
     let isMounted = true;
 
+    // Reusable sign-out handler with toast notification
+    const handleSignOut = async (reason: string) => {
+      if (!isMounted) return;
+      console.warn(`Signing out due to: ${reason}`);
+      toast({
+        title: "Session Ended",
+        description: reason,
+        variant: "destructive",
+      });
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error("Error during sign out:", signOutError);
+        if (isMounted) {
+            setUser(null);
+            setIsLoading(false);
+        }
+      }
+    };
+
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
@@ -76,17 +99,61 @@ export function useUser() {
     });
 
     // Initial check
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!isMounted) return;
-      setUser(user);
-      setIsLoading(false);
-    });
+    const checkInitialUser = async () => {
+      try {
+        const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          const isInvalidTokenError =
+            error.message.includes('Invalid Refresh Token') ||
+            (error instanceof Error && 'status' in error && (error as any).status === 400);
+
+          if (isInvalidTokenError) {
+            console.warn('Invalid refresh token detected on initial check. Signing out.');
+            handleSignOut("Your session is invalid or expired. Please log in again.");
+            // State update will happen via onAuthStateChange after signOut triggers
+            // No need to set user/loading state here directly if handleSignOut runs
+          } else {
+            // Handle other errors during initial fetch
+            console.error('Error fetching initial user:', error);
+            if (isMounted) {
+              setUser(null);
+              setIsLoading(false);
+            }
+          }
+        } else if (isMounted) {
+          // Success case: user fetched
+          setUser(fetchedUser);
+          setIsLoading(false);
+        }
+      } catch (catchError: any) {
+        // Catch unexpected errors during the getUser call itself (e.g., network)
+        console.error('Unexpected error during initial user check:', catchError);
+        
+        // Check if the caught error *itself* indicates an invalid token
+        const isInvalidTokenErrorInCatch =
+            catchError?.message?.includes('Invalid Refresh Token') ||
+            catchError?.status === 400;
+
+        if (isInvalidTokenErrorInCatch) {
+           console.warn('Invalid refresh token detected during catch. Signing out.');
+           handleSignOut("Could not verify your session. Please log in again.");
+           // State update will happen via onAuthStateChange after signOut triggers
+        } else if (isMounted) {
+          // If it's a different unexpected error, clear user and stop loading
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkInitialUser();
 
     return () => {
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [supabase, toast]);
 
   return { user, isLoading, auth };
 } 
