@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AppProviders } from "@/components/app-providers"
-// Toaster now rendered by AppProviders
-// import { Toaster } from "@/components/ui/toaster"
+import { ErrorBoundary } from "@/components/error/error-boundary";
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -18,8 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AppProviders>{children}</AppProviders>
-        {/* <Toaster /> */}{/* Removed as it's now in AppProviders */}
+        <ErrorBoundary>
+          <AppProviders>{children}</AppProviders>
+        </ErrorBoundary>
       </body>
     </html>
   )

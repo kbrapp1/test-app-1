@@ -1,212 +1,149 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
-import { POST } from './route'; // Import the POST handler
-import { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
 
-// --- Mocking Setup ---
-
-vi.mock('@supabase/supabase-js', () => {
-    // Define mocks *inside* the factory
-    const mockStorageFromUpload = vi.fn();
-    const mockStorageFromRemove = vi.fn();
-    const storageFrom = vi.fn(() => ({ upload: mockStorageFromUpload, remove: mockStorageFromRemove }));
-
-    const mockDbFromInsert = vi.fn();
-    const dbFrom = vi.fn(() => ({ insert: mockDbFromInsert }));
-
-    const mockedCreateClient = vi.fn(() => ({
-        storage: { from: storageFrom },
-        from: dbFrom,
-    }));
-
-    // Return the mocked createClient and, importantly, the nested mock functions
-    // so we can access them later if needed, although accessing via the client instance
-    // is often cleaner in tests.
-    return {
-         createClient: mockedCreateClient,
-         // Exposing these might be useful for direct manipulation/assertion if needed
-         __mocks: {
-             mockStorageFromUpload,
-             mockStorageFromRemove,
-             mockDbFromInsert,
-             storageFrom, 
-             dbFrom
-         }
-    };
+// Mock crypto.randomUUID properly using importOriginal
+vi.mock('crypto', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('crypto')>();
+  return {
+    __esModule: true,
+    default: {
+      ...actual,
+      randomUUID: () => 'mock-uuid'
+    }
+  };
 });
 
-// Helper to create a mock NextRequest with FormData
-function createMockRequest(formData: FormData): NextRequest {
-    // Casting to any as NextRequest constructor isn't directly exposed for simple mocking
-    return {
-        formData: async () => formData,
-        // Add other properties if needed by the route handler (e.g., headers)
-    } as any;
-}
+// Mock supabase client creation
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({
+    auth: { getUser: vi.fn(() => ({ data: { user: { id: 'test-user-id' } }, error: null })) },
+    storage: { from: vi.fn(() => ({ upload: vi.fn(), remove: vi.fn() })) },
+    from: vi.fn()
+  }))
+}));
 
-// --- Test Suite ---
+// Mock the database utilities
+vi.mock('@/lib/supabase/db', () => ({
+  uploadFile: vi.fn(),
+  insertData: vi.fn(),
+  removeFile: vi.fn()
+}));
 
+// Mock the authentication middleware
+vi.mock('@/lib/supabase/auth-middleware', () => ({
+  withAuth: (handler: any) => {
+    return async (req: NextRequest) => {
+      if (req.headers.get('x-test-auth') === 'fail') {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      }
+      const mockUser = { id: 'test-user-id' } as any;
+      return handler(req, mockUser, null);
+    };
+  }
+}));
+
+import { POST } from './route';
+import { User } from '@supabase/supabase-js';
+import { uploadFile, insertData, removeFile } from '@/lib/supabase/db';
+
+// Cast imported functions to mocks for TypeScript
+const mockUploadFile = uploadFile as unknown as ReturnType<typeof vi.fn>;
+const mockInsertData = insertData as unknown as ReturnType<typeof vi.fn>;
+const mockRemoveFile = removeFile as unknown as ReturnType<typeof vi.fn>;
+
+// Stub environment variables
+vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'mock-anon-key');
+vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'mock-service-role-key');
+
+// Begin test suite
 describe('POST /api/dam/upload', () => {
-    const originalEnv = { ...process.env };
-    let mockSupabaseFunctions: any; // To hold nested mocks for easier access in tests
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+  it('should return 400 if no files are provided', async () => {
+    const formData = new FormData();
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
+    request.formData = vi.fn().mockResolvedValue(formData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error.message).toBe('No files provided.');
+    expect(data.error.code).toBe('VALIDATION_ERROR');
+    expect(data.error.statusCode).toBe(400);
+  });
 
-        // Mock environment variables
-        process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://mock-supabase.co';
-        process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-service-role-key';
+  it('should upload a single valid image file successfully', async () => {
+    mockUploadFile.mockResolvedValue(Promise.resolve({ path: 'test-user-id/mock-uuid-test.jpg', error: null }));
+    mockInsertData.mockResolvedValue(Promise.resolve({ data: { id: 'mock-asset-id' }, error: null }));
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
+    request.formData = vi.fn().mockResolvedValue({ getAll: (_: string) => [file] } as unknown as FormData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.message).toBe('Upload successful');
+    expect(data.data).toEqual([
+      { name: 'test.jpg', storagePath: 'test-user-id/mock-uuid-test.jpg', size: file.size, type: file.type }
+    ]);
+  });
 
-        // Get the mocked client instance to access its internal mocks
-        const mockedCreateClient = createClient as Mock;
-        // Get the *instance* returned by the mocked createClient
-        const clientInstance = mockedCreateClient(); 
-        // Now access the mocks via the instance structure defined in the factory
-        mockSupabaseFunctions = {
-            upload: clientInstance.storage.from().upload,
-            remove: clientInstance.storage.from().remove,
-            insert: clientInstance.from().insert,
-        };
+  it('should skip non-image files', async () => {
+    mockUploadFile.mockResolvedValue(Promise.resolve({ path: 'test-user-id/mock-uuid-image.jpg', error: null }));
+    mockInsertData.mockResolvedValue(Promise.resolve({ data: { id: 'mock-asset-id' }, error: null }));
+    const imageFile = new File(['img'], 'image.jpg', { type: 'image/jpeg' });
+    const docFile = new File(['doc'], 'doc.pdf', { type: 'application/pdf' });
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
+    request.formData = vi.fn().mockResolvedValue({ getAll: (_: string) => [imageFile, docFile] } as unknown as FormData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.message).toBe('Upload successful');
+    expect(data.data).toEqual([
+      { name: 'image.jpg', storagePath: 'test-user-id/mock-uuid-image.jpg', size: imageFile.size, type: imageFile.type }
+    ]);
+    expect(mockUploadFile).toHaveBeenCalledTimes(1);
+  });
 
-        // Reset mocks to default success states using the accessed references
-        mockSupabaseFunctions.upload.mockResolvedValue({ data: { path: 'user-id/mock-uuid-test.png' }, error: null });
-        mockSupabaseFunctions.insert.mockResolvedValue({ data: {}, error: null });
-        mockSupabaseFunctions.remove.mockResolvedValue({ data: {}, error: null });
+  it('should return 500 if storage upload fails', async () => {
+    mockUploadFile.mockResolvedValue(Promise.resolve({ path: null, error: new Error('Storage error') }));
+    const file = new File(['err'], 'error.jpg', { type: 'image/jpeg' });
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
+    request.formData = vi.fn().mockResolvedValue({ getAll: (_: string) => [file] } as unknown as FormData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data.error.message).toBe('Storage Error (error.jpg): Storage error');
+    expect(data.error.code).toBe('DATABASE_ERROR');
+    expect(data.error.statusCode).toBe(500);
+    expect(mockRemoveFile).toHaveBeenCalled();
+  });
 
-         // Clear call history on the main createClient mock itself
-         mockedCreateClient.mockClear();
-         // Clear call history on the nested mocks obtained above
-         mockSupabaseFunctions.upload.mockClear();
-         mockSupabaseFunctions.remove.mockClear();
-         mockSupabaseFunctions.insert.mockClear();
-         // Also clear the intermediate 'from' mocks if necessary, though maybe less critical
-         clientInstance.storage.from.mockClear();
-         clientInstance.from.mockClear();
-    });
+  it('should return 500 and attempt cleanup if database insert fails', async () => {
+    mockUploadFile.mockResolvedValue(Promise.resolve({ path: 'test-user-id/mock-uuid-db-error.jpg', error: null }));
+    mockInsertData.mockResolvedValue(Promise.resolve({ data: undefined, error: new Error('Database error') }));
+    const file = new File(['db'], 'db-error.jpg', { type: 'image/jpeg' });
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
+    request.formData = vi.fn().mockResolvedValue({ getAll: (_: string) => [file] } as unknown as FormData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data.error.message).toBe('Database Error (db-error.jpg): Database error');
+    expect(data.error.code).toBe('DATABASE_ERROR');
+    expect(data.error.statusCode).toBe(500);
+    expect(mockRemoveFile).toHaveBeenCalled();
+  });
 
-    afterEach(() => {
-        // Restore original environment variables
-        process.env = originalEnv;
-        vi.restoreAllMocks();
-    });
-
-    it('should return 400 if no files are provided', async () => {
-        const formData = new FormData();
-        formData.append('userId', 'test-user-id');
-        const request = createMockRequest(formData);
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(400);
-        expect(json.error).toBe('No files provided.');
-    });
-
-    it('should return 400 if userId is not provided', async () => {
-        const formData = new FormData();
-        const mockFile = new File(['content'], 'test.png', { type: 'image/png' });
-        formData.append('files', mockFile);
-        // Missing userId
-        const request = createMockRequest(formData);
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(400);
-        expect(json.error).toBe('User ID not provided.');
-    });
-
-    // Add more tests here for success, errors, etc.
-    it('should upload a single valid image file successfully', async () => {
-        const formData = new FormData();
-        const mockFile = new File(['image content'], 'test-image.png', { type: 'image/png' });
-        const userId = 'user-123';
-        formData.append('files', mockFile);
-        formData.append('userId', userId);
-        const request = createMockRequest(formData);
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(200);
-        expect(json.message).toBe('Upload successful');
-        expect(json.data).toHaveLength(1);
-        expect(json.data[0].name).toBe('test-image.png');
-
-        // Verify mocks using the captured references
-        expect(mockSupabaseFunctions.upload).toHaveBeenCalledOnce();
-        expect(mockSupabaseFunctions.upload).toHaveBeenCalledWith(expect.stringContaining(`${userId}/`), mockFile);
-        expect(mockSupabaseFunctions.insert).toHaveBeenCalledOnce();
-        expect(mockSupabaseFunctions.insert).toHaveBeenCalledWith({
-            user_id: userId,
-            name: mockFile.name,
-            storage_path: expect.any(String),
-            mime_type: mockFile.type,
-            size: mockFile.size,
-        });
-    });
-
-    it('should skip non-image files', async () => {
-        const formData = new FormData();
-        const mockImageFile = new File(['image content'], 'image.jpg', { type: 'image/jpeg' });
-        const mockTextFile = new File(['text content'], 'document.txt', { type: 'text/plain' });
-        const userId = 'user-456';
-        formData.append('files', mockImageFile);
-        formData.append('files', mockTextFile);
-        formData.append('userId', userId);
-        const request = createMockRequest(formData);
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(200);
-        expect(json.message).toBe('Upload successful');
-        expect(json.data).toHaveLength(1); // Only the image file should be processed
-        expect(json.data[0].name).toBe('image.jpg');
-
-        // Verify mocks using captured references
-        expect(mockSupabaseFunctions.upload).toHaveBeenCalledOnce();
-        expect(mockSupabaseFunctions.upload).toHaveBeenCalledWith(expect.stringContaining(`${userId}/`), mockImageFile);
-        expect(mockSupabaseFunctions.insert).toHaveBeenCalledOnce();
-        expect(mockSupabaseFunctions.insert).toHaveBeenCalledWith(expect.objectContaining({ name: 'image.jpg' }));
-    });
-
-     it('should return 500 if storage upload fails', async () => {
-        const formData = new FormData();
-        const mockFile = new File(['content'], 'fail-upload.png', { type: 'image/png' });
-        formData.append('files', mockFile);
-        formData.append('userId', 'user-fail-storage');
-        const request = createMockRequest(formData);
-
-        // Mock error using captured reference
-        mockSupabaseFunctions.upload.mockRejectedValueOnce(new Error('Simulated Storage Error'));
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(500);
-        expect(json.error).toContain('Simulated Storage Error');
-     });
-
-    it('should return 500 and attempt cleanup if database insert fails', async () => {
-        const formData = new FormData();
-        const mockFile = new File(['content'], 'fail-db.png', { type: 'image/png' });
-        formData.append('files', mockFile);
-        formData.append('userId', 'user-fail-db');
-        const request = createMockRequest(formData);
-
-        // Mock error using captured reference
-        mockSupabaseFunctions.insert.mockRejectedValueOnce(new Error('Simulated DB Error'));
-
-        const response = await POST(request);
-        const json = await response.json();
-
-        expect(response.status).toBe(500);
-        expect(json.error).toContain('Simulated DB Error');
-
-        // Verify cleanup using captured reference
-        expect(mockSupabaseFunctions.remove).toHaveBeenCalledOnce();
-        expect(mockSupabaseFunctions.remove).toHaveBeenCalledWith([expect.stringContaining('user-fail-db/')]);
-    });
-
+  it('should handle authentication failure', async () => {
+    const headers = new Headers();
+    headers.set('x-test-auth', 'fail');
+    const formData = new FormData();
+    const request = new Request('https://example.com/api/dam/upload', { method: 'POST', headers });
+    request.formData = vi.fn().mockResolvedValue(formData);
+    const response = await POST(request as unknown as NextRequest);
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.error).toBe('Authentication required');
+  });
 }); 

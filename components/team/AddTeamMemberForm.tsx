@@ -1,3 +1,10 @@
+
+/**
+ * Next.js Server Component that renders a form for adding a new team member.
+ * It includes fields for name, title, primary image, and secondary image.
+ * The form uses the zodResolver for validation and the useForm hook for form handling.
+ * The form data is submitted to the '/api/team/upload' route for processing.
+ */
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -47,6 +54,14 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
     if (!values.primaryImage?.[0] || !values.secondaryImage?.[0]) {
         toast({ title: 'Error', description: 'Both primary and secondary images must be provided.', variant: 'destructive'});
         return;
+    }
+
+    // Client-side file type validation
+    const primaryType = values.primaryImage[0].type;
+    const secondaryType = values.secondaryImage[0].type;
+    if (!ACCEPTED_IMAGE_TYPES.includes(primaryType) || !ACCEPTED_IMAGE_TYPES.includes(secondaryType)) {
+      toast({ title: 'Error', description: 'Invalid file type', variant: 'destructive' });
+      return;
     }
 
     setIsLoading(true);

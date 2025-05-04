@@ -95,7 +95,7 @@ const FolderItem: React.FC<FolderItemProps> = ({
         
         <Link href={`/dam?folderId=${folder.id}`} className="flex-1 flex items-center truncate">
           <FolderIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate font-medium" title={folder.name}>{folder.name}</span>
+          <span className="truncate font-medium text-sm" title={folder.name}>{folder.name}</span>
         </Link>
       </div>
       {/* Render Children Recursively - Keep div, conditionally render content */}
@@ -159,7 +159,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({ initialFolders = [
         {/* Link part of Root */}
         <Link href="/dam" className="flex-1 flex items-center truncate">
           <FolderIcon className="h-4 w-4 mr-2 flex-shrink-0" /> 
-          <span className="font-medium">(Root)</span>
+          <span className="font-medium text-sm">(Root)</span>
         </Link>
      </div>
 

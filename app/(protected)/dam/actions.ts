@@ -1,3 +1,9 @@
+/**
+ * Next.js Server Action that authenticates the user and creates a new folder
+ * record in the Supabase 'folders' table based on submitted form data.
+ * It returns the action state and revalidates the '/dam' path on success.
+ */
+
 'use server';
 
 import { revalidatePath } from 'next/cache';

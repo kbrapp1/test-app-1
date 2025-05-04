@@ -1,3 +1,9 @@
+
+/**
+ * Next.js Server Component that renders a list of team members.
+ * It displays a grid of team member cards and a message if no members are found.
+ */
+
 import type { TeamMember } from '@/types/team';
 import { TeamMemberCard } from './TeamMemberCard';
 

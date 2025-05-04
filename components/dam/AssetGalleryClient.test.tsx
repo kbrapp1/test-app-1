@@ -159,8 +159,8 @@ describe('AssetGalleryClient', () => {
       statusText: 'Internal Server Error',
     });
     
-    // Spy on console.error
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // We no longer log errors to console in the component
+    // const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     
     render(<AssetGalleryClient currentFolderId={null} />);
     
@@ -171,13 +171,13 @@ describe('AssetGalleryClient', () => {
     // Should display empty state
     expect(screen.getByText('This folder is empty.')).toBeInTheDocument();
     
-    // Should have logged the error
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Error fetching folder items:',
-      expect.any(Error)
-    );
+    // We removed console.error so we don't need to test for it
+    // expect(consoleSpy).toHaveBeenCalledWith(
+    //   'Error fetching folder items:',
+    //   expect.any(Error)
+    // );
     
-    consoleSpy.mockRestore();
+    // consoleSpy.mockRestore();
   });
 
   it('should re-fetch data when folder ID changes', async () => {
@@ -248,13 +248,14 @@ describe('AssetGalleryClient', () => {
       ok: true,
       json: async () => [],
     });
-    
+
     render(<AssetGalleryClient currentFolderId={null} />);
     
     await waitFor(() => {
       expect(screen.queryByText(/loading assets/i)).not.toBeInTheDocument();
     });
     
+    // Verify empty state is displayed
     expect(screen.getByText('This folder is empty.')).toBeInTheDocument();
   });
 }); 

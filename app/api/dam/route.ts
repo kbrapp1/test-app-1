@@ -1,70 +1,63 @@
-import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { queryData, getPublicUrl } from '@/lib/supabase/db';
+import { withAuth } from '@/lib/supabase/auth-middleware';
+import { User } from '@supabase/supabase-js';
+import { withErrorHandling } from '@/lib/middleware/error';
+import { DatabaseError } from '@/lib/errors/base';
 
-export async function GET(request: Request) {
+// Define the actual handler function, which now receives user and supabase client directly
+async function getHandler(
+  request: NextRequest,
+  user: User, 
+  supabase: any
+) {
   const url = new URL(request.url);
   const folderId = url.searchParams.get('folderId');
-  
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+
+  // Fetch folders using the utility function
+  const { data: foldersData, error: foldersError } = await queryData(
+    supabase,
+    'folders',
+    'id, name, parent_folder_id',
     {
-      cookies: {
-        async get(name: string) {
-          const cookieStore = await cookies();
-          return cookieStore.get(name)?.value;
-        },
-      },
+      ...(folderId 
+        ? { matchColumn: 'parent_folder_id', matchValue: folderId } 
+        : { isNull: 'parent_folder_id' }),
+      userId: user.id,
+      orderBy: 'name',
+      ascending: true
     }
   );
 
-  // Get current user to ensure proper access control
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    console.error('Error fetching user or no user:', userError);
-    return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-  }
-
-  // Fetch folders under this folderId - Select only needed columns
-  let folderQuery = supabase.from('folders').select('id, name, parent_folder_id');
-  if (folderId) folderQuery = folderQuery.eq('parent_folder_id', folderId);
-  else folderQuery = folderQuery.is('parent_folder_id', null);
-  // Add filter for user ownership
-  folderQuery = folderQuery.eq('user_id', user.id);
-  
-  const { data: foldersData, error: foldersError } = await folderQuery.order('name', { ascending: true });
   if (foldersError) {
-    console.error('Folder query error:', foldersError);
-    return NextResponse.json({ error: foldersError.message }, { status: 500 });
+    throw new DatabaseError(foldersError.message || 'Failed to query folders');
   }
 
-  // Fetch assets under this folderId - Select only needed columns
-  let assetQuery = supabase.from('assets').select('id, name, storage_path, mime_type, folder_id');
-  
-  // Filter by folder ID (explicitly check if it's null or a specific ID)
-  if (folderId) {
-    assetQuery = assetQuery.eq('folder_id', folderId);
-  } else {
-    assetQuery = assetQuery.is('folder_id', null);
-  }
-  
-  // Filter by user ID
-  assetQuery = assetQuery.eq('user_id', user.id);
-  
-  const { data: assetsData, error: assetsError } = await assetQuery.order('created_at', { ascending: false });
+  // Fetch assets using the utility function
+  const { data: assetsData, error: assetsError } = await queryData(
+    supabase,
+    'assets',
+    'id, name, storage_path, mime_type, folder_id',
+    {
+      ...(folderId
+        ? { matchColumn: 'folder_id', matchValue: folderId }
+        : { isNull: 'folder_id' }),
+      userId: user.id,
+      orderBy: 'created_at',
+      ascending: false
+    }
+  );
+
   if (assetsError) {
-    console.error('Asset query error:', assetsError);
-    return NextResponse.json({ error: assetsError.message }, { status: 500 });
+    throw new DatabaseError(assetsError.message || 'Failed to query assets');
   }
 
-  // Build public URLs
+  // Build public URLs using the utility function
   const assetsWithUrls = (assetsData || []).map((asset: any) => {
-    const { data: urlData } = supabase.storage.from('assets').getPublicUrl(asset.storage_path);
     return {
       ...asset,
       type: 'asset',
-      publicUrl: urlData?.publicUrl || '/placeholder.png',
+      publicUrl: getPublicUrl(supabase, 'assets', asset.storage_path),
     };
   });
 
@@ -73,4 +66,7 @@ export async function GET(request: Request) {
   const combined = [...folders, ...assetsWithUrls];
 
   return NextResponse.json(combined);
-} 
+}
+
+// Export the GET handler wrapped with authentication AND error handling
+export const GET = withErrorHandling(withAuth(getHandler)); 

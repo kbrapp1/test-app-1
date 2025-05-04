@@ -1,3 +1,10 @@
+
+/**
+ * Next.js Server Component that renders a card for a team member.
+ * It includes an image and text block below the image.
+ * The image is displayed in a group with a hover effect.
+ */
+
 'use client';
 
 // Remove useState if no longer needed for image src

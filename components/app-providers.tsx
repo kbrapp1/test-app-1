@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CommandPalette } from "@/components/command-palette";
 import { PaletteProvider } from "@/context/palette-context";
 import { Toaster as SonnerToaster } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false);
@@ -21,11 +22,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       themes={['light', 'dark', 'system', 'ironmark']}
     >
-      <PaletteProvider value={paletteContextValue}>
-        {children}
-        <SonnerToaster position="bottom-right" richColors />
-      </PaletteProvider>
-      <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+      <TooltipProvider delayDuration={50}>
+        <PaletteProvider value={paletteContextValue}>
+          {children}
+          <SonnerToaster position="bottom-right" richColors />
+        </PaletteProvider>
+        <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+      </TooltipProvider>
     </ThemeProvider>
   );
 } 

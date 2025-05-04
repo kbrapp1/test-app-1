@@ -90,33 +90,35 @@ describe('AddTeamMemberForm', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    // Skipped due to JSDOM + file input + Zod/RHF incompatibility: file type validation does not work reliably in test environment.
-    it.skip('shows validation error for invalid file type', async () => {
+    it('shows validation error for invalid file type', async () => {
         renderFormInDialog();
-        const primaryImageInput = screen.getByLabelText(/Primary Image/i);
-        const submitButton = screen.getByRole('button', { name: /Add Member/i });
-        const file = createMockFile('test.txt', 1024, 'text/plain');
+        // Fill required text fields so zod validation passes name/title
+        await userEvent.type(screen.getByLabelText(/Name/i), 'Test Name');
+        await userEvent.type(screen.getByLabelText(/Title/i), 'Test Title');
+        // File inputs
+        const primaryImageInput = screen.getByLabelText(/Primary Image/i) as HTMLInputElement;
+        const secondaryImageInput = screen.getByLabelText(/Secondary \(Hover\) Image/i) as HTMLInputElement;
+        const invalidFile = createMockFile('test.txt', 1024, 'text/plain');
+        const validFile = createMockFile('valid.png', 1024, 'image/png');
         
-        await userEvent.upload(primaryImageInput, file);
-        await userEvent.click(submitButton);
+        // Remove accept attribute to allow invalid types in the test
+        primaryImageInput.removeAttribute('accept');
+        
+        // Upload files
+        await userEvent.upload(primaryImageInput, invalidFile);
+        await userEvent.upload(secondaryImageInput, validFile);
+        
+        // Submit form
+        await userEvent.click(screen.getByRole('button', { name: /Add Member/i }));
 
-        // Use a function matcher for the error message
-        const expectedMsg = 'Invalid file type';
-        let found = false;
-        try {
-            await waitFor(() => {
-                expect(
-                    screen.getByText((content) => content.includes(expectedMsg))
-                ).toBeInTheDocument();
-            }, { timeout: 2000 });
-            found = true;
-        } catch (e) {
-            // Print the DOM for debugging
-            // eslint-disable-next-line no-console
-            console.log(screen.debug());
-            throw e;
-        }
-        expect(found).toBe(true);
+        // Use a more flexible way to check for validation error text
+        await waitFor(() => {
+            // Look for any text that contains "Invalid file type" anywhere in the document
+            const errorElements = screen.getAllByText((content) => 
+                content.includes('Invalid file type'), { exact: false }
+            );
+            expect(errorElements.length).toBeGreaterThan(0);
+        }, { timeout: 2000 });
     });
 
     it('shows validation error for file size exceeding limit', async () => {

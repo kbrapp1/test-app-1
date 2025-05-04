@@ -16,7 +16,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Add timestamp to bust browser cache, but we'll still cache on the client side
+      // Add timestamp to bust browser cache
       const timestamp = new Date().getTime();
       const res = await fetch(`/api/dam?folderId=${currentFolderId ?? ''}&_=${timestamp}`, { 
         cache: 'no-store' // Ensure we get fresh data
@@ -29,7 +29,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
       const data: CombinedItem[] = await res.json();
       setItems(data);
     } catch (e) {
-      console.error('Error fetching folder items:', e);
+      // Silently handle errors - we'll show empty state UI
+      setItems([]);
     } finally {
       setLoading(false);
     }

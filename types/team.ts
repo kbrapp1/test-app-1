@@ -1,3 +1,14 @@
+/**
+ * Team-related type definitions
+ * 
+ * This file contains interfaces and types related to team functionality,
+ * including team members, team settings, and team-specific form schemas.
+ * 
+ * These types are used throughout the application for type safety when
+ * working with team data from the API and in form submissions.
+ */
+
+
 export interface TeamMember {
   id: string;
   name: string;

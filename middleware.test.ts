@@ -139,7 +139,9 @@ describe('Middleware', () => {
     const request = new NextRequest('http://localhost:3000/dashboard')
     const mockError = { name: 'AuthApiError', message: 'Invalid Refresh Token' }
     mockGetUser.mockResolvedValue({ data: { user: null }, error: mockError })
-    vi.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console.warn for this test
+    
+    // No longer logging warnings in middleware, so we don't need to mock console.warn
+    // vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     // Act
     const response = await middleware(request)
@@ -152,8 +154,10 @@ describe('Middleware', () => {
     expect(response?.url).toBe(expectedRedirectUrl.toString())
     // Check if NextResponse.redirect was called with the correct URL object
     expect(NextResponse.redirect).toHaveBeenCalledWith(expectedRedirectUrl)
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid Refresh Token'));
-    (console.warn as Mock).mockRestore(); // Restore console.warn
+    
+    // We removed console.warn from middleware, so we don't need to test for it anymore
+    // expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid Refresh Token'));
+    // (console.warn as Mock).mockRestore();
   })
 
   // Add more tests as needed, e.g., for other public routes or specific error conditions

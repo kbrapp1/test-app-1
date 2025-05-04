@@ -1,3 +1,9 @@
+/**
+ * Next.js Server Component that renders the Digital Asset Management (DAM)
+ * upload page, including a title, a back link, and the AssetUploader component
+ * which handles the actual file upload functionality.
+ */
+
 import React from 'react';
 import Link from 'next/link';
 import { AssetUploader } from '@/components/dam/AssetUploader';
