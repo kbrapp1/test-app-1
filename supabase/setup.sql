@@ -269,6 +269,72 @@ CREATE POLICY "Allow insert for authenticated" ON public.team_members
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- ============================================================================
+-- TTS PREDICTION TABLE SETUP
+-- ============================================================================
+-- Create the TtsPrediction table
+CREATE TABLE IF NOT EXISTS public."TtsPrediction" (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "replicatePredictionId" TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL,
+    "inputText" TEXT NOT NULL,
+    "outputUrl" TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "userId" uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    "sourceAssetId" uuid REFERENCES public.assets(id) ON DELETE SET NULL, -- Link to source text asset
+    "outputAssetId" uuid REFERENCES public.assets(id) ON DELETE SET NULL  -- Link to generated audio asset
+);
+
+-- Add the voiceId column if it doesn't exist
+ALTER TABLE public."TtsPrediction" ADD COLUMN IF NOT EXISTS "voiceId" TEXT;
+
+-- Ensure required trigger function exists (idempotent)
+-- Note: This assumes trigger_set_timestamp is generally useful. If not, create a specific one.
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW."updatedAt" = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to use the function (idempotent)
+DROP TRIGGER IF EXISTS set_timestamp_tts_prediction ON public."TtsPrediction";
+CREATE TRIGGER set_timestamp_tts_prediction
+BEFORE UPDATE ON public."TtsPrediction"
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+-- Enable RLS and add policies (idempotent)
+ALTER TABLE public."TtsPrediction" ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow individual user access for TtsPrediction" ON public."TtsPrediction";
+CREATE POLICY "Allow individual user access for TtsPrediction" ON public."TtsPrediction"
+    FOR ALL USING (auth.uid() = "userId");
+
+DROP POLICY IF EXISTS "Allow service role access for TtsPrediction" ON public."TtsPrediction";
+CREATE POLICY "Allow service role access for TtsPrediction" ON public."TtsPrediction"
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- RLS Policies for TTS Predictions (Allow users to manage their own predictions)
+DROP POLICY IF EXISTS "Allow insert for authenticated users" ON public."TtsPrediction";
+CREATE POLICY "Allow insert for authenticated users" ON public."TtsPrediction"
+    FOR INSERT WITH CHECK (auth.uid() = "userId");
+
+DROP POLICY IF EXISTS "Allow select for owner" ON public."TtsPrediction";
+CREATE POLICY "Allow select for owner" ON public."TtsPrediction"
+    FOR SELECT USING (auth.uid() = "userId");
+
+DROP POLICY IF EXISTS "Allow update for owner" ON public."TtsPrediction";
+CREATE POLICY "Allow update for owner" ON public."TtsPrediction"
+    FOR UPDATE USING (auth.uid() = "userId");
+
+-- Note: Delete is likely not needed for users, maybe admin only?
+DROP POLICY IF EXISTS "Allow delete for owner" ON public."TtsPrediction";
+-- CREATE POLICY "Allow delete for owner" ON public."TtsPrediction"
+--     FOR DELETE USING (auth.uid() = "userId");
+
+-- ============================================================================
 -- PERMISSIONS
 -- ============================================================================
 -- Grant usage on the public schema

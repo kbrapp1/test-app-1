@@ -15,28 +15,24 @@ import {
     FileTextIcon,
     FileCodeIcon,
     UploadCloudIcon,
+    Volume2Icon,
 } from "lucide-react";
 
 // Define the types for navigation items
 export interface NavItem {
     title: string;
-    url: string;
+    url: string; // URL for the main item or '#' for collapsible trigger
     icon: LucideIcon;
     label?: string; // Optional label (e.g., for beta features)
-    items?: NavSubItem[]; // Optional sub-items for nested navigation (used in NavMain originally)
+    items?: NavSubItem[]; // Sub-items for collapsible sections
+    collapsible?: boolean; // Flag to indicate this item should be collapsible
 }
 
 export interface NavSubItem {
     title: string;
     url: string;
     label?: string;
-}
-
-// Define the type for document items (slightly different structure)
-export interface DocumentItem {
-    name: string;
-    url: string;
-    icon: LucideIcon;
+    icon?: LucideIcon; // Optional icon for sub-items
 }
 
 // Export the navigation data arrays
@@ -47,6 +43,40 @@ export const navMainItems: NavItem[] = [
         url: "/dashboard", // Use actual target path
         icon: LayoutDashboardIcon,
     },
+    {
+        title: "Documents", // New Collapsible Section
+        url: "#", // No direct link for the trigger
+        icon: FolderIcon, // Or another suitable icon like FileTextIcon
+        collapsible: true,
+        items: [
+            {
+                title: "Notes",
+                url: "/documents/notes",
+                icon: FileTextIcon,
+            },
+            {
+                title: "Asset Library",
+                url: "/dam",
+                icon: UploadCloudIcon,
+            },
+            // Add other document-related items here if needed
+            // {
+            //     title: "Data Library",
+            //     url: "#",
+            //     icon: DatabaseIcon,
+            // },
+            // {
+            //     title: "Reports",
+            //     url: "#",
+            //     icon: ClipboardListIcon,
+            // },
+            // {
+            //     title: "Word Assistant",
+            //     url: "#",
+            //     icon: FileIcon,
+            // },
+        ],
+    },
     // Add other main navigation items here based on your desired scaffold structure
     // Example:
     // {
@@ -55,42 +85,23 @@ export const navMainItems: NavItem[] = [
     //   icon: BarChartIcon,
     // },
     {
-        title: "Projects",
-        url: "#", // Placeholder URL
-        icon: FolderIcon,
-    },
-    {
         title: "Team",
         url: "/team", // Updated to point to the Team page
         icon: UsersIcon,
     },
-];
-
-export const navDocumentsItems: DocumentItem[] = [
     {
-        name: "Data Library",
-        url: "#",
-        icon: DatabaseIcon,
-    },
-    {
-        name: "Reports",
-        url: "#",
-        icon: ClipboardListIcon,
-    },
-    {
-        name: "Word Assistant",
-        url: "#",
-        icon: FileIcon,
-    },
-    {
-        name: "Notes",
-        url: "/documents/notes", // Point to the new page
-        icon: FileTextIcon, // Use an appropriate icon
-    },
-    {
-        name: "Asset Library",
-        url: "/dam", // Corrected link to the gallery page
-        icon: UploadCloudIcon, // Use an appropriate icon for assets/uploads
+        title: "AI Playground",
+        url: "#", // Change URL to # for collapsible trigger
+        icon: FileCodeIcon,
+        collapsible: true, // Make it collapsible
+        items: [ // Add sub-items
+            {
+                title: "Text to Speech",
+                url: "/ai-playground/text-to-speech", // Define sub-item route
+                icon: Volume2Icon, // Add icon
+            },
+            // Add other AI playground sub-items here later if needed
+        ],
     },
 ];
 
@@ -116,50 +127,5 @@ export const navSecondaryItems: NavItem[] = [
 
 // Example for items with sub-items (originally 'navClouds' in AppSidebar data)
 // This structure might need adaptation depending on how NavMain handles sub-items
-export const navExampleWithSubItems: NavItem[] = [
-     {
-       title: "Capture",
-       icon: CameraIcon,
-       url: "#",
-       items: [
-         {
-           title: "Active Proposals",
-           url: "#",
-         },
-         {
-           title: "Archived",
-           url: "#",
-         },
-       ],
-     },
-     {
-       title: "Proposal",
-       icon: FileTextIcon,
-       url: "#",
-       items: [
-         {
-           title: "Active Proposals",
-           url: "#",
-         },
-         {
-           title: "Archived",
-           url: "#",
-         },
-       ],
-     },
-     {
-       title: "Prompts",
-       icon: FileCodeIcon,
-       url: "#",
-       items: [
-         {
-           title: "Active Proposals",
-           url: "#",
-         },
-         {
-           title: "Archived",
-           url: "#",
-         },
-       ],
-     },
-]; 
+// Remove or adapt navExampleWithSubItems if no longer needed or update its structure
+// export const navExampleWithSubItems: NavItem[] = [ ... ]; 

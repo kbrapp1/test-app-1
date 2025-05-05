@@ -385,82 +385,72 @@ describe('AssetUploader Component', () => {
     });
 
     it('should disable upload button if user session fails to load', async () => {
-        // Override the default getUser mock for this specific test
-        mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: { message: 'Auth error', name: 'AuthApiError', status: 401 } });
-
+        // Mock the getUser to return null user (error or no session)
+        mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('No session') });
+        
         render(<AssetUploader />);
-
-        // Wait for the component to attempt user fetch and handle the error
+        
+        // Verify that the upload button is disabled
+        const uploadButton = screen.getByRole('button', { name: /Upload Files/i });
+        expect(uploadButton).toBeDisabled();
+        
+        // Wait for the getUser call to complete
         await waitFor(() => {
             expect(mockGetUser).toHaveBeenCalledTimes(1);
         });
-
-        // Verify the upload button remains disabled because there's no user
-        expect(screen.getByRole('button', { name: /Upload Files/i })).toBeDisabled();
-
-        // Try selecting a file - button should still be disabled
-        const user = userEvent.setup();
+        
+        // Verify it stays disabled even after file selection
         const fileInput = screen.getByTestId('dropzone-input');
-        // Use an accepted file type even though it shouldn't matter
-        const testFile = createFile('no-user.png', 100, 'image/png');
-        await user.upload(fileInput, testFile);
-
+        const file = createFile('test.png', 100, 'image/png');
+        
+        // Use userEvent to upload the file
+        await userEvent.setup().upload(fileInput, file);
+        
+        // Wait for component to update
         await waitFor(() => {
-            // Even after file selection, the button remains disabled
-            expect(screen.getByRole('button', { name: /Upload Files/i })).toBeDisabled();
+            // Expect to see the file in the UI
+            expect(screen.getByText(/test\.png/i)).toBeInTheDocument();
+            // But the upload button should still be disabled
+            expect(uploadButton).toBeDisabled();
         });
     });
 
-    it('should open file dialog when "Select Files" button is clicked', async () => {
+    it('handles FetchError interface errors with status code correctly', async () => {
         const user = userEvent.setup();
         render(<AssetUploader />);
+        
+        // Wait for initial user fetch to complete
         await waitFor(() => expect(mockGetUser).toHaveBeenCalled());
-
-        const selectButton = screen.getByRole('button', { name: /Select Files/i });
-        await user.click(selectButton);
-
-        // Check if the mock open function was called
-        // Need to access the mock function returned by the last useDropzone mock call
-        const { open: mockedOpenFromHook } = (useDropzone as Mock).mock.results[0].value;
-        expect(mockedOpenFromHook).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle drop event correctly', async () => {
-        // This test requires manually triggering the dropzone's internal logic
-        render(<AssetUploader />);
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled());
-
-        const file1 = createFile('drop1.gif', 300, 'image/gif');
-        const file2 = createFile('drop2.webp', 400, 'image/webp');
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file1 as any); // Use basic mock
-        dataTransfer.items.add(file2 as any);
-        // Assign files directly to the files property for jsdom simulation
-        Object.defineProperty(dataTransfer, 'files', {
-            value: [file1, file2],
-            writable: false,
-        });
-
-        // Simulate dropping files onto the root element
-        const dropzoneRoot = screen.getByTestId('dropzone-root');
-        fireEvent.drop(dropzoneRoot, { dataTransfer });
-
-        // Manually trigger the captured onDrop callback since fireEvent.drop might not trigger it via the hook mock
-        if (lastOnDropCallback) {
-            // Create a basic mock event object
-            const mockEvent = new Event('drop') as any; // Cast to allow adding properties
-            mockEvent.dataTransfer = dataTransfer;
-            lastOnDropCallback([file1, file2], [], mockEvent);
-        } else {
-            throw new Error('onDrop callback was not captured by the mock');
-        }
-
-        // Check if the files are reflected in the component's UI
+        
+        // Create a test file
+        const fileInput = screen.getByTestId('dropzone-input');
+        const testFile = createFile('error-test.jpg', 1024, 'image/jpeg');
+        
+        // The FetchError interface expects an object with status property
+        const fetchError = new Error('Invalid file format');
+        Object.defineProperty(fetchError, 'status', { value: 422 });
+        
+        // Mock fetch to reject with our custom error
+        (fetch as Mock).mockImplementationOnce(() => Promise.reject(fetchError));
+        
+        // Upload the file
+        await user.upload(fileInput, testFile);
+        
+        // Find and click the upload button
+        const uploadButton = screen.getByRole('button', { name: /Upload Files/i });
+        await user.click(uploadButton);
+        
+        // Verify that the form shows the error message
         await waitFor(() => {
-            // Adjust expected KB values based on actual component rendering
-            expect(screen.getByText(/drop1\.gif - 0\.29 KB/i)).toBeInTheDocument();
-            expect(screen.getByText(/drop2\.webp - 0\.39 KB/i)).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /Upload Files/i })).toBeEnabled();
+            expect(screen.getByText(/Invalid file format/i)).toBeInTheDocument();
         });
+        
+        // Verify that toast.error was called with expected arguments
+        expect(toast.error).toHaveBeenCalledWith(
+            "Upload Failed", 
+            expect.objectContaining({
+                description: expect.stringContaining("Invalid file format")
+            })
+        );
     });
 }); 

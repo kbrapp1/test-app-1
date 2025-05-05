@@ -1,0 +1,81 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# TypeScript Best Practices
+
+- **Avoid Using `any` Type**
+  - Use specific types or generics instead of `any`
+  - When types are complex, create interfaces or type aliases
+  - For API responses, model the expected structure with interfaces
+
+- **Proper Error Handling Types**
+  ```typescript
+  // ❌ DON'T: Use any for errors
+  try {
+    // code
+  } catch (error: any) {
+    console.error(error.message);
+  }
+  
+  // ✅ DO: Create specific error interfaces or use Error
+  interface ApiError extends Error {
+    status?: number;
+    code?: string;
+  }
+  
+  try {
+    // code
+  } catch (error) {
+    const apiError = error as ApiError;
+    console.error(apiError.message, apiError.status);
+  }
+  ```
+
+- **Use TypeScript Utility Types**
+  - Use built-in utility types like `Partial<T>`, `Pick<T>`, `Omit<T>`, etc.
+  - Example: `type UserUpdate = Partial<User>;`
+  - For function params that accept any object, use `Record<string, unknown>` instead of `any`
+
+- **Handle Unknown Types Properly**
+  - Use `unknown` instead of `any` when the type is truly not known
+  - Always validate and type-narrow unknown values before using them
+  
+  ```typescript
+  // ✅ DO: Use unknown with type narrowing
+  function processData(data: unknown): string {
+    if (typeof data === 'string') {
+      return data.toUpperCase();
+    }
+    if (typeof data === 'number') {
+      return data.toString();
+    }
+    throw new Error('Unsupported data type');
+  }
+  ```
+
+- **Declare Function Parameter and Return Types**
+  - Always include parameter and return types for functions
+  - Use `void` for functions that don't return a value
+  - For callbacks and event handlers with known signatures, use the appropriate types
+  
+  ```typescript
+  // ❌ DON'T: Implicit any in parameters or return
+  function fetchData(id) {
+    // implementation
+  }
+  
+  // ✅ DO: Explicitly type parameters and return values
+  function fetchData(id: string): Promise<User> {
+    // implementation
+  }
+  ```
+
+- **Follow TypeScript ESLint Rules**
+  - Use ESLint with `@typescript-eslint/no-explicit-any` rule
+  - Run `pnpm run lint` regularly to catch type issues
+  - Add proper JSDoc comments for better type documentation
+
+
+

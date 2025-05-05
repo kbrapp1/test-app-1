@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useCallback, useTransition, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 // Input is used by dropzone internally, no need to render it explicitly if using button trigger
 // import { Input } from '@/components/ui/input';
 import { toast as sonnerToast } from "sonner"; // Import sonner directly
 import { createClient } from '@/lib/supabase/client'; // Import browser client
 import type { User } from '@supabase/supabase-js';
+import { FetchError, UploadFormData } from '@/types/dam';
 
 // Define accepted file types
 const ACCEPTED_IMAGE_TYPES = {
@@ -16,8 +17,6 @@ const ACCEPTED_IMAGE_TYPES = {
   'image/gif': ['.gif'],
   'image/webp': ['.webp'],
 };
-
-// No longer defining server action here
 
 // --- Client Component ---
 export function AssetUploader() {
@@ -36,7 +35,7 @@ export function AssetUploader() {
     getUser();
   }, [supabase.auth]); // Re-run if auth object changes
 
-  const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
     setError(null); // Clear previous errors
     if (fileRejections.length > 0) {
       const rejectionError = fileRejections[0].errors[0].message || 'Invalid file type selected.';
@@ -88,8 +87,8 @@ export function AssetUploader() {
 
             sonnerToast.success("Upload Successful", { description: `${result.data?.length || 0} file(s) uploaded.` });
             setFiles([]);
-        } catch (err: any) {
-            const errorMessage = err.message || 'An unknown error occurred during upload.';
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during upload.';
             sonnerToast.error("Upload Failed", { description: errorMessage });
             setError(errorMessage);
         }

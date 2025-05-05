@@ -65,6 +65,11 @@ _General Rule: Use the versions specified in `package.json`. Avoid manual instal
     *   `@supabase/ssr` (`^0.6.1`): Helpers for Supabase Auth in server-side rendering environments (Next.js).
     *   `@supabase/auth-helpers-nextjs` (`^0.10.0`): (Potentially legacy or specific use case) Helpers specifically for older Next.js versions or Pages Router. `@supabase/ssr` is generally preferred for App Router.
 
+## External APIs / Services
+
+*   **Supabase:** Provides Database (Postgres), Authentication, Storage, and potentially Edge Functions.
+*   **Replicate:** (New) Used for running AI models, initially for Text-to-Speech (`jaaari/kokoro-82m`). Interacted with via the `replicate` Node.js client library.
+
 ## Testing Framework & Libraries
 
 *   **Test Runner & Framework:** Vitest (`^3.1.1`)

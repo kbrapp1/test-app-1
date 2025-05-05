@@ -35,6 +35,9 @@ This document provides a high-level overview of the main directories and their p
 |   |   |   |-- team/         # Team section (view/add team members)
 |   |   |   |   |-- page.tsx  # Team page (protected route, shows team members)
 |   |   |   |   `-- (other files)
+|   |   |   |-- ai-playground/    # New AI Playground Section
+|   |   |   |   `-- text-to-speech/ # Text-to-Speech feature route
+|   |   |   |       `-- page.tsx
 |   |   |   `-- layout.tsx    # Main protected area layout (header, sidebar).
 |   |   `-- layout.tsx        # Root layout (html, body, global providers).
 |   |-- api/                  # API routes (optional).
@@ -51,100 +54,118 @@ This document provides a high-level overview of the main directories and their p
 |   |-- dam/                  # Components specific to the DAM feature.
 |   |   |-- AssetGallery.tsx    # Renders the grid of assets.
 |   |   |-- AssetThumbnail.tsx  # Renders individual asset, handles delete.
-|   |   `-- AssetUploader.tsx   # UI for uploading assets.
-|   |-- settings/             # Settings related components.
-|   |   |-- profile-form.tsx
-|   |   |-- password-form.tsx
-|   |   |-- email-form.tsx      (Placeholder)
-|   |   |-- security-section.tsx(Placeholder)
-|   |   `-- danger-zone.tsx     (Placeholder with confirmation dialog)
-|   |-- notes/                # Components specific to the Notes feature.
-|   |   |-- note-list.tsx       # Renders the list/grid of notes, handles D&D context.
-|   |   |-- note-list-item.tsx  # Individual note display, D&D item, edit toggle, color picker.
-|   |   |-- note-edit-form.tsx  # Extracted form component for editing notes.
-|   |   |-- add-note-dialog.tsx # Dialog containing the add note form.
-|   |   `-- add-note-form.tsx   # Form for creating a new note.
-|   |-- context/              # React Context providers (e.g., Command Palette).
-|   |-- hooks/                # Custom React hooks (e.g., useToast, useMobile).
-|   |-- team/                 # Components for Team feature
-|   |   |-- AddTeamMemberForm.tsx      # Form for adding a team member
-|   |   |-- AddTeamMemberDialog.tsx    # Dialog for the add form
-|   |   |-- TeamMemberCard.tsx         # Card for displaying a team member
-|   |   |-- TeamMemberList.tsx         # List/grid of team members
-|   |   `-- (tests, etc.)
-|   |-- forms/                # Standardized form components
-|   |   |-- FormWrapper.tsx     # Main form component that handles validation and submission
-|   |   |-- TextField.tsx       # Standard text input field
-|   |   |-- SelectField.tsx     # Dropdown select field
-|   |   |-- CheckboxField.tsx   # Checkbox input field
-|   |   |-- TextareaField.tsx   # Multi-line text input
-|   |   |-- SwitchField.tsx     # Toggle switch field
-|   |   |-- CustomField.tsx     # Custom field wrapper
-|   |   `-- index.ts            # Re-exports all form components
-|   |-- error-boundary.tsx    # React error boundary for catching UI errors
-|   `-- ... (Shared components like sidebar, header, data-table, etc.)
+|   |   |-- AssetUploader.tsx   # UI for uploading assets.
+|   |   |-- asset-selector-modal.tsx # (New) Modal for selecting text assets
+|   |   |-- settings/             # Settings related components.
+|   |   |   |-- profile-form.tsx
+|   |   |   |-- password-form.tsx
+|   |   |   |-- email-form.tsx      (Placeholder)
+|   |   |   |-- security-section.tsx(Placeholder)
+|   |   |   |-- danger-zone.tsx     (Placeholder with confirmation dialog)
+|   |   |   `-- layout.tsx    # Main protected area layout (header, sidebar).
+|   |   |-- notes/                # Components specific to the Notes feature.
+|   |   |   |-- note-list.tsx       # Renders the list/grid of notes, handles D&D context.
+|   |   |   |-- note-list-item.tsx  # Individual note display, D&D item, edit toggle, color picker.
+|   |   |   |-- note-edit-form.tsx  # Extracted form component for editing notes.
+|   |   |   |-- add-note-dialog.tsx # Dialog containing the add note form.
+|   |   |   `-- add-note-form.tsx   # Form for creating a new note.
+|   |   |-- ai/                   # (New) Components specific to AI features
+|   |   |   `-- tts/              # (New) Components for Text-to-Speech
+|   |   |       |-- tts-form.tsx
+|   |   |       |-- voice-selector.tsx (Optional)
+|   |   |       |-- audio-output.tsx (Handles waveform)
+|   |   |       |-- tts-history-list.tsx
+|   |   |       `-- tts-history-item.tsx
+|   |   |-- context/              # React Context providers (e.g., Command Palette).
+|   |   |-- hooks/                # Custom React hooks (e.g., useToast, useMobile).
+|   |   |-- team/                 # Components for Team feature
+|   |   |   |-- AddTeamMemberForm.tsx      # Form for adding a team member
+|   |   |   |-- AddTeamMemberDialog.tsx    # Dialog for the add form
+|   |   |   |-- TeamMemberCard.tsx         # Card for displaying a team member
+|   |   |   |-- TeamMemberList.tsx         # List/grid of team members
+|   |   |   `-- (tests, etc.)
+|   |   |-- forms/                # Standardized form components
+|   |   |   |-- FormWrapper.tsx     # Main form component that handles validation and submission
+|   |   |   |-- TextField.tsx       # Standard text input field
+|   |   |   |-- SelectField.tsx     # Dropdown select field
+|   |   |   |-- CheckboxField.tsx   # Checkbox input field
+|   |   |   |-- TextareaField.tsx   # Multi-line text input
+|   |   |   |-- SwitchField.tsx     # Toggle switch field
+|   |   |   |-- CustomField.tsx     # Custom field wrapper
+|   |   |   `-- index.ts            # Re-exports all form components
+|   |   |-- error-boundary.tsx    # React error boundary for catching UI errors
+|   |   `-- ... (Shared components like sidebar, header, data-table, etc.)
+|   |
+|   |-- context/                  # React Context providers (e.g., Command Palette).
+|   |
+|   |-- hooks/                    # Custom React hooks (e.g., useToast, useMobile).
+|   |
+|   |-- lib/                      # Core logic, utilities, external service integrations.
+|   |   |-- actions/              # Server Actions.
+|   |   |   |-- dam.ts            # Actions for Digital Asset Management (upload, delete, listTextAssets, getAssetContent).
+|   |   |   |-- notes.ts          # Actions for Notes feature (add, edit, delete, reorder).
+|   |   |   |-- tts.ts            # (New) Actions for TTS (startSpeechGeneration, getSpeechGenerationResult, getTtsVoices, saveTtsHistory, saveTtsAudioToDam, etc.)
+|   |   |   |-- config/               # Config files (e.g., navigation structure).
+|   |   |   |-- supabase/             # Supabase client setup (client, server).
+|   |   |   |-- errors/               # Error handling system.
+|   |   |   |   |-- base.ts           # Base error classes (AppError, ValidationError, etc.)
+|   |   |   |   |-- constants.ts      # Error codes, messages, and severity levels
+|   |   |   |   |-- factory.ts        # Factory functions for creating error instances
+|   |   |   |   |-- client.tsx        # Client-side error handling utilities
+|   |   |   |   `-- __tests__/        # Tests for error classes and utilities
+|   |   |   |-- middleware/           # Middleware for API routes and server actions.
+|   |   |   |   |-- error.ts          # Error handling middleware
+|   |   |   |   `-- __tests__/        # Middleware tests
+|   |   |   |-- logging/              # Logging service.
+|   |   |   |   `-- index.ts          # Logger implementation with different log levels
+|   |   |   |-- forms/                # Form handling utilities.
+|   |   |   |   |-- validation.ts     # Zod validation schemas
+|   |   |   |   |-- useFormWithValidation.ts # Custom form hook
+|   |   |   |   `-- error-handling.ts # Form error handling utilities
+|   |   |   `-- utils.ts              # General utility functions.
+|   |   |-- public/                   # Static assets (images, fonts, etc.).
+|   |   |
+|   |   |-- styles/                   # Global CSS files.
+|   |   |
+|   |   |-- tests/                    # Optional: End-to-end/integration test location.
+|   |   |
+|   |   |-- .storybook/             # Storybook configuration and stories (for UI component development & testing).
+|   |   |
+|   |   |-- docs/                     # Project documentation (you are here!).
+|   |   |   |-- project-structure.md  # This file
+|   |   |   |-- form-system-migration.md # Migration guide for the standardized form system
+|   |   |   |-- error_handling_steps.md # Implementation plan for error handling system
+|   |   |   |-- settings-page-steps.md
+|   |   |   |-- deployment_steps.md
+|   |   |   |-- stack-rules.md
+|   |   |   |-- quick-tips.md
+|   |   |   |-- test-instructions.md
+|   |   |   |-- scaffold-checklist.md # Added/Updated
+|   |   |   |-- types/notes.ts        # Added for shared Note/ColorOption types
+|   |   |   |-- text-to-speech/       # (New) Documentation specific to TTS
+|   |   |   |   |-- tts-ux-design.md
+|   |   |   |   |-- tts-fsd.md
+|   |   |   |   `-- tts-build-steps.md
+|   |   |   `-- (other docs)
+|   |   |
+|   |   |-- .env.example              # Environment variable template (includes REPLICATE_API_TOKEN).
+|   |   |-- .env.local                # Local environment variables (Gitignored).
+|   |   |-- .gitignore                # Files/folders ignored by Git.
+|   |   |-- middleware.ts             # Request middleware (authentication enforcement).
+|   |   |-- next.config.mjs           # Next.js configuration.
+|   |   |-- package.json              # Project dependencies and scripts.
+|   |   |-- postcss.config.mjs        # PostCSS configuration.
+|   |   |-- tailwind.config.js        # Tailwind CSS configuration.
+|   |   |-- tsconfig.json             # TypeScript configuration.
+|   |   |-- vitest.config.ts          # Vitest testing configuration.
+|   |   |-- vitest.setup.ts         # Vitest test setup file.
+|   |   `-- README.md                 # Project overview.
+|   |
+|   |-- prisma/                   # Prisma ORM configuration
+|   |   `-- schema.prisma         # Database schema (includes `tts_history` table)
+|   |
+|   `-- ... (rest of the original structure)
 |
-|-- context/                  # React Context providers (e.g., Command Palette).
-|
-|-- hooks/                    # Custom React hooks (e.g., useToast, useMobile).
-|
-|-- lib/                      # Core logic, utilities, external service integrations.
-|   |-- actions/              # Server Actions.
-|   |   |-- dam.ts            # Actions for Digital Asset Management (upload, delete).
-|   |   `-- notes.ts          # Actions for Notes feature (add, edit, delete, reorder).
-|   |-- config/               # Config files (e.g., navigation structure).
-|   |-- supabase/             # Supabase client setup (client, server).
-|   |-- errors/               # Error handling system.
-|   |   |-- base.ts           # Base error classes (AppError, ValidationError, etc.)
-|   |   |-- constants.ts      # Error codes, messages, and severity levels
-|   |   |-- factory.ts        # Factory functions for creating error instances
-|   |   |-- client.tsx        # Client-side error handling utilities
-|   |   `-- __tests__/        # Tests for error classes and utilities
-|   |-- middleware/           # Middleware for API routes and server actions.
-|   |   |-- error.ts          # Error handling middleware
-|   |   `-- __tests__/        # Middleware tests
-|   |-- logging/              # Logging service.
-|   |   `-- index.ts          # Logger implementation with different log levels
-|   |-- forms/                # Form handling utilities.
-|   |   |-- validation.ts     # Zod validation schemas
-|   |   |-- useFormWithValidation.ts # Custom form hook
-|   |   `-- error-handling.ts # Form error handling utilities
-|   `-- utils.ts              # General utility functions.
-|
-|-- public/                   # Static assets (images, fonts, etc.).
-|
-|-- styles/                   # Global CSS files.
-|
-|-- tests/                    # Optional: End-to-end/integration test location.
-|
-|-- .storybook/             # Storybook configuration and stories (for UI component development & testing).
-|
-|-- docs/                     # Project documentation (you are here!).
-|   |-- project-structure.md  # This file
-|   |-- form-system-migration.md # Migration guide for the standardized form system
-|   |-- error_handling_steps.md # Implementation plan for error handling system
-|   |-- settings-page-steps.md
-|   |-- deployment_steps.md
-|   |-- stack-rules.md
-|   |-- quick-tips.md
-|   |-- test-instructions.md
-|   |-- scaffold-checklist.md # Added/Updated
-|   |-- types/notes.ts        # Added for shared Note/ColorOption types
-|   `-- (other docs)
-|
-|-- .env.example              # Environment variable template.
-|-- .env.local                # Local environment variables (Gitignored).
-|-- .gitignore                # Files/folders ignored by Git.
-|-- middleware.ts             # Request middleware (authentication enforcement).
-|-- next.config.mjs           # Next.js configuration.
-|-- package.json              # Project dependencies and scripts.
-|-- postcss.config.mjs        # PostCSS configuration.
-|-- tailwind.config.js        # Tailwind CSS configuration.
-|-- tsconfig.json             # TypeScript configuration.
-|-- vitest.config.ts          # Vitest testing configuration.
-|-- vitest.setup.ts         # Vitest test setup file.
-`-- README.md                 # Project overview.
-
 ```
 
 ## Key Project Files & Purpose
@@ -158,9 +179,11 @@ This document provides a high-level overview of the main directories and their p
 *   `app/(protected)/settings/page.tsx`: Redirects users from `/settings` to `/settings/profile`.
 *   `app/(protected)/settings/[section]/page.tsx`: Individual pages for each settings section (profile, password, etc.).
 *   `app/(protected)/team/page.tsx`: Server Component for the Team page (shows all team members, protected route).
+*   `app/(protected)/ai-playground/text-to-speech/page.tsx`: Main page for the TTS feature.
 *   `components/dam/AssetGallery.tsx`: Server Component that fetches asset data from Supabase and renders the gallery grid using `AssetThumbnail`.
 *   `components/dam/AssetThumbnail.tsx`: Client Component that displays an individual asset image and includes the delete button and confirmation dialog logic.
 *   `components/dam/AssetUploader.tsx`: Client Component providing the UI for file selection, drag-and-drop, and triggering the upload action.
+*   `components/dam/asset-selector-modal.tsx`: Reusable modal for browsing and selecting text assets from the DAM.
 *   `components/notes/note-list.tsx`: Client Component that manages note state for D&D, renders `NoteListItem` components, handles D&D context and `onDragEnd` logic.
 *   `components/notes/note-list-item.tsx`: Client Component for displaying a single note, acting as a D&D item (`useSortable`), handling edit state toggle, rendering `NoteEditForm` or display view, and rendering the color picker.
 *   `components/notes/note-edit-form.tsx`: Client Component containing the form fields, state (`useActionState`), and logic for submitting note edits.
@@ -178,7 +201,7 @@ This document provides a high-level overview of the main directories and their p
 *   `lib/forms/error-handling.ts`: Utilities for handling form validation errors.
 *   `lib/actions/dam.ts`: Contains Server Actions (`uploadAssets`, `deleteAsset`) for managing digital assets in Supabase Storage and the database.
 *   `lib/actions/notes.ts`: Contains Server Actions (`addNote`, `editNote`, `deleteNote`, `updateNoteOrder`) for managing notes data in Supabase.
-*   `middleware.ts`: Enforces authentication, redirecting users based on login status and target route.
+*   `lib/actions/tts.ts`: Server Actions specifically for TTS (interacting with Replicate, saving history, saving audio to DAM).
 *   `lib/supabase/client.ts`: Creates the client-side Supabase instance.
 *   `lib/supabase/server.ts`: Creates the server-side Supabase instance (used by Server Components/Actions).
 *   `lib/config/navigation.ts`: Defines the links and structure for the main application sidebar.
@@ -191,6 +214,10 @@ This document provides a high-level overview of the main directories and their p
 *   `components/team/AddTeamMemberDialog.tsx`: Dialog/modal for the add form.
 *   `components/team/TeamMemberCard.tsx`: Card UI for displaying a team member (with hover effect).
 *   `components/team/TeamMemberList.tsx`: Renders the list/grid of team members.
+*   `components/ai/tts/tts-form.tsx`: Client component handling TTS input, configuration, and triggering generation.
+*   `components/ai/tts/audio-output.tsx`: Client component displaying the generated audio with waveform visualization and controls (play, download, save, share).
+*   `components/ai/tts/tts-history-list.tsx` / `tts-history-item.tsx`: Components for displaying the user's TTS generation history with links to DAM assets.
+*   `prisma/schema.prisma`: Defines database tables, including the new `tts_history` table.
 
 ## Detailed Directory Contents
 
@@ -280,6 +307,10 @@ This document provides a high-level overview of the main directories and their p
 *   `test-instructions.md`
 *   `scaffold-checklist.md` (Added/Updated)
 *   `types/notes.ts` (Added for shared Note/ColorOption types)
+*   `text-to-speech/` (New) Documentation specific to TTS
+*   `tts-ux-design.md`
+*   `tts-fsd.md`
+*   `tts-build-steps.md`
 
 ## Notes & Conventions
 

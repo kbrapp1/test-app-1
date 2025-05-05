@@ -1,9 +1,16 @@
 "use client"
 
+import type { NavItem } from "@/lib/config/navigation";
 import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -12,15 +19,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 export function NavMain({
   items,
 }: {
-  items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-  }[]
+  items: NavItem[]
 }) {
   const { setOpenMobile } = useSidebar()
 
@@ -44,21 +48,54 @@ export function NavMain({
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <Link href={item.url} passHref legacyBehavior>
-                <a>
-                  <SidebarMenuButton 
-                    tooltip={item.title}
-                    onClick={() => setOpenMobile(false)} 
+          <Accordion type="multiple" className="w-full">
+            {items.map((item) => (
+              item.collapsible && item.items ? (
+                <AccordionItem key={item.title} value={item.title} className="border-none">
+                  <AccordionTrigger
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-normal hover:bg-muted hover:no-underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    )}
                   >
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-                </a>
-              </Link>
-            </SidebarMenuItem>
-          ))}
+                    {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
+                    <span className="flex-1 truncate">{item.title}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-1 pl-5">
+                    {item.items.map((subItem) => (
+                      <SidebarMenuItem key={subItem.title} className="my-0.5">
+                        <Link href={subItem.url} passHref legacyBehavior>
+                          <a>
+                            <SidebarMenuButton
+                              tooltip={subItem.title}
+                              onClick={() => setOpenMobile(false)}
+                              className="flex h-8 items-center justify-start gap-2 px-2 text-sm group-data-[collapsible=icon]:justify-center"
+                            >
+                              {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
+                              <span className="group-data-[collapsible=icon]:opacity-0">{subItem.title}</span>
+                            </SidebarMenuButton>
+                          </a>
+                        </Link>
+                      </SidebarMenuItem>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              ) : (
+                <SidebarMenuItem key={item.title}>
+                  <Link href={item.url} passHref legacyBehavior>
+                    <a>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        onClick={() => setOpenMobile(false)}
+                      >
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </a>
+                  </Link>
+                </SidebarMenuItem>
+              )
+            ))}
+          </Accordion>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

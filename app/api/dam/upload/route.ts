@@ -12,9 +12,32 @@ import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { ValidationError, DatabaseError, ExternalServiceError } from '@/lib/errors/base';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { ApiResponse } from '@/types/dam';
+
+// Simple type for upload result items (different from Asset)
+interface UploadResultItem {
+    name: string;
+    storagePath: string;
+    size: number;
+    type: string;
+}
+
+// Define specific error types for better error handling
+interface StorageError extends Error {
+    message: string;
+    status?: number;
+    details?: string;
+}
+
+interface DatabaseQueryError extends Error {
+    message: string;
+    code?: string;
+    details?: string;
+}
 
 // Define the actual handler function that will be wrapped with auth middleware
-async function postHandler(request: NextRequest, user: User, _supabase: any) {
+async function postHandler(request: NextRequest, user: User, _supabase: SupabaseClient) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     const userId = user.id; // Use authenticated user ID instead of from formData
@@ -35,7 +58,7 @@ async function postHandler(request: NextRequest, user: User, _supabase: any) {
         auth: { persistSession: false }
     });
 
-    const uploadedAssetsData = [];
+    const uploadedAssetsData: UploadResultItem[] = [];
     let storagePath: string | null = null;
 
     for (const file of files) {
@@ -83,21 +106,28 @@ async function postHandler(request: NextRequest, user: User, _supabase: any) {
                 type: file.type,
             });
 
-        } catch (error: any) {
+        } catch (error: StorageError | DatabaseQueryError | Error | unknown) {
             // Attempt cleanup in case of error
             if (storagePath) {
                 try {
                     await removeFile(supabaseAdmin, 'assets', storagePath);
-                } catch (cleanupError: any) {
+                } catch (cleanupError: StorageError | Error | unknown) {
                     // Cleanup errors should not prevent the main error from being thrown
                 }
             }
             // Rethrow as DatabaseError to be handled by error middleware
-            throw new DatabaseError(error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error during upload';
+            throw new DatabaseError(errorMessage);
         }
     }
 
-    return NextResponse.json({ message: 'Upload successful', data: uploadedAssetsData }, { status: 200 });
+    const response: Omit<ApiResponse, 'data'> & { data: UploadResultItem[] } = { 
+        success: true, 
+        message: 'Upload successful', 
+        data: uploadedAssetsData 
+    };
+    
+    return NextResponse.json(response, { status: 200 });
 }
 
 // Export the POST handler wrapped with authentication and error handling

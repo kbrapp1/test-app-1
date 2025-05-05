@@ -1,3 +1,13 @@
+/**
+ * Global Error Component
+ * 
+ * This component handles application-level errors that occur during rendering.
+ * It displays a user-friendly error message and provides a way to recover.
+ * 
+ * Note: This is a Client Component as required by Next.js for error boundaries.
+ */
+
+
 'use client'; // Error components must be Client Components
 
 import { useEffect } from 'react';

@@ -126,7 +126,7 @@ describe('Notes Server Actions', () => {
             });
         });
 
-        it('should return auth error if getUser throws', async () => {
+         it('should return auth error if getUser throws', async () => {
             mockGetUser.mockRejectedValueOnce(new Error('Auth fetch failed'));
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
@@ -155,7 +155,7 @@ describe('Notes Server Actions', () => {
             
             const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
             const result = await addNote(null, formData);
-            
+
             expect(result).toEqual({ 
                 success: false, 
                 message: 'Failed to prepare note saving. Please try again.', 

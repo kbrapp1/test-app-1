@@ -8,6 +8,9 @@
 // Keep imports needed for deleteAsset
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { Database } from '@/types/supabase';
 
 // Remove the entire uploadAssets function
 /*
@@ -168,6 +171,153 @@ export async function deleteAsset(assetId: string, storagePath: string): Promise
         return { success: true };
 
     } catch (err: any) {
+        return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
+// ============================================================================
+// LIST TEXT ASSETS ACTION
+// ============================================================================
+
+// Define acceptable text MIME types for filtering
+const TEXT_MIME_TYPES = [
+    'text/plain',
+    'text/markdown',
+    'text/csv',
+    'application/json', // Often used for text-based data
+    'application/xml',  // Often used for text-based data
+    // Add other text-based types as needed (e.g., text/html, text/rtf)
+];
+
+// Define the shape of the returned asset data
+interface TextAssetSummary {
+    id: string;
+    name: string;
+    created_at: string;
+    // Add other fields if needed for the asset selector (e.g., folder_id)
+}
+
+/**
+ * Fetches a list of assets owned by the current user that match
+ * common text file MIME types.
+ */
+export async function listTextAssets(): Promise<{
+    success: boolean;
+    data?: TextAssetSummary[];
+    error?: string;
+}> {
+    const cookieStore = cookies();
+    // Use createServerActionClient for Server Actions
+    const supabase = createServerActionClient<Database>({ cookies: () => cookieStore });
+
+    try {
+        // 1. Get Authenticated User
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.error('listTextAssets: Auth Error', authError);
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 2. Query Assets Table
+        const { data, error } = await supabase
+            .from('assets')
+            .select('id, name, created_at') // Select needed fields
+            .eq('user_id', user.id)       // Filter by user
+            .in('mime_type', TEXT_MIME_TYPES) // Filter by text MIME types
+            .order('name', { ascending: true }); // Order alphabetically by name
+
+        if (error) {
+            console.error('listTextAssets: DB Query Error', error);
+            // TODO: Wrap with lib/errors
+            return { success: false, error: `Failed to fetch text assets: ${error.message}` };
+        }
+
+        // 3. Return Success
+        return { success: true, data: data || [] };
+
+    } catch (err: any) {
+        console.error('listTextAssets: Unexpected Error', err);
+        // TODO: Wrap with lib/errors
+        return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
+// ============================================================================
+// GET ASSET CONTENT ACTION
+// ============================================================================
+
+/**
+ * Fetches the content of a specific text asset from Supabase Storage.
+ */
+export async function getAssetContent(assetId: string): Promise<{
+    success: boolean;
+    content?: string;
+    error?: string;
+}> {
+    if (!assetId) {
+        return { success: false, error: 'Asset ID is required.' };
+    }
+
+    const cookieStore = cookies();
+    const supabase = createServerActionClient<Database>({ cookies: () => cookieStore });
+    // Also need a client for storage operations - use createClient from server helpers
+    const supabaseStorage = createClient(); // Use the existing helper for storage
+
+    try {
+        // 1. Get Authenticated User
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.error('getAssetContent: Auth Error', authError);
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 2. Fetch Asset Metadata (including storage_path and user_id for verification)
+        const { data: asset, error: dbError } = await supabase
+            .from('assets')
+            .select('id, storage_path, user_id, mime_type') // Select path and owner
+            .eq('id', assetId)
+            .single(); // Expect one asset
+
+        if (dbError) {
+            console.error('getAssetContent: DB Fetch Error', dbError);
+            return { success: false, error: `Error fetching asset metadata: ${dbError.message}` };
+        }
+        if (!asset) {
+            return { success: false, error: 'Asset not found.' };
+        }
+        if (asset.user_id !== user.id) {
+            console.warn('getAssetContent: User mismatch', { userId: user.id, assetOwner: asset.user_id });
+            return { success: false, error: 'Permission denied.' };
+        }
+        // Optional: Verify if the fetched asset is actually a text type again?
+        if (!TEXT_MIME_TYPES.includes(asset.mime_type)) {
+             console.warn('getAssetContent: Attempted to get content for non-text asset', { assetId, mimeType: asset.mime_type });
+             return { success: false, error: 'Cannot fetch content for this file type.' };
+        }
+
+        // 3. Download Content from Storage
+        const { data: blobData, error: storageError } = await supabaseStorage.storage
+            .from('assets') // Ensure this matches your bucket name
+            .download(asset.storage_path);
+
+        if (storageError) {
+            console.error('getAssetContent: Storage Download Error', storageError);
+            return { success: false, error: `Failed to download asset content: ${storageError.message}` };
+        }
+        if (!blobData) {
+            return { success: false, error: 'Downloaded asset content is empty.' };
+        }
+
+        // 4. Convert Blob to Text
+        // Ensure the text() method is awaited, as it returns a Promise<string>
+        const textContent = await blobData.text();
+
+        // 5. Return Success
+        return { success: true, content: textContent };
+
+    } catch (err: any) {
+        console.error('getAssetContent: Unexpected Error', err);
+        // TODO: Wrap with lib/errors
         return { success: false, error: err.message || 'An unexpected error occurred.' };
     }
 } 

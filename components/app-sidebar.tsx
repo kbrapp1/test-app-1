@@ -22,11 +22,9 @@ import Image from "next/image"
 
 import {
   navMainItems,
-  navDocumentsItems,
   navSecondaryItems
 } from "@/lib/config/navigation"
 
-import { NavDocuments } from "./nav-documents"
 import { NavMain } from "./nav-main"
 import { NavSecondary } from "./nav-secondary"
 import { NavUser } from "./nav-user"
@@ -56,7 +54,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainItems} />
-        <NavDocuments items={navDocumentsItems} />
         <NavSecondary items={navSecondaryItems} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
