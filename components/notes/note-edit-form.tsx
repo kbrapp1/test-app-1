@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckIcon, XIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/components/ui/use-toast";
 import type { Note } from '@/types/notes';
 
 // --- Action Type --- 

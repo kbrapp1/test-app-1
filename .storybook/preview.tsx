@@ -3,7 +3,7 @@ import React from 'react';
 import { ThemeProvider } from "next-themes"
 
 // Import global styles
-import '../styles/globals.css'
+import '../app/globals.css'
 
 // Theme provider decorator
 const withTheme: Decorator = (Story, context) => {

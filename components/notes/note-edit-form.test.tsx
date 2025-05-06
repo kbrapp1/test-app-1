@@ -1,19 +1,23 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { NoteEditForm } from './note-edit-form';
-import { useToast } from '@/hooks/use-toast';
-import type { Note } from '@/types/notes';
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { NoteEditForm } from "./note-edit-form";
+import type { Note } from "@/types/notes";
 
 // --- Mocks ---
 const mockEditAction = vi.fn();
 const mockOnCancel = vi.fn();
 const mockOnSaveSuccess = vi.fn();
 
-// Mock useToast
-const mockToast = vi.fn();
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: mockToast }),
+// Mock the server action
+vi.mock("@/lib/actions/notes", () => ({
+  editNoteAction: vi.fn(),
+}));
+
+// Mock the toast hook from the correct path
+const mockToastFn = vi.fn();
+vi.mock("@/components/ui/use-toast", () => ({
+  useToast: () => ({ toast: mockToastFn }),
 }));
 
 // --- Test Setup ---
@@ -41,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Reset action mock to resolve successfully by default
   mockEditAction.mockResolvedValue({ success: true, message: 'Updated from test' });
+  mockToastFn.mockClear();
 });
 
 // --- Tests ---
@@ -120,7 +125,7 @@ describe('NoteEditForm', () => {
         await user.click(screen.getByRole('button', { name: /save note/i }));
 
         await waitFor(() => {
-            expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+            expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({
                 title: 'Success',
                 description: successMessage,
                 variant: 'default',
@@ -138,7 +143,7 @@ describe('NoteEditForm', () => {
         await user.click(screen.getByRole('button', { name: /save note/i }));
 
         await waitFor(() => {
-            expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+            expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({
                 title: 'Error',
                 description: errorMessage,
                 variant: 'destructive',

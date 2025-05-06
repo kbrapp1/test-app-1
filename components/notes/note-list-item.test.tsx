@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event'; // For better interaction simulation
-import { NoteListItem } from './note-list-item';
-import { useToast } from '@/hooks/use-toast';
-import type { Mock } from 'vitest'; // Import Mock type
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event"; // For better interaction simulation
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import { NoteListItem } from "./note-list-item"; // Removed NoteListItemProps
+import type { Note } from "@/types/notes";
+// Removed problematic imports, actions are mocked below
+// import { deleteNoteAction, updateNoteColorAction } from "@/lib/actions/notes";
+// import { editNote } from "@/lib/actions/notes";
 
 // --- Mocks ---
 
@@ -20,10 +22,16 @@ import { deleteNote, editNote } from '@/app/(protected)/documents/notes/actions'
 const mockDeleteNoteAction = deleteNote as Mock;
 const mockEditNoteAction = editNote as Mock;
 
-// Mock useToast
-const mockToast = vi.fn();
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: mockToast }),
+// Mock the server action
+vi.mock("@/lib/actions/notes", () => ({
+  deleteNoteAction: vi.fn(),
+  updateNoteColorAction: vi.fn(),
+}));
+
+// Mock the toast hook from the correct path
+const mockToastFn = vi.fn();
+vi.mock("@/components/ui/use-toast", () => ({
+  useToast: () => ({ toast: mockToastFn }),
 }));
 
 // Mock dnd-kit useSortable
@@ -54,6 +62,7 @@ vi.mock('date-fns', async (importOriginal) => {
     };
 });
 
+vi.mock("next/navigation");
 
 // --- Test Setup ---
 const mockNote = {
@@ -190,7 +199,7 @@ describe('NoteListItem', () => {
 
          // Wait for state update and effect
         await waitFor(() => {
-             expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+             expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({
                  title: 'Error',
                  description: 'Delete Failed',
                  variant: 'destructive',

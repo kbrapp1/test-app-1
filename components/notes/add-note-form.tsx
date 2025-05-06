@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";

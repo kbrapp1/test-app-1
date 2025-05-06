@@ -1,4 +1,3 @@
-
 /**
  * Next.js Server Component that renders a form for adding a new team member.
  * It includes fields for name, title, primary image, and secondary image.
@@ -23,7 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import {
   teamMemberFormSchema, 
   type TeamMemberFormValues, 

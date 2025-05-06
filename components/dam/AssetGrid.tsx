@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { moveAsset } from '@/lib/actions/dam'; 
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { FixedSizeGrid } from 'react-window';
 // Import shared types
 import { Asset, Folder, CombinedItem } from '@/types/dam';

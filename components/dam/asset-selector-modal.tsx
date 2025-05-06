@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
 import { listTextAssets } from '@/lib/actions/dam'; // Import the action
 import { ScrollArea } from "@/components/ui/scroll-area"; // For potentially long lists
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileTextIcon, AlertCircleIcon } from 'lucide-react';
+import { FileTextIcon, AlertCircleIcon, SearchIcon } from 'lucide-react';
 import { Asset } from '@/types/dam'; // Import the shared Asset type
 
 // Remove local TextAsset type - use imported Asset type
@@ -37,6 +38,7 @@ export function AssetSelectorModal({
   const [assets, setAssets] = useState<Asset[]>([]); 
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // State for search term
 
   useEffect(() => {
     if (open && !hasFetched && !isLoading) {
@@ -44,10 +46,19 @@ export function AssetSelectorModal({
         setIsLoading(true);
         setError(null);
         try {
-          // Assume listTextAssets returns data compatible with Asset[]
           const result = await listTextAssets(); 
           if (result.success && result.data) {
-            setAssets(result.data);
+            // Make sure data conforms to Asset[] before setting state
+            const validAssets = result.data.map(item => ({
+              ...item,
+              type: 'asset', // Assuming listTextAssets only returns assets
+              publicUrl: '', // Add placeholder if not returned by action
+              storage_path: '', // Add placeholder if not returned by action
+              mime_type: 'text/plain', // Add placeholder if not returned
+              size: 0, // Add placeholder if not returned
+              folder_id: null // Add placeholder if not returned
+            })) as Asset[];
+            setAssets(validAssets);
           } else {
             setError(result.error || 'Failed to fetch assets.');
           }
@@ -63,8 +74,19 @@ export function AssetSelectorModal({
     }
     if (!open) {
         setHasFetched(false); // Reset fetch status when closed
+        setSearchTerm(''); // Reset search term when closed
     }
   }, [open, hasFetched, isLoading]);
+
+  // Filter assets based on search term
+  const filteredAssets = useMemo(() => {
+    if (!searchTerm) {
+      return assets;
+    }
+    return assets.filter(asset => 
+      asset.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [assets, searchTerm]);
 
   // Use the imported Asset type for the parameter
   const handleSelect = (asset: Asset) => { 
@@ -79,7 +101,20 @@ export function AssetSelectorModal({
         <DialogHeader>
           <DialogTitle>Select Text Asset</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[400px] w-full p-4 border rounded-md">
+
+        {/* Search Input */}
+        <div className="relative">
+          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search assets by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8"
+          />
+        </div>
+
+        <ScrollArea className="h-[400px] w-full p-4 border rounded-md mt-2">
           {isLoading && !hasFetched && (
             <div className="space-y-2">
               <Skeleton className="h-10 w-full" data-testid="skeleton-item" />
@@ -94,17 +129,25 @@ export function AssetSelectorModal({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          {!isLoading && !error && assets.length === 0 && hasFetched && (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <FileTextIcon className="h-12 w-12 mb-2" />
-              <p>No text assets found in your library.</p>
-              <p className="text-sm">(Supported types: .txt, .md)</p> 
-              {/* TODO: Add link to upload page? */}
-            </div>
+          {/* Use filteredAssets for rendering */}
+          {!isLoading && !error && filteredAssets.length === 0 && (
+             hasFetched && searchTerm ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <SearchIcon className="h-12 w-12 mb-2" />
+                  <p>No assets found matching "{searchTerm}".</p>
+              </div>
+             ) : hasFetched ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <FileTextIcon className="h-12 w-12 mb-2" />
+                  <p>No text assets found in your library.</p>
+                  <p className="text-sm">(Supported types: .txt, .md)</p> 
+              </div>
+             ) : null // Still loading or initial state
           )}
-          {!isLoading && !error && assets.length > 0 && (
+          {!isLoading && !error && filteredAssets.length > 0 && (
             <ul className="space-y-2">
-              {assets.map((asset) => (
+              {/* Map over filteredAssets */}
+              {filteredAssets.map((asset) => (
                 <li key={asset.id} className="flex items-center justify-between p-2 border rounded-md hover:bg-accent">
                   <div className='flex items-center gap-2'>
                      <FileTextIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />

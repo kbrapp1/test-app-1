@@ -24,20 +24,32 @@ export function AssetGridItem({ item, index, priorityThreshold, style }: AssetGr
   };
 
   return (
-    <div style={innerStyle}>
-      {item.type === 'folder' ? (
-        <FolderThumbnail folder={item as Folder} />
-      ) : (
-        <AssetThumbnail
-          src={(item as Asset).publicUrl}
-          alt={item.name}
-          assetId={item.id}
-          storagePath={(item as Asset).storage_path}
-          folderId={(item as Asset).folder_id}
-          type={item.type}
-          isPriority={index < priorityThreshold && (item as Asset).mime_type.startsWith('image/')}
-        />
-      )}
+    <div style={innerStyle} className="flex flex-col items-center text-center relative group">
+      {/* Filename displayed at the top */}
+      <div 
+        className="w-full px-1 pt-1 pb-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 truncate text-center bg-gray-100 dark:bg-gray-700 rounded-t-md border-b border-gray-200 dark:border-gray-600"
+        title={item.name}
+      >
+        {item.name}
+      </div>
+
+      {/* Thumbnail Area */}
+      <div className="w-full h-full flex-grow relative">
+        {item.type === 'folder' ? (
+          <FolderThumbnail folder={item as Folder} />
+        ) : (
+          <AssetThumbnail
+            src={(item as Asset).publicUrl}
+            alt={item.name}
+            assetId={item.id}
+            storagePath={(item as Asset).storage_path}
+            folderId={(item as Asset).folder_id}
+            type={item.type}
+            isPriority={index < priorityThreshold && (item as Asset).mime_type.startsWith('image/')}
+            mimeType={(item as Asset).mime_type}
+          />
+        )}
+      </div>
     </div>
   );
 } 

@@ -16,12 +16,10 @@ import React from 'react';
 import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/schemas/team';
 
 // --- Mocks ---
-// Mock useToast
-const mockToast = vi.fn();
-vi.mock('@/hooks/use-toast', () => ({
-    useToast: () => ({
-        toast: mockToast,
-    }),
+// Mock the toast hook
+const mockToastFn = vi.fn();
+vi.mock("@/components/ui/use-toast", () => ({
+  useToast: () => ({ toast: mockToastFn }),
 }));
 
 // Mock fetch
@@ -54,14 +52,15 @@ const renderFormInDialog = (props = {}) => {
 };
 
 describe('AddTeamMemberForm', () => {
+    const onSuccessMock = vi.fn();
+
     beforeEach(() => {
-        // Reset mocks before each test
         vi.clearAllMocks();
         (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
             ok: true,
             json: async () => ({ success: true }),
         });
-        mockToast.mockClear();
+        mockToastFn.mockClear();
     });
 
     it('renders all form fields', () => {
@@ -139,7 +138,6 @@ describe('AddTeamMemberForm', () => {
 
     it('calls fetch with FormData on valid submission', async () => {
         const user = userEvent.setup();
-        const onSuccessMock = vi.fn();
         renderFormInDialog({ onSuccess: onSuccessMock });
 
         const nameInput = screen.getByLabelText(/Name/i);
@@ -172,7 +170,7 @@ describe('AddTeamMemberForm', () => {
             expect(formData.get('secondaryImage')).toBeInstanceOf(File);
              expect((formData.get('secondaryImage') as File).name).toBe('secondary.png');
 
-            expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Success' }));
+            expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({ title: 'Success' }));
             expect(onSuccessMock).toHaveBeenCalledTimes(1);
         });
     });

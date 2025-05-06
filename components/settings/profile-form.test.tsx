@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ProfileForm } from './profile-form';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 // Mock Supabase client
 vi.mock('@/lib/supabase/client', () => ({
@@ -19,7 +19,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 // Mock useToast hook
 const mockToast = vi.fn();
-vi.mock('@/hooks/use-toast', () => ({
+vi.mock("@/components/ui/use-toast", () => ({
   useToast: vi.fn(() => ({ toast: mockToast })),
 }));
 

@@ -63,11 +63,6 @@ async function postHandler(request: NextRequest, user: User, _supabase: Supabase
 
     for (const file of files) {
         try {
-            if (!file.type.startsWith('image/')) {
-                // Skip non-image files silently
-                continue;
-            }
-
             const uniqueSuffix = crypto.randomUUID();
             storagePath = `${userId}/${uniqueSuffix}-${file.name}`;
 

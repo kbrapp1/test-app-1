@@ -11,11 +11,23 @@ import type { User } from '@supabase/supabase-js';
 import { FetchError, UploadFormData } from '@/types/dam';
 
 // Define accepted file types
-const ACCEPTED_IMAGE_TYPES = {
+const ACCEPTED_FILE_TYPES = {
+  // Images
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/gif': ['.gif'],
   'image/webp': ['.webp'],
+  // Audio
+  'audio/mpeg': ['.mp3'],
+  'audio/wav': ['.wav'],
+  'audio/ogg': ['.ogg'],
+  'audio/x-wav': ['.wav'],
+  // Documents
+  'application/pdf': ['.pdf'],
+  'text/plain': ['.txt'],
+  'text/markdown': ['.md'],
+  'application/msword': ['.doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 };
 
 // --- Client Component ---
@@ -48,7 +60,7 @@ export function AssetUploader() {
 
   const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject, open } = useDropzone({
     onDrop,
-    accept: ACCEPTED_IMAGE_TYPES,
+    accept: ACCEPTED_FILE_TYPES,
     multiple: true,
     noClick: true,
     noKeyboard: true,
@@ -121,7 +133,7 @@ export function AssetUploader() {
             Select Files
         </Button>
         <p className="text-xs text-gray-500 mt-2">
-          Accepted formats: JPG, PNG, GIF, WEBP
+          Accepted formats: Images (JPG, PNG, GIF, WEBP), Audio (MP3, WAV, OGG), Documents (PDF, TXT, MD, DOC, DOCX)
         </p>
       </div>
 

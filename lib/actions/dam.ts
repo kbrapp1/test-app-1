@@ -206,9 +206,8 @@ export async function listTextAssets(): Promise<{
     data?: TextAssetSummary[];
     error?: string;
 }> {
-    const cookieStore = cookies();
-    // Use createServerActionClient for Server Actions
-    const supabase = createServerActionClient<Database>({ cookies: () => cookieStore });
+    // Use the standard server client from @/lib/supabase/server
+    const supabase = createClient();
 
     try {
         // 1. Get Authenticated User
@@ -258,10 +257,8 @@ export async function getAssetContent(assetId: string): Promise<{
         return { success: false, error: 'Asset ID is required.' };
     }
 
-    const cookieStore = cookies();
-    const supabase = createServerActionClient<Database>({ cookies: () => cookieStore });
-    // Also need a client for storage operations - use createClient from server helpers
-    const supabaseStorage = createClient(); // Use the existing helper for storage
+    // Use the standard server client for all operations
+    const supabase = createClient(); 
 
     try {
         // 1. Get Authenticated User
@@ -296,7 +293,8 @@ export async function getAssetContent(assetId: string): Promise<{
         }
 
         // 3. Download Content from Storage
-        const { data: blobData, error: storageError } = await supabaseStorage.storage
+        // Use the same authenticated client for storage operations
+        const { data: blobData, error: storageError } = await supabase.storage 
             .from('assets') // Ensure this matches your bucket name
             .download(asset.storage_path);
 
@@ -318,6 +316,178 @@ export async function getAssetContent(assetId: string): Promise<{
     } catch (err: any) {
         console.error('getAssetContent: Unexpected Error', err);
         // TODO: Wrap with lib/errors
+        return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
+// ============================================================================
+// UPDATE ASSET TEXT ACTION
+// ============================================================================
+
+/**
+ * Updates the content of an existing text asset in Supabase Storage.
+ */
+export async function updateAssetText(
+    assetId: string, 
+    newContent: string
+): Promise<{ success: boolean; error?: string }> {
+    if (!assetId) {
+        return { success: false, error: 'Asset ID is required.' };
+    }
+
+    const supabase = createClient(); // Use standard server client
+
+    try {
+        // 1. Get Authenticated User
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.error('updateAssetText: Auth Error', authError);
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 2. Fetch Asset Metadata (storage_path, user_id for verification, mime_type)
+        const { data: asset, error: dbError } = await supabase
+            .from('assets')
+            .select('storage_path, user_id, mime_type') 
+            .eq('id', assetId)
+            .single();
+
+        if (dbError) {
+            console.error('updateAssetText: DB Fetch Error', dbError);
+            return { success: false, error: `Error fetching asset metadata: ${dbError.message}` };
+        }
+        if (!asset) {
+            return { success: false, error: 'Asset not found.' };
+        }
+        if (asset.user_id !== user.id) {
+            return { success: false, error: 'Permission denied.' };
+        }
+        // Ensure we are only updating text-based assets
+        if (!TEXT_MIME_TYPES.includes(asset.mime_type)) {
+             return { success: false, error: 'Cannot update content for this file type.' };
+        }
+
+        // 3. Prepare new content as Blob
+        const contentBlob = new Blob([newContent], { type: asset.mime_type });
+        const newSize = contentBlob.size;
+
+        // 4. Upload (overwrite) Content to Storage
+        const { error: storageError } = await supabase.storage
+            .from('assets')
+            .upload(asset.storage_path, contentBlob, { 
+                upsert: true, // Important: Allow overwriting 
+                contentType: asset.mime_type 
+            }); 
+
+        if (storageError) {
+            console.error('updateAssetText: Storage Upload Error', storageError);
+            return { success: false, error: `Failed to update asset content in storage: ${storageError.message}` };
+        }
+
+        // 5. Update asset metadata (size, potentially modified_at if added)
+        const { error: updateMetaError } = await supabase
+            .from('assets')
+            .update({ size: newSize /*, updated_at: new Date().toISOString() */ })
+            .match({ id: assetId });
+
+        if (updateMetaError) {
+            // Log error, but maybe return success as content was updated?
+            console.error('updateAssetText: DB Metadata Update Error', updateMetaError);
+             // Or: return { success: false, error: `Failed to update asset metadata: ${updateMetaError.message}` };
+        }
+
+        // 6. Revalidate relevant paths (optional, depending on how DAM displays content/previews)
+        // revalidatePath('/dam');
+        // revalidatePath(`/dam/asset/${assetId}`); 
+
+        return { success: true };
+
+    } catch (err: any) {
+        console.error('updateAssetText: Unexpected Error', err);
+        return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
+// ============================================================================
+// SAVE AS NEW TEXT ASSET ACTION
+// ============================================================================
+
+/**
+ * Saves the provided text content as a new asset in Supabase.
+ */
+export async function saveAsNewTextAsset(
+    content: string,
+    desiredName: string,
+    // folderId?: string | null // Optional: Add later if needed
+): Promise<{ success: boolean; error?: string; data?: { newAssetId: string } }> {
+    if (!desiredName) {
+        return { success: false, error: 'Asset name is required.' };
+    }
+
+    const supabase = createClient(); // Use standard server client
+
+    try {
+        // 1. Get Authenticated User
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.error('saveAsNewTextAsset: Auth Error', authError);
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // 2. Prepare Blob and Metadata
+        const mimeType = 'text/plain'; // Default to text/plain for new saves
+        const contentBlob = new Blob([content], { type: mimeType });
+        const fileSize = contentBlob.size;
+        const fileName = desiredName.endsWith('.txt') ? desiredName : `${desiredName}.txt`;
+        const storagePath = `${user.id}/${crypto.randomUUID()}-${fileName}`;
+
+        // 3. Upload to Supabase Storage
+        const { data: uploadData, error: storageError } = await supabase.storage
+            .from('assets')
+            .upload(storagePath, contentBlob, { contentType: mimeType });
+
+        if (storageError) {
+            console.error('saveAsNewTextAsset: Storage Upload Error', storageError);
+            return { success: false, error: `Storage upload failed: ${storageError.message}` };
+        }
+        if (!uploadData?.path) {
+             return { success: false, error: 'Storage upload failed silently.' };
+        }
+
+        // 4. Create record in 'assets' database table
+        const { data: assetRecord, error: dbError } = await supabase
+            .from('assets')
+            .insert({
+                user_id: user.id,
+                name: fileName,
+                storage_path: uploadData.path, 
+                mime_type: mimeType,
+                size: fileSize,
+                // folder_id: folderId ?? null // Add if folder support needed
+            })
+            .select('id') 
+            .single();
+
+        if (dbError) {
+            console.error('saveAsNewTextAsset: DB Insert Error', dbError);
+            // Attempt cleanup
+            await supabase.storage.from('assets').remove([uploadData.path]);
+            return { success: false, error: `Failed to save asset metadata: ${dbError.message}` };
+        }
+        if (!assetRecord?.id) {
+             console.error('saveAsNewTextAsset: DB Insert Error - No ID returned');
+             await supabase.storage.from('assets').remove([uploadData.path]);
+             return { success: false, error: 'Failed to save asset metadata (no ID returned).' };
+        }
+
+        // 5. Revalidate Path
+        revalidatePath('/dam');
+
+        // 6. Return Success with new Asset ID
+        return { success: true, data: { newAssetId: assetRecord.id } };
+
+    } catch (err: any) {
+        console.error('saveAsNewTextAsset: Unexpected Error', err);
         return { success: false, error: err.message || 'An unexpected error occurred.' };
     }
 } 

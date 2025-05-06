@@ -288,6 +288,9 @@ CREATE TABLE IF NOT EXISTS public."TtsPrediction" (
 -- Add the voiceId column if it doesn't exist
 ALTER TABLE public."TtsPrediction" ADD COLUMN IF NOT EXISTS "voiceId" TEXT;
 
+-- Add the errorMessage column if it doesn't exist
+ALTER TABLE public."TtsPrediction" ADD COLUMN IF NOT EXISTS "errorMessage" TEXT;
+
 -- Ensure required trigger function exists (idempotent)
 -- Note: This assumes trigger_set_timestamp is generally useful. If not, create a specific one.
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
@@ -309,8 +312,8 @@ EXECUTE FUNCTION trigger_set_timestamp();
 ALTER TABLE public."TtsPrediction" ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow individual user access for TtsPrediction" ON public."TtsPrediction";
-CREATE POLICY "Allow individual user access for TtsPrediction" ON public."TtsPrediction"
-    FOR ALL USING (auth.uid() = "userId");
+-- CREATE POLICY "Allow individual user access for TtsPrediction" ON public."TtsPrediction"
+--     FOR ALL USING (auth.uid() = "userId"); <-- Removed this redundant policy
 
 DROP POLICY IF EXISTS "Allow service role access for TtsPrediction" ON public."TtsPrediction";
 CREATE POLICY "Allow service role access for TtsPrediction" ON public."TtsPrediction"
@@ -331,8 +334,8 @@ CREATE POLICY "Allow update for owner" ON public."TtsPrediction"
 
 -- Note: Delete is likely not needed for users, maybe admin only?
 DROP POLICY IF EXISTS "Allow delete for owner" ON public."TtsPrediction";
--- CREATE POLICY "Allow delete for owner" ON public."TtsPrediction"
---     FOR DELETE USING (auth.uid() = "userId");
+CREATE POLICY "Allow delete for owner" ON public."TtsPrediction"
+    FOR DELETE USING (auth.uid() = "userId");
 
 -- ============================================================================
 -- PERMISSIONS

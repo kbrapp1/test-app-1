@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { User } from '@supabase/supabase-js';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

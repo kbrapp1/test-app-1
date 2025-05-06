@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { NoteListItem } from './note-list-item'; 
 import type { Note } from '@/types/notes'; // Import central type
 import { updateNoteOrder } from '@/app/(protected)/documents/notes/actions'; // Import the new action
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 // dnd-kit imports
 import {

@@ -121,9 +121,8 @@ body {
     --sidebar-border: 220 13% 91%; /* light gray border (like light theme) */
     --sidebar-ring: 192.9 86.1% 61.8%; /* ironmark-blue (focus ring) */
   }
-}
 
-@layer base {
+  /* Merged base styles */
   * {
     @apply border-border;
   }

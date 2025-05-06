@@ -28,8 +28,8 @@ This document outlines the planned steps to implement the Text-to-Speech feature
     *   [x] Initializes Replicate client.
     *   [x] Calls `replicate.predictions.get(predictionId)`.
     *   [x] Returns an object containing `{ success, status, outputUrl, error }`.
-    *   [x] Updates `TtsPrediction` table on final status.
-    *   [x] Downloads audio from Replicate and uploads to Supabase Storage ('assets' bucket).
+    *   [x] Updates `TtsPrediction` table on final status (including the potentially temporary `outputUrl` from Replicate).
+    *   [x] **Change Required:** Remove any existing logic in this function that automatically downloads the audio and uploads it to the final Supabase 'assets' bucket. This process is now handled explicitly by `saveTtsAudioToDam` (Step 9) triggered by the user (Step 11).
     *   [ ] Wraps errors using `lib/errors`. (Basic try/catch implemented, full integration pending)
 *   [x] *Testing:* Unit tests for both actions:
     *   [x] Mock the `replicate` client methods (`predictions.create`, `predictions.get`).
@@ -89,6 +89,7 @@ This document outlines the planned steps to implement the Text-to-Speech feature
     *   [x] Conditionally render the `<audio>` element only when `audioUrl` is present.
     *   [x] Use browser default controls.
 *   [x] Add download button for the generated audio.
+*   [x] **Fix:** Implement JavaScript-based solution to reliably download audio files by fetching as blob and using programmatic download, instead of relying on the HTML download attribute.
 *   [x] *Testing:* Write unit tests for `tts-interface.tsx` output area:
     *   [x] Verify it renders placeholder when `audioUrl` is null/undefined.
     *   [x] Verify the `<audio>` element renders with correct `src` when `audioUrl` is provided.
@@ -124,10 +125,11 @@ This document outlines the planned steps to implement the Text-to-Speech feature
 *   [x] Implement `listTextAssets` Server Action in `lib/actions/dam.ts` (filter `assets` table by text MIME types).
 *   [x] Implement `getAssetContent` Server Action in `lib/actions/dam.ts` (use Supabase client to fetch file content by path/name derived from asset ID).
 *   [x] Implement `saveTtsAudioToDam` Server Action in `lib/actions/tts.ts`:
-    *   [x] Accepts audio URL, user ID.
-    *   [x] Downloads audio from URL (e.g., using `fetch`).
+    *   [x] Accepts temporary audio URL (from `TtsPrediction`), user ID, prediction ID.
+    *   [x] **Next Change Required:** Ensure this action handles downloading the audio content from the provided temporary URL before proceeding with the upload and DB operations.
     *   [x] Uploads audio Blob/Buffer to Supabase Storage (bucket: `assets`).
     *   [x] Creates a new record in the `assets` table (determine filename, MIME type, size, etc.).
+    *   [x] Updates the original `TtsPrediction` record to link to the new `asset.id` (`output_asset_id`).
     *   [x] Returns the new `asset.id`.
 *   [x] *Testing:* Unit tests for these actions (mocking Supabase client, Supabase storage client, `fetch`).
 
@@ -157,14 +159,14 @@ This document outlines the planned steps to implement the Text-to-Speech feature
 
 **Step 11: Frontend - Save Audio to DAM & History Update**
 *   [x] Add "Save to Library" button to `components/tts/tts-interface.tsx` (appears conditionally when audio generated).
-*   [ ] In `tts-interface.tsx`, implement a handler (`handleSaveToLibrary`) triggered by the button press.
+*   [x] In `tts-interface.tsx`, implement a handler (`handleSaveToLibrary`) triggered by the button press.
     *   [x] Sets a saving state (`isSavingToDam`).
-    *   [ ] Calls `saveTtsAudioToDam` with the `audioResultUrl`.
-    *   [ ] On success, receives `output_asset_id`.
-    *   [ ] Calls `saveTtsHistory` with all relevant data including `sourceAssetId` (if set) and the new `output_asset_id`.
+    *   [x] Calls `saveTtsAudioToDam` with the temporary `audioResultUrl` and `predictionId` to perform the actual download, upload to Supabase 'assets', and DB updates. (**Note:** This is the explicit trigger for permanent saving).
+    *   [x] On success, receives `output_asset_id`.
+    *   [ ] Calls `saveTtsHistory` with all relevant data including `sourceAssetId` (if set) and the new `output_asset_id`. (Or update history UI directly).
     *   [ ] Updates history display or indicates successful save (e.g., via toast).
     *   [ ] Handles errors from save actions.
-*   [ ] Update the `saveTtsHistory` action call made *after polling completes* to only include `sourceAssetId` initially (or skip this initial save if saving to DAM is the primary way history gets created).
+*   [ ] ~~Update the `saveTtsHistory` action call made *after polling completes* to only include `sourceAssetId` initially (or skip this initial save if saving to DAM is the primary way history gets created).~~ (History update now primarily tied to explicit save)
 *   *Testing:* Update `tts-interface.tsx` tests to simulate clicking "Save", verify action calls (`saveTtsAudioToDam`, `saveTtsHistory`) and state updates.
 
 **Step 12: Frontend - History UI Update**
@@ -179,7 +181,64 @@ This document outlines the planned steps to implement the Text-to-Speech feature
 *   [ ] Implement logic to refresh history list when an item is saved to DAM.
 *   *Testing:* Integration tests for history display. Unit tests for list/item components verifying conditional rendering.
 
-**Step 13: Frontend & Backend - Shareable Links**
+**(Review Point 2: Voice selection, DAM loading/saving, and history display working - Partially Achieved)**
+
+## Phase 3: Output UI Enhancements (Waveform Player)
+
+**Step 14: Dependency & Component Setup**
+*   [ ] **Install Library:** Add `wavesurfer.js` dependency: `pnpm add wavesurfer.js @types/wavesurfer.js`.
+*   [ ] **Create Component:** Build `components/ui/waveform-audio-player.tsx`.
+    *   [ ] This component will be a client component (`'use client'`).
+    *   [ ] It accepts `audioUrl: string` as a prop.
+    *   [ ] Use `useRef` for the waveform container element.
+    *   [ ] Use `useEffect` to initialize `wavesurfer.js` instance when `audioUrl` changes or component mounts.
+    *   [ ] Configure `wavesurfer.js` options (e.g., colors, height, progress bar element, responsiveness).
+    *   [ ] Implement basic controls (Play/Pause button).
+    *   [ ] Implement display for current time / duration.
+    *   [ ] Ensure proper cleanup of the `wavesurfer.js` instance in the `useEffect` return function.
+*   [ ] *Testing:* Unit tests for `waveform-audio-player.tsx`:
+    *   [ ] Verify initialization with a valid URL.
+    *   [ ] Simulate play/pause clicks.
+    *   [ ] Test cleanup logic.
+
+**Step 15: Integrate Waveform Player**
+*   [ ] In `components/tts/tts-interface.tsx`:
+    *   [ ] Remove the existing `<audio>` element.
+    *   [ ] Import and render the `<WaveformAudioPlayer audioUrl={audioUrl} />` component conditionally when `audioUrl` is present.
+*   [ ] *Testing:* Update `tts-interface.tsx` integration tests to verify the `WaveformAudioPlayer` component renders instead of the standard `<audio>` tag.
+
+**Step 16: Backend - Delete Action**
+*   [ ] Create `deleteTtsPrediction` Server Action in `lib/actions/tts.ts`.
+    *   [ ] Accepts `predictionId: string`.
+    *   [ ] Authenticates the user.
+    *   [ ] Verifies the user owns the prediction record.
+    *   [ ] Deletes the audio file from Supabase Storage if `audio_url` points to Supabase Storage.
+    *   [ ] Deletes the record from the `TtsPrediction` table.
+    *   [ ] Returns `{ success: boolean, error?: string }`.
+*   [ ] *Testing:* Unit tests for `deleteTtsPrediction`, mocking Supabase client, storage client, and auth.
+
+**Step 17: Frontend - Update Output Actions**
+*   [ ] In `components/tts/tts-interface.tsx`:
+    *   [ ] Change the `CardTitle` in the output card to "Results".
+    *   [ ] In the `CardFooter` of the output card:
+        *   [ ] Add a "Tweak it" `Button`. (Placeholder functionality for now - perhaps just logs a message or resets the form).
+        *   [ ] Ensure the "Download" `Button` works correctly (using an `<a>` tag or `fetch`).
+        *   [ ] Add a "Delete" `Button` (variant="destructive").
+            *   [ ] Wrap the Delete button `onClick` with an `AlertDialog` (`@/components/ui/alert-dialog`) for confirmation.
+            *   [ ] On confirmation, call the `deleteTtsPrediction` action with the current `predictionId`.
+            *   [ ] On success, clear the `audioUrl`, `currentPredictionId`, and potentially refresh history.
+            *   [ ] Display toast notifications for success/failure.
+    *   [ ] Consider adding state to track deletion (`isDeleting`).
+*   [ ] *Testing:* Update `tts-interface.tsx` tests:
+    *   [ ] Verify "Results" title.
+    *   [ ] Verify presence and initial state of "Tweak it", "Download", "Delete" buttons.
+    *   [ ] Simulate clicking "Delete", confirm dialog appearance, confirm action call on confirmation, verify state updates (clearing audioUrl, etc.).
+
+**(Review Point 3: Waveform player integrated, output actions (Tweak, Download, Delete) implemented - Pending)**
+
+## Phase 4: Advanced Features & Polish
+
+**(Existing Step 13: Shareable Links)**
 *   [ ] **Decision:** Determine if Replicate output URLs are stable/long-lived enough or if audio needs copying to Supabase Storage.
 *   [ ] If copying needed: Update `saveTtsHistory` to download from Replicate URL and upload to Supabase Storage, saving the storage URL instead.
 *   [ ] Implement `generateShareableLink` action (if needed, e.g., for temporary signed URLs from Supabase Storage).

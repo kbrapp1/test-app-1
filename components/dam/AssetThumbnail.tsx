@@ -29,6 +29,24 @@ interface AssetThumbnailProps {
   folderId: string | null;
   type: 'asset';
   isPriority?: boolean;
+  mimeType?: string;
+}
+
+function getPlaceholderForMimeType(mimeType: string | undefined): string {
+  if (!mimeType) return '/placeholder.png';
+  
+  if (mimeType.startsWith('audio/')) {
+    return '/placeholders/audio.svg';
+  } else if (
+    mimeType.startsWith('text/') || 
+    mimeType === 'application/pdf' || 
+    mimeType.includes('document') ||
+    mimeType.includes('msword')
+  ) {
+    return '/placeholders/document.svg';
+  }
+  
+  return '/placeholders/generic.svg';
 }
 
 export function AssetThumbnail({
@@ -38,12 +56,14 @@ export function AssetThumbnail({
     storagePath,
     folderId,
     type,
-    isPriority = false
+    isPriority = false,
+    mimeType
 }: AssetThumbnailProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const fallbackSrc = '/placeholder.png';
+  
+  const fallbackSrc = getPlaceholderForMimeType(mimeType);
 
   const { 
       attributes, 
@@ -68,8 +88,18 @@ export function AssetThumbnail({
 
   const handleError = () => {
     console.warn(`Failed to load image: ${src}. Falling back to placeholder.`);
+    if (mimeType && !mimeType.startsWith('image/')) {
     setImgSrc(fallbackSrc);
+    } else {
+      setImgSrc('/placeholder.png');
+    }
   };
+
+  React.useEffect(() => {
+    if (mimeType && !mimeType.startsWith('image/')) {
+      setImgSrc(fallbackSrc);
+    }
+  }, [mimeType, fallbackSrc]);
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {

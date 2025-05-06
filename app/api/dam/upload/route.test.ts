@@ -89,21 +89,29 @@ describe('POST /api/dam/upload', () => {
     ]);
   });
 
-  it('should skip non-image files', async () => {
-    mockUploadFile.mockResolvedValue(Promise.resolve({ path: 'test-user-id/mock-uuid-image.jpg', error: null }));
-    mockInsertData.mockResolvedValue(Promise.resolve({ data: { id: 'mock-asset-id' }, error: null }));
+  it('should upload both image and non-image files', async () => {
+    mockUploadFile
+      .mockResolvedValueOnce(Promise.resolve({ path: 'test-user-id/mock-uuid-image.jpg', error: null }))
+      .mockResolvedValueOnce(Promise.resolve({ path: 'test-user-id/mock-uuid-doc.pdf', error: null }));
+    mockInsertData
+      .mockResolvedValueOnce(Promise.resolve({ data: { id: 'mock-asset-id-image' }, error: null }))
+      .mockResolvedValueOnce(Promise.resolve({ data: { id: 'mock-asset-id-pdf' }, error: null }));
+    
     const imageFile = new File(['img'], 'image.jpg', { type: 'image/jpeg' });
     const docFile = new File(['doc'], 'doc.pdf', { type: 'application/pdf' });
     const request = new Request('https://example.com/api/dam/upload', { method: 'POST' });
     request.formData = vi.fn().mockResolvedValue({ getAll: (_: string) => [imageFile, docFile] } as unknown as FormData);
+    
     const response = await POST(request as unknown as NextRequest);
     expect(response.status).toBe(200);
+    
     const data = await response.json();
     expect(data.message).toBe('Upload successful');
     expect(data.data).toEqual([
-      { name: 'image.jpg', storagePath: 'test-user-id/mock-uuid-image.jpg', size: imageFile.size, type: imageFile.type }
+      { name: 'image.jpg', storagePath: 'test-user-id/mock-uuid-image.jpg', size: imageFile.size, type: imageFile.type },
+      { name: 'doc.pdf', storagePath: 'test-user-id/mock-uuid-doc.pdf', size: docFile.size, type: docFile.type }
     ]);
-    expect(mockUploadFile).toHaveBeenCalledTimes(1);
+    expect(mockUploadFile).toHaveBeenCalledTimes(2);
   });
 
   it('should return 500 if storage upload fails', async () => {

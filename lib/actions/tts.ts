@@ -241,159 +241,76 @@ export async function getSpeechGenerationResult(replicatePredictionId: string): 
       return { success: false, status: 'unknown', audioUrl: null, error: 'Prediction not found.', ttsPredictionDbId: null };
     }
 
-    // If still processing, return current status
-    if (prediction.status !== 'succeeded' && prediction.status !== 'failed' && prediction.status !== 'canceled') {
-      // Return explicit type match, ensuring audioUrl is null
-      // Find the associated DB record ID even during processing if possible?
-      // For now, return null ID if not succeeded.
+    // Explicitly handle processing statuses
+    if (prediction.status === 'starting' || prediction.status === 'processing') {
       return { success: true, status: prediction.status, audioUrl: null, error: null, ttsPredictionDbId: null };
     }
 
-    // If failed or canceled, update DB and return error
+    // 2. If succeeded, use the Replicate output URL directly
+    if (prediction.status === 'succeeded' && prediction.output) {
+      const temporaryAudioUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+
+      if (typeof temporaryAudioUrl === 'string' && temporaryAudioUrl.startsWith('http')) {
+          // Update DB with final status and the TEMPORARY Replicate URL
+          const { data: updateResult, error: updateError } = await supabase
+            .from('TtsPrediction')
+            .update({ status: 'succeeded', outputUrl: temporaryAudioUrl }) // Save Replicate URL
+            .eq('replicatePredictionId', replicatePredictionId)
+            
+          // Fetch ID separately...
+          let dbPredictionId: string | null = null;
+          if (!updateError) {
+             const { data: fetchRecord, error: fetchError } = await supabase
+                .from('TtsPrediction')
+                .select('id')
+                .eq('replicatePredictionId', replicatePredictionId)
+                .single();
+             if (fetchError) {
+                console.error('Failed to fetch DB ID after successful update:', fetchError);
+             } else {
+                dbPredictionId = fetchRecord?.id ?? null;
+             }
+          } else {
+             console.error('Database update error after success:', updateError);
+          }
+          
+          // Return success with the temporary Replicate URL and the DB ID (fetched separately)
+          return {
+            success: true,
+            status: 'succeeded',
+            audioUrl: temporaryAudioUrl,
+            error: null,
+            ttsPredictionDbId: dbPredictionId,
+          };
+      } else {
+        console.error(`Replicate prediction ${replicatePredictionId} succeeded but output URL is invalid:`, prediction.output);
+        // Update DB status to failed if output is unusable
+        await supabase.from('TtsPrediction').update({ status: 'failed', outputUrl: null, error: 'Invalid output URL received' }).eq('replicatePredictionId', replicatePredictionId);
+        // Return explicit type match
+        return { success: false, status: 'failed', audioUrl: null, error: 'Prediction succeeded but output was invalid.', ttsPredictionDbId: null };
+      }
+    }
+
+    // 3. Handle failed or canceled status from Replicate
     if (prediction.status === 'failed' || prediction.status === 'canceled') {
-      console.error(`Replicate prediction ${replicatePredictionId} failed or was canceled. Status: ${prediction.status}, Error: ${prediction.error}`);
-      // Fetch DB ID before updating, if needed for return, although not strictly necessary for failure case
-      const { data: failedDbPrediction } = await supabase
-        .from('TtsPrediction')
-        .select('id')
-        .eq('replicatePredictionId', replicatePredictionId)
-        .maybeSingle(); // Use maybeSingle as it might fail
-        
+      const errorDetails = prediction.error ? JSON.stringify(prediction.error) : 'Prediction failed or was canceled.';
+      console.error(`Replicate prediction ${replicatePredictionId} failed or was canceled. Status: ${prediction.status}, Error: ${errorDetails}`);
+
+      // Update DB with final status and error
       const { error: updateError } = await supabase
         .from('TtsPrediction')
-        .update({ 
-          status: prediction.status
-        })
+        .update({ status: prediction.status, outputUrl: null, error: errorDetails })
         .eq('replicatePredictionId', replicatePredictionId);
 
       if (updateError) {
-        console.error(`Failed to update prediction status in DB for ${replicatePredictionId}:`, updateError);
-        // Don't block user-facing error return if DB update fails
+        console.error('Database update error after failure/cancel:', updateError);
       }
-      const replicateErrorString = typeof prediction.error === 'string' 
-        ? prediction.error 
-        : (prediction.error ? JSON.stringify(prediction.error) : 'Unknown Replicate error');
       // Return explicit type match
-      return { success: false, status: prediction.status, audioUrl: null, error: replicateErrorString, ttsPredictionDbId: failedDbPrediction?.id ?? null };
+      return { success: false, status: prediction.status, audioUrl: null, error: errorDetails, ttsPredictionDbId: null };
     }
 
-    // --- If SUCCEEDED ---
-    
-    // --- Check the associated DB record BEFORE processing output ---
-    // Verify the prediction belongs to the current user and get its current state
-    const { data: dbPrediction, error: dbError } = await supabase
-      .from('TtsPrediction')
-      .select('id, status, userId, outputUrl') // Changed back to outputUrl from output_url
-      .eq('replicatePredictionId', replicatePredictionId)
-      .single(); // Expect only one record
-
-    if (dbError || !dbPrediction) {
-      console.error(`Database error fetching prediction ${replicatePredictionId}:`, dbError);
-      // Don't expose DB error details directly to the client
-      return { success: false, status: 'unknown', audioUrl: null, error: 'Failed to retrieve prediction details.', ttsPredictionDbId: null }; 
-    }
-
-    // Security check: Ensure the prediction belongs to the authenticated user
-    if (dbPrediction.userId !== user.id) {
-      console.warn(`User ${user.id} attempted to access prediction ${replicatePredictionId} owned by ${dbPrediction.userId}`);
-      return { success: false, status: 'unknown', audioUrl: null, error: 'Permission denied.', ttsPredictionDbId: null }; 
-    }
-    
-    // --- Check if already processed and stored ---
-    // If the DB status is already 'succeeded' and has an outputUrl, return that.
-    // Prevents re-downloading/re-uploading if called multiple times after success.
-    if (dbPrediction.status === 'succeeded' && dbPrediction.outputUrl) { // Changed back to outputUrl from output_url
-        console.log(`Prediction ${replicatePredictionId} already processed. Returning stored URL: ${dbPrediction.outputUrl}`); // Changed back to outputUrl from output_url
-        // Return the existing DB ID as well
-        return { success: true, status: 'succeeded', audioUrl: dbPrediction.outputUrl, error: null, ttsPredictionDbId: dbPrediction.id }; // Changed back to outputUrl from output_url
-    }
-
-    // 2. Get the audio output URL from Replicate result
-    if (!prediction.output || typeof prediction.output !== 'string') {
-      console.error(`Prediction ${replicatePredictionId} succeeded but has no valid output URL:`, prediction.output);
-      // Update DB status to reflect the issue
-      const { error: updateError } = await supabase
-        .from('TtsPrediction')
-        .update({ 
-          status: 'failed' // Mark as failed due to missing output
-        })
-        .eq('replicatePredictionId', replicatePredictionId);
-      
-      if (updateError) console.error('Failed to update DB for missing output URL:', updateError);
-      // Return explicit type match
-      return { success: false, status: 'failed', audioUrl: null, error: 'Prediction completed but output is missing.', ttsPredictionDbId: dbPrediction.id };
-    }
-
-    const audioUrl = prediction.output;
-
-    // 3. (Optional but Recommended) Download audio and upload to Supabase Storage
-    // This prevents relying on temporary Replicate URLs.
-    // Generate a unique filename
-    const fileName = `tts-audio-${user.id}-${randomUUID()}.mp3`; // Ensure crypto import exists
-    const filePath = `${user.id}/${fileName}`; // Store in user-specific folder
-
-    console.log(`Fetching audio from Replicate URL: ${audioUrl}`);
-    const audioResponse = await fetch(audioUrl);
-    if (!audioResponse.ok) {
-      console.error(`Failed to fetch audio from Replicate URL: ${audioUrl}, Status: ${audioResponse.status}`);
-      // Update DB status? May not be necessary if we just return error here.
-      // Return explicit type match
-      return { success: false, status: 'failed', audioUrl: null, error: 'Failed to retrieve generated audio file.', ttsPredictionDbId: dbPrediction.id };
-    }
-    const audioBlob = await audioResponse.blob();
-    console.log(`Audio blob size: ${audioBlob.size}`);
-
-    console.log(`Uploading audio to Supabase Storage at path: ${filePath}`);
-    // Use existing client
-    const { data: uploadData, error: uploadError } = await supabase.storage 
-      .from('assets') // Changed from 'tts_audio' to 'assets'
-      .upload(filePath, audioBlob, {
-        contentType: 'audio/mpeg',
-        upsert: false, // Don't overwrite existing files with the same name (should be unique anyway)
-      });
-      
-    if (uploadError) {
-      console.error('Supabase Storage upload error:', uploadError);
-      // Update DB status?
-       // Return explicit type match
-       return { success: false, status: 'failed', audioUrl: null, error: 'Failed to save audio to storage.', ttsPredictionDbId: dbPrediction.id };
-    }
-    
-    console.log('Upload successful:', uploadData);
-
-    // 4. Get public URL for the stored audio
-    // Use existing client
-    const { data: publicUrlData } = supabase.storage 
-        .from('assets') // Changed from 'tts_audio' to 'assets'
-        .getPublicUrl(filePath);
-        
-    const storageUrl = publicUrlData?.publicUrl;
-    
-    if (!storageUrl) {
-        console.error('Failed to get public URL for stored audio:', filePath);
-         // Update DB status?
-         // Return explicit type match
-        return { success: false, status: 'failed', audioUrl: null, error: 'Failed to get public URL for saved audio.', ttsPredictionDbId: dbPrediction.id };
-    }
-    console.log(`Audio saved to Supabase Storage: ${storageUrl}`);
-
-    // 5. Update the prediction record in the database with the final status and storage URL
-    const { error: finalUpdateError } = await supabase
-      .from('TtsPrediction')
-      .update({
-        status: 'succeeded',
-        outputUrl: storageUrl // Store the Supabase Storage URL
-      })
-      // Update using the fetched primary key for robustness
-      .eq('id', dbPrediction.id); 
-
-    if (finalUpdateError) {
-      console.error(`Failed to update final prediction status in DB for ${replicatePredictionId}:`, finalUpdateError);
-      // Return success as the audio IS generated and stored, but log the DB update failure.
-      // The client still gets the URL. Subsequent calls might fix the DB state via the check at the start.
-    }
-    // Return explicit type match, ensuring the correct storageUrl is returned
-    return { success: true, status: 'succeeded', audioUrl: storageUrl, error: null, ttsPredictionDbId: dbPrediction.id };
+    // 4. Handle unexpected status (Should ideally not be reached if all statuses covered)
+    return { success: false, status: prediction.status ?? 'unknown', audioUrl: null, error: 'Unexpected prediction status from Replicate.', ttsPredictionDbId: null };
 
   } catch (error) {
     console.error(`Error getting speech generation result for ${replicatePredictionId}:`, error);
@@ -488,32 +405,16 @@ export async function saveTtsAudioToDam(
     const storagePath = `${user.id}/audio/${fileName}`; // Store in user-specific audio folder
     const fileSize = audioBlob.size;
 
-    // --- Use Service Role Key for Storage Upload (like DAM uploader) ---
-    // Add console logs to verify environment variables at runtime
-    console.log('[DEBUG] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('[DEBUG] SERVICE_KEY Set?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    // DO NOT log the actual service key itself for security reasons
-    
-    // Create an admin client with the service role key
-    const supabaseAdmin: SupabaseClient = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-
-    // 3. Upload to Supabase Storage using the admin client
-    console.log('Attempting storage upload with Service Role Key...');
-    const { data: uploadData, error: storageError } = await supabaseAdmin.storage // Use supabaseAdmin
-      .from('assets') // Bucket name
+    // 3. Upload to Supabase Storage using authenticated client
+    const { data: uploadData, error: storageError } = await supabase.storage
+      .from('assets')
       .upload(storagePath, audioBlob, {
         contentType: contentType,
-        upsert: false, 
+        upsert: false,
       });
-    console.log('Service Role Key upload attempt finished.');
-    // --- End Service Role Key Section ---
 
     if (storageError) {
-      console.error('saveTtsAudioToDam: Storage Upload Error (Service Key Attempt)', storageError); 
+      console.error('saveTtsAudioToDam: Storage Upload Error', storageError);
       return { success: false, error: `Storage upload failed: ${storageError.message}` };
     }
 
@@ -537,8 +438,7 @@ export async function saveTtsAudioToDam(
     if (dbError) {
       console.error('saveTtsAudioToDam: DB Insert Error', dbError);
       // Attempt to clean up the orphaned file in storage
-      // Use supabaseAdmin for cleanup as it has privileges
-      await supabaseAdmin.storage.from('assets').remove([storagePath]);
+      await supabase.storage.from('assets').remove([storagePath]);
       console.warn('saveTtsAudioToDam: Cleaned up orphaned storage file', storagePath);
       return { success: false, error: `Failed to save asset metadata: ${dbError.message}` };
     }
@@ -546,7 +446,7 @@ export async function saveTtsAudioToDam(
     if (!assetRecord) {
          console.error('saveTtsAudioToDam: DB Insert Error - No record returned');
          // Use supabaseAdmin for cleanup
-         await supabaseAdmin.storage.from('assets').remove([storagePath]);
+         await supabase.storage.from('assets').remove([storagePath]);
          console.warn('saveTtsAudioToDam: Cleaned up orphaned storage file (no record returned)', storagePath);
          return { success: false, error: 'Failed to save asset metadata (no record returned).' };
     }
@@ -556,13 +456,13 @@ export async function saveTtsAudioToDam(
     
     // 5. Link Asset to TtsPrediction record (Use original supabase client)
     console.log(`Linking asset ${newAssetId} to TtsPrediction ${ttsPredictionId}`);
-    const { error: updateError } = await supabase // Use original client 'supabase' here
+    const { error: updateErrorLink } = await supabase // Use original client 'supabase' here
         .from('TtsPrediction')
         .update({ outputAssetId: newAssetId })
         .eq('id', ttsPredictionId); // Match on the TtsPrediction Primary Key
         
-    if (updateError) {
-        console.error(`Failed to link asset ${newAssetId} to TtsPrediction ${ttsPredictionId}:`, updateError);
+    if (updateErrorLink) {
+        console.error(`Failed to link asset ${newAssetId} to TtsPrediction ${ttsPredictionId}:`, updateErrorLink);
     }
 
     // 6. Return Success with new Asset ID
