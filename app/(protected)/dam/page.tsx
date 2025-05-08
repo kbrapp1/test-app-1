@@ -14,37 +14,13 @@ import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { AssetGalleryClient } from '@/components/dam/AssetGalleryClient';
-import { FolderSidebar, Folder } from '@/components/dam/folder-sidebar';
+import type { Folder } from '@/types/dam';
 import { DamBreadcrumbs, type BreadcrumbItemData } from '@/components/dam/dam-breadcrumbs';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 // TODO: Import Breadcrumb component when created
 
 // Force dynamic rendering for this page because Supabase client uses cookies
 export const dynamic = 'force-dynamic';
-
-async function fetchFolders(supabase: SupabaseClient): Promise<Folder[]> {
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    console.error('Error fetching user or no user:', userError);
-    return []; // Handle error or redirect appropriately
-  }
-
-  // Fetch only ROOT folders
-  const { data: folders, error: foldersError } = await supabase
-    .from('folders')
-    .select('*')
-    .eq('user_id', user.id)
-    .is('parent_folder_id', null) // Only get top-level folders
-    .order('name', { ascending: true });
-
-  if (foldersError) {
-    console.error('Error fetching folders:', foldersError);
-    return []; // Or throw an error
-  }
-  
-  // Explicitly cast to Folder[] if Supabase types aren't fully inferred
-  return folders as Folder[] || [];
-}
 
 // Optimized function to fetch breadcrumb path using a recursive CTE
 async function fetchBreadcrumbPathRecursive(supabase: SupabaseClient, folderId: string | null): Promise<BreadcrumbItemData[]> {
@@ -89,16 +65,13 @@ export default async function DamGalleryPage({
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async get(name: string) {
+        get: async (name: string) => {
           const cookieStore = await cookies();
           return cookieStore.get(name)?.value;
         },
       },
     }
   );
-
-  // Fetch folders data server-side - ONLY ROOT FOLDERS
-  const folders = await fetchFolders(supabase);
 
   // Await searchParams before accessing its properties
   const resolvedSearchParams = await searchParams;
@@ -112,28 +85,26 @@ export default async function DamGalleryPage({
   const breadcrumbPath = await fetchBreadcrumbPathRecursive(supabase, currentFolderId);
 
   return (
-    <div className="flex h-full">
-      {/* Folder Sidebar - Pass only root folders */}
-      <FolderSidebar initialFolders={folders} currentFolderId={currentFolderId} />
-
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 overflow-auto">
-            <div className="mb-4 flex items-center justify-between">
-          {/* Render Breadcrumb component here */}
-          <DamBreadcrumbs path={breadcrumbPath} />
-                <Link href="/dam/upload" passHref legacyBehavior>
-                    <Button asChild>
-                        <a>
-                            <UploadCloud className="mr-2 h-4 w-4" /> Upload Assets
-                        </a>
-                    </Button>
-                </Link>
-            </div>
-        {/* Client Asset Gallery with caching */}
-        <div className="mt-4">
-          <AssetGalleryClient currentFolderId={currentFolderId} />
+    <main className="flex-1 p-4 overflow-auto">
+      <div className="mb-4 flex items-center justify-between">
+        <DamBreadcrumbs path={breadcrumbPath} />
+        <div className="flex items-center space-x-2">
+          <Link 
+            href={currentFolderId ? `/dam/upload?folderId=${currentFolderId}` : '/dam/upload'}
+            passHref 
+            legacyBehavior
+          >
+            <Button asChild>
+              <a>
+                <UploadCloud className="mr-2 h-4 w-4" /> Upload Assets
+              </a>
+            </Button>
+          </Link>
         </div>
-      </main>
-    </div>
+      </div>
+      <div className="mt-4">
+        <AssetGalleryClient currentFolderId={currentFolderId} />
+      </div>
+    </main>
   );
 }

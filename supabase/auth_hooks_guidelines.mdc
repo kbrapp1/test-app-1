@@ -1,0 +1,76 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+- **Auth Hook: Customize Access Token (JWT) Claims**
+    - **Purpose**: Used to add, remove, or modify claims in a JWT before it's issued to the user.
+    - **Critical: Response Format**
+        - The Edge Function (or Postgres function) *MUST* return a JSON object with a single top-level key: `claims`.
+        - All desired JWT claims (including any original claims passed into the hook that you want to preserve) must be nested under this `claims` key.
+        - **Incorrect Format (❌ DON'T):**
+          ```json
+          {
+            "session": { 
+              "custom_claims": { "my_claim": "value" }
+            }
+          }
+          ```
+        - **Correct Format (✅ DO):**
+          ```json
+          {
+            "claims": {
+              "iss": "supabase", // Example existing claim
+              "sub": "user-uuid",  // Example existing claim
+              // ... other existing claims to preserve
+              "custom_claims": { 
+                "my_claim": "value",
+                "active_organization_id": "org-uuid" 
+              }
+            }
+          }
+          ```
+        - **Reference Code Example:** See [set-active-org-claim/index.ts](mdc:supabase/functions/set-active-org-claim/index.ts) for how to correctly merge existing claims with new custom claims.
+          ```typescript
+          // Inside your Edge Function:
+          // const payload: AuthHookRequest = await req.json(); // Or parsed from text
+          const baseClaims = payload.claims || {}; 
+          const updatedClaims = {
+            ...baseClaims,
+            custom_claims: { 
+              active_organization_id: "your-org-id-here"
+              // ... other custom claims
+            }
+          };
+          return new Response(JSON.stringify({ claims: updatedClaims }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+          ```
+    - **Input Payload**:
+        - The hook receives a JSON payload containing `user_id`, existing `claims` (that Supabase would issue by default), and `authentication_method`.
+        - Your function should parse this payload to access these fields (e.g., `payload.user_id`, `payload.claims`).
+    - **Debugging Steps:**
+        - **Verify Response**: Always log the *exact stringified JSON* your function is returning. Compare this meticulously against the required `{"claims": {...}}` structure.
+        - **Supabase Auth Error**: If you see `output claims do not conform to the expected schema: (root): Invalid type. Expected: object, given: null`, it almost certainly means your hook's response JSON doesn't have the top-level `claims` object.
+        - **Check Function Logs**: Use `npx supabase functions logs <function-name> --project-ref <your-project-ref>` (or the equivalent in your Supabase dashboard) to see the actual output and any errors within the function.
+        - **Local Deployment**:
+            - When testing locally, ensure your Supabase services are running (`npx supabase start`).
+            - Redeploy the function after changes: `npx supabase functions deploy <function-name> --project-ref <your-project-ref>`.
+            - If changes don't seem to take effect, try `npx supabase stop` then `npx supabase start` to fully restart services. The `--no-verify-jwt` flag on deploy might also help force a refresh in some local caching scenarios, though its primary purpose is different.
+    - **Security**:
+        - Always verify the incoming hook request if a secret is configured (e.g., using `standardwebhooks` for HTTP hooks). See [set-active-org-claim/index.ts](mdc:supabase/functions/set-active-org-claim/index.ts) for an example.
+        - For local development, ensure `CUSTOM_AUTH_HOOK_SECRET` (or your chosen environment variable name) is set in your `.env` file and accessible to the function.
+
+- **General Auth Hook Configuration (`config.toml`)**
+    - Ensure the hook is correctly enabled and the URI is pointed to your function. For an Edge Function:
+      ```toml
+      # [auth.hook.custom_access_token] # This is commented out for HTTP hooks configured via Dashboard
+      # enabled = true
+      # uri = "http://localhost:54321/functions/v1/your-function-name" 
+      # For local development, this URI might be different or configured via the Supabase dashboard
+      # For deployed Supabase instances, HTTP Hooks are configured via Authentication > Hooks in the dashboard.
+      ```
+    - **Note:** For *HTTP Hooks* like the one we worked on, the primary configuration is done via the Supabase Dashboard (Project > Authentication > Hooks), not directly in `config.toml` for deployed instances. `config.toml` is more for local development setup or if you were using Postgres-based hooks.
+
+- **References:**
+    - Supabase Docs - Custom Access Token Hook: [https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook](https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook)

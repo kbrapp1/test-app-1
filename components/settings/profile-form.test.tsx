@@ -149,9 +149,10 @@ describe('ProfileForm', () => {
     const nameInput = screen.getByLabelText(/Name/i);
     const submitButton = screen.getByRole('button', { name: /Update Profile/i });
 
-    // Add focus before clearing and typing
+    // Ensure field is cleared reliably before typing
     nameInput.focus();
     await user.clear(nameInput);
+    fireEvent.change(nameInput, { target: { value: '' } }); // Add explicit change event
     await user.type(nameInput, newName);
     await user.click(submitButton);
 

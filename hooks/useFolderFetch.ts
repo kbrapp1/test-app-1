@@ -29,9 +29,10 @@ export function useFolderFetch(): UseFolderFetchResult {
   const fetchFolderChildren = async (folderId: string): Promise<Folder[]> => {
     setIsLoading(true);
     setError(null);
+    const cacheBuster = `&_=${Date.now()}`;
     
     try {
-      const res = await fetch(`/api/dam?folderId=${folderId}`);
+      const res = await fetch(`/api/dam?folderId=${folderId}${cacheBuster}`);
       
       if (!res.ok) {
         const errorMsg = `API request failed with status ${res.status}`;

@@ -3,6 +3,16 @@ import { GET } from './route';
 import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@supabase/supabase-js';
 import { queryData } from '@/lib/supabase/db';
+import { DatabaseError } from '@/lib/errors/base';
+
+// Mock getActiveOrganizationId for this test file
+vi.mock('@/lib/auth/server-action', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/auth/server-action')>();
+  return {
+    ...actual,
+    getActiveOrganizationId: vi.fn(() => Promise.resolve('mock-organization-id')), // Ensure it returns a consistent org ID
+  };
+});
 
 // Setup mock functions
 const mockAuthGetUser = vi.fn();
@@ -46,8 +56,27 @@ import { createServerClient } from '@supabase/ssr';
 // Mock cookies() from next/headers
 vi.mock('next/headers', () => ({
   cookies: vi.fn(() => ({
-    get: vi.fn(name => ({ value: `mock-cookie-${name}` }))
-  }))
+    get: vi.fn((name?: string) => {
+      // Match the specific Supabase auth token cookie name pattern
+      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
+      if (name && name.startsWith('sb-') && name.endsWith('-auth-token')) {
+        // console.log(`Mock cookies: Matched Supabase auth token cookie: ${name}`);
+        return { name, value: 'mock-jwt-token' }; // Provide a mock JWT string
+      }
+      // console.log(`Mock cookies: Other cookie accessed: ${name}`);
+      return undefined; // Return undefined for other cookies not explicitly handled
+    }),
+    getAll: vi.fn(() => [
+      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
+      { name: 'sb-zzapbmpqkqeqsrqwttzd-auth-token', value: 'mock-jwt-token' }
+    ]),
+    has: vi.fn((name?: string) => {
+      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
+      return !!(name && name.startsWith('sb-') && name.endsWith('-auth-token'));
+    })
+    // Add other cookie methods like `set`, `delete` if your code under test uses them
+  })),
+  headers: vi.fn(() => new Headers()), // Mock headers() if necessary
 }));
 
 // Mock environment variables
@@ -297,7 +326,8 @@ describe('DAM API Route', () => {
     
     // First call is for folders query - make it error
     originalQueryData.mockImplementationOnce(() => {
-      return Promise.resolve({ data: null, error: new Error('Database query error for folders') });
+      // Use DatabaseError instance for correct typing
+      return Promise.resolve({ data: null, error: new DatabaseError('Database query error for folders') });
     });
     
     const request = new Request('https://example.com/api/dam') as unknown as NextRequest;

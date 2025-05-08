@@ -9,6 +9,7 @@ type QueryOptions = {
   matchValue?: string | null;
   isNull?: string;
   userId?: string;
+  organizationId?: string;
   orderBy?: string;
   ascending?: boolean;
   limit?: number;
@@ -51,6 +52,9 @@ export const queryData = async <T = any>(
     }
     if (options.userId) {
       query = query.eq('user_id', options.userId);
+    }
+    if (options.organizationId) {
+      query = query.eq('organization_id', options.organizationId);
     }
     // Apply ordering
     if (options.orderBy) {

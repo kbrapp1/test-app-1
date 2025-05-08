@@ -13,14 +13,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { createFolder } from '@/app/(protected)/dam/actions'; // Import server action
+import { createFolder } from '@/lib/actions/dam/index'; // Updated import path
 import { toast } from 'sonner'; // Assuming you use sonner for toasts
 import { FolderPlus } from 'lucide-react';
+import { useFolderStore } from '@/lib/store/folderStore';
+import { type Folder } from '@/types/dam';
+import { useRouter } from 'next/navigation';
 
 // Simplified state for the action
 interface ActionState {
   success: boolean;
   error?: string;
+  folder?: Folder;
+  folderId?: string;
 }
 
 // Add prop for current folder ID
@@ -34,18 +39,24 @@ const initialState: ActionState = {
 
 export function NewFolderDialog({ currentFolderId }: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { addFolder } = useFolderStore();
   const [state, formAction, isPending] = useActionState(createFolder, initialState);
   const formRef = useRef<HTMLFormElement>(null); // Ref to reset form
+  const router = useRouter();
 
   useEffect(() => {
     if (state.success) {
       toast.success('Folder created successfully!');
-      setIsOpen(false); // Close dialog on success
-      formRef.current?.reset(); // Reset form fields
+      if (state.folder) {
+        addFolder(state.folder);
+        router.push(`/dam?folderId=${state.folder.id}`);
+      }
+      setIsOpen(false);
+      formRef.current?.reset();
     } else if (state.error) {
       toast.error(`Error: ${state.error}`);
     }
-  }, [state]);
+  }, [state, addFolder, router]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

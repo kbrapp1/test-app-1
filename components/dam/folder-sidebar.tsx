@@ -1,6 +1,6 @@
 "use client"; // Make it a client component
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Folder as FolderIcon, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,21 +8,39 @@ import { cn } from '@/lib/utils';
 import { NewFolderDialog } from './new-folder-dialog';
 import { Folder } from '@/types/dam';
 import { FolderItem } from './FolderItem';
-import { useFolderFetch } from '@/hooks/useFolderFetch';
+import { useFolderStore } from '@/lib/store/folderStore';
+import { useSearchParams } from 'next/navigation';
 
 // Props for the main sidebar component
 export interface FolderSidebarProps {
   initialFolders: Folder[];
-  currentFolderId: string | null;
+  // currentFolderId prop is still received from layout but will be overridden by searchParams
+  // No need to pass it explicitly if we derive it here from searchParams
 }
 
 /**
  * Sidebar component that displays a hierarchical folder structure
  * Provides navigation between folders and folder management
  */
-export function FolderSidebar({ initialFolders = [], currentFolderId }: FolderSidebarProps) {
+export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
+  const { rootFolders, setInitialFolders } = useFolderStore();
+  const searchParams = useSearchParams(); // <-- Get searchParams
+
+  // Determine currentFolderId from searchParams
+  const folderIdFromParams = searchParams.get('folderId');
+  const actualCurrentFolderId = folderIdFromParams || null;
+
+  useEffect(() => {
+    // Remove the console log once we confirm it works as expected
+    // console.log('FolderSidebar: Initializing store state...');
+    setInitialFolders(initialFolders);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setInitialFolders]); // initialFolders from layout props can be a dependency if it can change.
+                          // For root folders it might be stable, but good to include.
+                          // If setInitialFolders is guaranteed stable, then [setInitialFolders]
+
+  // Local state for root expansion (can be moved to store if needed globally)
   const [isRootExpanded, setIsRootExpanded] = useState(true);
-  const { fetchFolderChildren } = useFolderFetch();
 
   return (
     <aside className="w-64 border-r bg-background p-4 flex flex-col h-full overflow-y-auto">
@@ -31,7 +49,7 @@ export function FolderSidebar({ initialFolders = [], currentFolderId }: FolderSi
       {/* Root Folder Item */}
       <div className={cn(
         "flex items-center px-1 py-1 rounded-md mb-1",
-        currentFolderId === null ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-muted/50 text-gray-700 dark:text-gray-300"
+        actualCurrentFolderId === null ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-muted/50 text-gray-700 dark:text-gray-300"
       )}>
         {/* Expand/Collapse Button for Root */}
         <Button 
@@ -57,13 +75,12 @@ export function FolderSidebar({ initialFolders = [], currentFolderId }: FolderSi
       {/* Root Folders */}
       {isRootExpanded && (
         <div className="mt-1 pl-4">
-          {initialFolders.map(folder => (
-            <FolderItem 
-              key={folder.id} 
-              folder={folder} 
+          {rootFolders.map(folderNode => (
+            <FolderItem
+              key={folderNode.id}
+              folderNode={folderNode}
               level={0}
-              currentFolderId={currentFolderId}
-              onFetchChildren={fetchFolderChildren}
+              currentFolderId={actualCurrentFolderId}
             />
           ))}
         </div>
@@ -71,7 +88,7 @@ export function FolderSidebar({ initialFolders = [], currentFolderId }: FolderSi
 
       {/* New Folder Button */}
       <div className="mt-auto pt-4 border-t">
-        <NewFolderDialog currentFolderId={currentFolderId} /> 
+        <NewFolderDialog currentFolderId={actualCurrentFolderId} /> 
       </div>
     </aside>
   );

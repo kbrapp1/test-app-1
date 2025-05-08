@@ -9,6 +9,7 @@ import { toast as sonnerToast } from "sonner"; // Import sonner directly
 import { createClient } from '@/lib/supabase/client'; // Import browser client
 import type { User } from '@supabase/supabase-js';
 import { FetchError, UploadFormData } from '@/types/dam';
+import { useRouter } from 'next/navigation'; // <-- Import useRouter
 
 // Define accepted file types
 const ACCEPTED_FILE_TYPES = {
@@ -30,13 +31,18 @@ const ACCEPTED_FILE_TYPES = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 };
 
+interface AssetUploaderProps {
+  currentFolderId: string | null;
+}
+
 // --- Client Component ---
-export function AssetUploader() {
+export function AssetUploader({ currentFolderId }: AssetUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition(); // Keep for loading state
   const [user, setUser] = useState<User | null>(null); // State to hold user session
   const supabase = createClient(); // Initialize browser client
+  const router = useRouter(); // <-- Initialize router
 
   // Fetch user session on component mount
   useEffect(() => {
@@ -86,6 +92,8 @@ export function AssetUploader() {
     });
     // Append the user ID
     formData.append('userId', user.id);
+    // Append folderId (send empty string if null, backend handles conversion)
+    formData.append('folderId', currentFolderId ?? '');
 
     startTransition(async () => {
         try {
@@ -99,6 +107,11 @@ export function AssetUploader() {
 
             sonnerToast.success("Upload Successful", { description: `${result.data?.length || 0} file(s) uploaded.` });
             setFiles([]);
+
+            // Navigate back to the correct folder view programmatically
+            const targetPath = currentFolderId ? `/dam?folderId=${currentFolderId}` : '/dam';
+            router.push(targetPath); // <-- Add navigation
+
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during upload.';
             sonnerToast.error("Upload Failed", { description: errorMessage });

@@ -7,79 +7,95 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+// import { cookies } from 'next/headers'; // createClient from @/lib/supabase/server handles cookies
+// import { createServerClient, type CookieOptions } from '@supabase/ssr'; // Use createClient from lib
+import { createClient } from '@/lib/supabase/server'; // For multi-tenant aware client
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { Folder } from '@/types/dam'; // Assuming Folder type is defined here
 
 // Placeholder type - ideally replace with generated Supabase types
 // interface FolderInput {
 //   name: string;
 // }
 
-// Define the return type for the action state
-interface CreateFolderState {
+// Define the return type for the action state, aligning with FolderActionResult from lib/actions/dam/index.ts
+interface FolderActionResult {
   success: boolean;
   error?: string;
-  data?: any; // Adjust based on actual data type returned
+  folderId?: string; 
+  folder?: Folder;
+  parentFolderId?: string | null; 
 }
 
 export async function createFolder(
-  prevState: CreateFolderState, 
+  prevState: FolderActionResult, 
   formData: FormData
-): Promise<CreateFolderState> {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        async get(name: string) {
-          const cookieStore = await cookies();
-          return cookieStore.get(name)?.value;
-        },
-        async set(name: string, value: string, options: CookieOptions) {
-          const cookieStore = await cookies();
-          cookieStore.set({ name, value, ...options });
-        },
-        async remove(name: string, options: CookieOptions) {
-          const cookieStore = await cookies();
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
-
+): Promise<FolderActionResult> {
   const folderName = formData.get('name') as string;
-  const parentFolderId = formData.get('parentFolderId') as string | null;
+  const parentFolderIdValue = formData.get('parentFolderId') as string | null;
+  const parentFolderId = parentFolderIdValue === '' ? null : parentFolderIdValue;
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    console.error('User not authenticated', userError);
-    return { success: false, error: 'User not authenticated' };
+  if (!folderName || folderName.trim() === '') {
+    return { success: false, error: 'Folder name cannot be empty.' };
   }
 
-  if (!folderName || folderName.trim().length === 0) {
-    return { success: false, error: 'Folder name cannot be empty' };
+  const supabase = createClient(); // Uses the server client from @/lib/supabase/server
+
+  try {
+    // 1. Get Authenticated User
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('createFolder: Auth Error', authError);
+      return { success: false, error: 'User not authenticated.' };
+    }
+
+    // 2. Get Active Organization ID
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      console.error('createFolder: Active Organization ID not found.');
+      return { success: false, error: 'Active organization not found. Cannot create folder.' };
+    }
+
+    // 3. Insert new folder
+    const { data: insertedData, error: insertError } = await supabase
+      .from('folders')
+      .insert({
+        name: folderName.trim(),
+        parent_folder_id: parentFolderId,
+        user_id: user.id, // Associate with the creating user
+        organization_id: activeOrgId, // Associate with the active organization
+      })
+      .select('*') // Select all columns
+      .single();
+
+    if (insertError) {
+      console.error('createFolder: Insert Error', insertError);
+      if (insertError.code === '23505') { // Unique constraint violation
+        return { success: false, error: 'A folder with this name already exists in this location. Please use a different name.' };
+      }
+      return { success: false, error: `Failed to create folder: ${insertError.message}` };
+    }
+
+    if (!insertedData) {
+      console.error('createFolder: Folder created but data not returned.');
+      return { success: false, error: 'Folder created but ID was not returned.' };
+    }
+    
+    // 4. Revalidate paths
+    revalidatePath('/dam', 'layout'); 
+    if (parentFolderId) {
+      revalidatePath(`/dam/folders/${parentFolderId}`, 'layout');
+    } else {
+      revalidatePath('/dam', 'layout'); // Revalidate root if it was a root folder
+    }
+    
+    const newFolder: Folder = { ...insertedData, type: 'folder' }; 
+    return { success: true, folder: newFolder, folderId: newFolder.id };
+
+  } catch (err: any) {
+    console.error('createFolder: Unexpected Error', err);
+    return { success: false, error: err.message || 'An unexpected error occurred while creating the folder.' };
   }
-
-  const { data, error } = await supabase
-    .from('folders')
-    .insert([{ 
-        name: folderName.trim(), 
-        user_id: user.id,
-        parent_folder_id: parentFolderId || null
-      }])
-    .select()
-    .single(); // Assuming you want the created folder back
-
-  if (error) {
-    console.error('Error creating folder:', error);
-    // Add more specific error handling (e.g., duplicate name if you add constraint)
-    return { success: false, error: error.message };
-  }
-
-  console.log('Folder created:', data);
-  revalidatePath('/dam'); // Revalidate the DAM page to show the new folder
-  return { success: true, data };
 }
 
 // Add actions for renaming, deleting folders, managing tags etc. later 

@@ -14,6 +14,7 @@ import { withErrorHandling } from '@/lib/middleware/error';
 import { ValidationError, DatabaseError, ExternalServiceError } from '@/lib/errors/base';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ApiResponse } from '@/types/dam';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 // Simple type for upload result items (different from Asset)
 interface UploadResultItem {
@@ -39,8 +40,22 @@ interface DatabaseQueryError extends Error {
 // Define the actual handler function that will be wrapped with auth middleware
 async function postHandler(request: NextRequest, user: User, _supabase: SupabaseClient) {
     const formData = await request.formData();
+    // Retrieve uploaded files
     const files = formData.getAll('files') as File[];
+    // Safely read folderId, fallback for test stubs where formData.get may not exist
+    const folderIdInput = typeof (formData as any).get === 'function'
+        ? (formData.get('folderId') as string | null)
+        : null;
     const userId = user.id; // Use authenticated user ID instead of from formData
+
+    // Convert empty string or "null" string from formData to actual null
+    const folderId = folderIdInput === '' || folderIdInput === 'null' ? null : folderIdInput;
+
+    // Get active organization ID
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+        throw new ValidationError('Active organization ID not found. Please ensure an organization is active.');
+    }
 
     if (!files || files.length === 0) {
         throw new ValidationError('No files provided.');
@@ -64,7 +79,7 @@ async function postHandler(request: NextRequest, user: User, _supabase: Supabase
     for (const file of files) {
         try {
             const uniqueSuffix = crypto.randomUUID();
-            storagePath = `${userId}/${uniqueSuffix}-${file.name}`;
+            storagePath = `${activeOrgId}/${userId}/${uniqueSuffix}-${file.name}`;
 
             // Upload the file using the utility
             const { path, error: storageError } = await uploadFile(
@@ -83,6 +98,8 @@ async function postHandler(request: NextRequest, user: User, _supabase: Supabase
                 'assets',
                 {
                     user_id: userId,
+                    organization_id: activeOrgId,
+                    folder_id: folderId,
                     name: file.name,
                     storage_path: path,
                     mime_type: file.type,

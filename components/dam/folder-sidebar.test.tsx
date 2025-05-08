@@ -1,16 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { FolderSidebar } from './folder-sidebar';
+import { FolderSidebar, type FolderSidebarProps } from './folder-sidebar';
 import { Folder } from '@/types/dam';
-
-// Mock the fetch function
-global.fetch = vi.fn();
 
 // Mock child components to simplify testing
 vi.mock('./new-folder-dialog', () => ({
   NewFolderDialog: ({ currentFolderId }: { currentFolderId: string | null }) => (
-    <button data-testid="mock-new-folder-dialog" data-current-folder-id={currentFolderId}>
+    <button data-testid="mock-new-folder-dialog" data-current-folder-id={currentFolderId ? String(currentFolderId) : 'null'}>
       New Folder
     </button>
   ),
@@ -33,6 +30,39 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+// Mock the custom hook for FolderItem (implicitly used)
+const mockSubfolders = [
+    { id: 'subfolder-1', name: 'Work', user_id: 'user-123', created_at: '2023-01-03', parent_folder_id: 'folder-1', type: 'folder' as const },
+    { id: 'subfolder-2', name: 'Personal', user_id: 'user-123', created_at: '2023-01-04', parent_folder_id: 'folder-1', type: 'folder' as const },
+];
+const mockFetchFolderChildren = vi.fn(async (folderId: string) => {
+    if (folderId === 'folder-1') {
+        return Promise.resolve(mockSubfolders);
+    }
+    return Promise.resolve([]);
+});
+vi.mock('@/hooks/useFolderFetch', () => ({
+    useFolderFetch: () => ({
+        fetchFolderChildren: mockFetchFolderChildren,
+        isLoading: false,
+        error: null,
+    }),
+}));
+
+// --- NEW: Mock next/navigation ---
+const mockUseSearchParams = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/', // Default pathname
+  useSearchParams: () => mockUseSearchParams(), // Use the mock function
+}));
+// --- END NEW MOCK ---
+
+
 describe('FolderSidebar Component', () => {
   // Test data
   const mockFolders: Folder[] = [
@@ -54,73 +84,38 @@ describe('FolderSidebar Component', () => {
     },
   ];
 
-  // Mock response for the fetch API
-  const mockSubfolders = [
-    {
-      id: 'subfolder-1',
-      name: 'Work',
-      user_id: 'user-123',
-      created_at: '2023-01-03',
-      parent_folder_id: 'folder-1',
-      type: 'folder'
-    },
-    {
-      id: 'subfolder-2',
-      name: 'Personal',
-      user_id: 'user-123',
-      created_at: '2023-01-04',
-      parent_folder_id: 'folder-1',
-      type: 'folder'
-    },
-  ];
-
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Reset the fetch mock
-    (global.fetch as any).mockReset();
+    // Default mock for useSearchParams (no folderId)
+    mockUseSearchParams.mockReturnValue(new URLSearchParams()); 
   });
 
   it('renders root folders correctly', () => {
-    render(<FolderSidebar initialFolders={mockFolders} currentFolderId={null} />);
+    render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    // Check if sidebar title is rendered
     expect(screen.getByText('Folders')).toBeInTheDocument();
-    
-    // Check if root link is rendered
     expect(screen.getByText('(Root)')).toBeInTheDocument();
-    
-    // Check if folders are rendered
     expect(screen.getByText('Documents')).toBeInTheDocument();
     expect(screen.getByText('Images')).toBeInTheDocument();
     
-    // Check if the new folder dialog is rendered with correct props
     const newFolderButton = screen.getByTestId('mock-new-folder-dialog');
     expect(newFolderButton).toBeInTheDocument();
-    expect(newFolderButton.getAttribute('data-current-folder-id')).toBeNull();
+    // Check that it defaults to null if no folderId in searchParams
+    expect(newFolderButton.getAttribute('data-current-folder-id')).toBe('null'); 
   });
 
   it('handles folder expansion and fetches subfolders', async () => {
-    // Mock the fetch response for subfolders
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockSubfolders),
-    });
-
-    render(<FolderSidebar initialFolders={mockFolders} currentFolderId={null} />);
+    render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    // Find and click the expand button for the first folder
     const expandButtons = screen.getAllByRole('button');
-    const firstFolderExpandButton = expandButtons[1]; // Index 1 because the first one is for root
+    const firstFolderExpandButton = expandButtons[1]; 
     
     fireEvent.click(firstFolderExpandButton);
     
-    // Verify fetch was called with the correct URL
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/dam?folderId=folder-1');
+      expect(mockFetchFolderChildren).toHaveBeenCalledWith('folder-1');
     });
     
-    // Wait for the subfolders to be rendered
     await waitFor(() => {
       expect(screen.getByText('Work')).toBeInTheDocument();
       expect(screen.getByText('Personal')).toBeInTheDocument();
@@ -128,70 +123,52 @@ describe('FolderSidebar Component', () => {
   });
 
   it('applies active styling to the selected folder', () => {
-    render(<FolderSidebar initialFolders={mockFolders} currentFolderId="folder-2" />);
+    mockUseSearchParams.mockReturnValue(new URLSearchParams("folderId=folder-2"));
+    render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    // Get all folder links
     const links = screen.getAllByTestId('mock-link');
-    
-    // Find the link for "Images" folder (folder-2)
     const imagesLink = Array.from(links).find(link => link.textContent?.includes('Images'));
-    
-    // Verify it has the active class styling (check if the parent div has the bg-blue class)
-    const imagesLinkParent = imagesLink?.closest('div');
-    expect(imagesLinkParent?.className).toContain('bg-blue');
+    const linkContainer = imagesLink?.parentElement;
+    const styledParentDiv = linkContainer?.parentElement; 
+
+    expect(styledParentDiv?.className).toContain('bg-blue-100');
+  });
+
+  it('passes correct currentFolderId to NewFolderDialog based on searchParams', () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams("folderId=folder-1"));
+    render(<FolderSidebar initialFolders={mockFolders} />);
+
+    const newFolderButton = screen.getByTestId('mock-new-folder-dialog');
+    expect(newFolderButton.getAttribute('data-current-folder-id')).toBe('folder-1');
   });
 
   it('handles fetch errors when expanding folders', async () => {
-    // Mock fetch to reject with an error
-    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    mockFetchFolderChildren.mockRejectedValueOnce(new Error('Network error'));
+    render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    // Mock console.error to prevent test output pollution
-    const originalConsoleError = console.error;
-    console.error = vi.fn();
-    
-    render(<FolderSidebar initialFolders={mockFolders} currentFolderId={null} />);
-    
-    // Find and click the expand button for the first folder
     const expandButtons = screen.getAllByRole('button');
-    const firstFolderExpandButton = expandButtons[1]; // Index 1 because the first one is for root
+    const firstFolderExpandButton = expandButtons[1];
     
     fireEvent.click(firstFolderExpandButton);
     
-    // Verify fetch was called
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(mockFetchFolderChildren).toHaveBeenCalledWith('folder-1');
     });
     
-    // Wait for the error indicator to be shown
     await waitFor(() => {
-      // The error icon (AlertCircle) should be visible
       const errorIcon = document.querySelector('.text-red-500');
       expect(errorIcon).toBeInTheDocument();
     });
-    
-    // Restore console.error
-    console.error = originalConsoleError;
   });
 
   it('toggles root folder expansion', () => {
-    render(<FolderSidebar initialFolders={mockFolders} currentFolderId={null} />);
+    render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    // Find the root expand button
     const rootExpandButton = screen.getAllByRole('button')[0];
-    
-    // Initially, root folders should be visible
     expect(screen.getByText('Documents')).toBeInTheDocument();
-    
-    // Click to collapse
     fireEvent.click(rootExpandButton);
-    
-    // Root folders should be hidden
     expect(screen.queryByText('Documents')).not.toBeInTheDocument();
-    
-    // Click to expand again
     fireEvent.click(rootExpandButton);
-    
-    // Root folders should be visible again
     expect(screen.getByText('Documents')).toBeInTheDocument();
   });
 }); 

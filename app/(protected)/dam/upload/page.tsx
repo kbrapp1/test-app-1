@@ -10,13 +10,25 @@ import { AssetUploader } from '@/components/dam/AssetUploader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-// This is now a Server Component again
-export default function DamUploadPage() {
+// This is a Server Component, remove 'use client'
+export default async function DamUploadPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const folderParam = searchParams?.folderId;
+  const currentFolderId =
+    Array.isArray(folderParam) ? folderParam[0] :
+    typeof folderParam === 'string' ? folderParam :
+    null;
+
   return (
-    <div className="container mx-auto py-8">
+    // Apply consistent padding and layout like the gallery page
+    <main className="flex-1 p-4 overflow-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Upload Assets</h1>
-        <Link href="/dam" passHref legacyBehavior>
+        {/* Link back to the current folder or root */}
+        <Link href={currentFolderId ? `/dam?folderId=${currentFolderId}` : '/dam'} passHref legacyBehavior>
           <Button variant="outline" asChild>
             <a>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -28,7 +40,8 @@ export default function DamUploadPage() {
 
       {/* Removed Test Button - will move logic into AssetUploader if needed */}
       
-      <AssetUploader />
-    </div>
+      {/* Pass currentFolderId to the uploader */}
+      <AssetUploader currentFolderId={currentFolderId} />
+    </main>
   );
 } 

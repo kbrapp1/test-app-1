@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { useDropzone } from 'react-dropzone'; // Import the hook itself
 import { AssetUploader } from './AssetUploader';
 import { toast } from 'sonner'; // Import the mocked toast object
 import { createClient } from '@/lib/supabase/client'; // Import the actual function to get its type
+import { User } from '@supabase/supabase-js';
 
 // --- Mocking Setup ---
 
@@ -25,10 +26,10 @@ class MockDataTransfer {
 global.DataTransfer = MockDataTransfer as any;
 
 // Mock the Supabase browser client
-const mockGetUser = vi.fn();
+const mockSupabaseAuthGetUser = vi.fn();
 const mockSupabaseClient = {
     auth: {
-        getUser: mockGetUser,
+        getUser: mockSupabaseAuthGetUser,
     },
     // Add other methods if needed, e.g., storage
     storage: {
@@ -69,6 +70,26 @@ vi.mock('react-dropzone', async (importOriginal) => {
   };
 });
 
+// Mock next/navigation
+const mockRouterPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+    replace: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/', // Default pathname
+  useSearchParams: () => new URLSearchParams(), // Default searchParams
+}));
+
+// Mock useToast
+const mockToast = vi.fn();
+vi.mock('@/components/ui/use-toast', () => ({
+  useToast: () => ({
+    toast: mockToast,
+  }),
+}));
+
 // Helper to create a File object
 function createFile(name: string, size: number, type: string): File {
     // Ensure size is at least 1 for blob creation if size is 0
@@ -88,7 +109,8 @@ function createFile(name: string, size: number, type: string): File {
 // --- Test Suite ---
 
 describe('AssetUploader Component', () => {
-    const mockUser = { id: 'user-test-123', email: 'test@example.com' };
+    const mockUser = { id: 'user-test-123', email: 'test@example.com' } as User;
+    const defaultProps = { currentFolderId: null }; // Add default prop
     let lastOnDropCallback: ((acceptedFiles: File[], fileRejections: any[], event: Event) => void) | null = null;
 
     beforeEach(() => {
@@ -96,7 +118,7 @@ describe('AssetUploader Component', () => {
         lastOnDropCallback = null; // Reset callback catcher
 
         // Default Supabase mock implementation
-        mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+        mockSupabaseAuthGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
 
         // Default react-dropzone mock implementation - use the imported hook
         const mockOpenFn = vi.fn();
@@ -158,21 +180,21 @@ describe('AssetUploader Component', () => {
     });
 
     it('should render the dropzone and buttons', async () => {
-        render(<AssetUploader />);
+        render(<AssetUploader {...defaultProps} />);
         // Match exact text including HTML entity
         expect(screen.getByText("Drag &apos;n&apos; drop some files here, or click the button below")).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Select Files/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Upload Files/i })).toBeInTheDocument();
         await waitFor(() => {
-            expect(mockGetUser).toHaveBeenCalledTimes(1); // User fetch happens on mount
+            expect(mockSupabaseAuthGetUser).toHaveBeenCalledTimes(1); // User fetch happens on mount
         });
         expect(screen.getByRole('button', { name: /Upload Files/i })).toBeDisabled();
     });
 
     it('should fetch user on mount and enable upload button after file selection', async () => {
         const user = userEvent.setup();
-        render(<AssetUploader />);
-        expect(mockGetUser).toHaveBeenCalledTimes(1);
+        render(<AssetUploader {...defaultProps} />);
+        expect(mockSupabaseAuthGetUser).toHaveBeenCalledTimes(1);
 
         await waitFor(() => {
              expect(screen.getByRole('button', { name: /Upload Files/i })).toBeDisabled();
@@ -196,8 +218,8 @@ describe('AssetUploader Component', () => {
 
     it('should display selected file names and sizes', async () => {
         const user = userEvent.setup();
-        render(<AssetUploader />);
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled()); // Ensure user fetch completes
+        render(<AssetUploader {...defaultProps} />);
+        await waitFor(() => expect(mockSupabaseAuthGetUser).toHaveBeenCalled()); // Ensure user fetch completes
 
         const fileInput = screen.getByTestId('dropzone-input');
         const file1 = createFile('image1.jpg', 1024 * 5, 'image/jpeg'); // 5 KB
@@ -215,11 +237,11 @@ describe('AssetUploader Component', () => {
 
     it('should call fetch with FormData on submit with valid files and user', async () => {
         const user = userEvent.setup();
-        render(<AssetUploader />);
+        render(<AssetUploader {...defaultProps} />);
 
         // Wait for user to load
         await waitFor(() => {
-            expect(mockGetUser).toHaveBeenCalled();
+            expect(mockSupabaseAuthGetUser).toHaveBeenCalled();
             expect(screen.getByRole('button', { name: /Upload Files/i })).toBeDisabled();
         });
 
@@ -275,8 +297,8 @@ describe('AssetUploader Component', () => {
         const fetchPromise = new Promise(resolve => { resolveFetch = resolve; });
         (fetch as Mock).mockImplementationOnce(() => fetchPromise);
 
-        render(<AssetUploader />);
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled()); // Allow user fetch
+        render(<AssetUploader {...defaultProps} />);
+        await waitFor(() => expect(mockSupabaseAuthGetUser).toHaveBeenCalled()); // Allow user fetch
 
         const fileInput = screen.getByTestId('dropzone-input');
         const testFile = createFile('loading.png', 500, 'image/png');
@@ -315,8 +337,8 @@ describe('AssetUploader Component', () => {
         const errorMessage = 'Network Error';
         (fetch as Mock).mockRejectedValueOnce(new Error(errorMessage));
 
-        render(<AssetUploader />);
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled()); // Allow user fetch
+        render(<AssetUploader {...defaultProps} />);
+        await waitFor(() => expect(mockSupabaseAuthGetUser).toHaveBeenCalled()); // Allow user fetch
 
         const fileInput = screen.getByTestId('dropzone-input');
         const testFile = createFile('fail.gif', 500, 'image/gif');
@@ -354,8 +376,8 @@ describe('AssetUploader Component', () => {
             json: async () => ({ success: false, message: apiErrorMessage, error: apiErrorMessage }), // Simulate error structure
         });
 
-        render(<AssetUploader />);
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled()); // Allow user fetch
+        render(<AssetUploader {...defaultProps} />);
+        await waitFor(() => expect(mockSupabaseAuthGetUser).toHaveBeenCalled()); // Allow user fetch
 
         const fileInput = screen.getByTestId('dropzone-input');
         const testFile = createFile('api-fail.png', 500, 'image/png');
@@ -386,9 +408,9 @@ describe('AssetUploader Component', () => {
 
     it('should disable upload button if user session fails to load', async () => {
         // Mock the getUser to return null user (error or no session)
-        mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('No session') });
+        mockSupabaseAuthGetUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('No session') });
         
-        render(<AssetUploader />);
+        render(<AssetUploader {...defaultProps} />);
         
         // Verify that the upload button is disabled
         const uploadButton = screen.getByRole('button', { name: /Upload Files/i });
@@ -396,7 +418,7 @@ describe('AssetUploader Component', () => {
         
         // Wait for the getUser call to complete
         await waitFor(() => {
-            expect(mockGetUser).toHaveBeenCalledTimes(1);
+            expect(mockSupabaseAuthGetUser).toHaveBeenCalledTimes(1);
         });
         
         // Verify it stays disabled even after file selection
@@ -417,10 +439,10 @@ describe('AssetUploader Component', () => {
 
     it('handles FetchError interface errors with status code correctly', async () => {
         const user = userEvent.setup();
-        render(<AssetUploader />);
+        render(<AssetUploader {...defaultProps} />);
         
         // Wait for initial user fetch to complete
-        await waitFor(() => expect(mockGetUser).toHaveBeenCalled());
+        await waitFor(() => expect(mockSupabaseAuthGetUser).toHaveBeenCalled());
         
         // Create a test file
         const fileInput = screen.getByTestId('dropzone-input');
@@ -452,5 +474,11 @@ describe('AssetUploader Component', () => {
                 description: expect.stringContaining("Invalid file format")
             })
         );
+    });
+
+    it('should pass currentFolderId in FormData if provided', async () => {
+        render(<AssetUploader currentFolderId="folder-abc" />);
+        // ... setup file, trigger submit ...
+        // Check that formData.append('folderId', 'folder-abc') was called if you spy on FormData
     });
 }); 

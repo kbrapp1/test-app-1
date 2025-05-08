@@ -1,3 +1,9 @@
+// console.log('--- Vitest Setup ---');
+// console.log('SUPABASE_URL (from process.env):', process.env.SUPABASE_URL);
+// console.log('SUPABASE_ANON_KEY (from process.env):', process.env.SUPABASE_ANON_KEY);
+// console.log('TEST_USER_A_EMAIL (from process.env):', process.env.TEST_USER_A_EMAIL);
+// console.log('--------------------');
+
 import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
 import React from 'react'; // Import React for createElement
@@ -13,10 +19,10 @@ vi.mock('next/image', () => ({
 // --------------------------------------------------
 
 // Suppress console.log messages during tests
-vi.spyOn(console, 'log').mockImplementation(() => {});
+// vi.spyOn(console, 'log').mockImplementation(() => {}); // Keep this commented out for now
 // Optionally, suppress other console methods too:
-vi.spyOn(console, 'error').mockImplementation(() => {});
-vi.spyOn(console, 'warn').mockImplementation(() => {});
+// vi.spyOn(console, 'error').mockImplementation(() => {});
+// vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 // Mock window.matchMedia for JSDOM environment
 Object.defineProperty(window, 'matchMedia', {

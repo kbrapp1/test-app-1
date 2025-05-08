@@ -1,6 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Mock next/headers
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => ({
+    get: vi.fn((name?: string) => {
+      if (name === 'sb-zzapbmpqkqeqsrqwttzd-auth-token') { // Adjust if your auth token cookie name is different
+        return { name, value: 'mock-auth-token' };
+      }
+      return undefined;
+    }),
+    // Add other cookie methods if your code uses them (e.g., set, delete)
+    has: vi.fn(() => true), 
+    getAll: vi.fn(() => [{ name: 'sb-zzapbmpqkqeqsrqwttzd-auth-token', value: 'mock-auth-token'}]),
+  })),
+  headers: vi.fn(() => new Headers()), // Mock headers() if used by your code under test
+}));
+
+// Mock getActiveOrganizationId directly in the factory
+vi.mock('@/lib/auth/server-action', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/auth/server-action')>();
+  return {
+    ...actual, 
+    getActiveOrganizationId: vi.fn(() => Promise.resolve('mock-organization-id')), // Reverted to inline mock
+  };
+});
+
 // Mock crypto.randomUUID properly using importOriginal
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal<typeof import('crypto')>();
@@ -60,6 +85,7 @@ vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'mock-service-role-key');
 describe('POST /api/dam/upload', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // No need to set mockGetActiveOrgIdFn here anymore
   });
 
   it('should return 400 if no files are provided', async () => {
