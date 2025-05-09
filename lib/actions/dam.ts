@@ -8,9 +8,6 @@
 // Keep imports needed for deleteAsset
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { Database } from '@/types/supabase';
 import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Added for multi-tenancy
 import { Folder } from '@/types/dam';
 
@@ -379,64 +376,83 @@ export async function deleteFolder(prevState: FolderActionResult, formData: Form
 // DELETE ASSET ACTION
 // ============================================================================
 
-export async function deleteAsset(assetId: string, storagePath: string): Promise<{ success: boolean; error?: string }> {
-    // 1. Validate inputs
-    if (!assetId || !storagePath) {
-        return { success: false, error: 'Missing asset ID or storage path.' };
+export async function deleteAsset(assetId: string): Promise<{ success: boolean; error?: string }> {
+    if (!assetId) {
+        return { success: false, error: 'Asset ID is required.' };
     }
 
-    const supabaseServer = createClient(); // Server client for DB operations
+    const supabase = createClient(); // Uses the server client from @/lib/supabase/server
 
     try {
-        // 2. Get Authenticated User & Organization ID
-        const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
+        // 1. Get Authenticated User and Active Organization ID
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('deleteAsset: Auth Error', authError);
-            return { success: false, error: 'User not authenticated' };
+            return { success: false, error: 'User not authenticated.' };
         }
+
         const activeOrgId = await getActiveOrganizationId();
         if (!activeOrgId) {
             console.error('deleteAsset: Active Organization ID not found.');
             return { success: false, error: 'Active organization not found. Cannot delete asset.' };
         }
 
-        // 3. Verify asset existence and ownership/organization (using RLS on Supabase server client)
-        // A simple HEAD request might be enough if we only care about existence and org via RLS
-        // Or a select if we need other metadata, but for delete, RLS should suffice for DB part.
-        // Let's assume RLS on `assets` table enforces organization_id and potentially user_id checks for deletes.
+        // 2. Fetch the asset to verify ownership and get storage path
+        const { data: asset, error: fetchError } = await supabase
+            .from('assets')
+            .select('id, organization_id, storage_path')
+            .eq('id', assetId)
+            .single();
 
-        // 4. Delete from Supabase Storage
-        // Use the server client for storage to ensure RLS is respected if configured for storage deletes.
-        const { error: storageError } = await supabaseServer.storage
-            .from('assets') // Assuming your bucket is named 'assets'
-            .remove([storagePath]);
-
-        if (storageError) {
-            console.error('deleteAsset: Storage Error', storageError);
-            return { success: false, error: `Storage: ${storageError.message}` };
+        if (fetchError) {
+            console.error('deleteAsset: Error fetching asset metadata:', fetchError);
+            return { success: false, error: 'Error fetching asset details. Check logs.' };
         }
 
-        // 5. Delete from Database
-        // Match on both id and organization_id for safety, though RLS should also cover this.
-        const { error: dbError } = await supabaseServer
+        if (!asset) {
+            return { success: false, error: 'Asset not found.' };
+        }
+
+        if (asset.organization_id !== activeOrgId) {
+            console.warn(`deleteAsset: Attempt to delete asset ${assetId} from org ${asset.organization_id} by user in org ${activeOrgId}.`);
+            return { success: false, error: 'You are not authorized to delete this asset.' };
+        }
+        
+        if (!asset.storage_path) {
+            console.warn(`deleteAsset: Asset ${assetId} is missing storage_path. Will attempt DB deletion only.`);
+        } else {
+            // 3. Delete from Supabase Storage
+            const { error: storageError } = await supabase.storage
+                .from('dam_assets') // Ensure this is your correct bucket name
+                .remove([asset.storage_path]);
+
+            if (storageError) {
+                console.error('deleteAsset: Supabase storage deletion error - IGNORING:', storageError);
+            }
+        }
+
+        // 4. Delete the asset record from the database, ensuring it's within the organization
+        const { error: dbError } = await supabase
             .from('assets')
             .delete()
-            .match({ id: assetId, organization_id: activeOrgId }); 
+            .match({ id: assetId, organization_id: activeOrgId }); // Crucial: Match org_id
 
         if (dbError) {
-            console.error('deleteAsset: DB Error', dbError);
-            return { success: false, error: `Database: ${dbError.message}` };
+            console.error('deleteAsset: Database deletion error:', dbError);
+            return { success: false, error: `Failed to delete asset from database: ${dbError.message}` };
         }
 
-        // 6. Revalidate paths
-        revalidatePath('/dam'); // Revalidate the main DAM page
-        // Consider revalidating specific folder paths if assets are listed there directly
+        // 5. Revalidate paths
+        // Revalidate the main DAM page and potentially the folder's path if the asset was in one.
+        // For simplicity, revalidating /dam should cover most cases.
+        // If asset.folder_id was available and needed, you could revalidate `/dam/folders/${asset.folder_id}`
+        revalidatePath('/dam', 'layout');
 
         return { success: true };
 
     } catch (err: any) {
-        console.error('deleteAsset: Unexpected Error', err);
-        return { success: false, error: err.message || 'An unexpected error occurred' };
+        console.error('deleteAsset: Unexpected error', err);
+        return { success: false, error: err.message || 'An unexpected error occurred while deleting the asset.' };
     }
 }
 
@@ -511,26 +527,22 @@ export async function getAssetContent(assetId: string): Promise<{
         return { success: false, error: 'Asset ID is required.' };
     }
 
-    // Use server action client for this as it might be called from client components directly or via other server actions
-    // If it's ONLY from other server actions, createClient() is fine. 
-    // If it can be hit from a client-side trigger that calls a server action, this is safer.
-    const supabaseActionClient = createServerActionClient<Database>({ cookies });
-
+    const supabase = createClient();
     try {
-        // 1. Authentication and Organization Check (via action client user and helper)
-        const { data: { user }, error: authError } = await supabaseActionClient.auth.getUser();
+        // 1. Authentication and Organization Check
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('getAssetContent: Auth Error', authError);
             return { success: false, error: 'User not authenticated.' };
         }
-        const activeOrgId = await getActiveOrganizationId(); // Ensure this works with the action client context
+        const activeOrgId = await getActiveOrganizationId();
         if (!activeOrgId) {
             console.error('getAssetContent: Active Organization ID not found.');
             return { success: false, error: 'Active organization not found.' };
         }
 
         // 2. Fetch asset metadata to get storage_path and mime_type, ensuring it belongs to the user's org
-        const { data: asset, error: metaError } = await supabaseActionClient
+        const { data: asset, error: metaError } = await supabase
             .from('assets')
             .select('storage_path, mime_type')
             .match({ id: assetId, organization_id: activeOrgId }) // Crucial: scope by org
@@ -554,7 +566,7 @@ export async function getAssetContent(assetId: string): Promise<{
         }
 
         // 4. Download the asset content from storage
-        const { data: blobData, error: downloadError } = await supabaseActionClient.storage
+        const { data: blobData, error: downloadError } = await supabase.storage
             .from('assets') // Bucket name
             .download(asset.storage_path);
 
@@ -588,11 +600,11 @@ export async function updateAssetText(
     }
     // newContent can be empty, that's a valid update.
 
-    const supabaseActionClient = createServerActionClient<Database>({ cookies });
+    const supabase = createClient();
 
     try {
         // 1. Authentication and Organization Check
-        const { data: { user }, error: authError } = await supabaseActionClient.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('updateAssetText: Auth Error', authError);
             return { success: false, error: 'User not authenticated.' };
@@ -604,7 +616,7 @@ export async function updateAssetText(
         }
 
         // 2. Fetch current asset metadata (storage_path, mime_type) to ensure it exists and is text
-        const { data: asset, error: metaError } = await supabaseActionClient
+        const { data: asset, error: metaError } = await supabase
             .from('assets')
             .select('storage_path, mime_type')
             .match({ id: assetId, organization_id: activeOrgId }) // Scope by org
@@ -625,7 +637,7 @@ export async function updateAssetText(
         }
 
         // 3. Upload new content to storage, overwriting the existing file
-        const { data: uploadData, error: storageError } = await supabaseActionClient.storage
+        const { data: uploadData, error: storageError } = await supabase.storage
             .from('assets')
             .upload(asset.storage_path, new Blob([newContent]), {
                 contentType: asset.mime_type, // Use existing mime_type
@@ -643,7 +655,7 @@ export async function updateAssetText(
         // 4. Update asset metadata in the database (e.g., size, updated_at is handled by DB)
         //    We need to ensure `updated_at` is automatically managed by the database or update it here.
         //    Size also needs to be updated.
-        const { error: dbUpdateError } = await supabaseActionClient
+        const { error: dbUpdateError } = await supabase
             .from('assets')
             .update({
                 size: newContent.length, // Update the size
@@ -689,11 +701,11 @@ export async function saveAsNewTextAsset(
         return { success: false, error: 'Asset name is required.' };
     }
 
-    const supabaseActionClient = createServerActionClient<Database>({ cookies });
+    const supabase = createClient();
 
     try {
         // 1. Authentication and Organization Check
-        const { data: { user }, error: authError } = await supabaseActionClient.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('saveAsNewTextAsset: Auth Error', authError);
             return { success: false, error: 'User not authenticated.' };
@@ -715,7 +727,7 @@ export async function saveAsNewTextAsset(
         const storagePath = `${activeOrgId}/${user.id}/${uniqueFileName}`;
 
         // 3. Upload content to storage
-        const { data: uploadData, error: storageError } = await supabaseActionClient.storage
+        const { data: uploadData, error: storageError } = await supabase.storage
             .from('assets') // Your bucket name
             .upload(storagePath, new Blob([content]), {
                 contentType: mimeType,
@@ -731,7 +743,7 @@ export async function saveAsNewTextAsset(
         }
 
         // 4. Insert asset metadata into the database
-        const { data: dbData, error: dbInsertError } = await supabaseActionClient
+        const { data: dbData, error: dbInsertError } = await supabase
             .from('assets')
             .insert({
                 name: desiredName.trim(), // Use the user-provided name for display
@@ -749,14 +761,14 @@ export async function saveAsNewTextAsset(
         if (dbInsertError) {
             console.error('saveAsNewTextAsset: DB insert error', dbInsertError);
             // Attempt to clean up storage if DB insert fails
-            await supabaseActionClient.storage.from('assets').remove([uploadData.path]);
+            await supabase.storage.from('assets').remove([uploadData.path]);
             return { success: false, error: `Failed to save asset metadata: ${dbInsertError.message}` };
         }
 
         if (!dbData || !dbData.id) {
             console.error('saveAsNewTextAsset: DB insert succeeded but ID not returned.');
             // Attempt to clean up storage
-            await supabaseActionClient.storage.from('assets').remove([uploadData.path]);
+            await supabase.storage.from('assets').remove([uploadData.path]);
             return { success: false, error: 'Failed to get ID for new asset after saving metadata.' };
         }
 

@@ -14,7 +14,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { updateFolder } from '@/lib/actions/dam/index'; // Assuming this is the correct path
+import { updateFolder } from '@/lib/actions/dam'; // Assuming this is the correct path
+import { toast } from 'sonner';
+import { useFolderStore } from '@/lib/store/folderStore';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;

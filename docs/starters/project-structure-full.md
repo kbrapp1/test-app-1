@@ -47,8 +47,6 @@
       - `text-to-speech/`
         - `page.tsx` <!-- Page component for Text-to-Speech feature. -->
     - `dam/` <!-- Feature: Digital Asset Management section. -->
-      - `actions.test.ts` <!-- Tests for DAM server actions. -->
-      - `actions.ts` <!-- Server actions for DAM feature. -->
       - `page.tsx` <!-- Main page component for DAM. -->
       - `upload/` <!-- Sub-route for uploading assets. -->
         - `page.tsx` <!-- Page component for asset upload. -->
@@ -102,12 +100,10 @@
     - `confirm/` <!-- Handles user confirmation actions (e.g., email verification). -->
       - `confirm-logic.tsx` <!-- Client component containing confirmation logic. -->
       - `page.tsx` <!-- Page component for the confirmation UI. -->
-  - `dashboard/` <!-- Public dashboard route (potentially different from protected one). -->
   - `login/` <!-- Public login page route. -->
     - `page.tsx` <!-- Page component for the login form. -->
   - `signup/` <!-- Public signup page route. -->
     - `page.tsx` <!-- Page component for the signup form. -->
-  - `team/` <!-- Public team-related route (maybe informational). -->
 
 - `batch files/` <!-- Folder for Windows batch scripts. -->
   - `run-browser-tools.bat` <!-- Script to run browser-related tools. -->
@@ -140,7 +136,6 @@
     - `login-form.tsx` <!-- Login form component. -->
     - `signup-form.test.tsx` <!-- Tests for the signup form component. -->
     - `signup-form.tsx` <!-- Signup form component. -->
-  - `common/` <!-- General-purpose, widely reusable components. -->
   - `dam/` <!-- Components specific to the Digital Asset Management feature. -->
     - `asset-selector-modal.test.tsx` <!-- Tests for the asset selector modal. -->
     - `asset-selector-modal.tsx` <!-- Modal component for selecting assets. -->
@@ -305,8 +300,8 @@
   - `helpers.ts` <!-- General helper functions. -->
   - `utils.ts` <!-- Utility functions (often includes cn for Tailwind merging). -->
   - `actions/` <!-- Server actions (separate from page/route specific actions). -->
-    - `dam.test.ts` <!-- Tests for DAM server actions in lib. -->
-    - `dam.ts` <!-- Core DAM-related server actions. -->
+    - `dam/` <!-- DAM specific server actions and tests. -->
+      - `setup.ts` <!-- Test setup for DAM actions (placeholder). -->
     - `team.ts` <!-- Core team-related server actions. -->
     - `tts.test.ts` <!-- Tests for TTS server actions. -->
     - `tts.ts` <!-- Core TTS-related server actions. -->

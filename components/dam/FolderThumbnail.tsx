@@ -6,7 +6,7 @@ import { Folder as FolderIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import router for prefetch
 import { useDroppable } from '@dnd-kit/core'; // Import useDroppable
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
-import { type Folder } from './folder-sidebar'; // Reuse Folder type
+import type { Folder } from '@/types/dam'; // Corrected import
 
 interface FolderThumbnailProps {
   folder: Folder & { type: 'folder' }; // Add type from CombinedItem in AssetGallery
@@ -34,42 +34,48 @@ export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
   // };
 
   // Combine base classes with conditional classes for drop target feedback
-  const containerClasses = cn(
-    "flex flex-col items-center justify-center p-4 h-full w-full",
-    "bg-secondary/50 hover:bg-secondary/70", // Remove cursor-pointer from here
-    "transition-all duration-150 border border-transparent", // Added transparent border for transition
+  const outerContainerClasses = cn(
+    "relative group aspect-square overflow-hidden rounded-md",
+    "transition-all duration-150",
     {
-      'bg-primary/20 border-primary': isOver, // Highlight when draggable is over
-      'outline-dashed outline-1 outline-primary': isOver // Another visual cue
+      'bg-primary/20 border-primary': isOver, 
+      'outline-dashed outline-1 outline-primary': isOver 
     }
   );
 
+  // This div IS the gray padded frame
+  const grayPaddedFrameClasses = "p-4 h-full w-full bg-muted rounded-md"; 
+
+  // This div is the content tile INSIDE the gray frame. It gets bg-card and flex centering.
+  const contentTileClasses = "h-full w-full bg-card rounded-sm flex flex-col items-center justify-center"; 
+
   return (
-    // Apply DND ref to the container div
-    <div 
-      ref={setNodeRef} 
-      className={containerClasses} 
-      // Remove onClick handler
+    <div
+      ref={setNodeRef}
+      className={outerContainerClasses}
     >
-      {/* Wrap content with Link component */}
-      <Link 
-        href={`/dam?folderId=${folder.id}`} 
-        className="flex flex-col items-center justify-center h-full w-full cursor-pointer" // Add cursor-pointer to Link
-        prefetch={false} // Optional: Disable prefetching just in case
-      >
-        <FolderIcon 
-          className={cn(
-            "h-16 w-16 text-muted-foreground mb-2 transition-colors",
-            { 'text-primary': isOver } // Change icon color when over
-          )}
-        />
-        <span 
-          className="text-sm font-medium text-center text-muted-foreground truncate w-full"
-          title={folder.name}
-        >
-          {folder.name}
-        </span>
-      </Link>
+      <div className={grayPaddedFrameClasses}> 
+        <div className={contentTileClasses}> 
+          <Link 
+            href={`/dam?folderId=${folder.id}`} 
+            className="flex flex-col items-center justify-center cursor-pointer group/link h-full w-full p-2" // Link fills tile, has p-2 for its content
+            prefetch={false} 
+          >
+            <FolderIcon
+              className={cn(
+                "h-16 w-16 text-muted-foreground mb-2 transition-colors",
+                { 'text-primary': isOver }
+              )}
+            />
+            <span
+              className="text-sm font-medium text-center text-muted-foreground truncate w-full"
+              title={folder.name}
+            >
+              {folder.name}
+            </span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }; 

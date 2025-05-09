@@ -1,55 +1,136 @@
-import React from 'react';
-import { AssetThumbnail } from './AssetThumbnail';
-import { FolderThumbnail } from './FolderThumbnail';
+import React, { useRef } from 'react';
 import { Asset, Folder, CombinedItem } from '@/types/dam';
+import { AssetThumbnail, AssetThumbnailRef } from './AssetThumbnail';
+import { FolderThumbnail } from './FolderThumbnail';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Download, Edit3, Trash2, Folder as FolderIcon, FileText } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
-interface AssetGridItemProps {
+export interface AssetGridItemProps {
   item: CombinedItem;
-  index: number;
-  priorityThreshold: number;
-  style?: React.CSSProperties;
+  index?: number; 
+  priorityThreshold?: number; 
+  onDataChange: () => Promise<void>;
 }
 
 /**
  * Renders a single item in the asset grid, handling both folders and assets
  */
-export function AssetGridItem({ item, index, priorityThreshold, style }: AssetGridItemProps) {
-  // Inner container for styling (padding and fill parent)
-  const innerStyle: React.CSSProperties = {
-    padding: '0.5rem',
-    boxSizing: 'border-box',
-    width: '100%',
-    height: '100%',
-    ...style
+export const AssetGridItem = React.forwardRef<
+  HTMLDivElement,
+  AssetGridItemProps
+>(({ item, index, priorityThreshold, onDataChange }, ref) => {
+  const assetThumbnailRef = useRef<AssetThumbnailRef>(null);
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: { type: item.type, item: item },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 100 : undefined,
   };
+  
+  const dynamicCardStyle = isDragging ? { opacity: 0.5 } : {};
+
+  const handleDeleteClick = () => {
+    console.log('AssetGridItem: handleDeleteClick triggered for item:', item.id);
+    if (item.type === 'asset' && assetThumbnailRef.current) {
+      assetThumbnailRef.current.triggerDeleteDialog();
+    } else if (item.type === 'folder') {
+      console.warn("Folder deletion not yet implemented via 3-dot menu.");
+    }
+  };
+  
+  const cardHeaderContent = (
+    <>
+      <div className="flex items-center truncate min-w-0">
+        {item.type === 'folder' 
+          ? <FolderIcon className="w-4 h-4 mr-2 flex-shrink-0" /> 
+          : <FileText className="w-4 h-4 mr-2 flex-shrink-0" />}
+        <span className="truncate font-medium text-sm">{item.name}</span>
+      </div>
+      
+      {item.type === 'asset' ? (
+        <div className="flex-shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="p-1 h-auto">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              className="w-48" 
+              align="end" 
+              side="bottom"
+              sideOffset={5}
+              alignOffset={0}
+            >
+              <DropdownMenuItem>
+                <Download className="mr-2 h-4 w-4" />
+                <span>Download</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Edit3 className="mr-2 h-4 w-4" />
+                <span>Rename</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleDeleteClick} 
+                className="text-red-600 hover:!text-red-600 focus:!text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/50 focus:!bg-red-50 dark:focus:!bg-red-900/50 cursor-pointer"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ) : (
+        <div className="w-[28px] h-[28px] flex-shrink-0" />
+      )}
+    </>
+  );
 
   return (
-    <div style={innerStyle} className="flex flex-col items-center text-center relative group">
-      {/* Filename displayed at the top */}
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="group/card relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
       <div 
-        className="w-full px-1 pt-1 pb-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 truncate text-center bg-gray-100 dark:bg-gray-700 rounded-t-md border-b border-gray-200 dark:border-gray-600"
-        title={item.name}
+        className="p-2 border-b flex justify-between items-center"
+        style={dynamicCardStyle}
       >
-        {item.name}
+        {cardHeaderContent}
       </div>
-
-      {/* Thumbnail Area */}
-      <div className="w-full h-full flex-grow relative">
-        {item.type === 'folder' ? (
-          <FolderThumbnail folder={item as Folder} />
-        ) : (
-          <AssetThumbnail
-            src={(item as Asset).publicUrl}
-            alt={item.name}
-            assetId={item.id}
-            storagePath={(item as Asset).storage_path}
-            folderId={(item as Asset).folder_id}
-            type={item.type}
-            isPriority={index < priorityThreshold && (item as Asset).mime_type.startsWith('image/')}
-            mimeType={(item as Asset).mime_type}
-          />
-        )}
-      </div>
+      {item.type === 'asset' ? (
+        <AssetThumbnail
+          ref={assetThumbnailRef}
+          src={(item as Asset).publicUrl}
+          alt={item.name}
+          assetId={item.id}
+          folderId={(item as Asset).folder_id}
+          type={'asset'}
+          isPriority={index !== undefined && priorityThreshold !== undefined && index < priorityThreshold && (item as Asset).mime_type?.startsWith('image/')}
+          mimeType={(item as Asset).mime_type}
+          onDataChange={onDataChange}
+        />
+      ) : (
+        <FolderThumbnail folder={item as Folder} />
+      )}
     </div>
   );
-} 
+});
+
+AssetGridItem.displayName = 'AssetGridItem'; 

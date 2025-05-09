@@ -3,6 +3,7 @@ import { addNote, deleteNote, editNote, updateNoteOrder } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { ErrorCodes } from '@/lib/errors/constants';
+import { jwtDecode } from 'jwt-decode'; // Import for mocking
 
 // Define a reusable structure for the mocks
 const mockMatcher = {
@@ -23,6 +24,7 @@ const mockQueryBuilder = {
 };
 const mockAuth = {
     getUser: vi.fn(),
+    getSession: vi.fn(), // Add getSession mock
 };
 const mockSupabaseClient = {
     auth: mockAuth,
@@ -37,6 +39,11 @@ vi.mock('@/lib/supabase/server', () => ({
 // Mock revalidatePath
 vi.mock('next/cache', () => ({
     revalidatePath: vi.fn(),
+}));
+
+// Mock jwt-decode
+vi.mock('jwt-decode', () => ({
+    jwtDecode: vi.fn(),
 }));
 
 // --- Test Setup --- (Keep helpers)
@@ -61,6 +68,8 @@ describe('Notes Server Actions', () => {
     let mockUpsert: Mock;
     let mockMatch: Mock;
     let mockMaybeSingle: Mock;
+    let mockGetSession: Mock; // For getSession
+    let mockJwtDecode: Mock; // For jwtDecode
 
     beforeEach(() => {
         // Reset all mocks defined in the mock factory structure
@@ -75,9 +84,28 @@ describe('Notes Server Actions', () => {
         mockUpsert = mockQueryBuilder.upsert;
         mockMatch = mockMatcher.match;
         mockMaybeSingle = mockQueryBuilder.maybeSingle;
+        mockGetSession = mockAuth.getSession as Mock; // Assign getSession mock
+        mockJwtDecode = jwtDecode as Mock; // Assign jwtDecode mock
         
         // Default happy paths
         mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+        // Default mock for getSession returning a valid session with an access token
+        mockGetSession.mockResolvedValue({
+            data: {
+                session: {
+                    access_token: 'mock.access.token',
+                    user: mockUser,
+                }
+            },
+            error: null,
+        });
+        // Default mock for jwtDecode returning the active_organization_id
+        mockJwtDecode.mockReturnValue({
+            custom_claims: {
+                active_organization_id: 'test-org-id-from-jwt',
+            },
+        });
+
         mockInsert.mockResolvedValue({ error: null });
         mockMatch.mockResolvedValue({ error: null }); // Match resolves successfully by default
         mockUpsert.mockResolvedValue({ error: null });
@@ -96,6 +124,7 @@ describe('Notes Server Actions', () => {
                 title: 'Test Note',
                 content: 'Test Content',
                 user_id: mockUser.id,
+                organization_id: 'test-org-id-from-jwt', // Expect org id from JWT mock
                 position: 1, // Assuming default max position was 0
                 color_class: 'bg-yellow-200'
             }));
@@ -164,6 +193,17 @@ describe('Notes Server Actions', () => {
             expect(mockInsert).not.toHaveBeenCalled(); 
             expect(revalidatePath).not.toHaveBeenCalled();
         });
+
+        it('should return auth error if active_organization_id is not in JWT claims', async () => {
+            mockJwtDecode.mockReturnValueOnce({ custom_claims: {} }); // No active_organization_id
+            const formData = mockFormData({ title: 'Test Note', content: 'Test Content' });
+            const result = await addNote(null, formData);
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Active organization context is missing.',
+                code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+            });
+        });
     });
 
     // --- deleteNote Tests --- 
@@ -175,7 +215,7 @@ describe('Notes Server Actions', () => {
             expect(mockGetUser).toHaveBeenCalled();
             expect(mockFrom).toHaveBeenCalledWith('notes');
             expect(mockDelete).toHaveBeenCalled();
-            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id });
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt' });
             expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
             expect(result).toEqual({ success: true, message: 'Note deleted.' });
         });
@@ -199,9 +239,20 @@ describe('Notes Server Actions', () => {
             const formData = mockFormData({ note_id: 'note-123' });
             const result = await deleteNote(null, formData);
             expect(mockDelete).toHaveBeenCalled(); 
-            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id });
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-123', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt' });
             expect(result).toEqual({ success: false, message: 'Failed to delete the note. Please try again.' });
             expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should return auth error if active_organization_id is not in JWT claims', async () => {
+            mockJwtDecode.mockReturnValueOnce({ custom_claims: {} }); // No active_organization_id
+            const formData = mockFormData({ note_id: 'note-123' });
+            const result = await deleteNote(null, formData);
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Active organization context is missing.',
+                code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+            });
         });
     });
 
@@ -225,7 +276,7 @@ describe('Notes Server Actions', () => {
                 content: 'Updated Content',
                 color_class: 'bg-blue-200'
             });
-            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id });
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt' });
             expect(revalidatePath).toHaveBeenCalledWith('/documents/notes');
             expect(result).toEqual({ success: true, message: 'Note updated successfully.' });
         });
@@ -257,9 +308,20 @@ describe('Notes Server Actions', () => {
             const formData = mockFormData(validFormData);
             const result = await editNote(null, formData);
             expect(mockUpdate).toHaveBeenCalled();
-            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id });
+            expect(mockMatch).toHaveBeenCalledWith({ id: 'note-456', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt' });
             expect(result).toEqual({ success: false, message: 'Failed to update the note. Please try again.' });
             expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should return auth error if active_organization_id is not in JWT claims', async () => {
+            mockJwtDecode.mockReturnValueOnce({ custom_claims: {} }); // No active_organization_id
+            const formData = mockFormData(validFormData);
+            const result = await editNote(null, formData);
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Active organization context is missing.',
+                code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+            });
         });
     });
 
@@ -274,9 +336,9 @@ describe('Notes Server Actions', () => {
             expect(mockFrom).toHaveBeenCalledWith('notes');
             expect(mockUpsert).toHaveBeenCalledWith(
                 [
-                    { id: 'note-3', user_id: mockUser.id, position: 0 },
-                    { id: 'note-1', user_id: mockUser.id, position: 1 },
-                    { id: 'note-2', user_id: mockUser.id, position: 2 },
+                    { id: 'note-3', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt', position: 0 },
+                    { id: 'note-1', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt', position: 1 },
+                    { id: 'note-2', user_id: mockUser.id, organization_id: 'test-org-id-from-jwt', position: 2 },
                 ],
                 { onConflict: 'id' }
             );
@@ -310,6 +372,35 @@ describe('Notes Server Actions', () => {
             const result = await updateNoteOrder(orderedIds);
             expect(result).toEqual({ success: false, message: 'An unexpected error occurred while updating note order.' });
             expect(revalidatePath).not.toHaveBeenCalled();
+        });
+
+        it('should return auth error if active_organization_id is not in JWT claims', async () => {
+            mockJwtDecode.mockReturnValueOnce({ custom_claims: {} }); // No active_organization_id
+            const result = await updateNoteOrder(orderedIds);
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Active organization context is missing.',
+                code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+            });
+        });
+
+        // Test for when getActiveOrganizationId (via jwtDecode) returns null for active_organization_id
+        it('should return error if active_organization_id is not in JWT claims', async () => {
+            mockJwtDecode.mockReturnValueOnce({ custom_claims: {} }); // No active_organization_id
+            const orderedNoteIds = ['note-1', 'note-2'];
+            const result = await updateNoteOrder(orderedNoteIds);
+            expect(result).toEqual({ 
+                success: false, 
+                message: 'Active organization context is missing.',
+                code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+            });
+        });
+
+        it('should return auth error if user is not found', async () => {
+            mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+            const orderedNoteIds = ['note-1', 'note-2'];
+            const result = await updateNoteOrder(orderedNoteIds);
+            expect(result).toEqual({ success: false, message: 'Authentication error. Please log in again.' });
         });
     });
 }); 

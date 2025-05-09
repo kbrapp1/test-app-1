@@ -62,7 +62,7 @@ This document outlines the planned steps to refactor the application for multi-t
         *   If user belongs to one org, set it as active.
         *   If multiple, potentially redirect to an organization selector page or use a default/last-used.
 *   [x] **Auth:** Update Supabase JWT custom claims to include `active_organization_id` and potentially `organization_roles: [{org_id: 'uuid', role: 'admin'}, ...]`. This is typically done via a Supabase Edge Function triggered `on user creation/login` or by directly minting a custom JWT.
-*   [ ] **Backend:** Create/Update server-side utility (e.g., in `lib/auth/server-action.ts`) to reliably get the current user's active `organization_id` from the session/JWT. This will be used by server actions.
+*   [X] **Backend:** Create/Update server-side utility (e.g., in `lib/auth/server-action.ts`) to reliably get the current user's active `organization_id` from the session/JWT. This will be used by server actions.
 *   [x] *Testing:* Verify tenant context (`active_organization_id`) is correctly established in JWTs/session after login/signup. Test organization assignment logic.
 
 **Step 5: Server Actions & API Routes - Query & Logic Rewriting**

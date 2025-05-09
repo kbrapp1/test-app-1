@@ -58,6 +58,9 @@ export const ErrorCodes = {
 
   // Rate Limit Errors (429)
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+
+  // Additional errors
+  USER_NOT_IN_ORGANIZATION: 'USER_NOT_IN_ORGANIZATION',
 } as const;
 
 /**

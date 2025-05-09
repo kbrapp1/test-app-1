@@ -16,7 +16,9 @@ export default async function DamUploadPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const folderParam = searchParams?.folderId;
+  // Await the dynamic searchParams API before using its properties
+  const { folderId: folderParam } = await searchParams;
+
   const currentFolderId =
     Array.isArray(folderParam) ? folderParam[0] :
     typeof folderParam === 'string' ? folderParam :

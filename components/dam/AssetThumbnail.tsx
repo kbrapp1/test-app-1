@@ -1,11 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState, useTransition } from 'react';
-import { Trash2 } from 'lucide-react';
+import React, { useState, useTransition, forwardRef, useImperativeHandle } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import { deleteAsset } from '@/lib/actions/dam';
 
 import {
     AlertDialog,
@@ -16,20 +15,21 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Button } from '@/components/ui/button';
-import { deleteAsset } from '@/lib/actions/dam';
 
 interface AssetThumbnailProps {
   src: string;
   alt: string;
   assetId: string;
-  storagePath: string;
   folderId: string | null;
   type: 'asset';
   isPriority?: boolean;
   mimeType?: string;
+  onDataChange: () => Promise<void>;
+}
+
+export interface AssetThumbnailRef {
+  triggerDeleteDialog: () => void;
 }
 
 function getPlaceholderForMimeType(mimeType: string | undefined): string {
@@ -49,42 +49,29 @@ function getPlaceholderForMimeType(mimeType: string | undefined): string {
   return '/placeholders/generic.svg';
 }
 
-export function AssetThumbnail({
+const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>(({
     src,
     alt,
     assetId,
-    storagePath,
     folderId,
     type,
     isPriority = false,
-    mimeType
-}: AssetThumbnailProps) {
+    mimeType,
+    onDataChange
+}, ref) => {
   const [imgSrc, setImgSrc] = useState(src);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   
   const fallbackSrc = getPlaceholderForMimeType(mimeType);
 
-  const { 
-      attributes, 
-      listeners, 
-      setNodeRef, 
-      transform, 
-      isDragging 
-  } = useDraggable({
-    id: assetId,
-    data: {
-      type: type,
-      folderId: folderId,
-      name: alt,
-    },
-  });
-
-  const style = transform ? {
-    transform: CSS.Translate.toString(transform),
-    zIndex: 10,
-    cursor: 'grabbing',
-  } : undefined;
+  useImperativeHandle(ref, () => ({
+    triggerDeleteDialog: () => {
+      console.log('AssetThumbnail: triggerDeleteDialog called!');
+      setIsAlertOpen(true);
+    }
+  }));
 
   const handleError = () => {
     console.warn(`Failed to load image: ${src}. Falling back to placeholder.`);
@@ -98,15 +85,18 @@ export function AssetThumbnail({
   React.useEffect(() => {
     if (mimeType && !mimeType.startsWith('image/')) {
       setImgSrc(fallbackSrc);
+    } else {
+      setImgSrc(src);
     }
-  }, [mimeType, fallbackSrc]);
+  }, [src, mimeType, fallbackSrc]);
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {
       try {
-        const result = await deleteAsset(assetId, storagePath);
+        const result = await deleteAsset(assetId);
         if (result.success) {
           toast.success(`Asset "${alt}" deleted successfully.`);
+          await onDataChange();
         } else {
           toast.error(result.error || 'Failed to delete asset.');
         }
@@ -119,42 +109,22 @@ export function AssetThumbnail({
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes}
-      {...listeners}
-      className={`relative w-full h-full aspect-square group ${isDragging ? 'opacity-50' : 'cursor-grab'}`}
-    >
+    <div className="relative aspect-square group">
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <div className="relative group aspect-square overflow-hidden rounded-md bg-muted border border-gray-200 dark:border-gray-700">
-          <Image
-            src={imgSrc}
-            alt={alt}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
-            className={`object-cover transition-transform duration-300 ease-in-out group-hover:scale-105 ${isDragging ? 'cursor-grabbing' : ''}`}
-            onError={handleError}
-            priority={isPriority}
-            draggable="false"
-            onDragStart={(e) => e.preventDefault()}
-          />
-          {!isDragging && (
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-1 right-1 h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-                aria-label="Delete asset"
-                disabled={isPending}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-          )}
+        <div className="p-4 h-full w-full flex items-center justify-center bg-muted rounded-md">
+          <div className="relative h-full w-full overflow-hidden rounded-md">
+            <Image
+              src={imgSrc}
+              alt={alt}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
+              className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+              onError={handleError}
+              priority={isPriority}
+              draggable="false"
+              onDragStart={(e) => e.preventDefault()}
+            />
+          </div>
         </div>
 
         <AlertDialogContent>
@@ -180,4 +150,7 @@ export function AssetThumbnail({
       </AlertDialog>
     </div>
   );
-} 
+});
+
+AssetThumbnail.displayName = 'AssetThumbnail';
+export { AssetThumbnail }; 

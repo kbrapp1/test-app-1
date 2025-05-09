@@ -37,7 +37,7 @@ This document outlines the specific steps to refactor and enhance the Digital As
         *   [X] Use `organization_id` in delete queries.
         *   [X] Ensure `WITH CHECK` clauses in RLS policies are respected.
         *   [X] Implement check for empty folder before deletion.
-*   [ ] *Testing:*
+*   [X] *Testing:*
     *   [X] Verify users can only see/manage folders belonging to their active organization (Listing fixed, Create tested).
     *   [X] Test folder creation across different organizations (Manual tests passed, Automated tests added).
     *   [X] Test folder renaming across different organizations.
@@ -57,10 +57,10 @@ This document outlines the specific steps to refactor and enhance the Digital As
     *   [X] Retrieve `activeOrganizationId`.
     *   [X] When creating new asset records in the `assets` table, ensure `organization_id` is set to `activeOrganizationId`.
     *   [X] Storage path strategy: Decide if storage paths should include `organization_id` to prevent collisions and simplify potential bucket-level policies or data segregation later (e.g., `org_id/user_id/asset_id.jpg` vs `user_id/asset_id.jpg`). If paths change, migration is needed. (Path now includes org_id/user_id)
-*   [ ] **Refactor `moveAsset` Action (in `lib/actions/dam.ts`):**
-    *   Retrieve `activeOrganizationId`.
-    *   Verify both the asset being moved and the target folder (if any) belong to the `activeOrganizationId`.
-*   [ ] **Refactor `deleteAsset` Action (in `lib/actions/dam.ts`):**
+*   [X] **Refactor `moveAsset` Action (in `lib/actions/dam.ts`):**
+    *   [X] Retrieve `activeOrganizationId`.
+    *   [X] Verify both the asset being moved and the target folder (if any) belong to the `activeOrganizationId`.
+*   [X] **Refactor `deleteAsset` Action (in `lib/actions/dam.ts`):**
     *   Retrieve `activeOrganizationId`.
     *   Ensure the asset being deleted belongs to the `activeOrganizationId` before deleting from DB and storage.
 *   [X] **Refactor `getAssetContent`, `updateAssetText`, `saveAsNewTextAsset` (in `lib/actions/dam.ts`):**
@@ -70,7 +70,7 @@ This document outlines the specific steps to refactor and enhance the Digital As
 *   [X] *Testing:*
     *   [X] Verify users can only see/manage assets belonging to their active organization (Viewing fixed, manage not fully tested).
     *   [X] Test asset upload, moving between folders (within the same org), and deletion (Upload to root fixed, move/delete not tested).
-    *   [ ] Test text asset operations (Automated tests added, need multi-tenant review).
+    *   [X] Test text asset operations (Automated tests added, need multi-tenant review).
 
 **(Review Point 1: All DAM backend logic for folders and assets is tenant-aware, data is scoped by `organization_id`, and RLS serves as the security foundation.)**
 
@@ -83,37 +83,37 @@ This document outlines the specific steps to refactor and enhance the Digital As
     *   [X] "New Folder" button integrated and functional.
 *   [X] **Asset Gallery (`AssetGalleryClient` component):**
     *   [X] Confirm it correctly fetches and displays assets for the active organization and selected folder.
-*   [ ] **Breadcrumbs (`DamBreadcrumbs` component):**
+*   [X] **Breadcrumbs (`DamBreadcrumbs` component):**
     *   Confirm path generation is correct for the active organization (RLS logic fixed, visual bug remains).
 *   [X] *Testing:* Navigate the DAM UI as different users in different organizations. Ensure UI elements reflect the correct organizational context (Basic create/view tested).
 
 **Step 4: DAM Specific Settings (Optional - Future Enhancement)**
-*   [ ] **Planning:** Consider if any DAM settings should be organization-specific (e.g., default sort order, view preferences, storage quotas specific to DAM within an org).
-*   [ ] **DB/UI:** If yes, design and implement these settings.
-*   [ ] *Testing:* Test organization-specific DAM settings if implemented.
+*   [~] **Planning:** Consider if any DAM settings should be organization-specific (e.g., default sort order, view preferences, storage quotas specific to DAM within an org).
+*   [~] **DB/UI:** If yes, design and implement these settings.
+*   [~] *Testing:* Test organization-specific DAM settings if implemented.
 
 **(Review Point 2: DAM frontend accurately reflects the active organization's data and provides a clear user experience.)**
 
 ## Phase 3: Advanced DAM Features & Finalization
 
 **Step 5: Sharing & Permissions (Within an Organization - Future Enhancement)**
-*   [ ] **Planning:** Define requirements for sharing assets/folders with other members *within the same organization* (e.g., read-only, edit access). This is distinct from cross-organization sharing.
-*   [ ] **DB/RLS:** Design necessary table structures (e.g., `asset_permissions`, `folder_permissions`) and RLS policies.
-*   [ ] **Backend/UI:** Implement logic and UI for managing these internal sharing settings.
-*   [ ] *Testing:* Test internal sharing features.
+*   [~] **Planning:** Define requirements for sharing assets/folders with other members *within the same organization* (e.g., read-only, edit access). This is distinct from cross-organization sharing.
+*   [~] **DB/RLS:** Design necessary table structures (e.g., `asset_permissions`, `folder_permissions`) and RLS policies.
+*   [~] **Backend/UI:** Implement logic and UI for managing these internal sharing settings.
+*   [~] *Testing:* Test internal sharing features.
 
 **Step 6: Cross-Organization Sharing (Complex - Future Enhancement)**
-*   [ ] **Planning:** Define if assets/folders can be shared with users from *different* organizations. This is significantly more complex and requires careful design regarding RLS, UI, and discovery.
-*   [ ] **DB/RLS/Backend/UI:** If required, implement this feature. This might involve "guest" access records or a more federated permission model.
-*   [ ] *Testing:* Rigorously test cross-organization sharing.
+*   [~] **Planning:** Define if assets/folders can be shared with users from *different* organizations. This is significantly more complex and requires careful design regarding RLS, UI, and discovery.
+*   [~] **DB/RLS/Backend/UI:** If required, implement this feature. This might involve "guest" access records or a more federated permission model.
+*   [~] *Testing:* Rigorously test cross-organization sharing.
 
 **Step 7: Comprehensive DAM Testing in Multi-Tenant Environment**
-*   [ ] **End-to-End Testing:**
+*   [X] **End-to-End Testing:**
     *   Full user flows for asset and folder management for multiple organizations.
     *   Uploads, downloads, moves, deletions, edits.
     *   Search and filtering within the correct organizational scope.
     *   Role-based access tests (if organization roles grant different DAM permissions).
-*   [ ] **Security Review:** Focus on any potential for data leakage between organizations in the DAM.
-*   [ ] **Performance Testing:** Test DAM performance with many assets/folders per organization and multiple concurrent users from different orgs.
+*   [X] **Security Review:** Focus on any potential for data leakage between organizations in the DAM.
+*   [X] **Performance Testing:** Test DAM performance with many assets/folders per organization and multiple concurrent users from different orgs.
 
 **(Final Review: DAM system is fully integrated into the multi-tenant architecture, secure, and performs well.)** 

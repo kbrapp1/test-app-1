@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AssetGrid } from './AssetGrid';
-import type { CombinedItem } from './AssetGrid';
+import type { CombinedItem } from '@/types/dam';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
@@ -63,5 +63,5 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
     );
   }
 
-  return <AssetGrid combinedItems={items} />;
+  return <AssetGrid combinedItems={items} onDataChange={fetchData} setItems={setItems} />;
 }; 

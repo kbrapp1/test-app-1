@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Note } from '@/types/notes';
 import { ErrorCodes } from '@/lib/errors/constants'; // Import error codes
+import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Use the actual utility
 
 // Type for Server Action Response
 interface ActionResult {
@@ -50,12 +51,22 @@ export async function addNote(prevState: any, formData: FormData): Promise<Actio
         };
     }
 
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+        return {
+            success: false,
+            message: 'Active organization context is missing.',
+            code: ErrorCodes.USER_NOT_IN_ORGANIZATION // Example new error code
+        };
+    }
+
     // Get the highest current position
     try {
         const { data: maxPosData, error: maxPosError } = await supabase
             .from('notes')
             .select('position')
             .eq('user_id', user.id)
+            .eq('organization_id', activeOrgId) // Scope by organization
             .order('position', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -76,10 +87,11 @@ export async function addNote(prevState: any, formData: FormData): Promise<Actio
 
         const { error: insertError } = await supabase
             .from('notes')
-            .insert({ 
+            .insert({
                 title: title,
-                content: content, 
-                user_id: user.id, 
+                content: content,
+                user_id: user.id,
+                organization_id: activeOrgId, // Add organization_id
                 position: nextPosition, // Set the position
                 color_class: defaultColor // Set default color on creation
             });
@@ -128,10 +140,19 @@ export async function deleteNote(prevState: any, formData: FormData): Promise<Ac
         return { success: false, message: 'Authentication error. Please log in again.' };
     }
 
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+        return {
+            success: false,
+            message: 'Active organization context is missing.',
+            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+        };
+    }
+
     const { error: deleteError } = await supabase
         .from('notes')
         .delete()
-        .match({ id: noteId, user_id: user.id });
+        .match({ id: noteId, user_id: user.id, organization_id: activeOrgId }); // Add organization_id
 
     if (deleteError) {
         console.error('Delete Error (Delete Note):', deleteError.message);
@@ -172,15 +193,24 @@ export async function editNote(prevState: any, formData: FormData): Promise<Acti
         return { success: false, message: 'Authentication error. Please log in again.' };
     }
 
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+        return {
+            success: false,
+            message: 'Active organization context is missing.',
+            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+        };
+    }
+
     const { error: updateError } = await supabase
         .from('notes')
-        .update({ 
+        .update({
             title: newTitle,
-            content: newContent, 
+            content: newContent,
             color_class: newColorClass // Update the color class
             // updated_at handled by trigger
         })
-        .match({ id: noteId, user_id: user.id });
+        .match({ id: noteId, user_id: user.id, organization_id: activeOrgId }); // Add organization_id
 
     if (updateError) {
         console.error('Update Error (Edit Note):', updateError.message); 
@@ -206,10 +236,20 @@ export async function updateNoteOrder(orderedNoteIds: string[]): Promise<ActionR
         return { success: false, message: 'Authentication error. Please log in again.' };
     }
 
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+        return {
+            success: false,
+            message: 'Active organization context is missing.',
+            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
+        };
+    }
+
     // Create an array of objects for the upsert operation
     const updates = orderedNoteIds.map((id, index) => ({
         id: id,
         user_id: user.id, // Include user_id for RLS
+        organization_id: activeOrgId, // Add organization_id
         position: index   // Set position based on array index
     }));
 

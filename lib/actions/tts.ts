@@ -1,15 +1,13 @@
 'use server';
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import Replicate from 'replicate';
 import { z } from 'zod';
 import { Database } from '@/types/supabase'; // Corrected path
 import { Prediction } from 'replicate';
-import { createClient } from '@/lib/supabase/server'; // Use the custom server client that handles cookies correctly
-import { createClient as createStorageClientMaybe } from '@/lib/supabase/server'; // Keep the aliased import if it's used elsewhere (e.g., for storage)
+import { createClient } from '@/lib/supabase/server';
 import { randomUUID } from 'crypto'; // For generating unique filenames
-import { createClient as createAdminClient, SupabaseClient } from '@supabase/supabase-js';
+// import { createClient as createAdminClient, SupabaseClient } from '@supabase/supabase-js';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 // Type for the voice list
 interface TtsVoice {
@@ -103,7 +101,7 @@ export async function startSpeechGeneration(formData: FormData): Promise<{
   const validatedFields = StartSpeechSchema.safeParse(rawFormData);
   if (!validatedFields.success) {
     const fieldErrors = validatedFields.error.flatten().fieldErrors;
-    const errorMessage = fieldErrors.voiceId?.[0] 
+    const errorMessage = fieldErrors.voiceId?.[0]  
                        || fieldErrors.inputText?.[0]
                        || 'Invalid input.';
     console.error('Validation failed:', fieldErrors);
@@ -122,9 +120,14 @@ export async function startSpeechGeneration(formData: FormData): Promise<{
   }
 
   try {
-    // 1. Get Supabase client using the correct function
-    const supabase = createClient(); 
+    // 1. Get Supabase client for server actions
+    const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      console.error('startSpeechGeneration: Active Organization ID not found.');
+      return { success: false, error: 'Active organization not found. Cannot start speech generation.' };
+    }
 
     if (authError || !user) {
       console.error('Authentication error:', authError);
@@ -143,8 +146,8 @@ export async function startSpeechGeneration(formData: FormData): Promise<{
 
     if (!prediction || !prediction.id) {
       console.error('Replicate prediction creation failed:', prediction?.error);
-      const replicateErrorString = typeof prediction?.error === 'string' 
-        ? prediction.error 
+      const replicateErrorString = typeof prediction?.error === 'string'  
+        ? prediction.error  
         : (prediction?.error ? JSON.stringify(prediction.error) : 'Unknown Replicate error');
       return { success: false, error: replicateErrorString };
     }
@@ -158,7 +161,8 @@ export async function startSpeechGeneration(formData: FormData): Promise<{
         inputText: inputText,
         userId: user.id,
         sourceAssetId: sourceAssetId ?? null,
-        voiceId: voiceId, // Store voiceId
+        voiceId: voiceId,
+        organization_id: activeOrgId,
       })
       .select('id')
       .single();
@@ -201,10 +205,14 @@ interface GetSpeechResultReturn {
 }
 
 export async function getSpeechGenerationResult(replicatePredictionId: string): Promise<GetSpeechResultReturn> {
-  const supabase = createClient(); // Use the custom server client
+  const supabase = createClient();
 
-  // Basic check for user authentication (optional but good practice)
   const { data: { user }, error: authError } = await supabase.auth.getUser(); // Use the new client instance
+  const activeOrgId = await getActiveOrganizationId();
+  if (!activeOrgId) {
+    console.error('getSpeechGenerationResult: Active Organization ID not found.');
+    return { success: false, status: 'unknown', audioUrl: null, error: 'Active organization not found.', ttsPredictionDbId: null };
+  }
   if (authError || !user) {
     console.error('Authentication error:', authError);
     // Return explicit type match
@@ -254,10 +262,9 @@ export async function getSpeechGenerationResult(replicatePredictionId: string): 
           // Update DB with final status and the TEMPORARY Replicate URL
           const { data: updateResult, error: updateError } = await supabase
             .from('TtsPrediction')
-            .update({ status: 'succeeded', outputUrl: temporaryAudioUrl }) // Save Replicate URL
-            .eq('replicatePredictionId', replicatePredictionId)
-            
-          // Fetch ID separately...
+            .update({ status: 'succeeded', outputUrl: temporaryAudioUrl })
+            .eq('replicatePredictionId', replicatePredictionId);
+          
           let dbPredictionId: string | null = null;
           if (!updateError) {
              const { data: fetchRecord, error: fetchError } = await supabase
@@ -349,9 +356,14 @@ export async function saveTtsAudioToDam(
   assetId?: string;
   error?: string;
 }> {
-  // Use the standard server client
-  const supabase = createClient(); 
+  // Use server action client
+  const supabase = createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const activeOrgId = await getActiveOrganizationId();
+  if (!activeOrgId) {
+    console.error('saveTtsAudioToDam: Active Organization ID not found.');
+    return { success: false, error: 'Active organization not found. Cannot save TTS audio.' };
+  }
 
   if (authError || !user) {
     console.error('Auth error in saveTtsAudioToDam:', authError);
@@ -430,7 +442,7 @@ export async function saveTtsAudioToDam(
         storage_path: uploadData.path, // Use the path returned by storage
         mime_type: contentType,
         size: fileSize,
-        // folder_id can be null or assigned later if needed
+        organization_id: activeOrgId,
       })
       .select('id') // Select the ID of the newly created record
       .single();
@@ -459,7 +471,7 @@ export async function saveTtsAudioToDam(
     const { error: updateErrorLink } = await supabase // Use original client 'supabase' here
         .from('TtsPrediction')
         .update({ outputAssetId: newAssetId })
-        .eq('id', ttsPredictionId); // Match on the TtsPrediction Primary Key
+        .eq('id', ttsPredictionId);
         
     if (updateErrorLink) {
         console.error(`Failed to link asset ${newAssetId} to TtsPrediction ${ttsPredictionId}:`, updateErrorLink);
@@ -493,7 +505,7 @@ export async function saveTtsHistory(input: SaveHistoryInput): Promise<{
   error?: string;
 }> {
   console.warn('saveTtsHistory action called, but might be redundant. Check if TtsPrediction suffices.');
-  // Use the standard server client
+  // Use server action client
   const supabase = createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -545,12 +557,16 @@ export async function getTtsHistory(): Promise<{
   data?: TtsHistoryEntry[]; // Use the defined type
   error?: string;
 }> {
-  // Use the standard server client
-  const supabase = createClient(); 
+  // Use server action client
+  const supabase = createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return { success: false, error: 'User not authenticated' };
+  }
+  const activeOrgId = await getActiveOrganizationId();
+  if (!activeOrgId) {
+    return { success: false, error: 'Active organization not found.' };
   }
 
   try {

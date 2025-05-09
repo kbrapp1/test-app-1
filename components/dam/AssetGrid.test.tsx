@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AssetGrid } from './AssetGrid';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { moveAsset } from '@/lib/actions/dam';
 import type { CombinedItem } from '@/types/dam';
 
@@ -10,6 +10,18 @@ import type { CombinedItem } from '@/types/dam';
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => <div data-testid="dnd-context">{children}</div>,
   closestCenter: vi.fn(),
+  pointerWithin: vi.fn(),
+  useDraggable: vi.fn(() => ({
+    attributes: { role: 'button', 'aria-describedby': 'draggable' },
+    listeners: { onMouseDown: vi.fn(), onTouchStart: vi.fn() },
+    setNodeRef: vi.fn(),
+    transform: null,
+    isDragging: false,
+  })),
+  useSensor: vi.fn((sensor) => sensor),
+  useSensors: vi.fn((...sensors) => sensors),
+  PointerSensor: vi.fn(),
+  TouchSensor: vi.fn(),
 }));
 
 vi.mock('@dnd-kit/sortable', () => ({
@@ -185,7 +197,7 @@ describe('AssetGrid Component', () => {
     const emptyItems: CombinedItem[] = [];
     
     // Use screen.debug() for troubleshooting
-    render(<AssetGrid combinedItems={emptyItems} />);
+    render(<AssetGrid combinedItems={emptyItems} onDataChange={vi.fn()} setItems={vi.fn()} />);
     
     // Look for the presence of div elements that would be the loading placeholders
     const placeHolderElements = screen.getAllByRole('generic');
@@ -200,7 +212,7 @@ describe('AssetGrid Component', () => {
     // Create a small set of items (below the virtualization threshold)
     const smallSet = combinedItems.slice(0, 3);
     
-    const { findByTestId } = render(<AssetGrid combinedItems={smallSet} />);
+    const { findByTestId } = render(<AssetGrid combinedItems={smallSet} onDataChange={vi.fn()} setItems={vi.fn()} />);
     
     // Wait for component to mount
     await act(async () => {
@@ -232,7 +244,7 @@ describe('AssetGrid Component', () => {
       publicUrl: `http://example.com/sample${index}.jpg`
     })) as CombinedItem[];
     
-    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} />);
+    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} onDataChange={vi.fn()} setItems={vi.fn()} />);
     
     // Wait for component to mount
     await act(async () => {
@@ -275,7 +287,7 @@ describe('AssetGrid Component', () => {
       publicUrl: `http://example.com/sample${index}.jpg`
     })) as CombinedItem[];
     
-    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} />);
+    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} onDataChange={vi.fn()} setItems={vi.fn()} />);
     
     // Wait for component to mount and dimensions to be calculated
     await act(async () => {
@@ -307,7 +319,7 @@ describe('AssetGrid Component', () => {
       publicUrl: `http://example.com/sample${index}.jpg`
     })) as CombinedItem[];
     
-    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} />);
+    const { findByTestId } = render(<AssetGrid combinedItems={largeSet} onDataChange={vi.fn()} setItems={vi.fn()} />);
     
     // Wait for component to mount
     await act(async () => {

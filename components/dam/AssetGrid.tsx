@@ -1,9 +1,9 @@
 'use client';
 
 // Make sure all necessary hooks and components are imported
-import React, { useMemo } from 'react'; 
+import React, { useMemo, useState, useEffect, useRef, SetStateAction, Dispatch } from 'react'; 
 import { useRouter } from 'next/navigation';
-import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, pointerWithin, type DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { moveAsset } from '@/lib/actions/dam'; 
 import { useToast } from '@/components/ui/use-toast';
@@ -20,19 +20,40 @@ interface AssetGridProps {
     // Optional arrays passed from server for testing
     assets?: Asset[];
     folders?: Folder[];
+    onDataChange: () => Promise<void>;
+    setItems: Dispatch<SetStateAction<CombinedItem[]>>;
 }
 
 // Constants
-const PRIORITY_THRESHOLD = 4;
+const PRIORITY_THRESHOLD = 5;
 const VIRTUALIZE_THRESHOLD = 30;
-const CELL_SIZE = 150;
+const CELL_SIZE = 225;
 
 // The Client Component
-export function AssetGrid({ combinedItems }: AssetGridProps) {
+export const AssetGrid = React.memo<AssetGridProps>(({ combinedItems, onDataChange, setItems }) => {
     const { toast } = useToast();
     const router = useRouter(); 
+    const [optimisticallyHiddenItemId, setOptimisticallyHiddenItemId] = useState<string | null>(null);
     const itemIds = useMemo(() => combinedItems.map(item => item.id), [combinedItems]);
-    const { ref: gridContainerRef, dimensions, hasMounted } = useGridDimensions();
+    const { ref: gridDimensionsRef, dimensions, hasMounted } = useGridDimensions();
+
+    // Define sensors with activation constraints
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            // Require the mouse to move by 10 pixels before activating
+            activationConstraint: {
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            // Press delay of 250ms, tolerance of 5px of movement
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        })
+        // KeyboardSensor can be added here if needed
+    );
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
@@ -46,18 +67,39 @@ export function AssetGrid({ combinedItems }: AssetGridProps) {
             const assetId = active.id as string;
             const targetFolderId = isOverRootDroppable ? null : over.id as string;
             
-            if (active.data.current?.folderId === targetFolderId) return;
+            // Get current folder ID from the dragged item's data
+            const currentAssetFolderId = active.data.current?.item?.folder_id; // Access nested item data
+
+            // Prevent redundant moves
+            if (currentAssetFolderId === targetFolderId) {
+                console.log('Asset is already in the target folder. No move needed.');
+                return;
+            }
+
+            // Optimistically hide the item locally IMMEDIATELY
+            setOptimisticallyHiddenItemId(assetId);
 
             try {
+                // Note: Consider showing a loading state here
                 const result = await moveAsset(assetId, targetFolderId);
                 if (result.success) {
                     toast({ title: 'Asset moved successfully!' });
-                    router.refresh(); 
+                    
+                    // Optimistic UI Update: Remove item immediately
+                    setItems(prevItems => prevItems.filter(item => item.id !== assetId));
+                    
+                    // Fetch latest data from server to ensure consistency (no await needed for visual update)
+
                 } else {
                     toast({ title: 'Error moving asset', description: result.error, variant: 'destructive' });
+                    // Move failed, unhide the item
+                    setOptimisticallyHiddenItemId(null);
                 }
             } catch (error) {
-                toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+                console.error("Move asset error:", error); // Log the error
+                toast({ title: 'Error', description: 'An unexpected error occurred while moving the asset.', variant: 'destructive' });
+                // Move failed, unhide the item
+                setOptimisticallyHiddenItemId(null);
             }
         }
     };
@@ -77,19 +119,25 @@ export function AssetGrid({ combinedItems }: AssetGridProps) {
     if (combinedItems.length <= VIRTUALIZE_THRESHOLD) {
         return (
             <DndContext 
-                collisionDetection={closestCenter}
+                sensors={sensors}
+                collisionDetection={pointerWithin}
                 onDragEnd={handleDragEnd}
             >
                 <SortableContext items={itemIds} strategy={verticalListSortingStrategy} disabled={true}>
-                    <div className="grid grid-cols-[repeat(auto-fit,150px)] gap-4">
-                        {combinedItems.map((item, index) => (
-                            <AssetGridItem 
-                                key={item.id}
-                                item={item}
-                                index={index}
-                                priorityThreshold={PRIORITY_THRESHOLD}
-                            />
-                        ))}
+                    <div className="grid grid-cols-[repeat(auto-fit,225px)] gap-4">
+                        {combinedItems.map((item, index) => {
+                            // Hide optimistically removed item
+                            if (item.id === optimisticallyHiddenItemId) return null;
+                            return (
+                                <AssetGridItem 
+                                    key={item.id}
+                                    item={item}
+                                    index={index}
+                                    priorityThreshold={PRIORITY_THRESHOLD}
+                                    onDataChange={onDataChange}
+                                />
+                            );
+                        })}
                     </div>
                 </SortableContext>
             </DndContext>
@@ -100,34 +148,51 @@ export function AssetGrid({ combinedItems }: AssetGridProps) {
     const COLS = Math.max(2, Math.floor(dimensions.width / CELL_SIZE) || 6);
     const rowCount = Math.ceil(combinedItems.length / COLS);
     
-    return (
-        <div ref={gridContainerRef} className="w-full h-full">
-            {dimensions.width > 0 && (
+    const Cell = ({ columnIndex, rowIndex, style }: any) => {
+        const index = rowIndex * COLS + columnIndex;
+        if (index >= combinedItems.length) return null;
+        const item = combinedItems[index];
+        
+        // Hide optimistically removed item
+        if (item.id === optimisticallyHiddenItemId) return null;
+        
+        return (
+            <div style={style}>
+                <AssetGridItem 
+                    item={item} 
+                    index={index} 
+                    priorityThreshold={PRIORITY_THRESHOLD} 
+                    onDataChange={onDataChange}
+                />
+            </div>
+        );
+    };
+    
+    const grid = (
+        <DndContext 
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            onDragEnd={handleDragEnd}
+        >
+            <SortableContext items={itemIds} strategy={verticalListSortingStrategy} disabled={true}>
                 <FixedSizeGrid
                     columnCount={COLS}
-                    rowCount={rowCount}
                     columnWidth={CELL_SIZE}
+                    height={dimensions.height || 500}
+                    rowCount={rowCount}
                     rowHeight={CELL_SIZE}
-                    height={dimensions.height}
-                    width={dimensions.width}
+                    width={dimensions.width || 500}
+                    itemData={combinedItems}
                 >
-                    {({ columnIndex, rowIndex, style }) => {
-                        const index = rowIndex * COLS + columnIndex;
-                        if (index >= combinedItems.length) return null;
-                        const item = combinedItems[index];
-                        
-                        return (
-                            <div style={style} key={item.id}>
-                                <AssetGridItem 
-                                    item={item}
-                                    index={index}
-                                    priorityThreshold={PRIORITY_THRESHOLD}
-                                />
-                            </div>
-                        );
-                    }}
+                    {Cell}
                 </FixedSizeGrid>
-            )}
+            </SortableContext>
+        </DndContext>
+    );
+
+    return (
+        <div ref={gridDimensionsRef} style={{ width: '100%', height: 'calc(100vh - 200px)' }}>
+            {grid}
         </div>
     );
-}
+});

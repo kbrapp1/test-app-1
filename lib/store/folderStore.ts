@@ -13,11 +13,15 @@ export interface FolderNode extends Folder {
 // Define the store's state and actions
 interface FolderStoreState {
   rootFolders: FolderNode[];
+  selectedFolderId: string | null; // New state for selected folder
+  searchTerm: string; // New state for the search term
   setInitialFolders: (folders: Folder[]) => void;
   toggleExpand: (folderId: string) => void;
   fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<Folder[]>) => Promise<void>;
   addFolder: (newFolder: Folder) => void;
   removeFolder: (folderId: string) => void;
+  setSelectedFolder: (folderId: string | null) => void; // New action
+  setSearchTerm: (term: string) => void; // New action for search
   // TODO: Add renameFolder action
 }
 
@@ -77,6 +81,8 @@ const addNodeToParent = (
 // Create the Zustand store
 export const useFolderStore = create<FolderStoreState>((set, get) => ({
   rootFolders: [],
+  selectedFolderId: null, // Initialize selectedFolderId
+  searchTerm: '', // Initialize search term
 
   setInitialFolders: (folders) => {
     const initialNodes: FolderNode[] = folders.map(f => ({
@@ -86,7 +92,7 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
       isLoading: false,
       hasError: false,
     }));
-    set({ rootFolders: initialNodes });
+    set({ rootFolders: initialNodes, selectedFolderId: null }); // Reset selection when setting initial folders
   },
 
   toggleExpand: (folderId) => {
@@ -134,15 +140,43 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     }
   },
 
+  setSelectedFolder: (folderId) => { // Implement setSelectedFolder
+    set({ selectedFolderId: folderId });
+  },
+
+  setSearchTerm: (term) => { // Implement setSearchTerm
+    set({ searchTerm: term });
+  },
+
   addFolder: (newFolder) => {
     const newNode: FolderNode = {
         ...newFolder,
         children: null,
-        isExpanded: false,
+        isExpanded: false, // New folders are not expanded by default
         isLoading: false,
         hasError: false,
     };
-    set((state) => ({ rootFolders: addNodeToParent(state.rootFolders, newNode) }));
+
+    set((state) => {
+      let updatedRootFolders = state.rootFolders;
+
+      // Expand the parent folder if it exists
+      if (newNode.parent_folder_id) {
+        updatedRootFolders = findAndUpdateNode(
+          updatedRootFolders,
+          newNode.parent_folder_id,
+          (node) => ({ isExpanded: true }) // Ensure parent is expanded
+        );
+      }
+      
+      // Add the new folder to the tree
+      updatedRootFolders = addNodeToParent(updatedRootFolders, newNode);
+      
+      return { 
+        rootFolders: updatedRootFolders,
+        selectedFolderId: newNode.id // Select the newly created folder
+      };
+    });
   },
 
   removeFolder: (folderId) => {

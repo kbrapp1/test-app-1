@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
-import { deleteFolder } from '@/lib/actions/dam/index';
+import { deleteFolder } from '@/lib/actions/dam';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useFolderStore } from '@/lib/store/folderStore';
