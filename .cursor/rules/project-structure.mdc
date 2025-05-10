@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
 # Project Structure Overview
 
 <!-- For a detailed list of technologies and versions used, see [stack-rules.md](docs/starters/stack-rules.md) -->
@@ -351,7 +356,7 @@
     - `auth-middleware.ts` <!-- Supabase-specific authentication middleware helper. -->
     - `client.ts` <!-- Supabase client instance for client-side use. -->
     - `db.test.ts` <!-- Tests for database interaction helpers. -->
-    - `db.ts` <!-- Database interaction helpers (e.g., Prisma or Supabase client wrappers). -->
+    - `db.ts` <!-- Database interaction helpers (e.g. Supabase client wrappers). -->
     - `README.md` <!-- Documentation for Supabase integration. -->
     - `server.ts` <!-- Supabase client instance for server-side use. -->
   - `types/` <!-- Shared TypeScript type definitions. -->
@@ -410,4 +415,5 @@
   - `dam.ts` <!-- Types specific to the DAM feature. -->
   - `notes.ts` <!-- Types specific to the notes feature. -->
   - `supabase.ts` <!-- Types generated from the Supabase schema (database types). -->
+
   - `team.ts` <!-- Types specific to the team feature. -->

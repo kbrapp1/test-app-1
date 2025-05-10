@@ -42,9 +42,11 @@ export function FolderItem({
   const [deleteDialogKey, setDeleteDialogKey] = useState(0);
 
   const handleToggleExpand = async () => {
-    toggleExpand(folderNode.id);
-    // If expanding and children haven't been fetched, fetch them
-    if (!folderNode.isExpanded && folderNode.children === null) {
+    const aboutToExpand = !folderNode.isExpanded; // Capture state *before* toggling
+    toggleExpand(folderNode.id); // Toggle the state in the store
+
+    // Use pre-toggle state for fetch decision AND ensure children haven't been fetched yet
+    if (aboutToExpand && folderNode.children === null) { 
       await fetchAndSetChildren(folderNode.id, fetchFolderChildren);
     }
   };

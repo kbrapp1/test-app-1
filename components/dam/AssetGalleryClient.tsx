@@ -6,20 +6,22 @@ import type { CombinedItem } from '@/types/dam';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
+  initialSearchTerm?: string;
 }
 
-export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentFolderId }) => {
+export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentFolderId, initialSearchTerm }) => {
   const [items, setItems] = useState<CombinedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch data from API
-  const fetchData = async () => {
+  const fetchData = async (folderIdToFetch: string | null, termToFetch: string | undefined) => {
     setLoading(true);
     try {
-      // Add timestamp to bust browser cache
       const timestamp = new Date().getTime();
-      const res = await fetch(`/api/dam?folderId=${currentFolderId ?? ''}&_=${timestamp}`, { 
-        cache: 'no-store' // Ensure we get fresh data
+      const queryTerm = termToFetch || '';
+      const apiUrl = `/api/dam?folderId=${folderIdToFetch ?? ''}&q=${encodeURIComponent(queryTerm)}&_=${timestamp}`;
+      console.log('AssetGalleryClient fetching:', apiUrl);
+      const res = await fetch(apiUrl, { 
+        cache: 'no-store'
       });
       
       if (!res.ok) {
@@ -29,39 +31,35 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
       const data: CombinedItem[] = await res.json();
       setItems(data);
     } catch (e) {
-      // Silently handle errors - we'll show empty state UI
       setItems([]);
+      console.error("Error fetching DAM items:", e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    let cancelled = false;
-    
-    const load = async () => {
-      if (!cancelled) await fetchData();
-    };
-    
-    load();
-    
-    return () => { cancelled = true; };
-  }, [currentFolderId]);
+    fetchData(currentFolderId, initialSearchTerm);
+  }, [currentFolderId, initialSearchTerm]);
 
   if (loading) return (
     <div className="text-center p-8">
       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4"></div>
-      <p>Loading assets...</p>
+      <p>Loading...</p>
     </div>
   );
   
   if (items.length === 0) {
     return (
       <div className="text-center p-8">
-        <p>This folder is empty.</p>
+        {initialSearchTerm ? (
+          <p>No results found for "{initialSearchTerm}".</p>
+        ) : (
+          <p>This folder is empty.</p>
+        )}
       </div>
     );
   }
 
-  return <AssetGrid combinedItems={items} onDataChange={fetchData} setItems={setItems} />;
+  return <AssetGrid combinedItems={items} onDataChange={() => fetchData(currentFolderId, initialSearchTerm)} setItems={setItems} />;
 }; 

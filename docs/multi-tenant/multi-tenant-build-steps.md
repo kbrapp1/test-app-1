@@ -66,14 +66,14 @@ This document outlines the planned steps to refactor the application for multi-t
 *   [x] *Testing:* Verify tenant context (`active_organization_id`) is correctly established in JWTs/session after login/signup. Test organization assignment logic.
 
 **Step 5: Server Actions & API Routes - Query & Logic Rewriting**
-*   [ ] **Refactor:** Systematically update all Server Actions (`lib/actions/*.ts`, `app/**/actions.ts`) that interact with tenant-scoped data.
+*   [X] **Refactor:** Systematically update all Server Actions (`lib/actions/*.ts`, `app/**/actions.ts`) that interact with tenant-scoped data.
     *   Fetch the current `organization_id` using the utility from Step 4.
     *   **Crucial:** While RLS provides DB-level security, application queries should still explicitly include `organization_id` filters (`.eq('organization_id', currentOrgId)`) for clarity, performance (RLS can sometimes be less performant if not optimized), and to prevent unintended cross-tenant operations if RLS were ever misconfigured.
     *   This applies to: `listTextAssets`, `getAssetContent`, `updateAssetText`, `saveAsNewTextAsset` in `lib/actions/dam.ts`.
     *   This applies to: `startSpeechGeneration`, `getSpeechGenerationResult`, `saveTtsAudioToDam`, `getTtsHistory` in `lib/actions/tts.ts`.
     *   This applies to notes actions, team actions (if teams are now org-specific), etc.
-*   [ ] **Refactor:** Update all API Route handlers (`app/api/**/*.ts`) similarly if they directly access tenant-scoped data.
-*   [ ] **Refactor:** Review and update generic data access functions (e.g., `queryData` in `lib/supabase/db.ts`) to ensure they are tenant-aware or that all call sites correctly pass the `organization_id`.
+*   [X] **Refactor:** Update all API Route handlers (`app/api/**/*.ts`) similarly if they directly access tenant-scoped data.
+*   [X] **Refactor:** Review and update generic data access functions (e.g., `queryData` in `lib/supabase/db.ts`) to ensure they are tenant-aware or that all call sites correctly pass the `organization_id`.
 *   [ ] **New Actions:**
     *   `createOrganization(name: string): Promise<{organization_id: string}>`
     *   `switchActiveOrganization(organization_id: string): Promise<void>` (updates JWT/session and redirects)

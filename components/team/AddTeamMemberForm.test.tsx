@@ -22,6 +22,38 @@ vi.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({ toast: mockToastFn }),
 }));
 
+// Mock next/navigation
+const mockRouterRefresh = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: mockRouterRefresh,
+    push: vi.fn(), // Add other router methods if your component uses them
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    pathname: '/',
+    query: {},
+    asPath: '/',
+    events: {
+      on: vi.fn(),
+      off: vi.fn(),
+      emit: vi.fn(),
+    },
+    isFallback: false,
+    basePath: '',
+    locale: undefined,
+    locales: [],
+    defaultLocale: 'en',
+    isReady: true,
+    isPreview: false,
+    isLocaleDomain: false,
+    // Add any other properties/methods your component might expect from router
+  }),
+  usePathname: () => '/', // Mock usePathname if used directly or indirectly
+  useSearchParams: () => new URLSearchParams(), // Mock useSearchParams if used
+}));
+
 // Mock fetch
 global.fetch = vi.fn();
 
@@ -56,6 +88,7 @@ describe('AddTeamMemberForm', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockRouterRefresh.mockClear();
         (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
             ok: true,
             json: async () => ({ success: true }),
@@ -172,6 +205,7 @@ describe('AddTeamMemberForm', () => {
 
             expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({ title: 'Success' }));
             expect(onSuccessMock).toHaveBeenCalledTimes(1);
+            expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
         });
     });
 

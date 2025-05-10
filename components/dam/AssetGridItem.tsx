@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useTransition } from 'react';
 import { Asset, Folder, CombinedItem } from '@/types/dam';
 import { AssetThumbnail, AssetThumbnailRef } from './AssetThumbnail';
 import { FolderThumbnail } from './FolderThumbnail';
@@ -10,9 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Download, Edit3, Trash2, Folder as FolderIcon, FileText } from 'lucide-react';
+import { MoreHorizontal, Download, Edit3, Trash2, Folder as FolderIcon, FileText, Loader2 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { getAssetDownloadUrl } from '@/lib/actions/dam';
+import { toast } from 'sonner';
 
 export interface AssetGridItemProps {
   item: CombinedItem;
@@ -29,6 +31,7 @@ export const AssetGridItem = React.forwardRef<
   AssetGridItemProps
 >(({ item, index, priorityThreshold, onDataChange }, ref) => {
   const assetThumbnailRef = useRef<AssetThumbnailRef>(null);
+  const [isDownloading, startDownloadTransition] = useTransition();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
@@ -41,6 +44,35 @@ export const AssetGridItem = React.forwardRef<
   };
   
   const dynamicCardStyle = isDragging ? { opacity: 0.5 } : {};
+
+  const handleDownload = async () => {
+    if (item.type === 'asset') {
+      const asset = item as Asset;
+      startDownloadTransition(async () => {
+        try {
+          console.log('Requesting download URL for asset:', asset.name);
+          const result = await getAssetDownloadUrl(asset.id);
+
+          if (result.success && result.url) {
+            console.log('Received signed URL:', result.url);
+            const link = document.createElement('a');
+            link.href = result.url;
+            link.setAttribute('download', asset.name || 'download');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success(`Downloading ${asset.name}...`);
+          } else {
+            console.error('Failed to get download URL:', result.error);
+            toast.error(result.error || 'Could not prepare download.');
+          }
+        } catch (error) {
+          console.error('Error during download process:', error);
+          toast.error('An unexpected error occurred while trying to download.');
+        }
+      });
+    }
+  };
 
   const handleDeleteClick = () => {
     console.log('AssetGridItem: handleDeleteClick triggered for item:', item.id);
@@ -75,9 +107,13 @@ export const AssetGridItem = React.forwardRef<
               sideOffset={5}
               alignOffset={0}
             >
-              <DropdownMenuItem>
-                <Download className="mr-2 h-4 w-4" />
-                <span>Download</span>
+              <DropdownMenuItem onClick={handleDownload} disabled={isDownloading}>
+                {isDownloading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                <span>{isDownloading ? 'Preparing...' : 'Download'}</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Edit3 className="mr-2 h-4 w-4" />

@@ -11,10 +11,10 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0'; // Import standardwebhooks
 
 interface AuthHookRequest {
-  type?: string; 
+  type?: string;
   event?: string;
   user_id: string; // User ID is at the root
-  claims: any; 
+  claims: any;
   authentication_method?: string;
 }
 
@@ -28,7 +28,7 @@ console.log('Set Active Org Claim Edge Function initializing...');
 // Retrieve the configured Auth Hook secret from environment variables
 const HOOK_SECRET_WITH_PREFIX = Deno.env.get('CUSTOM_AUTH_HOOK_SECRET');
 
-serve(async (req: Request, connInfo: ConnInfo) => {
+serve(async (req: Request, connInfo: ConnInfo)=>{
   try {
     const requestBodyText = await req.text();
     console.log(`Received requestBodyText: ${requestBodyText}`); // LOG THE RAW BODY
@@ -42,9 +42,11 @@ serve(async (req: Request, connInfo: ConnInfo) => {
         console.log('Auth Hook payload verified successfully using standardwebhooks.');
       } catch (error) {
         console.error('Auth Hook payload verification failed (standardwebhooks):', (error as Error).message);
-        return new Response(JSON.stringify({ error: 'Unauthorized: Invalid hook signature' }), {
+        return new Response(JSON.stringify({
+          error: 'Unauthorized: Invalid hook signature'
+        }), {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' }
         });
       }
     } else {
@@ -58,22 +60,15 @@ serve(async (req: Request, connInfo: ConnInfo) => {
     } catch (parseError) {
       console.error('Failed to parse requestBodyText as JSON:', (parseError as Error).message);
       console.error('requestBodyText that failed parsing was:', requestBodyText);
-      return new Response(JSON.stringify({ error: 'Invalid JSON payload from Auth Hook' }), {
+      return new Response(JSON.stringify({
+        error: 'Invalid JSON payload from Auth Hook'
+      }), {
         status: 400, // Bad Request
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    
-    if (!payload || !payload.user_id) { // NEW CHECK
-      console.log('No user_id at payload root (or payload is null), skipping custom claim.');
-      const emptyResponseString = JSON.stringify({ session: {} });
-      console.log('Returning empty session object (stringified for return):', emptyResponseString);
-      return new Response(emptyResponseString, { 
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const userId = payload.user_id; // Get userId directly from payload.user_id
+    const userId = payload.user_id;
     console.log(`Processing user ID: ${userId}`);
 
     const supabaseAdminClient: SupabaseClient = createClient(
@@ -102,7 +97,6 @@ serve(async (req: Request, connInfo: ConnInfo) => {
       console.log(`No organization memberships found for user ${userId}.`);
     }
 
-    // Merge existing claims with our custom_claims field
     const baseClaims = payload.claims || {};
     const updatedClaims = {
       ...baseClaims,
@@ -110,16 +104,18 @@ serve(async (req: Request, connInfo: ConnInfo) => {
         ? { active_organization_id: activeOrganizationId }
         : {},
     };
+
     const responseBody = JSON.stringify({ claims: updatedClaims });
     console.log('Responding with updated claims:', JSON.stringify({ claims: updatedClaims }, null, 2));
     return new Response(responseBody, {
       headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (e) {
     const error = e as Error;
     console.error('Error in Edge Function:', error.message, error.stack);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

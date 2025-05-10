@@ -33,6 +33,8 @@ export function ProfileForm() {
   const supabase = createClient();
   const { toast } = useToast();
   const [email, setEmail] = useState<string>("Loading..."); // State for email display
+  const [organizationName, setOrganizationName] = useState<string | null>("Loading...");
+  const [userRole, setUserRole] = useState<string | null>("Loading...");
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -45,23 +47,65 @@ export function ProfileForm() {
   // Fetch user data and set default form values
   useEffect(() => {
     let isMounted = true;
-    const fetchUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
+    const fetchUserAndOrgData = async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       if (!isMounted) return;
 
-      if (error) {
-        console.error('Error fetching user:', error.message);
-        toast({ variant: "destructive", title: "Error fetching user data", description: error.message });
-        setEmail("Error loading email"); // Set email state on error
-      } else if (data?.user) {
-        reset({ name: data.user.user_metadata?.name || "" });
-        setEmail(data.user.email || "No email found"); // Set email state
+      if (userError) {
+        console.error('Error fetching user:', userError.message);
+        toast({ variant: "destructive", title: "Error fetching user data", description: userError.message });
+        setEmail("Error loading email");
+        setOrganizationName("Error loading org");
+        setUserRole("Error loading role");
+      } else if (userData?.user) {
+        const user = userData.user;
+        reset({ name: user.user_metadata?.name || "" });
+        setEmail(user.email || "No email found");
+
+        const activeOrgId = user.app_metadata?.active_organization_id;
+        if (activeOrgId) {
+          // Fetch organization name
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', activeOrgId)
+            .single();
+          
+          if (!isMounted) return;
+          if (orgError) {
+            console.error('Error fetching organization:', orgError.message);
+            setOrganizationName('N/A');
+          } else {
+            setOrganizationName(orgData?.name || 'N/A');
+          }
+
+          // Fetch user role in that organization
+          const { data: roleData, error: roleError } = await supabase
+            .from('organization_memberships')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('organization_id', activeOrgId)
+            .single();
+
+          if (!isMounted) return;
+          if (roleError) {
+            console.error('Error fetching user role:', roleError.message);
+            setUserRole('N/A');
+          } else {
+            setUserRole(roleData?.role || 'N/A');
+          }
+        } else {
+          setOrganizationName('N/A (No active org)');
+          setUserRole('N/A');
+        }
       } else {
         reset({ name: "" });
-        setEmail("Not logged in"); // Set email state if no user
+        setEmail("Not logged in");
+        setOrganizationName("Not logged in");
+        setUserRole("Not logged in");
       }
     };
-    fetchUser();
+    fetchUserAndOrgData();
     return () => { isMounted = false; };
   }, [supabase, toast, reset]);
 
@@ -90,7 +134,7 @@ export function ProfileForm() {
   };
 
   // Display loading indicator (could check email state too)
-  if (isLoading || email === "Loading...") {
+  if (isLoading || email === "Loading..." || organizationName === "Loading..." || userRole === "Loading...") {
     return <div>Loading profile...</div>;
   }
 
@@ -128,9 +172,37 @@ export function ProfileForm() {
           )}
         />
 
+        {/* Display Organization Name */}
+        <div className="space-y-2">
+          <Label htmlFor="organization-name-display">Current Organization</Label>
+          <Input 
+            id="organization-name-display" 
+            type="text" 
+            value={organizationName || 'N/A'} 
+            disabled 
+            className="mt-1" // Added for a little top margin for consistency if needed
+          />
+          {/* Optional: Add a description if needed */}
+          {/* <p className="text-sm text-muted-foreground">Your current active organization.</p> */}
+        </div>
+
+        {/* Display User Role */}
+        <div className="space-y-2">
+          <Label htmlFor="user-role-display">Role</Label>
+          <Input 
+            id="user-role-display" 
+            type="text" 
+            value={userRole || 'N/A'} 
+            disabled 
+            className="mt-1" // Added for a little top margin for consistency if needed
+          />
+          {/* Optional: Add a description if needed */}
+          {/* <p className="text-sm text-muted-foreground">Your role within the current organization.</p> */}
+        </div>
+
         {/* Add other FormFields here if schema includes more fields */}
 
-        <Button type="submit" disabled={isSubmitting || !isValid || isLoading || email === "Loading..."}>
+        <Button type="submit" disabled={isSubmitting || !isValid || isLoading || email === "Loading..." || organizationName === "Loading..." || userRole === "Loading..."}>
           {isSubmitting ? 'Updating...' : 'Update Profile'}
         </Button>
       </form>

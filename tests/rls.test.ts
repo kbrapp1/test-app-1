@@ -202,7 +202,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       expect(notes![0].organization_id).toBe(orgAId);
     });
     
-    it.skip('should INSERT notes only into Org A (RLS policy assigns org_id)', async () => {
+    it('should INSERT notes only into Org A (RLS policy assigns org_id)', async () => {
       console.log("RLS_TEST_USER_A_INSERT_STARTED");
       if (!userASupabase || !orgAId ||!adminSupabase) throw new Error("User/Admin client or OrgA ID not initialized for User A INSERT test");
       const { data, error } = await userASupabase
@@ -224,7 +224,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       if(adminData) expect(adminData.organization_id).toBe(orgAId);
     });
     
-    it.skip('should FAIL to INSERT notes into Org B', async () => {
+    it('should FAIL to INSERT notes into Org B', async () => {
       console.log("RLS_TEST_USER_A_FAIL_INSERT_B_STARTED");
       if (!userASupabase || !orgBId) throw new Error("User A client or OrgB ID not initialized for User A FAIL INSERT B test");
       const { error } = await userASupabase
@@ -235,7 +235,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       expect(error!.message).toMatch(/security policy|constraint/i); 
     });
 
-    it.skip('should UPDATE notes only in Org A', async () => {
+    it('should UPDATE notes only in Org A', async () => {
       console.log("RLS_TEST_USER_A_UPDATE_STARTED");
       if (!adminSupabase || !orgAId || !userASupabase) throw new Error("Admin/User client or OrgA ID not initialized for User A UPDATE test");
       const { data: note } = await adminSupabase.from('notes').insert({ title: 'Note To Update A', organization_id: orgAId }).select().single();
@@ -245,7 +245,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       expect(error).toBeNull();
     });
 
-    it.skip('should FAIL to UPDATE notes in Org B', async () => {
+    it('should FAIL to UPDATE notes in Org B', async () => {
       console.log("RLS_TEST_USER_A_FAIL_UPDATE_B_STARTED");
       if (!adminSupabase || !orgBId || !userASupabase) throw new Error("Admin/User client or OrgB ID not initialized for User A FAIL UPDATE B test");
       const { data: noteB } = await adminSupabase.from('notes').insert({ title: 'Note To Not Update B', organization_id: orgBId }).select().single();
@@ -259,7 +259,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       }
     });
 
-     it.skip('should DELETE notes only in Org A', async () => {
+     it('should DELETE notes only in Org A', async () => {
       console.log("RLS_TEST_USER_A_DELETE_STARTED");
       if (!adminSupabase || !orgAId || !userASupabase) throw new Error("Admin/User client or OrgA ID not initialized for User A DELETE test");
       const { data: note } = await adminSupabase.from('notes').insert({ title: 'Note To Delete A', organization_id: orgAId }).select().single();
@@ -269,7 +269,7 @@ describe.skip('RLS Multi-Tenancy Tests for "notes" table', () => {
       expect(error).toBeNull();
     });
 
-    it.skip('should FAIL to DELETE notes in Org B', async () => {
+    it('should FAIL to DELETE notes in Org B', async () => {
       console.log("RLS_TEST_USER_A_FAIL_DELETE_B_STARTED");
       if (!adminSupabase || !orgBId || !userASupabase) throw new Error("Admin/User client or OrgB ID not initialized for User A FAIL DELETE B test");
       const { data: noteB } = await adminSupabase.from('notes').insert({ title: 'Note To Not Delete B', organization_id: orgBId }).select().single();

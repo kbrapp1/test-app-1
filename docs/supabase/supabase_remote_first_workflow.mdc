@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Supabase Workflow: Remote-First Changes
+
+This guide outlines the steps for making database schema or RLS (Row Level Security) changes directly on your **remote Supabase project** (e.g., your staging or production instance) and then synchronizing those changes back to your local development environment.
+
+## I. On Your Remote Supabase Project (e.g., `app.supabase.com`)
+
+1.  **Make Changes in Supabase Studio:**
+    *   Navigate to your project dashboard on `app.supabase.com`.
+    *   Use the Supabase Studio interface to:
+        *   Modify table structures.
+        *   Create or update RLS policies.
+        *   Add or change database functions, triggers, etc.
+2.  **Test Remote Changes:**
+    *   Thoroughly test the applied changes using your application that is pointed to this remote Supabase instance.
+    *   Ensure all functionalities behave as expected and that RLS policies correctly restrict or grant access.
+
+## II. Locally (In Your Terminal, within Your Project Directory)
+
+1.  **Link CLI to Remote Project (If Necessary):**
+    *   Ensure your Supabase CLI is correctly linked to the remote project where you made the changes.
+    ```bash
+    npx supabase link --project-ref zzapbmpqkqeqsrqwttzd
+    ```
+    *(Replace `your_remote_project_id` with your actual Supabase project reference, e.g., `zzapbmpqkqeqsrqwttzd`)*
+
+2.  **Pull Remote Changes into a New Local Migration File:**
+    *   Generate a new migration file that captures the differences between your remote project's current schema and the schema defined by your existing local migration files.
+    ```bash
+    npx supabase db diff -f <migration_file_name>
+    ```
+    *   Replace `<migration_file_name>` with a descriptive name for the changes you pulled (e.g., `sync_prod_user_rls_update`, `add_tasks_table_from_remote`).
+    *   **Action:** Review the SQL in the newly generated file in your `supabase/migrations` directory. It should reflect the changes you made in the remote Supabase Studio.
+
+3.  **Apply All Local Migrations to Your Local Supabase Database:**
+    *   Update your local Supabase database instance (the one running in Docker, accessible via `http://localhost:54323`) to reflect all migration files, including the new one.
+    ```bash
+    npx supabase db reset
+    ```
+    *   This command wipes your local database and rebuilds it by applying all migrations from `supabase/migrations` in chronological order. Your local data will be lost unless you have seeding scripts.
+
+4.  **Verify Local and Remote Schemas are in Sync:**
+    *   Run the `db diff` command again to confirm that your local migration history now accurately describes your remote database schema.
+    ```bash
+    npx supabase db diff
+    ```
+    *   The expected output is: `No schema changes found`.
+
+## III. Post-Sync (Optional but Recommended)
+
+*   **Commit Changes:** Commit the new migration file (and any other related code changes) to your version control system (e.g., Git).
+*   **Communicate:** Inform your team (if applicable) about the changes pulled from the remote environment.
+
+This remote-first workflow is useful when the remote instance is the primary place for immediate changes, especially in early development or test environments. For production environments, a local-first approach with thorough testing before deploying to remote is generally safer.
+

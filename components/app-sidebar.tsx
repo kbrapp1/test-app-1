@@ -49,6 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             width={120}
             height={47}
             priority
+            style={{ width: '120px', height: '47px' }}
           />
         </a>
       </SidebarHeader>

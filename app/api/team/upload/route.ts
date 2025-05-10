@@ -91,10 +91,19 @@ async function postHandler(req: NextRequest, user: User, supabase: any) {
     }
 
     // --- Database Insert using utility ---
+    const activeOrgId = user.app_metadata?.active_organization_id;
+
+    if (!activeOrgId) {
+      // Clean up uploaded files before throwing
+      if (primary_image_path) await removeFile(supabase, 'team-images', primary_image_path);
+      if (secondary_image_path) await removeFile(supabase, 'team-images', secondary_image_path);
+      throw new DatabaseError('User does not have an active organization set. Cannot add team member.');
+    }
+
     const { data: teamMemberData, error: insertError } = await insertData(
       supabase,
       'team_members',
-      { name, title, primary_image_path, secondary_image_path }
+      { name, title, primary_image_path, secondary_image_path, organization_id: activeOrgId }
     );
 
     if (insertError) {

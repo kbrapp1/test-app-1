@@ -28,7 +28,11 @@ vi.mock('@/lib/supabase/auth-middleware', () => ({
       if (req.headers.get('x-test-auth') === 'fail') {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       }
-      const mockUser = { id: 'test-user-id' };
+      // Add app_metadata with active_organization_id to the mock user
+      const mockUser = { 
+        id: 'test-user-id', 
+        app_metadata: { active_organization_id: 'mock-active-org-id' } 
+      };
       // pass a dummy supabase client, utilities are mocked
       return handler(req, mockUser, {});
     };

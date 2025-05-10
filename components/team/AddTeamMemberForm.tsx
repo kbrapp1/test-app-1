@@ -10,6 +10,7 @@ import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import {
   DialogClose
 } from '@/components/ui/dialog';
@@ -36,6 +37,7 @@ interface AddTeamMemberFormProps {
 export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<TeamMemberFormValues>({
     resolver: zodResolver(teamMemberFormSchema),
@@ -84,6 +86,7 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
         toast({ title: 'Success', description: 'Team member added successfully.' });
         form.reset();
         onSuccess?.();
+        router.refresh();
       } else {
         let errorMessage = result.error || 'Failed to add team member.';
         if (result.details) {

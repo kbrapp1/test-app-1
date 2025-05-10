@@ -20,6 +20,7 @@ import { FolderPlus } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { type Folder } from '@/types/dam';
 import { useRouter } from 'next/navigation';
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"; // Import TooltipPrimitive
 
 // Simplified state for the action
 interface ActionState {
@@ -29,16 +30,25 @@ interface ActionState {
   folderId?: string;
 }
 
-// Add prop for current folder ID
-interface NewFolderDialogProps {
+// Props for the NewFolderDialog component
+interface NewFolderDialogOwnProps {
   currentFolderId: string | null;
+  asIcon?: boolean;
 }
+
+// Combine own props with props forwarded from TooltipTrigger
+type NewFolderDialogProps = NewFolderDialogOwnProps & 
+  Omit<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>, 'asChild'>;
 
 const initialState: ActionState = {
   success: false,
 };
 
-export function NewFolderDialog({ currentFolderId }: NewFolderDialogProps) {
+export function NewFolderDialog({ 
+  currentFolderId, 
+  asIcon, 
+  ...forwardedProps // Capture forwarded props
+}: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { addFolder } = useFolderStore();
   const [state, formAction, isPending] = useActionState(createFolder, initialState);
@@ -62,9 +72,15 @@ export function NewFolderDialog({ currentFolderId }: NewFolderDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <FolderPlus className="mr-2 h-4 w-4" /> New Folder
-        </Button>
+        {asIcon ? (
+          <Button variant="outline" size="icon" aria-label="New Folder" {...forwardedProps}> {/* Spread forwardedProps */}
+            <FolderPlus className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" {...forwardedProps}> {/* Spread forwardedProps */}
+            <FolderPlus className="mr-2 h-4 w-4" /> New Folder
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

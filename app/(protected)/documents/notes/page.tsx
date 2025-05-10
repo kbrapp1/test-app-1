@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state'; // Import EmptyState
 
 // Import server actions from the separate file
 import { addNote, deleteNote, editNote } from './actions';
+import { getActiveOrganizationId } from '@/lib/auth/server-action'; // <-- IMPORT UTILITY
 
 // Type for Server Action Response (keep for action definitions)
 // interface ActionResult {
@@ -49,7 +50,14 @@ interface Note {
     updated_at: string | null; // Add updated_at
 }
 
-export default async function NotesPage() {
+// Props for dependency injection of organization ID fetcher
+interface NotesPageProps {
+  getOrgId?: () => Promise<string | null>;
+}
+
+export default async function NotesPage(
+  { getOrgId = getActiveOrganizationId }: NotesPageProps = {}
+) {
   const supabase = createClient();
 
   // Fetch user first (unchanged)
@@ -58,6 +66,7 @@ export default async function NotesPage() {
   // Fetch notes data (unchanged logic, added type assertion)
   let notes: Note[] = []; // Use the Note type
   let fetchError: string | null = null;
+  let activeOrgId: string | null = null; // <-- DECLARE activeOrgId
 
   if (userError) {
     console.error('Error fetching user:', userError.message);
@@ -66,18 +75,39 @@ export default async function NotesPage() {
     console.error('No user found');
     fetchError = 'No authenticated user found.';
   } else {
-    const { data, error } = await supabase
-      .from('notes')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('position', { ascending: true });
+    // Fetch active organization ID AFTER user is confirmed
+    try {
+      activeOrgId = await getOrgId();
+      if (!activeOrgId) {
+        console.error('Active organization ID not found for user:', user.id);
+        fetchError = 'Active organization context is missing. Please select or create an organization.';
+      }
+    } catch (orgError: any) {
+      console.error('Error fetching active organization ID:', orgError.message);
+      fetchError = 'Could not determine active organization.';
+    }
 
-    if (error) {
-      console.error('Error fetching notes:', error.message);
-      fetchError = 'Could not fetch notes.';
-      notes = [];
-    } else {
-      notes = (data as Note[]) || []; // Assert type here
+    // Proceed to fetch notes only if user and activeOrgId are present and no prior fetchError
+    if (user && activeOrgId && !fetchError) {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('organization_id', activeOrgId) // <-- ADD organization_id FILTER
+        .order('position', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching notes:', error.message);
+        fetchError = 'Could not fetch notes.';
+        // notes remains empty as initialized
+      } else {
+        notes = (data as Note[]) || []; // Assert type here
+      }
+    } else if (user && !activeOrgId && !fetchError) {
+      // This case is now handled by the activeOrgId check above,
+      // but kept for clarity if logic changes.
+      // fetchError would already be set if activeOrgId is missing.
+      // notes remains empty as initialized
     }
   }
 

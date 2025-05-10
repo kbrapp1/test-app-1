@@ -77,7 +77,7 @@ This document outlines the specific steps to refactor and enhance the Digital As
 ## Phase 2: Frontend - DAM UI & User Experience
 
 **Step 3: Displaying Organization Context in DAM UI**
-*   [ ] **UI Review:** Ensure the current active organization's name is clearly visible on DAM pages.
+*   [X] **UI Review:** Ensure the current active organization's name is clearly visible on DAM pages.
 *   [X] **Folder Sidebar (`FolderSidebar` component):**
     *   [X] Confirm it correctly receives and displays folders for the active organization only (Data fetching fixed).
     *   [X] "New Folder" button integrated and functional.

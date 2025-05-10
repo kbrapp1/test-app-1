@@ -1,0 +1,21 @@
+---
+description: User uses @migrations
+globs: 
+alwaysApply: false
+---
+-   **User Prompt Keyword:** `@migrations`
+
+-   **AI Action When Keyword is Detected:**
+    -   When the user includes `@migrations` in their prompt, **prioritize examining the contents of the `supabase/migrations/` directory.**
+    -   Treat the SQL files within this directory as the most up-to-date definition and source of truth for understanding the project's:
+        -   Database schema (tables, columns, data types, constraints, relationships).
+        -   Row Level Security (RLS) policies (`CREATE POLICY`, `ALTER POLICY`).
+        -   Database functions (`CREATE FUNCTION`).
+        -   Database triggers (`CREATE TRIGGER`).
+        -   Views (`CREATE VIEW`).
+        -   Enabled extensions (`CREATE EXTENSION`).
+        -   Any other Data Definition Language (DDL) or Data Control Language (DCL) statements defined in the migrations.
+    -   This context is crucial for accurately answering questions or making suggestions related to the Supabase database structure, security logic, data access patterns, or potential migration issues.
+    -   If the user references specific migration files by name or timestamp after using `@migrations`, focus on those files but also consider the cumulative effect of all migrations for complete context if the query is broad.
+    -   If the `supabase/migrations` folder contents are not readily available in the current context, consider using available tools (like `list_dir` or `read_file` on specific migration files if their names are known or can be inferred) to gather this information.
+

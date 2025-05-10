@@ -11,6 +11,7 @@ export default function LoginPage() {
           width={200}
           height={50}
           priority
+          style={{ width: '200px', height: '50px' }}
         />
       </div>
       <LoginForm />

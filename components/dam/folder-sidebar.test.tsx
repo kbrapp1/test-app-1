@@ -107,9 +107,12 @@ describe('FolderSidebar Component', () => {
   it('handles folder expansion and fetches subfolders', async () => {
     render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    const expandButtons = screen.getAllByRole('button');
-    const firstFolderExpandButton = expandButtons[1]; 
+    // More robust selector for the "Documents" folder's expand button
+    const documentsLink = screen.getByText('Documents').closest('a')!;
+    const buttonAndLinkContainer = documentsLink.parentElement!;
+    const firstFolderExpandButton = buttonAndLinkContainer.querySelector('button')!;
     
+    expect(firstFolderExpandButton).toBeInTheDocument(); // Ensure button is found
     fireEvent.click(firstFolderExpandButton);
     
     await waitFor(() => {
@@ -146,9 +149,12 @@ describe('FolderSidebar Component', () => {
     mockFetchFolderChildren.mockRejectedValueOnce(new Error('Network error'));
     render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    const expandButtons = screen.getAllByRole('button');
-    const firstFolderExpandButton = expandButtons[1];
-    
+    // More robust selector for the "Documents" folder's expand button
+    const documentsLink = screen.getByText('Documents').closest('a')!;
+    const buttonAndLinkContainer = documentsLink.parentElement!;
+    const firstFolderExpandButton = buttonAndLinkContainer.querySelector('button')!;
+
+    expect(firstFolderExpandButton).toBeInTheDocument(); // Ensure button is found
     fireEvent.click(firstFolderExpandButton);
     
     await waitFor(() => {
@@ -161,14 +167,25 @@ describe('FolderSidebar Component', () => {
     });
   });
 
-  it('toggles root folder expansion', () => {
+  it('toggles root folder expansion', async () => {
     render(<FolderSidebar initialFolders={mockFolders} />); // No currentFolderId
     
-    const rootExpandButton = screen.getAllByRole('button')[0];
+    // More robust selector for the root folder's expand button
+    const rootLink = screen.getByText('(Root)').closest('a')!;
+    const rootItemContainer = rootLink.parentElement!;
+    const rootExpandButton = rootItemContainer.querySelector('button')!;
+
+    expect(rootExpandButton).toBeInTheDocument(); // Ensure button is found
     expect(screen.getByText('Documents')).toBeInTheDocument();
+    
     fireEvent.click(rootExpandButton);
-    expect(screen.queryByText('Documents')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Documents')).not.toBeInTheDocument();
+    });
+    
     fireEvent.click(rootExpandButton);
-    expect(screen.getByText('Documents')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Documents')).toBeInTheDocument();
+    });
   });
 }); 

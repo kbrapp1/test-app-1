@@ -10,6 +10,12 @@ import { Folder } from '@/types/dam';
 import { FolderItem } from './FolderItem';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { useSearchParams } from 'next/navigation';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Props for the main sidebar component
 export interface FolderSidebarProps {
@@ -43,8 +49,20 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
   const [isRootExpanded, setIsRootExpanded] = useState(true);
 
   return (
-    <aside className="w-64 border-r bg-background p-4 flex flex-col h-full overflow-y-auto">
-      <h2 className="text-lg font-semibold mb-4">Folders</h2>
+    <aside className="w-64 border-r bg-background px-4 pt-2 pb-4 flex flex-col h-full overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Folders</h2>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NewFolderDialog currentFolderId={actualCurrentFolderId} asIcon />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>New Folder</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       
       {/* Root Folder Item */}
       <div className={cn(
@@ -85,11 +103,6 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
           ))}
         </div>
       )}
-
-      {/* New Folder Button */}
-      <div className="mt-auto pt-4 border-t">
-        <NewFolderDialog currentFolderId={actualCurrentFolderId} /> 
-      </div>
     </aside>
   );
 } 

@@ -381,41 +381,34 @@ export async function deleteAsset(assetId: string): Promise<{ success: boolean; 
         return { success: false, error: 'Asset ID is required.' };
     }
 
-    const supabase = createClient(); // Uses the server client from @/lib/supabase/server
-
+    const supabase = createClient();
     try {
-        // 1. Get Authenticated User and Active Organization ID
+        // 1. Authentication and Organization Check
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             console.error('deleteAsset: Auth Error', authError);
             return { success: false, error: 'User not authenticated.' };
         }
-
         const activeOrgId = await getActiveOrganizationId();
         if (!activeOrgId) {
             console.error('deleteAsset: Active Organization ID not found.');
             return { success: false, error: 'Active organization not found. Cannot delete asset.' };
         }
 
-        // 2. Fetch the asset to verify ownership and get storage path
-        const { data: asset, error: fetchError } = await supabase
-            .from('assets')
-            .select('id, organization_id, storage_path')
-            .eq('id', assetId)
+        // 2. Fetch asset metadata to get storage_path (and ensure it belongs to the user's org)
+        const { data: asset, error: metaError } = await supabase
+            .from('assets') // Database table name
+            .select('id, storage_path, folder_id') // Include folder_id for revalidation
+            .match({ id: assetId, organization_id: activeOrgId }) // Crucial: scope by org
+            // .eq('user_id', user.id) // Optional: if assets are strictly user-owned
             .single();
 
-        if (fetchError) {
-            console.error('deleteAsset: Error fetching asset metadata:', fetchError);
-            return { success: false, error: 'Error fetching asset details. Check logs.' };
+        if (metaError) {
+            console.error('deleteAsset: Metadata fetch error', metaError);
+            return { success: false, error: `Failed to fetch asset metadata: ${metaError.message}` };
         }
-
         if (!asset) {
-            return { success: false, error: 'Asset not found.' };
-        }
-
-        if (asset.organization_id !== activeOrgId) {
-            console.warn(`deleteAsset: Attempt to delete asset ${assetId} from org ${asset.organization_id} by user in org ${activeOrgId}.`);
-            return { success: false, error: 'You are not authorized to delete this asset.' };
+            return { success: false, error: 'Asset not found or access denied.' };
         }
         
         if (!asset.storage_path) {
@@ -423,17 +416,21 @@ export async function deleteAsset(assetId: string): Promise<{ success: boolean; 
         } else {
             // 3. Delete from Supabase Storage
             const { error: storageError } = await supabase.storage
-                .from('dam_assets') // Ensure this is your correct bucket name
+                .from('assets') // Ensure this is your correct bucket name
                 .remove([asset.storage_path]);
 
             if (storageError) {
+                // Log the error but don't necessarily fail the whole operation if the DB record can still be deleted.
+                // This depends on desired behavior. Sometimes, you might want to proceed if the file is already gone or orphan DB record is acceptable temporarily.
+                // For now, we'll log and continue, but this could be changed to:
+                // return { success: false, error: `Failed to delete asset from storage: ${storageError.message}` };
                 console.error('deleteAsset: Supabase storage deletion error - IGNORING:', storageError);
             }
         }
 
         // 4. Delete the asset record from the database, ensuring it's within the organization
         const { error: dbError } = await supabase
-            .from('assets')
+            .from('assets') // Database table name
             .delete()
             .match({ id: assetId, organization_id: activeOrgId }); // Crucial: Match org_id
 
@@ -783,5 +780,67 @@ export async function saveAsNewTextAsset(
     } catch (err: any) {
         console.error('saveAsNewTextAsset: Unexpected Error', err);
         return { success: false, error: err.message || 'An unexpected error occurred.' };
+    }
+}
+
+// ============================================================================
+// GET ASSET DOWNLOAD URL ACTION
+// ============================================================================
+
+export async function getAssetDownloadUrl(assetId: string): Promise<{
+    success: boolean;
+    url?: string;
+    error?: string;
+}> {
+    if (!assetId) {
+        return { success: false, error: 'Asset ID is required.' };
+    }
+
+    const supabase = createClient(); // Server client
+    try {
+        // 1. Authentication and Organization Check
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.error('getAssetDownloadUrl: Auth Error', authError);
+            return { success: false, error: 'User not authenticated.' };
+        }
+        const activeOrgId = await getActiveOrganizationId();
+        if (!activeOrgId) {
+            console.error('getAssetDownloadUrl: Active Organization ID not found.');
+            return { success: false, error: 'Active organization not found.' };
+        }
+
+        // 2. Fetch asset metadata to get storage_path, ensuring it belongs to the user's org
+        const { data: asset, error: metaError } = await supabase
+            .from('assets') // Database table name
+            .select('storage_path, name') // Also select name to pass to download option if desired
+            .match({ id: assetId, organization_id: activeOrgId })
+            .single();
+
+        if (metaError) {
+            console.error('getAssetDownloadUrl: Metadata fetch error', metaError);
+            return { success: false, error: `Failed to fetch asset metadata: ${metaError.message}` };
+        }
+        if (!asset || !asset.storage_path) {
+            return { success: false, error: 'Asset not found, storage path missing, or access denied.' };
+        }
+
+        // 3. Create a signed URL for download
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+            .from('assets') // Use the correct bucket name: 'assets'
+            .createSignedUrl(asset.storage_path, 60 * 5, { // 5 minutes validity
+                download: asset.name || true // Use asset name for download or true for generic
+            });
+
+        if (signedUrlError) {
+            console.error('getAssetDownloadUrl: Signed URL creation error', signedUrlError);
+            return { success: false, error: `Could not create download link: ${signedUrlError.message}` };
+        }
+
+        return { success: true, url: signedUrlData.signedUrl };
+
+    } catch (err: any) {
+        console.error('getAssetDownloadUrl: Unexpected Error', err);
+        return { success: false, error: err.message || 'An unexpected error occurred generating download link.' };
     }
 } 
