@@ -246,52 +246,25 @@ $$;
 ALTER FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[]) RETURNS TABLE("id" "uuid", "invited_at" timestamp with time zone)
+CREATE OR REPLACE FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") RETURNS TABLE("id" "uuid", "invited_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth'
     AS $$
-DECLARE
-  caller_org_id uuid;
-  is_caller_admin boolean;
 BEGIN
-  -- It's critical to ensure the caller has the rights to view this information.
-  -- This example assumes you have a way to determine the relevant organization
-  -- for the users being queried and that the caller is an admin of that org.
-  -- For simplicity, this example doesn't fully implement that org-specific check
-  -- within the function itself for every user ID, as it can get complex if user_ids_to_check
-  -- span multiple orgs or if the org context isn't directly passed.
-
-  -- A more robust check would involve joining with organization_memberships
-  -- and ensuring auth.uid() is an admin for the orgs of ALL user_ids_to_check.
-  -- For this example, we'll rely on the client-side logic already fetching members
-  -- of a *specific active organization* for which the caller is presumed to be an admin.
-
-  -- Basic check: Ensure the caller is at least authenticated.
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Access Denied: User must be authenticated.';
-  END IF;
-
-  -- THIS IS A SIMPLIFIED SECURITY CHECK.
-  -- In a real-world scenario, you would want to ensure that auth.uid() is an admin
-  -- of the organization(s) to which the user_ids_to_check belong.
-  -- Since the client-side OrgRoleManager already filters by active_organization_id,
-  -- we are somewhat covered, but a direct DB function call should ideally be self-contained in its security.
-
-  -- Example of a more specific (but still simplified) check if you pass an org_id:
-  -- SELECT public.is_user_admin_of_organization(org_id_param) INTO is_caller_admin;
-  -- IF NOT is_caller_admin THEN
-  --   RAISE EXCEPTION 'Access Denied: Caller is not an admin of the specified organization.';
-  -- END IF;
-
   RETURN QUERY
-  SELECT u.id, u.invited_at
-  FROM auth.users u
-  WHERE u.id = ANY(user_ids_to_check);
+    SELECT
+      u.id,
+      u.invited_at
+    FROM auth.users u
+    JOIN public.organization_memberships m
+      ON u.id = m.user_id
+    WHERE
+      u.id = ANY(user_ids_to_check)
+      AND m.organization_id = p_organization_id;
 END;
 $$;
 
 
-ALTER FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[]) OWNER TO "postgres";
+ALTER FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
@@ -2346,19 +2319,19 @@ ALTER TABLE "public"."team_user_memberships" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."teams" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "Allow authenticated uploads to public folder jrj208_0" ON "storage"."objects" FOR INSERT TO "authenticated" WITH CHECK ((("bucket_id" = 'team-images'::"text") AND (("storage"."foldername"("name"))[1] = 'public'::"text")));
+CREATE POLICY "Org members can delete their org objects" ON "storage"."objects" FOR DELETE TO "authenticated" USING ((("split_part"("name", '/'::"text", 1))::"uuid" = "public"."get_active_organization_id"()));
 
 
 
-CREATE POLICY "Authenticated asset reads 1bqp9qb_0" ON "storage"."objects" FOR SELECT TO "authenticated" USING (("bucket_id" = 'assets'::"text"));
+CREATE POLICY "Org members can read their org objects" ON "storage"."objects" FOR SELECT TO "authenticated" USING ((("split_part"("name", '/'::"text", 1))::"uuid" = "public"."get_active_organization_id"()));
 
 
 
-CREATE POLICY "Authenticated asset uploads 1bqp9qb_0" ON "storage"."objects" FOR INSERT TO "authenticated" WITH CHECK (("bucket_id" = 'assets'::"text"));
+CREATE POLICY "Org members can update their org objects" ON "storage"."objects" FOR UPDATE TO "authenticated" USING ((("split_part"("name", '/'::"text", 1))::"uuid" = "public"."get_active_organization_id"()));
 
 
 
-CREATE POLICY "Authenticated team image reads jrj208_0" ON "storage"."objects" FOR SELECT TO "authenticated" USING ((("bucket_id" = 'team-images'::"text") AND (("storage"."foldername"("name"))[1] = 'public'::"text")));
+CREATE POLICY "Org members can upload objects under their org path" ON "storage"."objects" FOR INSERT TO "authenticated" WITH CHECK ((("split_part"("name", '/'::"text", 1))::"uuid" = "public"."get_active_organization_id"()));
 
 
 
@@ -2449,9 +2422,9 @@ GRANT ALL ON FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") TO "servi
 
 
 
-GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[]) TO "anon";
-GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[]) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[]) TO "service_role";
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "service_role";
 
 
 

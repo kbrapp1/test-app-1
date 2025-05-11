@@ -86,6 +86,31 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    // Ensure the target user exists and belongs to the same organization
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+    if (profileError || !profile?.id) {
+      return new Response(JSON.stringify({ error: 'Target user not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const targetUserId = profile.id;
+    const { data: targetMembership, error: membershipError2 } = await supabaseAdmin
+      .from('organization_memberships')
+      .select()
+      .eq('user_id', targetUserId)
+      .eq('organization_id', activeOrgId)
+      .single();
+    if (membershipError2 || !targetMembership) {
+      return new Response(JSON.stringify({ error: 'Forbidden: target user not in organization' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     // Trigger password reset email
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(
       email,

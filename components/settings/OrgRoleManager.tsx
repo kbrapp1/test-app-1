@@ -94,7 +94,7 @@ export function OrgRoleManager() {
 
       const { data: membershipRows, error: membershipError } = await supabase
         .from('organization_memberships')
-        .select('user_id, role_id, roles(name), organization_id')
+        .select('user_id, role_id, roles(name)')
         .eq('organization_id', orgIdFromAuth);
 
       if (membershipError) {
@@ -126,10 +126,13 @@ export function OrgRoleManager() {
         }
         profileRows = profilesData || [];
 
-        // Fetch auth.users for invited_at using RPC
+        // Fetch invitation details scoped to this organization
         if (userIds.length > 0) {
           const { data: authUsersData, error: authUsersError } = await supabase
-            .rpc('get_users_invitation_details', { user_ids_to_check: userIds });
+            .rpc('get_users_invitation_details', {
+              user_ids_to_check: userIds,
+              p_organization_id: orgIdFromAuth as string,
+            });
 
           if (authUsersError) {
             if (isMounted) toast({ variant: 'destructive', title: 'Error loading user invitation status', description: authUsersError.message });
@@ -156,7 +159,7 @@ export function OrgRoleManager() {
           name: profile.full_name,
           role_id: row.role_id,
           role_name: row.roles?.name || '',
-          organization_id: row.organization_id,
+          organization_id: orgIdFromAuth || '',
           last_sign_in_at: profile.last_sign_in_at,
           invited_at: authUser.invited_at,
         };

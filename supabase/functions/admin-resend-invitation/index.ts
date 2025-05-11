@@ -88,24 +88,43 @@ Deno.serve(async (req: Request) => {
     // ---- End Security Check ----
 
     console.log(`admin-resend-invitation: Attempting to resend invitation for email: ${email}, orgId: ${organizationId}, roleId: ${roleId}`);
-
-    // Directly attempt to invite the user. Error handling below will manage specific cases like 'email_exists'.
+    // Determine redirect URL for invitation
     const origin = req.headers.get('Origin') || Deno.env.get("PUBLIC_APP_URL");
     const redirectTo = `${origin}/onboarding`;
-    console.log("admin-resend-invitation: Using redirectTo:", redirectTo);
-    console.log("admin-resend-invitation: Origin header:", req.headers.get('Origin'));
-    console.log("admin-resend-invitation: PUBLIC_APP_URL env var:", Deno.env.get("PUBLIC_APP_URL"));
 
+    // Ensure the target user exists and belongs to the same organization
+    const { data: profile, error: profileError } = await supabaseAdminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+    if (profileError || !profile?.id) {
+      return new Response(JSON.stringify({ error: 'Target user not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const targetUserId = profile.id;
+    const { data: targetMembership, error: membershipError2 } = await supabaseAdminClient
+      .from('organization_memberships')
+      .select()
+      .eq('user_id', targetUserId)
+      .eq('organization_id', organizationId)
+      .single();
+    if (membershipError2 || !targetMembership) {
+      return new Response(JSON.stringify({ error: 'Forbidden: target user not in organization' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // Now send the invitation
     const { data: inviteData, error: inviteError } = await supabaseAdminClient.auth.admin.inviteUserByEmail(
       email,
-      {
-        redirectTo: redirectTo,
-        data: { 
-          invited_to_org_id: organizationId,
-          assigned_role_id: roleId,
-        }
+      { redirectTo, data: {
+        invited_to_org_id: organizationId,
+        assigned_role_id: roleId,
       }
-    );
+    });
 
     if (inviteError) {
       console.error(`admin-resend-invitation: Raw error object from inviteUserByEmail for ${email}:`, JSON.stringify(inviteError, null, 2));

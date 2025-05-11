@@ -145,9 +145,14 @@ export const queryData = async <T = any>(
 export const insertData = async <T = any>(
   supabase: SupabaseClient,
   table: string,
-  insertValues: Record<string, any>
+  insertValues: Record<string, any>,
+  options?: { organizationId?: string }
 ): Promise<{ data: T | null; error: DatabaseError | null }> => {
   try {
+    // Inject organization_id if provided to enforce tenant-scope
+    if (options?.organizationId) {
+      insertValues.organization_id = options.organizationId;
+    }
     const { data: result, error } = await supabase.from(table).insert(insertValues).select().maybeSingle();
 
     if (error) {
@@ -190,10 +195,16 @@ export const deleteData = async (
   supabase: SupabaseClient,
   table: string,
   matchColumn: string,
-  matchValue: string | number
+  matchValue: string | number,
+  options?: { organizationId?: string }
 ): Promise<{ success: boolean; error: DatabaseError | null }> => {
   try {
-    const { error } = await supabase.from(table).delete().eq(matchColumn, matchValue);
+    // Build delete query with optional organization filter for tenant-scope
+    let query = supabase.from(table).delete().eq(matchColumn, matchValue);
+    if (options?.organizationId) {
+      query = query.eq('organization_id', options.organizationId);
+    }
+    const { error } = await query;
 
     if (error) {
       const dbError = new DatabaseError(
