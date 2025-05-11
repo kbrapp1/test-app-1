@@ -63,6 +63,10 @@ export function OrgRoleManager() {
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
 
+  // Determine current user's role in this organization
+  const currentMembership = members.find(m => m.id === currentUserId);
+  const currentUserRoleName = currentMembership?.role_name;
+
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -553,7 +557,9 @@ export function OrgRoleManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Organization Members</h2>
-        <Button onClick={() => setShowAddMemberDialog(true)}>Add Member</Button>
+        {(currentUserRoleName === 'admin' || currentUserRoleName === 'super-admin') && (
+          <Button onClick={() => setShowAddMemberDialog(true)}>Add Member</Button>
+        )}
       </div>
       
       <Input 
