@@ -57,3 +57,9 @@ This guide outlines the steps for making database schema or RLS (Row Level Secur
 
 This remote-first workflow is useful when the remote instance is the primary place for immediate changes, especially in early development or test environments. For production environments, a local-first approach with thorough testing before deploying to remote is generally safer.
 
+## IV. Get a full schmea dump (assumes prohect is linked already in CLI)
+*   npx supabase db dump --schema public --schema auth --schema storage --file "./docs/supabase/full_schema_dump.sql"
+
+## IV. Deploying Edge Functions (assumes project is linked already in CLI)
+*   npx supabase functions deploy invite-member --project-ref zzapbmpqkqeqsrqwttzd --no-verify-jwt
+

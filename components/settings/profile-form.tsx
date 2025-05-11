@@ -79,20 +79,22 @@ export function ProfileForm() {
             setOrganizationName(orgData?.name || 'N/A');
           }
 
-          // Fetch user role in that organization
-          const { data: roleData, error: roleError } = await supabase
+          // Fetch user role in that organization (using role_id join to roles.name)
+          const { data: membershipData, error: membershipError } = await supabase
             .from('organization_memberships')
-            .select('role')
+            .select('role_id, roles(name)')
             .eq('user_id', user.id)
             .eq('organization_id', activeOrgId)
-            .single();
+            .single<{ role_id: string; roles: { name: string } | null }>();
 
           if (!isMounted) return;
-          if (roleError) {
-            console.error('Error fetching user role:', roleError.message);
+          if (membershipError) {
+            console.error('Error fetching user role:', membershipError.message);
             setUserRole('N/A');
           } else {
-            setUserRole(roleData?.role || 'N/A');
+            // Hide super-admin from display (should not be possible, but just in case)
+            const roleName = membershipData?.roles?.name;
+            setUserRole(roleName === 'super-admin' ? 'N/A' : roleName || 'N/A');
           }
         } else {
           setOrganizationName('N/A (No active org)');

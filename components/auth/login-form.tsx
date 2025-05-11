@@ -85,6 +85,12 @@ export function LoginForm() {
                 required
               />
               
+              <div className="text-right mt-1">
+                <Link href="/login/forgot" className="text-sm text-primary hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
+              
               <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
                 {isSubmitting ? 'Signing in...' : 'Sign in'}
               </Button>

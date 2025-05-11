@@ -1,0 +1,214 @@
+/// <reference path="./deno.d.ts" />
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+
+// Set up types for the request body
+interface RequestBody {
+  email: string;
+  name?: string;
+  organization_id: string;
+  role_id: string;
+}
+
+// Set up the server
+serve(async (req: Request) => {
+  try {
+    // CORS headers to allow requests from your frontend
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*", // Replace with your frontend URL in production
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Content-Type": "application/json",
+    };
+
+    // Handle OPTIONS request for CORS preflight
+    if (req.method === "OPTIONS") {
+      return new Response("ok", { headers: corsHeaders });
+    }
+
+    // Parse request body
+    const body: RequestBody = await req.json();
+    const { email, name, organization_id, role_id } = body;
+
+    if (!email || !organization_id || !role_id) {
+      return new Response(
+        JSON.stringify({
+          error: "Email, organization_id, and role_id are required",
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Get the Auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    // Get Supabase URL and service role key from environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Create Supabase client using service role key (Note: this has super admin privileges)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Extract token from auth header
+    const token = authHeader.replace("Bearer ", "");
+
+    // Verify the token and get user data
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token or user not found" }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+    const callingAdmin = userData.user;
+
+    // Check if the calling user is an admin in the target organization
+    const { data: adminCheck, error: adminCheckError } = await supabase
+      .from("organization_memberships")
+      .select("*, roles!inner(name)")
+      .eq("user_id", callingAdmin.id)
+      .eq("organization_id", organization_id)
+      .single();
+
+    if (adminCheckError || !adminCheck || adminCheck.roles.name !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: "You don't have admin permissions for this organization" }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    // --- Start of Revised Invitation Logic ---
+    console.log(`Admin ${callingAdmin.email} attempting to invite ${email} to org ${organization_id} with role ${role_id}`);
+
+    const origin = req.headers.get('Origin') || Deno.env.get("PUBLIC_APP_URL");
+    const redirectTo = `${origin}/onboarding`;
+    console.log("Using redirect URL for invitation:", redirectTo);
+
+    // Step 1: Always try to invite the user. This handles new and existing auth.users appropriately.
+    // The data field will store metadata associated with THIS specific invitation.
+    const { data: inviteResponse, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: redirectTo,
+      data: { // This data is stored in the new user's user_metadata or can be accessed via identity_data for existing users on invite.
+        invited_by: callingAdmin.id,
+        invited_to_org_id: organization_id, // For clarity that this is the target org of THIS invite
+        assigned_role_id: role_id,
+        full_name: name || undefined // Store the initially provided name if any
+      }
+    });
+
+    if (inviteError) {
+      console.error(`Failed to send invitation to ${email}:`, JSON.stringify(inviteError));
+      return new Response(
+        JSON.stringify({ error: `Failed to send invitation: ${inviteError.message}` }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const invitedUser = inviteResponse.user;
+    if (!invitedUser) {
+      console.error(`Invitation to ${email} succeeded but no user object returned.`);
+      return new Response(
+        JSON.stringify({ error: "Invitation process failed: no user data returned." }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    console.log(`Successfully sent/resent invitation to ${email}, user ID: ${invitedUser.id}`);
+
+    // Step 2: Check if the invited user is already a member of this specific organization.
+    const { data: existingMembership, error: membershipCheckError } = await supabase
+      .from("organization_memberships")
+      .select("user_id")
+      .eq("user_id", invitedUser.id)
+      .eq("organization_id", organization_id)
+      .maybeSingle(); // Use maybeSingle as they might not be a member yet
+
+    if (membershipCheckError) {
+      console.error(`Error checking existing membership for user ${invitedUser.id} in org ${organization_id}:`, membershipCheckError);
+      // Don't necessarily fail the whole process, the invite was sent.
+      // But we can't confirm/add membership. Log and potentially inform client differently.
+      return new Response(
+        JSON.stringify({ 
+          error: "Invitation sent, but failed to check existing membership. Please verify manually.",
+          details: membershipCheckError.message
+        }),
+        { status: 500, headers: corsHeaders } // Or a 207 Multi-Status if you want to be specific
+      );
+    }
+
+    if (existingMembership) {
+      console.log(`User ${invitedUser.email} is already a member of organization ${organization_id}.`);
+      // User invited/re-invited, and already in the org. Their role might need updating if different.
+      // For now, we just inform that they are already a member.
+      // A more advanced flow could update their role_id here if it was different from assigned_role_id.
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Invitation resent. User is already a member of this organization.",
+          userId: invitedUser.id,
+          isNewUser: false // Technically, inviteUserByEmail determines this, but from org perspective, they were existing member.
+        }),
+        { headers: corsHeaders }
+      );
+    }
+
+    // Step 3: Add user to the organization with the specified role, as they are not yet a member.
+    console.log(`Adding user ${invitedUser.email} (ID: ${invitedUser.id}) to organization ${organization_id} with role ${role_id}`);
+    const { error: addMembershipError } = await supabase
+      .from("organization_memberships")
+      .insert({
+        user_id: invitedUser.id,
+        organization_id: organization_id,
+        role_id: role_id
+      });
+
+    if (addMembershipError) {
+      console.error(`Failed to add user ${invitedUser.id} to organization ${organization_id}:`, addMembershipError);
+      // Invite was sent, but couldn't add to org. Critical to inform admin.
+      return new Response(
+        JSON.stringify({ 
+          error: "Invitation sent, but failed to add user to the organization. Please add them manually.",
+          details: addMembershipError.message
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    console.log(`User ${invitedUser.email} successfully added to organization ${organization_id}.`);
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: "Invitation sent and user added to organization.",
+        userId: invitedUser.id,
+        isNewUser: !existingMembership // This is a bit tricky, inviteUserByEmail response is better for true new auth user status
+                                      // For the client, this indicates if they were newly added to *this org*.
+      }),
+      { headers: corsHeaders }
+    );
+    // --- End of Revised Invitation Logic ---
+
+  } catch (error) {
+    console.error("Server error:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      { 
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        }
+      }
+    );
+  }
+}); 

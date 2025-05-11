@@ -79,14 +79,14 @@ serve(async (req: Request, connInfo: ConnInfo)=>{
     let activeOrganizationId: string | null = null;
     const { data: memberships, error: membershipError } = await supabaseAdminClient
       .from('organization_memberships')
-      .select('organization_id, role')
+      .select('organization_id, role_id, roles(name)')
       .eq('user_id', userId)
-      .returns<Membership[]>();
+      .returns<{ organization_id: string; role_id: string; roles: { name: string } }[]>();
 
     if (membershipError) {
       console.error('Error fetching organization memberships:', membershipError);
     } else if (memberships && memberships.length > 0) {
-      const adminMembership = memberships.find((m: Membership) => m.role === 'admin');
+      const adminMembership = memberships.find((m) => m.roles?.name === 'admin');
       if (adminMembership) {
         activeOrganizationId = adminMembership.organization_id;
       } else {

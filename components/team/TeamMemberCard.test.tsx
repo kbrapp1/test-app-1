@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TeamMemberCard } from './TeamMemberCard';
-import { TeamMember } from '@/lib/actions/team';
+import type { TeamMember } from '@/types/team';
 
 // Mock next/image
 vi.mock('next/image', () => ({
+    __esModule: true,
     default: (props: any) => {
+        const { fill, priority, ...rest } = props;
         // eslint-disable-next-line @next/next/no-img-element
-        return <img {...props} />;
+        return <img {...rest} />;
     },
 }));
 

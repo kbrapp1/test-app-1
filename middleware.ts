@@ -50,7 +50,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/auth/confirm']
+  const publicRoutes = [
+    '/login',
+    '/login/forgot',       // Forgot Password
+    '/login/reset/password',// Handle password reset link
+    '/signup',
+    '/auth/confirm',
+    '/onboarding'
+  ]
   
   // Define routes that authenticated users should be redirected *away* from
   const authRoutes = ['/', '/login', '/signup']

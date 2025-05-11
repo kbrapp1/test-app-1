@@ -80,13 +80,11 @@ vi.mock('@/components/ui/accordion', async (importOriginal) => {
 });
 
 // Mock next/link to allow finding the inner button/content
-// Keep the existing mock but ensure it renders children directly
 vi.mock('next/link', () => ({
   __esModule: true,
   default: ({ children, href }: any) => {
-    // Render children directly within an anchor tag for link role detection
-    // Add href for querying
-    return <a href={href}>{children}</a>;
+    // Use a span instead of an anchor to avoid nested anchors
+    return <span className="next-link-mock" data-href={href} role="link">{children}</span>;
   },
 }));
 
@@ -130,8 +128,8 @@ describe('NavMain', () => {
     // Find the link by role and name now
     const linkElement = screen.getByRole('link', { name: /dashboard/i });
     expect(linkElement).toBeInTheDocument();
-    // Check the href attribute directly
-    expect(linkElement).toHaveAttribute('href', '/dashboard');
+    // Check the data-href attribute instead of href
+    expect(linkElement).toHaveAttribute('data-href', '/dashboard');
     // Remove checks for legacyBehavior and passHref as the simplified mock doesn't handle them
   });
 
@@ -182,8 +180,8 @@ describe('NavMain', () => {
       const assetLibraryLink = await screen.findByRole('link', { name: /asset library/i });
       expect(notesLink).toBeVisible();
       expect(assetLibraryLink).toBeVisible();
-      expect(notesLink).toHaveAttribute('href', '/documents/notes');
-      expect(assetLibraryLink).toHaveAttribute('href', '/dam');
+      expect(notesLink).toHaveAttribute('data-href', '/documents/notes');
+      expect(assetLibraryLink).toHaveAttribute('data-href', '/dam');
 
       // Collapse the section
       await user.click(triggerButton);
@@ -199,8 +197,8 @@ describe('NavMain', () => {
       // Find the link by its role and name
       const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
       expect(dashboardLink).toBeInTheDocument();
-      // Check the href attribute directly on the link
-      expect(dashboardLink).toHaveAttribute('href', '/dashboard');
+      // Check the data-href attribute directly on the link
+      expect(dashboardLink).toHaveAttribute('data-href', '/dashboard');
     });
   });
 }); 

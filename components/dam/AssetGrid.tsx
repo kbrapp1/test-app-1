@@ -148,7 +148,7 @@ export const AssetGrid = React.memo<AssetGridProps>(({ combinedItems, onDataChan
     const COLS = Math.max(2, Math.floor(dimensions.width / CELL_SIZE) || 6);
     const rowCount = Math.ceil(combinedItems.length / COLS);
     
-    const Cell = ({ columnIndex, rowIndex, style }: any) => {
+    const Cell = ({ columnIndex, rowIndex, style, key }: any) => {
         const index = rowIndex * COLS + columnIndex;
         if (index >= combinedItems.length) return null;
         const item = combinedItems[index];
@@ -157,7 +157,7 @@ export const AssetGrid = React.memo<AssetGridProps>(({ combinedItems, onDataChan
         if (item.id === optimisticallyHiddenItemId) return null;
         
         return (
-            <div style={style}>
+            <div style={style} key={key || `cell-${item.id}`}>
                 <AssetGridItem 
                     item={item} 
                     index={index} 

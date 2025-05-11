@@ -31,11 +31,19 @@ vi.mock('@dnd-kit/sortable', () => ({
 
 // Mock child components
 vi.mock('./AssetThumbnail', () => ({
-  AssetThumbnail: (props: Record<string, any>) => <div data-testid="mock-asset-thumbnail" {...props}>Asset: {props.alt}</div>
+  AssetThumbnail: (props: Record<string, any>) => {
+    // Destructure props to avoid spreading unrecognized ones onto the div
+    const { alt, src, assetId, folderId, type, isPriority, mimeType, onDataChange, ...restHtmlProps } = props;
+    return <div data-testid="mock-asset-thumbnail" {...restHtmlProps}>Asset: {alt}</div>;
+  }
 }));
 
 vi.mock('./FolderThumbnail', () => ({
-  FolderThumbnail: (props: Record<string, any>) => <div data-testid="mock-folder-thumbnail" {...props}>Folder: {props.folder?.name}</div>
+  FolderThumbnail: (props: Record<string, any>) => {
+    // Destructure props
+    const { folder, ...restHtmlProps } = props;
+    return <div data-testid="mock-folder-thumbnail" {...restHtmlProps}>Folder: {folder?.name}</div>;
+  }
 }));
 
 // Mock react-window

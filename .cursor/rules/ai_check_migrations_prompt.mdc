@@ -1,21 +1,26 @@
 ---
-description: User uses @migrations
+description: 
 globs: 
 alwaysApply: false
 ---
 -   **User Prompt Keyword:** `@migrations`
-
+-   **Schema Dump Override:** If the user provides a full schema dump file (e.g., `docs/supabase/full_schema_dump.sql`), treat that file as the primary source of truth for the database schema, RLS policies, triggers, functions, and all DDL/DCL details—unless the user directs otherwise.
+-   **Default Behavior:** If no schema dump is provided, prioritize examining the contents of the `supabase/migrations/` directory.
 -   **AI Action When Keyword is Detected:**
-    -   When the user includes `@migrations` in their prompt, **prioritize examining the contents of the `supabase/migrations/` directory.**
-    -   Treat the SQL files within this directory as the most up-to-date definition and source of truth for understanding the project's:
+    -   When the user includes `@migrations` in their prompt, or when schema understanding is required, follow this precedence:
+        1. If a schema dump file is provided and up-to-date, use it as the source of truth.
+        2. Otherwise, use the SQL files within the `supabase/migrations/` directory as the most up-to-date definition.
+    -   Treat the selected source as authoritative for:
         -   Database schema (tables, columns, data types, constraints, relationships).
         -   Row Level Security (RLS) policies (`CREATE POLICY`, `ALTER POLICY`).
         -   Database functions (`CREATE FUNCTION`).
         -   Database triggers (`CREATE TRIGGER`).
         -   Views (`CREATE VIEW`).
         -   Enabled extensions (`CREATE EXTENSION`).
-        -   Any other Data Definition Language (DDL) or Data Control Language (DCL) statements defined in the migrations.
+        -   Any other Data Definition Language (DDL) or Data Control Language (DCL) statements.
     -   This context is crucial for accurately answering questions or making suggestions related to the Supabase database structure, security logic, data access patterns, or potential migration issues.
     -   If the user references specific migration files by name or timestamp after using `@migrations`, focus on those files but also consider the cumulative effect of all migrations for complete context if the query is broad.
-    -   If the `supabase/migrations` folder contents are not readily available in the current context, consider using available tools (like `list_dir` or `read_file` on specific migration files if their names are known or can be inferred) to gather this information.
+    -   If neither the schema dump nor the `supabase/migrations` folder contents are readily available in the current context, use available tools (like `list_dir` or `read_file` on specific migration files if their names are known or can be inferred) to gather this information.
+
+**Note:** Always clarify with the user if there is any ambiguity about which file or folder is the most current or authoritative source for the database schema.
 

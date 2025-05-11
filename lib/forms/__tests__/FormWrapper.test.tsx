@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { z } from 'zod';
 import { FormWrapper } from '@/components/forms/FormWrapper';
@@ -53,6 +53,26 @@ vi.mock('@/lib/forms/useFormWithValidation', () => ({
 }));
 
 describe('FormWrapper', () => {
+  let originalRequestSubmit: any;
+
+  beforeAll(() => {
+    // Store the original implementation if it exists
+    originalRequestSubmit = HTMLFormElement.prototype.requestSubmit;
+    // Mock requestSubmit
+    HTMLFormElement.prototype.requestSubmit = vi.fn(function(this: HTMLFormElement) {
+      // A very simple mock that just calls the form's submit method
+      // This mimics the most basic behavior of requestSubmit
+      if (typeof this.submit === 'function') {
+        this.submit();
+      }
+    });
+  });
+
+  afterAll(() => {
+    // Restore the original implementation
+    HTMLFormElement.prototype.requestSubmit = originalRequestSubmit;
+  });
+
   // Setup a simple schema for testing
   const schema = z.object({
     name: z.string().min(2, 'Name is required'),

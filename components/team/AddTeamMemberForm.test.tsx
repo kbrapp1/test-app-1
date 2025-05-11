@@ -76,6 +76,7 @@ const renderFormInDialog = (props = {}) => {
             <DialogContent>
                  <DialogHeader>
                     <DialogTitle>Test Dialog</DialogTitle>
+                    <DialogDescription>Test dialog description.</DialogDescription>
                  </DialogHeader>
                 <AddTeamMemberForm {...props} />
             </DialogContent>

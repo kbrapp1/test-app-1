@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { listTextAssets } from '@/lib/actions/dam'; // Import the action
@@ -100,6 +100,9 @@ export function AssetSelectorModal({
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>Select Text Asset</DialogTitle>
+          <DialogDescription>
+            Browse and select a text asset (.txt, .md) from your library. You can use the search bar to filter by name.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Search Input */}
