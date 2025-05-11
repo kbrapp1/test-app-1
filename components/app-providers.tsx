@@ -6,6 +6,7 @@ import { CommandPalette } from "@/components/command-palette";
 import { PaletteProvider } from "@/context/palette-context";
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as RadixToaster } from "@/components/ui/toaster";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = React.useState(false);
@@ -26,6 +27,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <PaletteProvider value={paletteContextValue}>
           {children}
           <SonnerToaster position="bottom-right" richColors />
+          <RadixToaster />
         </PaletteProvider>
         <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
       </TooltipProvider>

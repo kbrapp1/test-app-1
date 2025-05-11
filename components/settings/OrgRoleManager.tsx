@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -326,11 +327,33 @@ export function OrgRoleManager() {
       const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: { email: memberToReset.email, redirectTo }
       });
-      if (error) throw error;
-      toast({ title: 'Password Reset Email Sent', description: `Password reset link sent to ${memberToReset.email}.` });
+      console.log('admin-reset-password invoke response:', { data, error });
+
+      // Explicitly check the data/error from the function response
+      if (error) {
+        console.log('handleResetPassword branch: invocation error');
+        // This will catch network errors or if the function itself throws an unhandled exception
+        // or returns a non-2xx status code that invoke() surfaces as an error.
+        console.error('Error invoking admin-reset-password function:', error);
+        sonnerToast.error('Function Error', { description: error.message });
+      } else if (data && data.error) {
+        console.log('handleResetPassword branch: data.error', data.error);
+        // This catches errors returned in the JSON payload from a 2xx response
+        console.error('Error from admin-reset-password function payload:', data.error);
+        sonnerToast.error('Reset Error', { description: data.error });
+      } else if (data && data.success) {
+        console.log('handleResetPassword branch: success');
+        sonnerToast.success('Password Reset Email Sent', { description: `Password reset link sent to ${memberToReset.email}.` });
+      } else {
+        console.log('handleResetPassword branch: fallback', data);
+        // Fallback for unexpected successful responses without clear success/error fields
+        console.warn('Unexpected response from admin-reset-password function:', data);
+        sonnerToast('Password reset initiated, but response was unexpected.');
+      }
     } catch (e: any) {
-      console.error('Error sending password reset email:', e);
-      toast({ variant: 'destructive', title: 'Error Sending Password Reset', description: e.message });
+      // This catches errors from the try block itself (e.g., if `invoke` fails in a way not handled above)
+      console.error('Error sending password reset email (client-side exception):', e);
+      sonnerToast.error('Client Error', { description: e.message });
     } finally {
       setUpdating(null);
     }
@@ -460,7 +483,7 @@ export function OrgRoleManager() {
                       disabled={currentlyUpdatingFc === member.id}
                       aria-label="Reset Password"
                     >
-                      {currentlyUpdatingFc === member.id && member.id === currentlyUpdatingFc ? <LoaderIcon className="animate-spin h-4 w-4" /> : <Key className="h-4 w-4" />}
+                      <Key className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>Reset Password</p></TooltipContent>
@@ -518,7 +541,7 @@ export function OrgRoleManager() {
       },
       size: 80,
     }
-  ], [handleResendInvitation]);
+  ], [handleResendInvitation, handleResetPassword]);
 
   const table = useReactTable({
     data: members,

@@ -11,34 +11,34 @@ This document outlines the specific steps to refactor and enhance the Notes syst
 ## Phase 1: Backend - Notes Core Logic Refactoring
 
 **Step 1: Tenant-Scope Notes Table**
-*   [ ] **DB Review:** Confirm `notes` table has `organization_id` (FK to `organizations.id`, NOT NULL) and appropriate unique constraints if needed (e.g., if note titles should be unique within an organization).
-*   [ ] **RLS:** Ensure RLS policy for `notes` correctly uses `get_active_organization_id()` for `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
+*   [X] **DB Review:** Confirm `notes` table has `organization_id` (FK to `organizations.id`, NOT NULL) and appropriate unique constraints if needed (e.g., if note titles should be unique within an organization).
+*   [X **RLS:** Ensure RLS policy for `notes` correctly uses `get_active_organization_id()` for `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
     *   Example: `CREATE POLICY "Enable access for organization members on notes" ON public.notes FOR ALL USING (organization_id = public.get_active_organization_id()) WITH CHECK (organization_id = public.get_active_organization_id());`
     *   **Note on Advanced RLS:** If more granular permissions are needed (e.g., based on roles within `organization_memberships`), consider `SECURITY DEFINER` helper functions to avoid recursion.
-*   [ ] **Refactor Note Listing Logic (e.g., in `app/(protected)/documents/notes/page.tsx` or `app/(protected)/documents/notes/actions.ts`):**
-    *   [ ] Use `getActiveOrganizationId()`.
-    *   [ ] Modify Supabase query to filter by `organization_id` (e.g., `.eq('organization_id', activeOrgId)`).
-    *   [ ] Handle cases where `activeOrgId` is null.
-*   [ ] **Refactor Note Creation/Update/Delete Actions (e.g., `createNote`, `updateNote`, `deleteNote` in `app/(protected)/documents/notes/actions.ts`):**
-    *   [ ] `createNote` action:
-        *   [ ] Retrieves `activeOrganizationId`.
-        *   [ ] Uses `organization_id` in insert query.
-        *   [ ] Relies on RLS `WITH CHECK` for authorization.
-    *   [ ] `updateNote` action:
-        *   [ ] Retrieve `activeOrganizationId`.
-        *   [ ] Use `organization_id` in update queries.
-        *   [ ] Ensure `WITH CHECK` clauses in RLS policies are respected.
-    *   [ ] `deleteNote` action:
-        *   [ ] Retrieve `activeOrganizationId`.
-        *   [ ] Use `organization_id` in delete queries.
-        *   [ ] Ensure `WITH CHECK` clauses in RLS policies are respected.
-*   [ ] **Refactor any related entities (e.g., `tags` if they are tenant-scoped and linked to notes):**
-    *   [ ] If `tags` (or similar entities like `note_categories`) are tenant-specific, ensure they also have `organization_id` and appropriate RLS.
-    *   [ ] Update actions for managing these related entities to be tenant-aware.
-*   [ ] *Testing (Backend):*
-    *   [ ] Verify users can only see/manage notes belonging to their active organization.
-    *   [ ] Test note creation, update, and deletion across different organizations.
-    *   [ ] Test operations on related entities (like tags) if applicable.
+*   [X] **Refactor Note Listing Logic (e.g., in `app/(protected)/documents/notes/page.tsx` or `app/(protected)/documents/notes/actions.ts`):**
+    *   [X] Use `getActiveOrganizationId()`.
+    *   [X] Modify Supabase query to filter by `organization_id` (e.g., `.eq('organization_id', activeOrgId)`).
+    *   [X] Handle cases where `activeOrgId` is null.
+*   [X] **Refactor Note Creation/Update/Delete Actions (e.g., `createNote`, `updateNote`, `deleteNote` in `app/(protected)/documents/notes/actions.ts`):**
+    *   [X] `createNote` action:
+        *   [X] Retrieves `activeOrganizationId`.
+        *   [X] Uses `organization_id` in insert query.
+        *   [X] Relies on RLS `WITH CHECK` for authorization.
+    *   [X] `updateNote` action:
+        *   [X] Retrieve `activeOrganizationId`.
+        *   [X] Use `organization_id` in update queries.
+        *   [X] Ensure `WITH CHECK` clauses in RLS policies are respected.
+    *   [X] `deleteNote` action:
+        *   [X] Retrieve `activeOrganizationId`.
+        *   [X] Use `organization_id` in delete queries.
+        *   [X] Ensure `WITH CHECK` clauses in RLS policies are respected.
+*   [~] **Refactor any related entities (e.g., `tags` if they are tenant-scoped and linked to notes):**
+    *   [~] If `tags` (or similar entities like `note_categories`) are tenant-specific, ensure they also have `organization_id` and appropriate RLS.
+    *   [~] Update actions for managing these related entities to be tenant-aware.
+*   [~] *Testing (Backend):*
+    *   [~] Verify users can only see/manage notes belonging to their active organization.
+    *   [~ ]~ Test note creation, update, and deletion across different organizations.
+    *   [~] Test operations on related entities (like tags) if applicable.
 
 **(Review Point 1: All Notes backend logic is tenant-aware, data is scoped by `organization_id`, and RLS serves as the security foundation.)**
 

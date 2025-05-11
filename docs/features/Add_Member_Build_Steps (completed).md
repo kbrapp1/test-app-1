@@ -75,14 +75,14 @@ This document outlines the step-by-step process for implementing a feature that 
         *   [X] **Success Response:** Return a success response (e.g., JSON with a success message and status code 200).
     3.  **Deploy Edge Function:** Deploy the function from the Supabase CLI or dashboard.
 *   **Testing (Edge Function):**
-    1.  [ ] **Invoke Manually:** Use a tool like `curl`, Postman, or the Supabase CLI to invoke the deployed Edge Function directly with test payloads (various email addresses, role IDs, org IDs).
-    2.  [ ] **Verify Email Delivery:** Confirm invitation emails are sent to the test email addresses.
-    3.  [ ] **Check Supabase Auth Users:** Observe the `auth.users` table for invited users (they will have an `invited_at` timestamp).
-    4.  [ ] **Test Error Cases:**
-        *   [ ] Invalid email format.
-        *   [ ] Missing required parameters.
-        *   [ ] Attempting to invite an email that has already been invited.
-        *   [ ] (If implemented) Attempting to invite an email that is already an active user and member.
+    1.  [X] **Invoke Manually:** Use a tool like `curl`, Postman, or the Supabase CLI to invoke the deployed Edge Function directly with test payloads (various email addresses, role IDs, org IDs).
+    2.  [X] **Verify Email Delivery:** Confirm invitation emails are sent to the test email addresses.
+    3.  [X] **Check Supabase Auth Users:** Observe the `auth.users` table for invited users (they will have an `invited_at` timestamp).
+    4.  [X] **Test Error Cases:**
+        *   [X] Invalid email format.
+        *   [X] Missing required parameters.
+        *   [X] Attempting to invite an email that has already been invited.
+        *   [X] (If implemented) Attempting to invite an email that is already an active user and member.
 
 ---
 
@@ -106,15 +106,15 @@ This document outlines the step-by-step process for implementing a feature that 
         *   [X] **Action:** `EXECUTE FUNCTION public.handle_invitation_acceptance();`
     3.  **Apply SQL:** Add the function and trigger to your database via a migration script or Supabase Studio.
 *   **Testing (Trigger & Function):**
-    1.  [ ] Ensure the Edge Function (`invite-member`) is working.
-    2.  [ ] Send an invitation to a **new email address** not yet in `auth.users`.
-    3.  [ ] Click the invitation link in the received email and complete the signup process.
-    4.  [ ] **Verify Database State:**
-        *   [ ] Check `auth.users` for the new user. Confirm `raw_user_meta_data` contains the invitation data.
-        *   [ ] Check `public.profiles` for a new entry for this user with their `full_name` (if provided).
-        *   [ ] Check `public.organization_memberships` for a new entry linking the user to the target organization with the target role.
-        *   [ ] Verify `active_organization_id` in `auth.users.app_metadata`.
-    5.  [ ] Test with and without `fullName` provided in the invitation.
+    1.  [X] Ensure the Edge Function (`invite-member`) is working.
+    2.  [X] Send an invitation to a **new email address** not yet in `auth.users`.
+    3.  [X] Click the invitation link in the received email and complete the signup process.
+    4.  [X] **Verify Database State:**
+        *   [X] Check `auth.users` for the new user. Confirm `raw_user_meta_data` contains the invitation data.
+        *   [X] Check `public.profiles` for a new entry for this user with their `full_name` (if provided).
+        *   [X] Check `public.organization_memberships` for a new entry linking the user to the target organization with the target role.
+        *   [X] Verify `active_organization_id` in `auth.users.app_metadata`.
+    5.  [X] Test with and without `fullName` provided in the invitation.
 
 ---
 
@@ -143,11 +143,11 @@ This document outlines the step-by-step process for implementing a feature that 
             *   [X] Successful account setup.
             *   [X] Server errors during setup.
 *   **Testing (Onboarding):**
-    1.  [ ] Test with new user invitations (should show password fields).
-    2.  [ ] Test with existing user invitations (should just add to organization).
-    3.  [ ] Test error paths (invalid tokens, expired links).
-    4.  [ ] Verify redirection to appropriate page after completion.
-    5.  [ ] Check mobile responsiveness of onboarding form.
+    1.  [X] Test with new user invitations (should show password fields).
+    2.  [X] Test with existing user invitations (should just add to organization).
+    3.  [X] Test error paths (invalid tokens, expired links).
+    4.  [X] Verify redirection to appropriate page after completion.
+    5.  [X] Check mobile responsiveness of onboarding form.
 
 ---
 
@@ -155,21 +155,21 @@ This document outlines the step-by-step process for implementing a feature that 
 
 *   **Task:** Test the entire flow from an admin's perspective and the invited user's perspective.
     1.  **Admin Flow:**
-        *   [ ] Admin in Org A invites a new email address with a specific role (e.g., 'member').
-        *   [ ] Verify success toast.
+        *   [X] Admin in Org A invites a new email address with a specific role (e.g., 'member').
+        *   [X] Verify success toast.
     2.  **Invited User Flow:**
-        *   [ ] User receives email, clicks link, signs up.
-        *   [ ] User logs in.
-        *   [ ] Verify they have access to Org A's resources according to the 'member' role.
-        *   [ ] Verify their `active_organization_id` is set correctly.
+        *   [X] User receives email, clicks link, signs up.
+        *   [X] User logs in.
+        *   [X] Verify they have access to Org A's resources according to the 'member' role.
+        *   [X] Verify their `active_organization_id` is set correctly.
     3.  **Admin View Update:**
-        *   [ ] After the invited user completes signup, the admin should now see the new user in the member list with the correct name, email, and role.
+        *   [X] After the invited user completes signup, the admin should now see the new user in the member list with the correct name, email, and role.
     4.  **Error Case Handling:**
-        *   [ ] Test inviting an email that is already a member of the organization.
-        *   [ ] Test inviting an email that has already been invited but hasn't accepted.
-        *   [ ] Test any other edge cases identified.
+        *   [X] Test inviting an email that is already a member of the organization.
+        *   [X] Test inviting an email that has already been invited but hasn't accepted.
+        *   [X] Test any other edge cases identified.
     5.  **UI/UX Refinements:**
-        *   [ ] Ensure all loading states, success messages, and error messages are clear and user-friendly.
+        *   [X] Ensure all loading states, success messages, and error messages are clear and user-friendly.
 
 ---
 
