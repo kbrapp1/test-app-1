@@ -165,7 +165,7 @@ importers:
         specifier: ^14.3.8
         version: 14.3.8(react@19.1.0)
       react-hook-form:
-        specifier: ^7.54.1
+        specifier: ^7.56.3
         version: 7.56.3(react@19.1.0)
       react-resizable-panels:
         specifier: ^2.1.7

@@ -65,7 +65,7 @@
     "react-day-picker": "^9.0.0",
     "react-dom": "^19",
     "react-dropzone": "^14.3.8",
-    "react-hook-form": "^7.54.1",
+    "react-hook-form": "^7.56.3",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.3",
     "replicate": "^1.0.1",
