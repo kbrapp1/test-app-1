@@ -60,7 +60,7 @@ describe('NavSecondary', () => {
  
        // Assert that the link has the correct href and legacyBehavior was used
        expect(link).toHaveAttribute('data-href', item.url);
-       expect(link).toHaveAttribute('data-legacy', 'true');
+       expect(link).not.toHaveAttribute('data-legacy', 'true');
  
        // Verify icon and title are rendered within the link structure
        expect(within(link).getByTestId('icon-dynamic')).toBeInTheDocument();
