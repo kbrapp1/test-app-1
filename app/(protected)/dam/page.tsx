@@ -97,11 +97,11 @@ export default async function DamGalleryPage({
       <main className="flex-1 px-4 pt-2 pb-4 overflow-auto">
         <div className="mb-6 flex flex-col gap-4">
           <div className="flex items-center gap-4 w-full">
-            <form method="GET" action="/dam" className="flex items-center gap-2 flex-grow max-w-2xl">
+            <form method="GET" action="/dam" className="flex items-center gap-2 grow max-w-2xl">
               {currentFolderId && !currentSearchTerm && (
                 <input type="hidden" name="folderId" value={currentFolderId} />
               )}
-              <div className="relative flex-grow">
+              <div className="relative grow">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-help" />
@@ -136,7 +136,7 @@ export default async function DamGalleryPage({
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="submit" variant="default" size="icon" aria-label="Search" className="flex-shrink-0">
+                  <Button type="submit" variant="default" size="icon" aria-label="Search" className="shrink-0">
                     <Search className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
@@ -147,7 +147,7 @@ export default async function DamGalleryPage({
             </form>
 
             {/* Conditional Upload Button - aligned to the right of the search form */}
-            <div className="flex-shrink-0 ml-auto">
+            <div className="shrink-0 ml-auto">
               {!currentSearchTerm && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -185,7 +185,7 @@ export default async function DamGalleryPage({
           </div>
 
           {!currentSearchTerm && (
-            <div className="flex-grow min-w-[200px]">
+            <div className="grow min-w-[200px]">
                <DamBreadcrumbs path={breadcrumbPath} />
             </div>
           )}

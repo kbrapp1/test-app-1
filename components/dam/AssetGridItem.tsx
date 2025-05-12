@@ -87,13 +87,13 @@ export const AssetGridItem = React.forwardRef<
     <>
       <div className="flex items-center truncate min-w-0">
         {item.type === 'folder' 
-          ? <FolderIcon className="w-4 h-4 mr-2 flex-shrink-0" /> 
-          : <FileText className="w-4 h-4 mr-2 flex-shrink-0" />}
+          ? <FolderIcon className="w-4 h-4 mr-2 shrink-0" /> 
+          : <FileText className="w-4 h-4 mr-2 shrink-0" />}
         <span className="truncate font-medium text-sm">{item.name}</span>
       </div>
       
       {item.type === 'asset' ? (
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="p-1 h-auto">
@@ -122,7 +122,7 @@ export const AssetGridItem = React.forwardRef<
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={handleDeleteClick} 
-                className="text-red-600 hover:!text-red-600 focus:!text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/50 focus:!bg-red-50 dark:focus:!bg-red-900/50 cursor-pointer"
+                className="text-red-600 hover:text-red-600! focus:text-red-600! hover:bg-red-50! dark:hover:bg-red-900/50! focus:bg-red-50! dark:focus:bg-red-900/50! cursor-pointer"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Delete</span>
@@ -131,7 +131,7 @@ export const AssetGridItem = React.forwardRef<
           </DropdownMenu>
         </div>
       ) : (
-        <div className="w-[28px] h-[28px] flex-shrink-0" />
+        <div className="w-[28px] h-[28px] shrink-0" />
       )}
     </>
   );
@@ -142,7 +142,7 @@ export const AssetGridItem = React.forwardRef<
       style={style}
       {...attributes}
       {...listeners}
-      className="group/card relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="group/card relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-xs outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <div 
         className="p-2 border-b flex justify-between items-center"

@@ -46,7 +46,7 @@ export function OrgMemberCard({
   const canResend = member.invited_at && !member.last_sign_in_at;
 
   return (
-    <Card className="mb-4 shadow-sm">
+    <Card className="mb-4 shadow-xs">
       <CardHeader>
         <CardTitle className="text-lg">{member.name || <span className="italic text-muted-foreground">(No name set)</span>}</CardTitle>
         <CardDescription className="text-sm">{member.email}</CardDescription>

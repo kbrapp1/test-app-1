@@ -429,7 +429,7 @@ export function TtsInterface() {
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
                           <Command>
                             <CommandInput placeholder="Search voice..." />
                             <CommandList>
@@ -508,7 +508,7 @@ export function TtsInterface() {
                     onClick={handleDownload} 
                     variant="outline" 
                     disabled={effectiveIsLoading || isSavingToDam}
-                    className="flex-grow sm:flex-grow-0" // Grow on small screens, not on larger
+                    className="grow sm:grow-0" // Grow on small screens, not on larger
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download
@@ -517,7 +517,7 @@ export function TtsInterface() {
                     onClick={handleSaveToDam} 
                     variant="outline" 
                     disabled={isSavingToDam || effectiveIsLoading || !!outputAssetId}
-                    className="flex-grow sm:flex-grow-0" // Grow on small screens, not on larger
+                    className="grow sm:grow-0" // Grow on small screens, not on larger
                   >
                     {isSavingToDam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {outputAssetId ? 'Saved to Library' : 'Save to Library'}

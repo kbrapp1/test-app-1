@@ -89,7 +89,7 @@ export function FolderItem({
           </Button>
           
           <Link href={`/dam?folderId=${folderNode.id}`} className="flex items-center truncate">
-            <FolderIcon className="h-4 w-4 mr-2 flex-shrink-0" />
+            <FolderIcon className="h-4 w-4 mr-2 shrink-0" />
             <span className="truncate font-medium text-sm" title={folderNode.name}>{folderNode.name}</span>
           </Link>
         </div>

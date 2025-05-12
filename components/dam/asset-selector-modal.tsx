@@ -153,7 +153,7 @@ export function AssetSelectorModal({
               {filteredAssets.map((asset) => (
                 <li key={asset.id} className="flex items-center justify-between p-2 border rounded-md hover:bg-accent">
                   <div className='flex items-center gap-2'>
-                     <FileTextIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                     <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
                      <span className="truncate" title={asset.name}>{asset.name}</span>
                   </div>
                   <Button 

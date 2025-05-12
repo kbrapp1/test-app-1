@@ -124,7 +124,7 @@ export function NoteEditForm({
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 className={cn(
-                    "flex-grow mb-2 border focus:ring-2 text-sm rounded-sm p-2 resize-none cursor-text", 
+                    "grow mb-2 border focus:ring-2 text-sm rounded-sm p-2 resize-none cursor-text", 
                     currentInputBg, 
                     currentBorder, 
                     currentFocusRing,

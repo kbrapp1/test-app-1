@@ -54,7 +54,7 @@ export function NavMain({
                 <AccordionItem key={item.title} value={item.title} className="border-none">
                   <AccordionTrigger
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-normal hover:bg-muted hover:no-underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm font-normal hover:bg-muted hover:no-underline focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
                     )}
                   >
                     {item.icon && <item.icon className="h-4 w-4 shrink-0" />}

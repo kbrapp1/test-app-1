@@ -156,11 +156,11 @@ export function NoteListItem({
         currentTextColor,
         rotationClass,
         "after:absolute after:content-[''] after:bottom-0 after:right-0 after:w-0 after:h-0",
-        "after:border-[15px] after:border-l-transparent after:border-t-transparent",
+        "after:border-15 after:border-l-transparent after:border-t-transparent",
         "after:border-b-black/15 after:border-r-black/15",
         "dark:after:border-b-white/15 dark:after:border-r-white/15",
-        "after:shadow-sm after:transition-all after:duration-150",
-        "hover:after:border-[20px] hover:after:border-l-transparent hover:after:border-t-transparent",
+        "after:shadow-xs after:transition-all after:duration-150",
+        "hover:after:border-20 hover:after:border-l-transparent hover:after:border-t-transparent",
         isDragging ? 'z-10 shadow-xl' : ''
     )}>
       {isEditing ? (
@@ -183,7 +183,7 @@ export function NoteListItem({
                   type="button"
                   aria-label={`Set color to ${colorOption.bg.split('-')[1]}`}
                   className={cn(
-                    "h-4 w-4 rounded-full border border-black/20 dark:border-white/20 shadow-sm",
+                    "h-4 w-4 rounded-full border border-black/20 dark:border-white/20 shadow-xs",
                     colorOption.bg,
                     currentBgClass === colorOption.bg ? 'ring-2 ring-offset-1 ring-black/50 dark:ring-white/50' : '' 
                   )}
@@ -198,7 +198,7 @@ export function NoteListItem({
             >
                 {note.title || 'Untitled Note'}
             </h3>
-            <span className="block whitespace-pre-wrap flex-grow overflow-y-auto text-sm break-words mb-1">
+            <span className="block whitespace-pre-wrap grow overflow-y-auto text-sm break-words mb-1">
                 {note.content || ''}
             </span>
             <span className="text-xs mt-auto self-end opacity-70">
