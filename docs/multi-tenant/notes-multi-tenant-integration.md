@@ -45,44 +45,38 @@ This document outlines the specific steps to refactor and enhance the Notes syst
 ## Phase 2: Frontend - Notes UI & User Experience
 
 **Step 2: Displaying Organization Context in Notes UI**
-*   [ ] **UI Review:** Ensure the current active organization's name is clearly visible on Notes pages (e.g., `app/(protected)/documents/notes/page.tsx`).
-*   [ ] **Notes List Display (e.g., `NoteList` component in `components/notes/note-list.tsx`):**
-    *   [ ] Confirm it correctly receives and displays notes for the active organization only.
-*   [ ] **Note Creation UI (e.g., `AddNoteDialog` or `AddNoteForm` in `components/notes/`):**
-    *   [ ] Ensure new notes are associated with the active organization (backend should enforce this via session `organization_id`).
-*   [ ] **Note Viewing/Editing UI (e.g., `NoteEditForm` in `components/notes/note-edit-form.tsx`):**
-    *   [ ] Confirm that users can only view/edit notes belonging to their active organization.
-*   [ ] *Testing (Frontend):*
-    *   [ ] Navigate the Notes UI as different users in different organizations.
-    *   [ ] Ensure UI elements (lists, forms) reflect the correct organizational context.
-    *   [ ] Test creating, viewing, editing, and deleting notes.
-
-**Step 3: Notes Specific Settings (Optional - Future Enhancement)**
-*   [ ] **Planning:** Consider if any Notes settings should be organization-specific (e.g., default note template, sort order).
-*   [ ] **DB/UI:** If yes, design and implement these settings.
-*   [ ] *Testing:* Test organization-specific Notes settings if implemented.
+*   [X] **Notes List Display (e.g., `NoteList` component in `components/notes/note-list.tsx`):**
+    *   [X] Confirm it correctly receives and displays notes for the active organization only.
+*   [X] **Note Creation UI (e.g., `AddNoteDialog` or `AddNoteForm` in `components/notes/`):**
+    *   [X] Ensure new notes are associated with the active organization (backend should enforce this via session `organization_id`).
+*   [X] **Note Viewing/Editing UI (e.g., `NoteEditForm` in `components/notes/note-edit-form.tsx`):**
+    *   [X] Confirm that users can only view/edit notes belonging to their active organization.
+*   [X] *Testing (Frontend):*
+    *   [X] Navigate the Notes UI as different users in different organizations.
+    *   [X] Ensure UI elements (lists, forms) reflect the correct organizational context.
+    *   [X] Test creating, viewing, editing, and deleting notes.
 
 **(Review Point 2: Notes frontend accurately reflects the active organization's data and provides a clear user experience.)**
 
 ## Phase 3: Advanced Notes Features & Finalization
 
 **Step 4: Sharing & Permissions for Notes (Within an Organization - Future Enhancement)**
-*   [ ] **Planning:** Define requirements for sharing notes with other members *within the same organization*.
-*   [ ] **DB/RLS:** Design necessary table structures (e.g., `note_permissions`) and RLS policies.
-*   [ ] **Backend/UI:** Implement logic and UI for managing these internal sharing settings.
-*   [ ] *Testing:* Test internal note sharing features.
+*   [~] **Planning:** Define requirements for sharing notes with other members *within the same organization*.
+*   [~] **DB/RLS:** Design necessary table structures (e.g., `note_permissions`) and RLS policies.
+*   [~] **Backend/UI:** Implement logic and UI for managing these internal sharing settings.
+*   [~] *Testing:* Test internal note sharing features.
 
 **Step 5: Cross-Organization Sharing for Notes (Complex - Future Enhancement)**
-*   [ ] **Planning:** Define if notes can be shared with users from *different* organizations.
-*   [ ] **DB/RLS/Backend/UI:** If required, implement this feature.
-*   [ ] *Testing:* Rigorously test cross-organization note sharing.
+*   [~] **Planning:** Define if notes can be shared with users from *different* organizations.
+*   [~] **DB/RLS/Backend/UI:** If required, implement this feature.
+*   [~] *Testing:* Rigorously test cross-organization note sharing.
 
 **Step 6: Comprehensive Notes Testing in Multi-Tenant Environment**
-*   [ ] **End-to-End Testing:**
-    *   [ ] Full user flows for note management for multiple organizations.
-    *   [ ] Creation, viewing, editing, deletion, searching, and filtering of notes.
-    *   [ ] Role-based access tests for notes (if organization roles grant different note permissions).
-*   [ ] **Security Review:** Focus on any potential for data leakage between organizations in the Notes feature.
-*   [ ] **Performance Testing:** Test Notes performance with many notes per organization and multiple concurrent users from different orgs.
+*   [~] **End-to-End Testing:**
+    *   [~] Full user flows for note management for multiple organizations.
+    *   [~] Creation, viewing, editing, deletion, searching, and filtering of notes.
+    *   [~] Role-based access tests for notes (if organization roles grant different note permissions).
+*   [~] **Security Review:** Focus on any potential for data leakage between organizations in the Notes feature.
+*   [~] **Performance Testing:** Test Notes performance with many notes per organization and multiple concurrent users from different orgs.
 
 **(Final Review: Notes system is fully integrated into the multi-tenant architecture, secure, and performs well.)** 

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AssetGrid } from './AssetGrid';
 import { useToast } from '@/components/ui/use-toast';
-import { moveAsset } from '@/lib/actions/dam';
+import { moveAsset } from '@/lib/actions/dam/asset.actions';
 import type { CombinedItem } from '@/types/dam';
 
 // Mock the drag and drop library as it's complex to test
@@ -89,7 +89,7 @@ vi.mock('react-window', () => ({
 }));
 
 // Mock the moveAsset action
-vi.mock('@/lib/actions/dam', () => ({
+vi.mock('@/lib/actions/dam/asset.actions', () => ({
   moveAsset: vi.fn().mockResolvedValue({ success: true }),
 }));
 

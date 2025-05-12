@@ -20,6 +20,7 @@ interface FolderStoreState {
   fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<Folder[]>) => Promise<void>;
   addFolder: (newFolder: Folder) => void;
   removeFolder: (folderId: string) => void;
+  updateFolderNodeInStore: (updatedFolder: Folder) => void; // ADDED: Action definition
   setSelectedFolder: (folderId: string | null) => void; // New action
   setSearchTerm: (term: string) => void; // New action for search
   // TODO: Add renameFolder action
@@ -181,5 +182,20 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
 
   removeFolder: (folderId) => {
     set((state) => ({ rootFolders: findAndRemoveNode(state.rootFolders, folderId) }));
+  },
+
+  // ADDED: Implementation for updateFolderNodeInStore
+  updateFolderNodeInStore: (updatedFolder) => {
+    set((state) => ({
+      rootFolders: findAndUpdateNode(
+        state.rootFolders,
+        updatedFolder.id,
+        (node) => ({ 
+          name: updatedFolder.name,
+          // Potentially update other fields from updatedFolder if they can change
+          // and are part of FolderNode, e.g., parent_folder_id if moving while renaming (though less common for just rename)
+        })
+      ),
+    }));
   },
 })); 

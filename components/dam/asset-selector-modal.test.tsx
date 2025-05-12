@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { AssetSelectorModal } from './asset-selector-modal';
-import * as damActions from '@/lib/actions/dam'; // To mock listTextAssets
+import * as damActions from '@/lib/actions/dam/asset.actions'; // To mock listTextAssets
 
 // Mock the action
-vi.mock('@/lib/actions/dam');
+vi.mock('@/lib/actions/dam/asset.actions');
 
 describe('AssetSelectorModal', () => {
   const mockOnAssetSelect = vi.fn();

@@ -11,7 +11,7 @@
  */
 
 import { UseFormSetError, UseFormReturn, FieldValues } from 'react-hook-form';
-import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { AppError, ValidationError } from '../errors/base';
 import { ErrorFactory } from '../errors/factory';
 
@@ -27,71 +27,32 @@ export interface ApiError {
   code?: string;
 }
 
+/**
+ * Configuration for the form error handler.
+ */
 export interface FormErrorHandlerConfig {
-  /**
-   * Callback for handling unexpected errors
-   */
-  onUnexpectedError?: (error: unknown) => void;
-  
-  /**
-   * Map of field names to remap API field names to form field names
-   * E.g. { 'user.email': 'email' } would map API error on 'user.email' to form field 'email'
-   */
-  fieldMap?: Record<string, string>;
-  
-  /**
-   * Root field name to use for general errors not tied to a specific field
-   * @default 'root'
-   */
-  rootFieldName?: string;
-
-  /**
-   * Whether to show a toast notification for root errors
-   * @default true
-   */
-  showToast?: boolean;
-
-  /**
-   * Duration to show the toast notification in milliseconds
-   * @default 5000
-   */
+  showToast?: boolean; // Keep as optional, default will be true
   toastDuration?: number;
-
-  /**
-   * Whether to clear existing errors before setting new ones
-   * @default true
-   */
   clearExistingErrors?: boolean;
+  fieldMap?: Record<string, string>;
+  rootFieldName?: string;
+  onUnexpectedError?: (error: unknown) => void;
 }
 
-const DEFAULT_CONFIG: FormErrorHandlerConfig = {
-  showToast: true,
+const DEFAULT_CONFIG: Required<Pick<FormErrorHandlerConfig, 'showToast' | 'toastDuration' | 'clearExistingErrors'>> & Pick<FormErrorHandlerConfig, 'rootFieldName'> = {
+  showToast: true, // Explicitly true
   toastDuration: 5000,
   clearExistingErrors: true,
+  rootFieldName: 'root', // Add default for rootFieldName as well
 };
-
-// Initialize toast outside of component functions
-let toast: ReturnType<typeof useToast> | null = null;
-
-// Function to set toast handler for use in this module
-export function setToastHandler(toastHandler: ReturnType<typeof useToast>) {
-  toast = toastHandler;
-}
 
 /**
  * Safely display an error toast
  */
 function showErrorToast(message: string, options?: { duration?: number }) {
-  if (toast) {
-    toast.toast({
-      variant: "destructive",
-      title: "Error",
-      description: message,
-      duration: options?.duration || 5000
-    });
-  } else {
-    console.error('Toast not initialized:', message);
-  }
+  sonnerToast.error(message, { 
+    duration: options?.duration, // Will be overridden by specific config if provided, otherwise undefined (sonner default)
+  });
 }
 
 /**
@@ -141,9 +102,7 @@ export function setFormErrors<T extends FieldValues>(
 ) {
   // Optionally clear existing errors before setting new ones
   if (config?.clearExistingErrors !== false) {
-    // No built-in way to clear all errors in react-hook-form
-    // so we'd need to maintain a list of fields to clear
-    // This is a workaround for now
+
   }
   
   fieldErrors.forEach(error => {
@@ -156,93 +115,91 @@ export function setFormErrors<T extends FieldValues>(
   });
 }
 
-/**
- * Handles form errors by mapping them to the appropriate fields in the form
- * 
- * Supports handling different types of errors:
- * 1. API errors with a specific structure (message and errors object)
- * 2. Generic errors with just a message
- * 3. Unexpected errors (these are passed to onUnexpectedError if provided)
- */
 export function handleFormError<T extends FieldValues>(
   error: unknown,
   setError: UseFormSetError<T>,
-  config?: FormErrorHandlerConfig
+  userConfig?: FormErrorHandlerConfig
 ) {
-  const rootFieldName = config?.rootFieldName || 'root';
-  const fieldErrors = extractFieldErrors(error);
-  
-  // Set field-specific errors
-  if (fieldErrors.length > 0) {
-    setFormErrors(setError, fieldErrors, config);
-    return;
-  }
-  
-  // Handle known API error format
-  if (isApiError(error)) {
-    // Set general error message
-    if (error.message) {
-      setError(rootFieldName as any, { 
-        type: 'manual',
-        message: error.message 
-      });
+  // Merge userConfig with DEFAULT_CONFIG, ensuring all relevant fields have defaults
+  const config: FormErrorHandlerConfig & typeof DEFAULT_CONFIG = { 
+    ...DEFAULT_CONFIG, 
+    ...userConfig 
+  };
+
+  const rootFieldName = config.rootFieldName; // Use from merged config
+
+  let hasSetFieldErrors = false;
+  if (error instanceof ValidationError || error instanceof AppError) {
+    const fieldErrors = extractFieldErrors(error);
+    if (fieldErrors.length > 0) {
+      setFormErrors(setError, fieldErrors, { clearExistingErrors: config.clearExistingErrors });
+      hasSetFieldErrors = true;
+      // Typically, we don't show a global toast if specific field errors are shown.
+      // If a toast is desired here, it should be conditional on config.showToast AND !hasSetFieldErrors
     }
-    
-    // Set field-specific errors
-    if (error.errors) {
-      Object.entries(error.errors).forEach(([field, messages]) => {
-        // Check if we need to remap the field name
-        const mappedField = config?.fieldMap?.[field] || field;
-        setError(mappedField as any, { 
-          type: 'manual',
-          message: messages[0] || 'Invalid value' 
-        });
-      });
-    }
-    
-    return;
   }
-  
-  // Handle Error objects
-  if (error instanceof Error) {
+
+  // Handle generic Error objects (if not already handled as a field error type)
+  if (error instanceof Error && !hasSetFieldErrors) {
     setError(rootFieldName as any, { 
       type: 'manual',
       message: error.message 
     });
-    
-    // Show toast if configured to do so
-    if (config?.showToast !== false) {
-      showErrorToast(error.message, { duration: config?.toastDuration || 5000 });
+    if (config.showToast) {
+      showErrorToast(error.message, { duration: config.toastDuration });
     }
     return;
   }
-  
-  // Handle string errors
-  if (typeof error === 'string') {
+
+  // Handle string errors (if not already handled)
+  if (typeof error === 'string' && !hasSetFieldErrors) {
     setError(rootFieldName as any, { 
       type: 'manual',
       message: error 
     });
-    
-    // Show toast if configured to do so
-    if (config?.showToast !== false) {
-      showErrorToast(error, { duration: config?.toastDuration || 5000 });
+    if (config.showToast) {
+      showErrorToast(error, { duration: config.toastDuration });
     }
     return;
   }
-  
-  // Handle unexpected errors
-  if (config?.onUnexpectedError) {
-    config.onUnexpectedError(error);
-  } else if (error && typeof error === 'object') {
-    // Default fallback for unexpected errors
-    setError(rootFieldName as any, { 
-      type: 'manual',
-      message: 'An unexpected error occurred. Please try again.' 
-    });
-    
-    // Log error for debugging
-    console.error('Unexpected form error:', error);
+
+  // Handle API errors with field errors (ensure this doesn't double-toast if also an Error instance)
+  if (typeof error === 'object' && error !== null && ('errors' in error || 'fieldErrors' in error) && !hasSetFieldErrors) {
+    const apiFieldErrorObjects = extractFieldErrors(error);
+    if (apiFieldErrorObjects.length > 0) {
+      setFormErrors(setError, apiFieldErrorObjects, { 
+        clearExistingErrors: config.clearExistingErrors, 
+        fieldMap: config.fieldMap 
+      });
+      hasSetFieldErrors = true;
+    }
+    // If there's also a general message with API field errors, decide if a toast is needed
+    // For instance, if error.message exists and config.showToast is true
+    if ((error as any).message && typeof (error as any).message === 'string' && config.showToast && !hasSetFieldErrors) {
+        // This might be a bit aggressive if field errors are also present.
+        // Consider if root error should be set too.
+        setError(rootFieldName as any, { type: 'manual', message: (error as any).message });
+        showErrorToast((error as any).message, { duration: config.toastDuration });
+        return; 
+    }
+    if (hasSetFieldErrors) return; // If only field errors from API, no general toast unless explicit message above
+  }
+
+  // Fallback for unexpected errors if no field errors were set from any known type
+  if (!hasSetFieldErrors) {
+    if (config.onUnexpectedError) {
+      config.onUnexpectedError(error);
+    } else {
+      console.error('Unexpected form error:', error);
+      const unexpectedMessage = 'An unexpected error occurred. Please try again.';
+      setError(rootFieldName as any, { 
+        type: 'manual', 
+        message: unexpectedMessage 
+      });
+      if (config.showToast) {
+        showErrorToast(unexpectedMessage, { duration: config.toastDuration });
+      }
+    }
   }
 }
 

@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event'; // For more realistic interactions
 import { AssetThumbnail } from './AssetThumbnail';
-import * as damActions from '@/lib/actions/dam'; // Import module to mock specific export
+import * as damActions from '@/lib/actions/dam/asset.actions'; // Import module to mock specific export
 import { toast } from 'sonner';
 
 // Import the original function signature for type assertion (optional but good practice)
-import { deleteAsset } from '@/lib/actions/dam';
+import { deleteAsset } from '@/lib/actions/dam/asset.actions';
 
 // Mock the deleteAsset server action
-vi.mock('@/lib/actions/dam', async (importOriginal) => {
+vi.mock('@/lib/actions/dam/asset.actions', async (importOriginal) => {
     const original = await importOriginal<typeof damActions>();
     return {
         ...original, // Keep other exports if any

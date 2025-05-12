@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, { useState, useTransition, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { deleteAsset } from '@/lib/actions/dam';
+import { deleteAsset } from '@/lib/actions/dam/asset.actions';
 
 import {
     AlertDialog,

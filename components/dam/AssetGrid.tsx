@@ -5,7 +5,7 @@ import React, { useMemo, useState, useEffect, useRef, SetStateAction, Dispatch }
 import { useRouter } from 'next/navigation';
 import { DndContext, closestCenter, pointerWithin, type DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { moveAsset } from '@/lib/actions/dam'; 
+import { moveAsset } from '@/lib/actions/dam/asset.actions'; 
 import { useToast } from '@/components/ui/use-toast';
 import { FixedSizeGrid } from 'react-window';
 // Import shared types

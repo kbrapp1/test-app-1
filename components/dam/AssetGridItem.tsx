@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Download, Edit3, Trash2, Folder as FolderIcon, FileText, Loader2 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { getAssetDownloadUrl } from '@/lib/actions/dam';
+import { getAssetDownloadUrl } from '@/lib/actions/dam/asset.actions';
 import { toast } from 'sonner';
 
 export interface AssetGridItemProps {

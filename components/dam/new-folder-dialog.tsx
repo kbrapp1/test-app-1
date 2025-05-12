@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { createFolder } from '@/lib/actions/dam'; // Updated import path
+import { createFolder } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner'; // Assuming you use sonner for toasts
 import { FolderPlus } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';

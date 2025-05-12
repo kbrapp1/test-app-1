@@ -7,6 +7,7 @@ export interface BaseItem {
   id: string;
   name: string;
   user_id: string;
+  organization_id: string;
   created_at: string;
   type: 'asset' | 'folder';
 }

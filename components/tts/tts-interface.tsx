@@ -502,6 +502,27 @@ export function TtsInterface() {
                 <audio controls src={audioUrl} className="w-full">
                   Your browser does not support the audio element.
                 </audio>
+                {/* Button Row: Apply flex, allow wrapping, and justify to the end */}
+                <div className="flex flex-wrap justify-end gap-2 pt-2"> 
+                  <Button 
+                    onClick={handleDownload} 
+                    variant="outline" 
+                    disabled={effectiveIsLoading || isSavingToDam}
+                    className="flex-grow sm:flex-grow-0" // Grow on small screens, not on larger
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                  <Button 
+                    onClick={handleSaveToDam} 
+                    variant="outline" 
+                    disabled={isSavingToDam || effectiveIsLoading || !!outputAssetId}
+                    className="flex-grow sm:flex-grow-0" // Grow on small screens, not on larger
+                  >
+                    {isSavingToDam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {outputAssetId ? 'Saved to Library' : 'Save to Library'}
+                  </Button>
+                </div>
               </div>
             )}
             {!effectiveIsLoading && !audioUrl && !errorMessage && (
@@ -510,43 +531,6 @@ export function TtsInterface() {
               </div>
             )}
           </CardContent>
-          {audioUrl && ( // Show footer only when there is audio
-            <CardFooter className="flex justify-end gap-2">
-              {/* Download Button - Now using JavaScript for reliable downloads */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDownload}
-                disabled={effectiveIsLoading || isSavingToDam}
-              >
-                {effectiveIsLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                Download
-              </Button>
-              
-              {/* Save to Library Button */} 
-              {ttsPredictionDbId && !outputAssetId && (
-                  <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleSaveToDam}
-                      disabled={isSavingToDam || effectiveIsLoading}
-                  >
-                      {isSavingToDam ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                          <Save className="mr-2 h-4 w-4" />
-                      )}
-                      {isSavingToDam ? 'Saving...' : 'Save to Library'}
-                  </Button>
-              )}
-              {outputAssetId && ( // Show confirmation or link if saved
-                  <Button variant="ghost" size="sm" disabled className="text-green-600">
-                      <Check className="mr-2 h-4 w-4" />
-                      Saved
-                  </Button>
-              )}
-            </CardFooter>
-          )}
         </Card>
       </div>
     </TooltipProvider>

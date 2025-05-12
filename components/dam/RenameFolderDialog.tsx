@@ -13,10 +13,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { updateFolder } from '@/lib/actions/dam'; // Assuming this is the correct path
+import { updateFolder } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
+import type { Folder } from '@/types/dam';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;
@@ -25,10 +25,18 @@ interface RenameFolderDialogProps {
   currentName: string;
 }
 
-const initialState: { success: boolean; error?: string; folderId?: string } = {
+const initialState: {
+  success: boolean;
+  error?: string;
+  folderId?: string;
+  parentFolderId?: string | null;
+  folder?: Folder;
+} = {
   success: false,
   error: undefined,
   folderId: undefined,
+  parentFolderId: null,
+  folder: undefined,
 };
 
 function SubmitButton() {
@@ -47,47 +55,46 @@ export function RenameFolderDialog({
   currentName,
 }: RenameFolderDialogProps) {
   const [name, setName] = useState(currentName);
-  const { toast } = useToast();
-
-  // Ensure the input field resets when the currentName prop changes (e.g., opening dialog for a different folder)
-  useEffect(() => {
-    setName(currentName);
-  }, [currentName, isOpen]); // Also depend on isOpen to reset when dialog re-opens
-
-  // Bind folderId to the action
-  const updateFolderWithId = updateFolder.bind(null, initialState);
-  // The `prevState` for `updateFolder` is `initialState`
-  // The `formData` will be implicitly passed by `form` element
-  // However, server actions called by useFormState expect prevState as the first arg, then formData
-  // Our `updateFolder` is defined as: export async function updateFolder(prevState: FolderActionResult, formData: FormData)
-  // We also need to pass folderId and newName in formData
+  const { updateFolderNodeInStore } = useFolderStore();
   
-  // Create a new action that preserves prevState and then passes our specific formData
+  const [submissionHandled, setSubmissionHandled] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(currentName);
+      setSubmissionHandled(false); 
+    }
+  }, [isOpen, currentName]);
+
+  const updateFolderWithId = updateFolder.bind(null, initialState);
+  
   const dispatchAction = async (prevState: typeof initialState, formPayload: FormData) => {
-    formPayload.append('folderId', folderId); // Add folderId to the form data
-    formPayload.append('newName', name); // Add newName from local state to form data
-    return updateFolderWithId(formPayload); // updateFolder expects prevState, then formData
+    formPayload.append('folderId', folderId);
+    formPayload.append('newName', name);
+    return updateFolderWithId(formPayload);
   };
 
   const [state, formAction] = useActionState(dispatchAction, initialState);
 
-
   useEffect(() => {
-    if (state.success) {
-      toast({
-        title: 'Folder Renamed',
-        description: `Folder "${currentName}" has been successfully renamed to "${name}".`,
-      });
-      onClose(); // Close the dialog on success
-      // Consider revalidating relevant paths or relying on `revalidatePath` in server action
-    } else if (state.error) {
-      toast({
-        variant: 'destructive',
-        title: 'Rename Failed',
-        description: state.error,
-      });
+    if (submissionHandled) {
+      return;
     }
-  }, [state, currentName, name, onClose, toast]);
+
+    if (state.success && state.folder) {
+      toast.success(`Folder "${currentName}" has been successfully renamed to "${state.folder.name}".`);
+      
+      if (updateFolderNodeInStore) {
+        updateFolderNodeInStore(state.folder);
+      }
+      
+      setSubmissionHandled(true); 
+      onClose();
+    } else if (state.error) {
+      toast.error(state.error);
+      setSubmissionHandled(true); 
+    }
+  }, [state, currentName, name, onClose, updateFolderNodeInStore, submissionHandled]);
 
   if (!isOpen) {
     return null;
@@ -113,7 +120,7 @@ export function RenameFolderDialog({
               </Label>
               <Input
                 id="folderName"
-                name="newNameInput" // This name is for the input element, actual newName is passed via formPayload.append
+                name="newNameInput"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"

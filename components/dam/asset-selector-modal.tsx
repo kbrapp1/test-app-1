@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
-import { listTextAssets } from '@/lib/actions/dam'; // Import the action
+import { listTextAssets } from '@/lib/actions/dam/asset.actions'; // Import the action
 import { ScrollArea } from "@/components/ui/scroll-area"; // For potentially long lists
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
