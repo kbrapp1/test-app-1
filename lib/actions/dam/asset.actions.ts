@@ -26,6 +26,9 @@ import { getAssetDownloadUrlUsecase } from '@/lib/usecases/dam/getAssetDownloadU
 // TextMimeType and TextAssetSummary are now defined/handled in the service or types consumed by service.
 // dbTextAssetToSummary helper is removed.
 
+// Import types for the new action
+import { Asset, Folder, CombinedItem } from '@/types/dam';
+
 export async function moveAsset(
   assetId: string,
   targetFolderId: string | null
@@ -252,5 +255,92 @@ export async function getAssetDownloadUrl(
   } catch (err: any) {
     console.error('getAssetDownloadUrl Action: Unexpected error', err);
     return { success: false, error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+// Action to fetch combined assets and folders for the gallery view
+export async function getAssetsAndFoldersForGallery(
+  currentFolderId: string | null
+): Promise<{ success: boolean; data?: { combinedItems: CombinedItem[] }; error?: string }> {
+  // console.log(`[Action] Fetching gallery for folder: ${currentFolderId}`);
+  const supabaseUserClient = createSupabaseUserClient();
+  try {
+    // Auth Check (using user client)
+    const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser();
+    if (authError || !user) {
+      console.error('getAssetsAndFoldersForGallery Action: Auth Error', authError);
+      return { success: false, error: 'User not authenticated.' };
+    }
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      console.error('getAssetsAndFoldersForGallery Action: Active Organization ID not found.');
+      return { success: false, error: 'Active organization context not found.' };
+    }
+
+    // Use Admin client for data fetching to bypass RLS if necessary for broader view,
+    // or stick to User client if RLS should apply strictly.
+    // For simplicity, let's use the User client here, assuming RLS is set up correctly.
+    const supabase = supabaseUserClient; 
+
+    // --- Fetch Folders ---
+    let folderQuery = supabase.from('folders').select('*');
+    if (currentFolderId === null) {
+      folderQuery = folderQuery.is('parent_folder_id', null);
+    } else {
+      folderQuery = folderQuery.eq('parent_folder_id', currentFolderId);
+    }
+    // Ensure query is scoped by organization
+    folderQuery = folderQuery.eq('organization_id', activeOrgId);
+    const { data: foldersData, error: foldersError } = await folderQuery.order('name', { ascending: true });
+
+    if (foldersError) {
+      console.error('getAssetsAndFoldersForGallery: Error fetching folders:', foldersError);
+      return { success: false, error: `Error loading folders: ${foldersError.message}` };
+    }
+    const folders: Folder[] = (foldersData || []).map(f => ({ ...f, type: 'folder' }));
+
+    // --- Fetch Assets ---
+    let assetQuery = supabase.from('assets').select('*');
+    if (currentFolderId === null) {
+      assetQuery = assetQuery.is('folder_id', null);
+    } else {
+      assetQuery = assetQuery.eq('folder_id', currentFolderId);
+    }
+    // Ensure query is scoped by organization
+    assetQuery = assetQuery.eq('organization_id', activeOrgId);
+    const { data: assetsData, error: assetsError } = await assetQuery.order('created_at', { ascending: false });
+
+    if (assetsError) {
+      console.error('getAssetsAndFoldersForGallery: Error fetching assets:', assetsError);
+      return { success: false, error: `Error loading assets: ${assetsError.message}` };
+    }
+
+    // --- Generate Public URLs for Assets ---
+    // Public URLs might be better generated client-side if they expire or for performance.
+    // However, doing it here keeps the original logic.
+    // We need a Supabase client instance that can access storage.
+    // If RLS prevents the user client, we might need the admin client here.
+    // Assuming user client is sufficient for getPublicUrl based on bucket policies.
+    const assetsWithUrls: Asset[] = (assetsData || []).map((assetData: any) => {
+      const { data: urlData } = supabase.storage.from('assets').getPublicUrl(assetData.storage_path);
+      return {
+        ...assetData,
+        type: 'asset',
+        publicUrl: urlData?.publicUrl || '/placeholder.png',
+      } as Asset;
+    });
+
+    // --- Combine Data ---
+    const combinedItems: CombinedItem[] = [
+      ...(folders as CombinedItem[]),
+      ...(assetsWithUrls as CombinedItem[])
+    ];
+
+    // console.log(`[Action] Fetched ${combinedItems.length} items for folder: ${currentFolderId}`);
+    return { success: true, data: { combinedItems } };
+
+  } catch (err: any) {
+    console.error('getAssetsAndFoldersForGallery Action: Unexpected Error', err);
+    return { success: false, error: err.message || 'An unexpected error occurred fetching gallery data.' };
   }
 } 

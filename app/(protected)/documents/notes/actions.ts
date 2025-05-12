@@ -1,23 +1,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import type { Note } from '@/types/notes';
-import { ErrorCodes } from '@/lib/errors/constants'; // Import error codes
-import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Use the actual utility
+import { ErrorCodes } from '@/lib/errors/constants';
 
-// Type for Server Action Response
-interface ActionResult {
-    success: boolean;
-    message: string;
-    code?: string; // Add optional error code
-}
+// Import helpers from the new file
+import { getAuthContext, handleDatabaseError, ActionResult } from './helpers';
 
 // Server Action for adding notes 
 export async function addNote(prevState: any, formData: FormData): Promise<ActionResult> {
     const title = formData.get('title')?.toString();
     const content = formData.get('content')?.toString();
-    const defaultColor = 'bg-yellow-200'; // Define default color
+    const defaultColor = 'bg-yellow-200';
 
     if (!title) {
         return { 
@@ -27,101 +21,49 @@ export async function addNote(prevState: any, formData: FormData): Promise<Actio
         };
     }
 
-    const supabase = createClient();
-    let user;
-    try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError || !userData.user) {
-            console.error('Auth Error (Add Note):', userError?.message || 'User not found');
-            return { 
-                success: false, 
-                message: 'Authentication error. Please log in again.',
-                code: ErrorCodes.UNAUTHORIZED 
-            };
-        }
-        user = userData.user;
-    } catch (error) {
-        // Catch if supabase.auth.getUser() itself throws (e.g., network issue)
-        console.error('Unexpected Auth Error (Add Note):', error);
-        return { 
-            success: false, 
-            message: 'Could not verify authentication. Please try again.', 
-            // Consider specific code like NETWORK_ERROR if detectable
-            code: ErrorCodes.UNEXPECTED_ERROR 
-        };
-    }
+    const { context, errorResult } = await getAuthContext();
+    if (errorResult) return errorResult;
+    // Non-null assertion because errorResult is checked
+    // We get supabase, user, activeOrgId directly from the context now
+    const { supabase, user, activeOrgId } = context!;
 
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-        return {
-            success: false,
-            message: 'Active organization context is missing.',
-            code: ErrorCodes.USER_NOT_IN_ORGANIZATION // Example new error code
-        };
-    }
-
-    // Get the highest current position
     try {
+        // Get the highest current position
         const { data: maxPosData, error: maxPosError } = await supabase
             .from('notes')
             .select('position')
             .eq('user_id', user.id)
-            .eq('organization_id', activeOrgId) // Scope by organization
+            .eq('organization_id', activeOrgId)
             .order('position', { ascending: false })
             .limit(1)
             .maybeSingle();
 
         if (maxPosError) {
-            console.error('Error fetching max position:', maxPosError);
-            // Treat DB errors during position fetch as potentially critical or retriable
-            const code = maxPosError.message.includes('timeout') 
-                ? ErrorCodes.DATABASE_TIMEOUT 
-                : ErrorCodes.DATABASE_ERROR;
-            return { 
-                success: false, 
-                message: 'Failed to prepare note saving. Please try again.', 
-                code: code 
-            };
+            return handleDatabaseError(maxPosError, 'Note Preparation');
         }
         const nextPosition = (maxPosData?.position ?? -1) + 1;
 
+        // Insert the new note
         const { error: insertError } = await supabase
             .from('notes')
             .insert({
                 title: title,
                 content: content,
                 user_id: user.id,
-                organization_id: activeOrgId, // Add organization_id
-                position: nextPosition, // Set the position
-                color_class: defaultColor // Set default color on creation
+                organization_id: activeOrgId,
+                position: nextPosition,
+                color_class: defaultColor
             });
 
         if (insertError) {
-            console.error('Insert Error (Add Note):', insertError.message);
-            // Determine if it's a timeout or generic DB error
-            const code = insertError.message.includes('timeout') 
-                ? ErrorCodes.DATABASE_TIMEOUT 
-                : insertError.code === '23505' // Handle potential duplicate errors (e.g., unique constraint)
-                    ? ErrorCodes.DUPLICATE_ENTRY
-                    : ErrorCodes.DATABASE_ERROR;
-            return { 
-                success: false, 
-                message: 'Failed to save the note. Please try again.', 
-                code: code 
-            };
+             return handleDatabaseError(insertError, 'Note Saving');
         }
     } catch (dbError) {
         // Catch unexpected errors during DB operations
-        console.error('Unexpected DB Operation Error (Add Note):', dbError);
-        return {
-            success: false,
-            message: 'A database error occurred while saving the note.',
-            code: ErrorCodes.DATABASE_ERROR
-        };
+        return handleDatabaseError(dbError, 'Note Saving (Unexpected)');
     }
 
     revalidatePath('/documents/notes');
-    // Success case doesn't need a code
     return { success: true, message: 'Note added successfully.' };
 }
 
@@ -130,38 +72,28 @@ export async function deleteNote(prevState: any, formData: FormData): Promise<Ac
     const noteId = formData.get('note_id')?.toString();
 
     if (!noteId) {
-        return { success: false, message: 'Note ID missing.' };
+        return { success: false, message: 'Note ID missing.', code: ErrorCodes.VALIDATION_ERROR };
     }
 
-    const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-        console.error('Auth Error (Delete Note):', userError?.message);
-        return { success: false, message: 'Authentication error. Please log in again.' };
-    }
+    const { context, errorResult } = await getAuthContext();
+    if (errorResult) return errorResult;
+    const { supabase, user, activeOrgId } = context!; 
 
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-        return {
-            success: false,
-            message: 'Active organization context is missing.',
-            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
-        };
-    }
+    try {
+        const { error: deleteError } = await supabase
+            .from('notes')
+            .delete()
+            .match({ id: noteId, user_id: user.id, organization_id: activeOrgId });
 
-    const { error: deleteError } = await supabase
-        .from('notes')
-        .delete()
-        .match({ id: noteId, user_id: user.id, organization_id: activeOrgId }); // Add organization_id
-
-    if (deleteError) {
-        console.error('Delete Error (Delete Note):', deleteError.message);
-        // Return a generic user-friendly message, log the specific error
-        return { success: false, message: 'Failed to delete the note. Please try again.' };
+        if (deleteError) {
+            return handleDatabaseError(deleteError, 'Note Deletion');
+        }
+    } catch (dbError) {
+         return handleDatabaseError(dbError, 'Note Deletion (Unexpected)');
     }
 
     revalidatePath('/documents/notes'); 
-    return { success: true, message: 'Note deleted.' }; // Provide message for consistency
+    return { success: true, message: 'Note deleted.' };
 }
 
 // Server Action for editing notes
@@ -169,87 +101,55 @@ export async function editNote(prevState: any, formData: FormData): Promise<Acti
     const noteId = formData.get('note_id')?.toString();
     const newTitle = formData.get('title')?.toString();
     const newContent = formData.get('content')?.toString();
-    const newColorClass = formData.get('color_class')?.toString(); // Get color class
+    const newColorClass = formData.get('color_class')?.toString();
 
-    if (!noteId) { return { success: false, message: 'Note ID missing.' }; }
-    // Title and content validation might need adjustment if only color is changing
-    // For now, we require them when calling this action
-    if (!newTitle) {
-        return { success: false, message: 'Note title cannot be empty.' };
-    }
-    if (newContent === null || newContent === undefined) { 
-        return { success: false, message: 'Note content missing.' };
-    }
-    // Color validation (optional, could check against allowed list)
-    if (!newColorClass) {
-        return { success: false, message: 'Color selection missing.' };
-    }
+    // Basic Validation
+    if (!noteId) return { success: false, message: 'Note ID missing.', code: ErrorCodes.VALIDATION_ERROR };
+    if (!newTitle) return { success: false, message: 'Note title cannot be empty.', code: ErrorCodes.VALIDATION_ERROR };
+    if (newContent === null || newContent === undefined) return { success: false, message: 'Note content missing.', code: ErrorCodes.VALIDATION_ERROR };
+    if (!newColorClass) return { success: false, message: 'Color selection missing.', code: ErrorCodes.VALIDATION_ERROR };
 
-    const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-        console.error('Auth Error (Edit Note):', userError?.message); 
-        // Return a generic user-friendly message, log the specific error
-        return { success: false, message: 'Authentication error. Please log in again.' };
-    }
+    const { context, errorResult } = await getAuthContext();
+    if (errorResult) return errorResult;
+    const { supabase, user, activeOrgId } = context!;
 
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-        return {
-            success: false,
-            message: 'Active organization context is missing.',
-            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
-        };
-    }
+    try {
+        const { error: updateError } = await supabase
+            .from('notes')
+            .update({
+                title: newTitle,
+                content: newContent,
+                color_class: newColorClass 
+                // updated_at handled by trigger
+            })
+            .match({ id: noteId, user_id: user.id, organization_id: activeOrgId });
 
-    const { error: updateError } = await supabase
-        .from('notes')
-        .update({
-            title: newTitle,
-            content: newContent,
-            color_class: newColorClass // Update the color class
-            // updated_at handled by trigger
-        })
-        .match({ id: noteId, user_id: user.id, organization_id: activeOrgId }); // Add organization_id
-
-    if (updateError) {
-        console.error('Update Error (Edit Note):', updateError.message); 
-        // Return a generic user-friendly message, log the specific error
-        return { success: false, message: 'Failed to update the note. Please try again.' };
+        if (updateError) {
+            return handleDatabaseError(updateError, 'Note Update');
+        }
+    } catch (dbError) {
+         return handleDatabaseError(dbError, 'Note Update (Unexpected)');
     }
 
     revalidatePath('/documents/notes');
     return { success: true, message: 'Note updated successfully.' };
 }
 
-// --- NEW ACTION --- 
 // Server Action to update note order
 export async function updateNoteOrder(orderedNoteIds: string[]): Promise<ActionResult> {
     if (!Array.isArray(orderedNoteIds)) {
-        return { success: false, message: 'Invalid order data.' };
+        return { success: false, message: 'Invalid order data.', code: ErrorCodes.VALIDATION_ERROR };
     }
     
-    const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-        console.error('Auth Error (Update Order):', userError?.message);
-        return { success: false, message: 'Authentication error. Please log in again.' };
-    }
-
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-        return {
-            success: false,
-            message: 'Active organization context is missing.',
-            code: ErrorCodes.USER_NOT_IN_ORGANIZATION
-        };
-    }
+    const { context, errorResult } = await getAuthContext();
+    if (errorResult) return errorResult;
+    const { supabase, user, activeOrgId } = context!;
 
     // Create an array of objects for the upsert operation
     const updates = orderedNoteIds.map((id, index) => ({
         id: id,
         user_id: user.id, // Include user_id for RLS
-        organization_id: activeOrgId, // Add organization_id
+        organization_id: activeOrgId,
         position: index   // Set position based on array index
     }));
 
@@ -260,16 +160,12 @@ export async function updateNoteOrder(orderedNoteIds: string[]): Promise<ActionR
             .upsert(updates, { onConflict: 'id' }); // Update based on ID match
 
         if (error) {
-            console.error('Supabase order update error:', error);
-            // Return a generic user-friendly message, log the specific error
-            return { success: false, message: 'Failed to update note order. Please try again.' };
+            return handleDatabaseError(error, 'Note Order Update');
         }
 
-        revalidatePath('/documents/notes'); // Revalidate to reflect potential order changes
+        revalidatePath('/documents/notes'); 
         return { success: true, message: 'Note order updated.' };
     } catch (error) {
-        console.error('Error updating note order:', error);
-        // Return a generic user-friendly message, log the specific error
-        return { success: false, message: 'An unexpected error occurred while updating note order.' };
+        return handleDatabaseError(error, 'Note Order Update (Unexpected)');
     }
 } 
