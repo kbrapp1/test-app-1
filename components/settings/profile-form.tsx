@@ -142,20 +142,19 @@ export function ProfileForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-         {/* Email field (disabled, now reads from state) */}
-         <div className="space-y-2">
-            <Label htmlFor="email-display">Email</Label>
-            <Input 
-                id="email-display" 
-                type="email" 
-                value={email} // Use email state here
-                disabled 
-            />
-            <p className="text-sm text-muted-foreground">
-                Your email address cannot be changed here.
-            </p>
-         </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="space-y-2">
+           <Label htmlFor="email-display">Email</Label>
+           <Input 
+              id="email-display" 
+              type="email" 
+              value={email} 
+              disabled 
+           />
+           <p className="text-sm text-muted-foreground">
+              Your email address cannot be changed here.
+           </p>
+        </div>
 
         <FormField
           control={control}
@@ -169,12 +168,11 @@ export function ProfileForm() {
               <FormDescription>
                 This is the name that will be displayed publicly.
               </FormDescription>
-              <FormMessage /> { /* Displays validation errors */}
+              <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Display Organization Name */}
         <div className="space-y-2">
           <Label htmlFor="organization-name-display">Current Organization</Label>
           <Input 
@@ -182,13 +180,10 @@ export function ProfileForm() {
             type="text" 
             value={organizationName || 'N/A'} 
             disabled 
-            className="mt-1" // Added for a little top margin for consistency if needed
+            className="mt-1"
           />
-          {/* Optional: Add a description if needed */}
-          {/* <p className="text-sm text-muted-foreground">Your current active organization.</p> */}
         </div>
 
-        {/* Display User Role */}
         <div className="space-y-2">
           <Label htmlFor="user-role-display">Role</Label>
           <Input 
@@ -196,13 +191,9 @@ export function ProfileForm() {
             type="text" 
             value={userRole || 'N/A'} 
             disabled 
-            className="mt-1" // Added for a little top margin for consistency if needed
+            className="mt-1"
           />
-          {/* Optional: Add a description if needed */}
-          {/* <p className="text-sm text-muted-foreground">Your role within the current organization.</p> */}
         </div>
-
-        {/* Add other FormFields here if schema includes more fields */}
 
         <Button type="submit" disabled={isSubmitting || !isValid || isLoading || email === "Loading..." || organizationName === "Loading..." || userRole === "Loading..."}>
           {isSubmitting ? 'Updating...' : 'Update Profile'}

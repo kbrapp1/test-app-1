@@ -22,8 +22,8 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
 
   return (
     // Use grid or flex for better layout control if needed
-    <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-      <aside className="-mx-4 lg:w-44">
+    <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-2 lg:space-y-0">
+      <aside className="lg:w-44">
         <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
           {settingsNavItems.map((item) => {
             const isActive = pathname === item.href;
@@ -45,7 +45,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
       </aside>
-      <div className="flex-1">
+      <div className="flex-1 lg:pl-6">
         {children}
       </div>
     </div>

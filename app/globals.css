@@ -82,7 +82,7 @@
   @keyframes accordion-up {
     from {
       height: var(--radix-accordion-content-height);
-    }
+  }
     to {
       height: 0;
     }
@@ -116,19 +116,7 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
-}
 
-@utility text-balance {
-  text-wrap: balance;
-}
-
-@layer utilities {
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-  }
-}
-
-@layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -238,11 +226,16 @@
     --sidebar-ring: 192.9 86.1% 61.8%; /* ironmark-blue (focus ring) */
   }
 
-  /* Merged base styles */
+  /* Global element styles */
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    @apply bg-background text-foreground;
+  }
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
   }
+
+@utility text-balance {
+  text-wrap: balance;
 }
