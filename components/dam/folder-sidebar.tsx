@@ -63,7 +63,6 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
-      
       {/* Root Folder Item */}
       <div className={cn(
         "flex items-center px-1 py-1 rounded-md mb-1",
@@ -84,12 +83,11 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
         </Button>
         
         {/* Link to root folder */}
-        <Link href="/dam" className="flex-1 flex items-center truncate">
+        <Link href="/dam" className="flex-1 flex items-center truncate" legacyBehavior>
           <FolderIcon className="h-4 w-4 mr-2 shrink-0" /> 
           <span className="font-medium text-sm">(Root)</span>
         </Link>
       </div>
-
       {/* Root Folders */}
       {isRootExpanded && (
         <div className="mt-1 pl-4">

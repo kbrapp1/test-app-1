@@ -124,7 +124,7 @@ export default async function DamGalleryPage({
                         href={`/dam${currentFolderId ? `?folderId=${currentFolderId}` : ''}`}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                         aria-label="Clear search"
-                      >
+                        legacyBehavior>
                         <X className="h-8 w-8 text-muted-foreground hover:text-foreground" />
                       </Link>
                     </TooltipTrigger>

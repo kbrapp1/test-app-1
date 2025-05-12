@@ -88,7 +88,10 @@ export function FolderItem({
             )}
           </Button>
           
-          <Link href={`/dam?folderId=${folderNode.id}`} className="flex items-center truncate">
+          <Link
+            href={`/dam?folderId=${folderNode.id}`}
+            className="flex items-center truncate"
+            legacyBehavior>
             <FolderIcon className="h-4 w-4 mr-2 shrink-0" />
             <span className="truncate font-medium text-sm" title={folderNode.name}>{folderNode.name}</span>
           </Link>
@@ -118,7 +121,6 @@ export function FolderItem({
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
       <div className="mt-1">
         {folderNode.isExpanded && folderNode.children && folderNode.children.map(childNode => (
           <FolderItem 
@@ -129,7 +131,6 @@ export function FolderItem({
           />
         ))}
       </div>
-      
       <RenameFolderDialog 
         key={`rename-${dialogKey}`}
         isOpen={isRenameDialogOpen} 

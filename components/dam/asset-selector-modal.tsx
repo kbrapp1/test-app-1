@@ -134,18 +134,16 @@ export function AssetSelectorModal({
           )}
           {/* Use filteredAssets for rendering */}
           {!isLoading && !error && filteredAssets.length === 0 && (
-             hasFetched && searchTerm ? (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <SearchIcon className="h-12 w-12 mb-2" />
-                  <p>No assets found matching "{searchTerm}".</p>
-              </div>
-             ) : hasFetched ? (
+             (hasFetched && searchTerm ? (<div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+               <SearchIcon className="h-12 w-12 mb-2" />
+               <p>No assets found matching "{searchTerm}".</p>
+             </div>) : hasFetched ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <FileTextIcon className="h-12 w-12 mb-2" />
                   <p>No text assets found in your library.</p>
                   <p className="text-sm">(Supported types: .txt, .md)</p> 
               </div>
-             ) : null // Still loading or initial state
+             ) : null) // Still loading or initial state
           )}
           {!isLoading && !error && filteredAssets.length > 0 && (
             <ul className="space-y-2">

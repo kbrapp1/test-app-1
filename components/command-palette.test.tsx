@@ -58,9 +58,9 @@ vi.mock('@/components/ui/command', async (importOriginal) => {
     ),
     CommandItem: ({ children, onSelect, ...props }: { children: React.ReactNode; onSelect?: () => void; [key: string]: any }) => (
       // Simulate item click calling onSelect
-      <button data-testid="command-item" onClick={onSelect} {...props}>
+      (<button data-testid="command-item" onClick={onSelect} {...props}>
         {children}
-      </button>
+      </button>)
     ),
     CommandSeparator: () => <hr data-testid="command-separator" />,
   };

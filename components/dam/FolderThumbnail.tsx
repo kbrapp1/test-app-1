@@ -56,11 +56,12 @@ export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
     >
       <div className={grayPaddedFrameClasses}> 
         <div className={contentTileClasses}> 
-          <Link 
-            href={`/dam?folderId=${folder.id}`} 
-            className="flex flex-col items-center justify-center cursor-pointer group/link h-full w-full p-2" // Link fills tile, has p-2 for its content
-            prefetch={false} 
-          >
+          <Link
+            href={`/dam?folderId=${folder.id}`}
+            // Link fills tile, has p-2 for its content
+            className="flex flex-col items-center justify-center cursor-pointer group/link h-full w-full p-2"
+            prefetch={false}
+            legacyBehavior>
             <FolderIcon
               className={cn(
                 "h-16 w-16 text-muted-foreground mb-2 transition-colors",

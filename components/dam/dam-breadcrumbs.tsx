@@ -36,12 +36,12 @@ export const DamBreadcrumbs: React.FC<DamBreadcrumbsProps> = ({ path }) => {
             <BreadcrumbItem>
               {index === path.length - 1 ? (
                 // Last item is the current page (not a link)
-                <BreadcrumbPage>{item.name}</BreadcrumbPage>
+                (<BreadcrumbPage>{item.name}</BreadcrumbPage>)
               ) : (
                 // Intermediate items are links
-                <BreadcrumbLink asChild>
-                  <Link href={item.href}>{item.name}</Link>
-                </BreadcrumbLink>
+                (<BreadcrumbLink asChild>
+                  <Link href={item.href} legacyBehavior>{item.name}</Link>
+                </BreadcrumbLink>)
               )}
             </BreadcrumbItem>
             {index < path.length - 1 && <BreadcrumbSeparator />}

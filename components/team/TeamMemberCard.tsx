@@ -24,7 +24,7 @@ export function TeamMemberCard({ member }: TeamMemberCardProps) {
 
   return (
     // Remove Card wrapper, use a simple div if needed for grouping or spacing
-    <div> 
+    <div>
       {/* Ensure group class is present */}
       <div 
         // Change rounding to a larger arbitrary value

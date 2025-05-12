@@ -39,9 +39,7 @@ export default async function DamUploadPage({
           </Button>
         </Link>
       </div>
-
       {/* Removed Test Button - will move logic into AssetUploader if needed */}
-      
       {/* Pass currentFolderId to the uploader */}
       <AssetUploader currentFolderId={currentFolderId} />
     </main>
