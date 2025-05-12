@@ -30,7 +30,7 @@ export default async function DamUploadPage({
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Upload Assets</h1>
         {/* Link back to the current folder or root */}
-        <Link href={currentFolderId ? `/dam?folderId=${currentFolderId}` : '/dam'} passHref legacyBehavior>
+        <Link href={currentFolderId ? `/dam?folderId=${currentFolderId}` : '/dam'}>
           <Button variant="outline" asChild>
             <a>
               <ArrowLeft className="mr-2 h-4 w-4" />

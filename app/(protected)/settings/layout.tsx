@@ -38,7 +38,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
                     : "hover:bg-transparent hover:underline", // Default hover
                   "justify-start" // Align text to the left
                 )}
-                legacyBehavior>
+              >
                 {item.title}
               </Link>
             );
