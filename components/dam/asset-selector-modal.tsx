@@ -4,20 +4,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
-import { listTextAssets } from '@/lib/actions/dam/asset.actions'; // Import the action
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { listTextAssets } from '@/lib/actions/dam/text-asset.actions'; // Import the action
 import { ScrollArea } from "@/components/ui/scroll-area"; // For potentially long lists
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileTextIcon, AlertCircleIcon, SearchIcon } from 'lucide-react';
 import { Asset } from '@/types/dam'; // Import the shared Asset type
-
-// Remove local TextAsset type - use imported Asset type
-// type TextAsset = {
-//   id: string;
-//   name: string;
-//   created_at: string;
-//   // Add other relevant fields if returned by the action
-// };
 
 interface AssetSelectorModalProps {
   open: boolean;
@@ -38,55 +31,75 @@ export function AssetSelectorModal({
   const [assets, setAssets] = useState<Asset[]>([]); 
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // State for search term
+  const [searchTerm, setSearchTerm] = useState('');
+  // Add state for the debounced search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  // Remove commented out hook usage
+  // const debouncedSearchTerm = useDebounce(searchTerm, 300); // Commented out
+  // const debouncedSearchTerm = searchTerm; // Use direct search term for now
+
+  // Add useEffect for debouncing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    // Cleanup function to clear the timeout if searchTerm changes before delay finishes
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]); // Only re-run the effect if searchTerm changes
 
   useEffect(() => {
-    if (open && !hasFetched && !isLoading) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const result = await listTextAssets(); 
-          if (result.success && result.data) {
-            // Make sure data conforms to Asset[] before setting state
-            const validAssets = result.data.map(item => ({
-              ...item,
-              type: 'asset', // Assuming listTextAssets only returns assets
-              publicUrl: '', // Add placeholder if not returned by action
-              storage_path: '', // Add placeholder if not returned by action
-              mime_type: 'text/plain', // Add placeholder if not returned
-              size: 0, // Add placeholder if not returned
-              folder_id: null // Add placeholder if not returned
-            })) as Asset[];
-            setAssets(validAssets);
-          } else {
-            setError(result.error || 'Failed to fetch assets.');
+    // Fetch logic now depends on 'open' and 'hasFetched'
+    if (open && !hasFetched && !isLoading) { // Check hasFetched here
+        const fetchData = async () => {
+          setIsLoading(true);
+          setError(null);
+          try {
+            const result = await listTextAssets(); 
+            if (result.success && result.data) {
+              const validAssets = result.data.map(item => ({
+                ...item,
+                type: 'asset',
+                publicUrl: '', 
+                storage_path: '', 
+                mime_type: 'text/plain', 
+                size: 0, 
+                folder_id: null 
+              })) as Asset[];
+              setAssets(validAssets); // Store all fetched assets
+            } else {
+              setError(result.error || 'Failed to fetch assets.');
+            }
+          } catch (err) {
+            console.error("Failed to list text assets:", err);
+            setError('An unexpected error occurred while fetching assets.');
+          } finally {
+            setIsLoading(false);
+            setHasFetched(true); // Mark as fetched after the attempt
           }
-        } catch (err) {
-          console.error("Failed to list text assets:", err);
-          setError('An unexpected error occurred while fetching assets.');
-        } finally {
-          setIsLoading(false);
-          setHasFetched(true);
-        }
-      };
-      fetchData();
+        };
+        fetchData();
     }
     if (!open) {
-        setHasFetched(false); // Reset fetch status when closed
-        setSearchTerm(''); // Reset search term when closed
+        setHasFetched(false); 
+        setSearchTerm(''); 
+        setDebouncedSearchTerm(''); // Reset debounced term as well
     }
-  }, [open, hasFetched, isLoading]);
+    // Corrected dependency array
+  }, [open, hasFetched, isLoading]); // Keep isLoading to prevent potential race conditions if closed quickly
 
-  // Filter assets based on search term
+  // Filter assets based on the debounced search term
   const filteredAssets = useMemo(() => {
-    if (!searchTerm) {
+    if (!debouncedSearchTerm) {
       return assets;
     }
     return assets.filter(asset => 
-      asset.name.toLowerCase().includes(searchTerm.toLowerCase())
+      asset.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
-  }, [assets, searchTerm]);
+    // Use debouncedSearchTerm for filtering
+  }, [assets, debouncedSearchTerm]);
 
   // Use the imported Asset type for the parameter
   const handleSelect = (asset: Asset) => { 
@@ -134,9 +147,9 @@ export function AssetSelectorModal({
           )}
           {/* Use filteredAssets for rendering */}
           {!isLoading && !error && filteredAssets.length === 0 && (
-             (hasFetched && searchTerm ? (<div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+             (hasFetched && debouncedSearchTerm ? (<div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                <SearchIcon className="h-12 w-12 mb-2" />
-               <p>No assets found matching "{searchTerm}".</p>
+               <p>No assets found matching "{debouncedSearchTerm}".</p> 
              </div>) : hasFetched ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <FileTextIcon className="h-12 w-12 mb-2" />

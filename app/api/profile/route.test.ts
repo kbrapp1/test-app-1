@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GET, PUT } from './route';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { User } from '@supabase/supabase-js';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { User, SupabaseClient } from '@supabase/supabase-js';
+import { queryData, insertData, QueryOptions } from '@/lib/supabase/db-queries';
 
 // Mock the authentication middleware
 vi.mock('@/lib/supabase/auth-middleware', () => {
@@ -21,38 +22,14 @@ vi.mock('@/lib/supabase/auth-middleware', () => {
   };
 });
 
-// Mock the database utilities
-vi.mock('@/lib/supabase/db', () => {
+// Mock the database utilities from db-queries
+vi.mock('@/lib/supabase/db-queries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/supabase/db-queries')>();
   return {
-    queryData: vi.fn((supabase, table, fields, options) => {
-      if (options?.matchValue === 'test-user-id') {
-        return {
-          data: [{
-            id: 'test-user-id',
-            username: 'testuser',
-            full_name: 'Test User',
-            avatar_url: 'https://example.com/avatar.jpg',
-            website: 'https://example.com',
-            bio: 'Test bio'
-          }],
-          error: null
-        };
-      } else if (options?.matchValue === 'missing-user') {
-        return { data: [], error: null };
-      } else if (options?.matchValue === 'error-user') {
-        return { data: null, error: new Error('Database error') };
-      }
-      return { data: [], error: null };
-    }),
-    insertData: vi.fn((supabase, table, data) => {
-      if (data.id === 'test-user-id') {
-        return { data, error: null };
-      } else if (data.id === 'error-user') {
-        return { data: null, error: new Error('Database error') };
-      }
-      return { data, error: null };
-    }),
-    handleSupabaseError: vi.fn(error => NextResponse.json({ error: error.message }, { status: 500 }))
+    ...actual, // Spread to keep other exports if any, though we explicitly mock queryData and insertData
+    queryData: vi.fn(),
+    insertData: vi.fn(),
+    // If handleSupabaseError was used from here, mock it too. Assuming it's from db.ts or errors.ts
   };
 });
 
@@ -93,6 +70,36 @@ function getMockSupabase() {
 describe('Profile API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock for queryData
+    (queryData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, fields: string, options: QueryOptions) => {
+      if (options?.matchValue === 'test-user-id' && table === 'profiles') {
+        return Promise.resolve({
+          data: [{
+            id: 'test-user-id',
+            username: 'testuser',
+            full_name: 'Test User',
+            avatar_url: 'https://example.com/avatar.jpg',
+            website: 'https://example.com',
+            bio: 'Test bio'
+          }],
+          error: null
+        });
+      } else if (options?.matchValue === 'missing-user' && table === 'profiles') {
+        return Promise.resolve({ data: [], error: null });
+      } else if (options?.matchValue === 'error-user' && table === 'profiles') {
+        return Promise.resolve({ data: null, error: new Error('Database error') });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    // Default mock for insertData (used for PUT)
+    (insertData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, data: Record<string, any>) => {
+      if (table === 'profiles' && data.id === 'test-user-id') {
+        return Promise.resolve({ data, error: null });
+      }
+      return Promise.resolve({ data: null, error: new Error('Insert failed') });
+    });
   });
 
   describe('GET /api/profile', () => {

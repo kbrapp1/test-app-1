@@ -32,16 +32,16 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               {/* Revert to legacyBehavior */}
-              <Link href={item.url} passHref legacyBehavior>
-                <a> { /* Required child for legacyBehavior */}
-                  <SidebarMenuButton 
+              <Link href={item.url} legacyBehavior={undefined} passHref={undefined}>
+                {/* <a> REMOVED */} { /* Required child for legacyBehavior */}
+                  <SidebarMenuButton
                     tooltip={item.title}
                     onClick={() => setOpenMobile(false)}
                   >
                   <item.icon />
                   <span>{item.title}</span>
                   </SidebarMenuButton>
-                </a>
+                {/* </a> REMOVED */}
               </Link>
             </SidebarMenuItem>
           ))}

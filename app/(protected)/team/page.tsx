@@ -9,8 +9,8 @@ export default async function TeamPage() {
   const members = await getTeamMembers();
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 min-h-[50vh]">
+      <div className="flex justify-between items-center min-h-[60px]">
         <h1 className="text-3xl font-bold">Our Team</h1>
         <AddTeamMemberDialog />
       </div>

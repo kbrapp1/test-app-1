@@ -61,19 +61,21 @@ export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
             // Link fills tile, has p-2 for its content
             className="flex flex-col items-center justify-center cursor-pointer group/link h-full w-full p-2"
             prefetch={false}
-            legacyBehavior>
-            <FolderIcon
-              className={cn(
-                "h-16 w-16 text-muted-foreground mb-2 transition-colors",
-                { 'text-primary': isOver }
-              )}
-            />
-            <span
-              className="text-sm font-medium text-center text-muted-foreground truncate w-full"
-              title={folder.name}
-            >
-              {folder.name}
-            </span>
+            legacyBehavior={undefined}>
+            <>
+              <FolderIcon
+                className={cn(
+                  "h-16 w-16 text-muted-foreground mb-2 transition-colors",
+                  { 'text-primary': isOver }
+                )}
+              />
+              <span
+                className="text-sm font-medium text-center text-muted-foreground truncate w-full"
+                title={folder.name}
+              >
+                {folder.name}
+              </span>
+            </>
           </Link>
         </div>
       </div>

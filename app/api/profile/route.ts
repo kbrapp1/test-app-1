@@ -7,7 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
-import { queryData, insertData, handleSupabaseError } from '@/lib/supabase/db';
+import { queryData, insertData } from '@/lib/supabase/db-queries';
+import { handleSupabaseError } from '@/lib/supabase/db';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { NotFoundError, DatabaseError, ValidationError } from '@/lib/errors/base';
 

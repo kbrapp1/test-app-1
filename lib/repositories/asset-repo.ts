@@ -179,12 +179,15 @@ export async function createAssetRecordInDb(
 
 export async function getAssetSignedUrlFromStorage(
   storagePath: string,
-  expiresInSeconds: number = 60 * 60
+  expiresInSeconds: number = 60 * 60 // Default to 1 hour
 ): Promise<SupabaseQueryResult<{ signedUrl: string }>> {
   const supabase = createSupabaseUserClient();
   const { data, error } = await supabase.storage
     .from('assets')
-    .createSignedUrl(storagePath, expiresInSeconds);
+    .createSignedUrl(storagePath, expiresInSeconds, {
+      download: true, // Add this option to force download
+      // Optionally specify filename: download: `your-desired-filename.ext` 
+    });
   
   return { data: data ? { signedUrl: data.signedUrl } : null, error };
 } 

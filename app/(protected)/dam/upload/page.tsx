@@ -32,10 +32,10 @@ export default async function DamUploadPage({
         {/* Link back to the current folder or root */}
         <Link href={currentFolderId ? `/dam?folderId=${currentFolderId}` : '/dam'}>
           <Button variant="outline" asChild>
-            <a>
+            <span>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Library
-            </a>
+            </span>
           </Button>
         </Link>
       </div>

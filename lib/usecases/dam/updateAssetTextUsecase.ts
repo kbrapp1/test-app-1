@@ -1,4 +1,4 @@
-import { updateAssetTextService } from '@/lib/services/asset-service';
+import { updateAssetTextService } from '@/lib/services/text-asset-service';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 interface UpdateAssetTextUsecaseParams {

@@ -7,7 +7,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { uploadFile, insertData, removeFile } from '@/lib/supabase/db';
+import { uploadFile, removeFile } from '@/lib/supabase/db-storage';
+import { insertData } from '@/lib/supabase/db-queries';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';

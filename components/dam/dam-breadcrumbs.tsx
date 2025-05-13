@@ -40,7 +40,7 @@ export const DamBreadcrumbs: React.FC<DamBreadcrumbsProps> = ({ path }) => {
               ) : (
                 // Intermediate items are links
                 (<BreadcrumbLink asChild>
-                  <Link href={item.href} legacyBehavior>{item.name}</Link>
+                  <Link href={item.href} legacyBehavior={undefined}>{item.name}</Link>
                 </BreadcrumbLink>)
               )}
             </BreadcrumbItem>

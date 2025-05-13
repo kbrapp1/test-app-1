@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server'; // Using server client suitable for Route Handlers
-import { uploadFile, insertData, removeFile } from '@/lib/supabase/db';
+import { uploadFile, removeFile } from '@/lib/supabase/db-storage';
+import { insertData } from '@/lib/supabase/db-queries';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import crypto from 'crypto';
@@ -55,51 +56,56 @@ async function postHandler(req: NextRequest, user: User, supabase: any) {
   const secondaryFile = secondaryEntry as any;
 
   // --- File Upload & DB Logic (Using utilities) ---
+  let primary_image_path: string | null = null; // Initialize for potential cleanup
+  let secondary_image_path: string | null = null; // Initialize for potential cleanup
+
   try {
+    const activeOrgId = user.app_metadata?.active_organization_id;
+
+    if (!activeOrgId) {
+      // No need to clean up files here as they haven't been uploaded yet
+      throw new DatabaseError('User does not have an active organization set. Cannot add team member.'); 
+    }
+
+    // Construct paths using org and user ID
     const primaryFileName = `${crypto.randomUUID()}-${primaryFile.name}`;
-    const primaryPath = `public/${primaryFileName}`;
+    const primaryPath = `${activeOrgId}/${user.id}/${primaryFileName}`;
     
     // Use uploadFile utility
-    const { path: primary_image_path, error: primaryUploadError } = await uploadFile(
+    const { path: uploaded_primary_path, error: primaryUploadError } = await uploadFile(
       supabase,
       'team-images',
       primaryPath,
       primaryFile
     );
+    primary_image_path = uploaded_primary_path; // Assign after upload attempt
 
     if (primaryUploadError) throw new DatabaseError(`Primary image upload failed: ${primaryUploadError.message}`);
     if (!primary_image_path) throw new DatabaseError('Primary image upload failed silently');
 
+    // Construct paths using org and user ID
     const secondaryFileName = `${crypto.randomUUID()}-${secondaryFile.name}`;
-    const secondaryPath = `public/${secondaryFileName}`;
+    const secondaryPath = `${activeOrgId}/${user.id}/${secondaryFileName}`;
     
     // Use uploadFile utility again
-    const { path: secondary_image_path, error: secondaryUploadError } = await uploadFile(
+    const { path: uploaded_secondary_path, error: secondaryUploadError } = await uploadFile(
       supabase,
       'team-images',
       secondaryPath,
       secondaryFile
     );
+    secondary_image_path = uploaded_secondary_path; // Assign after upload attempt
 
     if (secondaryUploadError) {
-        await removeFile(supabase, 'team-images', primary_image_path);
+        if (primary_image_path) await removeFile(supabase, 'team-images', primary_image_path);
         throw new DatabaseError(`Secondary image upload failed: ${secondaryUploadError.message}`);
     }
     if (!secondary_image_path) {
-        await removeFile(supabase, 'team-images', primary_image_path);
+        if (primary_image_path) await removeFile(supabase, 'team-images', primary_image_path);
         throw new DatabaseError('Secondary image upload failed silently');
     }
 
     // --- Database Insert using utility ---
-    const activeOrgId = user.app_metadata?.active_organization_id;
-
-    if (!activeOrgId) {
-      // Clean up uploaded files before throwing
-      if (primary_image_path) await removeFile(supabase, 'team-images', primary_image_path);
-      if (secondary_image_path) await removeFile(supabase, 'team-images', secondary_image_path);
-      throw new DatabaseError('User does not have an active organization set. Cannot add team member.');
-    }
-
     const { data: teamMemberData, error: insertError } = await insertData(
       supabase,
       'team_members',

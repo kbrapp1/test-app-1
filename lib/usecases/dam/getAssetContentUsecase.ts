@@ -1,4 +1,4 @@
-import { getAssetContentService } from '@/lib/services/asset-service';
+import { getAssetContentService } from '@/lib/services/text-asset-service';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 interface GetAssetContentUsecaseParams {

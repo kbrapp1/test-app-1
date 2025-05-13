@@ -3,9 +3,9 @@
 // Make sure all necessary hooks and components are imported
 import React, { useMemo, useState, useEffect, useRef, SetStateAction, Dispatch } from 'react'; 
 import { useRouter } from 'next/navigation';
-import { DndContext, closestCenter, pointerWithin, type DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
+import { DndContext, closestCenter, pointerWithin, type DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { moveAsset } from '@/lib/actions/dam/asset.actions'; 
+import { moveAsset } from '@/lib/actions/dam/asset-crud.actions';
 import { useToast } from '@/components/ui/use-toast';
 import { FixedSizeGrid } from 'react-window';
 // Import shared types

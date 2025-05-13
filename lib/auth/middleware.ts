@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseClient, User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { checkAuth } from '@/lib/supabase/db';
+import { checkAuth } from '@/lib/supabase/db-auth';
 import { AuthorizationError } from '@/lib/errors/base';
 import { Permission, UserRole } from './roles';
 import { hasRole, hasPermission, hasAnyRole, hasAnyPermission } from './authorization';

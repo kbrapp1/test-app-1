@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,6 +112,9 @@ export function RenameFolderDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Rename Folder</DialogTitle>
+          <DialogDescription>
+            Enter the new name for the folder below. The current name is "{currentName}".
+          </DialogDescription>
         </DialogHeader>
         <form action={formAction}>
           <div className="grid gap-4 py-4">

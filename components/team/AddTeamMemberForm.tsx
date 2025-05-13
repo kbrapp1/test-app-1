@@ -88,11 +88,21 @@ export function AddTeamMemberForm({ onSuccess }: AddTeamMemberFormProps) {
         onSuccess?.();
         router.refresh();
       } else {
-        let errorMessage = result.error || 'Failed to add team member.';
-        if (result.details) {
-             errorMessage = `Validation failed: ${JSON.stringify(result.details)}`;
+        // Ensure only strings are passed to the toast description
+        let errorDescription = 'Failed to add team member.'; // Default message
+        if (result.error) {
+          if (typeof result.error === 'object' && result.error !== null && typeof result.error.message === 'string') {
+            // If it's our structured error object with a message property
+            errorDescription = result.error.message;
+          } else if (typeof result.error === 'string') {
+            // If it's just an error string
+            errorDescription = result.error;
+          }
+          // Optionally append details if they exist and are useful for the user
+          // if (result.details) { errorDescription += ` Details: ${JSON.stringify(result.details)}`; }
         }
-        toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+        // Use the derived string description
+        toast({ title: 'Error', description: errorDescription, variant: 'destructive' });
       }
     } catch (error) {
       console.error('API submission error:', error);

@@ -15,7 +15,7 @@ This directory contains utility functions for interacting with Supabase services
 
 ```typescript
 import { createClient } from '@/lib/supabase/server';
-import { checkAuth } from '@/lib/supabase/db';
+import { checkAuth } from '@/lib/supabase/db-auth';
 
 // In an API route or server component
 const supabase = createClient();
@@ -65,7 +65,7 @@ This pattern handles:
 
 ```typescript
 import { createClient } from '@/lib/supabase/server';
-import { queryData, insertData, deleteData } from '@/lib/supabase/db';
+import { queryData, insertData, deleteData } from '@/lib/supabase/db-queries';
 
 // Query data with filters
 const { data: folders, error } = await queryData(
@@ -107,7 +107,7 @@ const { success, error: deleteError } = await deleteData(
 
 ```typescript
 import { createClient } from '@/lib/supabase/server';
-import { uploadFile, removeFile, getPublicUrl } from '@/lib/supabase/db';
+import { uploadFile, removeFile, getPublicUrl } from '@/lib/supabase/db-storage';
 
 // Upload a file
 const { path, error: uploadError } = await uploadFile(

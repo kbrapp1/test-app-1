@@ -16,14 +16,23 @@ import { AssetGrid } from './AssetGrid';
 
 // Import the Client Component Wrapper
 import { AssetGalleryClientWrapper } from './AssetGalleryClientWrapper';
+import { NewFolderDialog } from './new-folder-dialog';
+import { DamBreadcrumbs } from './dam-breadcrumbs';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getFolderById } from '@/lib/repositories/folder-repo';
+import { Folder } from '@/types/dam';
 
 // --- Import types from the central location --- 
-import { Asset, Folder, CombinedItem } from '@/types/dam';
+import { Asset, CombinedItem } from '@/types/dam';
 
 // --- Import the new server action --- 
-import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/asset.actions';
+// import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/asset.actions';
 
 // --- Main AssetGallery Server Component --- 
+import { Suspense } from 'react';
+// import { DamAssetUploadDialog } from './DamAssetUploadDialog'; // Removed - file not found
+import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/gallery.actions';
+
 interface AssetGalleryProps {
     currentFolderId: string | null;
 }

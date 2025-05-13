@@ -1,4 +1,4 @@
-import { listTextAssetsService } from '@/lib/services/asset-service';
+import { listTextAssetsService } from '@/lib/services/text-asset-service';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 // This interface should match the TextAssetSummary defined or used by the service

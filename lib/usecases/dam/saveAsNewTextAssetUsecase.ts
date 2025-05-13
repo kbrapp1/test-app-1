@@ -1,6 +1,6 @@
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { createClient as createSupabaseUserClient } from '@/lib/supabase/server';
-import { saveAsNewTextAssetService } from '@/lib/services/asset-service';
+import { saveAsNewTextAssetService } from '@/lib/services/text-asset-service';
 import { AppError } from '@/lib/errors/base';
 import { ErrorCodes } from '@/lib/errors/constants';
 

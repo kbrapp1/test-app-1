@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Mock next/headers
@@ -47,11 +47,14 @@ vi.mock('@supabase/supabase-js', () => ({
   }))
 }));
 
-// Mock the database utilities
-vi.mock('@/lib/supabase/db', () => ({
+// Mock the database utilities from their new locations
+vi.mock('@/lib/supabase/db-storage', () => ({
   uploadFile: vi.fn(),
+  removeFile: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/db-queries', () => ({
   insertData: vi.fn(),
-  removeFile: vi.fn()
 }));
 
 // Mock the authentication middleware
@@ -68,13 +71,15 @@ vi.mock('@/lib/supabase/auth-middleware', () => ({
 }));
 
 import { POST } from './route';
-import { User } from '@supabase/supabase-js';
-import { uploadFile, insertData, removeFile } from '@/lib/supabase/db';
+// User import might not be needed if mockUser is 'any' as in the withAuth mock
+// import { User } from '@supabase/supabase-js'; 
+import { uploadFile, removeFile } from '@/lib/supabase/db-storage';
+import { insertData } from '@/lib/supabase/db-queries';
 
-// Cast imported functions to mocks for TypeScript
-const mockUploadFile = uploadFile as unknown as ReturnType<typeof vi.fn>;
-const mockInsertData = insertData as unknown as ReturnType<typeof vi.fn>;
-const mockRemoveFile = removeFile as unknown as ReturnType<typeof vi.fn>;
+// Type assertion for mocks
+const mockUploadFile = uploadFile as Mock;
+const mockInsertData = insertData as Mock;
+const mockRemoveFile = removeFile as Mock;
 
 // Stub environment variables
 vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');

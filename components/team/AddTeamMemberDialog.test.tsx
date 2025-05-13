@@ -59,7 +59,7 @@ describe('AddTeamMemberDialog', () => {
     expect(button).not.toBeDisabled();
   });
 
-  it('shows nothing while loading', () => {
+  it('shows disabled button with loading tooltip while loading', async () => {
     // Mock the useUser hook to return loading state
     (useUser as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       auth: {
@@ -72,8 +72,16 @@ describe('AddTeamMemberDialog', () => {
 
     renderWithTooltip(<AddTeamMemberDialog />);
     
-    // Component should not render anything
-    const button = screen.queryByRole('button', { name: /add team member/i });
-    expect(button).not.toBeInTheDocument();
+    // Button should be present and disabled
+    const button = screen.getByRole('button', { name: /add team member/i });
+    expect(button).toBeInTheDocument();
+    expect(button).toBeDisabled();
+
+    // Hover over the button to show tooltip
+    await userEvent.hover(button);
+    
+    // Wait for tooltip to appear and verify its content
+    const tooltipContent = await screen.findByRole('tooltip');
+    expect(tooltipContent).toHaveTextContent(/loading.../i);
   });
 }); 

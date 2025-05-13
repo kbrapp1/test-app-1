@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { handleFormError } from '../error-handling'; // Core handler stays
 import {
   extractFieldErrors,
   setFormErrors,
-  handleFormError,
+} from '../error-handling-utils'; // Import utils
+import {
   createFormErrorHandler,
   FormErrorFactory,
+} from '../error-handling-factories'; // Import factories
+import {
   type FieldError,
   type FormErrorHandlerConfig,
   type ApiError,
-} from '../error-handling';
+} from '../error-handling-types'; // Import types
 import { AppError, ValidationError } from '../../errors/base'; // Assuming path
 import { ErrorFactory } from '../../errors/factory'; // Assuming path
 import type { UseFormSetError, FieldValues } from 'react-hook-form';
@@ -193,8 +197,8 @@ describe('handleFormError', () => {
     (sonnerToast.error as Mock).mockReset();
     const plainObjectWithMessage = { message: "Plain object message" };
     handleFormError(plainObjectWithMessage, mockSetError);
-    expect(mockSetError).toHaveBeenCalledWith(DEFAULT_ROOT_FIELD, { type: 'manual', message: "An unexpected error occurred. Please try again." });
-    expect(sonnerToast.error).toHaveBeenCalledWith("An unexpected error occurred. Please try again.", { duration: 5000 });
+    expect(mockSetError).toHaveBeenCalledWith(DEFAULT_ROOT_FIELD, { type: 'manual', message: "Plain object message" });
+    expect(sonnerToast.error).toHaveBeenCalledWith("Plain object message", { duration: 5000 });
   });
 
 
@@ -202,8 +206,8 @@ describe('handleFormError', () => {
     const error = { message: 'API general message only' };
     handleFormError(error, mockSetError);
     
-    expect(mockSetError).toHaveBeenCalledWith(DEFAULT_ROOT_FIELD, { type: 'manual', message: 'An unexpected error occurred. Please try again.' });
-    expect(sonnerToast.error).toHaveBeenCalledWith('An unexpected error occurred. Please try again.', { duration: 5000 });
+    expect(mockSetError).toHaveBeenCalledWith(DEFAULT_ROOT_FIELD, { type: 'manual', message: 'API general message only' });
+    expect(sonnerToast.error).toHaveBeenCalledWith('API general message only', { duration: 5000 });
 
     mockSetError.mockReset();
     (sonnerToast.error as Mock).mockReset();

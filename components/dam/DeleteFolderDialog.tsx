@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogClose,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { deleteFolder } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner';
@@ -64,12 +65,12 @@ export function DeleteFolderDialog({ isOpen, onClose, folderId, folderName, onDe
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Delete Folder</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete the folder "{folderName}"? This action cannot be undone.
+          </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="folderId" value={folderId} />
-          <p>
-            Are you sure you want to delete the folder "{folderName}"? This action cannot be undone.
-          </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
               Cancel

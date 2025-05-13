@@ -63,17 +63,15 @@ export function NavMain({
                   <AccordionContent className="pb-1 pl-5">
                     {item.items.map((subItem) => (
                       <SidebarMenuItem key={subItem.title} className="my-0.5">
-                        <Link href={subItem.url} passHref legacyBehavior>
-                          <a>
-                            <SidebarMenuButton
-                              tooltip={subItem.title}
-                              onClick={() => setOpenMobile(false)}
-                              className="flex h-8 items-center justify-start gap-2 px-2 text-sm group-data-[collapsible=icon]:justify-center"
-                            >
-                              {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
-                              <span className="group-data-[collapsible=icon]:opacity-0">{subItem.title}</span>
-                            </SidebarMenuButton>
-                          </a>
+                        <Link href={subItem.url}>
+                          <SidebarMenuButton
+                            tooltip={subItem.title}
+                            onClick={() => setOpenMobile(false)}
+                            className="flex h-8 items-center justify-start gap-2 px-2 text-sm group-data-[collapsible=icon]:justify-center"
+                          >
+                            {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
+                            <span className="group-data-[collapsible=icon]:opacity-0">{subItem.title}</span>
+                          </SidebarMenuButton>
                         </Link>
                       </SidebarMenuItem>
                     ))}
@@ -81,16 +79,14 @@ export function NavMain({
                 </AccordionItem>
               ) : (
                 <SidebarMenuItem key={item.title}>
-                  <Link href={item.url} passHref legacyBehavior>
-                    <a>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        onClick={() => setOpenMobile(false)}
-                      >
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </a>
+                  <Link href={item.url}>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
               )

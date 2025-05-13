@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryData, getPublicUrl } from '@/lib/supabase/db';
+import { queryData } from '@/lib/supabase/db-queries';
+import { getPublicUrl } from '@/lib/supabase/db-storage';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';

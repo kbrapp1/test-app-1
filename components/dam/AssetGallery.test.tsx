@@ -4,12 +4,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AssetGallery } from './AssetGallery'; // Updated import
-import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/asset.actions';
+import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/gallery.actions'; // Updated path
 import { AssetGalleryClientWrapper } from './AssetGalleryClientWrapper'; // Updated import
 import { Asset, Folder, CombinedItem } from '@/types/dam';
 
 // Mock the server action
-vi.mock('@/lib/actions/dam/asset.actions', () => ({
+vi.mock('@/lib/actions/dam/gallery.actions', () => ({
   getAssetsAndFoldersForGallery: vi.fn(),
 }));
 

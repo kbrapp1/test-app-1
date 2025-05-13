@@ -83,9 +83,11 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
         </Button>
         
         {/* Link to root folder */}
-        <Link href="/dam" className="flex-1 flex items-center truncate" legacyBehavior>
-          <FolderIcon className="h-4 w-4 mr-2 shrink-0" /> 
-          <span className="font-medium text-sm">(Root)</span>
+        <Link href="/dam" className="flex-1 flex items-center truncate" legacyBehavior={undefined}>
+          <>
+            <FolderIcon className="h-4 w-4 mr-2 shrink-0" /> 
+            <span className="font-medium text-sm">(Root)</span>
+          </>
         </Link>
       </div>
       {/* Root Folders */}

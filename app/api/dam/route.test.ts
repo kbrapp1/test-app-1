@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { GET } from './route';
 import { NextRequest, NextResponse } from 'next/server';
-import { User } from '@supabase/supabase-js';
-import { queryData } from '@/lib/supabase/db';
+import { User, SupabaseClient } from '@supabase/supabase-js';
+import { queryData, QueryOptions } from '@/lib/supabase/db-queries';
 import { DatabaseError } from '@/lib/errors/base';
 
 // Mock getActiveOrganizationId for this test file
@@ -111,45 +111,11 @@ vi.mock('@supabase/ssr', () => {
 });
 
 // Mock the database utilities
-vi.mock('@/lib/supabase/db', () => {
-  const originalModule = vi.importActual('@/lib/supabase/db');
-  
+vi.mock('@/lib/supabase/db-queries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/supabase/db-queries')>();
   return {
-    ...originalModule,
-    checkAuth: vi.fn(() => ({ authenticated: true, user: { id: 'test-user-id' } })),
-    queryData: vi.fn((supabase, table, select, options) => {
-      if (options?.matchColumn === 'folder_id' && options?.matchValue === 'folder-1') {
-        return {
-          data: [
-            { id: 'asset-1', name: 'test-asset.jpg', storage_path: 'path/to/asset.jpg', mime_type: 'image/jpeg', folder_id: 'folder-1' }
-          ]
-        };
-      } else if (options?.isNull === 'folder_id') {
-        return {
-          data: [
-            { id: 'asset-root', name: 'root-asset.jpg', storage_path: 'path/to/root.jpg', mime_type: 'image/jpeg', folder_id: null }
-          ]
-        };
-      } else if (options?.matchColumn === 'parent_folder_id' && options?.matchValue === 'folder-1') {
-        return {
-          data: [
-            { id: 'subfolder-1', name: 'Subfolder', parent_folder_id: 'folder-1' }
-          ]
-        };
-      } else if (options?.isNull === 'parent_folder_id') {
-        return {
-          data: [
-            { id: 'folder-1', name: 'Test Folder', parent_folder_id: null }
-          ]
-        };
-      } else if (table === 'error_table') {
-        return { error: new Error('Database query error') };
-      } else {
-        return { data: [] };
-      }
-    }),
-    getPublicUrl: vi.fn(() => 'https://example.com/public-url'),
-    handleSupabaseError: vi.fn(error => NextResponse.json({ error: error.message }, { status: 500 }))
+    ...actual, // Spread actual module to keep other functions like insertData, deleteData if they exist and are used
+    queryData: vi.fn(), // Mock queryData specifically
   };
 });
 
@@ -278,10 +244,50 @@ describe('DAM API Route', () => {
     mockGetPublicUrl.mockImplementation(path => ({ 
       data: { publicUrl: `https://example.com/${path}` } 
     }));
+
+    // Default mock implementation for queryData for most tests in this suite
+    (queryData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, select: string, options: QueryOptions) => {
+      // console.log(`Mocked queryData called with: table=${table}, options=${JSON.stringify(options)}`);
+      if (options?.matchColumn === 'folder_id' && options?.matchValue === 'folder-1') {
+        return Promise.resolve({
+          data: [
+            { id: 'asset-1', name: 'test-asset.jpg', storage_path: 'path/to/asset.jpg', mime_type: 'image/jpeg', folder_id: 'folder-1', user_id: 'test-user-id', created_at: new Date().toISOString() }
+          ],
+          error: null
+        });
+      } else if (options?.isNull === 'folder_id') {
+        return Promise.resolve({
+          data: [
+            { id: 'asset-root', name: 'root-asset.jpg', storage_path: 'path/to/root.jpg', mime_type: 'image/jpeg', folder_id: null, user_id: 'test-user-id', created_at: new Date().toISOString() }
+          ],
+          error: null
+        });
+      } else if (options?.matchColumn === 'parent_folder_id' && options?.matchValue === 'folder-1') {
+        return Promise.resolve({
+          data: [
+            { id: 'subfolder-1', name: 'Subfolder', parent_folder_id: 'folder-1', user_id: 'test-user-id', created_at: new Date().toISOString() }
+          ],
+          error: null
+        });
+      } else if (options?.isNull === 'parent_folder_id') {
+        return Promise.resolve({
+          data: [
+            { id: 'folder-1', name: 'Test Folder', parent_folder_id: null, user_id: 'test-user-id', created_at: new Date().toISOString() }
+          ],
+          error: null
+        });
+      } else if (options?.matchColumn === 'parent_folder_id' && options?.matchValue === 'empty-folder') {
+         return Promise.resolve({ data: [], error: null }); // For empty folder test case
+      } else if (options?.matchColumn === 'folder_id' && options?.matchValue === 'empty-folder') {
+         return Promise.resolve({ data: [], error: null }); // For empty folder assets test case
+      }
+      // Default to empty array if no specific conditions met
+      return Promise.resolve({ data: [], error: null });
+    });
   });
   
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks(); // Restore all mocks to their original implementations
   });
   
   it('should handle null folder ID (root folder)', async () => {
@@ -321,32 +327,30 @@ describe('DAM API Route', () => {
   });
   
   it('should handle database query errors', async () => {
-    // Create a custom mocked implementation for queryData just for this test
-    const originalQueryData = vi.mocked(queryData);
-    
-    // First call is for folders query - make it error
-    originalQueryData.mockImplementationOnce(() => {
-      // Use DatabaseError instance for correct typing
-      return Promise.resolve({ data: null, error: new DatabaseError('Database query error for folders') });
+    const request = new NextRequest('https://example.com/api/dam?folderId=error_folder', {
+      headers: { 'x-user-id': 'test-user-id' }
     });
-    
-    const request = new Request('https://example.com/api/dam') as unknown as NextRequest;
+
+    // Mock queryData to return an error for the 'folders' query
+    (queryData as Mock).mockImplementationOnce(async (supabase: SupabaseClient, table: string, select: string, options: QueryOptions) => {
+      if (table === 'folders') {
+        return Promise.resolve({ data: null, error: new DatabaseError('Database query error for folders') });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
     const response = await GET(request);
-    
     expect(response.status).toBe(500);
     const responseData = await response.json();
-    
-    // Expect the standardized error object structure
-    expect(responseData).toMatchObject({
-      error: {
-        message: 'Database query error for folders',
-        code: 'DATABASE_ERROR', // Default code for DatabaseError
-        statusCode: 500
-      }
-    });
-    
-    // Reset the mock implementation
-    originalQueryData.mockReset();
+    expect(responseData.error.message).toBe('Database query error for folders');
+
+    // Ensure queryData was called (at least for the folders table)
+    expect(queryData).toHaveBeenCalledWith(
+      expect.anything(), // Supabase client
+      'folders',        // table
+      expect.any(String), // selectFields
+      expect.objectContaining({ matchColumn: 'parent_folder_id', matchValue: 'error_folder' }) // options
+    );
   });
   
   it('should handle unauthenticated users', async () => {

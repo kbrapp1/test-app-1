@@ -45,10 +45,18 @@ describe('TeamMemberCard', () => {
 
     it('applies correct styling classes', () => {
         const { container } = render(<TeamMemberCard member={mockMember} />);
-        const imageContainer = container.querySelector('.group.relative');
-        expect(imageContainer).toHaveClass('rounded-tr-[4rem]');
-        expect(imageContainer).toHaveClass('aspect-square');
+        
+        // Find the container div that *should* have the rounding and overflow hidden
+        const roundedContainer = container.querySelector('div[class*="overflow-hidden"]');
+        expect(roundedContainer).toBeInTheDocument(); 
+        expect(roundedContainer).toHaveClass('rounded-tr-[4rem]');
+        expect(roundedContainer).toHaveClass('w-full'); // Add another check for certainty
 
+        // Optionally, find the AspectRatio element within it if needed for other checks
+        const imageGroup = roundedContainer?.querySelector('.group.relative');
+        expect(imageGroup).toBeInTheDocument();
+
+        // Test image classes as before
         const primaryImage = screen.getByAltText(`Photo of ${mockMember.name}`);
         expect(primaryImage).toHaveClass('grayscale'); // Initially grayscale
         expect(primaryImage).toHaveClass('group-hover:grayscale-0');

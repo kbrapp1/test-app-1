@@ -3,17 +3,17 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event'; // For more realistic interactions
 import { AssetThumbnail } from './AssetThumbnail';
-import * as damActions from '@/lib/actions/dam/asset.actions'; // Import module to mock specific export
+import * as damActionsCrud from '@/lib/actions/dam/asset-crud.actions'; // Import module to mock specific export
 import { toast } from 'sonner';
+import { usePathname } from 'next/navigation';
+import { Asset } from '@/types/dam';
+import { deleteAsset } from '@/lib/actions/dam/asset-crud.actions';
 
-// Import the original function signature for type assertion (optional but good practice)
-import { deleteAsset } from '@/lib/actions/dam/asset.actions';
-
-// Mock the deleteAsset server action
-vi.mock('@/lib/actions/dam/asset.actions', async (importOriginal) => {
-    const original = await importOriginal<typeof damActions>();
+// Mock the deleteAsset server action from its new location
+vi.mock('@/lib/actions/dam/asset-crud.actions', async (importOriginal) => {
+    const originalModule = await importOriginal<typeof damActionsCrud>();
     return {
-        ...original, // Keep other exports if any
+        ...originalModule,
         deleteAsset: vi.fn(), // Mock the specific function
     };
 });
@@ -54,7 +54,7 @@ const mockProps = {
 };
 
 // Use the imported deleteAsset for the mock type
-const mockedDeleteAsset = damActions.deleteAsset as Mock;
+const mockedDeleteAsset = damActionsCrud.deleteAsset as Mock;
 
 describe('AssetThumbnail Component', () => {
     let user: ReturnType<typeof userEvent.setup>;

@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '../middleware';
 import { UserRole, Permission } from '../roles';
 import { AuthorizationError } from '@/lib/errors/base';
+import { checkAuth } from '@/lib/supabase/db-auth';
 
 // Mock dependencies
 vi.mock('@/lib/supabase/server');
@@ -16,19 +17,10 @@ vi.mock('@/lib/errors/base', () => ({
   }
 }));
 
-// Directly mock the checkAuth function
-vi.mock('@/lib/supabase/db', () => ({
-  checkAuth: vi.fn().mockResolvedValue({
-    authenticated: true,
-    user: {
-      id: 'mock-user-id',
-      app_metadata: { role: 'admin' }
-    }
-  })
+// Directly mock the checkAuth function from its new path
+vi.mock('@/lib/supabase/db-auth', () => ({
+  checkAuth: vi.fn(), // Just mock the function initially
 }));
-
-// Import the mock after the vi.mock calls
-import { checkAuth } from '@/lib/supabase/db';
 
 describe('Auth Middleware', () => {
   const mockRequest = new NextRequest('https://example.com/api/test');
@@ -38,12 +30,12 @@ describe('Auth Middleware', () => {
     vi.clearAllMocks();
     mockHandler = vi.fn().mockResolvedValue(NextResponse.json({ success: true }));
     
-    // Reset default behavior in beforeEach to ensure clean state for each test
-    (checkAuth as any).mockResolvedValue({
+    // Reset default behavior in beforeEach using type assertion
+    (checkAuth as Mock).mockResolvedValue({
       authenticated: true,
-      user: { 
+      user: {
         id: 'mock-user-id',
-        app_metadata: { role: 'admin' }
+        app_metadata: { role: UserRole.ADMIN } // Use enum for consistency
       }
     });
   });
@@ -51,11 +43,11 @@ describe('Auth Middleware', () => {
   it('calls the handler with the user when authentication succeeds', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'admin' },
+      app_metadata: { role: UserRole.ADMIN },
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -72,7 +64,7 @@ describe('Auth Middleware', () => {
 
   it('returns 401 when authentication fails', async () => {
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: false, 
       user: null
     });
@@ -87,11 +79,11 @@ describe('Auth Middleware', () => {
   it('checks for required role when specified', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'viewer' },
+      app_metadata: { role: UserRole.VIEWER },
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -106,11 +98,11 @@ describe('Auth Middleware', () => {
   it('allows access when user has the required role', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'admin' },
+      app_metadata: { role: UserRole.ADMIN },
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -124,11 +116,11 @@ describe('Auth Middleware', () => {
   it('checks for required permission when specified', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'viewer' },
+      app_metadata: { role: UserRole.VIEWER },
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -143,11 +135,11 @@ describe('Auth Middleware', () => {
   it('allows access when user has the required permission', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'admin' },
+      app_metadata: { role: UserRole.ADMIN }, // Admin has DELETE_USER permission
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -161,11 +153,11 @@ describe('Auth Middleware', () => {
   it('handles multiple required permissions with anyPermission=true', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'viewer' },
+      app_metadata: { role: UserRole.VIEWER }, // Viewer has VIEW_ASSET
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });
@@ -182,11 +174,11 @@ describe('Auth Middleware', () => {
   it('requires all permissions when anyPermission=false', async () => {
     const mockUser = { 
       id: 'user-1',
-      app_metadata: { role: 'editor' },
+      app_metadata: { role: UserRole.EDITOR }, // Editor has UPDATE_ASSET but not DELETE_USER
     };
     
     // Override for this specific test
-    (checkAuth as any).mockResolvedValueOnce({
+    (checkAuth as Mock).mockResolvedValueOnce({
       authenticated: true, 
       user: mockUser
     });

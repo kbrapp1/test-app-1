@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AssetGrid } from './AssetGrid';
 import { Asset, Folder, CombinedItem } from '@/types/dam';
-import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/asset.actions'; // Action to refetch data
+import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/gallery.actions'; // Action to refetch data
 import { useToast } from '@/components/ui/use-toast';
 
 interface AssetGalleryClientWrapperProps {

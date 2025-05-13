@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { File } from 'buffer';
 
@@ -14,11 +14,16 @@ vi.mock('crypto', async (importOriginal) => {
   };
 });
 
-// Mock the DB utilities
-vi.mock('@/lib/supabase/db', () => ({
+// Mock the DB utilities from their new locations
+vi.mock('@/lib/supabase/db-storage', () => ({
   uploadFile: vi.fn(),
-  insertData: vi.fn(),
   removeFile: vi.fn(),
+  // Mock getPublicUrl if needed by this test file (doesn't seem so)
+}));
+
+vi.mock('@/lib/supabase/db-queries', () => ({
+  insertData: vi.fn(),
+  // Mock queryData, deleteData if needed
 }));
 
 // Mock the authentication middleware
@@ -40,11 +45,13 @@ vi.mock('@/lib/supabase/auth-middleware', () => ({
 }));
 
 import { POST } from './route';
-import { uploadFile, insertData, removeFile } from '@/lib/supabase/db';
+import { uploadFile, removeFile } from '@/lib/supabase/db-storage';
+import { insertData } from '@/lib/supabase/db-queries';
 
-const mockUploadFile = uploadFile as unknown as ReturnType<typeof vi.fn>;
-const mockInsertData = insertData as unknown as ReturnType<typeof vi.fn>;
-const mockRemoveFile = removeFile as unknown as ReturnType<typeof vi.fn>;
+// Type assertion for mocks
+const mockUploadFile = uploadFile as Mock;
+const mockInsertData = insertData as Mock;
+const mockRemoveFile = removeFile as Mock;
 
 // Begin test suite
 describe('POST /api/team/upload', () => {

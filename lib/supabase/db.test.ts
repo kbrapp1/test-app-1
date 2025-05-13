@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DatabaseError } from '@/lib/errors/base';
 import { logger } from '@/lib/logging';
-import { 
-  queryData, 
-  insertData, 
-  deleteData, 
-  uploadFile, 
-  removeFile 
-} from './db'; // Import functions to test
+import {
+  queryData,
+  insertData,
+  deleteData,
+} from './db-queries'; // Updated import path
+import {
+  uploadFile,
+  removeFile
+} from './db-storage'; // Updated import path
 
 // Mock the logger
 vi.mock('@/lib/logging', () => ({

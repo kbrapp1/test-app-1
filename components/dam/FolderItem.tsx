@@ -91,9 +91,11 @@ export function FolderItem({
           <Link
             href={`/dam?folderId=${folderNode.id}`}
             className="flex items-center truncate"
-            legacyBehavior>
-            <FolderIcon className="h-4 w-4 mr-2 shrink-0" />
-            <span className="truncate font-medium text-sm" title={folderNode.name}>{folderNode.name}</span>
+            legacyBehavior={undefined}>
+            <>
+              <FolderIcon className="h-4 w-4 mr-2 shrink-0" />
+              <span className="truncate font-medium text-sm" title={folderNode.name}>{folderNode.name}</span>
+            </>
           </Link>
         </div>
         

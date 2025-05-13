@@ -1,11 +1,19 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, act } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { AssetSelectorModal } from './asset-selector-modal';
-import * as damActions from '@/lib/actions/dam/asset.actions'; // To mock listTextAssets
+import * as damTextAssetActions from '@/lib/actions/dam/text-asset.actions'; // To mock listTextAssets
+import { listTextAssets } from '@/lib/actions/dam/text-asset.actions';
+import { Asset } from '@/types/dam';
+import { MockedFunction } from 'vitest';
 
 // Mock the action
-vi.mock('@/lib/actions/dam/asset.actions');
+vi.mock('@/lib/actions/dam/text-asset.actions', () => ({ // Mock new path
+  listTextAssets: vi.fn(),
+}));
+
+// Use the imported and typed mock for listTextAssets
+const mockedListTextAssets = listTextAssets as MockedFunction<typeof listTextAssets>;
 
 describe('AssetSelectorModal', () => {
   const mockOnAssetSelect = vi.fn();
@@ -15,7 +23,7 @@ describe('AssetSelectorModal', () => {
     // Reset mocks before each test
     vi.resetAllMocks();
     // Provide a default successful mock implementation for listTextAssets
-    vi.mocked(damActions.listTextAssets).mockResolvedValue({
+    vi.mocked(damTextAssetActions.listTextAssets).mockResolvedValue({
       success: true,
       data: [
         { id: 'asset1', name: 'test1.txt', created_at: new Date().toISOString() },
@@ -27,7 +35,7 @@ describe('AssetSelectorModal', () => {
   test('displays loading skeleton initially when open', async () => {
     // Mock listTextAssets to simulate loading state
     const mockPromise = new Promise(() => {}); // Promise that never resolves
-    vi.mocked(damActions.listTextAssets).mockReturnValue(mockPromise as any);
+    vi.mocked(damTextAssetActions.listTextAssets).mockReturnValue(mockPromise as any);
 
     render(
       <AssetSelectorModal 
@@ -76,7 +84,7 @@ describe('AssetSelectorModal', () => {
 
   test('displays empty state when no assets are found', async () => {
     // Mock listTextAssets to return empty array
-    vi.mocked(damActions.listTextAssets).mockResolvedValue({ success: true, data: [] });
+    vi.mocked(damTextAssetActions.listTextAssets).mockResolvedValue({ success: true, data: [] });
 
     render(
       <AssetSelectorModal 
@@ -101,7 +109,7 @@ describe('AssetSelectorModal', () => {
   test('displays error message on fetch failure', async () => {
     const errorMessage = 'Failed to load assets from server.';
     // Mock listTextAssets to return an error
-    vi.mocked(damActions.listTextAssets).mockResolvedValue({ success: false, error: errorMessage });
+    vi.mocked(damTextAssetActions.listTextAssets).mockResolvedValue({ success: false, error: errorMessage });
 
     render(
       <AssetSelectorModal 
