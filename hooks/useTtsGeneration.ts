@@ -7,20 +7,23 @@ export function useTtsGeneration() {
   const [isTtsPending, startTtsTransition] = useTransition();
   const [isPollingLoading, setIsPollingLoading] = useState(false);
   const [currentPredictionId, setCurrentPredictionId] = useState<string | null>(null);
-  const [predictionStatus, setPredictionStatus] = useState<string>('idle'); // idle, starting, processing, succeeded, failed, canceled
+  const [predictionStatus, setPredictionStatus] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [ttsErrorMessage, setTtsErrorMessage] = useState<string | null>(null);
-  const [ttsPredictionDbId, setTtsPredictionDbId] = useState<string | null>(null); // Store the DB ID associated with the prediction
+  const [ttsPredictionDbId, setTtsPredictionDbId] = useState<string | null>(null);
 
   // Reset state function
   const resetTtsState = useCallback(() => {
-    setCurrentPredictionId(null);
-    setPredictionStatus('idle');
+    // startSpeechGenerationMutation.reset(); // Not applicable here
+    // getSpeechGenerationResultMutation.reset(); // Not applicable here
+    setIsPollingLoading(false);
+    setCurrentPredictionId(null); // Ensure polling stops
+    setPredictionStatus(null);
     setAudioUrl(null);
     setTtsErrorMessage(null);
     setTtsPredictionDbId(null);
-    setIsPollingLoading(false);
-  }, []);
+    console.log("[useTtsGeneration] State reset");
+  }, []); // Removed mutation dependencies, as they don't exist in this hook
 
   // Effect for polling the prediction status
   useEffect(() => {
@@ -91,6 +94,9 @@ export function useTtsGeneration() {
 
       if (result.success && result.predictionId) {
         setCurrentPredictionId(result.predictionId);
+        if (result.ttsPredictionDbId) { // Check if ttsPredictionDbId is returned
+          setTtsPredictionDbId(result.ttsPredictionDbId); // Store our DB ID
+        }
         // Polling will start via useEffect
       } else {
         setTtsErrorMessage(result.error || 'Failed to start generation.');
@@ -101,6 +107,21 @@ export function useTtsGeneration() {
 
   const isGenerating = isTtsPending || isPollingLoading;
 
+  const loadPrediction = useCallback((data: {
+    audioUrl: string | null;
+    dbId: string | null;
+    status?: string | null;
+  }) => {
+    // The calling context (TtsInterface) should call resetTtsState first if needed.
+    // This function just loads the data into state.
+    setAudioUrl(data.audioUrl); 
+    setTtsPredictionDbId(data.dbId);
+    setPredictionStatus(data.status || (data.audioUrl ? 'succeeded' : null));
+    setTtsErrorMessage(null); // Clear any previous error
+    // isGenerating will be false as mutations are reset and isPollingLoading is false (or will be set by resetTtsState)
+    console.log("[useTtsGeneration] Prediction loaded into state:", data);
+  }, []); // Dependencies: setAudioUrl, setTtsPredictionDbId, etc. are stable from useState
+
   return {
     isGenerating,
     predictionStatus,
@@ -109,5 +130,6 @@ export function useTtsGeneration() {
     ttsPredictionDbId,
     startGeneration,
     resetTtsState,
+    loadPrediction,
   };
 } 

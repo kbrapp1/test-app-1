@@ -8,6 +8,20 @@ import { saveTtsAudioToDam as saveTtsAudioToDamUsecase } from '@/lib/usecases/tt
 import { saveTtsHistory as saveTtsHistoryUsecase } from '@/lib/usecases/tts/saveTtsHistoryUsecase';
 import { getTtsHistory as getTtsHistoryUsecase } from '@/lib/usecases/tts/getTtsHistoryUsecase';
 
+// Import the types from the usecase file if they are exported, or redefine if necessary
+// Assuming TtsPredictionRow is part of the return type or an exported type from the usecase, or Database types can be used.
+// For this example, let's assume we need to define params similar to the usecase.
+// Ideally, if TtsPredictionRow is complex and defined in types/supabase.ts, use that.
+import type { Database } from '@/types/supabase';
+type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
+
+interface GetTtsHistoryActionParams {
+  page?: number;
+  limit?: number;
+  sortBy?: keyof TtsPredictionRow;
+  sortOrder?: 'asc' | 'desc';
+}
+
 // Re-export functions for client consumption
 export async function getTtsVoices() {
   return getTtsVoicesUsecase();
@@ -36,6 +50,7 @@ export async function saveTtsHistory(
   return saveTtsHistoryUsecase(input);
 }
 
-export async function getTtsHistory() {
-  return getTtsHistoryUsecase();
+export async function getTtsHistory(params?: GetTtsHistoryActionParams) {
+  // Pass the received params directly to the usecase function
+  return getTtsHistoryUsecase(params);
 }

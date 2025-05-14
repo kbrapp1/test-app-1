@@ -158,6 +158,9 @@ importers:
       react:
         specifier: ^19
         version: 19.1.0
+      react-audio-spectrogram-player:
+        specifier: ^2.0.1
+        version: 2.0.1
       react-day-picker:
         specifier: ^9.0.0
         version: 9.6.7(react@19.1.0)
@@ -2735,6 +2738,9 @@ packages:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
 
+  colormap@2.3.2:
+    resolution: {integrity: sha512-jDOjaoEEmA9AgA11B/jCSAvYE95r3wRoAyTf3LEHGiUVlNHJaL1mRkf5AyLSpQBVGfTEPwGEqCIzL+kgr2WgNA==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3709,6 +3715,9 @@ packages:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
 
+  lerp@1.0.3:
+    resolution: {integrity: sha512-70Rh4rCkJDvwWiTsyZ1HmJGvnyfFah4m6iTux29XmasRiZPDBpT9Cfa4ai73+uLZxnlKruUS62jj2lb11wURiA==}
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -4165,6 +4174,9 @@ packages:
     resolution: {integrity: sha512-RmkhL8CAyCRPXCE28MMH0z2PNWQBNk2Q09ZdxM9IOOXwxwZbN+qbWaatPkdkWIKL2ZVDImrN/pK5HTRz2PcS4g==}
     engines: {node: '>= 0.8'}
 
+  react-audio-spectrogram-player@2.0.1:
+    resolution: {integrity: sha512-7RnQJYdSW7KBvnRLMWJxW3GIGVmNCzLzfar/+l/6n6txKH8B/o/DKvWuX7ra20f0zGmNoCQxnQnFxMCPWhLlsg==}
+
   react-confetti@6.4.0:
     resolution: {integrity: sha512-5MdGUcqxrTU26I2EU7ltkWPwxvucQTuqMm8dUz72z2YMqTD6s9vMcDUysk7n9jnC+lXuCPeJJ7Knf98VEYE9Rg==}
     engines: {node: '>=16'}
@@ -4347,6 +4359,9 @@ packages:
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
+
+  rust-melspec-wasm@0.1.0-alpha.2:
+    resolution: {integrity: sha512-O/PaN3MUwg3MsHZ+hkvKsSOggsgU/0aTJwRn9AH9q0HQ2+Jl4HUVmfS+tDMBJZK/7/RLw7FI6tQ4di4CYyVLyQ==}
 
   safe-array-concat@1.1.3:
     resolution: {integrity: sha512-AURm5f0jYEOydBj7VQlVvDrjeFgthDdEF5H1dP+6mNpoXOMo1quQqJ4wvJDyRZ9+pO3kGWoOdmV08cSv2aJV6Q==}
@@ -7480,6 +7495,10 @@ snapshots:
       color-string: 1.9.1
     optional: true
 
+  colormap@2.3.2:
+    dependencies:
+      lerp: 1.0.3
+
   concat-map@0.0.1: {}
 
   content-disposition@1.0.0:
@@ -8614,6 +8633,8 @@ snapshots:
     dependencies:
       language-subtag-registry: 0.3.23
 
+  lerp@1.0.3: {}
+
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -9015,6 +9036,11 @@ snapshots:
       iconv-lite: 0.6.3
       unpipe: 1.0.0
 
+  react-audio-spectrogram-player@2.0.1:
+    dependencies:
+      colormap: 2.3.2
+      rust-melspec-wasm: 0.1.0-alpha.2
+
   react-confetti@6.4.0(react@19.1.0):
     dependencies:
       react: 19.1.0
@@ -9252,6 +9278,8 @@ snapshots:
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
+
+  rust-melspec-wasm@0.1.0-alpha.2: {}
 
   safe-array-concat@1.1.3:
     dependencies:

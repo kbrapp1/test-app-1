@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,12 +8,19 @@ import { useToast } from '@/components/ui/use-toast';
 import { AssetSelectorModal } from '@/components/dam/asset-selector-modal';
 import type { Asset } from '@/types/dam';
 import { TooltipProvider } from "@/components/ui/tooltip";
-
-// Import the new hooks and subcomponents
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WaveformAudioPlayer } from "@/components/ui/waveform-audio-player";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useTtsGeneration } from '@/hooks/useTtsGeneration';
 import { useTtsDamIntegration } from '@/hooks/useTtsDamIntegration';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';
+import { Loader2 } from "lucide-react";
 
 // Validation schema definition (can be shared or defined here)
 const TtsInputSchema = z.object({
@@ -25,15 +32,28 @@ const TtsInputSchema = z.object({
 
 type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
 
-export function TtsInterface() {
+// Prop type for initialization data
+export interface TtsFormInitializationData {
+  inputText: string;
+  voiceId: string;
+  key: number; // Used to force re-initialization if needed
+  outputUrl?: string | null;
+  dbId?: string | null;
+}
+
+export interface TtsInterfaceProps {
+  formInitialValues?: TtsFormInitializationData;
+}
+
+export function TtsInterface({ formInitialValues }: TtsInterfaceProps) {
   const { toast } = useToast();
 
   // --- Form Setup ---
   const form = useForm<TtsInputFormValues>({
     resolver: zodResolver(TtsInputSchema),
     defaultValues: {
-      inputText: '',
-      voiceId: '', // Make sure voiceId is initialized
+      inputText: formInitialValues?.inputText || '',
+      voiceId: formInitialValues?.voiceId || '',
     },
   });
   const currentInputText = form.watch('inputText');
@@ -42,11 +62,12 @@ export function TtsInterface() {
   const { 
     isGenerating,
     predictionStatus, 
-    audioUrl, 
+    audioUrl: generatedAudioUrl, // Renamed to avoid conflict with replay
     ttsErrorMessage,
     ttsPredictionDbId,
     startGeneration, 
-    resetTtsState 
+    resetTtsState, 
+    loadPrediction
   } = useTtsGeneration();
   
   const { 
@@ -64,9 +85,40 @@ export function TtsInterface() {
   } = useTtsDamIntegration({
       onTextLoaded: (text, assetId) => {
         form.setValue('inputText', text, { shouldValidate: true });
+        form.setValue('voiceId', '' ); // Reset voice when loading from DAM text asset
         resetTtsState();
       }
   });
+
+  const activeAudioUrl = generatedAudioUrl || null;
+  console.log('[TtsInterface] Rendering. activeAudioUrl:', activeAudioUrl, 'generatedAudioUrl:', generatedAudioUrl); // DEBUG
+
+  // Effect to handle form re-initialization from history
+  useEffect(() => {
+    if (formInitialValues) {
+      console.log('[TtsInterface] Effect: formInitialValues changed.', formInitialValues); // DEBUG
+      resetTtsState(); // Always reset first to clear any ongoing generation/polling
+      
+      form.reset({
+        inputText: formInitialValues.inputText,
+        voiceId: formInitialValues.voiceId,
+      });
+
+      if (formInitialValues.outputUrl && formInitialValues.dbId) {
+        // If there's an output URL and dbId from the reloaded item, load it.
+        loadPrediction({
+          audioUrl: formInitialValues.outputUrl,
+          dbId: formInitialValues.dbId,
+          status: formInitialValues.outputUrl ? 'succeeded' : null // Or a specific 'loaded_from_history' status
+        });
+        console.log('[TtsInterface] Called loadPrediction with:', formInitialValues.outputUrl, formInitialValues.dbId);
+      } else {
+        // If no outputUrl, ensure everything is fully reset (resetTtsState already did most of this)
+        // This branch might be redundant if resetTtsState is comprehensive enough
+        console.log('[TtsInterface] No outputUrl in formInitialValues, relying on resetTtsState.');
+      }
+    }
+  }, [formInitialValues, form, resetTtsState, loadPrediction]); // Added loadPrediction to dependencies
 
   // --- State for Delete --- 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -93,23 +145,20 @@ export function TtsInterface() {
   }, [form, saveTextAsNewAsset]);
 
   const handleSaveToLibrary = useCallback(() => {
-    if (!audioUrl) {
+    if (!generatedAudioUrl) {
         toast({ title: 'Error', description: 'No audio generated yet.', variant: 'destructive' });
         return;
     }
-    saveAudioToDam(audioUrl, ttsPredictionDbId);
-  }, [audioUrl, ttsPredictionDbId, saveAudioToDam, toast]);
+    saveAudioToDam(generatedAudioUrl, ttsPredictionDbId);
+  }, [generatedAudioUrl, ttsPredictionDbId, saveAudioToDam, toast]);
 
   // Placeholder Delete Handler
   const handleDeletePrediction = useCallback(async () => {
     if (!ttsPredictionDbId) return;
     setIsDeleting(true);
     console.log("TODO: Call delete action with ID:", ttsPredictionDbId);
-    // Placeholder: Replace with actual delete action call
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
     toast({ title: "Info", description: "Delete functionality not fully implemented yet." });
-    // On successful deletion from backend:
-    // resetTtsState(); 
     setIsDeleting(false);
   }, [ttsPredictionDbId, toast]);
 
@@ -120,7 +169,6 @@ export function TtsInterface() {
   return (
     <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Input Card Component */}
         <TtsInputCard 
           form={form}
           onSubmit={onSubmit}
@@ -135,13 +183,12 @@ export function TtsInterface() {
           onLoadFromLibraryClick={() => setIsDamModalOpen(true)}
         />
 
-        {/* Output Card Component - Corrected Props */}
         <TtsOutputCard
           isLoading={isGenerating} 
           isPollingLoading={isGenerating}
           isSavingToDam={isAudioActionLoading} 
           isDeleting={isDeleting} 
-          audioUrl={audioUrl}
+          audioUrl={activeAudioUrl}
           predictionStatus={predictionStatus}
           errorMessage={ttsErrorMessage} 
           currentPredictionId={null}
@@ -150,11 +197,10 @@ export function TtsInterface() {
           onDeletePrediction={handleDeletePrediction}
         />
 
-        {/* DAM Asset Selector Modal (remains controlled by the parent) */} 
         <AssetSelectorModal
           open={isDamModalOpen}
           onOpenChange={setIsDamModalOpen}
-          onAssetSelect={loadTextFromAsset} // Pass the handler from the hook
+          onAssetSelect={loadTextFromAsset}
         />
       </div>
     </TooltipProvider>
