@@ -166,25 +166,56 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
           console.warn('[WaveformPlayer] Stale instance WaveSurfer error event ignored:', err, 'URL associated with event:', currentInstance.options.url);
           return;
         }
-        console.warn('[WaveformPlayer] WaveSurfer error event (handled, displaying in UI):', err, 'URL:', currentInstance.options.url);
 
-        let errorMessage = 'Unknown error occurred.';
-        if (typeof err === 'string') {
-          errorMessage = err;
-        } else if (err && typeof (err as any).message === 'string') {
-          errorMessage = (err as any).message;
+        let displayError = '';
+        let isExpiredLinkError = false; // Flag to identify the specific error
+
+        // Check for the specific "expired link" or invalid media source scenario
+        if (typeof err === 'object' && err !== null) {
+          const mediaError = err as any;
+          if (
+            mediaError.code === 4 &&
+            typeof mediaError.message === 'string' &&
+            (mediaError.message.toLowerCase().includes('media_element_error') ||
+             mediaError.message.toLowerCase().includes('format error') ||
+             mediaError.message.toLowerCase().includes('src_not_supported'))
+          ) {
+            displayError = "Media link expired. Please create another generation.";
+            isExpiredLinkError = true;
+          }
         }
 
-        if (errorMessage.toLowerCase().includes('fetch') ||
-            errorMessage.toLowerCase().includes('http') ||
-            errorMessage.toLowerCase().includes('networkerror')) {
-          setError(`Failed to load audio: Network error (${errorMessage}). Please check the URL and your connection.`);
-        } else if (errorMessage.toLowerCase().includes('decode') || errorMessage.toLowerCase().includes('format')) {
-          setError(`Failed to load audio: Unsupported audio format or corrupt file (${errorMessage}).`);
-        } else {
-          setError(`Failed to load audio: ${errorMessage}.`);
+        // Only log to console if it's not the handled expired link error
+        if (!isExpiredLinkError) {
+          console.warn('[WaveformPlayer] WaveSurfer error event (handled, displaying in UI):', err, 'URL:', currentInstance.options.url);
         }
 
+        if (!displayError) { // If not the specific expired link error, use more generic messages
+          let errorMessage = 'Unknown error occurred.';
+          if (typeof err === 'string') {
+            errorMessage = err;
+          } else if (err && typeof (err as any).message === 'string') {
+            errorMessage = (err as any).message;
+          }
+
+          // General network or fetch errors
+          if (errorMessage.toLowerCase().includes('fetch') ||
+              errorMessage.toLowerCase().includes('http') ||
+              errorMessage.toLowerCase().includes('networkerror')) {
+            displayError = `Failed to load audio: Network error (${errorMessage}). Please check the URL and your connection.`;
+          } 
+          // General decode or format errors not caught by the specific scenario above
+          else if (errorMessage.toLowerCase().includes('decode') || 
+                   errorMessage.toLowerCase().includes('format')) {
+            displayError = `Failed to load audio: Unsupported audio format or corrupt file (${errorMessage}).`;
+          } 
+          // Fallback for other errors
+          else {
+            displayError = `Failed to load audio: ${errorMessage}.`;
+          }
+        }
+
+        setError(displayError);
         setIsLoading(false);
         setIsPlaying(false);
         setDuration(0);

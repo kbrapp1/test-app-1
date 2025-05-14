@@ -43,9 +43,10 @@ export interface TtsFormInitializationData {
 
 export interface TtsInterfaceProps {
   formInitialValues?: TtsFormInitializationData;
+  onGenerationComplete?: () => void;
 }
 
-export function TtsInterface({ formInitialValues }: TtsInterfaceProps) {
+export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInterfaceProps) {
   const { toast } = useToast();
 
   // --- Form Setup ---
@@ -68,7 +69,9 @@ export function TtsInterface({ formInitialValues }: TtsInterfaceProps) {
     startGeneration, 
     resetTtsState, 
     loadPrediction
-  } = useTtsGeneration();
+  } = useTtsGeneration({ 
+    onGenerationComplete 
+  });
   
   const { 
     isDamModalOpen, 

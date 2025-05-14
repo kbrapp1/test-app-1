@@ -195,6 +195,8 @@ alwaysApply: false
     - `TtsInputCard.tsx` <!-- Component containing the input form (text, voice selection) and DAM text actions for the TTS interface. -->
     - `TtsOutputCard.tsx` <!-- Component displaying the generated audio, status, errors, and DAM audio actions for the TTS interface. -->
     - `VoiceSelector.tsx` <!-- Component for selecting a TTS voice using a Popover and Command list. -->
+    - `TtsHistoryItem.tsx` <!-- Component for an individual item in the TTS generation history list. -->
+    - `TtsHistoryPanel.tsx` <!-- Component to display a list of past TTS generations. -->
   - `ui/` <!-- Base UI components (often from shadcn/ui). -->
     - `accordion.tsx` <!-- Collapsible content panels component. -->
     - `alert-dialog.tsx` <!-- Modal dialog for important alerts requiring action. -->
@@ -284,6 +286,7 @@ alwaysApply: false
   - `useFolderFetch.ts` <!-- Hook for fetching and caching folder structure data. -->
   - `useGridDimensions.test.ts` <!-- Tests for grid dimensions hook. -->
   - `useGridDimensions.ts` <!-- Hook for calculating responsive grid layout dimensions. -->
+  - `useHeadlessAudioPlayer.ts` <!-- Hook for managing audio playback without a UI, for background tasks or previews. -->
   - `useOrgMembers.ts` <!-- Hook for fetching and managing organization members and roles. -->
   - `useOrgMemberActions.ts` <!-- Hook encapsulating actions for organization members (role change, remove, resend invite, reset pw). -->
   - `useEventListener.ts` <!-- Hook for managing event listeners. -->
@@ -306,69 +309,75 @@ alwaysApply: false
     - `common.actions.ts` <!-- General-purpose server actions. -->
     - `notes.actions.ts` <!-- Actions for managing notes (from app/(protected)/documents/notes/actions.ts). -->
     - `onboarding.actions.ts` <!-- Actions related to the user onboarding process. -->
-    - `settings.actions.ts` <!-- Actions for updating user settings. -->
-    - `team.actions.ts` <!-- Actions for managing team members. -->
-    - `team.test.ts` <!-- Tests for team management actions. -->
-    - `tts.actions.ts` <!-- Server actions specific to the Text-to-Speech feature. -->
-    - `tts.test.ts` <!-- Tests for TTS actions. -->
-    - `dam/` <!-- Actions related to Digital Asset Management. -->
-      - `asset-crud.actions.ts` <!-- CRUD actions for DAM assets (move, delete). -->
-      - `asset-url.actions.ts` <!-- Actions for generating asset download URLs. -->
+    - `profile.actions.ts` <!-- Actions for updating user profile information. -->
+    - `team.actions.ts` <!-- Actions for team management (inviting, removing members). -->
+    - `dam/` <!-- Server actions specific to Digital Asset Management. -->
+      - `asset.actions.ts` <!-- Actions for managing individual assets (metadata, deletion). -->
       - `folder.actions.ts` <!-- Actions for managing DAM folders (create, rename, delete). -->
-      - `folder.test.ts` <!-- Tests for DAM folder actions. -->
-      - `gallery.actions.ts` <!-- Actions for retrieving items for the DAM gallery view. -->
-      - `text-asset.actions.ts` <!-- Actions specific to text-based assets in DAM. -->
-  - `auth/` <!-- Authentication utilities and middleware. -->
-    - `__tests__/` <!-- Tests for auth utilities. -->
-  - `config/` <!-- Application configuration constants and settings. -->
-    - `index.ts` <!-- Main config exports -->
-    - `ttsConstants.ts` <!-- Constants specifically for the TTS feature (e.g., Replicate model ID, voice list). -->
-  - `errors/` <!-- Error handling and custom error classes. -->
-    - `__tests__/` <!-- Tests for error handling. -->
-  - `forms/` <!-- Utilities and components related to forms. -->
-    - `__tests__/` <!-- Tests for form utilities. -->
-      - `error-handling.test.ts` <!-- Tests for form error handling utilities. -->
-      - `onboardingValidation.test.ts` <!-- Tests for onboarding form validation. -->
-    - `error-handling-factories.ts` <!-- Factory functions for creating form error handlers and errors. -->
-    - `error-handling-types.ts` <!-- Types and constants for form error handling. -->
-    - `error-handling-utils.ts` <!-- Helper utilities for form error handling (extraction, setting errors, toasts). -->
-    - `error-handling.ts` <!-- Core logic for handling form submission errors and displaying them. -->
-    - `onboardingValidation.ts` <!-- Validation logic for the onboarding form. -->
-    - `README.md` <!-- Overview of form handling utilities. -->
-  - `hooks/` <!-- Custom React hooks. -->
-  - `logging/` <!-- Logging utilities for consistent error logging. -->
-  - `middleware/` <!-- Next.js middleware helpers and utilities. -->
-    - `__tests__/` <!-- Tests for middleware utilities. -->
-  - `replicate/` <!-- Utilities related to the Replicate API. -->
-    - `client.ts` <!-- Initializes and exports the Replicate API client. -->
-  - `repositories/` <!-- Data access layer functions (interacting directly with DB/Storage). -->
-    - `asset-repo.ts` <!-- Repository functions for assets table and storage. -->
-    - `folder-repo.ts` <!-- Repository functions for folders table. -->
-  - `schemas/` <!-- Zod validation schemas. -->
-    - `damSchemas.ts` <!-- Schemas for DAM related actions/data. -->
-    - `ttsSchemas.ts` <!-- Schemas for TTS related actions/data. -->
-  - `services/` <!-- Lower-level services interacting with repositories or external APIs. -->
-    - `asset-service.ts` <!-- General asset management services (move, delete, get URL). -->
-    - `text-asset-service.ts` <!-- Services specifically for text asset content manipulation. -->
-    - `folder-service.ts` <!-- Services related to DAM folders. -->
-    - `ttsService.ts` <!-- Core TTS logic interacting with Replicate and Supabase Storage. -->
-  - `store/` <!-- State management stores (e.g., Zustand). -->
+    - `settings.actions.ts` <!-- Actions for updating user settings. -->
+  - `auth/` <!-- Authentication related utilities and configurations. -->
+    - `__tests__/`
+      - `utils.test.ts` <!-- Tests for authentication utility functions. -->
+    - `config.ts` <!-- Configuration for authentication providers (e.g., Supabase Auth). -->
+    - `utils.ts` <!-- Utility functions for authentication tasks. -->
+  - `config/` <!-- Application-wide configuration settings. -->
+    - `site.ts` <!-- Site metadata, navigation links, etc. -->
+  - `constants/` <!-- Constant values used throughout the application. -->
+    - `dashboard.ts` <!-- Constants related to the dashboard feature. -->
+    - `index.ts` <!-- Barrel file for all constants. -->
+    - `paths.ts` <!-- Application route paths. -->
+    - `roles.ts` <!-- Definitions of user roles and permissions. -->
+    - `tts.ts` <!-- Constants related to the Text-to-Speech feature. -->
+  - `errors/` <!-- Custom error classes and error handling utilities. -->
+    - `__tests__/`
+      - `error-utils.test.ts` <!-- Tests for error utility functions. -->
+    - `error-utils.ts` <!-- Utility functions for error handling and reporting. -->
+    - `index.ts` <!-- Barrel file for error-related modules. -->
+    - `types.ts` <!-- TypeScript types for error objects. -->
+  - `forms/` <!-- Utilities and configurations for form handling. -->
+    - `__tests__/`
+      - `utils.test.ts` <!-- Tests for form utility functions. -->
+    - `utils.ts` <!-- Utility functions for form validation and submission. -->
+  - `hooks/` <!-- Legacy hooks, prefer top-level `hooks/` directory. -->
+  - `logging/` <!-- Logging configurations and utilities. -->
+    - `logger.ts` <!-- Main logger instance and configuration. -->
+  - `middleware/` <!-- Next.js middleware configurations. -->
+    - `__tests__/`
+      - `auth-middleware.test.ts` <!-- Tests for authentication middleware. -->
+    - `auth-middleware.ts` <!-- Middleware for protecting routes based on auth status. -->
+  - `replicate/` <!-- Utilities for interacting with the Replicate API. -->
+    - `client.ts` <!-- Replicate API client setup. -->
+    - `types.ts` <!-- TypeScript types for Replicate API requests/responses. -->
+  - `repositories/` <!-- Data access layer, abstracting data sources. -->
+    - `UserRepository.ts` <!-- Repository for user data operations. -->
+    - `DamRepository.ts` <!-- Repository for DAM data operations. -->
+  - `schemas/` <!-- Zod schemas for data validation. -->
+    - `auth.schema.ts` <!-- Schemas for authentication forms. -->
+    - `dam.schema.ts` <!-- Schemas for DAM related data (assets, folders). -->
+    - `notes.schema.ts` <!-- Schemas for notes validation. -->
+    - `onboarding.schema.ts` <!-- Schemas for onboarding form validation. -->
+    - `profile.schema.ts` <!-- Schemas for profile update forms. -->
+    - `settings.schema.ts` <!-- Schemas for various settings forms. -->
+    - `team.schema.ts` <!-- Schemas for team management forms. -->
+    - `tts.schema.ts` <!-- Schemas for Text-to-Speech input validation. -->
+  - `services/` <!-- Business logic services, orchestrating use cases. -->
+    - `EmailService.ts` <!-- Service for sending emails. -->
+    - `StorageService.ts` <!-- Service for interacting with file storage. -->
+  - `store/` <!-- State management stores (e.g., Zustand, Redux). -->
+    - `uiStore.ts` <!-- Store for UI related state (modals, sidebar). -->
   - `supabase/` <!-- Supabase client and utility functions. -->
-    - `client.ts` <!-- Client-side Supabase client. -->
-    - `db.ts` <!-- Supabase utility for handling API route errors (handleSupabaseError). -->
-    - `db-auth.ts` <!-- Supabase utility for authentication checks (checkAuth). -->
-    - `db-queries.ts` <!-- Supabase utilities for database CRUD operations (queryData, insertData, deleteData). -->
-    - `db-storage.ts` <!-- Supabase utilities for storage operations (getPublicUrl, uploadFile, removeFile). -->
-    - `server.ts` <!-- Server-side Supabase client. -->
-    - `ssr.ts` <!-- Server-side rendering Supabase client. -->
-    - `auth-middleware.ts` <!-- Middleware for protecting API routes. -->
-    - `admin.ts` <!-- Supabase admin client (service role key) - use with caution. -->
-  - `usecases/` <!-- High-level application use cases orchestrating actions/repositories. -->
-    - `dam/` <!-- Use cases specific to the Digital Asset Management feature. -->
-      - `getGalleryItemsUsecase.ts` <!-- Use case for fetching assets and folders for the DAM gallery. -->
-    - `tts/` <!-- Use cases specific to the Text-to-Speech feature. -->
-      - `generateTtsUsecase.ts` <!-- Use case for generating speech from text. -->
-  - `utils.ts` <!-- General utility functions. -->
+    - `client.ts` <!-- Supabase client initialization (browser/server). -->
+    - `middleware.ts` <!-- Supabase middleware client. -->
+    - `server.ts` <!-- Supabase server-side client. -->
+    - `utils.ts` <!-- Utility functions for Supabase operations. -->
+  - `usecases/` <!-- Application-specific business logic orchestrators. -->
+    - `dam/` <!-- Use cases related to Digital Asset Management. -->
+      - `uploadAssetUsecase.ts` <!-- Handles asset upload logic. -->
+    - `tts/` <!-- Use cases related to Text-to-Speech. -->
+      - `getTtsHistoryUsecase.ts` <!-- Usecase for fetching TTS generation history. -->
+      - `markTtsUrlAsInvalidUsecase.ts` <!-- Usecase for marking a TTS audio URL as invalid/expired. -->
+      - `generateSpeechUsecase.ts` <!-- Handles speech generation logic. -->
+  - `utils/` <!-- General utility functions. -->
 - `public/` <!-- Static assets served publicly. -->
   - `placeholders/` <!-- Placeholder images or assets. -->
   - `favicon.ico` <!-- Application icon for browser tabs. -->

@@ -1,5 +1,6 @@
 'use server';
 
+import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 // Import specific usecase functions
 import { getTtsVoices as getTtsVoicesUsecase } from '@/lib/usecases/tts/getTtsVoicesUsecase';
 import { startSpeechGeneration as startSpeechGenerationUsecase } from '@/lib/usecases/tts/startSpeechGenerationUsecase';
@@ -20,6 +21,7 @@ interface GetTtsHistoryActionParams {
   limit?: number;
   sortBy?: keyof TtsPredictionRow;
   sortOrder?: 'asc' | 'desc';
+  searchQuery?: string;
 }
 
 // Re-export functions for client consumption
@@ -38,9 +40,26 @@ export async function getSpeechGenerationResult(replicatePredictionId: string) {
 export async function saveTtsAudioToDam(
   audioUrl: string,
   desiredAssetName: string,
-  ttsPredictionId: string
+  ttsPredictionId: string,
+  linkToPrediction: boolean = true
 ) {
-  return saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId);
+  const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId);
+
+  if (result.success && result.assetId && linkToPrediction) {
+    const supabase = createSupabaseServerClient();
+    const { error: linkError } = await supabase
+      .from('TtsPrediction')
+      .update({ outputAssetId: result.assetId })
+      .eq('id', ttsPredictionId);
+
+    if (linkError) {
+      console.error('TTS Action (saveTtsAudioToDam): Error linking asset ID to TTS prediction:', linkError);
+      return { ...result, error: `Asset created, but linking failed: ${linkError.message}` };
+    }
+    console.log(`TTS Action (saveTtsAudioToDam): Successfully linked asset ${result.assetId} to prediction ${ttsPredictionId}`);
+  }
+
+  return result;
 }
 
 export async function saveTtsHistory(
@@ -51,6 +70,6 @@ export async function saveTtsHistory(
 }
 
 export async function getTtsHistory(params?: GetTtsHistoryActionParams) {
-  // Pass the received params directly to the usecase function
+  // Pass the received params directly to the usecase function, including searchQuery
   return getTtsHistoryUsecase(params);
 }

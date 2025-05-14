@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, RefreshCcw, Trash2, Database as DatabaseIcon } from 'lucide-react'; // Aliased Database icon
+import { Play, RefreshCcw, Trash2, Database as DatabaseIcon, Save, CopyPlus, ExternalLink } from 'lucide-react'; // Added Save and CopyPlus icons
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlayIcon, PauseIcon, ExternalLinkIcon, AlertTriangleIcon, CheckCircle2Icon, CircleSlashIcon, Loader2Icon } from 'lucide-react';
+import { PlayIcon, PauseIcon, ExternalLinkIcon, AlertTriangleIcon, CheckCircle2Icon, CircleSlashIcon, Loader2Icon, RefreshCcw as RefreshCcwIcon } from 'lucide-react';
 // import type { TtsPrediction } from '@/types/supabase-custom'; // Assuming a TtsPrediction type
 import type { Database } from '@/types/supabase'; // Standard Supabase types
+import { cn } from '@/lib/utils';
+import { WaveformAudioPlayer } from '@/components/ui/waveform-audio-player';
 
 type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
 
@@ -16,6 +18,8 @@ export interface TtsHistoryItemProps {
   onReloadInput: (item: TtsPredictionRow) => void;
   onViewInDam: (item: TtsPredictionRow) => void; 
   onDelete: (item: TtsPredictionRow) => void;
+  onSaveToDam: (item: TtsPredictionRow) => Promise<boolean>; // Modified to return Promise<boolean>
+  onSaveAsToDam: (item: TtsPredictionRow) => Promise<boolean>; // New prop for Save As
   headlessPlayerCurrentlyPlayingUrl?: string | null;
   isHeadlessPlayerPlaying?: boolean;
   isHeadlessPlayerLoading?: boolean;
@@ -28,57 +32,83 @@ export function TtsHistoryItem({
   onReloadInput, 
   onViewInDam, 
   onDelete,
+  onSaveToDam,
+  onSaveAsToDam, // New prop
   headlessPlayerCurrentlyPlayingUrl,
   isHeadlessPlayerPlaying,
   isHeadlessPlayerLoading,
   headlessPlayerError,
 }: TtsHistoryItemProps) {
   const [isDeleting, setIsDeleting] = useState(false); // Example local state for delete operation
+  const [isSavingToDam, setIsSavingToDam] = useState(false); // Local loading state for DAM save
+  const [isSavingAsToDam, setIsSavingAsToDam] = useState(false); // New state for Save As
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [playerError, setPlayerError] = useState<string | null>(null);
 
   const formattedDate = item.createdAt ? new Date(item.createdAt).toLocaleString() : 'N/A';
   const inputTextSnippet = item.inputText ? item.inputText.substring(0, 50) + (item.inputText.length > 50 ? '...' : '') : 'No input text';
   const voiceIdDisplay = item.voiceId || 'N/A';
   const statusDisplay = item.status || 'unknown';
 
+  const audioUrl = item.outputUrl;
+  const isCurrentItemPlaying = headlessPlayerCurrentlyPlayingUrl === audioUrl && isHeadlessPlayerPlaying;
+  const isCurrentItemLoading = headlessPlayerCurrentlyPlayingUrl === audioUrl && isHeadlessPlayerLoading;
+
   const handleDeleteClick = async () => {
     // ... existing code ...
     return <AlertTriangleIcon className="h-5 w-5 text-yellow-500" />;
   };
 
-  const isThisItemTargetedByHeadlessPlayer = headlessPlayerCurrentlyPlayingUrl === item.outputUrl;
-  const isThisItemLoading = isThisItemTargetedByHeadlessPlayer && isHeadlessPlayerLoading;
-  const isThisItemPlaying = isThisItemTargetedByHeadlessPlayer && isHeadlessPlayerPlaying;
-  const isThisItemPaused = isThisItemTargetedByHeadlessPlayer && !isHeadlessPlayerPlaying && !isHeadlessPlayerLoading && !headlessPlayerError;
-  const isThisItemInError = isThisItemTargetedByHeadlessPlayer && headlessPlayerError && !isHeadlessPlayerLoading && !isHeadlessPlayerPlaying;
+  const handlePlayPause = () => {
+    if (audioUrl) {
+      onReplay(item);
+      setShowPlayer(true);
+      setPlayerError(null); 
+    }
+  };
 
-  // Determine Replay button icon and action
-  let replayButtonIcon;
-  let replayButtonText;
-  let replayButtonTooltip;
-  let replayButtonDisabled = !item.outputUrl || isDeleting;
+  const handleReloadInput = () => {
+    onReloadInput(item);
+  };
 
-  if (isThisItemInError) {
-    replayButtonIcon = <AlertTriangleIcon className="h-4 w-4 mr-2 text-destructive" />;
-    replayButtonText = "Error";
-    replayButtonTooltip = headlessPlayerError || "Playback failed";
-    // Keep button clickable to retry, onReplay should clear the error in the hook implicitly by starting new play attempt
-  } else if (isThisItemLoading) {
-    replayButtonIcon = <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />;
-    replayButtonText = "Loading...";
-    replayButtonTooltip = "Audio is loading";
-  } else if (isThisItemPlaying) {
-    replayButtonIcon = <PauseIcon className="h-4 w-4 mr-2" />;
-    replayButtonText = "Pause";
-    replayButtonTooltip = "Pause Replay";
-  } else if (isThisItemPaused) {
-    replayButtonIcon = <PlayIcon className="h-4 w-4 mr-2" />;
-    replayButtonText = "Resume";
-    replayButtonTooltip = "Resume Replay";
-  } else {
-    replayButtonIcon = <PlayIcon className="h-4 w-4 mr-2" />;
-    replayButtonText = "Replay";
-    replayButtonTooltip = "Replay Audio";
-  }
+  const handleDelete = () => {
+    onDelete(item);
+  };
+
+  const handleSave = async () => {
+    if (!item.outputUrl || item.outputAssetId || isSavingToDam) return;
+    setIsSavingToDam(true);
+    const success = await onSaveToDam(item);
+    if (!success) { // Only reset if save failed; rely on prop update for success
+      setIsSavingToDam(false);
+    }
+    // If successful, isSavingToDam remains true until item.outputAssetId is updated via props,
+    // which will then disable the button based on item.outputAssetId
+  };
+
+  const handleSaveAs = async () => {
+    if (!item.outputUrl || isSavingAsToDam) return;
+    setIsSavingAsToDam(true);
+    const success = await onSaveAsToDam(item);
+    // Reset state regardless of success for "Save As" as it doesn't change item.outputAssetId
+    setIsSavingAsToDam(false); 
+  };
+
+  const saveButtonTooltip = !item.outputUrl
+    ? "Output not available."
+    : isSavingToDam && !item.outputAssetId
+    ? "Saving..."
+    : item.outputAssetId
+    ? "Item is saved to DAM. Use 'Save As' to create a new copy."
+    : "Save to DAM";
+
+  const saveAsButtonTooltip = !item.outputUrl
+    ? "Output not available."
+    : isSavingAsToDam
+    ? "Saving as new..."
+    : "Save as a new asset in DAM";
+
+  const isEffectivelySaved = !!item.outputAssetId && !isSavingToDam;
 
   return (
     <div className="p-3 mb-2 border rounded-lg hover:shadow-md transition-shadow">
@@ -98,38 +128,81 @@ export function TtsHistoryItem({
       <p className="text-xs text-gray-600 mb-3">Voice: {voiceIdDisplay}</p>
       
       <div className="flex space-x-2 flex-wrap gap-y-2">
-        <Tooltip>
-          <TooltipTrigger asChild> 
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => onReplay(item)} 
-              disabled={replayButtonDisabled}
-              className="min-w-[7rem] justify-center"
-            >
-              {replayButtonIcon}
-              {replayButtonText}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent><p>{replayButtonTooltip}</p></TooltipContent>
-        </Tooltip>
-        <Button variant="outline" size="sm" onClick={() => onReloadInput(item)} title="Reload Input">
-          <RefreshCcw className="w-4 h-4 mr-1" /> Reload
-        </Button>
-        {item.outputAssetId && (
-            <Button variant="outline" size="sm" onClick={() => onViewInDam(item)} title="View in DAM">
-                <DatabaseIcon className="w-4 h-4 mr-1" /> DAM
-            </Button>
-        )}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => onDelete(item)} 
-          title="Delete"
-          className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-500"
-        >
-          <Trash2 className="w-4 h-4 mr-1" /> Delete
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild> 
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handlePlayPause} 
+                disabled={!audioUrl || isCurrentItemLoading}
+              >
+                {isCurrentItemLoading ? <Loader2Icon className="h-4 w-4 animate-spin" /> : (isCurrentItemPlaying ? <PauseIcon className="h-4 w-4 mr-2" /> : <PlayIcon className="h-4 w-4 mr-2" />)}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{isCurrentItemLoading ? "Loading..." : isCurrentItemPlaying ? "Pause" : "Play"}</p></TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleReloadInput}
+              >
+                <RefreshCcwIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Reload Input</p></TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={isEffectivelySaved || !item.outputUrl || isSavingToDam ? 0 : undefined}>
+                <Button
+                  variant={isEffectivelySaved ? "default" : "outline"} 
+                  size="icon" 
+                  onClick={handleSave}
+                  disabled={!item.outputUrl || isSavingToDam || isEffectivelySaved}
+                  className={cn(isEffectivelySaved && "cursor-default")}
+                >
+                  {(isSavingToDam && !item.outputAssetId) ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{saveButtonTooltip}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={!item.outputUrl || isSavingAsToDam ? 0 : undefined}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleSaveAs}
+                  disabled={!item.outputUrl || isSavingAsToDam}
+                >
+                  {isSavingAsToDam ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <CopyPlus className="h-4 w-4" />}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{saveAsButtonTooltip}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleDelete}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Delete</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       {statusDisplay === 'failed' && item.errorMessage && (
         <p className="mt-2 text-xs text-red-600">Error: {item.errorMessage}</p>

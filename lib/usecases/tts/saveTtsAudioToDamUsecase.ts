@@ -62,8 +62,7 @@ export async function saveTtsAudioToDam(
     }
 
     console.log(`TTS Usecase (saveTtsAudioToDam): Created asset record in DB with ID: ${newAssetRecord.id}`);
-    // TODO: Link newAssetRecord.id with ttsPredictionId (e.g., update a tts_predictions table)
-    
+
     return { success: true, assetId: newAssetRecord.id };
 
   } catch (error: any) {

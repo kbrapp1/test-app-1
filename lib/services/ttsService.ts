@@ -78,14 +78,19 @@ export async function downloadAndUploadAudio(
   try {
     const response = await fetch(audioUrl);
     if (!response.ok) {
-      throw new Error(`Failed to download audio from URL: ${response.statusText}`);
+      if (response.status === 403 || response.status === 404) {
+        console.warn(`Service: Failed to download audio from ${audioUrl}. Status: ${response.status}. Link likely expired or invalid.`);
+        throw new Error('Failed to download audio: The source link may have expired or is invalid.');
+      }
+      throw new Error(`Failed to download audio from URL: Server responded with ${response.status} ${response.statusText}`);
     }
     audioBlob = await response.blob();
     contentType = response.headers.get('content-type') || 'audio/mpeg';
     console.log('Service: Fetched audio from Replicate. Content-Type:', contentType);
-  } catch (fetchError) {
+  } catch (fetchError: any) {
     console.error('Service: Error fetching audio from Replicate URL:', fetchError);
-    throw new Error('Failed to download generated audio.');
+    const errorMessage = fetchError.message || 'Failed to download generated audio. Unknown fetch error.';
+    throw new Error(errorMessage);
   }
 
   const fileExtension = getExtensionFromMimeType(contentType);

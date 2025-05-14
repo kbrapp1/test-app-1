@@ -2,7 +2,12 @@ import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { startSpeechGeneration, getSpeechGenerationResult } from '@/lib/actions/tts';
 
-export function useTtsGeneration() {
+interface UseTtsGenerationOptions {
+  onGenerationComplete?: () => void;
+}
+
+export function useTtsGeneration(options?: UseTtsGenerationOptions) {
+  const { onGenerationComplete } = options || {};
   const { toast } = useToast();
   const [isTtsPending, startTtsTransition] = useTransition();
   const [isPollingLoading, setIsPollingLoading] = useState(false);
@@ -57,6 +62,10 @@ export function useTtsGeneration() {
           setCurrentPredictionId(null); // Stop polling
           setIsPollingLoading(false);
           toast({ title: 'Speech generated successfully!' });
+          // Notify parent component that generation is complete
+          if (onGenerationComplete) {
+            onGenerationComplete();
+          }
           clearInterval(intervalId);
         } else if (currentStatus === 'failed' || currentStatus === 'canceled') {
           setTtsErrorMessage(result.error ? JSON.stringify(result.error) : 'Prediction failed or was canceled.');
@@ -82,7 +91,7 @@ export function useTtsGeneration() {
       clearInterval(intervalId);
       setIsPollingLoading(false); // Ensure loading stops if component unmounts while polling
     };
-  }, [currentPredictionId, predictionStatus, toast]);
+  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete]);
 
   // Function to initiate the TTS generation
   const startGeneration = useCallback((formData: FormData) => {

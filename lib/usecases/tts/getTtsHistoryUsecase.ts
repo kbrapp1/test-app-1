@@ -17,6 +17,7 @@ interface GetTtsHistoryParams {
   limit?: number;
   sortBy?: keyof TtsPredictionRow;
   sortOrder?: 'asc' | 'desc';
+  searchQuery?: string;
 }
 
 /**
@@ -50,6 +51,7 @@ export async function getTtsHistory(
     const limit = params?.limit && params.limit > 0 ? params.limit : DEFAULT_PAGE_LIMIT;
     const sortBy = params?.sortBy || DEFAULT_SORT_BY;
     const sortOrder = params?.sortOrder || DEFAULT_SORT_ORDER;
+    const searchQuery = params?.searchQuery?.trim();
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -59,6 +61,16 @@ export async function getTtsHistory(
       .select('*', { count: 'exact' })
       .eq('userId', user.id)
       .eq('organization_id', activeOrgId);
+
+    // Apply search query if provided
+    if (searchQuery && searchQuery.length > 0) {
+      const searchPattern = `%${searchQuery}%`;
+      query = query.or(
+        `inputText.ilike.${searchPattern},` +
+        `voiceId.ilike.${searchPattern},` +
+        `status.ilike.${searchPattern}`
+      );
+    }
 
     // Apply sorting - TypeScript will help ensure sortBy is a valid keyof TtsPredictionRow.
     // The database will error if an invalid column name is somehow passed for sortBy.
