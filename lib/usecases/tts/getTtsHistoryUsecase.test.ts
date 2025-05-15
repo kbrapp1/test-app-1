@@ -86,8 +86,8 @@ describe('getTtsHistoryUsecase', () => {
   it('should return data and count on successful fetch', async () => {
     const mockDate = new Date().toISOString();
     const mockData: TtsPredictionRow[] = [
-      { id: '1', inputText: 'Hello', createdAt: mockDate, status: 'succeeded', userId: 'test-user-id', organization_id: 'test-org-id', replicatePredictionId: 'rep1', voiceId: 'alloy', sourceAssetId: null, outputAssetId: null, outputUrl: 'http://example.com/audio1.mp3', errorMessage: null, updatedAt: mockDate },
-      { id: '2', inputText: 'World', createdAt: mockDate, status: 'succeeded', userId: 'test-user-id', organization_id: 'test-org-id', replicatePredictionId: 'rep2', voiceId: 'alloy', sourceAssetId: null, outputAssetId: null, outputUrl: 'http://example.com/audio2.mp3', errorMessage: null, updatedAt: mockDate },
+      { id: '1', inputText: 'Hello', createdAt: mockDate, status: 'succeeded', userId: 'test-user-id', organization_id: 'test-org-id', replicatePredictionId: 'rep1', voiceId: 'alloy', sourceAssetId: null, outputAssetId: null, outputUrl: 'http://example.com/audio1.mp3', errorMessage: null, updatedAt: mockDate, is_output_url_problematic: false, output_url_last_error: null, prediction_provider: 'replicate' },
+      { id: '2', inputText: 'World', createdAt: mockDate, status: 'succeeded', userId: 'test-user-id', organization_id: 'test-org-id', replicatePredictionId: 'rep2', voiceId: 'alloy', sourceAssetId: null, outputAssetId: null, outputUrl: 'http://example.com/audio2.mp3', errorMessage: null, updatedAt: mockDate, is_output_url_problematic: false, output_url_last_error: null, prediction_provider: 'replicate' },
     ]; 
     (mockSupabaseClient.range as any).mockResolvedValueOnce({ data: mockData, error: null, count: 2 });
 

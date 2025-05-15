@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useForm, UseFormProps, UseFormReturn, FieldValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { handleFormError, FormErrorHandlerConfig } from './error-handling';
+import { handleFormError } from './error-handling';
+import type { FormErrorHandlerConfig } from './error-handling-types';
 
 export interface UseFormWithValidationProps<T extends FieldValues> extends UseFormProps<T> {
   /**

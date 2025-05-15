@@ -10,7 +10,7 @@ export interface TtsProviderSettings {
 export const ttsProviderConfigs: Record<string, TtsProviderSettings> = {
   replicate: {
     displayName: 'Replicate',
-    linkExpiryMinutes: 55,
+    linkExpiryMinutes: 60,
   },
   // Example for another provider (you can add more later)
   // elevenlabs: {

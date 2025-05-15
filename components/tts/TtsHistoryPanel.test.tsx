@@ -278,10 +278,9 @@ describe('TtsHistoryPanel', () => {
       fireEvent.click(loadMoreButton);
       
       expect(loadMoreButton).toBeDisabled();
-      // When loading page 2 (from page 1), currentPage is still 1 while isLoading.
-      // So, the text remains "Load More" and the specific icon for "Loading more..." state isn't shown.
-      expect(loadMoreButton).toHaveTextContent(/load more/i);
-      expect(screen.queryByTestId("loading-more-icon")).not.toBeInTheDocument();
+      // The button should now indicate it's loading more.
+      expect(loadMoreButton).toHaveTextContent(/loading more.../i);
+      expect(screen.getByTestId("loading-more-icon")).toBeInTheDocument(); // Icon should be present
 
       await act(async () => {
         await slowFetchPromise; 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Trash2Icon, LoaderIcon } from "lucide-react";
+import { Trash2Icon, LoaderIcon, Send, Key } from "lucide-react";
 
 // Assuming OrgMember and RoleOption interfaces are defined similarly to OrgRoleManager
 // If they are in a shared types file, import them. Otherwise, redefine:
@@ -30,6 +30,7 @@ interface OrgMemberCardProps {
   onRoleChange: (userId: string, newRoleId: string) => void;
   onBeginRemoveMember: (member: OrgMember) => void; // Function to set state in parent to show dialog
   onResendInvitation: (member: OrgMember) => void; // Added handler for resending invitation
+  onResetPassword: (member: OrgMember) => void; // Added handler for resetting password
 }
 
 export function OrgMemberCard({
@@ -40,6 +41,7 @@ export function OrgMemberCard({
   onRoleChange,
   onBeginRemoveMember,
   onResendInvitation,
+  onResetPassword,
 }: OrgMemberCardProps) {
   const isSelf = member.id === currentUserId;
   const isUpdatingThisMember = updating === member.id;
@@ -93,6 +95,17 @@ export function OrgMemberCard({
           >
             {isUpdatingThisMember && <LoaderIcon className="animate-spin h-4 w-4 mr-2" />} Resend Invite
           </Button>
+        )}
+        {!isSelf && (
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onResetPassword(member)}
+                disabled={isUpdatingThisMember}
+                aria-label="Reset Password"
+            >
+                {isUpdatingThisMember ? <LoaderIcon className="animate-spin h-4 w-4 mr-2" /> : <Key className="h-4 w-4 mr-2" />} Reset Password
+            </Button>
         )}
         <Button
           variant="ghost"

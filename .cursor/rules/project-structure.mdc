@@ -174,6 +174,8 @@ alwaysApply: false
     - `danger-zone.tsx` <!-- Component for dangerous settings like deletion. -->
     - `email-form.tsx` <!-- Form for updating email settings. -->
     - `OrgMemberCard.tsx` <!-- Card component for displaying organization members. -->
+    - `OrgMembersDesktopTable.tsx` <!-- Desktop-specific table view for organization members. -->
+    - `OrgMembersTable.columns.tsx` <!-- Column definitions for the organization members table. -->
     - `OrgMembersTable.tsx` <!-- Presentation component for displaying organization members (table/cards). -->
     - `OrgRoleManager.tsx` <!-- Component for managing organization roles. -->
     - `password-form.test.tsx` <!-- Tests for the password form component. -->
@@ -192,11 +194,20 @@ alwaysApply: false
     - `TeamMemberList.tsx` <!-- List of all team members with filtering. -->
   - `tts/` <!-- Text-to-Speech components. -->
     - `tts-interface.tsx` <!-- User interface for text-to-speech conversion. -->
+    - `TtsHistoryItem.tsx` <!-- Component for an individual item in the TTS generation history list. -->
+    - `TtsHistoryItemActions.tsx` <!-- Actions for a TTS history item (e.g., retry, delete). -->
+    - `TtsHistoryItemErrorDisplay.tsx` <!-- Component to display errors for a TTS history item. -->
+    - `TtsHistoryItemInfo.tsx` <!-- Component displaying information for a TTS history item. -->
+    - `TtsHistoryList.tsx` <!-- Component for displaying the list of TTS history items. -->
+    - `TtsHistoryPanel.tsx` <!-- Component to display a list of past TTS generations. -->
+    - `TtsHistoryPanelHeader.tsx` <!-- Header component for the TTS history panel. -->
+    - `TtsHistoryPanelSearch.tsx` <!-- Search input component for the TTS history panel. -->
     - `TtsInputCard.tsx` <!-- Component containing the input form (text, voice selection) and DAM text actions for the TTS interface. -->
     - `TtsOutputCard.tsx` <!-- Component displaying the generated audio, status, errors, and DAM audio actions for the TTS interface. -->
+    - `ttsHistoryUtils.ts` <!-- Utility functions for TTS history. -->
+    - `useTtsHistory.ts` <!-- Hook for managing TTS history data and state. -->
+    - `useTtsHistoryItemState.ts` <!-- Hook for managing state of a TTS history item. -->
     - `VoiceSelector.tsx` <!-- Component for selecting a TTS voice using a Popover and Command list. -->
-    - `TtsHistoryItem.tsx` <!-- Component for an individual item in the TTS generation history list. -->
-    - `TtsHistoryPanel.tsx` <!-- Component to display a list of past TTS generations. -->
   - `ui/` <!-- Base UI components (often from shadcn/ui). -->
     - `accordion.tsx` <!-- Collapsible content panels component. -->
     - `alert-dialog.tsx` <!-- Modal dialog for important alerts requiring action. -->
@@ -250,6 +261,7 @@ alwaysApply: false
     - `tooltip.tsx` <!-- Hover tooltip component. -->
     - `use-mobile.tsx` <!-- Hook for detecting mobile viewport. -->
     - `use-toast.ts` <!-- Hook for showing toast notifications. -->
+    - `useWaveSurfer.ts` <!-- Hook for integrating WaveSurfer.js for audio visualization. -->
 - `context/` <!-- React Context API providers and consumers. -->
   - `palette-context.tsx` <!-- Context for managing color palettes or themes. -->
 - `docs/` <!-- Project documentation files. -->
@@ -283,101 +295,183 @@ alwaysApply: false
   - `project-structure-full.txt` <!-- Full project structure text file. -->
 - `hooks/` <!-- Custom React hooks for reusable component logic. -->
   - `useCompleteOnboarding.ts` <!-- Hook for handling user onboarding completion flow. -->
+  - `useEventListener.ts` <!-- Hook for managing event listeners. -->
   - `useFolderFetch.ts` <!-- Hook for fetching and caching folder structure data. -->
+  - `useForm.ts` <!-- Generic hook for managing form state and validation. -->
   - `useGridDimensions.test.ts` <!-- Tests for grid dimensions hook. -->
   - `useGridDimensions.ts` <!-- Hook for calculating responsive grid layout dimensions. -->
   - `useHeadlessAudioPlayer.ts` <!-- Hook for managing audio playback without a UI, for background tasks or previews. -->
-  - `useOrgMembers.ts` <!-- Hook for fetching and managing organization members and roles. -->
-  - `useOrgMemberActions.ts` <!-- Hook encapsulating actions for organization members (role change, remove, resend invite, reset pw). -->
-  - `useEventListener.ts` <!-- Hook for managing event listeners. -->
-  - `useForm.ts` <!-- Generic hook for managing form state and validation. -->
   - `useIntersectionObserver.ts` <!-- Hook for observing element visibility. -->
   - `useIsomorphicLayoutEffect.ts` <!-- Hook for layout effect in SSR/CSR. -->
   - `useLocalStorage.ts` <!-- Hook for interacting with browser local storage. -->
   - `useMediaQuery.ts` <!-- Hook for tracking media query matches. -->
   - `useOnboarding.ts` <!-- Hook for managing state, logic, and side effects for the user onboarding flow. -->
+  - `useOrgMemberActions.ts` <!-- Hook encapsulating actions for organization members (role change, remove, resend invite, reset pw). -->
+  - `useOrgMembers.ts` <!-- Hook for fetching and managing organization members and roles. -->
   - `usePagination.ts` <!-- Hook for managing pagination state. -->
   - `useTtsDamIntegration.ts` <!-- Hook for managing DAM interactions (loading text, saving audio) within the TTS feature. -->
   - `useTtsGeneration.ts` <!-- Hook for managing TTS generation state, polling, and results. -->
+  - `useTtsSaveAsDialog.ts` <!-- Hook for managing the "Save As" dialog functionality in TTS. -->
 - `lib/` <!-- Shared libraries, utilities, and core logic. -->
   - `__mocks__/`
     - `errors/` <!-- Mocks for error handling utilities in tests. -->
     - `supabase/` <!-- Mocks for Supabase client in tests. -->
   - `actions/` <!-- Server actions for form submissions and backend operations. -->
-    - `auth.actions.ts` <!-- Actions related to user authentication (login, signup). -->
-    - `auth.test.ts` <!-- Tests for authentication actions. -->
-    - `common.actions.ts` <!-- General-purpose server actions. -->
-    - `notes.actions.ts` <!-- Actions for managing notes (from app/(protected)/documents/notes/actions.ts). -->
+    - `auth.actions.ts` <!-- Actions related to authentication (login, signup, logout). -->
+    - `dam.actions.ts` <!-- Actions related to Digital Asset Management. -->
+    - `notes.actions.ts` <!-- Actions for managing notes (create, update, delete). -->
     - `onboarding.actions.ts` <!-- Actions related to the user onboarding process. -->
+    - `organization.actions.ts` <!-- Actions for managing organization settings and members. -->
     - `profile.actions.ts` <!-- Actions for updating user profile information. -->
-    - `team.actions.ts` <!-- Actions for team management (inviting, removing members). -->
-    - `dam/` <!-- Server actions specific to Digital Asset Management. -->
-      - `asset.actions.ts` <!-- Actions for managing individual assets (metadata, deletion). -->
-      - `folder.actions.ts` <!-- Actions for managing DAM folders (create, rename, delete). -->
-    - `settings.actions.ts` <!-- Actions for updating user settings. -->
+    - `team.actions.ts` <!-- Actions for managing team members. -->
+    - `tts.actions.ts` <!-- Actions for Text-to-Speech generation and results. -->
   - `auth/` <!-- Authentication related utilities and configurations. -->
     - `__tests__/`
-      - `utils.test.ts` <!-- Tests for authentication utility functions. -->
-    - `config.ts` <!-- Configuration for authentication providers (e.g., Supabase Auth). -->
-    - `utils.ts` <!-- Utility functions for authentication tasks. -->
-  - `config/` <!-- Application-wide configuration settings. -->
-    - `site.ts` <!-- Site metadata, navigation links, etc. -->
-  - `constants/` <!-- Constant values used throughout the application. -->
-    - `dashboard.ts` <!-- Constants related to the dashboard feature. -->
-    - `index.ts` <!-- Barrel file for all constants. -->
-    - `paths.ts` <!-- Application route paths. -->
-    - `roles.ts` <!-- Definitions of user roles and permissions. -->
-    - `tts.ts` <!-- Constants related to the Text-to-Speech feature. -->
+      - `utils.test.ts` <!-- Tests for auth utility functions. -->
+    - `lucia.ts` <!-- Lucia auth configuration and adapter setup. -->
+    - `utils.ts` <!-- Utility functions for authentication. -->
+  - `config/` <!-- Configuration files for various services and features. -->
+    - `appConfig.ts` <!-- General application configuration settings. -->
+    - `siteConfig.ts` <!-- Configuration for site metadata, navigation, etc. -->
+    - `ttsProviderConfig.ts` <!-- Configuration for TTS providers. -->
+  - `constants.ts` <!-- Application-wide constants. -->
+  - `db/` <!-- Database schema, migrations, and query utilities. -->
+    - `index.ts` <!-- Main export for database utilities. -->
+    - `schema.ts` <!-- Database schema definition using Drizzle ORM. -->
   - `errors/` <!-- Custom error classes and error handling utilities. -->
     - `__tests__/`
-      - `error-utils.test.ts` <!-- Tests for error utility functions. -->
-    - `error-utils.ts` <!-- Utility functions for error handling and reporting. -->
-    - `index.ts` <!-- Barrel file for error-related modules. -->
-    - `types.ts` <!-- TypeScript types for error objects. -->
-  - `forms/` <!-- Utilities and configurations for form handling. -->
+      - `errorHandler.test.ts` <!-- Tests for the error handler utility. -->
+    - `errorHandler.ts` <!-- Centralized error handling utility. -->
+    - `index.ts` <!-- Barrel file for error utilities. -->
+  - `events/` <!-- Event definitions and handlers for application events. -->
+    - `eventEmitter.ts` <!-- Application event emitter instance. -->
+    - `eventTypes.ts` <!-- TypeScript types for defined application events. -->
+  - `forms/` <!-- Utilities and types related to form handling. -->
     - `__tests__/`
       - `utils.test.ts` <!-- Tests for form utility functions. -->
-    - `utils.ts` <!-- Utility functions for form validation and submission. -->
-  - `hooks/` <!-- Legacy hooks, prefer top-level `hooks/` directory. -->
-  - `logging/` <!-- Logging configurations and utilities. -->
-    - `logger.ts` <!-- Main logger instance and configuration. -->
+    - `utils.ts` <!-- Utility functions for form processing and validation. -->
+  - `hooks/` <!-- Shared, non-UI specific hooks (utility hooks). -->
+    - `useDebounce.ts` <!-- Hook for debouncing function calls. -->
+  - `logger.ts` <!-- Logging utility configuration. -->
+  - `logging/` <!-- Logging specific utilities. -->
+    - `config.ts` <!-- Configuration for the logging library (e.g., Pino). -->
+    - `logger.ts` <!-- Main logger instance. -->
   - `middleware/` <!-- Next.js middleware configurations. -->
     - `__tests__/`
-      - `auth-middleware.test.ts` <!-- Tests for authentication middleware. -->
-    - `auth-middleware.ts` <!-- Middleware for protecting routes based on auth status. -->
+      - `authMiddleware.test.ts` <!-- Tests for authentication middleware. -->
+    - `authMiddleware.ts` <!-- Middleware for handling authentication and route protection. -->
+    - `index.ts` <!-- Main middleware entry point (if combining multiple middlewares). -->
   - `replicate/` <!-- Utilities for interacting with the Replicate API. -->
-    - `client.ts` <!-- Replicate API client setup. -->
-    - `types.ts` <!-- TypeScript types for Replicate API requests/responses. -->
+    - `config.ts` <!-- Configuration for the Replicate client. -->
+    - `ReplicateClient.ts` <!-- Client for making API calls to Replicate. -->
   - `repositories/` <!-- Data access layer, abstracting data sources. -->
-    - `UserRepository.ts` <!-- Repository for user data operations. -->
-    - `DamRepository.ts` <!-- Repository for DAM data operations. -->
+    - `damRepository.ts` <!-- Repository for DAM related data operations. -->
+    - `notesRepository.ts` <!-- Repository for notes data operations. -->
+    - `organizationRepository.ts` <!-- Repository for organization data. -->
+    - `profileRepository.ts` <!-- Repository for user profile data. -->
+    - `teamRepository.ts` <!-- Repository for team data. -->
+    - `ttsRepository.ts` <!-- Repository for TTS prediction data. -->
+    - `usersRepository.ts` <!-- Repository for user data. -->
   - `schemas/` <!-- Zod schemas for data validation. -->
-    - `auth.schema.ts` <!-- Schemas for authentication forms. -->
-    - `dam.schema.ts` <!-- Schemas for DAM related data (assets, folders). -->
-    - `notes.schema.ts` <!-- Schemas for notes validation. -->
-    - `onboarding.schema.ts` <!-- Schemas for onboarding form validation. -->
-    - `profile.schema.ts` <!-- Schemas for profile update forms. -->
-    - `settings.schema.ts` <!-- Schemas for various settings forms. -->
-    - `team.schema.ts` <!-- Schemas for team management forms. -->
-    - `tts.schema.ts` <!-- Schemas for Text-to-Speech input validation. -->
-  - `services/` <!-- Business logic services, orchestrating use cases. -->
-    - `EmailService.ts` <!-- Service for sending emails. -->
-    - `StorageService.ts` <!-- Service for interacting with file storage. -->
+    - `auth.schemas.ts` <!-- Schemas for authentication forms. -->
+    - `dam.schemas.ts` <!-- Schemas for DAM operations. -->
+    - `notes.schemas.ts` <!-- Schemas for notes validation. -->
+    - `onboarding.schemas.ts` <!-- Schemas for onboarding data. -->
+    - `organization.schemas.ts` <!-- Schemas for organization settings. -->
+    - `profile.schemas.ts` <!-- Schemas for profile updates. -->
+    - `team.schemas.ts` <!-- Schemas for team management. -->
+    - `tts.schemas.ts` <!-- Schemas for TTS inputs and outputs. -->
+  - `services/` <!-- Business logic services. -->
+    - `damService.ts` <!-- Service for DAM related business logic. -->
+    - `emailService.ts` <!-- Service for sending emails. -->
+    - `notesService.ts` <!-- Service for notes business logic. -->
+    - `onboardingService.ts` <!-- Service for user onboarding logic. -->
+    - `organizationService.ts` <!-- Service for organization logic. -->
+    - `profileService.ts` <!-- Service for profile business logic. -->
+    - `teamService.ts` <!-- Service for team business logic. -->
+    - `ttsService.ts` <!-- Service for TTS related business logic. -->
   - `store/` <!-- State management stores (e.g., Zustand, Redux). -->
-    - `uiStore.ts` <!-- Store for UI related state (modals, sidebar). -->
-  - `supabase/` <!-- Supabase client and utility functions. -->
-    - `client.ts` <!-- Supabase client initialization (browser/server). -->
-    - `middleware.ts` <!-- Supabase middleware client. -->
-    - `server.ts` <!-- Supabase server-side client. -->
+    - `appStore.ts` <!-- General application state store. -->
+  - `supabase/` <!-- Supabase client and utilities. -->
+    - `client.ts` <!-- Supabase client-side client instance. -->
+    - `server.ts` <!-- Supabase server-side client instance. -->
+    - `admin.ts` <!-- Supabase admin client (elevated privileges). -->
     - `utils.ts` <!-- Utility functions for Supabase operations. -->
-  - `usecases/` <!-- Application-specific business logic orchestrators. -->
-    - `dam/` <!-- Use cases related to Digital Asset Management. -->
-      - `uploadAssetUsecase.ts` <!-- Handles asset upload logic. -->
-    - `tts/` <!-- Use cases related to Text-to-Speech. -->
-      - `getTtsHistoryUsecase.ts` <!-- Usecase for fetching TTS generation history. -->
-      - `markTtsUrlAsInvalidUsecase.ts` <!-- Usecase for marking a TTS audio URL as invalid/expired. -->
-      - `generateSpeechUsecase.ts` <!-- Handles speech generation logic. -->
-  - `utils/` <!-- General utility functions. -->
-- `public/` <!-- Static assets served publicly. -->
-  - `placeholders/` <!-- Placeholder images or assets. -->
-  - `favicon.ico` <!-- Application icon for browser tabs. -->
+  - `types.ts` <!-- Global TypeScript types and interfaces. -->
+  - `usecases/` <!-- Use case specific business logic. Orchestrates services and repositories. -->
+    - `dam/`
+      - `deleteAssetUsecase.ts`
+      - `getAssetUsecase.ts`
+      - `listAssetsUsecase.ts`
+      - `uploadAssetUsecase.ts`
+    - `tts/`
+      - `__tests__/`
+        - `getSpeechGenerationResultUsecase.test.ts` <!-- Tests for TTS result polling use case. -->
+      - `getSpeechGenerationResultUsecase.ts` <!-- Use case for polling TTS generation results. -->
+      - `startSpeechGenerationUsecase.ts` <!-- Use case for initiating TTS generation. -->
+  - `utils.ts` <!-- General utility functions. -->
+  - `vectorDb.ts` <!-- Utilities for interacting with a vector database. -->
+- `public/` <!-- Static assets accessible from the web root. -->
+  - `placeholders/` <!-- Placeholder images. -->
+  - `robots.txt` <!-- Instructions for web crawlers. -->
+  - `site.webmanifest` <!-- Web app manifest for PWA capabilities. -->
+- `scripts/` <!-- Utility scripts for development and build processes. -->
+  - `seed.ts` <!-- Script for seeding the database with initial data. -->
+- `stories/` <!-- Storybook stories for UI components. -->
+  - `assets/` <!-- Assets used within Storybook stories. -->
+  - `Button.stories.tsx` <!-- Stories for the Button component. -->
+  - `Page.stories.tsx` <!-- Example stories for page layouts. -->
+- `supabase/` <!-- Supabase specific configuration and migrations. -->
+  - `.branches/` <!-- Supabase CLI branches. -->
+  - `.temp/` <!-- Supabase CLI temporary files. -->
+  - `config.toml` <!-- Supabase CLI configuration file. -->
+  - `functions/` <!-- Supabase Edge Functions. -->
+    - `_shared/` <!-- Shared code/utilities for Edge Functions. -->
+      - `cors.ts` <!-- CORS headers utility for functions. -->
+      - `supabaseAdmin.ts` <!-- Supabase admin client for functions. -->
+    - `admin-resend-invitation/` <!-- Edge function for admin to resend member invitation. -->
+      - `index.ts`
+    - `admin-reset-password/` <!-- Edge function for admin to trigger password reset for a user. -->
+      - `index.ts`
+    - `complete-onboarding-membership/` <!-- Edge function to finalize membership during onboarding. -->
+      - `index.ts`
+    - `invite-member/` <!-- Edge function for inviting a new member to an organization. -->
+      - `index.ts`
+    - `set-active-org-claim/` <!-- Edge function to set custom JWT claim for active organization. -->
+      - `index.ts`
+  - `migrations/` <!-- Database schema migrations. -->
+    - `meta/`
+      - `_journal.json`
+    - `0000_..._.sql` <!-- Example migration file. -->
+  - `seed.sql` <!-- SQL script for seeding initial database data. -->
+- `tests/` <!-- End-to-end and integration tests (e.g., Playwright). -->
+  - `auth.setup.ts` <!-- Setup for authentication in E2E tests. -->
+  - `auth.spec.ts` <!-- E2E tests for authentication flows. -->
+  - `dashboard.spec.ts` <!-- E2E tests for dashboard functionality. -->
+  - `example.spec.ts` <!-- Example E2E test file. -->
+  - `global.setup.ts` <!-- Global setup for all E2E tests. -->
+  - `playwright.config.ts` <!-- Playwright configuration file. -->
+- `types/` <!-- Global TypeScript type definitions. -->
+  - `lucia.d.ts` <!-- Type augmentations for Lucia auth. -->
+  - `next-auth.d.ts` <!-- Type augmentations for NextAuth (if used). -->
+- `.env.example` <!-- Example environment variables file. -->
+- `.env.local` <!-- Local environment variables (gitignored). -->
+- `.eslintrc.json` <!-- ESLint configuration file. -->
+- `.gitignore` <!-- Specifies intentionally untracked files that Git should ignore. -->
+- `components.json` <!-- Configuration for shadcn/ui components. -->
+- `LICENSE` <!-- Project license file. -->
+- `middleware.test.ts` <!-- Tests for root middleware.ts (if any). -->
+- `middleware.ts` <!-- Root Next.js middleware file. -->
+- `next-env.d.ts` <!-- Next.js TypeScript environment declarations. -->
+- `next.config.mjs` <!-- Next.js configuration file. -->
+- `package.json` <!-- Project dependencies and scripts. -->
+- `pnpm-lock.yaml` <!-- PNPM lockfile. -->
+- `pnpm-workspace.yaml` <!-- PNPM workspace configuration. -->
+- `postcss.config.mjs` <!-- PostCSS configuration file. -->
+- `README.md` <!-- Project README file. -->
+- `tsconfig.json` <!-- TypeScript configuration file. -->
+- `tsconfig.tsbuildinfo` <!-- TypeScript build information file. -->
+- `vitest.config.ts` <!-- Vitest configuration file. -->
+- `vitest.setup.ts` <!-- Vitest global setup file. -->
+- `vitest.shims.d.ts` <!-- Vitest shims for TypeScript. -->
+- `vitest.workspace.ts` <!-- Vitest workspace configuration. -->

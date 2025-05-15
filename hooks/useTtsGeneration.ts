@@ -19,81 +19,80 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
 
   // Reset state function
   const resetTtsState = useCallback(() => {
-    // startSpeechGenerationMutation.reset(); // Not applicable here
-    // getSpeechGenerationResultMutation.reset(); // Not applicable here
     setIsPollingLoading(false);
     setCurrentPredictionId(null); // Ensure polling stops
     setPredictionStatus(null);
     setAudioUrl(null);
     setTtsErrorMessage(null);
     setTtsPredictionDbId(null);
-    console.log("[useTtsGeneration] State reset");
-  }, []); // Removed mutation dependencies, as they don't exist in this hook
+  }, []);
 
   // Effect for polling the prediction status
   useEffect(() => {
-    // We need ttsPredictionDbId to fetch provider info for polling.
-    if (!currentPredictionId || !ttsPredictionDbId || predictionStatus === 'succeeded' || predictionStatus === 'failed' || predictionStatus === 'canceled') {
+    if (!currentPredictionId) {
+      return;
+    }
+    if (!ttsPredictionDbId) {
+      return;
+    }
+    if (predictionStatus === 'succeeded' || predictionStatus === 'failed' || predictionStatus === 'canceled') {
       return;
     }
 
-    // Indicate polling has started
     setIsPollingLoading(true);
-    setPredictionStatus('processing');
+    // If status is not final and not already 'processing', set to 'processing' to reflect polling activity.
+    // Avoids resetting from 'starting' if it's the very first poll setup.
+    if (predictionStatus !== 'processing' && predictionStatus !== 'starting') {
+        setPredictionStatus('processing'); 
+    } else if (!predictionStatus) { // If status is null (e.g. after reset and new ID set)
+        setPredictionStatus('processing');
+    }
 
     const intervalId = setInterval(async () => {
       try {
-        // Pass ttsPredictionDbId to the action, so it can determine the provider and the actual provider's prediction ID.
-        const result = await getSpeechGenerationResult(ttsPredictionDbId);
+        const result = await getSpeechGenerationResult(ttsPredictionDbId); 
 
-        if (!result.success) {
-          setTtsErrorMessage(result.error || 'Polling failed.');
-          setCurrentPredictionId(null);
+        // Refined condition for actual polling failure:
+        // Stop only if the action indicates a hard failure (result.success is false AND there's an error string)
+        // OR if the status returned is explicitly 'failed' or 'canceled' by the provider (even if success was technically true from the action wrapper).
+        if ((!result.success && result.error) || result.status === 'failed' || result.status === 'canceled') {
+          setTtsErrorMessage(result.error || `Prediction status: ${result.status || 'failed'}`);
+          setCurrentPredictionId(null); 
           setIsPollingLoading(false);
-          setPredictionStatus('failed');
-          clearInterval(intervalId);
+          setPredictionStatus(result.status || 'failed'); // Ensure status reflects the failure
+          clearInterval(intervalId); 
           return;
         }
 
-        const currentStatus = result.status || 'failed';
+        const currentStatus = result.status || 'failed'; // Default to 'failed' if status is somehow missing after passing above check
         setPredictionStatus(currentStatus);
 
         if (currentStatus === 'succeeded') {
           setAudioUrl(result.audioUrl ?? null);
-          setTtsPredictionDbId(result.ttsPredictionDbId ?? null);
-          setCurrentPredictionId(null); // Stop polling
+          setCurrentPredictionId(null); 
           setIsPollingLoading(false);
           toast({ title: 'Speech generated successfully!' });
-          // Notify parent component that generation is complete
           if (onGenerationComplete) {
             onGenerationComplete();
           }
-          clearInterval(intervalId);
-        } else if (currentStatus === 'failed' || currentStatus === 'canceled') {
-          setTtsErrorMessage(result.error ? JSON.stringify(result.error) : 'Prediction failed or was canceled.');
-          setTtsPredictionDbId(null);
-          setCurrentPredictionId(null); // Stop polling
-          setIsPollingLoading(false);
-          clearInterval(intervalId);
+          clearInterval(intervalId); 
+        } else {
+          // For any other status (like 'processing', 'starting') that isn't a hard error, just log and continue.
         }
-        // Keep polling if status is starting, processing, etc.
-      } catch (error) {
-        console.error('Polling error:', error);
-        setTtsErrorMessage('An error occurred during polling.');
-        setCurrentPredictionId(null);
+      } catch (error: any) {
+        setTtsErrorMessage(error.message || 'An error occurred during polling.');
+        setCurrentPredictionId(null); 
         setIsPollingLoading(false);
         setPredictionStatus('failed');
-        setTtsPredictionDbId(null);
-        clearInterval(intervalId);
+        clearInterval(intervalId); 
       }
-    }, 3000); // Poll every 3 seconds
+    }, 3000); 
 
-    // Cleanup function
     return () => {
       clearInterval(intervalId);
-      setIsPollingLoading(false); // Ensure loading stops if component unmounts while polling
+      setIsPollingLoading(false);
     };
-  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete, ttsPredictionDbId]);
+  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete, ttsPredictionDbId]); // REMOVED resetTtsState from deps
 
   // Function to initiate the TTS generation
   const startGeneration = useCallback((formData: FormData) => {
@@ -111,21 +110,21 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     }
 
     startTtsTransition(async () => {
-      // Pass parameters explicitly instead of formData
       const result = await startSpeechGeneration(inputText, voiceId, provider);
 
-      if (result.success && result.predictionId) {
+      if (result.success && result.predictionId && result.ttsPredictionDbId) {
+        // Important: Set DB ID first, then Replicate ID to trigger polling effect correctly
+        setTtsPredictionDbId(result.ttsPredictionDbId); 
         setCurrentPredictionId(result.predictionId);
-        if (result.ttsPredictionDbId) { // Check if ttsPredictionDbId is returned
-          setTtsPredictionDbId(result.ttsPredictionDbId); // Store our DB ID
-        }
-        // Polling will start via useEffect
       } else {
         setTtsErrorMessage(result.error || 'Failed to start generation.');
-        setPredictionStatus('failed'); // Set status to failed if start fails
+        setPredictionStatus('failed');
+        // Ensure currentPredictionId and ttsPredictionDbId are null if start failed
+        setCurrentPredictionId(null);
+        setTtsPredictionDbId(null);
       }
     });
-  }, [resetTtsState, startTtsTransition]);
+  }, [resetTtsState, startTtsTransition]); // Removed setTtsErrorMessage from deps as it's a setter
 
   const isGenerating = isTtsPending || isPollingLoading;
 
@@ -134,15 +133,15 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     dbId: string | null;
     status?: string | null;
   }) => {
-    // The calling context (TtsInterface) should call resetTtsState first if needed.
-    // This function just loads the data into state.
+    resetTtsState(); // Reset state before loading an existing prediction
     setAudioUrl(data.audioUrl); 
     setTtsPredictionDbId(data.dbId);
     setPredictionStatus(data.status || (data.audioUrl ? 'succeeded' : null));
-    setTtsErrorMessage(null); // Clear any previous error
-    // isGenerating will be false as mutations are reset and isPollingLoading is false (or will be set by resetTtsState)
-    console.log("[useTtsGeneration] Prediction loaded into state:", data);
-  }, []); // Dependencies: setAudioUrl, setTtsPredictionDbId, etc. are stable from useState
+    setTtsErrorMessage(null); 
+    // Ensure polling doesn't start for already loaded predictions
+    setCurrentPredictionId(null); 
+    setIsPollingLoading(false);
+  }, [resetTtsState]); // resetTtsState is a dependency
 
   return {
     isGenerating,

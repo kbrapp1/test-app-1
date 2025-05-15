@@ -57,19 +57,39 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
       }
       try {
         console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}`);
-        const result = await getTtsVoices(selectedProvider); // Pass the selected provider
+        const result = await getTtsVoices(selectedProvider);
         if (result.success && result.data) {
           setAvailableVoices(result.data);
           if (result.data.length === 0 && !result.error) {
             setVoiceLoadingError(`No voices available for provider: ${selectedProvider}`);
           } else if (result.error) {
-            setVoiceLoadingError(result.error);
+            let errorMessage = 'Unknown error';
+            if (typeof result.error === 'string') {
+              errorMessage = result.error;
+            } else if (result.error && typeof (result.error as any).message === 'string') {
+              errorMessage = (result.error as any).message;
+            }
+            setVoiceLoadingError(errorMessage);
           }
         } else {
-          setVoiceLoadingError(result.error || `Failed to load voices for ${selectedProvider}.`);
+          let errorMessage = `Failed to load voices for ${selectedProvider}.`;
+          if (result.error) {
+            if (typeof result.error === 'string') {
+              errorMessage = result.error;
+            } else if (typeof (result.error as any).message === 'string') {
+              errorMessage = (result.error as any).message;
+            }
+          }
+          setVoiceLoadingError(errorMessage);
         }
       } catch (error) {
-        setVoiceLoadingError('An unexpected error occurred while fetching voices.');
+        let errorMessage = 'An unexpected error occurred while fetching voices.';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        setVoiceLoadingError(errorMessage);
         console.error('Voice fetch error:', error);
       }
     }
