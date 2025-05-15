@@ -991,7 +991,10 @@ CREATE TABLE IF NOT EXISTS "public"."TtsPrediction" (
     "outputAssetId" "uuid",
     "voiceId" "text",
     "errorMessage" "text",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "prediction_provider" "text",
+    "is_output_url_problematic" boolean DEFAULT false NOT NULL,
+    "output_url_last_error" "text"
 );
 
 
@@ -999,6 +1002,18 @@ ALTER TABLE "public"."TtsPrediction" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."TtsPrediction"."organization_id" IS 'FK to the organization this record belongs to.';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."prediction_provider" IS 'Identifies the source of the TTS prediction (e.g., replicate, elevenlabs).';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."is_output_url_problematic" IS 'Flags if the output_url has been identified as problematic (e.g., expired, inaccessible).';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."output_url_last_error" IS 'Stores the last error message encountered when trying to use the output_url.';
 
 
 

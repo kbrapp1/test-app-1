@@ -4,27 +4,33 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 /**
- * Usecase: Validates input, initiates speech generation via Replicate, and saves initial prediction to DB.
+ * Usecase: Validates input, initiates speech generation via the specified provider, and saves initial prediction to DB.
  */
-export async function startSpeechGeneration(formData: FormData): Promise<{ success: boolean; predictionId?: string; ttsPredictionDbId?: string; error?: string; errors?: Record<string, string[]> }> {
-  // Validate input using Zod schema
-  const parsed = StartSpeechSchema.safeParse({
-    inputText: formData.get('inputText'),
-    voiceId: formData.get('voiceId'),
-    // TODO: Handle sourceAssetId if passed from form
-  });
-
-  if (!parsed.success) {
-    console.error('TTS Usecase (startSpeechGeneration): Input validation failed', parsed.error.flatten().fieldErrors);
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+export async function startSpeechGeneration(
+  inputText: string, 
+  voiceId: string, 
+  provider: string
+): Promise<{ success: boolean; predictionId?: string; ttsPredictionDbId?: string; error?: string; /*errors?: Record<string, string[]>*/ }> {
+  
+  // Basic validation for now, assuming form-level Zod validation handled more complex cases.
+  if (!inputText || !voiceId || !provider) {
+    console.error('TTS Usecase (startSpeechGeneration): Missing inputText, voiceId, or provider.');
+    return { success: false, error: 'Missing required parameters (inputText, voiceId, or provider).' };
   }
 
-  const validatedInput: StartSpeechInput = parsed.data;
+  // Provider-specific logic will go here. For now, only Replicate is supported.
+  if (provider !== 'replicate') {
+    console.warn(`TTS Usecase (startSpeechGeneration): Unsupported provider: ${provider}`);
+    return { success: false, error: `Provider '${provider}' is not currently supported.` };
+  }
+
+  // Construct the input for Replicate (matches StartSpeechInput without FormData parsing)
+  const replicateInput: StartSpeechInput = { inputText, voiceId };
 
   try {
-    console.log('TTS Usecase (startSpeechGeneration): Calling Replicate to create prediction...');
-    const prediction = await createReplicatePrediction(validatedInput);
-    console.log('TTS Usecase (startSpeechGeneration): Replicate prediction created:', prediction.id);
+    console.log(`TTS Usecase (startSpeechGeneration): Calling Replicate for provider '${provider}' to create prediction...`);
+    const prediction = await createReplicatePrediction(replicateInput);
+    console.log(`TTS Usecase (startSpeechGeneration): Replicate prediction created for provider '${provider}':`, prediction.id);
     
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -41,12 +47,16 @@ export async function startSpeechGeneration(formData: FormData): Promise<{ succe
     }
 
     const initialDbRecord = {
-      replicatePredictionId: prediction.id,
-      status: prediction.status || 'starting', // Use status from Replicate if available, otherwise 'starting'
-      inputText: validatedInput.inputText,
-      voiceId: validatedInput.voiceId,
+      // Storing Replicate's prediction ID. If other providers are used,
+      // this field will store their respective prediction IDs.
+      // Consider renaming this field to `providerPredictionId` in a future schema migration.
+      replicatePredictionId: prediction.id, 
+      status: prediction.status || 'starting', 
+      inputText: replicateInput.inputText,
+      voiceId: replicateInput.voiceId,
       userId: user.id,
       organization_id: organizationId,
+      prediction_provider: provider, // Store the provider
       // sourceAssetId: validatedInput.sourceAssetId, // TODO: Add to StartSpeechInput if needed
     };
 

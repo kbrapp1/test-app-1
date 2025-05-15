@@ -21,6 +21,7 @@ import { useTtsDamIntegration } from '@/hooks/useTtsDamIntegration';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';
 import { Loader2 } from "lucide-react";
+import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig'; // Import provider configs
 
 // Validation schema definition (can be shared or defined here)
 const TtsInputSchema = z.object({
@@ -28,6 +29,7 @@ const TtsInputSchema = z.object({
     .min(1, 'Input text cannot be empty.')
     .max(5000, 'Input text exceeds maximum length of 5000 characters.'),
   voiceId: z.string({ required_error: "Please select a voice." }).min(1, "Please select a voice."),
+  provider: z.string({ required_error: "Please select a provider." }).min(1, "Please select a provider."), // Added provider
 });
 
 type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
@@ -36,6 +38,7 @@ type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
 export interface TtsFormInitializationData {
   inputText: string;
   voiceId: string;
+  provider?: string; // Added provider, optional for now
   key: number; // Used to force re-initialization if needed
   outputUrl?: string | null;
   dbId?: string | null;
@@ -55,6 +58,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
     defaultValues: {
       inputText: formInitialValues?.inputText || '',
       voiceId: formInitialValues?.voiceId || '',
+      provider: formInitialValues?.provider || Object.keys(ttsProviderConfigs)[0] || '', // Default provider
     },
   });
   const currentInputText = form.watch('inputText');
@@ -105,6 +109,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
       form.reset({
         inputText: formInitialValues.inputText,
         voiceId: formInitialValues.voiceId,
+        provider: formInitialValues.provider || Object.keys(ttsProviderConfigs)[0] || '', // Set provider on reset
       });
 
       if (formInitialValues.outputUrl && formInitialValues.dbId) {
@@ -132,6 +137,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
     const formData = new FormData();
     formData.append('inputText', values.inputText);
     formData.append('voiceId', values.voiceId);
+    formData.append('provider', values.provider); // Append provider
     startGeneration(formData);
   };
 

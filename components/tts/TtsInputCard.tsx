@@ -9,6 +9,8 @@ import { Loader2, Library, Save, SaveAll } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { z } from 'zod';
 import { VoiceSelector } from './VoiceSelector';
+import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Define the structure for a voice object
 interface TtsVoice {
@@ -25,6 +27,7 @@ const TtsInputSchema = z.object({
     .min(1, 'Input text cannot be empty.')
     .max(5000, 'Input text exceeds maximum length of 5000 characters.'),
   voiceId: z.string({ required_error: "Please select a voice." }).min(1, "Please select a voice."),
+  provider: z.string({ required_error: "Please select a provider." }).min(1, "Please select a provider."),
 });
 type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
 
@@ -57,6 +60,7 @@ export function TtsInputCard({
 }: TtsInputCardProps) {
   
   const hasTextChanged = sourceAssetId && currentInputText !== originalLoadedText;
+  const selectedProvider = form.watch('provider'); // Watch the provider field
 
   return (
     <Card>
@@ -152,7 +156,37 @@ export function TtsInputCard({
                     field={field} 
                     setValue={form.setValue}
                     isDisabled={isProcessing} 
+                    selectedProvider={selectedProvider} // Pass the selected provider
                   />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Provider Selection */}
+            <FormField
+              control={form.control}
+              name="provider"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Provider</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    disabled={isProcessing}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a TTS provider" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(ttsProviderConfigs).map(([providerKey, providerConfig]) => (
+                        <SelectItem key={providerKey} value={providerKey}>
+                          {providerConfig.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

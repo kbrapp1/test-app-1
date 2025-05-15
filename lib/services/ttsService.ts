@@ -79,18 +79,31 @@ export async function downloadAndUploadAudio(
     const response = await fetch(audioUrl);
     if (!response.ok) {
       if (response.status === 403 || response.status === 404) {
-        console.warn(`Service: Failed to download audio from ${audioUrl}. Status: ${response.status}. Link likely expired or invalid.`);
-        throw new Error('Failed to download audio: The source link may have expired or is invalid.');
+        throw new Error(
+          `Failed to download audio. The link may have expired or is invalid (Status: ${response.status} ${response.statusText}).`
+        );
       }
-      throw new Error(`Failed to download audio from URL: Server responded with ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to download audio from URL: ${response.statusText} (Status: ${response.status})`
+      );
     }
     audioBlob = await response.blob();
     contentType = response.headers.get('content-type') || 'audio/mpeg';
+
+    // Additional check for content type
+    if (!contentType.startsWith('audio/')) {
+      console.warn(
+        `Service: Downloaded content from ${audioUrl} is not audio. Content-Type: ${contentType}. Treating as download failure.`
+      );
+      throw new Error(
+        `Downloaded file is not audio (type: ${contentType}). The link might be for an error page or invalid content.`
+      );
+    }
+
     console.log('Service: Fetched audio from Replicate. Content-Type:', contentType);
-  } catch (fetchError: any) {
+  } catch (fetchError) {
     console.error('Service: Error fetching audio from Replicate URL:', fetchError);
-    const errorMessage = fetchError.message || 'Failed to download generated audio. Unknown fetch error.';
-    throw new Error(errorMessage);
+    throw new Error('Failed to download generated audio.');
   }
 
   const fileExtension = getExtensionFromMimeType(contentType);

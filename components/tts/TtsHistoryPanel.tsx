@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { X, RotateCw, Search } from 'lucide-react';
+import { X, RotateCw, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getTtsHistory } from '@/lib/actions/tts';
+import { getTtsHistory, markTtsUrlProblematic } from '@/lib/actions/tts';
 import { TtsHistoryItem } from './TtsHistoryItem';
 import type { Database } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getTtsProviderConfig } from '@/lib/config/ttsProviderConfig';
 
 type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
 
@@ -27,6 +28,39 @@ export interface TtsHistoryPanelProps {
   shouldRefresh?: boolean;
   onRefreshComplete?: () => void;
 }
+
+const ITEMS_PER_PAGE = 10;
+const DEBOUNCE_DELAY = 300;
+
+// Helper function to determine if a Replicate prediction link is likely expired
+const isPredictionLinkLikelyExpired = (item: TtsPredictionRow): boolean => {
+  if (!item.prediction_provider || !item.outputUrl || !item.createdAt) {
+    return false;
+  }
+
+  const providerConfig = getTtsProviderConfig(item.prediction_provider);
+  const linkExpiryMinutes = providerConfig?.linkExpiryMinutes;
+
+  // If no specific expiry is configured for this provider, assume not expired by this logic
+  if (typeof linkExpiryMinutes !== 'number') {
+    return false;
+  }
+
+  // For Replicate, also ensure the URL matches the expected pattern.
+  // For other providers, this specific URL check might not be necessary or might differ.
+  if (item.prediction_provider === 'replicate' && !item.outputUrl.includes('replicate.delivery')) {
+    return false;
+  }
+
+  try {
+    const creationDate = new Date(item.createdAt);
+    const expiryThreshold = new Date(creationDate.getTime() + linkExpiryMinutes * 60 * 1000);
+    return new Date() > expiryThreshold;
+  } catch (e) {
+    console.warn('Error parsing date for expiry check:', item.createdAt, e);
+    return false; // If date is invalid, assume not expired
+  }
+};
 
 export function TtsHistoryPanel({ 
   isOpen, 
@@ -55,8 +89,27 @@ export function TtsHistoryPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [allItemsLoaded, setAllItemsLoaded] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const ITEMS_PER_PAGE = 10;
-  const DEBOUNCE_DELAY = 300;
+
+  // Effect to mark item as problematic on playback error
+  useEffect(() => {
+    if (headlessPlayerError && headlessPlayerCurrentlyPlayingUrl) {
+      const problematicItem = historyItems.find(it => it.outputUrl === headlessPlayerCurrentlyPlayingUrl);
+      if (problematicItem && !problematicItem.is_output_url_problematic) {
+        markTtsUrlProblematic(problematicItem.id, headlessPlayerError).then(result => {
+          if (result.success) {
+            // Optimistically update the item in state
+            setHistoryItems(prevItems => 
+              prevItems.map(it => 
+                it.id === problematicItem.id 
+                  ? { ...it, is_output_url_problematic: true, output_url_last_error: headlessPlayerError } 
+                  : it
+              )
+            );
+          }
+        });
+      }
+    }
+  }, [headlessPlayerError, headlessPlayerCurrentlyPlayingUrl, historyItems]);
 
   const fetchHistory = useCallback(async (page: number, currentSearchQuery: string) => {
     setIsLoading(true);
@@ -130,9 +183,8 @@ export function TtsHistoryPanel({
         });
       }, 50);
       
-      if (historyItems.length === 0) { 
+      if (historyItems.length === 0 && !isLoading && !shouldRefresh) { 
          setCurrentPage(1);
-         setHistoryItems([]);
          setAllItemsLoaded(false);
          fetchHistory(1, searchQuery);
       }
@@ -143,7 +195,7 @@ export function TtsHistoryPanel({
       const timer = setTimeout(() => setIsMounted(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, fetchHistory, searchQuery, historyItems.length]);
+  }, [isOpen, fetchHistory, searchQuery, historyItems.length, isLoading, shouldRefresh]);
   
   useEffect(() => {
     if (shouldRefresh && isOpen) {
@@ -172,6 +224,45 @@ export function TtsHistoryPanel({
     }
   };
 
+  // Wrapped save handlers
+  const handleSaveToDamForItem = async (item: TtsPredictionRow): Promise<boolean> => {
+    const success = await onSaveToDam(item); // Call original prop
+    if (!success && !item.is_output_url_problematic) {
+      const errorMessage = "Failed to save audio; link may be invalid.";
+      markTtsUrlProblematic(item.id, errorMessage).then(result => {
+        if (result.success) {
+          setHistoryItems(prevItems =>
+            prevItems.map(it =>
+              it.id === item.id
+                ? { ...it, is_output_url_problematic: true, output_url_last_error: errorMessage }
+                : it
+            )
+          );
+        }
+      });
+    }
+    return success;
+  };
+
+  const handleSaveAsToDamForItem = async (item: TtsPredictionRow): Promise<boolean> => {
+    const success = await onSaveAsToDam(item); // Call original prop
+    if (!success && !item.is_output_url_problematic) {
+      const errorMessage = "Failed to save audio as new; link may be invalid.";
+      markTtsUrlProblematic(item.id, errorMessage).then(result => {
+        if (result.success) {
+          setHistoryItems(prevItems =>
+            prevItems.map(it =>
+              it.id === item.id
+                ? { ...it, is_output_url_problematic: true, output_url_last_error: errorMessage }
+                : it
+            )
+          );
+        }
+      });
+    }
+    return success;
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -189,22 +280,32 @@ export function TtsHistoryPanel({
     
     return (
       <>
-        {historyItems.map((item) => (
-          <TtsHistoryItem 
-            key={item.id} 
-            item={item} 
-            onReplay={onReplayItem}
-            onReloadInput={onReloadInputFromItem}
-            onDelete={onDeleteItem}
-            onViewInDam={onViewInDamItem}
-            onSaveToDam={onSaveToDam}
-            onSaveAsToDam={onSaveAsToDam}
-            headlessPlayerCurrentlyPlayingUrl={headlessPlayerCurrentlyPlayingUrl}
-            isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
-            isHeadlessPlayerLoading={isHeadlessPlayerLoading}
-            headlessPlayerError={headlessPlayerError}
-          />
-        ))}
+        {historyItems.map((item) => {
+          const itemIsLikelyExpired = isPredictionLinkLikelyExpired(item);
+          const itemHasPlaybackError = headlessPlayerCurrentlyPlayingUrl === item.outputUrl && !!headlessPlayerError;
+          
+          return (
+            <TtsHistoryItem 
+              key={item.id} 
+              item={item} 
+              isLikelyExpired={itemIsLikelyExpired}
+              hasActualPlaybackError={itemHasPlaybackError}
+              actualPlaybackErrorMessage={itemHasPlaybackError ? headlessPlayerError : null}
+              isProblematicFromDb={item.is_output_url_problematic}
+              dbProblematicMessage={item.output_url_last_error}
+              onReplay={onReplayItem}
+              onReloadInput={onReloadInputFromItem}
+              onDelete={onDeleteItem}
+              onViewInDam={onViewInDamItem}
+              onSaveToDam={handleSaveToDamForItem}
+              onSaveAsToDam={handleSaveAsToDamForItem}
+              headlessPlayerCurrentlyPlayingUrl={headlessPlayerCurrentlyPlayingUrl}
+              isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
+              isHeadlessPlayerLoading={isHeadlessPlayerLoading}
+              headlessPlayerError={headlessPlayerError}
+            />
+          );
+        })}
         {historyItems.length > 0 && historyItems.length < totalCount && !allItemsLoaded && (
           <Button 
             variant="outline"
@@ -212,7 +313,14 @@ export function TtsHistoryPanel({
             onClick={handleLoadMore}
             disabled={isLoading}
           >
-            {isLoading && currentPage > 1 ? 'Loading more...' : 'Load More'} 
+            {isLoading && currentPage > 1 ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-more-icon" />
+                Loading more...
+              </>
+            ) : (
+              'Load More'
+            )} 
           </Button>
         )}
          {allItemsLoaded && historyItems.length > 0 && (
@@ -229,14 +337,14 @@ export function TtsHistoryPanel({
         isPanelVisible ? "translate-x-0" : "translate-x-full"
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b shrink-0">
         <h2 className="text-lg font-semibold">Generation History</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close history panel">
           <X className="h-4 w-4" />
         </Button>
       </div>
       
-      <div className="p-4 border-b">
+      <div className="p-4 border-b shrink-0">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -244,6 +352,7 @@ export function TtsHistoryPanel({
             className="pl-8 pr-10"
             value={searchQuery}
             onChange={handleSearchChange}
+            aria-label="Search TTS history"
           />
           {searchQuery && (
             <Button 
@@ -260,7 +369,7 @@ export function TtsHistoryPanel({
                 setAllItemsLoaded(false); 
                 fetchHistory(1, '');
               }}
-              aria-label="Clear search"
+              aria-label="Clear search query"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -268,8 +377,11 @@ export function TtsHistoryPanel({
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4">
-        {renderContent()}
+      {/* Content Wrapper: This div will take up the remaining space and handle overflow */}
+      <div className="flex-1 overflow-hidden"> 
+        <div className="h-full overflow-y-auto p-4">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,11 @@ export function TtsOutputCard({
   onDeletePrediction
 }: TtsOutputCardProps) {
   const { toast } = useToast();
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPlaybackError(null);
+  }, [audioUrl]);
 
   const handleDownloadClick = async () => {
     if (!audioUrl) return;
@@ -106,6 +111,7 @@ export function TtsOutputCard({
         {!showLoadingState && !errorMessage && hasAudio && (
           <WaveformAudioPlayer 
             audioUrl={audioUrl} 
+            onPlaybackError={setPlaybackError}
           />
         )}
       </CardContent>
@@ -118,7 +124,7 @@ export function TtsOutputCard({
                   variant="outline" 
                   size="icon"
                   onClick={handleCopyToClipboard} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting}
+                  disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
                 >
                   <CopyIcon className="h-4 w-4" />
                 </Button>
@@ -134,7 +140,7 @@ export function TtsOutputCard({
                   variant="outline" 
                   size="icon"
                   onClick={handleDownloadClick} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting}
+                  disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
                 >
                   <Download className="h-4 w-4" />
                 </Button>
@@ -149,7 +155,7 @@ export function TtsOutputCard({
                 <Button 
                   size="icon"
                   onClick={onSaveToLibrary} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting || !currentTtsPredictionDbId}
+                  disabled={showLoadingState || isSavingToDam || isDeleting || !currentTtsPredictionDbId || !!playbackError}
                 >
                   {isSavingToDam ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -171,7 +177,7 @@ export function TtsOutputCard({
                       <Button 
                         variant="destructive" 
                         size="icon"
-                        disabled={showLoadingState || isSavingToDam || isDeleting}
+                        disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
                       >
                         {isDeleting ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

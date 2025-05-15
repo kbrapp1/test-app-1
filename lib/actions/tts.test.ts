@@ -24,6 +24,9 @@ import { getTtsHistory as getTtsHistoryUsecase } from '@/lib/usecases/tts/getTts
 // Type alias for the module we are testing
 type TtsModule = typeof import('./tts');
 
+// Variable to hold the dynamically imported module - moved to higher scope
+let ttsActions: TtsModule;
+
 // --- Mocks --- 
 
 // Mock next/headers (hoisted)
@@ -152,14 +155,12 @@ describe('TTS Server Actions', () => {
   const testVoiceId = 'af_bella';
   const testAudioUrl = 'https://example.com/audio.mp3';
   const testNewAssetId = 'new-asset-uuid-789';
+  const testProviderId = 'replicate'; // Added for the test
   // const mockUuid = 'mock-uuid-1234-5678-90ab-cdef12345678'; // Handled by service
   // const testGeneratedFilename = `${mockUuid}.mp3`; // Handled by service
   // const testStoragePath = `${testUserId}/audio/${testGeneratedFilename}`; // Handled by service
   const MODEL_IDENTIFIER = 'jaaari/kokoro-82m:f559560eb822dc509045f3921a1921234918b91739db4bf3daab2169b71c7a13';
   
-  // Variable to hold the dynamically imported module
-  let ttsActions: TtsModule;
-
   beforeEach(async () => {
     vi.resetAllMocks(); // Resets all mocks, including service mocks
     process.env = { ...OLD_ENV, REPLICATE_API_TOKEN: 'test-token' }; 
@@ -252,7 +253,7 @@ describe('TTS Server Actions', () => {
     vi.resetAllMocks();
 
 
-    // Dynamically import the module to test AFTER all mocks are set up
+    // Dynamically import the module to get the actual implementations or their auto-mocks
     ttsActions = await import('./tts'); 
 
     // Now, import the mocked usecases *after* dynamic import of actions 
@@ -272,25 +273,25 @@ describe('TTS Server Actions', () => {
   });
 
   afterEach(() => {
-    process.env = OLD_ENV; // Restore original environment variables
-    vi.restoreAllMocks(); // Ensures mocks are clean for other test files
+    process.env = OLD_ENV;
+    vi.restoreAllMocks(); // This will restore the original implementations
   });
 
   describe('startSpeechGeneration', () => {
-    const formData = createFormData({ inputText: testInputText, voiceId: testVoiceId });
+    // const formData = createFormData({ inputText: testInputText, voiceId: testVoiceId, provider: testProviderId }); // No longer needed for these tests
     const mockUsecaseSuccessResponse = { success: true, predictionId: testPredictionId };
     const mockUsecaseValidationError = { success: false, errors: { inputText: ['Required'] } };
     const mockUsecaseAuthError = { success: false, error: 'Auth failed' };
 
-    it('should call startSpeechGeneration usecase with formData and return its successful result', async () => {
+    it('should call startSpeechGeneration usecase with inputText, voiceId, and provider and return its successful result', async () => {
       // Import the mock for this test
       const { startSpeechGeneration } = await import('@/lib/usecases/tts/startSpeechGenerationUsecase');
       (startSpeechGeneration as Mock).mockResolvedValue(mockUsecaseSuccessResponse);
       
-      const result = await ttsActions.startSpeechGeneration(formData);
+      const result = await ttsActions.startSpeechGeneration(testInputText, testVoiceId, testProviderId); // Call with individual args
 
       expect(startSpeechGeneration).toHaveBeenCalledTimes(1);
-      expect(startSpeechGeneration).toHaveBeenCalledWith(formData);
+      expect(startSpeechGeneration).toHaveBeenCalledWith(testInputText, testVoiceId, testProviderId);
       expect(result).toEqual(mockUsecaseSuccessResponse);
     });
 
@@ -298,9 +299,10 @@ describe('TTS Server Actions', () => {
       const { startSpeechGeneration } = await import('@/lib/usecases/tts/startSpeechGenerationUsecase');
       (startSpeechGeneration as Mock).mockResolvedValue(mockUsecaseValidationError);
 
-      const result = await ttsActions.startSpeechGeneration(formData); // formData might be invalid
+      const result = await ttsActions.startSpeechGeneration(testInputText, testVoiceId, testProviderId); // Call with individual args
 
       expect(startSpeechGeneration).toHaveBeenCalledTimes(1);
+      expect(startSpeechGeneration).toHaveBeenCalledWith(testInputText, testVoiceId, testProviderId);
       expect(result).toEqual(mockUsecaseValidationError);
     });
 
@@ -308,9 +310,10 @@ describe('TTS Server Actions', () => {
       const { startSpeechGeneration } = await import('@/lib/usecases/tts/startSpeechGenerationUsecase');
       (startSpeechGeneration as Mock).mockResolvedValue(mockUsecaseAuthError);
 
-      const result = await ttsActions.startSpeechGeneration(formData);
+      const result = await ttsActions.startSpeechGeneration(testInputText, testVoiceId, testProviderId); // Call with individual args
 
       expect(startSpeechGeneration).toHaveBeenCalledTimes(1);
+      expect(startSpeechGeneration).toHaveBeenCalledWith(testInputText, testVoiceId, testProviderId);
       expect(result).toEqual(mockUsecaseAuthError);
     });
 
@@ -320,81 +323,168 @@ describe('TTS Server Actions', () => {
       (startSpeechGeneration as Mock).mockRejectedValue(usecaseError);
 
       await expect(
-        ttsActions.startSpeechGeneration(formData)
+        ttsActions.startSpeechGeneration(testInputText, testVoiceId, testProviderId) // Call with individual args
       ).rejects.toThrow(usecaseError);
       expect(startSpeechGeneration).toHaveBeenCalledTimes(1);
+      expect(startSpeechGeneration).toHaveBeenCalledWith(testInputText, testVoiceId, testProviderId);
     });
   });
 
   describe('saveTtsAudioToDam', () => {
-    const testAudioUrl = 'https://example.com/audio.mp3';
-    const desiredAssetName = 'My Saved Audio';
-    const testPredictionId = 'pred-for-save';
-    const mockUsecaseResponse = { success: true, assetId: testNewAssetId };
+    const predictionId = 'pred-123';
+    const assetId = 'asset-456';
+    const ttsPredictionId = 'tts-pred-uuid-001';
 
-    it('should call saveTtsAudioToDam usecase with correct parameters and return its result', async () => {
-      const { saveTtsAudioToDam } = await import('@/lib/usecases/tts/saveTtsAudioToDamUsecase');
-      (saveTtsAudioToDam as Mock).mockResolvedValue(mockUsecaseResponse);
-
-      const result = await ttsActions.saveTtsAudioToDam(
-        testAudioUrl,
-        desiredAssetName,
-        testPredictionId
-      );
-
-      expect(saveTtsAudioToDam).toHaveBeenCalledTimes(1);
-      expect(saveTtsAudioToDam).toHaveBeenCalledWith(
-        testAudioUrl,
-        desiredAssetName,
-        testPredictionId
-      );
-      expect(result).toEqual(mockUsecaseResponse);
+    // Specific beforeEach for saveTtsAudioToDam to set up its mocks correctly
+    beforeEach(() => {
+      (saveTtsAudioToDamUsecase as Mock).mockReset();
+      
+      const mockEqUpdate = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn(() => ({ eq: mockEqUpdate })); 
+      
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === 'TtsPrediction') {
+          return { update: mockUpdate } as any;
+        }
+        return { 
+          insert: vi.fn().mockReturnThis(), 
+          select: vi.fn().mockReturnThis(), 
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        } as any;
+      });
     });
 
-    it('should return error result from usecase if usecase call fails', async () => {
-      const mockErrorResponse = {
-        success: false,
-        error: 'Usecase error details'
-      };
-      const { saveTtsAudioToDam } = await import('@/lib/usecases/tts/saveTtsAudioToDamUsecase');
-      (saveTtsAudioToDam as Mock).mockResolvedValue(mockErrorResponse);
+    it('should call saveTtsAudioToDam usecase with correct parameters and return its result (linking enabled)', async () => {
+      const mockUsecaseResponse = { success: true, assetId: assetId };
+      (saveTtsAudioToDamUsecase as Mock).mockResolvedValue(mockUsecaseResponse);
+      
+      const mockEqUpdateFn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn(() => ({ eq: mockEqUpdateFn }));
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === 'TtsPrediction') {
+          return { update: mockUpdateFn };
+        }
+        return {}; 
+      });
 
-      const result = await ttsActions.saveTtsAudioToDam(
+      // Call with 4 args (linkToPrediction = true by default, but explicit here for clarity)
+      const result = await ttsActions.saveTtsAudioToDam(testAudioUrl, 'test_audio.mp3', ttsPredictionId, true);
+
+      expect(saveTtsAudioToDamUsecase).toHaveBeenCalledWith(
         testAudioUrl,
-        desiredAssetName,
-        testPredictionId
+        'test_audio.mp3',
+        ttsPredictionId
+        // No userId here, usecase handles it
       );
+      expect(result).toEqual({ success: true, assetId: assetId });
+      
+      expect(mockUpdateFn).toHaveBeenCalledWith({ outputAssetId: assetId });
+      expect(mockEqUpdateFn).toHaveBeenCalledWith('id', ttsPredictionId);
+    });
 
-      expect(saveTtsAudioToDam).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockErrorResponse);
+    it('should call saveTtsAudioToDam usecase and not link if linkToPrediction is false', async () => {
+      const mockUsecaseResponse = { success: true, assetId: assetId };
+      (saveTtsAudioToDamUsecase as Mock).mockResolvedValue(mockUsecaseResponse);
+
+      const mockUpdateFn = vi.fn(); // Should not be called
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === 'TtsPrediction') {
+          return { update: mockUpdateFn };
+        }
+        return {};
+      });
+
+      // Call with 4 args (linkToPrediction = false)
+      const result = await ttsActions.saveTtsAudioToDam(testAudioUrl, 'test_audio_no_link.mp3', ttsPredictionId, false);
+
+      expect(saveTtsAudioToDamUsecase).toHaveBeenCalledWith(
+        testAudioUrl,
+        'test_audio_no_link.mp3',
+        ttsPredictionId
+      );
+      expect(result).toEqual({ success: true, assetId: assetId });
+      expect(mockUpdateFn).not.toHaveBeenCalled();
+    });
+
+
+    it('should return error result from usecase if usecase call fails', async () => {
+      const usecaseError = { success: false, error: 'Usecase failed' };
+      (saveTtsAudioToDamUsecase as Mock).mockResolvedValue(usecaseError);
+
+      // Call with 3 args (linkToPrediction defaults to true)
+      const result = await ttsActions.saveTtsAudioToDam(testAudioUrl, 'test_audio.mp3', ttsPredictionId);
+      expect(result).toEqual(usecaseError);
+      expect(saveTtsAudioToDamUsecase).toHaveBeenCalledWith(testAudioUrl, 'test_audio.mp3', ttsPredictionId);
     });
 
     it('should propagate thrown errors from the usecase', async () => {
-      const usecaseError = new Error('Critical usecase failure');
-      const { saveTtsAudioToDam } = await import('@/lib/usecases/tts/saveTtsAudioToDamUsecase');
-      (saveTtsAudioToDam as Mock).mockRejectedValue(usecaseError);
+      const usecaseError = new Error('Usecase threw an error');
+      (saveTtsAudioToDamUsecase as Mock).mockRejectedValue(usecaseError);
 
       await expect(
-        ttsActions.saveTtsAudioToDam(
-          testAudioUrl,
-          desiredAssetName,
-          testPredictionId
-        )
+        // Call with 3 args
+        ttsActions.saveTtsAudioToDam(testAudioUrl, 'test_audio.mp3', ttsPredictionId)
       ).rejects.toThrow(usecaseError);
-       expect(saveTtsAudioToDam).toHaveBeenCalledTimes(1);
+      expect(saveTtsAudioToDamUsecase).toHaveBeenCalledWith(testAudioUrl, 'test_audio.mp3', ttsPredictionId);
     });
+
+    it('should return asset created but linking failed if Supabase update fails', async () => {
+      const mockUsecaseResponse = { success: true, assetId: assetId };
+      (saveTtsAudioToDamUsecase as Mock).mockResolvedValue(mockUsecaseResponse);
+
+      const linkErrorMessage = 'Supabase link error';
+      const mockEqUpdateFn = vi.fn().mockResolvedValue({ error: { message: linkErrorMessage } });
+      const mockUpdateFn = vi.fn(() => ({ eq: mockEqUpdateFn }));
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === 'TtsPrediction') {
+          return { update: mockUpdateFn };
+        }
+        return {};
+      });
+
+      // Call with linking enabled (default)
+      const result = await ttsActions.saveTtsAudioToDam(testAudioUrl, 'test_audio.mp3', ttsPredictionId);
+
+      expect(saveTtsAudioToDamUsecase).toHaveBeenCalledWith(testAudioUrl, 'test_audio.mp3', ttsPredictionId);
+      expect(mockUpdateFn).toHaveBeenCalledWith({ outputAssetId: assetId });
+      expect(mockEqUpdateFn).toHaveBeenCalledWith('id', ttsPredictionId);
+      expect(result.success).toBe(true);
+      expect(result.assetId).toBe(assetId);
+      expect(result.error).toContain(linkErrorMessage);
+    });
+
   });
 
   describe('getTtsHistory', () => {
      const mockUsecaseResponse = { success: true, data: [{ id: 'hist-1', text: 'test' }] };
      
-    it('should call getTtsHistory usecase and return its result', async () => {
+    it('should call getTtsHistory usecase and return its result when no params are provided', async () => {
       const { getTtsHistory } = await import('@/lib/usecases/tts/getTtsHistoryUsecase');
       (getTtsHistory as Mock).mockResolvedValue(mockUsecaseResponse);
 
-      const result = await ttsActions.getTtsHistory();
+      const result = await ttsActions.getTtsHistory(); // No params
 
       expect(getTtsHistory).toHaveBeenCalledTimes(1);
+      expect(getTtsHistory).toHaveBeenCalledWith(undefined); // Or expect.anything() if default object is passed by action
+      expect(result).toEqual(mockUsecaseResponse);
+    });
+
+    it('should call getTtsHistory usecase with provided params and return its result', async () => {
+      const { getTtsHistory } = await import('@/lib/usecases/tts/getTtsHistoryUsecase');
+      (getTtsHistory as Mock).mockResolvedValue(mockUsecaseResponse);
+      const testParams = {
+        page: 2,
+        limit: 20,
+        sortBy: 'inputText' as const, // Cast to const if sortBy is a literal union
+        sortOrder: 'asc' as const,   // Cast to const if sortOrder is a literal union
+        searchQuery: 'specific search'
+      };
+
+      const result = await ttsActions.getTtsHistory(testParams);
+
+      expect(getTtsHistory).toHaveBeenCalledTimes(1);
+      expect(getTtsHistory).toHaveBeenCalledWith(testParams);
       expect(result).toEqual(mockUsecaseResponse);
     });
 
@@ -537,6 +627,110 @@ describe('TTS Server Actions', () => {
       expect(getTtsVoices).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockError);
     });
+  });
+
+});
+
+describe('markTtsUrlProblematic', () => {
+  const testTtsPredictionId = 'tts-pred-uuid-for-marking';
+  const testErrorMessage = 'Test error message for problematic link';
+
+  let mockUpdateFn: Mock;
+  let mockEqFn: Mock;
+
+  beforeEach(async () => {
+    // Reset specific mocks for Supabase client related to this action
+    mockSupabaseGetUser.mockReset();
+    mockSupabaseFrom.mockReset();
+    // cookies().get.mockReset(); // Already reset in global beforeEach
+
+    mockEqFn = vi.fn().mockResolvedValue({ error: null }); // Default successful update
+    mockUpdateFn = vi.fn(() => ({ eq: mockEqFn }));
+    
+    mockSupabaseFrom.mockImplementation((tableName: string) => {
+      if (tableName === 'TtsPrediction') {
+        return { update: mockUpdateFn };
+      }
+      return {}; // Default empty object for other tables
+    });
+
+    // Default successful auth
+    mockSupabaseGetUser.mockResolvedValue({ data: { user: { id: 'test-user-id' } }, error: null });
+  });
+
+  it('should update TtsPrediction with problematic status and error message', async () => {
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId, testErrorMessage);
+
+    expect(mockSupabaseGetUser).toHaveBeenCalledTimes(1);
+    expect(mockSupabaseFrom).toHaveBeenCalledWith('TtsPrediction');
+    expect(mockUpdateFn).toHaveBeenCalledWith(expect.objectContaining({
+      is_output_url_problematic: true,
+      output_url_last_error: testErrorMessage,
+      updatedAt: expect.any(String), // Or Date, depending on actual implementation
+    }));
+    expect(mockEqFn).toHaveBeenCalledWith('id', testTtsPredictionId);
+    expect(result).toEqual({ success: true });
+  });
+
+  it('should update TtsPrediction with problematic status (no error message)', async () => {
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId);
+
+    expect(mockSupabaseGetUser).toHaveBeenCalledTimes(1);
+    expect(mockSupabaseFrom).toHaveBeenCalledWith('TtsPrediction');
+    expect(mockUpdateFn).toHaveBeenCalledWith(expect.objectContaining({
+      is_output_url_problematic: true,
+      updatedAt: expect.any(String), // Or Date
+    }));
+    expect(mockUpdateFn.mock.calls[0][0].output_url_last_error).toBeUndefined();
+    expect(mockEqFn).toHaveBeenCalledWith('id', testTtsPredictionId);
+    expect(result).toEqual({ success: true });
+  });
+
+  it('should return auth error if user is not authenticated', async () => {
+    mockSupabaseGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'Auth error'} });
+    
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId, testErrorMessage);
+
+    expect(mockSupabaseGetUser).toHaveBeenCalledTimes(1);
+    expect(mockSupabaseFrom).not.toHaveBeenCalled();
+    expect(mockUpdateFn).not.toHaveBeenCalled();
+    expect(result).toEqual({ success: false, error: 'Authentication failed.' });
+  });
+
+  it('should return error if Supabase update fails', async () => {
+    const dbErrorMessage = 'DB update failed';
+    mockEqFn.mockResolvedValue({ error: { message: dbErrorMessage } });
+
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId, testErrorMessage);
+
+    expect(mockSupabaseGetUser).toHaveBeenCalledTimes(1);
+    expect(mockSupabaseFrom).toHaveBeenCalledWith('TtsPrediction');
+    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+    expect(mockEqFn).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ success: false, error: dbErrorMessage });
+  });
+
+  it('should return generic error for unexpected Supabase client failures', async () => {
+    const unexpectedErrorMessage = 'Unexpected client error';
+    mockSupabaseFrom.mockImplementation(() => { 
+      throw new Error(unexpectedErrorMessage); 
+    });
+
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId, testErrorMessage);
+
+    expect(mockSupabaseGetUser).toHaveBeenCalledTimes(1); // Auth is checked first
+    expect(result).toEqual({ success: false, error: unexpectedErrorMessage });
+  });
+
+  it('should return generic error if getUser throws unexpectedly', async () => {
+    const unexpectedAuthErrorMessage = 'Unexpected auth error';
+    mockSupabaseGetUser.mockImplementation(async () => { 
+      throw new Error(unexpectedAuthErrorMessage); 
+    });
+    
+    const result = await ttsActions.markTtsUrlProblematic(testTtsPredictionId, testErrorMessage);
+
+    expect(result).toEqual({ success: false, error: unexpectedAuthErrorMessage });
   });
 
 });

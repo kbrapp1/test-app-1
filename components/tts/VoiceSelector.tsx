@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UseFormReturn, ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,35 +24,49 @@ interface TtsVoice {
   accent: 'American' | 'British' | 'Other';
 }
 
-// Minimal schema for typing props, or import from shared location
+// Updated schema to match the one in TtsInputCard
 const TtsInputSchema = z.object({
   inputText: z.string(),
   voiceId: z.string(),
+  provider: z.string(), // Added provider to match the form's full schema
 });
 type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
 
 interface VoiceSelectorProps {
-  // Pass the specific field render prop from the FormField
   field: ControllerRenderProps<TtsInputFormValues, 'voiceId'>;
-  // Pass the setValue function from the form instance
   setValue: UseFormSetValue<TtsInputFormValues>; 
   isDisabled?: boolean;
+  selectedProvider?: string; // New prop for the currently selected provider
 }
 
-export function VoiceSelector({ field, setValue, isDisabled }: VoiceSelectorProps) {
+export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }: VoiceSelectorProps) {
   const [availableVoices, setAvailableVoices] = useState<TtsVoice[]>([]);
   const [voiceLoadingError, setVoiceLoadingError] = useState<string | null>(null);
   const [voicePopoverOpen, setVoicePopoverOpen] = useState(false);
+  const prevProviderRef = useRef<string | undefined>(undefined); // Ref to store the previous provider
 
   useEffect(() => {
     async function fetchVoices() {
       setVoiceLoadingError(null);
+      setAvailableVoices([]); // Clear previous voices immediately
+      // If no provider is selected yet, don't fetch, or fetch a default set if desired.
+      // For now, let's only fetch if a provider is selected.
+      if (!selectedProvider) {
+        setVoiceLoadingError('Please select a TTS provider first to see available voices.');
+        return;
+      }
       try {
-        const result = await getTtsVoices();
+        console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}`);
+        const result = await getTtsVoices(selectedProvider); // Pass the selected provider
         if (result.success && result.data) {
           setAvailableVoices(result.data);
+          if (result.data.length === 0 && !result.error) {
+            setVoiceLoadingError(`No voices available for provider: ${selectedProvider}`);
+          } else if (result.error) {
+            setVoiceLoadingError(result.error);
+          }
         } else {
-          setVoiceLoadingError(result.error || 'Failed to load voices.');
+          setVoiceLoadingError(result.error || `Failed to load voices for ${selectedProvider}.`);
         }
       } catch (error) {
         setVoiceLoadingError('An unexpected error occurred while fetching voices.');
@@ -60,7 +74,22 @@ export function VoiceSelector({ field, setValue, isDisabled }: VoiceSelectorProp
       }
     }
     fetchVoices();
-  }, []);
+  }, [selectedProvider]); // Depend on selectedProvider to refetch
+
+  // Effect to clear voiceId when selectedProvider has actually changed 
+  // and a voice was selected for the previous provider.
+  useEffect(() => {
+    if (prevProviderRef.current !== selectedProvider) {
+      if (field.value) { // Only clear if a voice is currently selected
+        console.log(
+          `VoiceSelector: Provider changed from '${prevProviderRef.current}' to '${selectedProvider}'. Clearing selected voice ID ('${field.value}').`
+        );
+        setValue('voiceId', '', { shouldValidate: true });
+      }
+    }
+    // Update the ref to the current provider *after* checking and potentially clearing.
+    prevProviderRef.current = selectedProvider;
+  }, [selectedProvider, field.value, setValue]);
 
   return (
     <Popover open={voicePopoverOpen} onOpenChange={setVoicePopoverOpen}>

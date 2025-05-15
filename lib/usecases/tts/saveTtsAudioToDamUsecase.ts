@@ -1,7 +1,6 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { createAssetRecordInDb } from '@/lib/repositories/asset-repo';
-import { randomUUID } from 'crypto';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
 // import { cleanupStorageFile } from '@/lib/services/ttsService'; // For TODO
 
@@ -31,9 +30,16 @@ export async function saveTtsAudioToDam(
       return { success: false, error: 'Active organization context is missing.' };
     }
 
+    // downloadAndUploadAudio will throw if there's an issue.
     const uploadResult = await downloadAndUploadAudio(audioUrl, organizationId, userId);
+
+    // If we reach here, downloadAndUploadAudio was successful and returned the expected object.
+    // The properties storagePath, contentType, and blobSize are guaranteed to be present
+    // due to the return type of downloadAndUploadAudio and the fact that it throws on error.
     console.log(`TTS Usecase (saveTtsAudioToDam): Audio uploaded to ${uploadResult.storagePath}`);
 
+    // Dynamically import randomUUID so that vitest's async mock can override it
+    const { randomUUID } = await import('crypto');
     const newAssetId = randomUUID();
     const dbInput = {
       id: newAssetId,

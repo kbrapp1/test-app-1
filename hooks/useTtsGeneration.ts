@@ -32,7 +32,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
 
   // Effect for polling the prediction status
   useEffect(() => {
-    if (!currentPredictionId || predictionStatus === 'succeeded' || predictionStatus === 'failed' || predictionStatus === 'canceled') {
+    // We need ttsPredictionDbId to fetch provider info for polling.
+    if (!currentPredictionId || !ttsPredictionDbId || predictionStatus === 'succeeded' || predictionStatus === 'failed' || predictionStatus === 'canceled') {
       return;
     }
 
@@ -42,7 +43,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
 
     const intervalId = setInterval(async () => {
       try {
-        const result = await getSpeechGenerationResult(currentPredictionId);
+        // Pass ttsPredictionDbId to the action, so it can determine the provider and the actual provider's prediction ID.
+        const result = await getSpeechGenerationResult(ttsPredictionDbId);
 
         if (!result.success) {
           setTtsErrorMessage(result.error || 'Polling failed.');
@@ -91,15 +93,26 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
       clearInterval(intervalId);
       setIsPollingLoading(false); // Ensure loading stops if component unmounts while polling
     };
-  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete]);
+  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete, ttsPredictionDbId]);
 
   // Function to initiate the TTS generation
   const startGeneration = useCallback((formData: FormData) => {
     resetTtsState(); // Reset previous state before starting
     setPredictionStatus('starting');
 
+    const inputText = formData.get('inputText') as string;
+    const voiceId = formData.get('voiceId') as string;
+    const provider = formData.get('provider') as string;
+
+    if (!inputText || !voiceId || !provider) {
+      setTtsErrorMessage('Missing input text, voice ID, or provider for speech generation.');
+      setPredictionStatus('failed');
+      return;
+    }
+
     startTtsTransition(async () => {
-      const result = await startSpeechGeneration(formData);
+      // Pass parameters explicitly instead of formData
+      const result = await startSpeechGeneration(inputText, voiceId, provider);
 
       if (result.success && result.predictionId) {
         setCurrentPredictionId(result.predictionId);

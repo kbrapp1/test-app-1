@@ -8,6 +8,8 @@ import { PlayIcon, PauseIcon, Loader2Icon, Volume2Icon, VolumeXIcon } from 'luci
 
 interface WaveformAudioPlayerProps {
   audioUrl: string | null;
+  isLikelyExpired?: boolean;
+  onPlaybackError?: (errorMessage: string) => void;
 }
 
 // Helper function to format time (MM:SS)
@@ -18,7 +20,7 @@ const formatTime = (seconds: number): string => {
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
+export function WaveformAudioPlayer({ audioUrl, isLikelyExpired, onPlaybackError }: WaveformAudioPlayerProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,6 +49,20 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
 
   useEffect(() => {
     if (!waveformRef.current) return;
+
+    // If link is likely expired, don't initialize and show error state
+    if (isLikelyExpired) {
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+        wavesurfer.current = null;
+      }
+      setError("Audio link has likely expired and cannot be played.");
+      setIsLoading(false);
+      setIsPlaying(false);
+      setDuration(0);
+      setCurrentTime(0);
+      return;
+    }
 
     // If audioUrl is null, destroy any existing instance and clear states
     if (!audioUrl) {
@@ -187,10 +203,12 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
 
         // Only log to console if it's not the handled expired link error
         if (!isExpiredLinkError) {
+          // For Replicate 404s, we might not want the generic console warning if we set a specific user message.
+          // However, let's keep the log for now unless it becomes too noisy with the new specific handling.
           console.warn('[WaveformPlayer] WaveSurfer error event (handled, displaying in UI):', err, 'URL:', currentInstance.options.url);
         }
 
-        if (!displayError) { // If not the specific expired link error, use more generic messages
+        if (!displayError) { 
           let errorMessage = 'Unknown error occurred.';
           if (typeof err === 'string') {
             errorMessage = err;
@@ -198,10 +216,18 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
             errorMessage = (err as any).message;
           }
 
+          // Specific check for Replicate 404
+          if (typeof (err as any).message === 'string' &&
+              (err as any).message.includes('Failed to fetch') &&
+              (err as any).message.includes('404') &&
+              currentInstance.options.url?.includes('replicate.delivery')) {
+            displayError = "Media link expired. Please create another generation.";
+            // isExpiredLinkError = true; // Optionally set this if you want to suppress the generic console.warn above for this case too
+          }
           // General network or fetch errors
-          if (errorMessage.toLowerCase().includes('fetch') ||
-              errorMessage.toLowerCase().includes('http') ||
-              errorMessage.toLowerCase().includes('networkerror')) {
+          else if (errorMessage.toLowerCase().includes('fetch') ||
+            errorMessage.toLowerCase().includes('http') ||
+            errorMessage.toLowerCase().includes('networkerror')) {
             displayError = `Failed to load audio: Network error (${errorMessage}). Please check the URL and your connection.`;
           } 
           // General decode or format errors not caught by the specific scenario above
@@ -212,7 +238,7 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
           // Fallback for other errors
           else {
             displayError = `Failed to load audio: ${errorMessage}.`;
-          }
+        }
         }
 
         setError(displayError);
@@ -220,11 +246,16 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
         setIsPlaying(false);
         setDuration(0);
         setCurrentTime(0);
+
+        // Call the new callback prop
+        if (onPlaybackError) {
+          onPlaybackError(displayError);
+        }
       });
     };
 
     // Directly initialize WaveSurfer without pre-flight check
-    initializeWaveSurfer(audioUrl);
+        initializeWaveSurfer(audioUrl);
 
     // Cleanup function
     return () => {
@@ -235,11 +266,11 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
         wavesurfer.current = null;
       }
     };
-  }, [audioUrl]);
+  }, [audioUrl, isLikelyExpired, onPlaybackError]);
 
   // If no audioUrl, render nothing or a placeholder for the player area
   // This is mostly handled by TtsOutputCard's conditional rendering, but good to be safe.
-  if (!audioUrl && !isLoading) { // Added !isLoading to prevent flicker if it was loading then url became null
+  if (!audioUrl && !isLoading && !isLikelyExpired) { // Added !isLikelyExpired
       // return <div className="flex flex-col items-center w-full pt-4 pb-0 rounded-md border bg-background h-[140px] justify-center text-muted-foreground"><p>No audio loaded.</p></div>;
       // Let the parent component (TtsOutputCard) handle the placeholder logic for consistency.
       // This component will just not render its waveform part.
@@ -253,19 +284,23 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
       <div ref={waveformRef} className="w-full h-[64px] px-4 mb-4" />
 
       {/* Error Display: Keep horizontal padding */}
-      {error && !isLoading && (
-        <p className="text-sm text-destructive w-full text-center px-4 py-2 mb-4">Error: {error}</p>
+      {/* Display error if it exists, or if the link is likely expired (and not already loading an error message) */}
+      {(error || (isLikelyExpired && !isLoading)) && (
+        <p className="text-sm text-destructive w-full text-center px-4 py-2 mb-4">
+          {isLikelyExpired ? "Audio link has likely expired and cannot be played." : `Error: ${error}`}
+        </p>
       )}
 
       {/* Controls Container: Keep horizontal padding */}
-      {!error && (
+      {/* Hide controls if likely expired, similar to when there's an error */}
+      {!error && !isLikelyExpired && (
         <div className="flex items-center gap-4 w-full px-4 py-1 bg-muted border-t">
           {/* Play/Pause Button */}
           <Button 
             onClick={handlePlayPause} 
             variant="ghost" // Changed variant
             size="icon" 
-            disabled={isLoading || !!error}
+            disabled={isLoading || !!error || isLikelyExpired}
             aria-label={isPlaying ? 'Pause' : 'Play'}
             className="flex-shrink-0"
           >
@@ -289,7 +324,7 @@ export function WaveformAudioPlayer({ audioUrl }: WaveformAudioPlayerProps) {
             max={100}
             step={0.1}
             onValueChange={handleSeek}
-            disabled={isLoading || !!error || duration <= 0}
+            disabled={isLoading || !!error || duration <= 0 || isLikelyExpired}
             className="flex-grow mx-2 cursor-pointer"
             aria-label="Audio Seek Bar"
           />

@@ -1,117 +1,142 @@
 import { getReplicatePrediction } from '@/lib/services/ttsService';
 import { createClient } from '@/lib/supabase/server';
+import type { Database } from '@/types/supabase'; // Import Database types
+
+type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
 
 /**
- * Usecase: Fetches the result/status of a speech generation prediction from Replicate
+ * Usecase: Fetches the result/status of a speech generation prediction from the specified provider
  * and updates the corresponding record in the local TtsPrediction table.
  */
 export async function getSpeechGenerationResult(
-  replicatePredictionId: string
+  ttsPredictionDbId: string // Our internal DB ID for the TtsPrediction record
 ): Promise<{
   success: boolean;
-  status: string; // The status from Replicate
-  audioUrl: string | null; // The audio URL from Replicate, if successful
-  error: string | null;    // Error message from Replicate or internal
-  ttsPredictionDbId: string | null; // Our internal DB ID for the TtsPrediction record
+  status: string; 
+  audioUrl: string | null; 
+  error: string | null;    
+  ttsPredictionDbId: string | null; // Echo back our DB ID
 }> {
   const supabase = createClient();
-  let ourDbRecordId: string | null = null;
 
   try {
-    console.log(`TTS Usecase (getSpeechGenerationResult): Getting result for Replicate prediction ID: ${replicatePredictionId}`);
-    const replicatePrediction = await getReplicatePrediction(replicatePredictionId);
-    console.log(`TTS Usecase (getSpeechGenerationResult): Received Replicate prediction status: ${replicatePrediction.status}`);
+    // 1. Fetch our TtsPrediction record to get provider and provider's prediction ID
+    console.log(`TTS Usecase (getSpeechGenerationResult): Fetching TtsPrediction record with ID: ${ttsPredictionDbId}`);
+    const { data: ttsRecord, error: fetchError } = await supabase
+      .from('TtsPrediction')
+      .select('*')
+      .eq('id', ttsPredictionDbId)
+      .single();
 
-    const currentReplicateStatus = replicatePrediction.status;
-    const outputAudioUrl = replicatePrediction.status === 'succeeded' ? (replicatePrediction.output as string | null) : null;
-    const replicateError = replicatePrediction.error ? String(replicatePrediction.error) : null;
+    if (fetchError || !ttsRecord) {
+      console.error(`TTS Usecase (getSpeechGenerationResult): Could not fetch TtsPrediction record for ID ${ttsPredictionDbId}:`, fetchError);
+      return {
+        success: false,
+        status: 'failed',
+        audioUrl: null,
+        error: `Failed to fetch prediction details from database: ${fetchError?.message || 'Record not found.'}`, 
+        ttsPredictionDbId,
+      };
+    }
 
-    const updateData: { 
-      status: string;
-      outputUrl?: string | null;
-      errorMessage?: string | null;
-      updatedAt: string; // Trigger should also handle this, but good to be explicit
-    } = {
-      status: currentReplicateStatus,
+    const provider = ttsRecord.prediction_provider;
+    const providerPredictionId = ttsRecord.replicatePredictionId; // Using current field name
+
+    if (!provider || !providerPredictionId) {
+        console.error(`TTS Usecase (getSpeechGenerationResult): Missing provider ('${provider}') or providerPredictionId ('${providerPredictionId}') in TtsPrediction record ${ttsPredictionDbId}`);
+        return { 
+            success: false, 
+            status: 'failed', 
+            audioUrl: null, 
+            error: 'Database record is missing provider information.', 
+            ttsPredictionDbId 
+        };
+    }
+
+    let currentProviderStatus: string;
+    let outputAudioUrl: string | null = null;
+    let providerError: string | null = null;
+
+    // 2. Provider-specific logic to get status
+    if (provider === 'replicate') {
+      console.log(`TTS Usecase (getSpeechGenerationResult): Getting result from Replicate for prediction ID: ${providerPredictionId}`);
+      const replicatePrediction = await getReplicatePrediction(providerPredictionId);
+      console.log(`TTS Usecase (getSpeechGenerationResult): Received Replicate prediction status: ${replicatePrediction.status}`);
+      currentProviderStatus = replicatePrediction.status;
+      outputAudioUrl = replicatePrediction.status === 'succeeded' ? (replicatePrediction.output as string | null) : null;
+      providerError = replicatePrediction.error ? String(replicatePrediction.error) : null;
+    } else {
+      console.warn(`TTS Usecase (getSpeechGenerationResult): Unsupported provider '${provider}' for TtsPrediction ID ${ttsPredictionDbId}`);
+      return { 
+        success: false, 
+        status: 'failed', 
+        audioUrl: null, 
+        error: `Provider '${provider}' is not supported for status checks.`, 
+        ttsPredictionDbId 
+      };
+    }
+
+    // 3. Update our TtsPrediction table
+    const updateData: Partial<TtsPredictionRow> = { // Use Partial for update data
+      status: currentProviderStatus,
       updatedAt: new Date().toISOString(),
     };
 
     if (outputAudioUrl) {
       updateData.outputUrl = outputAudioUrl;
     }
-    if (replicateError) {
-      updateData.errorMessage = replicateError;
+    // Only set errorMessage if there was an error from the provider AND the status is a failure/error status.
+    // If providerError is set but status is e.g. 'succeeded', it might be a warning or non-fatal issue.
+    if (providerError && (currentProviderStatus === 'failed' || currentProviderStatus === 'canceled')) {
+      updateData.errorMessage = providerError;
     }
 
-    console.log(`TTS Usecase (getSpeechGenerationResult): Updating TtsPrediction table for replicatePredictionId ${replicatePredictionId} with data:`, updateData);
-    const { data: updatedRecord, error: dbUpdateError } = await supabase
+    console.log(`TTS Usecase (getSpeechGenerationResult): Updating TtsPrediction table for ID ${ttsPredictionDbId} with data:`, updateData);
+    const { error: dbUpdateError } = await supabase
       .from('TtsPrediction')
       .update(updateData)
-      .eq('replicatePredictionId', replicatePredictionId)
-      .select('id')
-      .single();
+      .eq('id', ttsPredictionDbId); // Use our DB ID for the update
 
     if (dbUpdateError) {
-      console.error(`TTS Usecase (getSpeechGenerationResult): DB update error for replicatePredictionId ${replicatePredictionId}:`, dbUpdateError);
-      // Return Replicate status but indicate DB update failure
-      return { 
-        success: false, // Indicate overall failure due to DB issue
-        status: currentReplicateStatus, 
-        audioUrl: outputAudioUrl, 
-        error: `Failed to update prediction in database: ${dbUpdateError.message}`, 
-        ttsPredictionDbId: null 
-      };
-    }
-
-    if (!updatedRecord) {
-      console.error(`TTS Usecase (getSpeechGenerationResult): No record found in TtsPrediction for replicatePredictionId ${replicatePredictionId} to update.`);
-      // This case should ideally not happen if startSpeechGenerationUsecase worked correctly
+      console.error(`TTS Usecase (getSpeechGenerationResult): DB update error for TtsPrediction ID ${ttsPredictionDbId}:`, dbUpdateError);
       return { 
         success: false, 
-        status: currentReplicateStatus, 
+        status: currentProviderStatus, 
         audioUrl: outputAudioUrl, 
-        error: 'Failed to find prediction record in database to update.', 
-        ttsPredictionDbId: null 
+        error: `Failed to update prediction in database: ${dbUpdateError.message}`, 
+        ttsPredictionDbId 
       };
     }
     
-    ourDbRecordId = updatedRecord.id;
-    console.log(`TTS Usecase (getSpeechGenerationResult): Successfully updated TtsPrediction record ${ourDbRecordId} for Replicate ID ${replicatePredictionId}`);
+    console.log(`TTS Usecase (getSpeechGenerationResult): Successfully updated TtsPrediction record ${ttsPredictionDbId}`);
 
-    // Check if Replicate itself reported an error for the prediction
-    if (replicateError) {
-      console.error(`TTS Usecase (getSpeechGenerationResult): Replicate prediction failed for ${replicatePredictionId}:`, replicateError);
-      return { success: false, status: currentReplicateStatus, audioUrl: null, error: replicateError, ttsPredictionDbId: ourDbRecordId };
+    // 4. Determine overall success and return
+    if (providerError && (currentProviderStatus === 'failed' || currentProviderStatus === 'canceled')) {
+      console.error(`TTS Usecase (getSpeechGenerationResult): Provider '${provider}' reported failure for ${providerPredictionId}:`, providerError);
+      return { success: false, status: currentProviderStatus, audioUrl: null, error: providerError, ttsPredictionDbId };
     }
 
-    // Check if Replicate prediction succeeded but has no output URL (should be rare)
-    if (currentReplicateStatus === 'succeeded' && !outputAudioUrl) {
-      console.error(`TTS Usecase (getSpeechGenerationResult): Replicate prediction ${replicatePredictionId} succeeded but has no output URL.`);
-      return { success: false, status: currentReplicateStatus, audioUrl: null, error: 'Prediction succeeded but audio URL is missing.', ttsPredictionDbId: ourDbRecordId };
+    if (currentProviderStatus === 'succeeded' && !outputAudioUrl) {
+      console.error(`TTS Usecase (getSpeechGenerationResult): Provider '${provider}' prediction ${providerPredictionId} succeeded but has no output URL.`);
+      return { success: false, status: currentProviderStatus, audioUrl: null, error: 'Prediction succeeded but audio URL is missing.', ttsPredictionDbId };
     }
 
-    // If everything went well (DB update and Replicate status is not an error state handled above)
     return { 
-      success: true, // Or determine based on currentReplicateStatus (e.g. only true if 'succeeded')
-      status: currentReplicateStatus, 
+      success: currentProviderStatus === 'succeeded', // Success is true only if provider status is 'succeeded'
+      status: currentProviderStatus, 
       audioUrl: outputAudioUrl, 
-      error: null, // No internal error, Replicate error handled above
-      ttsPredictionDbId: ourDbRecordId 
+      error: null, 
+      ttsPredictionDbId 
     };
 
   } catch (error: any) {
-    console.error(`TTS Usecase (getSpeechGenerationResult): Catch block error for Replicate ID ${replicatePredictionId}:`, error);
-    // Attempt to find our DB record ID even in case of an error to return it if possible
-    // This might be helpful if the error occurred after fetching from Replicate but before/during DB update attempt
-    // However, if `replicatePrediction` itself failed, `ourDbRecordId` would be null.
-    // A more robust way might be another query if essential.
-    // For now, if `ourDbRecordId` was set before error, use it.
+    console.error(`TTS Usecase (getSpeechGenerationResult): Catch block error for TtsPredictionDbId ${ttsPredictionDbId}:`, error);
     return {
       success: false,
-      status: 'failed', // Generic status for catch block error
+      status: 'failed',
       audioUrl: null,
       error: error.message || 'Failed to get speech generation result.',
-      ttsPredictionDbId: ourDbRecordId, // May be null if error happened early
+      ttsPredictionDbId,
     };
   }
 } 
