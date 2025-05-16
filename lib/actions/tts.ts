@@ -26,8 +26,8 @@ interface GetTtsHistoryActionParams {
 }
 
 // Re-export functions for client consumption
-export async function getTtsVoices(provider?: string) {
-  return getTtsVoicesUsecase(provider);
+export async function getTtsVoices(provider?: string, modelId?: string) {
+  return getTtsVoicesUsecase(provider, modelId);
 }
 
 export async function startSpeechGeneration(inputText: string, voiceId: string, provider: string) {

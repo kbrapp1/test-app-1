@@ -112,18 +112,18 @@ describe('VoiceSelector', () => {
 
   it('renders correctly and loads voices', async () => {
     renderComponent();
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
   });
 
   it('displays "Select voice..." when no voice is selected', async () => {
     renderComponent({ value: undefined });
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
     expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Select a voice');
   });
 
   it('displays the selected voice name', async () => {
     renderComponent({ value: 'voice1' });
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
     await waitFor(() => {
       expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Alice');
     });
@@ -131,7 +131,7 @@ describe('VoiceSelector', () => {
 
   it('opens popover on trigger click', async () => {
     renderComponent();
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     const trigger = screen.getByTestId('popover-trigger');
     fireEvent.click(trigger);
@@ -143,7 +143,7 @@ describe('VoiceSelector', () => {
 
   it('renders voice items in the popover', async () => {
     renderComponent();
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
 
@@ -160,7 +160,7 @@ describe('VoiceSelector', () => {
   it('calls setValue when a voice is selected', async () => {
     const localMockSetValue = vi.fn();
     renderComponent({ value: undefined }, localMockSetValue);
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
     await waitFor(() => expect(screen.getByTestId('popover-content')).toBeVisible());
@@ -177,7 +177,7 @@ describe('VoiceSelector', () => {
 
   it('filters voices based on search input', async () => {
     renderComponent();
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
 
@@ -196,7 +196,7 @@ describe('VoiceSelector', () => {
     );
     renderComponent();
     // Expect the initial call without waiting for it to resolve for this specific check
-    expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider');
+    expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined);
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
     
@@ -212,7 +212,7 @@ describe('VoiceSelector', () => {
     mockGetTtsVoices.mockResolvedValueOnce({ success: false, data: null, error: { message: 'Failed to fetch' } });
     renderComponent();
 
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
 
@@ -225,7 +225,7 @@ describe('VoiceSelector', () => {
   it('displays "Select voice..." in trigger if selected voice is not in the loaded list', async () => {
     renderComponent({ value: 'unknownVoiceId' });
 
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Select a voice');
   });
@@ -234,7 +234,7 @@ describe('VoiceSelector', () => {
     const localMockSetValue = vi.fn();
     renderComponent({ value: undefined }, localMockSetValue);
   
-    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider'));
+    await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
     expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Select a voice');
   
     fireEvent.click(screen.getByTestId('popover-trigger'));

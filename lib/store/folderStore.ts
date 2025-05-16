@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { Folder } from '@/types/dam';
-import { useFolderFetch } from '@/hooks/useFolderFetch'; // We might need fetch logic here
+// We might need fetch logic here, but useFolderFetch is not directly used in the store actions provided.
+// It was mentioned as a comment in the original code, so keeping the import if it might be used later elsewhere or was planned.
+import { useFolderFetch } from '@/hooks/useFolderFetch'; 
+import {
+  findNodeById, // Removed: local definition
+  findAndUpdateNode,
+  findAndRemoveNode,
+  addNodeToParent,
+  buildNodeMap
+} from './folderStoreUtils'; // ADDED: Import from utils
 
 // Define the structure for a folder node in the store, including children and expansion state
 export interface FolderNode extends Folder {
@@ -26,59 +35,6 @@ interface FolderStoreState {
   // TODO: Add renameFolder action
 }
 
-// Helper to recursively find and update a folder node
-const findAndUpdateNode = (
-  nodes: FolderNode[], 
-  folderId: string, 
-  updateFn: (node: FolderNode) => Partial<FolderNode>
-): FolderNode[] => {
-  return nodes.map(node => {
-    if (node.id === folderId) {
-      return { ...node, ...updateFn(node) };
-    }
-    if (node.children) {
-      return { ...node, children: findAndUpdateNode(node.children, folderId, updateFn) };
-    }
-    return node;
-  });
-};
-
-// Helper to recursively find and remove a folder node
-const findAndRemoveNode = (nodes: FolderNode[], folderId: string): FolderNode[] => {
-  return nodes.filter(node => {
-    if (node.id === folderId) {
-      return false; // Remove this node
-    }
-    if (node.children) {
-      node.children = findAndRemoveNode(node.children, folderId);
-    }
-    return true; // Keep other nodes
-  });
-};
-
-// Helper to add a folder to the correct parent
-const addNodeToParent = (
-    nodes: FolderNode[], 
-    newFolder: FolderNode
-): FolderNode[] => {
-    if (newFolder.parent_folder_id === null) {
-        // Add to root, maintaining alphabetical order
-        const newNodes = [...nodes, newFolder];
-        return newNodes.sort((a, b) => a.name.localeCompare(b.name));
-    }
-    return nodes.map(node => {
-        if (node.id === newFolder.parent_folder_id) {
-            // Add to children if parent is found and children array exists
-            const updatedChildren = node.children ? [...node.children, newFolder].sort((a, b) => a.name.localeCompare(b.name)) : [newFolder];
-            return { ...node, children: updatedChildren };
-        }
-        if (node.children) {
-            return { ...node, children: addNodeToParent(node.children, newFolder) };
-        }
-        return node;
-    });
-};
-
 // Create the Zustand store
 export const useFolderStore = create<FolderStoreState>((set, get) => ({
   rootFolders: [],
@@ -86,14 +42,26 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   searchTerm: '', // Initialize search term
 
   setInitialFolders: (folders) => {
-    const initialNodes: FolderNode[] = folders.map(f => ({
-      ...f,
-      children: null,
-      isExpanded: false,
-      isLoading: false,
-      hasError: false,
-    }));
-    set({ rootFolders: initialNodes, selectedFolderId: null }); // Reset selection when setting initial folders
+    const currentState = get();
+    const existingNodeMap = buildNodeMap(currentState.rootFolders);
+
+    const initialNodes: FolderNode[] = folders.map(f => {
+      const existingNode = existingNodeMap.get(f.id);
+      return {
+        ...f,
+        children: existingNode?.children ?? null, // Preserve existing children if any, otherwise null
+        isExpanded: existingNode?.isExpanded ?? false, // Preserve expansion state
+        isLoading: existingNode?.isLoading ?? false,
+        hasError: existingNode?.hasError ?? false,
+      };
+    });
+    // This simplistic mapping might break tree structure if folders are re-parented or deleted.
+    // A more robust approach would rebuild the tree from the new flat list `folders` 
+    // while preserving states of nodes that still exist.
+    // For now, let's assume `folders` is a flat list of root folders primarily.
+    // If `folders` is meant to be the *entire* hierarchy, a tree-building step is needed here.
+    // Given the original code, `folders` in `setInitialFolders` are just root folders.
+    set({ rootFolders: initialNodes.filter(f => f.parent_folder_id === null).sort((a,b) => a.name.localeCompare(b.name)) , selectedFolderId: null });
   },
 
   toggleExpand: (folderId) => {
@@ -105,37 +73,40 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   },
 
   fetchAndSetChildren: async (folderId, fetcher) => {
-    // Set loading state
+    const fullCurrentStateMap = buildNodeMap(get().rootFolders); // Get map of the entire current tree
+
     set((state) => ({ 
         rootFolders: findAndUpdateNode(state.rootFolders, folderId, () => ({ isLoading: true, hasError: false }))
     }));
 
     try {
-      const children = await fetcher(folderId);
-      const childrenNodes: FolderNode[] = children.map(f => ({ 
-        ...f, 
-        children: null, 
-        isExpanded: false, 
-        isLoading: false, 
-        hasError: false 
-      }));
+      const childrenData = await fetcher(folderId); // This is Folder[]
+      const childrenNodes: FolderNode[] = childrenData.map(f_child => {
+        const existingChildNode = fullCurrentStateMap.get(f_child.id); // Check if this child existed before
+        return {
+          ...f_child,
+          children: existingChildNode?.children ?? null, // Preserve deeper children
+          isExpanded: existingChildNode?.isExpanded ?? false, // Preserve expansion of this child
+          isLoading: existingChildNode?.isLoading ?? false,
+          hasError: existingChildNode?.hasError ?? false,
+        };
+      });
       
-      // Update node with children and reset loading/error
       set((state) => ({ 
-          rootFolders: findAndUpdateNode(state.rootFolders, folderId, () => ({ 
-              children: childrenNodes, 
+          rootFolders: findAndUpdateNode(state.rootFolders, folderId, (parentNode) => ({ 
+              children: childrenNodes.sort((a,b) => a.name.localeCompare(b.name)), 
               isLoading: false, 
-              hasError: false 
+              hasError: false,
+              // isExpanded: true // Parent is already expanded to trigger this fetch, or was toggled.
           }))
       }));
     } catch (error) {
       console.error("Error fetching children:", error);
-      // Set error state and reset loading
       set((state) => ({ 
           rootFolders: findAndUpdateNode(state.rootFolders, folderId, () => ({ 
               isLoading: false, 
               hasError: true, 
-              children: [] // Set empty array on error to prevent re-fetch loops
+              children: [] 
           }))
       }));
     }
@@ -149,33 +120,40 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     set({ searchTerm: term });
   },
 
-  addFolder: (newFolder) => {
+  addFolder: (newFolderData: Folder) => {
     const newNode: FolderNode = {
-        ...newFolder,
+        ...newFolderData,
         children: null,
-        isExpanded: false, // New folders are not expanded by default
+        isExpanded: false, 
         isLoading: false,
         hasError: false,
     };
 
     set((state) => {
-      let updatedRootFolders = state.rootFolders;
+      let updatedRootFolders = [...state.rootFolders];
+      const nodeMap = buildNodeMap(updatedRootFolders); // For quick parent lookup
 
-      // Expand the parent folder if it exists
-      if (newNode.parent_folder_id) {
-        updatedRootFolders = findAndUpdateNode(
-          updatedRootFolders,
-          newNode.parent_folder_id,
-          (node) => ({ isExpanded: true }) // Ensure parent is expanded
-        );
+      // Expand all ancestors
+      let parentId = newNode.parent_folder_id;
+      while (parentId) {
+        const parentNode = nodeMap.get(parentId);
+        if (parentNode) {
+          updatedRootFolders = findAndUpdateNode(
+            updatedRootFolders,
+            parentId,
+            () => ({ isExpanded: true })
+          );
+          parentId = parentNode.parent_folder_id;
+        } else {
+          parentId = null; // Parent not found in current tree, stop
+        }
       }
       
-      // Add the new folder to the tree
       updatedRootFolders = addNodeToParent(updatedRootFolders, newNode);
       
       return { 
         rootFolders: updatedRootFolders,
-        selectedFolderId: newNode.id // Select the newly created folder
+        selectedFolderId: newNode.id 
       };
     });
   },

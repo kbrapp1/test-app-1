@@ -105,6 +105,7 @@ export function NewFolderDialog({
                 placeholder="e.g., Marketing Assets"
                 className="col-span-3" 
                 required 
+                autoComplete="off" // Added to prevent browser autofill
               />
             </div>
           </div>

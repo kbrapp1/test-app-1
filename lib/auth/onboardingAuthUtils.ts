@@ -32,4 +32,32 @@ export async function processAuthFromUrlHelper(supabase: SupabaseClient): Promis
   }
 
   return { user: userData.user, processedFromHash: sessionProcessedFromHash };
+}
+
+// Generalized error handler for onboarding processes
+export function handleOnboardingError(
+  err: any, 
+  context: string, 
+  toast: (options: { title: string; description: string; variant: 'destructive' | 'default' }) => void,
+  setFormValidationError?: (message: string | null) => void, // Optional setter for form-specific validation errors
+  toastTitle?: string
+) {
+  console.error(`Error during ${context}:`, err);
+  const message = err.message || `An unexpected error occurred during ${context}.`;
+
+  // If a specific setter for form validation errors is provided and context matches, use it.
+  if (setFormValidationError && (context === 'form validation' || err.code === 'VALIDATION_ERROR')) {
+    setFormValidationError(message);
+    // Optionally, don't show a toast for pure form validation errors handled inline
+    // unless explicitly requested or if it's a general error presented as validation.
+  } else {
+    // For other errors, or if no specific form error setter is given, show a toast.
+    toast({
+      title: toastTitle || 'Onboarding Error',
+      description: message,
+      variant: 'destructive',
+    });
+  }
+  // The hook itself will manage its general `error` state if needed, 
+  // this helper focuses on direct feedback (toast/form validation message).
 } 

@@ -66,25 +66,25 @@ export function FolderItem({
   return (
     <div>
       <div className={cn(
-        "flex items-center justify-between px-1 py-0.5 rounded-md group relative",
+        "flex items-center justify-between px-1 rounded-md group relative",
+        "py-2",
         isActive ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-muted/50 text-gray-700 dark:text-gray-300"
-      )} style={{ paddingLeft: `${level * 1.5}rem` }}>
+      )} style={{ paddingLeft: `${level * 1.25}rem` }}>
         <div className="flex items-center flex-1 truncate mr-2">
           <Button 
             variant="ghost" 
-            size="sm" 
             onClick={handleToggleExpand}
-            className="p-1 h-4 w-4 mr-1 flex items-center justify-center"
+            className="pl-2 pr-1 py-1 h-4 w-4 mr-1 flex items-center justify-center"
             disabled={folderNode.isLoading}
           >
             {folderNode.isLoading ? (
-              <span className="animate-spin h-4 w-4">⏳</span>
+              <span className="animate-spin h-2 w-2">⏳</span>
             ) : folderNode.hasError ? (
-              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertCircle className="h-2 w-2 text-red-500" />
             ) : folderNode.isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-[0.375rem] w-[0.375rem]" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-[0.375rem] w-[0.375rem]" />
             )}
           </Button>
           
@@ -93,7 +93,7 @@ export function FolderItem({
             className="flex items-center truncate"
             legacyBehavior={undefined}>
             <>
-              <FolderIcon className="h-4 w-4 mr-2 shrink-0" />
+              <FolderIcon className="h-5 w-5 mr-2 shrink-0" />
               <span className="truncate font-medium text-sm" title={folderNode.name}>{folderNode.name}</span>
             </>
           </Link>

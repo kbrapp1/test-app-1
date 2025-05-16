@@ -1,29 +1,22 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { Folder } from '@/types/dam';
-import { createClient as createSupabaseUserClient } from '@/lib/supabase/server'; // Still needed for auth
+import {
+  _authenticateAndGetOrgId,
+  _revalidatePathsForFolderMutation, // This is used by createFolder directly
+  _coreUpdateFolder,
+  _coreDeleteFolder,
+  FolderActionResult // Import the interface
+} from './folder.action.helpers';
+import { createClient as createSupabaseUserClient } from '@/lib/supabase/server'; // Added for direct use
+import { type ServiceResult } from '@/types/services'; // Added import
+import { ErrorCodes } from '@/lib/errors/constants'; // Added import
 
-// Import Usecases
+// Import Usecases (only createFolderUsecase is directly used here now)
 import { createFolderUsecase } from '@/lib/usecases/dam/createFolderUsecase';
-import { updateFolderUsecase } from '@/lib/usecases/dam/updateFolderUsecase';
-import { deleteFolderUsecase } from '@/lib/usecases/dam/deleteFolderUsecase';
 
-// Import specific services needed for other actions until they are refactored
-// import { updateFolderService, deleteFolderService } from '@/lib/services/dam-service';
-// Keep repository import if still needed by actions for revalidation paths, etc.
-import { getFolderById } from '@/lib/repositories/folder-repo';
-
-interface FolderActionResult {
-  success: boolean;
-  error?: string;
-  folderId?: string;
-  parentFolderId?: string | null;
-  folder?: Folder;
-}
-
-// dbRecordToAppFolder helper is removed as this logic is now in the service layer.
+// getFolderById is no longer needed here directly, it's used in helpers
+// import { getFolderById } from '@/lib/repositories/folder-repo';
 
 export async function createFolder(
   prevState: FolderActionResult,
@@ -33,30 +26,21 @@ export async function createFolder(
   const parentFolderIdValue = formData.get('parentFolderId') as string | null;
   const parentFolderId = parentFolderIdValue === '' || parentFolderIdValue === 'null' ? null : parentFolderIdValue;
 
-  // Basic form validation remains in action
   if (!folderName || folderName.trim() === '') {
     return { success: false, error: 'Folder name cannot be empty.' };
   }
 
-  const supabaseAuthClient = createSupabaseUserClient();
+  const authResult = await _authenticateAndGetOrgId('createFolder');
+  if (authResult.errorResult) {
+    return authResult.errorResult;
+  }
+  const { user, activeOrgId } = authResult;
+
   try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
-    if (authError || !user) {
-      console.error('createFolder Action: Auth Error', authError);
-      return { success: false, error: 'User not authenticated.' };
-    }
-
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-      console.error('createFolder Action: Active Organization ID not found.');
-      return { success: false, error: 'Active organization not found. Cannot create folder.' };
-    }
-
-    // Call the usecase
     const usecaseResult = await createFolderUsecase({
-      userId: user.id,
-      organizationId: activeOrgId,
-      folderName: folderName.trim(), // Usecase might also trim, but good practice here too
+      userId: user!.id,
+      organizationId: activeOrgId!,
+      folderName: folderName.trim(),
       parentFolderId,
     });
 
@@ -65,14 +49,7 @@ export async function createFolder(
       return { success: false, error: usecaseResult.error || 'Failed to create folder via usecase.' };
     }
 
-    // Revalidation logic remains in action
-    revalidatePath('/dam', 'layout');
-    if (parentFolderId) {
-      revalidatePath(`/dam/folders/${parentFolderId}`, 'layout');
-    } else {
-      // Revalidate root if parent is null. Explicitly revalidate /dam which covers root items.
-      revalidatePath('/dam', 'layout'); 
-    }
+    _revalidatePathsForFolderMutation(parentFolderId, usecaseResult.data.folder.id);
     
     const newFolder = usecaseResult.data.folder;
     return { success: true, folder: newFolder, folderId: newFolder.id };
@@ -97,56 +74,13 @@ export async function updateFolder(
     return { success: false, error: 'New folder name cannot be empty.' };
   }
 
-  const supabaseAuthClient = createSupabaseUserClient();
-  try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
-    if (authError || !user) {
-      console.error('updateFolder Action: Auth Error', authError);
-      return { success: false, error: 'User not authenticated.' };
-    }
-
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-      console.error('updateFolder Action: Active Organization ID not found.');
-      return { success: false, error: 'Active organization not found. Cannot update folder.' };
-    }
-
-    let parentFolderIdForReval: string | null | undefined = undefined;
-    const { data: currentFolderData, error: fetchError } = await getFolderById(folderId, activeOrgId);
-
-    if (fetchError) {
-        console.warn('updateFolder Action: Fetch for revalidation path failed', fetchError);
-    }
-    if (currentFolderData) {
-        parentFolderIdForReval = currentFolderData.parent_folder_id;
-    }
-
-    // Call the usecase
-    const usecaseResult = await updateFolderUsecase({
-      organizationId: activeOrgId,
-      folderId,
-      newName: newName.trim(),
-    });
-
-    if (!usecaseResult.success || !usecaseResult.data) {
-      console.error('updateFolder Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to update folder via usecase.' };
-    }
-
-    revalidatePath('/dam', 'layout');
-    if (parentFolderIdForReval) {
-      revalidatePath(`/dam/folders/${parentFolderIdForReval}`, 'layout');
-    } else {
-      revalidatePath('/dam', 'layout'); 
-    }
-    revalidatePath(`/dam/folders/${folderId}`, 'layout');
-
-    return { success: true, folder: usecaseResult.data.folder };
-
-  } catch (err: any) {
-    console.error('updateFolder Action: Unexpected Error', err);
-    return { success: false, error: err.message || 'An unexpected error occurred while updating the folder.' };
+  const authResult = await _authenticateAndGetOrgId('updateFolder');
+  if (authResult.errorResult) {
+    return authResult.errorResult;
   }
+  const { activeOrgId } = authResult;
+
+  return _coreUpdateFolder(folderId, newName, activeOrgId!);
 }
 
 export async function deleteFolder(
@@ -159,44 +93,78 @@ export async function deleteFolder(
     return { success: false, error: 'Folder ID is required for deletion.' };
   }
 
-  const supabaseAuthClient = createSupabaseUserClient();
+  const authResult = await _authenticateAndGetOrgId('deleteFolder');
+  if (authResult.errorResult) {
+    return authResult.errorResult;
+  }
+  const { activeOrgId } = authResult;
+  
+  return _coreDeleteFolder(folderId, activeOrgId!);
+}
+
+export async function renameFolderClient(
+  folderId: string,
+  newName: string
+): Promise<FolderActionResult> {
+  if (!folderId) {
+    return { success: false, error: 'Folder ID is required.' };
+  }
+  if (!newName || newName.trim() === '') {
+    return { success: false, error: 'New folder name cannot be empty.' };
+  }
+
+  const authResult = await _authenticateAndGetOrgId('renameFolderClient');
+  if (authResult.errorResult) {
+    return authResult.errorResult;
+  }
+  const { activeOrgId } = authResult;
+
+  return _coreUpdateFolder(folderId, newName, activeOrgId!);
+}
+
+export async function deleteFolderClient(
+  folderId: string
+): Promise<FolderActionResult> {
+  if (!folderId) {
+    return { success: false, error: 'Folder ID is required for deletion.' };
+  }
+
+  const authResult = await _authenticateAndGetOrgId('deleteFolderClient');
+  if (authResult.errorResult) {
+    return authResult.errorResult;
+  }
+  const { activeOrgId } = authResult;
+  
+  return _coreDeleteFolder(folderId, activeOrgId!);
+}
+
+export async function getFoldersForPicker(): Promise<ServiceResult<{ id: string; name: string; parent_folder_id: string | null }[]>> {
+  const authResult = await _authenticateAndGetOrgId('getFoldersForPicker');
+  if (authResult.errorResult) {
+    // Ensure errorResult.error is a string, provide a fallback if necessary
+    const errorMessage = typeof authResult.errorResult.error === 'string' 
+      ? authResult.errorResult.error 
+      : 'Authorization failed.';
+    return { success: false, error: errorMessage, errorCode: ErrorCodes.UNAUTHORIZED };
+  }
+  // activeOrgId is guaranteed if errorResult is not present due to _authenticateAndGetOrgId logic
+  const { activeOrgId } = authResult; 
+  const supabase = createSupabaseUserClient(); // Create client instance here
+
   try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
-    if (authError || !user) {
-      console.error('deleteFolder Action: Auth Error', authError);
-      return { success: false, error: 'User not authenticated.' };
+    const { data, error } = await supabase
+      .from('folders')
+      .select('id, name, parent_folder_id')
+      .eq('organization_id', activeOrgId!) // activeOrgId is checked by _authenticateAndGetOrgId
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('getFoldersForPicker: Supabase error', error);
+      return { success: false, error: error.message, errorCode: ErrorCodes.DATABASE_ERROR };
     }
-
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-      console.error('deleteFolder Action: Active Organization ID not found.');
-      return { success: false, error: 'Active organization not found. Cannot delete folder.' };
-    }
-
-    // Call the usecase
-    const usecaseResult = await deleteFolderUsecase({
-        organizationId: activeOrgId,
-        folderId,
-    });
-
-    if (!usecaseResult.success || !usecaseResult.data) {
-      console.error('deleteFolder Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to delete folder via usecase.' };
-    }
-
-    // Revalidation using data from usecase (which gets it from service)
-    revalidatePath('/dam', 'layout');
-    const parentFolderIdFromUsecase = usecaseResult.data.parentFolderId;
-    if (parentFolderIdFromUsecase) {
-      revalidatePath(`/dam/folders/${parentFolderIdFromUsecase}`, 'layout');
-    } else {
-      revalidatePath('/dam', 'layout');
-    }
-
-    return { success: true, folderId: usecaseResult.data.deletedFolderId, parentFolderId: parentFolderIdFromUsecase };
-
+    return { success: true, data: data || [] };
   } catch (err: any) {
-    console.error('deleteFolder Action: Unexpected Error', err);
-    return { success: false, error: err.message || 'An unexpected error occurred while deleting the folder.' };
+    console.error('getFoldersForPicker: Unexpected error', err);
+    return { success: false, error: err.message || 'An unexpected error occurred.', errorCode: ErrorCodes.UNEXPECTED_ERROR };
   }
 } 

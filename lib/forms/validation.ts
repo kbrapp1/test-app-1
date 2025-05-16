@@ -48,31 +48,11 @@ export const confirmPasswordSchema = z
   .string()
   .min(1, 'Please confirm your password');
 
-/**
- * Helper to add password confirmation validation to a schema
- * 
- * Example usage:
- * ```
- * const schema = z.object({
- *   password: passwordSchema,
- *   confirmPassword: confirmPasswordSchema,
- * }).refine(passwordsMatch, {
- *   message: "Passwords don't match",
- *   path: ["confirmPassword"],
- * });
- * ```
- */
 export const passwordsMatch = (data: { 
   password: string; 
   confirmPassword: string;
 }) => data.password === data.confirmPassword;
 
-/**
- * Username validation
- * - 3-20 characters
- * - Alphanumeric plus underscores and hyphens
- * - Lowercase transformation
- */
 export const usernameSchema = z
   .string()
   .min(3, 'Username must be at least 3 characters')
@@ -80,32 +60,18 @@ export const usernameSchema = z
   .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens')
   .transform(val => val.toLowerCase());
 
-/**
- * Full name validation
- * - 2-50 characters
- * - Trims whitespace
- */
 export const nameSchema = z
   .string()
   .min(2, 'Name is required and must be at least 2 characters')
   .max(50, 'Name must be less than 50 characters')
   .transform(val => val.trim());
 
-/**
- * Phone number validation (basic)
- * - Min 10 characters
- * - Max 15 characters
- */
 export const phoneSchema = z
   .string()
   .min(10, 'Please enter a valid phone number')
   .max(15, 'Phone number is too long')
   .regex(/^[0-9+\-\s()]+$/, 'Please enter a valid phone number format');
 
-/**
- * URL validation with optional protocol
- * - Adds https:// if missing
- */
 export const urlSchema = z
   .string()
   .min(1, 'URL is required')

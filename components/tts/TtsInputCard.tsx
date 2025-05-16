@@ -9,7 +9,7 @@ import { Loader2, Library, Save, SaveAll } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { z } from 'zod';
 import { VoiceSelector } from './VoiceSelector';
-import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig';
+import { ttsProvidersConfig, ProviderConfig } from '@/lib/config/ttsProviderConfig';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Define the structure for a voice object
@@ -180,7 +180,7 @@ export function TtsInputCard({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.entries(ttsProviderConfigs).map(([providerKey, providerConfig]) => (
+                      {Object.entries(ttsProvidersConfig).map(([providerKey, providerConfig]: [string, ProviderConfig]) => (
                         <SelectItem key={providerKey} value={providerKey}>
                           {providerConfig.displayName}
                         </SelectItem>

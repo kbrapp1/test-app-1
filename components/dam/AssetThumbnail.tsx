@@ -60,13 +60,17 @@ const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>(({
     mimeType,
     onDataChange
 }, ref) => {
-  const [imgSrc, setImgSrc] = useState(src);
+  const fallbackSrc = getPlaceholderForMimeType(mimeType);
+  const [imgSrc, setImgSrc] = useState(() => {
+    if (mimeType && !mimeType.startsWith('image/')) {
+      return fallbackSrc;
+    }
+    return src;
+  });
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   
-  const fallbackSrc = getPlaceholderForMimeType(mimeType);
-
   useImperativeHandle(ref, () => ({
     triggerDeleteDialog: () => {
       console.log('AssetThumbnail: triggerDeleteDialog called!');

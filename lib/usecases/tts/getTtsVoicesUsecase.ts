@@ -1,20 +1,55 @@
 import type { TtsVoice } from '@/types/tts';
-import { AMERICAN_VOICES } from '@/lib/config/ttsConstants';
-// import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig'; // Future: use this to get provider-specific voices
+import { ttsProvidersConfig, ProviderConfig, REPLICATE_MODELS } from '@/lib/config/ttsProviderConfig';
 
 /**
- * Usecase: Fetches the list of available TTS voices for a given provider.
+ * Usecase: Fetches the list of available TTS voices for a given provider and optionally a specific model.
  */
-export async function getTtsVoices(provider?: string): Promise<{ success: boolean; data?: TtsVoice[]; error?: string }> {
-  // If no provider is specified, or if it's replicate, return American voices.
-  // This is a placeholder for more sophisticated provider-specific voice fetching.
-  if (!provider || provider === 'replicate') {
-    // In a real scenario, this might fetch from a DB or a provider-specific config in ttsProviderConfigs
-    return { success: true, data: AMERICAN_VOICES };
+export async function getTtsVoices(
+  providerId?: string,
+  modelId?: string
+): Promise<{ success: boolean; data?: TtsVoice[]; error?: string }> {
+  if (!providerId) {
+    return { success: false, error: 'Provider ID is required.' };
+  }
+
+  const providerConfig = ttsProvidersConfig[providerId];
+
+  if (!providerConfig) {
+    return { success: false, error: `Configuration for provider '${providerId}' not found.` };
+  }
+
+  // If a specific modelId is provided
+  if (modelId) {
+    if (providerConfig.models && providerConfig.models[modelId]) {
+      return { success: true, data: providerConfig.models[modelId].voices };
+    }
+    // If modelId is given but not found in config for this provider
+    return { success: false, error: `Model '${modelId}' not found for provider '${providerId}'.` };
+  }
+
+  // If no modelId is provided, try to use the default model for the provider
+  if (providerConfig.defaultModel && providerConfig.models && providerConfig.models[providerConfig.defaultModel]) {
+    return { success: true, data: providerConfig.models[providerConfig.defaultModel].voices };
+  }
+
+  // If no specific model and no default model, but voices are defined at the provider level
+  if (providerConfig.voices) {
+    return { success: true, data: providerConfig.voices };
   }
   
-  // For any other provider, return an empty list or an appropriate error/message for now.
-  // This indicates that voices for other providers need to be configured/implemented.
-  console.warn(`getTtsVoicesUsecase: Voice list not implemented for provider: ${provider}`);
-  return { success: true, data: [], error: `Voice list for provider '${provider}' is not available.` }; // Or success: false
+  // If voices are meant to be fetched dynamically (placeholder for future)
+  // if (providerConfig.fetchVoicesFn) { 
+  //   try {
+  //     // Assuming fetchVoicesFn might need an API key, which needs to be securely retrieved.
+  //     // This part is highly dependent on the specific provider's API and auth.
+  //     // const apiKey = await getApiKeyForProvider(providerId); // Placeholder
+  //     const voices = await providerConfig.fetchVoicesFn(); 
+  //     return { success: true, data: voices };
+  //   } catch (e: any) {
+  //     return { success: false, error: `Failed to dynamically fetch voices for ${providerId}: ${e.message}` };
+  //   }
+  // }
+
+  console.warn(`getTtsVoicesUsecase: No voices found for provider: ${providerId} with the given parameters.`);
+  return { success: true, data: [], error: `No voice list configured for provider '${providerId}' with the specified model.` };
 } 

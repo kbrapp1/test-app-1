@@ -123,6 +123,7 @@ alwaysApply: false
   - `dam/` <!-- Components specific to the Digital Asset Management feature. -->
     - `asset-selector-modal.test.tsx` <!-- Tests for the asset selector modal. -->
     - `asset-selector-modal.tsx` <!-- Modal for selecting assets from the library. -->
+    - `AssetActionDropdownMenu.tsx` <!-- Dropdown menu component for asset-specific actions (e.g., rename, move, download). -->
     - `AssetGallery.test.tsx` <!-- Tests for the asset gallery component. -->
     - `AssetGallery.tsx` <!-- Server component for displaying asset gallery. -->
     - `AssetGalleryClient.test.tsx` <!-- Tests for the client-side gallery logic. -->
@@ -139,8 +140,19 @@ alwaysApply: false
     - `folder-sidebar.test.tsx` <!-- Tests for the folder sidebar. -->
     - `folder-sidebar.tsx` <!-- Sidebar for navigating DAM folder structure. -->
     - `FolderItem.tsx` <!-- Component for individual folder item display. -->
+    - `FolderListItem.tsx` <!-- Component for displaying a folder as a list item, used in new DAM view. -->
     - `FolderThumbnail.tsx` <!-- Thumbnail representation of a folder. -->
     - `new-folder-dialog.tsx` <!-- Dialog for creating new folders in DAM. -->
+    - `dialogs/` <!-- Reusable dialog components for DAM operations. -->
+      - `AssetDetailsDialog.tsx` <!-- Dialog for viewing detailed information about an asset. -->
+      - `ConfirmationDialog.tsx` <!-- Generic dialog for confirming actions (e.g., delete). -->
+      - `InputDialog.tsx` <!-- Generic dialog for single text input (e.g., rename, create). -->
+      - `FolderPickerDialog.tsx` <!-- Dialog for selecting a folder, e.g., for moving assets. -->
+      - `folderPickerUtils.ts` <!-- Utility functions for the folder picker dialog (e.g., tree building, filtering). -->
+      - `FolderTreeItem.tsx` <!-- Component for rendering an individual item in the folder picker tree. -->
+    - `hooks/` <!-- Custom React hooks specific to DAM components. -->
+      - `useAssetItemActions.ts` <!-- Hook for managing asset item actions (download, rename, move) and their pending states. -->
+      - `useAssetItemDialogs.ts` <!-- Hook for managing dialog states (open/close, data) for asset items. -->
   - `error/` <!-- Components related to error display. -->
     - `__tests__/`
       - `error-boundary.test.tsx` <!-- Tests for error boundary component. -->
@@ -325,6 +337,8 @@ alwaysApply: false
     - `profile.actions.ts` <!-- Actions for updating user profile information. -->
     - `team.actions.ts` <!-- Actions for managing team members. -->
     - `tts.actions.ts` <!-- Actions for Text-to-Speech generation and results. -->
+    - `folder.action.helpers.ts` <!-- Helper functions for folder server actions. -->
+    - `folder.actions.ts`
   - `auth/` <!-- Authentication related utilities and configurations. -->
     - `__tests__/`
       - `utils.test.ts` <!-- Tests for auth utility functions. -->
@@ -392,6 +406,9 @@ alwaysApply: false
     - `ttsService.ts` <!-- Service for TTS related business logic. -->
   - `store/` <!-- State management stores (e.g., Zustand, Redux). -->
     - `appStore.ts` <!-- General application state store. -->
+    - `folderStore.ts` <!-- Zustand store for managing DAM folder state and interactions. -->
+    - `folderStoreUtils.ts` <!-- Utility functions for the folder Zustand store (e.g., node manipulation, tree building). -->
+    - `sidebarStore.ts` <!-- Zustand store for managing main application sidebar state. -->
   - `supabase/` <!-- Supabase client and utilities. -->
     - `client.ts` <!-- Supabase client-side client instance. -->
     - `server.ts` <!-- Supabase server-side client instance. -->

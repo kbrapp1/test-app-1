@@ -2,7 +2,7 @@ import { Prediction } from 'replicate';
 import { randomUUID } from 'crypto';
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { replicateClient } from '@/lib/replicate/client';
-import { MODEL_IDENTIFIER } from '@/lib/config/ttsConstants';
+// import { MODEL_IDENTIFIER } from '@/lib/config/ttsConstants'; // Removed old import
 import type { StartSpeechInput } from '@/lib/schemas/ttsSchemas';
 
 // Helper to get Supabase Admin Client (ensure env vars are set)
@@ -23,13 +23,16 @@ function getSupabaseAdminClient() {
 /**
  * Creates a prediction request with Replicate.
  */
-export async function createReplicatePrediction(input: StartSpeechInput): Promise<Prediction> {
+export async function createReplicatePrediction(input: StartSpeechInput, modelId: string): Promise<Prediction> {
   if (!replicateClient) {
     throw new Error('Replicate client is not initialized. Check API token.');
   }
-  console.log(`Service: Starting prediction for voice: ${input.voiceId}`);
+  if (!modelId) {
+    throw new Error('Replicate modelId (version) is required to create a prediction.');
+  }
+  console.log(`Service: Starting prediction for voice: ${input.voiceId} using model: ${modelId}`);
   const prediction = await replicateClient.predictions.create({
-    version: MODEL_IDENTIFIER,
+    version: modelId, // Use the passed modelId
     input: {
       text: input.inputText,
       voice: input.voiceId,

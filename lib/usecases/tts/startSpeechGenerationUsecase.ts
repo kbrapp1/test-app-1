@@ -2,6 +2,7 @@ import { StartSpeechSchema, type StartSpeechInput } from '@/lib/schemas/ttsSchem
 import { createReplicatePrediction } from '@/lib/services/ttsService';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { ttsProvidersConfig } from '@/lib/config/ttsProviderConfig';
 
 /**
  * Usecase: Validates input, initiates speech generation via the specified provider, and saves initial prediction to DB.
@@ -16,14 +17,35 @@ export async function startSpeechGeneration(
     return { success: false, error: 'Missing required parameters (inputText, voiceId, or provider).' };
   }
 
-  if (provider !== 'replicate') {
-    return { success: false, error: `Provider '${provider}' is not currently supported.` };
+  const providerConfig = ttsProvidersConfig[provider];
+  if (!providerConfig) {
+    return { success: false, error: `Provider '${provider}' is not supported or configured.` };
   }
 
-  const replicateInput: StartSpeechInput = { inputText, voiceId };
+  let replicateModelId: string | undefined;
+  if (provider === 'replicate') {
+    if (!providerConfig.defaultModel) {
+      return { success: false, error: `Default model not configured for Replicate provider.` };
+    }
+    replicateModelId = providerConfig.defaultModel;
+  } else {
+    // Handle other providers or return error if only replicate is supported for actual generation for now
+    return { success: false, error: `Provider '${provider}' is not currently supported for speech generation.` };
+  }
+
+  const ttsInput: StartSpeechInput = { inputText, voiceId };
 
   try {
-    const prediction = await createReplicatePrediction(replicateInput);
+    let prediction;
+    if (provider === 'replicate') {
+      if (!replicateModelId) { // Should be set if provider is replicate, but for type safety
+        return { success: false, error: 'Replicate Model ID could not be determined.' };
+      }
+      prediction = await createReplicatePrediction(ttsInput, replicateModelId);
+    } else {
+      // This case is already handled above, but as a safeguard:
+      return { success: false, error: `Speech generation for provider '${provider}' is not implemented.` };
+    }
     
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -40,8 +62,8 @@ export async function startSpeechGeneration(
     const initialDbRecord = {
       replicatePredictionId: prediction.id, 
       status: prediction.status || 'starting', 
-      inputText: replicateInput.inputText,
-      voiceId: replicateInput.voiceId,
+      inputText: ttsInput.inputText,
+      voiceId: ttsInput.voiceId,
       userId: user.id,
       organization_id: organizationId,
       prediction_provider: provider,

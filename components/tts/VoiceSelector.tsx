@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { getTtsVoices } from '@/lib/actions/tts';
 import { z } from 'zod';
+import { REPLICATE_MODELS } from '@/lib/config/ttsProviderConfig'; // <-- Import REPLICATE_MODELS
 
 // Define the structure for a voice object
 interface TtsVoice {
@@ -56,8 +57,15 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
         return;
       }
       try {
-        console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}`);
-        const result = await getTtsVoices(selectedProvider);
+        let modelIdToPass: string | undefined = undefined;
+        if (selectedProvider === 'replicate') {
+          // Assuming Kokoro is the default/only Replicate model for now
+          // In a more advanced setup, you might have a model selector for Replicate
+          modelIdToPass = REPLICATE_MODELS.KOKORO_82M;
+        }
+        
+        console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}, model: ${modelIdToPass || 'N/A'}`);
+        const result = await getTtsVoices(selectedProvider, modelIdToPass);
         if (result.success && result.data) {
           setAvailableVoices(result.data);
           if (result.data.length === 0 && !result.error) {

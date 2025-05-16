@@ -1,23 +1,16 @@
-import React, { useRef, useTransition } from 'react';
+import React, { useRef } from 'react';
 import { Asset, Folder, CombinedItem } from '@/types/dam';
 import { AssetThumbnail, AssetThumbnailRef } from './AssetThumbnail';
 import { FolderThumbnail } from './FolderThumbnail';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Download, Edit3, Trash2, Folder as FolderIcon, FileText, Loader2 } from 'lucide-react';
+import { Folder as FolderIcon, FileText } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { formatDistanceToNow } from 'date-fns';
-import { useToast } from '@/components/ui/use-toast';
-import { getAssetDownloadUrl } from '@/lib/actions/dam/asset-url.actions';
-import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { InputDialog } from '@/components/dam/dialogs/InputDialog';
+import { AssetDetailsDialog } from '@/components/dam/dialogs/AssetDetailsDialog';
+import { FolderPickerDialog } from '@/components/dam/dialogs/FolderPickerDialog';
+import { useAssetItemDialogs } from './hooks/useAssetItemDialogs';
+import { useAssetItemActions } from './hooks/useAssetItemActions';
+import { AssetActionDropdownMenu } from './AssetActionDropdownMenu';
 
 export interface AssetGridItemProps {
   item: CombinedItem;
@@ -34,7 +27,26 @@ export const AssetGridItem = React.forwardRef<
   AssetGridItemProps
 >(({ item, index, priorityThreshold, onDataChange }, ref) => {
   const assetThumbnailRef = useRef<AssetThumbnailRef>(null);
-  const [isDownloading, startDownloadTransition] = useTransition();
+
+  const {
+    renameDialog,
+    openRenameDialog,
+    closeRenameDialog,
+    detailsDialog,
+    openDetailsDialog,
+    closeDetailsDialog,
+    moveDialog,
+    openMoveDialog,
+    closeMoveDialog,
+  } = useAssetItemDialogs();
+
+  // Ensure actions hook is only instantiated for assets
+  const itemActions = item.type === 'asset' ? useAssetItemActions({
+    item: item as Asset,
+    onDataChange,
+    closeRenameDialog,
+    closeMoveDialog,
+  }) : null;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
@@ -48,37 +60,7 @@ export const AssetGridItem = React.forwardRef<
   
   const dynamicCardStyle = isDragging ? { opacity: 0.5 } : {};
 
-  const handleDownload = async () => {
-    if (item.type === 'asset') {
-      const asset = item as Asset;
-      startDownloadTransition(async () => {
-        try {
-          console.log('Requesting download URL for asset:', asset.name);
-          const result = await getAssetDownloadUrl(asset.id);
-
-          if (result.success && result.url) {
-            console.log('Received signed URL:', result.url);
-            const link = document.createElement('a');
-            link.href = result.url;
-            link.setAttribute('download', asset.name || 'download');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast.success(`Downloading ${asset.name}...`);
-          } else {
-            console.error('Failed to get download URL:', result.error);
-            toast.error(result.error || 'Could not prepare download.');
-          }
-        } catch (error) {
-          console.error('Error during download process:', error);
-          toast.error('An unexpected error occurred while trying to download.');
-        }
-      });
-    }
-  };
-
   const handleDeleteClick = () => {
-    console.log('AssetGridItem: handleDeleteClick triggered for item:', item.id);
     if (item.type === 'asset' && assetThumbnailRef.current) {
       assetThumbnailRef.current.triggerDeleteDialog();
     } else if (item.type === 'folder') {
@@ -95,53 +77,30 @@ export const AssetGridItem = React.forwardRef<
         <span className="truncate font-medium text-sm">{item.name}</span>
       </div>
       
-      {item.type === 'asset' ? (
+      {item.type === 'asset' && itemActions && (
         <div className="shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-1 h-auto">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              className="w-48" 
-              align="end" 
-              side="bottom"
-              sideOffset={5}
-              alignOffset={0}
-            >
-              <DropdownMenuItem onClick={handleDownload} disabled={isDownloading}>
-                {isDownloading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="mr-2 h-4 w-4" />
-                )}
-                <span>{isDownloading ? 'Preparing...' : 'Download'}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit3 className="mr-2 h-4 w-4" />
-                <span>Rename</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={handleDeleteClick} 
-                className="text-red-600 hover:text-red-600! focus:text-red-600! hover:bg-red-50! dark:hover:bg-red-900/50! focus:bg-red-50! dark:focus:bg-red-900/50! cursor-pointer"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AssetActionDropdownMenu
+            item={item as Asset}
+            onViewDetails={(e) => { e.stopPropagation(); openDetailsDialog(item as Asset); }}
+            onOpenRenameDialog={(e) => { e.stopPropagation(); openRenameDialog(item as Asset); }}
+            onOpenMoveDialog={(e) => { e.stopPropagation(); openMoveDialog(item as Asset); }}
+            onDownload={itemActions.handleDownload}
+            onDelete={handleDeleteClick} // Delete still needs its specific trigger logic
+            isDownloading={itemActions.isDownloading}
+            isPendingRename={itemActions.isPendingRename}
+            isPendingMove={itemActions.isPendingMove}
+          />
         </div>
-      ) : (
-        <div className="w-[28px] h-[28px] shrink-0" />
+      )}
+      {item.type === 'folder' && (
+         <div className="w-[28px] h-[28px] shrink-0" /> // Placeholder for alignment if no dropdown
       )}
     </>
   );
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setNodeRef} // Ensure ref from forwardRef is also applied if needed, or use setNodeRef for dnd
       style={style}
       {...attributes}
       {...listeners}
@@ -161,12 +120,42 @@ export const AssetGridItem = React.forwardRef<
           assetId={item.id}
           folderId={(item as Asset).folder_id}
           type={'asset'}
-          isPriority={index !== undefined && priorityThreshold !== undefined && index < priorityThreshold && (item as Asset).mime_type?.startsWith('image/')}
+          isPriority={index !== undefined && priorityThreshold !== undefined && index < priorityThreshold}
           mimeType={(item as Asset).mime_type}
           onDataChange={onDataChange}
         />
       ) : (
         <FolderThumbnail folder={item as Folder} />
+      )}
+
+      {/* Dialogs */}
+      {renameDialog.isOpen && renameDialog.data && itemActions && (
+        <InputDialog
+          isOpen={renameDialog.isOpen}
+          onOpenChange={(isOpen) => !isOpen && closeRenameDialog()}
+          title={`Rename Asset`}
+          description={`Renaming "${renameDialog.data.name}". Enter a new name below.`}
+          initialValue={renameDialog.data.name}
+          inputLabel="New Name"
+          onSubmit={itemActions.handleRenameSubmit}
+          isLoading={itemActions.isPendingRename}
+        />
+      )}
+      {detailsDialog.isOpen && detailsDialog.data && (
+        <AssetDetailsDialog 
+          isOpen={detailsDialog.isOpen}
+          onOpenChange={(isOpen) => !isOpen && closeDetailsDialog()}
+          asset={detailsDialog.data}
+        />
+      )}
+      {moveDialog.isOpen && moveDialog.data && itemActions && (
+        <FolderPickerDialog
+          isOpen={moveDialog.isOpen}
+          onOpenChange={(isOpen) => !isOpen && closeMoveDialog()}
+          onFolderSelect={itemActions.handleMoveConfirm}
+          currentAssetFolderId={moveDialog.data.folder_id}
+          assetName={moveDialog.data.name}
+        />
       )}
     </div>
   );

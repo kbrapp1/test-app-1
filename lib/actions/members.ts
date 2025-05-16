@@ -38,6 +38,11 @@ export async function inviteMemberToOrganization(
       return { success: false, error: 'You must be logged in to invite members' };
     }
 
+    // Determine the correct application URL based on the environment
+    const appUrl = process.env.NODE_ENV === 'development' 
+                   ? (process.env.NEXT_PUBLIC_APP_URL_DEV || 'http://localhost:3000') 
+                   : (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL);
+
     const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/invite-member`;
     
     const response = await fetch(edgeFunctionUrl, {
@@ -51,6 +56,7 @@ export async function inviteMemberToOrganization(
         name: name || undefined,
         organization_id: organizationId,
         role_id: roleId,
+        explicit_app_url: appUrl,
       }),
     });
 

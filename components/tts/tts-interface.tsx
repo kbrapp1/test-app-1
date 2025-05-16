@@ -21,7 +21,7 @@ import { useTtsDamIntegration } from '@/hooks/useTtsDamIntegration';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';
 import { Loader2 } from "lucide-react";
-import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig'; // Import provider configs
+import { ttsProvidersConfig } from '@/lib/config/ttsProviderConfig'; // Import provider configs
 
 // Validation schema definition (can be shared or defined here)
 const TtsInputSchema = z.object({
@@ -58,7 +58,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
     defaultValues: {
       inputText: formInitialValues?.inputText || '',
       voiceId: formInitialValues?.voiceId || '',
-      provider: formInitialValues?.provider || Object.keys(ttsProviderConfigs)[0] || '', // Default provider
+      provider: formInitialValues?.provider || Object.keys(ttsProvidersConfig)[0] || '', // Default provider
     },
   });
   const currentInputText = form.watch('inputText');
@@ -92,7 +92,6 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
   } = useTtsDamIntegration({
       onTextLoaded: (text, assetId) => {
         form.setValue('inputText', text, { shouldValidate: true });
-        form.setValue('voiceId', '' ); // Reset voice when loading from DAM text asset
         resetTtsState();
       }
   });
@@ -109,7 +108,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
       form.reset({
         inputText: formInitialValues.inputText,
         voiceId: formInitialValues.voiceId,
-        provider: formInitialValues.provider || Object.keys(ttsProviderConfigs)[0] || '', // Set provider on reset
+        provider: formInitialValues.provider || Object.keys(ttsProvidersConfig)[0] || '', // Set provider on reset
       });
 
       if (formInitialValues.outputUrl && formInitialValues.dbId) {

@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { vi } from 'vitest';
 import { TtsInputCard } from './TtsInputCard';
-import { ttsProviderConfigs } from '@/lib/config/ttsProviderConfig';
+import { ttsProvidersConfig } from '@/lib/config/ttsProviderConfig';
 import { z } from 'zod';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -19,7 +19,7 @@ vi.mock('./VoiceSelector', () => ({
 }));
 
 describe('TtsInputCard', () => {
-  const defaultProvider = Object.keys(ttsProviderConfigs)[0];
+  const defaultProvider = Object.keys(ttsProvidersConfig)[0];
   const defaultValues = { inputText: '', voiceId: '', provider: defaultProvider };
   const onSubmit = vi.fn();
   const handleSaveText = vi.fn();

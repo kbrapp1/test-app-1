@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Folder as FolderIcon, ChevronRight, ChevronDown } from 'lucide-react';
+import { Folder as FolderIcon, ChevronRight, ChevronDown, Home as HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NewFolderDialog } from './new-folder-dialog';
@@ -41,12 +41,12 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
     // console.log('FolderSidebar: Initializing store state...');
     setInitialFolders(initialFolders);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setInitialFolders]); // initialFolders from layout props can be a dependency if it can change.
+  }, [initialFolders, setInitialFolders]); // initialFolders from layout props can be a dependency if it can change.
                           // For root folders it might be stable, but good to include.
                           // If setInitialFolders is guaranteed stable, then [setInitialFolders]
 
-  // Local state for root expansion (can be moved to store if needed globally)
-  const [isRootExpanded, setIsRootExpanded] = useState(true);
+  // isRootExpanded state is no longer used for toggling visibility
+  // const [isRootExpanded, setIsRootExpanded] = useState(true);
 
   return (
     <aside className="w-64 border-r bg-background px-4 pt-2 pb-4 flex flex-col h-full overflow-y-auto">
@@ -63,46 +63,34 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
-      {/* Root Folder Item */}
+      {/* Home Folder Item - Modified padding and alignment */}
       <div className={cn(
-        "flex items-center px-1 py-1 rounded-md mb-1",
+        "flex items-center rounded-md mb-1", // Removed px-1, py will be increased
+        // Apply left padding to align with children (who get pl-4 from their container + FolderItem internal padding)
+        // FolderItem at level 0 likely has some base padding. Let's assume pl-4 for now to match its container.
+        "pl-4 py-2", // Increased py, added pl for alignment. Adjust pl if necessary after seeing FolderItem.
         actualCurrentFolderId === null ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" : "hover:bg-muted/50 text-gray-700 dark:text-gray-300"
       )}>
-        {/* Expand/Collapse Button for Root */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setIsRootExpanded(!isRootExpanded)}
-          className="p-1 h-4 w-4 mr-1 flex items-center justify-center"
-        >
-          {isRootExpanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </Button>
+        {/* Placeholder div removed */}
         
-        {/* Link to root folder */}
         <Link href="/dam" className="flex-1 flex items-center truncate" legacyBehavior={undefined}>
           <>
-            <FolderIcon className="h-4 w-4 mr-2 shrink-0" /> 
-            <span className="font-medium text-sm">(Root)</span>
+            <HomeIcon className="h-4 w-4 mr-2 shrink-0" /> 
+            <span className="font-medium text-sm">Home</span>
           </>
         </Link>
       </div>
-      {/* Root Folders */}
-      {isRootExpanded && (
-        <div className="mt-1 pl-4">
-          {rootFolders.map(folderNode => (
-            <FolderItem
-              key={folderNode.id}
-              folderNode={folderNode}
-              level={0}
-              currentFolderId={actualCurrentFolderId}
-            />
-          ))}
-        </div>
-      )}
+      {/* Root Folders - Children of Home */}
+      <div className="mt-1"> {/* This pl-4 is the base indentation for level 0 children */}
+        {rootFolders.map(folderNode => (
+          <FolderItem
+            key={folderNode.id}
+            folderNode={folderNode}
+            level={0}
+            currentFolderId={actualCurrentFolderId}
+          />
+        ))}
+      </div>
     </aside>
   );
 } 
