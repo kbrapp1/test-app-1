@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { NavMain } from './nav-main'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { MailIcon, PlusCircleIcon, LayoutDashboardIcon, FolderIcon, FileTextIcon, UploadCloudIcon } from 'lucide-react'
+import { MailIcon, PlusCircleIcon, LayoutDashboardIcon, FolderIcon, FileTextIcon, UploadCloudIcon, UsersIcon, FileCodeIcon, Volume2Icon, BookTextIcon } from 'lucide-react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import React from 'react'
 
@@ -100,11 +100,52 @@ const renderWithProvider = (ui: React.ReactElement) => {
 };
 
 describe('NavMain', () => {
-  const mockItems = [
+  const mockItemsFull = [
     {
       title: 'Dashboard',
       url: '/dashboard',
       icon: LayoutDashboardIcon,
+    },
+    {
+        title: "Documents",
+        url: "#", 
+        icon: FolderIcon, 
+        collapsible: true,
+        items: [
+            {
+                title: "Notes",
+                url: "/documents/notes",
+                icon: FileTextIcon,
+            },
+            {
+                title: "Asset Library",
+                url: "/dam",
+                icon: UploadCloudIcon,
+            },
+        ],
+    },
+    {
+        title: "Team",
+        url: "/team",
+        icon: UsersIcon,
+    },
+    {
+        title: "Playbooks",
+        url: "/playbooks", 
+        icon: BookTextIcon,
+    },
+    {
+        title: "AI Playground",
+        url: "#", 
+        icon: FileCodeIcon,
+        collapsible: true,
+        items: [ 
+            {
+                title: "Text to Speech",
+                url: "/ai-playground/text-to-speech",
+                icon: Volume2Icon,
+            },
+        ],
     },
   ];
 
@@ -123,14 +164,23 @@ describe('NavMain', () => {
   });
 
   it('should render dynamic items wrapped in Links with correct href', () => {
-    renderWithProvider(<NavMain items={mockItems} />); 
+    // Use a subset for this specific test for simplicity if mockItemsFull is too large
+    const dashboardItem = mockItemsFull.find(item => item.title === 'Dashboard')!;
+    renderWithProvider(<NavMain items={[dashboardItem]} />); 
 
-    // Find the link by role and name now
     const linkElement = screen.getByRole('link', { name: /dashboard/i });
     expect(linkElement).toBeInTheDocument();
-    // Check the data-href attribute instead of href
     expect(linkElement).toHaveAttribute('data-href', '/dashboard');
-    // Remove checks for legacyBehavior and passHref as the simplified mock doesn't handle them
+  });
+
+  it('should render the Playbooks link correctly', () => {
+    const playbooksItem = mockItemsFull.find(item => item.title === 'Playbooks')!;
+    renderWithProvider(<NavMain items={[playbooksItem]} />); 
+    const linkElement = screen.getByRole('link', { name: /playbooks/i });
+    expect(linkElement).toBeInTheDocument();
+    expect(linkElement).toHaveAttribute('data-href', '/playbooks');
+    // Optionally, check for the icon if the mock setup allows verifying specific icons
+    // For now, just ensuring the link and href is the primary goal.
   });
 
   it('should render only static buttons when items prop is empty', () => {

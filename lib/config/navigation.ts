@@ -16,6 +16,7 @@ import {
     FileCodeIcon,
     UploadCloudIcon,
     Volume2Icon,
+    BookTextIcon,
 } from "lucide-react";
 
 // Define the types for navigation items
@@ -88,6 +89,11 @@ export const navMainItems: NavItem[] = [
         title: "Team",
         url: "/team", // Updated to point to the Team page
         icon: UsersIcon,
+    },
+    {
+        title: "Playbooks",
+        url: "/playbooks", 
+        icon: BookTextIcon,
     },
     {
         title: "AI Playground",
