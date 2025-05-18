@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { withAuthAction, getSessionUser } from '../server-action';
+import { getSessionUser } from '../server-action';
+import { withAuthAction } from '..';
 import { UserRole, Permission } from '../roles';
 import { AuthorizationError } from '@/lib/errors/base';
 import type { User } from '@supabase/supabase-js';

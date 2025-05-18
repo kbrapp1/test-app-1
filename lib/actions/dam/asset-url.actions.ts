@@ -2,7 +2,7 @@
 
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { getAssetDownloadUrlUsecase } from '@/lib/usecases/dam/getAssetDownloadUrlUsecase';
-import { getAssetDownloadUrlService } from '@/lib/services/asset-service'; // Keep service for the second action
+import { getAssetDownloadUrlService } from '@/lib/services/asset-core.service'; // Keep service for the second action
 
 export async function getAssetDownloadUrl(
   assetId: string

@@ -6,7 +6,7 @@ import { saveTtsAudioToDam } from './saveTtsAudioToDamUsecase';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
-import { createAssetRecordInDb } from '@/lib/repositories/asset-repo';
+import { createAssetRecordInDb } from '@/lib/repositories/asset.db.repo';
 
 // Mock dependencies (these are the correct ones for the usecase)
 vi.mock('@/lib/supabase/server', () => ({
@@ -21,7 +21,7 @@ vi.mock('@/lib/services/ttsService', () => ({
   downloadAndUploadAudio: vi.fn(),
 }));
 
-vi.mock('@/lib/repositories/asset-repo', () => ({
+vi.mock('@/lib/repositories/asset.db.repo', () => ({
   createAssetRecordInDb: vi.fn(),
 }));
 
@@ -92,21 +92,25 @@ describe('saveTtsAudioToDamUsecase', () => {
   });
 
   it('should return auth error if user is not authenticated', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (mockSupabaseClient.auth.getUser as any).mockResolvedValueOnce({ data: { user: null }, error: { message: 'Auth error'} });
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Authentication failed.');
     expect(downloadAndUploadAudio).not.toHaveBeenCalled();
     expect(createAssetRecordInDb).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should return error if active organization is not found', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (getActiveOrganizationId as any).mockResolvedValueOnce(null);
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Active organization context is missing.');
     expect(downloadAndUploadAudio).not.toHaveBeenCalled();
     expect(createAssetRecordInDb).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should return error if downloadAndUploadAudio service fails', async () => {

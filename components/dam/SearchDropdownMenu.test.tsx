@@ -6,6 +6,7 @@ import type { CombinedItem } from '@/types/dam';
 
 const mockOnSelect = vi.fn();
 const mockOnViewAllResults = vi.fn();
+const mockCloseDropdown = vi.fn();
 
 describe('SearchDropdownMenu', () => {
   const defaultProps = {
@@ -14,11 +15,13 @@ describe('SearchDropdownMenu', () => {
     isLoading: false,
     searchTermForDisplay: '',
     onViewAllResults: mockOnViewAllResults,
+    closeDropdown: mockCloseDropdown,
   };
 
   beforeEach(() => {
     mockOnSelect.mockClear();
     mockOnViewAllResults.mockClear();
+    mockCloseDropdown.mockClear();
   });
 
   test('renders loading state', () => {
@@ -52,6 +55,7 @@ describe('SearchDropdownMenu', () => {
         organization_id: 'org1',
         created_at: '2021-01-01T00:00:00Z',
         parent_folder_id: null,
+        ownerName: 'Mock Owner',
       },
       {
         id: 'file1',
@@ -65,6 +69,8 @@ describe('SearchDropdownMenu', () => {
         size: 123,
         folder_id: null,
         publicUrl: 'http://example.com/file',
+        ownerName: 'Mock Owner',
+        parentFolderName: null,
       },
     ];
     render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="my" />);
@@ -91,10 +97,12 @@ describe('SearchDropdownMenu', () => {
         size: 123,
         folder_id: null,
         publicUrl: 'http://example.com/click.png',
+        ownerName: 'Mock Owner',
+        parentFolderName: null,
       },
     ];
     render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="click" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Click Me.png' }));
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Click Me.png' }));
     expect(mockOnSelect).toHaveBeenCalledTimes(1);
     expect(mockOnSelect).toHaveBeenCalledWith(items[0]);
   });
@@ -113,6 +121,8 @@ describe('SearchDropdownMenu', () => {
         size: 1,
         folder_id: null,
         publicUrl: 'http://example.com/afile.txt',
+        ownerName: 'Mock Owner',
+        parentFolderName: null,
       },
     ];
     render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="A File" />);
@@ -134,10 +144,12 @@ describe('SearchDropdownMenu', () => {
         size: 1,
         folder_id: null,
         publicUrl: 'http://example.com/another.pdf',
+        ownerName: 'Mock Owner',
+        parentFolderName: null,
       },
     ];
     render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="Another" />);
-    fireEvent.click(screen.getByText(/Search for/));
+    fireEvent.mouseDown(screen.getByText(/Search for/));
     expect(mockOnViewAllResults).toHaveBeenCalledTimes(1);
   });
 
@@ -155,62 +167,12 @@ describe('SearchDropdownMenu', () => {
         size: 1,
         folder_id: null,
         publicUrl: 'http://example.com/afile.txt',
+        ownerName: 'Mock Owner',
+        parentFolderName: null,
       },
     ];
     render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="" />);
     expect(screen.queryByText(/Search for/)).toBeNull();
-  });
-
-  test('highlights matching part of the item name', () => {
-    const items: CombinedItem[] = [
-      {
-        id: 'file1',
-        name: 'Important Document.pdf',
-        type: 'asset',
-        user_id: 'u1',
-        organization_id: 'org1',
-        created_at: '2021-01-01T00:00:00Z',
-        storage_path: '/important.pdf',
-        mime_type: 'application/pdf',
-        size: 1,
-        folder_id: null,
-        publicUrl: 'http://example.com/important.pdf',
-      },
-    ];
-    render(<SearchDropdownMenu {...defaultProps} items={items} searchTermForDisplay="Doc" />);
-
-    // Check that the full item name is rendered correctly with the highlighted part
-    const fullItemNameButton = screen.getByRole('button', { name: /^Important Doc ument\.pdf$/i });
-    
-    // Get the span.truncate directly from the button
-    const truncateSpan = fullItemNameButton.querySelector('span.truncate');
-    expect(truncateSpan).toBeInTheDocument(); // Make sure it exists
-
-    if (truncateSpan) {
-        const childNodes = Array.from(truncateSpan.childNodes);
-        
-        // Expected: [TextNode("Important "), <span.font-semibold>Doc</span>, TextNode("ument.pdf")]
-        expect(childNodes.length).toBe(3); // Ensure exactly 3 children
-
-        // Child 0: TextNode "Important "
-        expect(childNodes[0].nodeType).toBe(Node.TEXT_NODE);
-        expect(childNodes[0].textContent).toBe('Important ');
-
-        // Child 1: ElementNode <span class="font-semibold">Doc</span>
-        expect(childNodes[1].nodeType).toBe(Node.ELEMENT_NODE);
-        const highlightedSpan = childNodes[1] as HTMLElement;
-        expect(highlightedSpan.tagName).toBe('SPAN');
-        expect(highlightedSpan).toHaveClass('font-semibold');
-        expect(highlightedSpan.textContent).toBe('Doc');
-
-        // Child 2: TextNode "ument.pdf"
-        expect(childNodes[2].nodeType).toBe(Node.TEXT_NODE);
-        expect(childNodes[2].textContent).toBe('ument.pdf');
-    } else {
-        // This case should ideally not be reached if the previous expect(truncateSpan).toBeInTheDocument() passes.
-        // But as a fallback, fail the test explicitly.
-        throw new Error('span.truncate not found within the button');
-    }
   });
 
 });

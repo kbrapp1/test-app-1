@@ -1,12 +1,15 @@
 import {
   listTextAssetsFromDb,
+  type AssetDbRecord,
   getAssetByIdFromDb,
+  createAssetRecordInDb,
+  updateAssetMetadataInDb,
+} from '@/lib/repositories/asset.db.repo';
+import {
   downloadAssetBlobFromStorage,
   uploadToStorage,
-  updateAssetMetadataInDb,
-  createAssetRecordInDb,
-  removeAssetFromStorage // Needed for cleanup in saveAsNew
-} from '@/lib/repositories/asset-repo';
+  removeAssetFromStorage, // Needed for cleanup in saveAsNew
+} from '@/lib/repositories/asset.storage.repo';
 import { type ServiceResult } from '@/types/services';
 import { ErrorCodes } from '@/lib/errors/constants';
 import { randomUUID } from 'crypto';
@@ -60,7 +63,7 @@ export async function getAssetContentService(
     return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
   }
   try {
-    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId, 'storage_path, mime_type');
+    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId);
     if (assetMetaResult.error) {
       return { success: false, error: `Failed to fetch asset metadata: ${assetMetaResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR };
     }
@@ -93,7 +96,7 @@ export async function updateAssetTextService(
 ): Promise<ServiceResult<null>> {
   if (!assetId) { return { success: false, error: 'Asset ID is required for update.', errorCode: ErrorCodes.VALIDATION_ERROR }; }
   try {
-    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId, 'storage_path, mime_type, name');
+    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId);
     if (assetMetaResult.error) { return { success: false, error: `Failed to fetch asset metadata: ${assetMetaResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR }; }
     if (!assetMetaResult.data || !assetMetaResult.data.storage_path || !assetMetaResult.data.mime_type) { 
       return { success: false, error: 'Asset not found, access denied, or key metadata missing.', errorCode: ErrorCodes.RESOURCE_NOT_FOUND }; 

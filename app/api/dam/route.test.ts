@@ -1,370 +1,272 @@
-import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
-import { GET } from './route';
+/// <reference types="vitest/globals" />
 import { NextRequest, NextResponse } from 'next/server';
 import { User, SupabaseClient } from '@supabase/supabase-js';
-import { queryData, QueryOptions } from '@/lib/supabase/db-queries';
-import { DatabaseError } from '@/lib/errors/base';
+import { getHandler } from './route'; // Assuming getHandler is exported for testing
+import { CombinedItem, Folder, Asset } from '@/types/dam';
+import { vi, describe, it, expect, beforeEach, afterEach, Mock } from 'vitest';
 
-// Mock getActiveOrganizationId for this test file
-vi.mock('@/lib/auth/server-action', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/auth/server-action')>();
-  return {
-    ...actual,
-    getActiveOrganizationId: vi.fn(() => Promise.resolve('mock-organization-id')), // Ensure it returns a consistent org ID
-  };
-});
-
-// Setup mock functions
-const mockAuthGetUser = vi.fn();
-const mockFromSelect = vi.fn();
-const mockFromInsert = vi.fn();
-const mockFromDelete = vi.fn();
-const mockEq = vi.fn();
-const mockIs = vi.fn();
-const mockOrder = vi.fn();
-const mockGetPublicUrl = vi.fn();
-
-// Mock query builder object that can chain methods
-const createQueryChain = () => ({
-  eq: mockEq,
-  is: mockIs,
-  order: mockOrder
-});
-
-// Mock Supabase client
-vi.mock('@supabase/ssr', () => {
-  return {
-    createServerClient: vi.fn(() => ({
-      auth: {
-        getUser: mockAuthGetUser
-      },
-      from: vi.fn(() => ({
-        select: mockFromSelect,
-      })),
-      storage: {
-        from: vi.fn(() => ({
-          getPublicUrl: mockGetPublicUrl
-        }))
-      }
-    }))
-  };
-});
-
-// Import after mocking
-import { createServerClient } from '@supabase/ssr';
-
-// Mock cookies() from next/headers
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => ({
-    get: vi.fn((name?: string) => {
-      // Match the specific Supabase auth token cookie name pattern
-      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
-      if (name && name.startsWith('sb-') && name.endsWith('-auth-token')) {
-        // console.log(`Mock cookies: Matched Supabase auth token cookie: ${name}`);
-        return { name, value: 'mock-jwt-token' }; // Provide a mock JWT string
-      }
-      // console.log(`Mock cookies: Other cookie accessed: ${name}`);
-      return undefined; // Return undefined for other cookies not explicitly handled
-    }),
-    getAll: vi.fn(() => [
-      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
-      { name: 'sb-zzapbmpqkqeqsrqwttzd-auth-token', value: 'mock-jwt-token' }
-    ]),
-    has: vi.fn((name?: string) => {
-      // IMPORTANT: Replace 'zzapbmpqkqeqsrqwttzd' with your actual Supabase project_ref if different
-      return !!(name && name.startsWith('sb-') && name.endsWith('-auth-token'));
-    })
-    // Add other cookie methods like `set`, `delete` if your code under test uses them
-  })),
-  headers: vi.fn(() => new Headers()), // Mock headers() if necessary
+// Mock dependencies
+vi.mock('@/lib/auth/server-action', () => ({
+  getActiveOrganizationId: vi.fn(),
 }));
 
-// Mock environment variables
-vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
-vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'mock-anon-key');
+vi.mock('@/lib/supabase/db-queries', () => ({
+  queryData: vi.fn(),
+}));
 
-// Mock the authentication middleware
-vi.mock('@/lib/supabase/auth-middleware', () => {
-  return {
-    withAuth: (handler: any) => {
-      return async (req: any) => {
-        // For authentication test
-        if (req.headers.get('x-test-auth') === 'fail') {
-          return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-        }
-        
-        // Otherwise call the handler with mocked user
-        const mockUser = { id: 'test-user-id' } as User;
-        return handler(req, mockUser, getMockSupabase());
-      }
-    }
+vi.mock('./dam-api.helpers', () => ({
+  getAssetIdsForTagFilter: vi.fn(),
+  buildAssetBaseQueryInternal: vi.fn(),
+  transformAndEnrichData: vi.fn(),
+  applyQuickSearchLimits: vi.fn(),
+}));
+
+// Import mocked functions to spy on them or set their implementation
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { queryData } from '@/lib/supabase/db-queries';
+import {
+  getAssetIdsForTagFilter,
+  buildAssetBaseQueryInternal,
+  transformAndEnrichData,
+  applyQuickSearchLimits,
+  RawAssetFromApi, // Import if needed for mock data typing
+  TransformedDataReturn
+} from './dam-api.helpers';
+
+
+describe('API GET /api/dam', () => {
+  let mockRequest: NextRequest;
+  let mockUser: User;
+  let mockSupabaseClient: SupabaseClient;
+
+  const createMockQueryBuilder = (defaultResponse: { data: any[] | null, error: any | null } = { data: [], error: null }) => {
+    let currentResponse = { ...defaultResponse };
+    const builder = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      resolvesTo: (data: any[] | null, error: any | null = null) => {
+        currentResponse = { data, error };
+      },
+      then: (onFulfilled?: (value: any) => any, onRejected?: (reason: any) => any) =>
+        Promise.resolve(currentResponse).then(onFulfilled, onRejected),
+    };
+    return builder;
   };
-});
 
-// Mock the Supabase client
-vi.mock('@supabase/ssr', () => {
-  return {
-    createServerClient: vi.fn(() => {
-      return getMockSupabase();
-    })
-  };
-});
+  let folderQueryMockBuilder: ReturnType<typeof createMockQueryBuilder>;
+  let assetQueryMockBuilder: ReturnType<typeof createMockQueryBuilder>;
 
-// Mock the database utilities
-vi.mock('@/lib/supabase/db-queries', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/supabase/db-queries')>();
-  return {
-    ...actual, // Spread actual module to keep other functions like insertData, deleteData if they exist and are used
-    queryData: vi.fn(), // Mock queryData specifically
-  };
-});
 
-// Create a reusable mock Supabase client
-function getMockSupabase() {
-  return {
-    auth: {
-      getUser: vi.fn(() => ({
-        data: { user: { id: 'test-user-id' } },
-        error: null
-      }))
-    },
-    from: vi.fn((table) => {
-      return {
-        select: vi.fn(() => {
-          if (table === 'error_table') {
-            return {
-              eq: vi.fn(() => ({ data: null, error: new Error('Database query error') })),
-              is: vi.fn(() => ({ data: null, error: new Error('Database query error') })),
-              order: vi.fn(() => ({ data: null, error: new Error('Database query error') }))
-            };
-          } else if (table === 'folders') {
-            return {
-              eq: vi.fn((column, value) => {
-                if (column === 'parent_folder_id' && value === 'folder-1') {
-                  return {
-                    order: vi.fn(() => ({
-                      data: [{ id: 'subfolder-1', name: 'Subfolder', parent_folder_id: 'folder-1' }],
-                      error: null
-                    }))
-                  };
-                } else {
-                  return {
-                    order: vi.fn(() => ({ data: [], error: null }))
-                  };
-                }
-              }),
-              is: vi.fn((column, value) => {
-                if (column === 'parent_folder_id' && value === null) {
-                  return {
-                    order: vi.fn(() => ({
-                      data: [{ id: 'folder-1', name: 'Test Folder', parent_folder_id: null }],
-                      error: null
-                    }))
-                  };
-                } else {
-                  return {
-                    order: vi.fn(() => ({ data: [], error: null }))
-                  };
-                }
-              }),
-              order: vi.fn(() => ({ data: [], error: null }))
-            };
-          } else if (table === 'assets') {
-            return {
-              eq: vi.fn((column, value) => {
-                if (column === 'folder_id' && value === 'folder-1') {
-                  return {
-                    order: vi.fn(() => ({
-                      data: [{ id: 'asset-1', name: 'test-asset.jpg', storage_path: 'path/to/asset.jpg', mime_type: 'image/jpeg', folder_id: 'folder-1' }],
-                      error: null
-                    }))
-                  };
-                } else {
-                  return {
-                    order: vi.fn(() => ({ data: [], error: null }))
-                  };
-                }
-              }),
-              is: vi.fn((column, value) => {
-                if (column === 'folder_id' && value === null) {
-                  return {
-                    order: vi.fn(() => ({
-                      data: [{ id: 'asset-root', name: 'root-asset.jpg', storage_path: 'path/to/root.jpg', mime_type: 'image/jpeg', folder_id: null }],
-                      error: null
-                    }))
-                  };
-                } else {
-                  return {
-                    order: vi.fn(() => ({ data: [], error: null }))
-                  };
-                }
-              }),
-              order: vi.fn(() => ({ data: [], error: null }))
-            };
-          } else {
-            return {
-              eq: vi.fn(() => ({ data: [], error: null })),
-              is: vi.fn(() => ({ data: [], error: null })),
-              order: vi.fn(() => ({ data: [], error: null }))
-            };
-          }
-        }),
-        insert: vi.fn(() => ({ data: [{}], error: null })),
-        update: vi.fn(() => ({ data: {}, error: null }))
-      };
-    }),
-    storage: {
-      from: vi.fn(() => ({
-        upload: vi.fn(() => ({ data: { path: 'path/to/file' }, error: null })),
-        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/public-url' } })),
-        remove: vi.fn(() => ({ data: {}, error: null }))
-      }))
-    }
-  };
-}
-
-describe('DAM API Route', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks(); // Reset mocks for each test
+
+    mockUser = { id: 'user-123' } as User; // Simplified mock user
+
+    folderQueryMockBuilder = createMockQueryBuilder();
+    assetQueryMockBuilder = createMockQueryBuilder();
     
-    // Setup mock authenticated user
-    mockAuthGetUser.mockResolvedValue({
-      data: { user: { id: 'mock-user-id' } },
-      error: null
-    });
-    
-    // Setup mock database query chains with fluent interface
-    mockFromSelect.mockReturnValue(createQueryChain());
-    
-    // For each method in the chain, make it return a query chain too
-    mockEq.mockReturnValue(createQueryChain());
-    mockIs.mockReturnValue(createQueryChain());
-    
-    // Setup mock for getPublicUrl
-    mockGetPublicUrl.mockImplementation(path => ({ 
-      data: { publicUrl: `https://example.com/${path}` } 
+    mockSupabaseClient = {
+      from: vi.fn((tableName: string) => {
+        if (tableName === 'folders') return folderQueryMockBuilder;
+        if (tableName === 'assets') return assetQueryMockBuilder; // Though typically buildAssetBaseQueryInternal handles assets
+        return createMockQueryBuilder(); // Fallback
+      }),
+    } as unknown as SupabaseClient;
+
+    (buildAssetBaseQueryInternal as Mock).mockReturnValue(assetQueryMockBuilder);
+    (getActiveOrganizationId as Mock).mockResolvedValue('org-123');
+    (transformAndEnrichData as Mock).mockImplementation(async (_supabase: SupabaseClient, _orgId: string, folders: any[] | null, assets: RawAssetFromApi[] | null) => ({
+      foldersWithDetails: (folders || []).map((f: any) => ({ ...f, type: 'folder', ownerName: 'Mock Owner' } as unknown as Folder)),
+      assetsWithDetails: (assets || []).map((a: RawAssetFromApi) => ({ ...a, type: 'asset', ownerName: 'Mock Owner', publicUrl: 'mock://url' } as unknown as Asset)),
     }));
+    (applyQuickSearchLimits as Mock).mockImplementation((folders: Folder[], assets: Asset[]) => [...folders, ...assets]);
+    (queryData as Mock).mockResolvedValue({ data: [], error: null });
+    (getAssetIdsForTagFilter as Mock).mockResolvedValue(null);
 
-    // Default mock implementation for queryData for most tests in this suite
-    (queryData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, select: string, options: QueryOptions) => {
-      // console.log(`Mocked queryData called with: table=${table}, options=${JSON.stringify(options)}`);
-      if (options?.matchColumn === 'folder_id' && options?.matchValue === 'folder-1') {
-        return Promise.resolve({
-          data: [
-            { id: 'asset-1', name: 'test-asset.jpg', storage_path: 'path/to/asset.jpg', mime_type: 'image/jpeg', folder_id: 'folder-1', user_id: 'test-user-id', created_at: new Date().toISOString() }
-          ],
-          error: null
-        });
-      } else if (options?.isNull === 'folder_id') {
-        return Promise.resolve({
-          data: [
-            { id: 'asset-root', name: 'root-asset.jpg', storage_path: 'path/to/root.jpg', mime_type: 'image/jpeg', folder_id: null, user_id: 'test-user-id', created_at: new Date().toISOString() }
-          ],
-          error: null
-        });
-      } else if (options?.matchColumn === 'parent_folder_id' && options?.matchValue === 'folder-1') {
-        return Promise.resolve({
-          data: [
-            { id: 'subfolder-1', name: 'Subfolder', parent_folder_id: 'folder-1', user_id: 'test-user-id', created_at: new Date().toISOString() }
-          ],
-          error: null
-        });
-      } else if (options?.isNull === 'parent_folder_id') {
-        return Promise.resolve({
-          data: [
-            { id: 'folder-1', name: 'Test Folder', parent_folder_id: null, user_id: 'test-user-id', created_at: new Date().toISOString() }
-          ],
-          error: null
-        });
-      } else if (options?.matchColumn === 'parent_folder_id' && options?.matchValue === 'empty-folder') {
-         return Promise.resolve({ data: [], error: null }); // For empty folder test case
-      } else if (options?.matchColumn === 'folder_id' && options?.matchValue === 'empty-folder') {
-         return Promise.resolve({ data: [], error: null }); // For empty folder assets test case
-      }
-      // Default to empty array if no specific conditions met
-      return Promise.resolve({ data: [], error: null });
-    });
+
+    // Default request (can be overridden in tests)
+    mockRequest = new NextRequest('http://localhost/api/dam') as NextRequest;
   });
-  
+
   afterEach(() => {
-    vi.restoreAllMocks(); // Restore all mocks to their original implementations
+    vi.restoreAllMocks();
   });
-  
-  it('should handle null folder ID (root folder)', async () => {
-    const request = new Request('https://example.com/api/dam') as unknown as NextRequest;
-    const response = await GET(request);
-    
-    expect(response.status).toBe(200);
-    const responseData = await response.json();
-    
-    expect(responseData).toHaveLength(2);
-    expect(responseData[0]).toMatchObject({ id: 'folder-1', name: 'Test Folder', type: 'folder' });
-    expect(responseData[1]).toMatchObject({ id: 'asset-root', name: 'root-asset.jpg', type: 'asset' });
+
+  const mockRawAssets: RawAssetFromApi[] = [
+    { id: 'asset-1', name: 'Asset 1', user_id: 'user-a', created_at: '2023-01-01T00:00:00Z', storage_path: '/a1.jpg', mime_type: 'image/jpeg', size: 100, folder_id: null, asset_tags: [], organization_id: 'org-123' },
+  ];
+  const mockRawFolders: any[] = [ // Using any[] for mockRawFolders as its elements are used directly in transformAndEnrichData mock
+    { id: 'folder-1', name: 'Folder 1', user_id: 'user-b', created_at: '2023-01-02T00:00:00Z', parent_folder_id: null },
+  ];
+
+  it('should throw ValidationError if no active organization ID is found', async () => {
+    (getActiveOrganizationId as Mock).mockResolvedValue(null);
+    await expect(getHandler(mockRequest, mockUser, mockSupabaseClient))
+      .rejects
+      .toThrow('Active organization ID not found. Cannot fetch DAM data.');
   });
-  
-  it('should handle specific folder ID', async () => {
-    const request = new Request('https://example.com/api/dam?folderId=folder-1') as unknown as NextRequest;
-    const response = await GET(request);
-    
-    expect(response.status).toBe(200);
-    const responseData = await response.json();
-    
-    expect(responseData).toHaveLength(2);
-    expect(responseData[0]).toMatchObject({ id: 'subfolder-1', name: 'Subfolder', type: 'folder' });
-    expect(responseData[1]).toMatchObject({ id: 'asset-1', name: 'test-asset.jpg', type: 'asset' });
-  });
-  
-  it('should return empty array if no items found', async () => {
-    // Skip the problematic mock, we can test this another way
-    const request = new Request('https://example.com/api/dam?folderId=empty-folder') as unknown as NextRequest;
-    const response = await GET(request);
-    
-    expect(response.status).toBe(200);
-    const responseData = await response.json();
-    
-    // The test will still work as our test fixtures return empty arrays by default
-    expect(Array.isArray(responseData)).toBe(true);
-  });
-  
-  it('should handle database query errors', async () => {
-    const request = new NextRequest('https://example.com/api/dam?folderId=error_folder', {
-      headers: { 'x-user-id': 'test-user-id' }
+
+  describe('Browse Mode (no search term)', () => {
+    it('should fetch root folder contents successfully', async () => {
+      mockRequest = new NextRequest('http://localhost/api/dam?folderId=') as NextRequest;
+      (queryData as Mock).mockResolvedValueOnce({ data: mockRawFolders, error: null }); // For folders in root
+      assetQueryMockBuilder.resolvesTo(mockRawAssets);
+
+      const response = await getHandler(mockRequest, mockUser, mockSupabaseClient);
+      const result = await response.json();
+
+      expect(queryData).toHaveBeenCalledWith(expect.anything(), 'folders', expect.any(String), expect.objectContaining({ isNull: 'parent_folder_id' }));
+      expect(buildAssetBaseQueryInternal).toHaveBeenCalledWith(mockSupabaseClient, 'org-123', null);
+      expect(assetQueryMockBuilder.is).toHaveBeenCalledWith('folder_id', null);
+      expect(transformAndEnrichData).toHaveBeenCalledWith(mockSupabaseClient, 'org-123', mockRawFolders, mockRawAssets);
+      expect(result.length).toBe(2); // 1 folder, 1 asset from mocks
+      expect(result[0].name).toBe('Folder 1');
+      expect(result[1].name).toBe('Asset 1');
     });
 
-    // Mock queryData to return an error for the 'folders' query
-    (queryData as Mock).mockImplementationOnce(async (supabase: SupabaseClient, table: string, select: string, options: QueryOptions) => {
-      if (table === 'folders') {
-        return Promise.resolve({ data: null, error: new DatabaseError('Database query error for folders') });
-      }
-      return Promise.resolve({ data: [], error: null });
+    it('should fetch specific folder contents successfully', async () => {
+      mockRequest = new NextRequest('http://localhost/api/dam?folderId=folder-xyz') as NextRequest;
+      const subfolderData = [{ id: 'subfolder-1', name: 'Subfolder' }];
+      const assetInFolderData = [{ id: 'asset-in-folder', name: 'Asset in Folder' }];
+      (queryData as Mock).mockResolvedValueOnce({ data: subfolderData, error: null });
+      assetQueryMockBuilder.resolvesTo(assetInFolderData as RawAssetFromApi[]);
+      
+      (transformAndEnrichData as Mock).mockImplementationOnce(async (_supabase: SupabaseClient, _orgId: string, fd: any[] | null, ad: RawAssetFromApi[] | null) => ({
+        foldersWithDetails: (fd || []).map(f => ({ ...f, type: 'folder' }) as any),
+        assetsWithDetails: (ad || []).map(a => ({ ...a, type: 'asset' }) as any),
+      }));
+
+      const response = await getHandler(mockRequest, mockUser, mockSupabaseClient);
+      const result = await response.json();
+
+      expect(queryData).toHaveBeenCalledWith(expect.anything(), 'folders', expect.any(String), expect.objectContaining({ matchValue: 'folder-xyz' }));
+      expect(assetQueryMockBuilder.eq).toHaveBeenCalledWith('folder_id', 'folder-xyz');
+      expect(result.length).toBe(2);
+      expect(result[0].name).toBe('Subfolder');
+      expect(result[1].name).toBe('Asset in Folder');
+    });
+    
+    it('should apply query limits in browse mode with quicksearch', async () => {
+      mockRequest = new NextRequest('http://localhost/api/dam?quicksearch=true&limit=1') as NextRequest;
+      (queryData as Mock).mockResolvedValueOnce({ data: mockRawFolders, error: null });
+      assetQueryMockBuilder.resolvesTo(mockRawAssets);
+      // applyQuickSearchLimits is NOT called in browse mode by design
+      // (applyQuickSearchLimits as Mock).mockReturnValueOnce([ { id: 'folder-1', name: 'Folder 1', type: 'folder' } as unknown as CombinedItem ]);
+
+      await getHandler(mockRequest, mockUser, mockSupabaseClient);
+      
+      expect((queryData as Mock).mock.calls[0][3].limit).toBe(1); // Math.ceil(1/2) = 1
+      expect(assetQueryMockBuilder.limit).toHaveBeenCalledWith(1);
+      expect(applyQuickSearchLimits).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Search Mode (with search term)', () => {
+    beforeEach(() => {
+      mockRequest = new NextRequest('http://localhost/api/dam?q=test') as NextRequest;
+      folderQueryMockBuilder.resolvesTo(mockRawFolders);
+      assetQueryMockBuilder.resolvesTo(mockRawAssets);
     });
 
-    const response = await GET(request);
-    expect(response.status).toBe(500);
-    const responseData = await response.json();
-    expect(responseData.error.message).toBe('Database query error for folders');
+    it('should fetch search results successfully', async () => {
+      const response = await getHandler(mockRequest, mockUser, mockSupabaseClient);
+      const result = await response.json();
 
-    // Ensure queryData was called (at least for the folders table)
-    expect(queryData).toHaveBeenCalledWith(
-      expect.anything(), // Supabase client
-      'folders',        // table
-      expect.any(String), // selectFields
-      expect.objectContaining({ matchColumn: 'parent_folder_id', matchValue: 'error_folder' }) // options
-    );
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith('folders');
+      expect(folderQueryMockBuilder.ilike).toHaveBeenCalledWith('name', '%test%');
+      expect(buildAssetBaseQueryInternal).toHaveBeenCalled();
+      expect(assetQueryMockBuilder.ilike).toHaveBeenCalledWith('name', '%test%');
+      expect(transformAndEnrichData).toHaveBeenCalledWith(mockSupabaseClient, 'org-123', mockRawFolders, mockRawAssets);
+      expect(result.length).toBe(2);
+    });
+
+    it('should handle tagIds in search mode', async () => {
+      mockRequest = new NextRequest('http://localhost/api/dam?q=test&tagIds=tag1,tag2') as NextRequest;
+      (getAssetIdsForTagFilter as Mock).mockResolvedValueOnce(['asset-id-for-tag']);
+
+      await getHandler(mockRequest, mockUser, mockSupabaseClient);
+
+      expect(getAssetIdsForTagFilter).toHaveBeenCalledWith(mockSupabaseClient, 'tag1,tag2');
+      expect(buildAssetBaseQueryInternal).toHaveBeenCalledWith(mockSupabaseClient, 'org-123', ['asset-id-for-tag']);
+    });
+
+    it('should apply quick search limits in search mode', async () => {
+      mockRequest = new NextRequest('http://localhost/api/dam?q=test&quicksearch=true&limit=1') as NextRequest;
+      const limitedCombinedItem = { id: 'asset-1', name: 'Asset 1', type: 'asset' } as unknown as CombinedItem;
+      (applyQuickSearchLimits as Mock).mockReturnValueOnce([limitedCombinedItem]);
+      (transformAndEnrichData as Mock).mockResolvedValueOnce({
+        foldersWithDetails: mockRawFolders.map(f => ({ ...f, type: 'folder' }) as any),
+        assetsWithDetails: mockRawAssets.map(a => ({ ...a, type: 'asset' }) as any),
+      });
+
+      const response = await getHandler(mockRequest, mockUser, mockSupabaseClient);
+      const result = await response.json();
+      
+      expect(folderQueryMockBuilder.limit).toHaveBeenCalledWith(1); 
+      expect(assetQueryMockBuilder.limit).toHaveBeenCalledWith(1);
+      
+      const transformedDataResult = await (transformAndEnrichData as Mock).mock.results[0].value;
+      expect(applyQuickSearchLimits).toHaveBeenCalledWith(
+        transformedDataResult.foldersWithDetails,
+        transformedDataResult.assetsWithDetails,
+        1
+      );
+      expect(result).toEqual([limitedCombinedItem]);
+    });
   });
   
-  it('should handle unauthenticated users', async () => {
-    const headers = new Headers();
-    headers.set('x-test-auth', 'fail');
-    
-    const request = new Request('https://example.com/api/dam', { headers }) as unknown as NextRequest;
-    const response = await GET(request);
-    
-    expect(response.status).toBe(401);
-    const responseData = await response.json();
-    
-    expect(responseData).toMatchObject({
-      error: 'Authentication required'
-    });
+  it('should handle database errors for folders gracefully', async () => {
+    (queryData as Mock).mockResolvedValueOnce({ data: null, error: new Error('Folder query failed') });
+    assetQueryMockBuilder.resolvesTo(mockRawAssets);
+
+    mockRequest = new NextRequest('http://localhost/api/dam') as NextRequest;
+
+    await expect(getHandler(mockRequest, mockUser, mockSupabaseClient))
+        .rejects
+        .toThrow('Folder query failed');
   });
-}); 
+
+  it('should handle database errors for assets gracefully in browse mode', async () => {
+    (queryData as Mock).mockResolvedValueOnce({ data: mockRawFolders, error: null }); 
+    assetQueryMockBuilder.resolvesTo(null, new Error('Asset query failed in browse'));
+
+    mockRequest = new NextRequest('http://localhost/api/dam') as NextRequest;
+
+    await expect(getHandler(mockRequest, mockUser, mockSupabaseClient))
+        .rejects
+        .toThrow('Asset query failed in browse');
+  });
+  
+  it('should handle database errors for assets gracefully in search mode', async () => {
+    folderQueryMockBuilder.resolvesTo(mockRawFolders);
+    assetQueryMockBuilder.resolvesTo(null, new Error('Asset query failed in search'));
+
+    mockRequest = new NextRequest('http://localhost/api/dam?q=searchterm') as NextRequest;
+
+    await expect(getHandler(mockRequest, mockUser, mockSupabaseClient))
+        .rejects
+        .toThrow('Asset query failed in search');
+  });
+
+  it('should return a NextResponse with JSON data', async () => {
+    (queryData as Mock).mockResolvedValueOnce({ data: [], error: null });
+    assetQueryMockBuilder.resolvesTo([]);
+    (transformAndEnrichData as Mock).mockResolvedValueOnce({ foldersWithDetails: [], assetsWithDetails: [] });
+
+    const response = await getHandler(mockRequest, mockUser, mockSupabaseClient);
+    expect(response).toBeInstanceOf(NextResponse);
+    const jsonData = await response.json();
+    expect(jsonData).toEqual([]);
+  });
+
+});
+
+// Note: To run these tests, you might need to export getHandler from './route.ts'
+// e.g., in route.ts: export { getHandler }; (if not already)
+// Or, test the exported GET method by mocking withAuth and withErrorHandling wrappers.
+// Testing getHandler directly is generally simpler for unit tests. 

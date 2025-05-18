@@ -1,4 +1,4 @@
-import { moveAssetService } from '@/lib/services/asset-service';
+import { moveAssetService } from '@/lib/services/asset-core.service';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 interface MoveAssetUsecaseParams {

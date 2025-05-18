@@ -3,19 +3,30 @@ import {
   getAssetByIdFromDb,
   updateAssetFolderInDb,
   deleteAssetRecordFromDb,
+  updateAssetNameInDb,
+} from '@/lib/repositories/asset.db.repo';
+import {
   removeAssetFromStorage,
   getAssetSignedUrlFromStorage,
-} from '@/lib/repositories/asset-repo';
-import { getFolderById } from '@/lib/repositories/folder-repo'; // For moveAssetService
+} from '@/lib/repositories/asset.storage.repo';
+import { getFolderById } from '@/lib/repositories/folder-repo';
 import { type Asset } from '@/types/dam';
 import { AppError } from '@/lib/errors/base';
 import { ErrorCodes } from '@/lib/errors/constants';
-import type { ServiceResult } from '@/types/services'; // Updated path
+import type { ServiceResult } from '@/types/services';
+import type { Tag } from '@/lib/actions/dam/tag.actions';
 
-function dbRecordToAppAsset(dbRecord: AssetDbRecord): Asset {
+export function dbRecordToAppAsset(dbRecord: AssetDbRecord): Asset { // Made exportable for potential reuse
   if (!dbRecord) {
     throw new AppError(ErrorCodes.UNEXPECTED_ERROR, 'DB record is null, cannot map to Asset.');
   }
+
+  const mappedTags: Tag[] = dbRecord.asset_tags
+    ? dbRecord.asset_tags
+        .map(at => at.tags)
+        .filter((tag): tag is Tag => tag !== null)
+    : [];
+
   return {
     id: dbRecord.id,
     created_at: dbRecord.created_at,
@@ -27,7 +38,10 @@ function dbRecordToAppAsset(dbRecord: AssetDbRecord): Asset {
     storage_path: dbRecord.storage_path,
     mime_type: dbRecord.mime_type,
     size: dbRecord.size,
-    publicUrl: '', // Placeholder
+    publicUrl: '', 
+    tags: mappedTags,
+    parentFolderName: null, 
+    ownerName: null, 
   };
 }
 
@@ -40,7 +54,7 @@ export async function moveAssetService(
     return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
   }
   try {
-    const assetResult = await getAssetByIdFromDb(assetId, organizationId, 'id, folder_id, organization_id');
+    const assetResult = await getAssetByIdFromDb(assetId, organizationId);
     if (assetResult.error) {
       console.error('moveAssetService: Asset fetch error', assetResult.error);
       return { success: false, error: `Error finding asset: ${assetResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR };
@@ -82,7 +96,7 @@ export async function deleteAssetService(
     return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
   }
   try {
-    const assetResult = await getAssetByIdFromDb(assetId, organizationId, 'id, storage_path, folder_id');
+    const assetResult = await getAssetByIdFromDb(assetId, organizationId);
     if (assetResult.error) {
       console.error('deleteAssetService: Metadata fetch error', assetResult.error);
       return { success: false, error: `Failed to fetch asset metadata: ${assetResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR };
@@ -115,7 +129,7 @@ export async function getAssetDownloadUrlService(
     return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
   }
   try {
-    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId, 'storage_path');
+    const assetMetaResult = await getAssetByIdFromDb(assetId, organizationId);
     if (assetMetaResult.error) { return { success: false, error: `Failed to fetch asset metadata: ${assetMetaResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR }; }
     if (!assetMetaResult.data || !assetMetaResult.data.storage_path) { 
       return { success: false, error: 'Asset not found, access denied, or storage path missing.', errorCode: ErrorCodes.RESOURCE_NOT_FOUND }; 
@@ -127,5 +141,45 @@ export async function getAssetDownloadUrlService(
   } catch (err: any) {
     console.error('getAssetDownloadUrlService: Unexpected Error', err);
     return { success: false, error: err.message || 'An unexpected error occurred.', errorCode: ErrorCodes.UNEXPECTED_ERROR };
+  }
+}
+
+export async function renameAssetService(
+  organizationId: string,
+  assetId: string,
+  newName: string
+): Promise<ServiceResult<{ id: string; name: string }>> {
+  if (!assetId) {
+    return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
+  }
+  if (!newName || newName.trim().length === 0) {
+    return { success: false, error: 'New name is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
+  }
+  if (!organizationId) {
+    return { success: false, error: 'Organization ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
+  }
+
+  try {
+    const trimmedName = newName.trim();
+    const updateResult = await updateAssetNameInDb(assetId, trimmedName, organizationId);
+
+    if (updateResult.error) {
+      console.error('renameAssetService: DB Update Error', updateResult.error);
+      const errorCode = (updateResult.error as any).code; 
+      if (errorCode === '23505') { 
+        return { success: false, error: 'An asset with this name already exists in this folder/organization.', errorCode: ErrorCodes.DUPLICATE_ENTRY };
+      }
+      return { success: false, error: `Failed to rename asset: ${updateResult.error.message}`, errorCode: ErrorCodes.DATABASE_ERROR };
+    }
+
+    if (!updateResult.data) {
+      return { success: false, error: 'Asset not found or rename not permitted.', errorCode: ErrorCodes.RESOURCE_NOT_FOUND };
+    }
+
+    return { success: true, data: { id: updateResult.data.id, name: updateResult.data.name } };
+
+  } catch (err: any) {
+    console.error('renameAssetService: Unexpected Error', err);
+    return { success: false, error: err.message || 'An unexpected error occurred during asset rename.', errorCode: ErrorCodes.UNEXPECTED_ERROR };
   }
 } 

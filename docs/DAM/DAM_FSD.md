@@ -42,17 +42,17 @@ This document outlines the functional requirements for the Digital Asset Managem
 *   **[x] FR-DAM-016:** The system shall provide clear user feedback upon successful deletion or failure.
 
 ### Phase 2: Core Organization & Management
-*   **[ ] FR-DAM-014:** The system shall provide UI functionality for users to create hierarchical folders.
-*   **[ ] FR-DAM-015:** The system shall allow users to move assets between folders.
+*   **[x] FR-DAM-014:** The system shall provide UI functionality for users to create hierarchical folders.
+*   **[X] FR-DAM-015:** The system shall allow users to move assets between folders.
 *   **[ ] FR-DAM-016:** The system shall provide UI functionality for users to add and remove tags to/from assets.
 *   **[ ] FR-DAM-017:** The system shall support multi-selecting assets within the gallery view (e.g., via checkboxes).
 *   **[ ] FR-DAM-018:** The system shall allow users to perform bulk deletion on selected assets, with appropriate confirmation.
-*   **[ ] FR-DAM-019:** The database schema shall be updated to support folders (e.g., `folder_id` on `assets` table) and tags (e.g., `tags` and `asset_tags` tables).
+*   **[x] FR-DAM-019:** The database schema shall be updated to support folders (e.g., `folder_id` on `assets` table) and tags (e.g., `tags` and `asset_tags` tables). *(Marked for folder support)*
 
 ### Phase 3: Enhanced Discovery & Asset Types
-*   **[ ] FR-DAM-020:** The system shall provide a search interface allowing users to find assets based on criteria such as filename and tags.
+*   **[x] FR-DAM-020:** The system shall provide a search interface allowing users to find assets based on criteria such as filename and tags. *(Marked for filename search)*
 *   **[ ] FR-DAM-021:** The system shall allow users to sort assets in the gallery view (e.g., by name, date uploaded, size).
-*   **[ ] FR-DAM-022:** The system shall allow users to filter assets in the gallery view (e.g., by tag, potentially by folder).
+*   **[x] FR-DAM-022:** The system shall allow users to filter assets in the gallery view (e.g., by tag, potentially by folder). *(Marked for folder filtering)*
 *   **[ ] FR-DAM-023:** The system shall extend upload validation and handling to support common video file types.
 *   **[ ] FR-DAM-024:** The system shall extend upload validation and handling to support common document file types (e.g., PDF).
 *   **[ ] FR-DAM-025:** The system shall display appropriate thumbnails or icons for non-image file types in the gallery view.

@@ -42,6 +42,8 @@ const mockAssetData: Asset[] = [
     folder_id: null,
     type: 'asset',
     publicUrl: 'https://example.com/test-image-1.png',
+    ownerName: 'Mock Owner',
+    parentFolderName: null,
   },
   {
     id: 'asset-2',
@@ -55,6 +57,8 @@ const mockAssetData: Asset[] = [
     folder_id: null,
     type: 'asset',
     publicUrl: 'https://example.com/test-image-2.jpg',
+    ownerName: 'Mock Owner',
+    parentFolderName: null,
   },
 ];
 
@@ -67,6 +71,7 @@ const mockFolderData: Folder[] = [
     organization_id: 'org-123',
     created_at: new Date().toISOString(),
     type: 'folder',
+    ownerName: 'Mock Owner',
   },
 ];
 
@@ -103,8 +108,15 @@ describe('AssetGalleryClient', () => {
 
     render(<AssetGalleryClient currentFolderId={null} viewMode="grid" />);
     
-    // Check for loading indicator
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    // Check for loading indicator - wait for it to appear as initial state might take a moment to render
+    await waitFor(() => {
+      expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    });
+
+    // Also wait for it to disappear after fetch completes
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+    });
   });
 
   it('should fetch and display assets for the root folder', async () => {
@@ -143,6 +155,8 @@ describe('AssetGalleryClient', () => {
       folder_id: 'folder-1',
       type: 'asset',
       publicUrl: 'https://example.com/folder-image.png',
+      ownerName: 'Mock Owner',
+      parentFolderName: 'Test Folder',
     };
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -210,49 +224,55 @@ describe('AssetGalleryClient', () => {
   it('should re-fetch data when folder ID changes', async () => {
     const { rerender } = render(<AssetGalleryClient currentFolderId={null} viewMode="grid" />);
     
+    // Initial fetch for root folder (which populates allItems)
+    // MockFetch by default returns mockFolderData and mockAssetData
     await waitFor(() => {
       expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toMatch(/\/api\/dam\?folderId=&q=&_=\d+/);
+      // Ensure some initial items are rendered
+      expect(screen.getByText('Test Folder')).toBeInTheDocument();
+      expect(screen.getByText('test-image-1.png')).toBeInTheDocument();
     });
-    
-    // First fetch for root folder
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch.mock.calls[0][0]).toMatch(/\/api\/dam\?folderId=&q=&_=\d+/);
-    
+        
+    const newFolderAsset = {
+      id: 'asset-special',
+      name: 'special-image.png',
+      storage_path: 'user/folder-special/special-image.png',
+      mime_type: 'image/png',
+      size: 4096,
+      created_at: new Date().toISOString(),
+      user_id: 'user-123',
+      organization_id: 'org-123', 
+      folder_id: 'folder-special',
+      type: 'asset' as const,
+      publicUrl: 'https://example.com/special-image.png',
+      ownerName: 'Mock Owner',
+      parentFolderName: null,
+    };
+
     // Mock a different response for the new folder
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [
-        {
-          id: 'asset-special',
-          name: 'special-image.png',
-          storage_path: 'user/folder-special/special-image.png',
-          mime_type: 'image/png',
-          size: 4096,
-          created_at: new Date().toISOString(),
-          user_id: 'user-123',
-          folder_id: 'folder-special',
-          type: 'asset',
-          publicUrl: 'https://example.com/special-image.png',
-        }
-      ],
+      json: async () => [newFolderAsset],
     });
     
     // Change the folder ID
     rerender(<AssetGalleryClient currentFolderId="folder-special" viewMode="grid" />);
     
-    // Should display loading again
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    // The global "Loading..." spinner should NOT appear if allItems already had content.
+    expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
     
+    // Wait for the new data to be fetched and displayed
     await waitFor(() => {
-      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      // Second fetch for the specific folder
+      expect(mockFetch).toHaveBeenCalledTimes(2); 
+      expect(mockFetch.mock.calls[1][0]).toMatch(/\/api\/dam\?folderId=folder-special&q=&_=\d+/);
+      expect(screen.getByText('special-image.png')).toBeInTheDocument();
+      // Ensure old items are gone (if the new folder doesn't include them)
+      expect(screen.queryByText('Test Folder')).not.toBeInTheDocument();
+      expect(screen.queryByText('test-image-1.png')).not.toBeInTheDocument();
     });
-    
-    // Second fetch for the specific folder
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(mockFetch.mock.calls[1][0]).toMatch(/\/api\/dam\?folderId=folder-special&q=&_=\d+/);
-    
-    // New asset should be displayed
-    expect(screen.getByText('special-image.png')).toBeInTheDocument();
   });
 
   it('should include a cache-busting timestamp parameter to prevent browser caching', async () => {
@@ -325,6 +345,110 @@ describe('AssetGalleryClient', () => {
     });
 
     expect(screen.getByText(/No results found for "nonexistent"/i)).toBeInTheDocument();
+  });
+
+  it('should re-fetch data when initialSearchTerm changes', async () => {
+    // Start with an empty response for the initial currentFolderId=null
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    });
+
+    const { rerender } = render(
+      <AssetGalleryClient currentFolderId={null} initialSearchTerm="" viewMode="grid" />
+    );
+
+    // Initially, it might load and then show empty state
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(screen.getByText('This folder is empty.')).toBeInTheDocument();
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+
+    const searchResults: Asset[] = [
+      { 
+        id: 'search-asset-1', name: 'Searched Asset 1', type: 'asset', folder_id: null,
+        storage_path: 's1', mime_type: 'image/png', size: 1024, created_at: new Date().toISOString(), 
+        user_id: 'user-123', organization_id: 'org-123', publicUrl: 'http://example.com/searched.png',
+        ownerName: 'Mock Owner', parentFolderName: null,
+      }
+    ];
+    // Mock fetch for the search term
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => searchResults,
+    });
+
+    // Rerender with a new initialSearchTerm, currentFolderId is the same (null)
+    // Since allItems became empty from the first fetch, the loading spinner should appear now
+    rerender(
+      <AssetGalleryClient currentFolderId={null} initialSearchTerm="searchterm" viewMode="grid" />
+    );
+
+    // Expect loading spinner because allItems was [] and now we are fetching again.
+    await waitFor(() => {
+      expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(screen.getByText('Searched Asset 1')).toBeInTheDocument();
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1][0]).toMatch(/&q=searchterm&/);
+  });
+
+  it('should display loading state when initialSearchTerm causes re-fetch and items are initially empty', async () => {
+    // Start with an empty response for the initial currentFolderId=null
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    });
+
+    const { rerender } = render(
+      <AssetGalleryClient currentFolderId={null} initialSearchTerm="" viewMode="grid" />
+    );
+
+    // Initially, it might load and then show empty state
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(screen.getByText('This folder is empty.')).toBeInTheDocument();
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+
+    const searchResults: Asset[] = [
+      { 
+        id: 'search-asset-1', name: 'Searched Asset 1', type: 'asset', folder_id: null,
+        storage_path: 's1', mime_type: 'image/png', size: 1024, created_at: new Date().toISOString(), 
+        user_id: 'user-123', organization_id: 'org-123', publicUrl: 'http://example.com/searched.png',
+        ownerName: 'Mock Owner', parentFolderName: null,
+      }
+    ];
+    // Mock fetch for the search term
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => searchResults,
+    });
+
+    // Rerender with a new initialSearchTerm, currentFolderId is the same (null)
+    // Since allItems became empty from the first fetch, the loading spinner should appear now
+    rerender(
+      <AssetGalleryClient currentFolderId={null} initialSearchTerm="searchterm" viewMode="grid" />
+    );
+
+    // Expect loading spinner because allItems was [] and now we are fetching again.
+    await waitFor(() => {
+      expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading.../i)).not.toBeInTheDocument();
+      expect(screen.getByText('Searched Asset 1')).toBeInTheDocument();
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[1][0]).toMatch(/&q=searchterm&/);
   });
 
   // Test for list view

@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Loader2, Folder as FolderIconLucide, FileText as FileIconLucide } from 'lucide-react';
 import type { CombinedItem } from '@/types/dam';
@@ -8,6 +9,7 @@ interface SearchDropdownMenuProps {
   isLoading: boolean;
   searchTermForDisplay: string;
   onViewAllResults: () => void;
+  closeDropdown: () => void;
 }
 
 export function SearchDropdownMenu({
@@ -16,6 +18,7 @@ export function SearchDropdownMenu({
   isLoading,
   searchTermForDisplay,
   onViewAllResults,
+  closeDropdown,
 }: SearchDropdownMenuProps) {
   if (isLoading) {
     return (
@@ -45,7 +48,11 @@ export function SearchDropdownMenu({
               <button
                 type="button"
                 className="w-full text-left px-3 py-2 text-sm hover:bg-muted truncate flex items-center"
-                onClick={() => onSelect(item)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  closeDropdown();
+                  onSelect(item);
+                }}
               >
                 {item.type === 'folder' ? (
                   <FolderIconLucide className="h-4 w-4 mr-2 text-blue-500 shrink-0" />
@@ -53,20 +60,7 @@ export function SearchDropdownMenu({
                   <FileIconLucide className="h-4 w-4 mr-2 text-gray-500 shrink-0" />
                 )}
                 <span className="truncate">
-                  {searchTermForDisplay && item.name.toLowerCase().includes(searchTermForDisplay.toLowerCase()) ? (
-                    <>
-                      {item.name.substring(0, item.name.toLowerCase().indexOf(searchTermForDisplay.toLowerCase()))}
-                      <span className="font-semibold">
-                        {item.name.substring(
-                          item.name.toLowerCase().indexOf(searchTermForDisplay.toLowerCase()),
-                          item.name.toLowerCase().indexOf(searchTermForDisplay.toLowerCase()) + searchTermForDisplay.length
-                        )}
-                      </span>
-                      {item.name.substring(item.name.toLowerCase().indexOf(searchTermForDisplay.toLowerCase()) + searchTermForDisplay.length)}
-                    </>
-                  ) : (
-                    item.name
-                  )}
+                  {item.name}
                 </span>
               </button>
             </li>
@@ -77,8 +71,12 @@ export function SearchDropdownMenu({
         <div className={`px-3 py-2 ${items.length > 0 ? 'border-t border-border' : ''}`}> 
           <button
             type="button"
-            className="text-sm text-primary hover:underline w-full text-left"
-            onClick={onViewAllResults}
+            className="w-full text-left text-sm text-primary hover:underline"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              closeDropdown();
+              onViewAllResults();
+            }}
           >
             Search for "<span className="font-semibold">{searchTermForDisplay}</span>"
           </button>

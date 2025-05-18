@@ -17,6 +17,7 @@ import { moveAsset } from '@/lib/actions/dam/asset-crud.actions';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { AssetListItem } from './AssetListItem';
+import { damTableColumns } from './dam-column-config';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
@@ -39,7 +40,6 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
       const timestamp = new Date().getTime();
       const queryTerm = termToFetch || '';
       const apiUrl = `/api/dam?folderId=${folderIdToFetch ?? ''}&q=${encodeURIComponent(queryTerm)}&_=${timestamp}`;
-      // console.log('AssetGalleryClient fetching:', apiUrl); // Keep console.log commented out unless debugging
       const res = await fetch(apiUrl, {
         cache: 'no-store'
       });
@@ -116,17 +116,20 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
       }
     });
     separatedFolders.sort((a, b) => a.name.localeCompare(b.name));
-    return { folders: separatedFolders, assets: separatedAssets.filter(a => a.id !== optimisticallyHiddenItemId) };
+    const result = { folders: separatedFolders, assets: separatedAssets.filter(a => a.id !== optimisticallyHiddenItemId) };
+    return result;
   }, [allItems, optimisticallyHiddenItemId]);
 
-  if (loading) return (
+  // Show a global loading spinner if it's the initial load (no items yet)
+  if (loading && allItems.length === 0) return (
     <div className="text-center p-8">
       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4"></div>
       <p>Loading...</p>
     </div>
   );
 
-  if (folders.length === 0 && assets.length === 0 && !loading) {
+  // Show empty state only if not loading and truly empty after initial load attempt
+  if (!loading && folders.length === 0 && assets.length === 0) {
     return (
       <div className="text-center p-8">
         {initialSearchTerm ? (
@@ -140,6 +143,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+      {/* Optional: A subtle loading indicator could be placed here if desired */}
+      {/* Example: {loading && <div className="absolute top-0 left-0 w-full h-full bg-white/50 flex items-center justify-center z-50"><p>Refreshing...</p></div>} */}
       <div>
         {folders.length > 0 && (
           <div className="mb-8">
@@ -172,6 +177,18 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
                 />
               ) : (
                 <div className='flex flex-col gap-0'>
+                  {/* Column Headers for List View */}
+                  <div className="flex items-center p-2 gap-4 border-b bg-muted/50 rounded-t-md">
+                    {damTableColumns.map((col) => (
+                      <div
+                        key={`header-${col.id}`}
+                        className={col.headerClassName}
+                        style={col.headerStyle}
+                      >
+                        {col.headerName}
+                      </div>
+                    ))}
+                  </div>
                   {assets.map(asset => (
                     <AssetListItem 
                       key={asset.id} 

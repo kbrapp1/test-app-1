@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, UploadCloud } from 'lucide-react';
+import { Search, UploadCloud, XIcon } from 'lucide-react';
 import { SearchDropdownMenu } from './SearchDropdownMenu';
 import type { CombinedItem } from '@/types/dam';
+import { useDamSearchInput } from './hooks/useDamSearchInput';
+import { useDamSearchDropdown } from './hooks/useDamSearchDropdown';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { DamTagFilter } from './DamTagFilter';
+import { useDamUrlManager } from '@/lib/hooks/useDamUrlManager';
 
 interface DamSearchBarProps {
   currentFolderId: string | null;
@@ -14,87 +19,93 @@ interface DamSearchBarProps {
 
 export function DamSearchBar({ currentFolderId, gallerySearchTerm }: DamSearchBarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const urlManager = useDamUrlManager();
 
-  const [searchInputTerm, setSearchInputTerm] = useState(gallerySearchTerm);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(gallerySearchTerm);
-  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
-  const [dropdownSearchResults, setDropdownSearchResults] = useState<CombinedItem[]>([]);
-  const [isDropdownLoading, setIsDropdownLoading] = useState(false);
+  const {
+    searchInputTerm,
+    setSearchInputTerm,
+    debouncedSearchTerm,
+    setDebouncedSearchTerm,
+  } = useDamSearchInput({ initialValue: gallerySearchTerm });
 
+  const mainSearchedTermRef = useRef<string | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [dropdownDisabled, setDropdownDisabled] = useState(false);
 
-  useEffect(() => {
-    setSearchInputTerm(gallerySearchTerm);
-    setDebouncedSearchTerm(gallerySearchTerm);
-    if (!gallerySearchTerm) {
-      setIsSearchDropdownOpen(false);
-      setDropdownSearchResults([]);
-    }
-  }, [gallerySearchTerm]);
+  // State for Tag Filtering
+  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+  // This state now represents the source of truth for selected tags from the URL
+  const [selectedTagIdsFromUrl, setSelectedTagIdsFromUrl] = useState<Set<string>>(new Set());
 
+  // Get active organization ID on client side
   useEffect(() => {
-    if (
-      searchInputTerm.trim() === gallerySearchTerm.trim() &&
-      searchInputTerm.trim() !== '' &&
-      !isSearchDropdownOpen
-    ) {
-      return;
-    }
-    const handler = setTimeout(() => setDebouncedSearchTerm(searchInputTerm), 300);
-    return () => clearTimeout(handler);
-  }, [searchInputTerm, gallerySearchTerm, isSearchDropdownOpen]);
-
-  useEffect(() => {
-    if (debouncedSearchTerm.trim() === '') {
-      setIsSearchDropdownOpen(false);
-      setDropdownSearchResults([]);
-      return;
-    }
-    if (debouncedSearchTerm === gallerySearchTerm && gallerySearchTerm !== '' && !isSearchDropdownOpen) {
-      return;
-    }
-    const fetchDropdownResults = async () => {
-      setIsDropdownLoading(true);
-      const apiUrl = `/api/dam?folderId=${currentFolderId ?? ''}&q=${encodeURIComponent(debouncedSearchTerm)}&limit=5&quicksearch=true&_=${Date.now()}`;
+    const fetchOrgId = async () => {
       try {
-        const res = await fetch(apiUrl, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch suggestions');
-        const data: CombinedItem[] = await res.json();
-        setDropdownSearchResults(data);
-        if (debouncedSearchTerm.trim() !== '') setIsSearchDropdownOpen(true);
+        const orgId = await getActiveOrganizationId();
+        setActiveOrgId(orgId);
       } catch (error) {
-        console.error('Error fetching dropdown search results:', error);
-        setDropdownSearchResults([]);
-        if (debouncedSearchTerm.trim() !== '') setIsSearchDropdownOpen(true);
+        console.error("Failed to get active organization ID for tag filter", error);
       }
-      setIsDropdownLoading(false);
     };
-    fetchDropdownResults();
-  }, [debouncedSearchTerm, currentFolderId, gallerySearchTerm]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsSearchDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    fetchOrgId();
   }, []);
+
+  // Initialize selectedTagIdsFromUrl from URL search params
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const currentTagIdsParam = searchParams.get('tagIds');
+    if (currentTagIdsParam) {
+      setSelectedTagIdsFromUrl(new Set(currentTagIdsParam.split(',').map(id => id.trim()).filter(id => id)));
+    } else {
+      setSelectedTagIdsFromUrl(new Set());
+    }
+  }, [searchParams]);
+
+  const {
+    isDropdownOpen,
+    dropdownResults,
+    isDropdownLoading,
+    setIsDropdownOpen,
+  } = useDamSearchDropdown({
+    debouncedSearchTerm,
+    currentFolderId,
+    mainSearchedTerm: mainSearchedTermRef.current,
+    gallerySearchTerm,
+    inputFocused,
+    searchContainerRef,
+  });
+  
+  const actualDropdownOpen = dropdownDisabled ? false : isDropdownOpen;
 
   const handleMainSearch = useCallback(
     (searchTermToUse?: string) => {
-      setIsSearchDropdownOpen(false);
-      const params = new URLSearchParams(searchParams.toString());
       const term = typeof searchTermToUse === 'string' ? searchTermToUse : searchInputTerm;
-      if (term.trim()) params.set('q', term.trim()); else params.delete('q');
-      if (currentFolderId) params.set('folderId', currentFolderId); else params.delete('folderId');
-      const qs = params.toString();
-      router.push(qs ? `/dam?${qs}` : '/dam');
+      const trimmedTerm = term.trim();
+
+      mainSearchedTermRef.current = trimmedTerm;
+      setSearchInputTerm(trimmedTerm);
+      setDebouncedSearchTerm(trimmedTerm);
+      setIsDropdownOpen(false);
+      setInputFocused(false);
+      setDropdownDisabled(true);
+
+      const inputElement = searchContainerRef.current?.querySelector('input[type="search"]');
+      if (inputElement) {
+        (inputElement as HTMLInputElement).blur();
+      }
+      
+      urlManager.setSearchAndFolder(trimmedTerm, currentFolderId);
     },
-    [searchInputTerm, currentFolderId, router, searchParams]
+    [
+      searchInputTerm, currentFolderId, urlManager,
+      setIsDropdownOpen, setSearchInputTerm, setInputFocused, setDebouncedSearchTerm, setDropdownDisabled
+    ]
   );
+
+  useEffect(() => {
+    setDropdownDisabled(false);
+  }, [gallerySearchTerm, currentFolderId]); // Also depends on currentFolderId
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,40 +113,52 @@ export function DamSearchBar({ currentFolderId, gallerySearchTerm }: DamSearchBa
   };
 
   const handleClearSearch = () => {
+    mainSearchedTermRef.current = null;
     setSearchInputTerm('');
     setDebouncedSearchTerm('');
-    setIsSearchDropdownOpen(false);
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('q');
-    if (currentFolderId) params.set('folderId', currentFolderId); else params.delete('folderId');
-    const qs = params.toString();
-    router.push(qs ? `/dam?${qs}` : '/dam');
+    setIsDropdownOpen(false);
+    
+    urlManager.clearSearchPreserveContext(currentFolderId);
   };
 
   const handleDropdownItemSelect = (item: CombinedItem) => {
-    setIsSearchDropdownOpen(false);
+    setIsDropdownOpen(false);
     if (item.type === 'folder') {
-      setSearchInputTerm('');
+      setSearchInputTerm(''); 
       setDebouncedSearchTerm('');
-      router.push(`/dam?folderId=${item.id}`);
+      urlManager.navigateToFolder(item.id, { preserveTagFilters: true, preserveSearchQuery: false });
     } else {
       handleMainSearch(item.name);
-      setSearchInputTerm('');
+      setSearchInputTerm(''); 
       setDebouncedSearchTerm('');
     }
   };
 
   const handleInputFocus = () => {
-    if (searchInputTerm.trim() !== '' && (dropdownSearchResults.length > 0 || isDropdownLoading)) {
-      setIsSearchDropdownOpen(true);
+    setInputFocused(true);
+    if (searchInputTerm.trim() !== '' && (dropdownResults.length > 0 || isDropdownLoading)) {
+        setIsDropdownOpen(true);
     }
+  };
+
+  const handleInputBlur = () => {
+    setInputFocused(false);
+  };
+
+  const handleTagFilterChange = useCallback((newTagIds: Set<string>) => {
+    urlManager.setTagsPreserveContext(newTagIds, gallerySearchTerm, currentFolderId);
+  }, [gallerySearchTerm, currentFolderId, urlManager]);
+
+  // Function to handle navigation to upload page
+  const navigateToUpload = () => {
+    const uploadPath = currentFolderId ? `/dam/upload?folderId=${currentFolderId}` : '/dam/upload';
+    router.push(uploadPath);
   };
 
   return (
     <>
       <div ref={searchContainerRef} className="relative flex items-center gap-2 grow max-w-2xl">
         <form onSubmit={handleFormSubmit} className="flex items-center gap-2 grow">
-          {currentFolderId && !gallerySearchTerm && <input type="hidden" name="folderId" value={currentFolderId} />}
           <div className="relative grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
@@ -143,53 +166,68 @@ export function DamSearchBar({ currentFolderId, gallerySearchTerm }: DamSearchBa
               placeholder="Search all assets & folders..."
               className="pl-10 py-2 h-10 text-base w-full"
               value={searchInputTerm}
-              onChange={(e) => { const val = e.target.value; setSearchInputTerm(val); if (val === '') handleClearSearch(); }}
+              onChange={(e) => { 
+                const val = e.target.value; 
+                setSearchInputTerm(val); 
+                mainSearchedTermRef.current = null;
+                if (val === '') {
+                  handleClearSearch(); 
+                }
+              }}
               onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
             />
-            {isSearchDropdownOpen && (
+            {actualDropdownOpen && (
               <SearchDropdownMenu
-                items={dropdownSearchResults}
+                items={dropdownResults}
                 onSelect={handleDropdownItemSelect}
                 isLoading={isDropdownLoading}
                 searchTermForDisplay={debouncedSearchTerm}
                 onViewAllResults={() => handleMainSearch(debouncedSearchTerm)}
+                closeDropdown={() => setIsDropdownOpen(false)}
               />
             )}
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button type="submit" variant="default" size="icon" aria-label="Search" className="shrink-0">
-                <Search className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent><p>Perform search</p></TooltipContent>
-          </Tooltip>
+          {searchInputTerm && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" variant="ghost" size="icon" onClick={handleClearSearch} className="h-9 w-9 p-0">
+                    <XIcon className="h-5 w-5 text-muted-foreground" />
+                    <span className="sr-only">Clear search</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clear search</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </form>
-      </div>
-      <div className="shrink-0">
-        {!gallerySearchTerm ? (
+        
+        <DamTagFilter
+            activeOrgId={activeOrgId}
+            initialSelectedTagIdsFromUrl={selectedTagIdsFromUrl}
+            onFilterChange={handleTagFilterChange}
+        />
+
+        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button asChild variant="outline" size="icon">
-                <a href={currentFolderId ? `/dam/upload?folderId=${currentFolderId}` : '/dam/upload'} aria-label="Upload Asset">
-                  <UploadCloud className="h-5 w-5" />
-                </a>
+              <Button variant="outline" className="hidden sm:flex items-center gap-2" onClick={navigateToUpload}>
+                <UploadCloud className="h-5 w-5" />
+                Upload
               </Button>
             </TooltipTrigger>
-            <TooltipContent><p>Upload Asset</p></TooltipContent>
+            <TooltipContent>
+              <p>Upload assets</p>
+            </TooltipContent>
           </Tooltip>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button asChild variant="outline" size="icon">
-                <a href="/dam/upload" aria-label="Upload Asset">
-                  <UploadCloud className="h-5 w-5" />
-                </a>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent><p>Upload Asset</p></TooltipContent>
-          </Tooltip>
-        )}
+        </TooltipProvider>
+        <Button variant="outline" size="icon" className="sm:hidden" onClick={navigateToUpload}>
+          <UploadCloud className="h-5 w-5" />
+          <span className="sr-only">Upload</span>
+        </Button>
       </div>
     </>
   );

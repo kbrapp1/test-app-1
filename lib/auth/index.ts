@@ -15,4 +15,5 @@ export * from './authorization';
 export { withAuth, type AuthenticatedHandler, type AuthOptions } from './middleware';
 
 // Server action wrappers
-export { withAuthAction, getSessionUser, type AuthActionOptions } from './server-action'; 
+export { getSessionUser } from './server-action';
+export { withAuthAction, type AuthActionOptions } from './action-wrapper'; 

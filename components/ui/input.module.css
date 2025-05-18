@@ -1,0 +1,17 @@
+.hideSearchCancelButton::-webkit-search-decoration,
+.hideSearchCancelButton::-webkit-search-cancel-button,
+.hideSearchCancelButton::-webkit-search-results-button,
+.hideSearchCancelButton::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.hideSearchCancelButton::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.hideSearchCancelButton::-moz-search-clear-button {
+  display: none;
+} 

@@ -45,7 +45,7 @@ if (typeof HTMLFormElement !== 'undefined' && typeof HTMLFormElement.prototype.r
     }
   };
 } else if (typeof HTMLFormElement !== 'undefined') {
-  console.log('HTMLFormElement.prototype.requestSubmit already exists or HTMLFormElement is undefined (early setup).');
+  // console.log('HTMLFormElement.prototype.requestSubmit already exists or HTMLFormElement is undefined (early setup).');
 }
 
 // console.log('--- Vitest Setup ---');

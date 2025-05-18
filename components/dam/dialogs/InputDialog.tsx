@@ -53,11 +53,15 @@ export const InputDialog: React.FC<InputDialogProps> = ({
     if (isOpen) {
       setInputValue(initialValue); // Reset value when dialog opens/initialValue changes
       setValidationError(null); // Reset validation error
-      if (parentIsLoading === undefined) {
-        setInternalIsLoading(false); // Reset internal loading state if not parent-controlled
+      // If parentIsLoading is not defined, we are using internal loading.
+      // Reset internal loading state only when the dialog is newly opened and not already loading.
+      if (parentIsLoading === undefined && !internalIsLoading) {
+        // Check if internalIsLoading needs reset. Typically, it's set to false in handleSubmit's finally block.
+        // For safety, ensure it's false when dialog opens if not parent-controlled.
+        setInternalIsLoading(false);
       }
     }
-  }, [isOpen, initialValue, parentIsLoading]);
+  }, [isOpen, initialValue]); // Removed parentIsLoading from dependency array
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

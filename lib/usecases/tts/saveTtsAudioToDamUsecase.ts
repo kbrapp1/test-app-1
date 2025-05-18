@@ -1,6 +1,6 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { createAssetRecordInDb } from '@/lib/repositories/asset-repo';
+import { createAssetRecordInDb } from '@/lib/repositories/asset.db.repo';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
 // import { cleanupStorageFile } from '@/lib/services/ttsService'; // For TODO
 

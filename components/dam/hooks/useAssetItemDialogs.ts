@@ -27,7 +27,9 @@ export function useAssetItemDialogs(): UseAssetItemDialogsReturn {
   const closeRenameDialog = () => setRenameDialog({ isOpen: false, data: null });
 
   const openDetailsDialog = (asset: Asset) => setDetailsDialog({ isOpen: true, data: asset });
-  const closeDetailsDialog = () => setDetailsDialog({ isOpen: false, data: null });
+  const closeDetailsDialog = () => {
+    setDetailsDialog({ isOpen: false, data: null });
+  };
 
   const openMoveDialog = (asset: Asset) => setMoveDialog({ isOpen: true, data: asset });
   const closeMoveDialog = () => setMoveDialog({ isOpen: false, data: null });

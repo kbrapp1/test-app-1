@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Asset, Folder, CombinedItem } from '@/types/dam';
 import { AssetThumbnail, AssetThumbnailRef } from './AssetThumbnail';
 import { FolderThumbnail } from './FolderThumbnail';
@@ -11,6 +11,8 @@ import { FolderPickerDialog } from '@/components/dam/dialogs/FolderPickerDialog'
 import { useAssetItemDialogs } from './hooks/useAssetItemDialogs';
 import { useAssetItemActions } from './hooks/useAssetItemActions';
 import { AssetActionDropdownMenu } from './AssetActionDropdownMenu';
+import { Badge } from '@/components/ui/badge';
+import type { Tag } from '@/lib/actions/dam/tag.actions';
 
 export interface AssetGridItemProps {
   item: CombinedItem;
@@ -128,6 +130,17 @@ export const AssetGridItem = React.forwardRef<
         <FolderThumbnail folder={item as Folder} />
       )}
 
+      {/* Display Tags for Assets */}
+      {item.type === 'asset' && (item as Asset).tags && (item as Asset).tags!.length > 0 && (
+        <div className="p-2 border-t flex flex-wrap gap-1">
+          {(item as Asset).tags!.map((tag: Tag) => (
+            <Badge key={tag.id} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Dialogs */}
       {renameDialog.isOpen && renameDialog.data && itemActions && (
         <InputDialog
@@ -146,6 +159,7 @@ export const AssetGridItem = React.forwardRef<
           isOpen={detailsDialog.isOpen}
           onOpenChange={(isOpen) => !isOpen && closeDetailsDialog()}
           asset={detailsDialog.data}
+          onAssetDataChange={onDataChange}
         />
       )}
       {moveDialog.isOpen && moveDialog.data && itemActions && (

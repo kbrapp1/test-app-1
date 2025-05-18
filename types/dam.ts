@@ -1,6 +1,11 @@
+import type { Tag as ImportedTag } from '@/lib/actions/dam/tag.actions';
+
 /**
  * Shared type definitions for Digital Asset Management (DAM) module
  */
+
+// Re-export Tag type for wider use
+export type Tag = ImportedTag;
 
 // Base type shared by assets and folders
 export interface BaseItem {
@@ -10,6 +15,7 @@ export interface BaseItem {
   organization_id: string;
   created_at: string;
   type: 'asset' | 'folder';
+  ownerName: string | null;
 }
 
 // Asset specific properties
@@ -20,6 +26,8 @@ export interface Asset extends BaseItem {
   size: number;
   folder_id: string | null;
   publicUrl: string;
+  parentFolderName: string | null;
+  tags?: Tag[];
 }
 
 // Folder specific properties

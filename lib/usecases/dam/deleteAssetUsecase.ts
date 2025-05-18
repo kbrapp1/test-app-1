@@ -1,4 +1,4 @@
-import { deleteAssetService } from '@/lib/services/asset-service';
+import { deleteAssetService } from '@/lib/services/asset-core.service';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 interface DeleteAssetUsecaseParams {
