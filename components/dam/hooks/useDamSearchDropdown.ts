@@ -69,22 +69,24 @@ export function useDamSearchDropdown({
       }
 
       setIsDropdownLoading(true);
-      const apiUrl = `/api/dam?folderId=${currentFolderId ?? ''}&q=${encodeURIComponent(debouncedSearchTerm)}&limit=5&quicksearch=true&_=${Date.now()}`;
+      const apiUrl = `/api/dam?folderId=${currentFolderId ?? ''}&q=${encodeURIComponent(debouncedSearchTerm)}&limit=5&quickSearch=true&_=${Date.now()}`;
       try {
         const res = await fetch(apiUrl, { cache: 'no-store' });
         if (fetchControllerRef.current !== currentFetchId) return; // Stale request
 
         if (!res.ok) throw new Error('Failed to fetch suggestions');
-        const data: CombinedItem[] = await res.json();
+        // The API returns an object with a `data` array and `totalItems`
+        const jsonResponse = await res.json() as { data?: CombinedItem[]; totalItems?: number };
+        const items: CombinedItem[] = Array.isArray(jsonResponse.data) ? jsonResponse.data : [];
 
         if (fetchControllerRef.current === currentFetchId) {
-          setDropdownResults(data);
-          if (debouncedSearchTerm.trim() !== '' && data.length > 0 && inputFocused) {
+          setDropdownResults(items);
+          if (debouncedSearchTerm.trim() !== '' && items.length > 0 && inputFocused) {
             setIsDropdownOpen(true);
-          } else if (debouncedSearchTerm.trim() !== '' && data.length === 0 && inputFocused) {
+          } else if (debouncedSearchTerm.trim() !== '' && items.length === 0 && inputFocused) {
             // Show dropdown even with no results to display "no results" message
             setIsDropdownOpen(true);
-          } else if (!inputFocused && data.length === 0) {
+          } else if (!inputFocused && items.length === 0) {
             setIsDropdownOpen(false); // If not focused and no results, hide
           }
           // If input is not focused but we got results, keep it closed until focus

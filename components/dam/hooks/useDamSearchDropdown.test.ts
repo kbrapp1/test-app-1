@@ -71,7 +71,7 @@ describe('useDamSearchDropdown', () => {
   it('should fetch results and open dropdown if term exists and input is focused', async () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [mockItem],
+      json: async () => ({ data: [mockItem] }),
     });
     const { result } = renderHook(() => 
       useDamSearchDropdown({ ...defaultProps, debouncedSearchTerm: 'test', inputFocused: true })
@@ -83,8 +83,12 @@ describe('useDamSearchDropdown', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     const fetchCall = (fetch as Mock).mock.calls[0];
     const fetchUrl = fetchCall[0] as string;
-    expect(fetchUrl).toContain('/api/dam?folderId=&q=test&limit=5&quicksearch=true');
-    expect(fetchUrl).toMatch(/&_=\d+$/); // Check for cache buster at the end
+    expect(fetchUrl).toContain('/api/dam?');
+    expect(fetchUrl).toContain('folderId=');
+    expect(fetchUrl).toContain('q=test');
+    expect(fetchUrl).toContain('limit=5');
+    expect(fetchUrl).toContain('quickSearch=true');
+    expect(fetchUrl).toMatch(/&_=\d+$/);
     expect(fetchCall[1]).toEqual({ cache: 'no-store' });
 
     expect(result.current.dropdownResults).toEqual([mockItem]);
@@ -94,7 +98,7 @@ describe('useDamSearchDropdown', () => {
   it('should open dropdown with no results message if term exists, focused, but API returns empty', async () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [],
+      json: async () => ({ data: [] }),
     });
     const { result } = renderHook(() => 
       useDamSearchDropdown({ ...defaultProps, debouncedSearchTerm: 'empty', inputFocused: true })
@@ -107,7 +111,7 @@ describe('useDamSearchDropdown', () => {
   it('should close dropdown if API returns empty and input is not focused', async () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [],
+      json: async () => ({ data: [] }),
     });
     const { result } = renderHook(() => 
       useDamSearchDropdown({ ...defaultProps, debouncedSearchTerm: 'empty', inputFocused: false })
@@ -138,7 +142,7 @@ describe('useDamSearchDropdown', () => {
   it('should close dropdown on click outside', async () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [mockItem],
+      json: async () => ({ data: [mockItem] }),
     });
     const { result } = renderHook(() => 
       useDamSearchDropdown({ ...defaultProps, debouncedSearchTerm: 'test', inputFocused: true })
@@ -158,7 +162,7 @@ describe('useDamSearchDropdown', () => {
   it('should not close dropdown on click inside searchContainerRef', async () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [mockItem],
+      json: async () => ({ data: [mockItem] }),
     });
     const { result } = renderHook(() => 
       useDamSearchDropdown({ ...defaultProps, debouncedSearchTerm: 'test', inputFocused: true })
@@ -207,7 +211,7 @@ describe('useDamSearchDropdown', () => {
 
     // Resolve second fetch first
     act(() => {
-      secondResolve({ ok: true, json: async () => secondCallResults });
+      secondResolve({ ok: true, json: async () => ({ data: secondCallResults }) });
     });
     await waitFor(() => expect(result.current.dropdownResults).toEqual(secondCallResults));
     expect(result.current.isDropdownOpen).toBe(true);
@@ -216,7 +220,7 @@ describe('useDamSearchDropdown', () => {
     
     // Now resolve the first (stale) fetch
     act(() => {
-      firstResolve({ ok: true, json: async () => firstCallResults });
+      firstResolve({ ok: true, json: async () => ({ data: firstCallResults }) });
     });
 
     // Wait for any potential state updates, results should NOT change to firstCallResults
@@ -239,7 +243,7 @@ describe('useDamSearchDropdown', () => {
   it('should not re-fetch if debouncedSearchTerm matches gallerySearchTerm and dropdown is already open with results', async () => {
      (fetch as Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => [mockItem],
+      json: async () => ({ data: [mockItem] }),
     });
     // Initial fetch to populate results and open dropdown
     const { result, rerender } = renderHook((props) => useDamSearchDropdown(props), {

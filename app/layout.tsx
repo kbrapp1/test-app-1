@@ -15,6 +15,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AppProviders } from "@/components/app-providers"
 import { ErrorBoundary } from "@/components/error/error-boundary";
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -31,7 +32,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ErrorBoundary>
-          <AppProviders>{children}</AppProviders>
+          <AppProviders>
+            <Suspense fallback={<div>Loading...</div>}>
+              {children}
+            </Suspense>
+          </AppProviders>
         </ErrorBoundary>
       </body>
     </html>

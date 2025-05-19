@@ -95,26 +95,28 @@ export default async function DamGalleryPage({
   const breadcrumbPath = await fetchBreadcrumbPathRecursive(supabase, currentFolderId);
 
   return (
-    // <TooltipProvider> REMOVED: Now inside DamPageClientView
+    // <TooltipProvider> REMOVED: Now inside DamPageClientView or not needed at this level
       <main className="flex-1 px-4 pt-2 pb-4 overflow-auto">
-        <div className="mb-6 flex flex-col gap-4">
-          {/* Breadcrumbs remain here, above the client view that contains search/gallery */}
-          {!currentSearchTerm && (
-            <div className="grow min-w-[200px]">
-               <DamBreadcrumbs path={breadcrumbPath} />
-            </div>
-          )}
-          {currentSearchTerm && (
-               <div className="text-sm text-muted-foreground">
-                  Showing search results for "<strong>{currentSearchTerm}</strong>". <Link href="/dam" className="text-primary hover:underline">Clear search</Link>
+        {/* 
+          Breadcrumb and search result text rendering is now handled by DamPageClientView
+          <div className="mb-6 flex flex-col gap-4">
+            {!currentSearchTerm && (
+              <div className="grow min-w-[200px]">
+                <DamBreadcrumbs path={breadcrumbPath} />
               </div>
-          )}
-        </div>
+            )}
+            {currentSearchTerm && (
+                <div className="text-sm text-muted-foreground">
+                    Showing search results for "<strong>{currentSearchTerm}</strong>". <Link href="/dam" className="text-primary hover:underline">Clear search</Link>
+                </div>
+            )}
+          </div> 
+        */}
 
-        {/* Client view now handles the header controls and gallery */}
         <DamPageClientView 
           initialCurrentFolderId={currentFolderId} 
           initialCurrentSearchTerm={currentSearchTerm} 
+          breadcrumbPath={breadcrumbPath} // Pass breadcrumbPath as a prop
         />
       </main>
     // </TooltipProvider>

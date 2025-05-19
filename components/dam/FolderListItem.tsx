@@ -19,7 +19,7 @@ import { ConfirmationDialog } from './dialogs/ConfirmationDialog';
 import { renameFolderClient, deleteFolderClient } from '@/lib/actions/dam/folder.actions';
 import { useToast } from '@/components/ui/use-toast';
 
-interface FolderListItemProps {
+export interface FolderListItemProps {
   folder: FolderType;
   onDataChange: () => void;
 }

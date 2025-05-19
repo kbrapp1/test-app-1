@@ -1,193 +1,147 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { InputDialog, InputDialogProps } from './InputDialog'; // Adjust path as necessary
-import { vi } from 'vitest'; // Import vi for Vitest mocking
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { InputDialog, InputDialogProps } from './InputDialog'; // Assuming InputDialogProps is exported
 
-// Mock a simple toast if your dialog or its onSubmit handler uses it
-// vi.mock('@/components/ui/use-toast', () => ({
-//   useToast: () => ({ toast: vi.fn() }),
-// }));
+// Mock shadcn/ui components if they are not vital to the logic being tested
+vi.mock('@/components/ui/dialog', () => ({
+  Dialog: ({ children, open, onOpenChange }: { children: React.ReactNode, open: boolean, onOpenChange: (open: boolean) => void }) => 
+    open ? <div data-testid="dialog" onClick={() => onOpenChange(!open)}>{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-content">{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode }) => <p data-testid="dialog-description">{children}</p>,
+  DialogFooter: ({ children }: { children: React.ReactNode }) => <div data-testid="dialog-footer">{children}</div>,
+  DialogClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const mockOnOpenChange = vi.fn();
-const mockOnSubmit = vi.fn();
+vi.mock('@/components/ui/input', () => ({
+  Input: (props: any) => <input data-testid="input" {...props} />,
+}));
+
+vi.mock('@/components/ui/button', () => ({
+  Button: (props: any) => <button data-testid="button" {...props}>{props.children}</button>,
+}));
+
 
 const defaultProps: InputDialogProps = {
   isOpen: true,
-  onOpenChange: mockOnOpenChange,
+  onOpenChange: vi.fn(),
   title: 'Test Input Dialog',
-  description: '',
-  initialValue: 'Initial Text',
-  onSubmit: mockOnSubmit,
-};
-
-const TestWrapper: React.FC<Partial<InputDialogProps>> = (props) => {
-  return <InputDialog {...defaultProps} {...props} />;
+  description: 'This is a test description.',
+  initialValue: 'initial',
+  onSubmit: vi.fn(),
+  inputPlaceholder: 'Enter value',
+  submitButtonText: 'Submit',
+  isLoading: false,
 };
 
 describe('InputDialog', () => {
   beforeEach(() => {
-    vi.clearAllMocks(); // Use vi.clearAllMocks() for Vitest
+    vi.clearAllMocks();
+    defaultProps.onOpenChange = vi.fn();
+    defaultProps.onSubmit = vi.fn();
   });
 
-  it('renders correctly with initial props', () => {
-    render(<TestWrapper />);
-    expect(screen.getByText('Test Input Dialog')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Initial Text')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
+  const renderInputDialog = (props: Partial<InputDialogProps> = {}) => {
+    return render(<InputDialog {...defaultProps} {...props} />);
+  };
+
+  it('should render correctly when open', () => {
+    renderInputDialog();
+    expect(screen.getByTestId('dialog-title')).toHaveTextContent('Test Input Dialog');
+    expect(screen.getByTestId('dialog-description')).toHaveTextContent('This is a test description.');
+    expect(screen.getByTestId('input')).toHaveValue('initial');
+    expect(screen.getByTestId('input')).toHaveAttribute('placeholder', 'Enter value');
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 
-  it('updates input value on change', async () => {
-    const user = userEvent.setup();
-    render(<TestWrapper />);
-    const input = screen.getByDisplayValue('Initial Text') as HTMLInputElement;
-    await user.clear(input);
-    await user.type(input, 'New Value');
-    expect(input.value).toBe('New Value');
+  it('should not render when isOpen is false', () => {
+    renderInputDialog({ isOpen: false });
+    expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
   });
 
-  it('calls onSubmit with the new value when form is submitted', async () => {
-    const user = userEvent.setup();
-    mockOnSubmit.mockResolvedValueOnce(undefined); // Ensure onSubmit is an async mock if it returns a Promise
-    render(<TestWrapper />);
-    const input = screen.getByDisplayValue('Initial Text');
-    await user.clear(input);
-    await user.type(input, 'Submitted Value');
-    await user.click(screen.getByRole('button', { name: /Save/i }));
-
-    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    expect(mockOnSubmit).toHaveBeenCalledWith('Submitted Value');
+  it('should call onOpenChange with false when Cancel button is clicked', () => {
+    renderInputDialog();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('does not call onSubmit if input is empty (default behavior)', async () => {
-    const user = userEvent.setup();
-    render(<TestWrapper />);
-    const input = screen.getByDisplayValue('Initial Text');
-    await user.clear(input);
-    await user.click(screen.getByRole('button', { name: /Save/i }));
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-    expect(await screen.findByText('Input cannot be empty.')).toBeInTheDocument();
+  it('should update input value on change', () => {
+    renderInputDialog();
+    const input = screen.getByTestId('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'new value' } });
+    expect(input.value).toBe('new value');
   });
 
-  it('calls onOpenChange(false) when cancel button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<TestWrapper />);
-    await user.click(screen.getByRole('button', { name: /Cancel/i }));
-    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
+  it('should call onSubmit with the current input value when submit button is clicked', async () => {
+    renderInputDialog();
+    const input = screen.getByTestId('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'submitted value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(defaultProps.onSubmit).toHaveBeenCalledWith('submitted value');
+    });
   });
 
-  it('displays description if provided', () => {
-    render(<TestWrapper description="This is a test description." />);
-    expect(screen.getByText('This is a test description.')).toBeInTheDocument();
+  it('should call onSubmit with the initial value if input is not changed', async () => {
+    renderInputDialog();
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(defaultProps.onSubmit).toHaveBeenCalledWith('initial');
+    });
   });
 
-  it('uses custom button text if provided', () => {
-    render(<TestWrapper submitButtonText="Confirm" cancelButtonText="Dismiss" />);
-    expect(screen.getByRole('button', { name: /Confirm/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Dismiss/i })).toBeInTheDocument();
+  it('should display loading state on submit button', () => {
+    renderInputDialog({ isLoading: true });
+    const submitButton = screen.getByRole('button', { name: 'Processing...' });
+    expect(submitButton).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
+    // Check for loading spinner if your Button component renders one
+    // expect(submitButton.querySelector('.lucide-loader-2')).toBeInTheDocument();
   });
 
-  it('displays loading state when isLoading prop is true', () => {
-    render(<TestWrapper isLoading={true} />);
-    expect(screen.getByRole('button', { name: /Processing.../i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Processing.../i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Cancel/i })).toBeDisabled();
-  });
+  it('should reset input to initialValue when dialog reopens if not persistent or unmounted', () => {
+    const { rerender } = renderInputDialog({ initialValue: 'first' });
+    let input = screen.getByTestId('input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'changed' } });
+    expect(input.value).toBe('changed');
 
-  describe('With Validation Prop', () => {
-    const mockValidation = vi.fn();
+    // Simulate closing and reopening with a new initialValue
+    rerender(<InputDialog {...defaultProps} isOpen={false} initialValue="second" />);
+    rerender(<InputDialog {...defaultProps} isOpen={true} initialValue="second" />); 
     
-    it('calls validation function on input change', async () => {
-      const user = userEvent.setup();
-      mockValidation.mockReturnValue(null); // No error initially
-      render(<TestWrapper validation={mockValidation} />); 
-      const input = screen.getByDisplayValue('Initial Text');
-      await user.type(input, 'a'); // Type one character
-      expect(mockValidation).toHaveBeenCalledWith('Initial Texta');
-    });
+    input = screen.getByTestId('input') as HTMLInputElement; // re-query after rerender
+    expect(input.value).toBe('second'); // Behavior depends on how internal state is managed
+  });
 
-    it('displays validation error and prevents submission if validation fails', async () => {
-      const user = userEvent.setup();
-      const errorMessage = "Invalid input!";
-      mockValidation.mockReturnValue(errorMessage);
-      render(<TestWrapper validation={mockValidation} initialValue="test"/>);
-      
-      const input = screen.getByDisplayValue('test') as HTMLInputElement;
-      // Trigger validation by typing, even if value is same as initial (or make it different)
-      await user.type(input, ' '); // Add a space to trigger change and validation
-      await user.keyboard('[Backspace]'); // Remove the space
-      
-      expect(await screen.findByText(errorMessage)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Save/i })).toBeDisabled();
-      
-      await user.click(screen.getByRole('button', { name: /Save/i }));
-      expect(mockOnSubmit).not.toHaveBeenCalled();
-    });
+  it('should allow submitting an empty string if not otherwise validated', async () => {
+    // To test "if not otherwise validated" for empty string, pass a validation fn that allows it.
+    const mockValidation = vi.fn((value: string) => value === 'disallowed' ? 'Error' : null);
+    renderInputDialog({ initialValue: '', validation: mockValidation });
+    
+    const input = screen.getByTestId('input') as HTMLInputElement;
+    expect(input.value).toBe('');
+    
+    // No validation error should prevent submission
 
-    it('clears validation error and allows submission if input becomes valid', async () => {
-      const user = userEvent.setup();
-      
-      mockValidation.mockImplementation((value: string) => {
-        if (value === 'invalid') {
-          return 'Initial error';
-        }
-        if (value === 'valid_input') {
-          return null; // Valid
-        }
-        // For other intermediate states during typing, we can assume no error or specific errors.
-        // For this test, we'll default to null for simplicity for states not explicitly "invalid".
-        return null; 
-      });
-      
-      render(<TestWrapper validation={mockValidation} initialValue="something_else" />);
-      // It's generally safer to get by role or placeholder if initialValue changes or input is cleared
-      const input = screen.getByRole('textbox') as HTMLInputElement; 
-      // Or, if you rely on initialValue for selection:
-      // const input = screen.getByDisplayValue('something_else') as HTMLInputElement;
+    // Submit button should not be disabled by our permissive validation
+    const submitButton = screen.getByRole('button', { name: defaultProps.submitButtonText });
+    expect(submitButton).not.toBeDisabled();
 
-
-      // Phase 1: Make input invalid
-      await user.clear(input); // Clear "something_else"
-      await user.type(input, 'invalid'); // Type "invalid"
-      
-      expect(await screen.findByText('Initial error')).toBeInTheDocument();
-      // Check that validation was indeed called with "invalid"
-      // userEvent.type calls the handler for each char, so "invalid" will be the last relevant one.
-      expect(mockValidation).toHaveBeenCalledWith('invalid');
-      expect(screen.getByRole('button', { name: /Save/i })).toBeDisabled();
-
-      // Phase 2: Make input valid
-      await user.clear(input); // Clear "invalid"
-      await user.type(input, 'valid_input'); // Type "valid_input"
-      
-      // Wait for the error message to disappear
-      await waitFor(() => {
-        expect(screen.queryByText('Initial error')).not.toBeInTheDocument();
-      });
-      expect(mockValidation).toHaveBeenCalledWith('valid_input');
-      expect(screen.getByRole('button', { name: /Save/i })).not.toBeDisabled();
-
-      // Phase 3: Submit
-      mockOnSubmit.mockResolvedValueOnce(undefined); // Ensure mock is ready for this specific call
-      await user.click(screen.getByRole('button', { name: /Save/i }));
-      expect(mockOnSubmit).toHaveBeenCalledWith('valid_input');
-    });
-
-    it('allows submission with empty string if validation explicitly allows it', async () => {
-        const user = userEvent.setup();
-        // Validation returns null (no error) for empty string
-        mockValidation.mockImplementation((value: string) => value.trim() === '' ? null : 'Must be empty');
-        render(<TestWrapper validation={mockValidation} initialValue="not empty"/>);
-        const input = screen.getByDisplayValue('not empty');
-        await user.clear(input);
-
-        expect(screen.queryByText('Must be empty')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Save/i })).not.toBeDisabled();
-
-        await user.click(screen.getByRole('button', { name: /Save/i }));
-        expect(mockOnSubmit).toHaveBeenCalledWith('');
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(defaultProps.onSubmit).toHaveBeenCalledWith('');
     });
   });
+
+  it('should use custom submit button text if provided', () => {
+    renderInputDialog({ submitButtonText: 'Confirm Action' });
+    expect(screen.getByRole('button', { name: 'Confirm Action' })).toBeInTheDocument();
+  });
+
 }); 

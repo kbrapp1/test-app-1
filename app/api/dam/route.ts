@@ -1,182 +1,113 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryData } from '@/lib/supabase/db-queries';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { DatabaseError, ValidationError } from '@/lib/errors/base';
-import { Asset, Folder, CombinedItem } from '@/types/dam';
+import { CombinedItem } from '@/types/dam';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import type { Tag } from '@/lib/actions/dam/tag.actions';
 
 import {
-  RawAssetFromApi,
-  TransformedDataReturn,
-  getOwnerNames,
-  getAssetIdsForTagFilter,
-  buildAssetBaseQueryInternal,
-  transformAndEnrichData,
-  applyQuickSearchLimits
+  applyQuickSearchLimits,
+  fetchSearchResults,
+  fetchFolderContents,
 } from './dam-api.helpers';
 
-interface DataFetchingResult {
-  foldersData: Omit<Folder, 'type' | 'organization_id'>[] | null;
-  assetsData: RawAssetFromApi[] | null;
-  foldersError: Error | null;
-  assetsError: Error | null;
-}
+import {
+  transformAndEnrichData
+} from './dam-api.transformers';
 
-interface LimitOptions {
-  quickSearch: boolean;
-  parsedLimit?: number;
-}
+import type {
+  DamFilterParameters,
+  DamSortParameters,
+  LimitOptions,
+  DataFetchingResult
+} from './dam-api.types';
 
-async function fetchSearchResults(
-  supabase: SupabaseClient,
-  activeOrgId: string,
-  searchTerm: string, 
-  tagIdsParam: string | null,
-  limitOptions: LimitOptions
-): Promise<DataFetchingResult> {
-  const { quickSearch, parsedLimit } = limitOptions;
-
-  let folderQuery = supabase
-    .from('folders')
-    .select('id, name, user_id, created_at, parent_folder_id')
-    .eq('organization_id', activeOrgId)
-    .ilike('name', `%${searchTerm}%`)
-    .order('name', { ascending: true });
-
-  const tagFilterAssetIds = await getAssetIdsForTagFilter(supabase, tagIdsParam);
-  let assetQueryBuilder = buildAssetBaseQueryInternal(supabase, activeOrgId, tagFilterAssetIds)
-    .ilike('name', `%${searchTerm}%`) 
-    .order('created_at', { ascending: false });
-
-  if (quickSearch && parsedLimit) {
-    folderQuery = folderQuery.limit(Math.ceil(parsedLimit / 2));
-    assetQueryBuilder = assetQueryBuilder.limit(parsedLimit);
-  }
-
-  const [folderSearch, assetSearch] = await Promise.all([folderQuery, assetQueryBuilder]);
-
-  return {
-    foldersData: folderSearch.data as Omit<Folder, 'type' | 'organization_id'>[] | null,
-    foldersError: folderSearch.error,
-    assetsData: assetSearch.data as RawAssetFromApi[] | null,
-    assetsError: assetSearch.error,
-  };
-}
-
-async function fetchFolderContents(
-  supabase: SupabaseClient,
-  activeOrgId: string,
-  folderId: string | null,
-  tagIdsParam: string | null,
-  limitOptions: LimitOptions
-): Promise<DataFetchingResult> {
-  const { quickSearch, parsedLimit } = limitOptions;
-
-  let folderBaseQueryOptions = {
-    ...(folderId && folderId.trim() !== '' 
-      ? { matchColumn: 'parent_folder_id', matchValue: folderId } 
-      : { isNull: 'parent_folder_id' }),
-    organizationId: activeOrgId,
-    orderBy: 'name',
-    ascending: true,
-    limit: (quickSearch && parsedLimit) ? Math.ceil(parsedLimit / 2) : undefined
-  };
-
-  const folderResult = await queryData<Omit<Folder, 'type' | 'organization_id'> >(
-    supabase,
-    'folders',
-    'id, name, user_id, created_at, parent_folder_id',
-    folderBaseQueryOptions
-  );
-
-  const tagFilterAssetIds = await getAssetIdsForTagFilter(supabase, tagIdsParam);
-  let assetQueryBuilder = buildAssetBaseQueryInternal(supabase, activeOrgId, tagFilterAssetIds);
-
-  if (folderId && folderId.trim() !== '') {
-    assetQueryBuilder = assetQueryBuilder.eq('folder_id', folderId);
-  } else {
-    assetQueryBuilder = assetQueryBuilder.is('folder_id', null);
-  }
-  assetQueryBuilder = assetQueryBuilder.order('created_at', { ascending: false });
-
-  if (quickSearch && parsedLimit) {
-    assetQueryBuilder = assetQueryBuilder.limit(parsedLimit);
-  }
-
-  const assetResult = await assetQueryBuilder;
-
-  return {
-    foldersData: folderResult.data,
-    foldersError: folderResult.error,
-    assetsData: assetResult.data as RawAssetFromApi[] | null,
-    assetsError: assetResult.error as Error | null,
-  };
-}
-
-async function getHandler(
+export async function getHandler(
   request: NextRequest,
-  user: User, 
+  _user: User,
   supabase: SupabaseClient
 ) {
-  const url = new URL(request.url);
-  const folderIdParam = url.searchParams.get('folderId');
-  const searchTermParam = url.searchParams.get('q');
-  const quickSearch = url.searchParams.get('quicksearch') === 'true';
-  const limitParam = url.searchParams.get('limit');
-  const tagIdsParam = url.searchParams.get('tagIds'); 
+  const { searchParams } = new URL(request.url);
+  const folderId = searchParams.get('folderId');
+  const searchTerm = searchParams.get('q') || '';
+  const quickSearch = searchParams.get('quickSearch') === 'true';
+  const limitParam = searchParams.get('limit');
+  const tagIdsParam = searchParams.get('tagIds');
 
-  let parsedLimit: number | undefined = undefined;
-  if (quickSearch && limitParam) {
-    const num = parseInt(limitParam, 10);
-    if (!isNaN(num) && num > 0) {
-      parsedLimit = Math.min(num, 20); 
-    }
+  const filters: DamFilterParameters = {
+    type: searchParams.get('type'),
+    creationDateOption: searchParams.get('creationDateOption'),
+    dateStart: searchParams.get('dateStart'),
+    dateEnd: searchParams.get('dateEnd'),
+    ownerId: searchParams.get('ownerId'),
+    sizeOption: searchParams.get('sizeOption'),
+    sizeMin: searchParams.get('sizeMin'),
+    sizeMax: searchParams.get('sizeMax'),
+  };
+
+  const sortParams: DamSortParameters = {
+    sortBy: searchParams.get('sortBy'),
+    sortOrder: searchParams.get('sortOrder') as 'asc' | 'desc' | null,
+  };
+
+  const parsedLimit = limitParam ? parseInt(limitParam, 10) : undefined;
+  const limitOptions: LimitOptions = { quickSearch, parsedLimit };
+
+  if (limitParam && (Number.isNaN(parsedLimit) || (parsedLimit !== undefined && parsedLimit < 0))) {
+    throw new ValidationError('Invalid limit parameter. Limit must be a non-negative number.');
   }
 
   const activeOrgId = await getActiveOrganizationId();
   if (!activeOrgId) {
-    throw new ValidationError('Active organization ID not found. Cannot fetch DAM data.');
+    throw new DatabaseError('Active organization not found');
   }
+  
+  let result: DataFetchingResult;
+  const isGlobalFilterWithoutSearchOrFolder = 
+    !searchTerm && 
+    (!folderId || folderId.trim() === '') && 
+    !!(filters.type || filters.creationDateOption || filters.ownerId || filters.sizeOption || tagIdsParam);
 
-  let fetchResult: DataFetchingResult;
-  const limitOpts: LimitOptions = { quickSearch, parsedLimit };
-
-  if (searchTermParam && searchTermParam.trim() !== '') {
-    const trimmedSearchTerm = searchTermParam.trim();
-    fetchResult = await fetchSearchResults(supabase, activeOrgId, trimmedSearchTerm, tagIdsParam, limitOpts);
+  if (searchTerm) { 
+    result = await fetchSearchResults(supabase, activeOrgId, searchTerm, tagIdsParam, filters, sortParams, limitOptions);
+  } else if (isGlobalFilterWithoutSearchOrFolder) {
+    result = await fetchSearchResults(supabase, activeOrgId, '', tagIdsParam, filters, sortParams, limitOptions, true);
   } else {
-    fetchResult = await fetchFolderContents(supabase, activeOrgId, folderIdParam, tagIdsParam, limitOpts);
+    result = await fetchFolderContents(supabase, activeOrgId, folderId, tagIdsParam, filters, sortParams, limitOptions);
   }
 
-  let { foldersData, assetsData, foldersError, assetsError } = fetchResult;
-
-  if (foldersError) {
-    throw new DatabaseError(foldersError.message || 'Failed to query folders');
-  }
-  if (assetsError) {
-    throw new DatabaseError(assetsError.message || 'Failed to query assets');
+  if (result.foldersError || result.assetsError) {
+    const errorToLog = result.foldersError || result.assetsError;
+    console.error('Error fetching DAM data:', errorToLog);
+    throw new DatabaseError('Failed to fetch DAM resources.', errorToLog ? errorToLog.message : undefined);
   }
 
-  const { foldersWithDetails, assetsWithDetails }: TransformedDataReturn = await transformAndEnrichData(
-    supabase,
-    activeOrgId,
-    foldersData,
-    assetsData
+  const { foldersWithDetails, assetsWithDetails } = await transformAndEnrichData(
+    supabase, 
+    activeOrgId, 
+    result.foldersData,
+    result.assetsData
   );
+  
+  let combinedData: CombinedItem[] = [...foldersWithDetails, ...assetsWithDetails];
 
-  let combined: CombinedItem[] = [...foldersWithDetails, ...assetsWithDetails];
-
-  if (quickSearch && parsedLimit && searchTermParam && searchTermParam.trim() !== '') {
-    combined = applyQuickSearchLimits(foldersWithDetails, assetsWithDetails, parsedLimit);
+  if (quickSearch && typeof parsedLimit === 'number') {
+    combinedData = applyQuickSearchLimits(foldersWithDetails, assetsWithDetails, parsedLimit);
+  } else if (quickSearch && parsedLimit === undefined) {
+    // If quickSearch is true but no limit is specified, default to applying some limit or decide behavior.
+    // For now, let's assume if limit is not given with quicksearch, we don't apply specific quicksearch limit logic here,
+    // and rely on limits applied within fetchSearchResults/fetchFolderContents if any.
+    // Or, apply a default limit for quicksearch if desired.
+    // This else-if can be refined based on desired quicksearch behavior without limit.
   }
+  
+  const responseData = {
+    data: combinedData || [],
+    totalItems: (combinedData && typeof combinedData.length === 'number') ? combinedData.length : 0
+  };
 
-  return NextResponse.json(combined);
+  return NextResponse.json(responseData);
 }
 
-export const GET = withErrorHandling(withAuth(getHandler));
-
-// Export getHandler for testing purposes
-export { getHandler }; 
+export const GET = withErrorHandling(withAuth(getHandler)); 

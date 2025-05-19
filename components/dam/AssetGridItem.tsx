@@ -12,6 +12,8 @@ import { useAssetItemDialogs } from './hooks/useAssetItemDialogs';
 import { useAssetItemActions } from './hooks/useAssetItemActions';
 import { AssetActionDropdownMenu } from './AssetActionDropdownMenu';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import type { Tag } from '@/lib/actions/dam/tag.actions';
 
 export interface AssetGridItemProps {
@@ -61,6 +63,12 @@ export const AssetGridItem = React.forwardRef<
   };
   
   const dynamicCardStyle = isDragging ? { opacity: 0.5 } : {};
+
+  // Tag clamping configuration
+  const MAX_INLINE_TAGS = 3;
+  const assetTags: Tag[] = item.type === 'asset' ? (item as Asset).tags ?? [] : [];
+  const inlineTags = assetTags.slice(0, MAX_INLINE_TAGS);
+  const overflowCount = assetTags.length - inlineTags.length;
 
   const handleDeleteClick = () => {
     if (item.type === 'asset' && assetThumbnailRef.current) {
@@ -131,13 +139,36 @@ export const AssetGridItem = React.forwardRef<
       )}
 
       {/* Display Tags for Assets */}
-      {item.type === 'asset' && (item as Asset).tags && (item as Asset).tags!.length > 0 && (
-        <div className="p-2 border-t flex flex-wrap gap-1">
-          {(item as Asset).tags!.map((tag: Tag) => (
-            <Badge key={tag.id} variant="secondary" className="text-xs">
-              {tag.name}
-            </Badge>
+      {assetTags.length > 0 && (
+        <div className="p-2 border-t flex items-center gap-1 overflow-hidden flex-nowrap">
+          {inlineTags.map((tag) => (
+            <Tooltip key={tag.id}>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="text-xs truncate max-w-[5rem]">
+                  {tag.name}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tag.name}</p>
+              </TooltipContent>
+            </Tooltip>
           ))}
+          {overflowCount > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Badge variant="outline" className="text-xs cursor-pointer">
+                  +{overflowCount} more
+                </Badge>
+              </PopoverTrigger>
+              <PopoverContent className="p-2 flex flex-wrap gap-1 max-w-xs">
+                {assetTags.map((tag) => (
+                  <Badge key={tag.id} variant="secondary" className="text-xs truncate max-w-[7rem]">
+                    {tag.name}
+                  </Badge>
+                ))}
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       )}
 

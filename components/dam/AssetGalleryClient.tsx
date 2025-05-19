@@ -1,139 +1,103 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AssetGrid } from './AssetGrid';
 import { FolderListItem } from './FolderListItem';
 import type { CombinedItem, Folder, Asset } from '@/types/dam';
 import {
   DndContext,
   pointerWithin,
-  type DragEndEvent,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  TouchSensor,
 } from '@dnd-kit/core';
-import { moveAsset } from '@/lib/actions/dam/asset-crud.actions';
 import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
 import { AssetListItem } from './AssetListItem';
 import { damTableColumns } from './dam-column-config';
+import { useAssetGalleryData } from '@/components/dam/hooks/useAssetGalleryData';
+import { useAssetDragAndDrop } from '@/components/dam/hooks/useAssetDragAndDrop';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
-  initialSearchTerm?: string;
+  searchTerm?: string;
+  tagIds?: string;
   viewMode: ViewMode;
+  filterType?: string;
+  filterCreationDateOption?: string;
+  filterDateStart?: string;
+  filterDateEnd?: string;
+  filterOwnerId?: string;
+  filterSizeOption?: string;
+  filterSizeMin?: string;
+  filterSizeMax?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export type ViewMode = 'grid' | 'list';
 
-export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentFolderId, initialSearchTerm, viewMode }) => {
-  const [allItems, setAllItems] = useState<CombinedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => {
+  const { 
+    currentFolderId, 
+    searchTerm, 
+    tagIds, 
+    viewMode, 
+    filterType,
+    filterCreationDateOption,
+    filterDateStart,
+    filterDateEnd,
+    filterOwnerId,
+    filterSizeOption,
+    filterSizeMin,
+    filterSizeMax,
+    sortBy,
+    sortOrder,
+  } = props;
+
   const [optimisticallyHiddenItemId, setOptimisticallyHiddenItemId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchData = async (folderIdToFetch: string | null, termToFetch: string | undefined) => {
-    setLoading(true);
-    setOptimisticallyHiddenItemId(null);
-    try {
-      const timestamp = new Date().getTime();
-      const queryTerm = termToFetch || '';
-      const apiUrl = `/api/dam?folderId=${folderIdToFetch ?? ''}&q=${encodeURIComponent(queryTerm)}&_=${timestamp}`;
-      const res = await fetch(apiUrl, {
-        cache: 'no-store'
-      });
+  const {
+    allItems,
+    loading,
+    isFirstLoad,
+    fetchData: refreshGalleryData,
+    setAllItems,
+  } = useAssetGalleryData(props);
 
-      if (!res.ok) {
-        throw new Error(`API returned status ${res.status}`);
-      }
-
-      const data: CombinedItem[] = await res.json();
-      setAllItems(data);
-    } catch (e) {
-      setAllItems([]);
-      console.error("Error fetching DAM items:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { sensors, handleDragEnd } = useAssetDragAndDrop({
+    setAllItems,
+    setOptimisticallyHiddenItemId,
+    toast,
+  });
 
   useEffect(() => {
-    fetchData(currentFolderId, initialSearchTerm);
-  }, [currentFolderId, initialSearchTerm]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
-  );
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!active || !over) return;
-
-    const isActiveAsset = active.data.current?.type === 'asset';
-    const isOverFolder = over.data.current?.type === 'folder' && over.data.current?.accepts?.includes('asset');
-
-    if (isActiveAsset && isOverFolder) {
-      const assetId = active.id as string;
-      const targetFolderId = over.id as string;
-      
-      const draggedAsset = active.data.current?.item as Asset | undefined;
-      if (!draggedAsset) return;
-
-      if (draggedAsset.folder_id === targetFolderId) {
-        toast({ title: 'No Change', description: 'Asset is already in the target folder.', variant: 'default' });
-        return;
-      }
-
-      setOptimisticallyHiddenItemId(assetId);
-
-      try {
-        const result = await moveAsset(assetId, targetFolderId);
-        if (result.success) {
-          toast({ title: 'Asset moved successfully!' });
-          setAllItems(prevItems => prevItems.filter(item => item.id !== assetId));
-        } else {
-          toast({ title: 'Error moving asset', description: result.error, variant: 'destructive' });
-          setOptimisticallyHiddenItemId(null);
-        }
-      } catch (error) {
-        console.error("Move asset error:", error);
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
-        setOptimisticallyHiddenItemId(null);
-      }
-    }
-  };
+    setOptimisticallyHiddenItemId(null);
+  }, [props]);
 
   const { folders, assets } = useMemo(() => {
     const separatedFolders: Folder[] = [];
     const separatedAssets: Asset[] = [];
-    allItems.forEach(item => {
+    allItems.forEach((item: CombinedItem) => {
       if (item.type === 'folder') {
         separatedFolders.push(item as Folder);
-      } else if (item.type === 'asset') {
+      } else if (item.type === 'asset' && item.id !== optimisticallyHiddenItemId) {
         separatedAssets.push(item as Asset);
       }
     });
     separatedFolders.sort((a, b) => a.name.localeCompare(b.name));
-    const result = { folders: separatedFolders, assets: separatedAssets.filter(a => a.id !== optimisticallyHiddenItemId) };
-    return result;
+    return { folders: separatedFolders, assets: separatedAssets };
   }, [allItems, optimisticallyHiddenItemId]);
 
-  // Show a global loading spinner if it's the initial load (no items yet)
-  if (loading && allItems.length === 0) return (
+  if (loading && isFirstLoad) return (
     <div className="text-center p-8">
       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4"></div>
       <p>Loading...</p>
     </div>
   );
 
-  // Show empty state only if not loading and truly empty after initial load attempt
   if (!loading && folders.length === 0 && assets.length === 0) {
     return (
       <div className="text-center p-8">
-        {initialSearchTerm ? (
-          <p>No results found for "{initialSearchTerm}".</p>
+        {searchTerm ? (
+          <p>No results found for "{searchTerm}".</p>
         ) : (
           <p>This folder is empty.</p>
         )}
@@ -143,8 +107,6 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
-      {/* Optional: A subtle loading indicator could be placed here if desired */}
-      {/* Example: {loading && <div className="absolute top-0 left-0 w-full h-full bg-white/50 flex items-center justify-center z-50"><p>Refreshing...</p></div>} */}
       <div>
         {folders.length > 0 && (
           <div className="mb-8">
@@ -154,57 +116,51 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = ({ currentF
                 <FolderListItem 
                   key={folder.id} 
                   folder={folder} 
-                  onDataChange={() => fetchData(currentFolderId, initialSearchTerm)}
+                  onDataChange={refreshGalleryData}
                 />
               ))}
             </div>
           </div>
         )}
 
-        {(assets.length > 0 || (initialSearchTerm && folders.length === 0 && !loading)) && (
-           <>
-              {folders.length > 0 && assets.length > 0 && (
-                <h2 className="text-xl font-semibold mt-8 mb-4 px-1">Files</h2>
-              )}
-              {!folders.length && assets.length > 0 && (
-                <h2 className="text-xl font-semibold mb-4 px-1">Files</h2>
-              )}
-              {viewMode === 'grid' ? (
-                <AssetGrid
-                    assets={assets}
-                    onDataChange={() => fetchData(currentFolderId, initialSearchTerm)}
-                    optimisticallyHiddenItemId={optimisticallyHiddenItemId}
-                />
-              ) : (
-                <div className='flex flex-col gap-0'>
-                  {/* Column Headers for List View */}
-                  <div className="flex items-center p-2 gap-4 border-b bg-muted/50 rounded-t-md">
-                    {damTableColumns.map((col) => (
-                      <div
-                        key={`header-${col.id}`}
-                        className={col.headerClassName}
-                        style={col.headerStyle}
-                      >
-                        {col.headerName}
-                      </div>
-                    ))}
-                  </div>
-                  {assets.map(asset => (
-                    <AssetListItem 
-                      key={asset.id} 
-                      item={asset} 
-                      onDataChange={() => fetchData(currentFolderId, initialSearchTerm)} 
-                    />
+        {assets.length > 0 && (
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-4 px-1">Assets</h2>
+            {viewMode === 'grid' ? (
+              <AssetGrid 
+                assets={assets} 
+                onDataChange={refreshGalleryData}
+                optimisticallyHiddenItemId={optimisticallyHiddenItemId}
+              />
+            ) : (
+              <div className='flex flex-col gap-0'>
+                <div className="flex items-center p-2 gap-4 border-b bg-muted/50 rounded-t-md">
+                  {damTableColumns.map((col) => (
+                    <div
+                      key={`header-${col.id}`}
+                      className={col.headerClassName}
+                      style={col.headerStyle}
+                    >
+                      {col.headerName}
+                    </div>
                   ))}
                 </div>
-              )}
-           </>
-        )}
-        
-        {folders.length > 0 && assets.length === 0 && !initialSearchTerm && !loading && (
-          <div className="text-center p-8 text-muted-foreground mt-4">
-            <p>No files in this folder.</p>
+                {assets.map(asset => (
+                  <AssetListItem 
+                    key={asset.id} 
+                    item={asset}
+                    onDataChange={refreshGalleryData} 
+                  />
+                ))}
+              </div>
+            )}
           </div>
+        )}
+        {(loading && !isFirstLoad) && (
+            <div className="text-center p-4 text-sm text-gray-500">
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-current border-r-transparent mr-2"></div>
+                Refreshing content...
+            </div>
         )}
       </div>
     </DndContext>

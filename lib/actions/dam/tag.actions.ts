@@ -90,7 +90,7 @@ export async function listTagsForOrganization(
   try {
     const { data: tags, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('*, asset_tags!inner(tag_id)')
       .eq('organization_id', organizationId)
       .order('name', { ascending: true });
 
@@ -102,6 +102,39 @@ export async function listTagsForOrganization(
     return { success: true, data: (tags as Tag[]) || [] };
   } catch (e: any) {
     console.error('Unexpected error listing tags:', e);
+    return { success: false, error: 'An unexpected error occurred: ' + e.message };
+  }
+}
+
+/**
+ * Lists ALL tags for a given organization, including orphaned ones.
+ * Intended for internal use by components like TagEditor to check for existing tag names
+ * before attempting creation.
+ */
+export async function getAllTagsForOrganizationInternal(
+  organizationId: string,
+): Promise<ActionResult<Tag[]>> {
+  if (!organizationId) {
+    return { success: false, error: 'Organization ID is required.' };
+  }
+
+  const supabase = createClient();
+
+  try {
+    const { data: tags, error } = await supabase
+      .from('tags')
+      .select('*') // Select all tags, no join
+      .eq('organization_id', organizationId)
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error listing all internal tags:', error);
+      return { success: false, error: 'Failed to list all internal tags. ' + error.message };
+    }
+
+    return { success: true, data: (tags as Tag[]) || [] };
+  } catch (e: any) {
+    console.error('Unexpected error listing all internal tags:', e);
     return { success: false, error: 'An unexpected error occurred: ' + e.message };
   }
 } 

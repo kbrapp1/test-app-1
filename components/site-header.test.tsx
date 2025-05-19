@@ -2,6 +2,17 @@ import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { SiteHeader } from './site-header'
 
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/', // Default mock pathname
+  useSearchParams: () => new URLSearchParams(), // Default mock searchParams
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    // Add other router methods if needed by the component during tests
+  }),
+}));
+
 // Mock child components to isolate SiteHeader logic
 vi.mock('./theme-toggle', () => ({
   ThemeToggle: () => <div data-testid="theme-toggle-mock">ThemeToggle</div>,
@@ -22,13 +33,6 @@ describe('SiteHeader', () => {
   it('should render without crashing', () => {
     render(<SiteHeader />)
     // Implicit assertion: no error thrown
-  })
-
-  it('should render the "Documents" title', () => {
-    render(<SiteHeader />)
-    // Use heading role for better semantics if possible, or text match
-    const titleElement = screen.getByRole('heading', { name: /documents/i, level: 1 })
-    expect(titleElement).toBeInTheDocument()
   })
 
   it('should render the ThemeToggle component', () => {

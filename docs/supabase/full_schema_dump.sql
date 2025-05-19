@@ -153,6 +153,22 @@ COMMENT ON FUNCTION "auth"."uid"() IS 'Deprecated. Use auth.jwt() -> ''sub'' ins
 
 
 
+CREATE OR REPLACE FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.organization_memberships om1
+    JOIN public.organization_memberships om2 ON om1.organization_id = om2.organization_id
+    WHERE om1.user_id = auth.uid() AND om2.user_id = p_target_user_id
+  );
+$$;
+
+
+ALTER FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."check_email_domain"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -244,6 +260,26 @@ $$;
 
 
 ALTER FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") RETURNS TABLE("id" "uuid", "name" "text")
+    LANGUAGE "sql" STABLE
+    AS $$
+  SELECT
+    p.id AS id,
+    COALESCE(p.full_name, p.email, 'Unnamed User') AS name
+  FROM
+    public.organization_memberships om
+  JOIN
+    public.profiles p ON om.user_id = p.id
+  WHERE
+    om.organization_id = target_org_id
+  ORDER BY
+    name;
+$$;
+
+
+ALTER FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") RETURNS TABLE("id" "uuid", "invited_at" timestamp with time zone)
@@ -350,7 +386,7 @@ CREATE OR REPLACE FUNCTION "public"."trigger_set_timestamp"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-  NEW."updatedAt" = NOW();
+  NEW.updated_at = NOW();
   RETURN NEW;
 END;
 $$;
@@ -1035,7 +1071,8 @@ CREATE TABLE IF NOT EXISTS "public"."assets" (
     "size" integer NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "folder_id" "uuid",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 ALTER TABLE ONLY "public"."assets" FORCE ROW LEVEL SECURITY;
@@ -1054,7 +1091,8 @@ CREATE TABLE IF NOT EXISTS "public"."folders" (
     "user_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "parent_folder_id" "uuid",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 ALTER TABLE ONLY "public"."folders" FORCE ROW LEVEL SECURITY;
@@ -1887,6 +1925,14 @@ CREATE OR REPLACE TRIGGER "handle_teams_updated_at" BEFORE UPDATE ON "public"."t
 
 
 
+CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."assets" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
+
+
+
+CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."folders" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
+
+
+
 CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."notes" FOR EACH ROW EXECUTE FUNCTION "public"."moddatetime"('updated_at');
 
 
@@ -2248,6 +2294,10 @@ CREATE POLICY "Organization members can access their org data in tags" ON "publi
 
 
 
+CREATE POLICY "Organization members can view profiles via func" ON "public"."profiles" FOR SELECT TO "authenticated" USING ("public"."are_users_in_same_org"("id"));
+
+
+
 CREATE POLICY "Superusers can manage organization domains" ON "public"."organization_domains" USING (("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid"));
 
 
@@ -2407,6 +2457,12 @@ GRANT ALL ON FUNCTION "auth"."uid"() TO "dashboard_user";
 
 
 
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "anon";
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "service_role";
@@ -2434,6 +2490,12 @@ GRANT ALL ON FUNCTION "public"."get_current_auth_uid_for_test"() TO "service_rol
 GRANT ALL ON FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "service_role";
 
 
 

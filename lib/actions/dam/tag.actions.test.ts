@@ -151,7 +151,7 @@ describe('Tag Server Actions', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockTagsData);
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('tags');
-      expect(mockSupabaseQueryBuilder.select).toHaveBeenCalledWith('*');
+      expect(mockSupabaseQueryBuilder.select).toHaveBeenCalledWith('*, asset_tags!inner(tag_id)');
       expect(mockSupabaseQueryBuilder.eq).toHaveBeenCalledWith('organization_id', mockOrgId);
       expect(mockSupabaseQueryBuilder.order).toHaveBeenCalledWith('name', { ascending: true });
     });

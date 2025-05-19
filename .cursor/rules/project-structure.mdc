@@ -56,7 +56,10 @@ alwaysApply: false
       - `page.tsx` <!-- Page component for managing team members. -->
   - `api/` <!-- Directory for API route handlers. -->
     - `dam/` <!-- API routes related to DAM. -->
-      - `dam-api.helpers.ts` <!-- Helper functions for DAM API route logic. -->
+      - `dam-api.helpers.ts` <!-- Core data fetching and utility functions for DAM API (e.g., fetchSearchResults, fetchFolderContents). -->
+      - `dam-api.query-builders.ts` <!-- Utility functions for constructing Supabase queries for DAM. -->
+      - `dam-api.transformers.ts` <!-- Utility functions for transforming raw DAM data from Supabase. -->
+      - `dam-api.types.ts` <!-- TypeScript type definitions for DAM API. -->
       - `route.ts` <!-- API route for retrieving and managing digital assets. -->
       - `upload/` <!-- API route for handling asset uploads. -->
         - `route.ts` <!-- API handler for file uploads to storage. -->
@@ -124,6 +127,7 @@ alwaysApply: false
     - `FolderThumbnail.tsx` <!-- Thumbnail representation of a folder. -->
     - `new-folder-dialog.tsx` <!-- Dialog for creating new folders in DAM. -->
     - `SearchDropdownMenu.tsx` <!-- Dropdown menu component displaying search results for the DAM search bar. -->
+    - `TagEditor.tsx` <!-- Component for editing tags on an asset. -->
     - `dialogs/` <!-- Reusable dialog components for DAM operations. -->
       - `AssetDetailsDialog.tsx` <!-- Dialog for viewing detailed information about an asset. -->
       - `ConfirmationDialog.tsx` <!-- Generic dialog for confirming actions (e.g., delete). -->
@@ -131,6 +135,12 @@ alwaysApply: false
       - `FolderPickerDialog.tsx` <!-- Dialog for selecting a folder, e.g., for moving assets. -->
       - `folderPickerUtils.ts` <!-- Utility functions for the folder picker dialog (e.g., tree building, filtering). -->
       - `FolderTreeItem.tsx` <!-- Component for rendering an individual item in the folder picker tree. -->
+    - `filters/` <!-- Components for DAM filtering controls. -->
+      - `CreationDateFilter.tsx` <!-- Filter component for asset/folder creation date. -->
+      - `OwnerFilter.tsx` <!-- Filter component for asset/folder owner. -->
+      - `SizeFilter.tsx` <!-- Filter component for asset size. -->
+      - `SortControl.tsx` <!-- Component for controlling sort order of assets/folders. -->
+      - `TypeFilter.tsx` <!-- Filter component for asset/folder type. -->
     - `hooks/` <!-- Custom React hooks specific to DAM components. -->
       - `useAssetItemActions.ts` <!-- Hook for managing asset item actions (download, rename, move) and their pending states. -->
       - `useAssetItemDialogs.ts` <!-- Hook for managing dialog states (open/close, data) for asset items. -->

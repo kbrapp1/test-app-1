@@ -24,6 +24,7 @@ interface FolderStoreState {
   rootFolders: FolderNode[];
   selectedFolderId: string | null; // New state for selected folder
   searchTerm: string; // New state for the search term
+  changeVersion: number; // ADDED: Change indicator
   setInitialFolders: (folders: Folder[]) => void;
   toggleExpand: (folderId: string) => void;
   fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<Folder[]>) => Promise<void>;
@@ -40,6 +41,7 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   rootFolders: [],
   selectedFolderId: null, // Initialize selectedFolderId
   searchTerm: '', // Initialize search term
+  changeVersion: 0, // ADDED: Initialize change indicator
 
   setInitialFolders: (folders) => {
     const currentState = get();
@@ -61,7 +63,11 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     // For now, let's assume `folders` is a flat list of root folders primarily.
     // If `folders` is meant to be the *entire* hierarchy, a tree-building step is needed here.
     // Given the original code, `folders` in `setInitialFolders` are just root folders.
-    set({ rootFolders: initialNodes.filter(f => f.parent_folder_id === null).sort((a,b) => a.name.localeCompare(b.name)) , selectedFolderId: null });
+    set({ 
+      rootFolders: initialNodes.filter(f => f.parent_folder_id === null).sort((a,b) => a.name.localeCompare(b.name)), 
+      selectedFolderId: null,
+      // changeVersion: get().changeVersion + 1 // Optionally increment on initial set/reset too
+    });
   },
 
   toggleExpand: (folderId) => {
@@ -153,13 +159,17 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
       
       return { 
         rootFolders: updatedRootFolders,
-        selectedFolderId: newNode.id 
+        selectedFolderId: newNode.id,
+        changeVersion: state.changeVersion + 1 // ADDED: Increment version
       };
     });
   },
 
   removeFolder: (folderId) => {
-    set((state) => ({ rootFolders: findAndRemoveNode(state.rootFolders, folderId) }));
+    set((state) => ({ 
+      rootFolders: findAndRemoveNode(state.rootFolders, folderId),
+      changeVersion: state.changeVersion + 1 // ADDED: Increment version
+    }));
   },
 
   // ADDED: Implementation for updateFolderNodeInStore
@@ -174,6 +184,7 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
           // and are part of FolderNode, e.g., parent_folder_id if moving while renaming (though less common for just rename)
         })
       ),
+      changeVersion: state.changeVersion + 1 // ADDED: Increment version
     }));
   },
 })); 

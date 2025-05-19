@@ -1,3 +1,5 @@
+'use client';
+
 // Placeholder component for Security settings (e.g., 2FA)
 export function SecuritySection() {
   return (
