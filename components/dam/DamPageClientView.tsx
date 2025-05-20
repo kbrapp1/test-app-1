@@ -111,7 +111,7 @@ export function DamPageClientView({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="pl-1 pr-4 pt-2 pb-4 md:pl-1 md:pr-6 md:pt-2 md:pb-6 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex-grow min-w-0">
             {gallerySearchTerm && gallerySearchTerm.trim() !== '' ? (

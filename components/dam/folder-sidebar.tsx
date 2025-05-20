@@ -49,7 +49,7 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
   // const [isRootExpanded, setIsRootExpanded] = useState(true);
 
   return (
-    <aside className="w-64 border-r bg-background px-4 pt-2 pb-4 flex flex-col h-full overflow-y-auto">
+    <aside className="w-55 border-r bg-background px-4 pt-2 pb-4 flex flex-col h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Folders</h2>
         <TooltipProvider>

@@ -300,33 +300,49 @@ describe('TtsHistoryPanel', () => {
 
   // Test for refresh functionality
   it('refetches history when shouldRefresh is true and panel is open', async () => {
-    // Initial render with shouldRefresh: false. fetchHistory is called by default.
+    // Initial render with shouldRefresh: false. 
+    // getTtsHistory is called by default using the mock from beforeEach.
     const { rerender } = renderTtsHistoryPanel({ isOpen: true, shouldRefresh: false });
     await waitFor(() => expect(screen.getByText(`Input for ${mockItems[0].id}`)).toBeInTheDocument());
-    // This assertion checks the call from the initial render in this specific test scope.
-    // If beforeEach also sets up a call, this might need to be adjusted based on mock clearing.
-    // For now, assuming this test starts fresh or beforeEach's call is accounted for.
-    expect(ttsActions.getTtsHistory).toHaveBeenCalledTimes(1); 
+    // Expect the initial call from beforeEach's mock
+    expect(ttsActions.getTtsHistory).toHaveBeenCalledTimes(1);
 
-    (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>).mockClear(); // Clear calls before triggering refresh
+    // DO NOT CLEAR/RESET getTtsHistory here.
+    // Set up the mock for the REFRESH call specifically.
+    // This .mockResolvedValueOnce() will apply to the *next* call to getTtsHistory.
     const newMockData = [mockPredictionItem('newId1', new Date().toISOString())];
-    (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      success: true,
-      data: newMockData,
-      count: newMockData.length,
-    });
+    (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ // This should be for the 2nd call (the refresh call)
+        success: true,
+        data: newMockData,
+        count: newMockData.length,
+      });
+      // .mockImplementationOnce(async (params: any) => { // Keep this commented for now
+      //   console.log('### TTS HISTORY REFRESH MOCK CALLED with params:', JSON.stringify(params));
+      //   console.log('### TTS HISTORY REFRESH MOCK RETURNING newMockData with id:', newMockData[0]?.id);
+      //   return { success: true, data: newMockData, count: newMockData.length };
+      // });
 
-    // Use the rerender from the initial render of this test
-    rerender(<TtsHistoryPanel {...defaultProps} isOpen={true} shouldRefresh={true} onRefreshComplete={mockOnRefreshComplete} />);
+    // Trigger refresh by toggling shouldRefresh to true; hook resets state and calls onRefreshComplete
+    await act(async () => {
+      rerender(<TtsHistoryPanel {...defaultProps} isOpen={true} shouldRefresh={true} onRefreshComplete={mockOnRefreshComplete} />);
+    });
+    // onRefreshComplete should be invoked
+    expect(mockOnRefreshComplete).toHaveBeenCalledTimes(1);
+
+    // After parent resets shouldRefresh to false, effect will fetch new data
+    await act(async () => {
+      rerender(<TtsHistoryPanel {...defaultProps} isOpen={true} shouldRefresh={false} onRefreshComplete={mockOnRefreshComplete} />);
+    });
+    // Wait for the UI to update with new data
+    expect(await screen.findByText(`Input for newId1`)).toBeInTheDocument();
+    expect(screen.queryByText(`Input for ${mockItems[0].id}`)).not.toBeInTheDocument(); // Old items should be gone
     
-    // Expect getTtsHistory to be called ONCE for the refresh action
-    await waitFor(() => expect(ttsActions.getTtsHistory).toHaveBeenCalledTimes(1)); 
+    // Verify getTtsHistory was called for initial load and for refresh fetch
+    expect(ttsActions.getTtsHistory).toHaveBeenCalledTimes(2);
     expect(ttsActions.getTtsHistory).toHaveBeenLastCalledWith(
       expect.objectContaining({ page: 1, limit: ITEMS_PER_PAGE_TEST, searchQuery: '' })
     );
-    expect(await screen.findByText(`Input for newId1`)).toBeInTheDocument();
-    expect(screen.queryByText(`Input for ${mockItems[0].id}`)).not.toBeInTheDocument(); // Old items should be gone
-    expect(mockOnRefreshComplete).toHaveBeenCalledTimes(1);
   });
 
 

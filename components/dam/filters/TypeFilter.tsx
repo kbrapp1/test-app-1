@@ -42,12 +42,12 @@ export function TypeFilter({ selectedType, onTypeChange }: TypeFilterProps) {
   };
 
   return (
-    <div className="flex items-center"> {/* Removed gap-0.5 */}
+    <div className="flex items-center group"> {/* wrap chip in group for focus-within styling */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className={`flex items-center justify-start gap-2 px-3 h-10 ${selectedType && selectedType !== '' ? 'rounded-r-none border-r-0' : ''}`}
+            className={`flex items-center justify-start gap-2 px-3 h-10 ${selectedType && selectedType !== '' ? 'rounded-r-none border-r-0' : ''} group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0`}
           >
             <FilterIcon size={16} />
             Type: {currentLabel}
@@ -66,11 +66,11 @@ export function TypeFilter({ selectedType, onTypeChange }: TypeFilterProps) {
       {(selectedType && selectedType !== '') && (
         <Button
           variant="outline"
-          className="h-10 w-10 p-0 rounded-l-none -ml-px flex items-center justify-center hover:bg-muted-foreground/10"
+          className="h-10 w-10 p-0 rounded-l-none -ml-px flex items-center justify-center hover:bg-muted-foreground/10 group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
           onClick={handleClearFilter}
           aria-label="Clear type filter"
         >
-          <XIcon size={16} className="text-muted-foreground" />
+          <XIcon size={16} className="text-muted-foreground group-focus-within:text-primary" />
         </Button>
       )}
     </div>

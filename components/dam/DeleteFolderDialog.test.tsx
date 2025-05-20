@@ -17,6 +17,7 @@ const mockFolder: Folder = {
   created_at: new Date().toISOString(),
   type: 'folder',
   parent_folder_id: null,
+  ownerName: '',
 };
 
 // Mock next/navigation

@@ -6,7 +6,7 @@
 export interface TtsVoice {
   id: string;
   name: string;
-  gender: 'Female' | 'Male';
+  gender: 'Female' | 'Male' | 'Other';
   accent: 'American' | 'British' | 'Other';
 }
 
@@ -23,4 +23,9 @@ export interface TtsHistoryEntry {
   sourceAssetId?: string | null;
   voiceId?: string | null;
   outputAssetId?: string | null; // ID of the saved DAM asset, if linked
-} 
+}
+
+/**
+ * Supported Text-to-Speech providers
+ */
+export type TtsProvider = 'replicate' | 'elevenlabs'; 

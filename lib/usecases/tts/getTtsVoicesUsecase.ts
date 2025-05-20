@@ -1,5 +1,6 @@
 import type { TtsVoice } from '@/types/tts';
 import { ttsProvidersConfig, ProviderConfig, REPLICATE_MODELS } from '@/lib/config/ttsProviderConfig';
+import { listVoices as listElevenLabsVoices } from '@/lib/services/elevenlabsService';
 
 /**
  * Usecase: Fetches the list of available TTS voices for a given provider and optionally a specific model.
@@ -12,6 +13,18 @@ export async function getTtsVoices(
     return { success: false, error: 'Provider ID is required.' };
   }
 
+  // Handle ElevenLabs dynamically
+  if (providerId === 'elevenlabs') {
+    try {
+      const elevenLabsVoices = await listElevenLabsVoices(); 
+      return { success: true, data: elevenLabsVoices };
+    } catch (error: any) {
+      console.error('Error fetching ElevenLabs voices:', error);
+      return { success: false, error: error.message || 'Failed to fetch ElevenLabs voices.' };
+    }
+  }
+
+  // Existing logic for other providers (e.g., Replicate)
   const providerConfig = ttsProvidersConfig[providerId];
 
   if (!providerConfig) {
@@ -50,6 +63,6 @@ export async function getTtsVoices(
   //   }
   // }
 
-  console.warn(`getTtsVoicesUsecase: No voices found for provider: ${providerId} with the given parameters.`);
-  return { success: true, data: [], error: `No voice list configured for provider '${providerId}' with the specified model.` };
+  console.warn(`getTtsVoicesUsecase: No voices found for provider: ${providerId} with the given parameters (modelId: ${modelId}).`);
+  return { success: true, data: [], error: `No voice list configured or dynamically fetchable for provider '${providerId}' with the specified model.` };
 } 

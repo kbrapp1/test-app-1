@@ -13,10 +13,20 @@ import {
     FileIcon,
     CameraIcon,
     FileTextIcon,
-    FileCodeIcon,
+    BotIcon,
     UploadCloudIcon,
     Volume2Icon,
     BookTextIcon,
+    StoreIcon,
+    PlugIcon,
+    BellIcon,
+    ActivityIcon,
+    CheckCircleIcon,
+    MegaphoneIcon,
+    CalendarIcon,
+    LightbulbIcon,
+    PaletteIcon,
+    CodeIcon,
 } from "lucide-react";
 
 // Define the types for navigation items
@@ -41,72 +51,81 @@ export interface NavSubItem {
 export const navMainItems: NavItem[] = [
     {
         title: "Dashboard",
-        url: "/dashboard", // Use actual target path
+        url: "/dashboard",
         icon: LayoutDashboardIcon,
     },
     {
-        title: "Documents", // New Collapsible Section
-        url: "#", // No direct link for the trigger
-        icon: FolderIcon, // Or another suitable icon like FileTextIcon
+        title: "Documents",
+        url: "#",
+        icon: FolderIcon,
         collapsible: true,
         items: [
-            {
-                title: "Notes",
-                url: "/documents/notes",
-                icon: FileTextIcon,
-            },
-            {
-                title: "Asset Library",
-                url: "/dam",
-                icon: UploadCloudIcon,
-            },
-            // Add other document-related items here if needed
-            // {
-            //     title: "Data Library",
-            //     url: "#",
-            //     icon: DatabaseIcon,
-            // },
-            // {
-            //     title: "Reports",
-            //     url: "#",
-            //     icon: ClipboardListIcon,
-            // },
-            // {
-            //     title: "Word Assistant",
-            //     url: "#",
-            //     icon: FileIcon,
-            // },
+            { title: "Notes", url: "/documents/notes", icon: FileTextIcon },
+            { title: "Asset Library", url: "/dam", icon: UploadCloudIcon },
         ],
     },
-    // Add other main navigation items here based on your desired scaffold structure
-    // Example:
-    // {
-    //   title: "Analytics",
-    //   url: "/analytics",
-    //   icon: BarChartIcon,
-    // },
     {
-        title: "Team",
-        url: "/team", // Updated to point to the Team page
+        title: "Collaboration",
+        url: "#",
         icon: UsersIcon,
+        collapsible: true,
+        items: [
+            { title: "Team", url: "/team", icon: UsersIcon },
+            { title: "Playbooks", url: "/playbooks", icon: BookTextIcon },
+            { title: "Notifications", url: "/notifications", icon: BellIcon },
+            { title: "Activity Feed", url: "/activity-feed", icon: ActivityIcon },
+            { title: "Approvals", url: "/approvals", icon: CheckCircleIcon },
+        ],
     },
     {
-        title: "Playbooks",
-        url: "/playbooks", 
-        icon: BookTextIcon,
+        title: "Marketing",
+        url: "#",
+        icon: MegaphoneIcon,
+        collapsible: true,
+        items: [
+            { title: "Marketing Automation", url: "/marketing-automation", icon: BarChartIcon },
+            { title: "Campaign Management", url: "/campaign-management", icon: ListIcon },
+            { title: "Templates Library", url: "/templates", icon: FileIcon },
+            { title: "Content Calendar", url: "/content-calendar", icon: CalendarIcon },
+        ],
+    },
+    {
+        title: "Analytics",
+        url: "#",
+        icon: BarChartIcon,
+        collapsible: true,
+        items: [
+            { title: "Reporting", url: "/reporting", icon: ClipboardListIcon },
+            { title: "Insights & Recommendations", url: "/insights", icon: LightbulbIcon },
+        ],
+    },
+    {
+        title: "Assets",
+        url: "#",
+        icon: CameraIcon,
+        collapsible: true,
+        items: [
+            { title: "Digital Storefront", url: "/digital-storefront", icon: StoreIcon },
+            { title: "Brand Guidelines", url: "/brand-guidelines", icon: PaletteIcon },
+        ],
+    },
+    {
+        title: "Integrations & API",
+        url: "#",
+        icon: PlugIcon,
+        collapsible: true,
+        items: [
+            { title: "Integrations", url: "/integrations", icon: PlugIcon },
+            { title: "Developer API & Webhooks", url: "/developer-api", icon: CodeIcon },
+        ],
     },
     {
         title: "AI Playground",
-        url: "#", // Change URL to # for collapsible trigger
-        icon: FileCodeIcon,
-        collapsible: true, // Make it collapsible
-        items: [ // Add sub-items
-            {
-                title: "Text to Speech",
-                url: "/ai-playground/text-to-speech", // Define sub-item route
-                icon: Volume2Icon, // Add icon
-            },
-            // Add other AI playground sub-items here later if needed
+        url: "#",
+        icon: BotIcon,
+        collapsible: true,
+        items: [
+            { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon },
         ],
     },
 ];

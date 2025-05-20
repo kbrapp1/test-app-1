@@ -8,8 +8,8 @@ import { useToast } from '@/components/ui/use-toast';
 
 interface AssetGalleryClientWrapperProps {
     initialCombinedItems: CombinedItem[];
-    initialAssets: Asset[];
-    initialFolders: Folder[];
+    // initialAssets: Asset[]; // We might not need to pass these separately if combinedItems is comprehensive
+    // initialFolders: Folder[];
     currentFolderId: string | null;
 }
 
@@ -20,6 +20,7 @@ export function AssetGalleryClientWrapper({
     currentFolderId,
 }: AssetGalleryClientWrapperProps) {
     const [combinedItems, setItems] = useState<CombinedItem[]>(initialCombinedItems);
+    const [optimisticallyHiddenItemId, setOptimisticallyHiddenItemId] = useState<string | null>(null);
     const { toast } = useToast();
 
     // Effect to update local state if initial props change (e.g., navigation to a different folder)
@@ -49,13 +50,16 @@ export function AssetGalleryClientWrapper({
         return <p>This folder is empty.</p>; // Match server component's empty message
     }
     
+    const assetsToDisplay = combinedItems.filter(item => item.type === 'asset') as Asset[];
+    
     // The Asset[] and Folder[] props for AssetGrid are optional and for testing/mocking if needed.
     // For operational use, combinedItems is the primary data source for AssetGrid.
     return (
         <AssetGrid 
-            combinedItems={combinedItems} 
-            setItems={setItems} 
-            onDataChange={handleDataChange} 
+            assets={assetsToDisplay} 
+            onDataChange={handleDataChange}
+            optimisticallyHiddenItemId={optimisticallyHiddenItemId}
+            // setItems={setItems} // AssetGrid does not take setItems directly
             // assets={initialAssets} // Pass if AssetGrid needs them separately for some reason
             // folders={initialFolders} // Pass if AssetGrid needs them separately
         />

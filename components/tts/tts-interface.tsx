@@ -47,9 +47,10 @@ export interface TtsFormInitializationData {
 export interface TtsInterfaceProps {
   formInitialValues?: TtsFormInitializationData;
   onGenerationComplete?: () => void;
+  remountKey: string | number; // Add remountKey prop
 }
 
-export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInterfaceProps) {
+export function TtsInterface({ formInitialValues, onGenerationComplete, remountKey }: TtsInterfaceProps) {
   const { toast } = useToast();
 
   // --- Form Setup ---
@@ -178,6 +179,7 @@ export function TtsInterface({ formInitialValues, onGenerationComplete }: TtsInt
     <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2">
         <TtsInputCard 
+          key={remountKey}
           form={form}
           onSubmit={onSubmit}
           isProcessing={isProcessing}

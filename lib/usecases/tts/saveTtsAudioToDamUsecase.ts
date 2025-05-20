@@ -1,21 +1,22 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { createAssetRecordInDb } from '@/lib/repositories/asset.db.repo';
+import { createAssetRecordInDb, type CreateAssetDbRecordInput } from '@/lib/repositories/asset.db.repo';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
 // import { cleanupStorageFile } from '@/lib/services/ttsService'; // For TODO
 
 /**
  * Usecase: Saves generated TTS audio to the Digital Asset Management (DAM) system.
- * This involves downloading from the audio URL, uploading to Supabase Storage,
+ * This involves downloading from the audio URL (for external providers) or using existing
+ * storage details (for providers like ElevenLabs), uploading to Supabase Storage if necessary,
  * and creating an asset record in the database.
  */
 export async function saveTtsAudioToDam(
-  audioUrl: string,
+  audioUrl: string, // For Replicate, this is external. For ElevenLabs, this is the publicUrl from our storage.
   desiredAssetName: string,
-  ttsPredictionId: string // Kept for future linking, e.g., to a tts_predictions table
+  ttsPredictionId: string
 ): Promise<{ success: boolean; assetId?: string; error?: string }> {
   try {
-    console.log(`TTS Usecase (saveTtsAudioToDam): Saving audio from ${audioUrl} to DAM.`);
+    console.log(`TTS Usecase (saveTtsAudioToDam): Saving audio for prediction ${ttsPredictionId} to DAM.`);
 
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -30,23 +31,50 @@ export async function saveTtsAudioToDam(
       return { success: false, error: 'Active organization context is missing.' };
     }
 
-    // downloadAndUploadAudio will throw if there's an issue.
-    const uploadResult = await downloadAndUploadAudio(audioUrl, organizationId, userId);
+    // Fetch the TtsPrediction record
+    const { data: ttsPrediction, error: predictionError } = await supabase
+      .from('TtsPrediction')
+      .select('*')
+      .eq('id', ttsPredictionId)
+      .single();
 
-    // If we reach here, downloadAndUploadAudio was successful and returned the expected object.
-    // The properties storagePath, contentType, and blobSize are guaranteed to be present
-    // due to the return type of downloadAndUploadAudio and the fact that it throws on error.
-    console.log(`TTS Usecase (saveTtsAudioToDam): Audio uploaded to ${uploadResult.storagePath}`);
+    if (predictionError || !ttsPrediction) {
+      console.error('TTS Usecase (saveTtsAudioToDam): Could not fetch TtsPrediction record:', predictionError);
+      return { success: false, error: 'Failed to retrieve TTS prediction details.' };
+    }
 
-    // Dynamically import randomUUID so that vitest's async mock can override it
+    let storagePathValue: string;
+    let contentTypeValue: string;
+    let blobSizeValue: number;
+
+    if (ttsPrediction.prediction_provider === 'elevenlabs') {
+      console.log('TTS Usecase (saveTtsAudioToDam): ElevenLabs provider. Using stored asset details.');
+      if (!ttsPrediction.output_storage_path || !ttsPrediction.output_content_type || ttsPrediction.output_file_size === null) {
+        console.error('TTS Usecase (saveTtsAudioToDam): ElevenLabs prediction missing stored asset details.');
+        return { success: false, error: 'ElevenLabs prediction is missing necessary stored asset details (path, type, or size).' };
+      }
+      storagePathValue = ttsPrediction.output_storage_path;
+      contentTypeValue = ttsPrediction.output_content_type;
+      blobSizeValue = ttsPrediction.output_file_size;
+      console.log(`TTS Usecase (saveTtsAudioToDam): Using existing ElevenLabs asset at ${storagePathValue}`);
+    } else {
+      console.log(`TTS Usecase (saveTtsAudioToDam): Provider ${ttsPrediction.prediction_provider || 'unknown'}. Downloading and uploading from ${audioUrl}`);
+      const uploadResult = await downloadAndUploadAudio(audioUrl, organizationId, userId);
+      storagePathValue = uploadResult.storagePath;
+      contentTypeValue = uploadResult.contentType;
+      blobSizeValue = uploadResult.blobSize;
+      console.log(`TTS Usecase (saveTtsAudioToDam): Audio uploaded to ${storagePathValue}`);
+    }
+
     const { randomUUID } = await import('crypto');
     const newAssetId = randomUUID();
-    const dbInput = {
+    
+    const dbInput: CreateAssetDbRecordInput = {
       id: newAssetId,
       name: desiredAssetName,
-      storagePath: uploadResult.storagePath,
-      mimeType: uploadResult.contentType,
-      size: uploadResult.blobSize,
+      storagePath: storagePathValue,
+      mimeType: contentTypeValue,
+      size: blobSizeValue,
       userId: userId,
       organizationId: organizationId,
       folderId: null, 
@@ -56,14 +84,11 @@ export async function saveTtsAudioToDam(
 
     if (dbError) {
       console.error('TTS Usecase (saveTtsAudioToDam): DB error creating asset record:', dbError);
-      // TODO: Consider cleaning up the uploaded storage file if DB insert fails.
-      // For example: await cleanupStorageFile(uploadResult.storagePath);
       return { success: false, error: `Database error: ${dbError.message}` };
     }
 
     if (!newAssetRecord) {
       console.error('TTS Usecase (saveTtsAudioToDam): Asset record creation returned no data/error.');
-      // TODO: Consider cleanup
       return { success: false, error: 'Failed to save asset metadata.' };
     }
 

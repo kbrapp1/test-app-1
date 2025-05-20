@@ -11,27 +11,21 @@
 ## Phase 1: Persistent Folder Tree Sidebar
 
 **Step 1: Design Sidebar Integration**
-*   [ ] **Decision:** Determine how the folder tree sidebar will be displayed. Is it always visible on DAM pages, or toggleable? The screenshot suggests it's part of a main layout.
-*   [ ] **Component Choice:** Decide whether to build a custom tree component or use a library. For a custom approach, recursive rendering of folder items will be needed.
-*   [ ] **Data Fetching:** Plan how to fetch the entire folder hierarchy for the sidebar. This might be a new API endpoint or an enhancement to an existing one.
+*   [x] **Decision:** Determine how the folder tree sidebar will be displayed. It's integrated in the DAM layout as a persistent sidebar.
+*   [x] **Component Choice:** A custom recursive tree (`FolderSidebar` and `FolderItem`) is implemented using Zustand store and hooks.
+*   [x] **Data Fetching:** Root folders fetched in layout; children fetched lazily in `FolderItem` via `useFolderFetch` and store.
 
 **Step 2: Create/Integrate Folder Tree Component**
-*   [ ] **File:** Create a new component, e.g., `components/dam/sidebar/DamFolderTree.tsx`.
-*   [ ] **Code:** Implement logic to fetch and render the folder hierarchy.
-    *   Each folder node should be clickable to navigate the main DAM view to that folder.
-    *   Indicate the currently active/selected folder in the tree.
-    *   Allow expanding/collapsing of folder nodes.
-*   [ ] **Styling:** Style the tree for clarity and ease of use.
-*   [ ] **Integration:** Add this component to the appropriate layout file (e.g., `app/(protected)/dam/layout.tsx` or the main app layout if the sidebar is global).
-*   [ ] **Testing:**
-    *   Verify the folder tree displays correctly.
-    *   Verify clicking folders in the tree updates the main DAM view (`AssetGalleryClient`).
-    *   Verify the active folder is highlighted in the tree.
+*   [x] **File:** `FolderSidebar` and `FolderItem` exist under `components/dam/`, no `DamFolderTree` file name needed.
+*   [x] **Code:** Recursive rendering in `FolderItem` with expand/collapse, active highlight, and navigation links.
+*   [x] **Styling:** Styled with padding, icons, hover and active states for clarity.
+*   [x] **Integration:** Added to `app/(protected)/dam/layout.tsx` as a persistent sidebar.
+*   [x] **Testing:** Unit tests in `folder-sidebar.test.tsx` and `FolderItem` tests cover display and navigation.
 
 **Step 3: Synchronization with Main View**
-*   [ ] **State Management:** Ensure that navigation in the main view (e.g., clicking a folder chip or breadcrumb) updates the highlighted/active folder in the sidebar tree.
-*   [ ] **Prop Drilling / Context API:** Use appropriate state management (props, Zustand, or React Context) to keep the sidebar and main view synchronized regarding the current folder ID.
-*   [ ] **Testing:** Navigate through folders using both the sidebar and the main view; ensure both stay in sync.
+*   [x] **State Management:** `FolderSidebar` derives `currentFolderId` from URL params, folder store highlights active node automatically.
+*   [x] **Prop Drilling / Context API:** Synchronization via Zustand store and URL searchParams; no extra context layers needed.
+*   [x] **Testing:** Manual and unit tests ensure breadcrumbs, folder clicks, and sidebar remain in sync.
 
 **Step 4: Drag-and-Drop to Sidebar Folders (Advanced)**
 *   [ ] **DND:** Make folder nodes in the `DamFolderTree.tsx` droppable targets for assets.

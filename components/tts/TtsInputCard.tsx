@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { VoiceSelector } from './VoiceSelector';
 import { ttsProvidersConfig, ProviderConfig } from '@/lib/config/ttsProviderConfig';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 // Define the structure for a voice object
 interface TtsVoice {
@@ -56,7 +57,7 @@ export function TtsInputCard({
   currentInputText,
   handleSaveText,
   handleSaveTextAs,
-  onLoadFromLibraryClick 
+  onLoadFromLibraryClick
 }: TtsInputCardProps) {
   
   const hasTextChanged = sourceAssetId && currentInputText !== originalLoadedText;
@@ -153,11 +154,27 @@ export function TtsInputCard({
                 <FormItem className="flex flex-col">
                   <FormLabel>Voice</FormLabel>
                   <VoiceSelector 
+                    key={selectedProvider || 'no-provider'}
                     field={field} 
                     setValue={form.setValue}
                     isDisabled={isProcessing} 
                     selectedProvider={selectedProvider} // Pass the selected provider
                   />
+                  {/* Add Input for manual voice ID if ElevenLabs is selected */}
+                  {selectedProvider === 'elevenlabs' && (
+                    <div className="mt-2">
+                      <FormLabel htmlFor="manualVoiceId" className="text-xs text-muted-foreground">Manual ElevenLabs Voice ID (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="manualVoiceId"
+                          placeholder="Enter custom ElevenLabs Voice ID"
+                          {...field} // Spread field props here to connect to form.voiceId
+                          disabled={isProcessing}
+                          className="mt-1"
+                        />
+                      </FormControl>
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -170,8 +187,12 @@ export function TtsInputCard({
                 <FormItem className="flex flex-col">
                   <FormLabel>Provider</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // When provider changes manually, clear the voiceId
+                      form.setValue('voiceId', '', { shouldValidate: true }); 
+                    }}
+                    value={field.value}
                     disabled={isProcessing}
                   >
                     <FormControl>

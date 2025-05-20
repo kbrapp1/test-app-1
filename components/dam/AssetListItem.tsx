@@ -75,7 +75,7 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({ item, onDataChange
 
   return (
     <>
-      <div className="flex items-center p-2 hover:bg-muted/50 rounded-md gap-4 border-b last:border-b-0">
+      <div className="flex w-full items-center p-2 hover:bg-muted/50 rounded-md gap-4 border-b last:border-b-0">
         {damTableColumns.map((col) => {
           const { content, displayColumn } = getCellContent(
             col,

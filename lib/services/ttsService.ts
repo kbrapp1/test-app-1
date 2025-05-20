@@ -150,4 +150,34 @@ export async function cleanupStorageFile(storagePath: string): Promise<void> {
   } catch (cleanupError) {
     console.error('Service: Exception during storage cleanup:', cleanupError);
   }
+}
+
+/**
+ * Uploads an ArrayBuffer of audio to Supabase Storage and returns its public URL.
+ */
+export async function uploadAudioBuffer(
+  buffer: ArrayBuffer,
+  organizationId: string,
+  userId: string
+): Promise<{ storagePath: string; publicUrl: string; contentType: string; blobSize: number }> {
+  const supabaseAdmin = getSupabaseAdminClient();
+  const audioBuffer = Buffer.from(buffer);
+  const contentType = 'audio/mpeg';
+  const fileExtension = '.mp3';
+  const uniqueFilename = `${randomUUID()}${fileExtension}`;
+  const storagePath = `${organizationId}/${userId}/audio/${uniqueFilename}`;
+
+  const { data: uploadData, error: storageError } = await supabaseAdmin.storage
+    .from('assets')
+    .upload(storagePath, audioBuffer, {
+      contentType,
+      upsert: false,
+    });
+  if (storageError) {
+    throw new Error(`Storage upload failed: ${storageError.message}`);
+  }
+  // Get a public URL
+  const { data: urlData } = supabaseAdmin.storage.from('assets').getPublicUrl(uploadData.path);
+  const publicUrl = urlData.publicUrl;
+  return { storagePath: uploadData.path, publicUrl, contentType, blobSize: audioBuffer.byteLength };
 } 

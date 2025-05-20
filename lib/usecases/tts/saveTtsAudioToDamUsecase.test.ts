@@ -7,8 +7,11 @@ import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
 import { createAssetRecordInDb } from '@/lib/repositories/asset.db.repo';
+import type { Database } from '@/types/supabase'; // Import Database type
 
-// Mock dependencies (these are the correct ones for the usecase)
+type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
+
+// Mock dependencies
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }));
@@ -25,7 +28,6 @@ vi.mock('@/lib/repositories/asset.db.repo', () => ({
   createAssetRecordInDb: vi.fn(),
 }));
 
-// Correct crypto mock using the pattern suggested by Vitest for built-ins
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -34,11 +36,17 @@ vi.mock('crypto', async (importOriginal) => {
   };
 });
 
+// Enhanced mock Supabase client
 const mockSupabaseClient = {
   auth: {
     getUser: vi.fn(),
   },
+  from: vi.fn().mockReturnThis(), // Allow chaining
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  single: vi.fn(), // This will be specifically mocked in tests
 };
+
 
 describe('saveTtsAudioToDamUsecase', () => {
   const testAudioUrl = 'http://example.com/audio.mp3';
@@ -46,8 +54,22 @@ describe('saveTtsAudioToDamUsecase', () => {
   const testSourcePredictionId = 'pred-123';
   const testUserId = 'user-abc-123';
   const testOrgId = 'org-xyz-789';
-  // mockGeneratedAssetId is defined globally for the mock factory
   
+  const mockReplicatePrediction: Partial<TtsPredictionRow> = {
+    id: testSourcePredictionId,
+    outputUrl: testAudioUrl,
+    prediction_provider: 'replicate',
+  };
+
+  const mockElevenlabsPrediction: any = { // Cast to any for now
+    id: testSourcePredictionId,
+    prediction_provider: 'elevenlabs',
+    output_storage_path: 'org/elevenlabs/audio.mp3',
+    output_content_type: 'audio/mpeg',
+    output_file_size: 54321,
+    outputUrl: 'http://supabase-storage.com/org/elevenlabs/audio.mp3' 
+  };
+
   const mockDownloadUploadResponse = {
     storagePath: `${testOrgId}/tts-audio/service-generated-uuid.mp3`,
     contentType: 'audio/mpeg',
@@ -56,7 +78,7 @@ describe('saveTtsAudioToDamUsecase', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockRandomUUIDSpy.mockClear(); // Clear the spy, its return value is set at definition
+    mockRandomUUIDSpy.mockClear();
 
     (createClient as any).mockReturnValue(mockSupabaseClient);
     (mockSupabaseClient.auth.getUser as any).mockResolvedValue({
@@ -66,10 +88,19 @@ describe('saveTtsAudioToDamUsecase', () => {
     (getActiveOrganizationId as any).mockResolvedValue(testOrgId);
     (downloadAndUploadAudio as any).mockResolvedValue(mockDownloadUploadResponse);
     (createAssetRecordInDb as any).mockResolvedValue({ data: { id: mockGeneratedAssetId }, error: null }); 
+    
+    (mockSupabaseClient.single as any).mockResolvedValue({ data: mockReplicatePrediction, error: null });
   });
 
-  it('should successfully call services and create asset record', async () => {
+  it('should successfully call services and create asset record for replicate provider', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
+
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('TtsPrediction');
+    expect(mockSupabaseClient.select).toHaveBeenCalledWith('*');
+    expect(mockSupabaseClient.eq).toHaveBeenCalledWith('id', testSourcePredictionId);
+    expect(mockSupabaseClient.single).toHaveBeenCalledTimes(1);
 
     expect(getActiveOrganizationId).toHaveBeenCalledTimes(1);
     expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledTimes(1);
@@ -89,6 +120,45 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(result.success).toBe(true);
     expect(result.assetId).toBe(mockGeneratedAssetId);
     expect(result.error).toBeUndefined();
+  });
+
+  it('should use stored metadata and not call download/upload for elevenlabs provider', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockElevenlabsPrediction, error: null });
+
+    const result = await saveTtsAudioToDam(
+      mockElevenlabsPrediction.outputUrl!, 
+      testDesiredAssetName, 
+      testSourcePredictionId
+    );
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith('TtsPrediction');
+    expect(mockSupabaseClient.select).toHaveBeenCalledWith('*');
+    expect(mockSupabaseClient.eq).toHaveBeenCalledWith('id', testSourcePredictionId);
+    expect(mockSupabaseClient.single).toHaveBeenCalledTimes(1);
+
+    expect(downloadAndUploadAudio).not.toHaveBeenCalled(); 
+    
+    expect(createAssetRecordInDb).toHaveBeenCalledWith({
+      id: mockGeneratedAssetId,
+      name: testDesiredAssetName,
+      storagePath: mockElevenlabsPrediction.output_storage_path,
+      mimeType: mockElevenlabsPrediction.output_content_type,
+      size: mockElevenlabsPrediction.output_file_size,
+      userId: testUserId,
+      organizationId: testOrgId,
+      folderId: null,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.assetId).toBe(mockGeneratedAssetId);
+    expect(result.error).toBeUndefined();
+  });
+
+  it('should return error if TtsPrediction record not found', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: null, error: null });
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Failed to retrieve TTS prediction details.');
   });
 
   it('should return auth error if user is not authenticated', async () => {
@@ -113,7 +183,8 @@ describe('saveTtsAudioToDamUsecase', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should return error if downloadAndUploadAudio service fails', async () => {
+  it('should return error if downloadAndUploadAudio service fails for replicate provider', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
     const serviceErrorMessage = 'Failed to download or upload audio';
     (downloadAndUploadAudio as any).mockRejectedValueOnce(new Error(serviceErrorMessage));
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
@@ -122,7 +193,8 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(createAssetRecordInDb).not.toHaveBeenCalled();
   });
 
-  it('should return error if createAssetRecordInDb fails', async () => {
+  it('should return error if createAssetRecordInDb fails (for replicate)', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
     const dbErrorMessage = 'DB insert failed';
     (createAssetRecordInDb as any).mockResolvedValueOnce({ data: null, error: { message: dbErrorMessage } });
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
@@ -130,8 +202,9 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(result.error).toBe(`Database error: ${dbErrorMessage}`);
   });
 
-  it('should return error if createAssetRecordInDb returns no data/error', async () => {
-    (createAssetRecordInDb as any).mockResolvedValueOnce({ data: null, error: null }); // Simulate no data, no error
+  it('should return error if createAssetRecordInDb returns no data/error (for replicate)', async () => {
+    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
+    (createAssetRecordInDb as any).mockResolvedValueOnce({ data: null, error: null });
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Failed to save asset metadata.');

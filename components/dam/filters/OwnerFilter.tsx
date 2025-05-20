@@ -64,12 +64,12 @@ export function OwnerFilter({ selectedOwnerId, onOwnerChange, members = DUMMY_ME
   };
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center group">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className={`flex items-center justify-start gap-2 px-3 h-10 ${selectedOwnerId && selectedOwnerId !== '' ? 'rounded-r-none border-r-0' : ''}`}
+            className={`flex items-center justify-start gap-2 px-3 h-10 ${selectedOwnerId && selectedOwnerId !== '' ? 'rounded-r-none border-r-0' : ''} group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0`}
           >
             <UsersIcon size={16} />
             <span className="truncate">Owner: {currentButtonLabel}</span>
@@ -106,11 +106,11 @@ export function OwnerFilter({ selectedOwnerId, onOwnerChange, members = DUMMY_ME
       {(selectedOwnerId && selectedOwnerId !== '') && (
         <Button
           variant="outline"
-          className="h-10 w-10 p-0 rounded-l-none -ml-px flex items-center justify-center hover:bg-muted-foreground/10"
+          className="h-10 w-10 p-0 rounded-l-none -ml-px flex items-center justify-center hover:bg-muted-foreground/10 group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
           onClick={handleClearFilter}
           aria-label="Clear owner filter"
         >
-          <XIcon size={16} className="text-muted-foreground" />
+          <XIcon size={16} className="text-muted-foreground group-focus-within:text-primary" />
         </Button>
       )}
     </div>

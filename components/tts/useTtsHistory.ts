@@ -38,10 +38,14 @@ export function useTtsHistory({
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [allItemsLoaded, setAllItemsLoaded] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
 
-  const fetchHistoryInternal = useCallback(async (page: number, currentSearchQuery: string) => {
+  const fetchHistoryInternal = useCallback(async (page: number, currentSearchQuery: string, isInitialFetch: boolean = false) => {
     if (page === 1) {
         setIsLoading(true);
+    }
+    if (page > 1) {
+        setIsActuallyLoadingMore(true);
     }
     
     setError(null);
@@ -83,14 +87,22 @@ export function useTtsHistory({
     }
     if (page === 1) setIsLoading(false);
     if (page > 1) setIsActuallyLoadingMore(false);
-
+    if (isInitialFetch && page === 1) {
+        setInitialFetchAttempted(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (isOpen && historyItems.length === 0 && !isLoading && !searchQuery && !shouldRefresh && !isActuallyLoadingMore) {
-        fetchHistoryInternal(1, '');
+    if (!isOpen) {
+      setInitialFetchAttempted(false);
     }
-  }, [isOpen, historyItems.length, isLoading, searchQuery, shouldRefresh, fetchHistoryInternal, isActuallyLoadingMore]);
+  }, [isOpen]);
+  
+  useEffect(() => {
+    if (isOpen && !initialFetchAttempted && !isLoading && !isActuallyLoadingMore && !searchQuery && !shouldRefresh) {
+        fetchHistoryInternal(1, '', true);
+    }
+  }, [isOpen, initialFetchAttempted, isLoading, isActuallyLoadingMore, searchQuery, shouldRefresh, fetchHistoryInternal]);
 
   useEffect(() => {
     if (shouldRefresh && isOpen) {
@@ -98,12 +110,12 @@ export function useTtsHistory({
       setHistoryItems([]);
       setAllItemsLoaded(false);
       setIsActuallyLoadingMore(false);
-      fetchHistoryInternal(1, searchQuery);
+      setInitialFetchAttempted(false);
       if (onRefreshComplete) {
         onRefreshComplete();
       }
     }
-  }, [shouldRefresh, isOpen, fetchHistoryInternal, searchQuery, onRefreshComplete]);
+  }, [shouldRefresh, isOpen, onRefreshComplete]);
 
   useEffect(() => {
     if (headlessPlayerError && headlessPlayerCurrentlyPlayingUrl) {
@@ -134,11 +146,16 @@ export function useTtsHistory({
       setHistoryItems([]); 
       setAllItemsLoaded(false);
       setIsActuallyLoadingMore(false);
-      fetchHistoryInternal(1, newQuery);
+      setInitialFetchAttempted(false);
     }, DEBOUNCE_DELAY);
-  }, [fetchHistoryInternal]);
+  }, []);
   
-  // Cleanup timeout on unmount
+  useEffect(() => {
+    if (isOpen && !initialFetchAttempted && searchQuery && !isLoading && !isActuallyLoadingMore && !shouldRefresh) {
+      fetchHistoryInternal(1, searchQuery, true);
+    }
+  }, [isOpen, initialFetchAttempted, searchQuery, isLoading, isActuallyLoadingMore, shouldRefresh, fetchHistoryInternal]);
+
   useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
@@ -148,11 +165,10 @@ export function useTtsHistory({
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    if (!isLoading && !isActuallyLoadingMore && historyItems.length < totalCount && !allItemsLoaded) {
-      setIsActuallyLoadingMore(true);
+    if (!isLoading && !isActuallyLoadingMore && !allItemsLoaded) {
       fetchHistoryInternal(currentPage + 1, searchQuery);
     }
-  }, [isLoading, isActuallyLoadingMore, historyItems.length, totalCount, currentPage, searchQuery, fetchHistoryInternal, allItemsLoaded]);
+  }, [isLoading, isActuallyLoadingMore, allItemsLoaded, currentPage, searchQuery, fetchHistoryInternal]);
 
   const handleSaveToDamWrapper = useCallback(async (item: TtsPredictionRow): Promise<boolean> => {
     const success = await onSaveToDam(item);
@@ -197,19 +213,17 @@ export function useTtsHistory({
     isLoading,
     error,
     searchQuery,
-    setSearchQuery: handleSearchChange, // Expose a function to update search query
+    setSearchQuery: handleSearchChange,
     clearSearch: () => {
-        setSearchQuery('');
-        if (searchTimeoutRef.current) { clearTimeout(searchTimeoutRef.current); }
-        setCurrentPage(1);
-        setHistoryItems([]);
-        setAllItemsLoaded(false);
-        setIsActuallyLoadingMore(false);
-        fetchHistoryInternal(1, '');
+      setSearchQuery('');
+      setCurrentPage(1);
+      setHistoryItems([]);
+      setAllItemsLoaded(false);
+      setIsActuallyLoadingMore(false);
+      setInitialFetchAttempted(false);
     },
     handleLoadMore,
     allItemsLoaded,
-    totalCount,
     isLoadingMore: isActuallyLoadingMore,
     handleSaveToDamForItem: handleSaveToDamWrapper,
     handleSaveAsToDamForItem: handleSaveAsToDamWrapper,

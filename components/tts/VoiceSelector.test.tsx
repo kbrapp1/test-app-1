@@ -176,17 +176,30 @@ describe('VoiceSelector', () => {
   });
 
   it('filters voices based on search input', async () => {
-    renderComponent();
+    renderComponent({value: 'voice1'}); // Ensure a voice is selected initially so the list is populated for filtering
     await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
 
     fireEvent.click(screen.getByTestId('popover-trigger'));
-
     await waitFor(() => expect(screen.getByTestId('popover-content')).toBeVisible());
 
-    const searchInput = screen.getByTestId('command-input');
+    // const searchInput = screen.getByTestId('command-input'); // Old way
+    const searchInput = screen.getByPlaceholderText('Search voice...'); // New way, finding our custom input
+    
     fireEvent.change(searchInput, { target: { value: 'Ali' } });
-
     expect(searchInput).toHaveValue('Ali');
+
+    // Check that only 'Alice' is visible
+    const items = screen.getAllByTestId('command-item');
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent('Alice');
+    expect(screen.queryByText('Bob')).not.toBeInTheDocument();
+    expect(screen.queryByText('Charlie')).not.toBeInTheDocument();
+
+    // Clear the search
+    fireEvent.change(searchInput, { target: { value: '' } });
+    expect(searchInput).toHaveValue('');
+    const allItems = screen.getAllByTestId('command-item');
+    expect(allItems).toHaveLength(mockVoices.length); // Should show all voices again
   });
 
   it('shows loading state initially (simulated by delayed promise)', async () => {

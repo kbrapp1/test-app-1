@@ -56,6 +56,7 @@ export default function TextToSpeechPage() {
       setFormInitialValues({
         inputText: item.inputText,
         voiceId: item.voiceId,
+        provider: item.prediction_provider || undefined,
         key: Date.now(),
         outputUrl: item.outputUrl,
         dbId: item.id,
@@ -137,6 +138,8 @@ export default function TextToSpeechPage() {
         </Button>
       </div>
       <TtsInterface
+        key={formInitialValues?.key ?? 'default'}
+        remountKey={formInitialValues?.key ?? 'default'}
         formInitialValues={formInitialValues}
         onGenerationComplete={handleTtsGenerationComplete}
       />

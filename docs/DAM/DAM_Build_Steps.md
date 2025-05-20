@@ -218,27 +218,27 @@ This document outlines the step-by-step process for implementing the Digital Ass
     *   [x] Test moving into and out of folders.
 
 **Step 2.5: Implement Tagging UI & Actions**
-*   [ ] **UI (Tag Input):** In an asset detail view/modal (or directly on `AssetThumbnail` via popover), add an interface for adding/removing tags. Could use a combobox/multi-select input (`shadcn/ui` Command or Select) that allows selecting existing tags or creating new ones.
-*   [ ] **Server Action (Add/Create Tag):** Create `async function addTagToAsset(assetId: string, tagName: string)` in `lib/actions/dam.ts`.
-    *   [ ] Get `user_id`.
-    *   [ ] Check if tag `name` exists for the user in `tags`. If not, create it. Get the `tag_id`.
-    *   [ ] Insert a row into `asset_tags` linking `asset_id` and `tag_id`. Handle potential conflicts (tag already added).
-    *   [ ] Handle errors.
-    *   [ ] `revalidatePath` (potentially for the specific asset or gallery).
-    *   [ ] Return success/error.
-*   [ ] **Server Action (Remove Tag):** Create `async function removeTagFromAsset(assetId: string, tagId: string)` in `lib/actions/dam.ts`.
-    *   [ ] Get `user_id` for auth.
-    *   [ ] Delete row from `asset_tags` matching `asset_id` and `tag_id`.
-    *   [ ] Handle errors.
-    *   [ ] `revalidatePath`.
-    *   [ ] Return success/error.
-*   [ ] **Client Logic:** Wire up the tag input UI to call the actions, display existing tags for the asset, handle pending states, and show feedback.
-*   [ ] **Testing:**
-    *   [ ] Open the tagging UI for an asset.
-    *   [ ] Add a new tag (e.g., "important"). Verify it appears on the asset. Verify `tags` and `asset_tags` tables are updated in Supabase.
-    *   [ ] Add the same tag again. Verify it handles the duplicate gracefully.
-    *   [ ] Add an existing tag (if another asset has one). Verify `asset_tags` is updated.
-    *   [ ] Remove a tag. Verify it disappears from the UI and the `asset_tags` table.
+*   [x] **UI (Tag Input):** In an asset detail view/modal (or directly on `AssetThumbnail` via popover), add an interface for adding/removing tags. Could use a combobox/multi-select input (`shadcn/ui` Command or Select) that allows selecting existing tags or creating new ones.
+*   [x] **Server Action (Add/Create Tag):** Create `async function addTagToAsset(assetId: string, tagName: string)` in `lib/actions/dam.ts`.
+    *   [x] Get `user_id`.
+    *   [x] Check if tag `name` exists for the user in `tags`. If not, create it. Get the `tag_id`.
+    *   [x] Insert a row into `asset_tags` linking `asset_id` and `tag_id`. Handle potential conflicts (tag already added).
+    *   [x] Handle errors.
+    *   [x] `revalidatePath` (potentially for the specific asset or gallery).
+    *   [x] Return success/error.
+*   [x] **Server Action (Remove Tag):** Create `async function removeTagFromAsset(assetId: string, tagId: string)` in `lib/actions/dam.ts`.
+    *   [x] Get `user_id` for auth.
+    *   [x] Delete row from `asset_tags` matching `asset_id` and `tag_id`.
+    *   [x] Handle errors.
+    *   [x] `revalidatePath`.
+    *   [x] Return success/error.
+*   [x] **Client Logic:** Wire up the tag input UI to call the actions, display existing tags for the asset, handle pending states, and show feedback.
+*   [x] **Testing:**
+    *   [x] Open the tagging UI for an asset.
+    *   [x] Add a new tag (e.g., "important"). Verify it appears on the asset. Verify `tags` and `asset_tags` tables are updated in Supabase.
+    *   [x] Add the same tag again. Verify it handles the duplicate gracefully.
+    *   [x] Add an existing tag (if another asset has one). Verify `asset_tags` is updated.
+    *   [x] Remove a tag. Verify it disappears from the UI and the `asset_tags` table.
 
 **Step 2.6: Implement Multi-Select & Bulk Delete**
 *   [ ] **UI (Selection):** Add checkboxes or similar UI to `AssetThumbnail` (and `FolderThumbnail`?) to allow selecting multiple items. Could appear on hover or persistently. Maintain selection state in the parent gallery component.
@@ -263,54 +263,54 @@ This document outlines the step-by-step process for implementing the Digital Ass
 ## Phase 3: Enhanced Discovery & Asset Types
 
 **Step 3.1: Implement Search Functionality**
-*   [ ] **UI:** Add a search input field (`shadcn/ui Input` with search icon) to the gallery page (`/app/(protected)/dam/page.tsx`).
-*   [ ] **Data Fetching:** Modify the data fetching logic in `AssetGallery.tsx` (or its source) to accept a search query parameter.
-*   [ ] **Backend Query:** Update the Supabase query to filter assets based on the search term.
-    *   [ ] Search `assets.name` using `ilike '%${searchTerm}%'`.
-    *   [ ] Search associated tags: Join `asset_tags` and `tags`, filter where `tags.name ilike '%${searchTerm}%'`. Combine results (e.g., using `UNION` or separate queries client-side).
-*   [ ] **Client Logic:** Update the search input to trigger a refetch/navigation with the search term (e.g., update URL query parameter `?search=...`, rely on Next.js routing and `revalidatePath` or manage state manually). Add debouncing to the search input.
-*   [ ] **Testing:**
-    *   [ ] Visit `/dam`. Type a partial filename into the search box. Verify gallery filters accordingly.
-    *   [ ] Type a tag name used on some assets. Verify those assets appear.
-    *   [ ] Clear the search box. Verify the full gallery returns.
-    *   [ ] Test searching within a specific folder.
+*   [x] **UI:** Add a search input field (`shadcn/ui Input` with search icon) to the gallery page (`/app/(protected)/dam/page.tsx`).
+*   [x] **Data Fetching:** Modify the data fetching logic in `AssetGallery.tsx` (or its source) to accept a search query parameter.
+*   [x] **Backend Query:** Update the Supabase query to filter assets based on the search term.
+    *   [x] Search `assets.name` using `ilike '%${searchTerm}%'`.
+    *   [x] Search associated tags: Join `asset_tags` and `tags`, filter where `tags.name ilike '%${searchTerm}%'`. Combine results (e.g., using `UNION` or separate queries client-side).
+*   [x] **Client Logic:** Update the search input to trigger a refetch/navigation with the search term (e.g., update URL query parameter `?search=...`, rely on Next.js routing and `revalidatePath` or manage state manually). Add debouncing to the search input.
+*   [x] **Testing:**
+    *   [x] Visit `/dam`. Type a partial filename into the search box. Verify gallery filters accordingly.
+    *   [x] Type a tag name used on some assets. Verify those assets appear.
+    *   [x] Clear the search box. Verify the full gallery returns.
+    *   [x] Test searching within a specific folder.
 
 **Step 3.2: Implement Sorting Functionality**
-*   [ ] **UI:** Add a dropdown (`shadcn/ui Select`) to the gallery page allowing users to choose sort criteria (e.g., "Name (A-Z)", "Name (Z-A)", "Date Uploaded (Newest)", "Date Uploaded (Oldest)", "Size (Largest)", "Size (Smallest)").
-*   [ ] **Data Fetching:** Modify data fetching to accept sort order parameters (column and direction).
-*   [ ] **Backend Query:** Update the Supabase query to use `.order(column, { ascending: boolean })` based on the selected criteria.
-*   [ ] **Client Logic:** Update the sort dropdown to trigger refetch/navigation with the sort parameters (e.g., URL query params `?sortBy=name&sortDir=asc`).
-*   [ ] **Testing:**
-    *   [ ] Visit `/dam`. Select different sorting options.
-    *   [ ] Verify the order of assets in the gallery updates correctly based on name, date, and size.
-    *   [ ] Test sorting within folders and with search terms applied.
+*   [x] **UI:** Add a dropdown (`shadcn/ui Select`) to the gallery page allowing users to choose sort criteria (e.g., "Name (A-Z)", "Name (Z-A)", "Date Uploaded (Newest)", "Date Uploaded (Oldest)", "Size (Largest)", "Size (Smallest)").
+*   [x] **Data Fetching:** Modify data fetching to accept sort order parameters (column and direction).
+*   [x] **Backend Query:** Update the Supabase query to use `.order(column, { ascending: boolean })` based on the selected criteria.
+*   [x] **Client Logic:** Update the sort dropdown to trigger refetch/navigation with the sort parameters (e.g., URL query params `?sortBy=name&sortDir=asc`).
+*   [x] **Testing:**
+    *   [x] Visit `/dam`. Select different sorting options.
+    *   [x] Verify the order of assets in the gallery updates correctly based on name, date, and size.
+    *   [x] Test sorting within folders and with search terms applied.
 
 **Step 3.3: Implement Filtering Functionality (By Tag)**
-*   [ ] **UI:** Add a filter mechanism, perhaps another dropdown or a multi-select combobox, allowing users to select one or more tags to filter by. Display available tags dynamically.
-*   [ ] **Data Fetching:** Modify data fetching to accept selected tag IDs.
-*   [ ] **Backend Query:** Update Supabase query to filter assets based on selected tags. Requires joining `asset_tags` and filtering where `asset_tags.tag_id` is in the list of selected tag IDs. Handle logic for multiple tags (AND vs OR).
-*   [ ] **Client Logic:** Update the filter UI to trigger refetch/navigation with filter parameters (e.g., URL query params `?tags=id1,id2`).
-*   [ ] **Testing:**
-    *   [ ] Visit `/dam`. Select a tag from the filter UI. Verify only assets with that tag are shown.
-    *   [ ] Select multiple tags (if supported). Verify results match AND/OR logic.
-    *   [ ] Combine filtering with sorting and searching. Clear filters.
+*   [x] **UI:** Add a filter mechanism, perhaps another dropdown or a multi-select combobox, allowing users to select one or more tags to filter by. Display available tags dynamically.
+*   [x] **Data Fetching:** Modify data fetching to accept selected tag IDs.
+*   [x] **Backend Query:** Update Supabase query to filter assets based on selected tags. Requires joining `asset_tags` and filtering where `asset_tags.tag_id` is in the list of selected tag IDs. Handle logic for multiple tags (AND vs OR).
+*   [x] **Client Logic:** Update the filter UI to trigger refetch/navigation with filter parameters (e.g., URL query params `?tags=id1,id2`).
+*   [x] **Testing:**
+    *   [x] Visit `/dam`. Select a tag from the filter UI. Verify only assets with that tag are shown.
+    *   [x] Select multiple tags (if supported). Verify results match AND/OR logic.
+    *   [x] Combine filtering with sorting and searching. Clear filters.
 
 **Step 3.4: Implement List View Toggle**
-*   [ ] **UI (Toggle):** Add UI controls (e.g., buttons with grid and list icons) to switch between Gallery View and List View.
-*   [ ] **UI (List View Component):** Create `components/dam/AssetListView.tsx` to render assets and folders in a table or list format, showing columns like Name, Type, Date Modified, Size.
-*   [ ] **Client Logic:** Manage the view state (list or grid). Conditionally render either `AssetGallery.tsx` (or the relevant grid component) or `AssetListView.tsx`.
-*   [ ] **Integration:** Ensure sorting, filtering, selection, and navigation functionalities work correctly within the List View.
-*   [ ] **Testing:**
-    *   [ ] Visit `/dam`. Verify the default view (Grid/Gallery).
-    *   [ ] Click the List View toggle. Verify the view changes to a list/table format showing relevant columns.
-    *   [ ] Test sorting, filtering, folder navigation, and selection in List View.
-    *   [ ] Toggle back to Grid View. Verify state (like current folder, sort order) is preserved if appropriate.
+*   [x] **UI (Toggle):** Add UI controls (e.g., buttons with grid and list icons) to switch between Gallery View and List View.
+*   [x] **UI (List View Component):** Create `components/dam/AssetListView.tsx` to render assets and folders in a table or list format, showing columns like Name, Type, Date Modified, Size.
+*   [x] **Client Logic:** Manage the view state (list or grid). Conditionally render either `AssetGallery.tsx` (or the relevant grid component) or `AssetListView.tsx`.
+*   [x] **Integration:** Ensure sorting, filtering, selection, and navigation functionalities work correctly within the List View.
+*   [x] **Testing:**
+    *   [x] Visit `/dam`. Verify the default view (Grid/Gallery).
+    *   [x] Click the List View toggle. Verify the view changes to a list/table format showing relevant columns.
+    *   [x] Test sorting, filtering, folder navigation, and selection in List View.
+    *   [x] Toggle back to Grid View. Verify state (like current folder, sort order) is preserved if appropriate.
 
 **Step 3.5: Extend Upload for Video & Documents**
 *   [x] **Client Validation:** Update `AssetUploader.tsx`'s client-side MIME type validation to include common file types:
     *   [x] Audio types: `audio/mpeg` (.mp3), `audio/wav` (.wav), `audio/ogg` (.ogg)
     *   [x] Document types: `application/pdf` (.pdf), `text/plain` (.txt), `text/markdown` (.md), etc.
-    *   [x] Video types: `video/mp4`, `video/webm`
+    *   [ ] Video types: `video/mp4`, `video/webm`
 *   [x] **Server Action:** Remove server-side filters that skipped non-image files in the `uploadAssets` function
 *   [x] **Testing:**
     *   [x] Go to `/dam/upload`. Attempt to select/drop MP3, WAV, PDF files. Verify they are accepted by the UI validator.

@@ -74,7 +74,8 @@ describe('FolderSidebar Component', () => {
       organization_id: 'org-123',
       created_at: '2023-01-01',
       parent_folder_id: null,
-      type: 'folder'
+      type: 'folder',
+      ownerName: '',
     },
     {
       id: 'folder-2',
@@ -83,7 +84,8 @@ describe('FolderSidebar Component', () => {
       organization_id: 'org-123',
       created_at: '2023-01-02',
       parent_folder_id: null,
-      type: 'folder'
+      type: 'folder',
+      ownerName: '',
     },
   ];
 

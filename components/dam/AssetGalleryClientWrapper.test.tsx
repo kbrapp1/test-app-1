@@ -9,9 +9,10 @@ import type { CombinedItem, Asset, Folder } from '@/types/dam';
 
 // Mock child components
 vi.mock('./AssetGrid', () => ({
-  AssetGrid: vi.fn(({ combinedItems, onDataChange }) => (
+  AssetGrid: vi.fn(({ assets, onDataChange, optimisticallyHiddenItemId }) => (
     <div data-testid="mock-asset-grid">
-      <span>{combinedItems.length} items</span>
+      <span>{assets.length} items</span>
+      {optimisticallyHiddenItemId && <span data-testid="optimistic-hide">{optimisticallyHiddenItemId}</span>}
       <button onClick={onDataChange} data-testid="trigger-data-change">Refresh</button>
     </div>
   )),
@@ -53,21 +54,18 @@ describe('AssetGalleryClientWrapper', () => {
     render(
       <AssetGalleryClientWrapper
         initialCombinedItems={mockCombinedItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
     expect(screen.getByTestId('mock-asset-grid')).toBeInTheDocument();
-    expect(screen.getByText(`${mockCombinedItems.length} items`)).toBeInTheDocument();
+    const expectedAssetCount = mockCombinedItems.filter(item => item.type === 'asset').length;
+    expect(screen.getByText(`${expectedAssetCount} items`)).toBeInTheDocument();
   });
 
   it('renders empty state message if initialCombinedItems is empty', () => {
     render(
       <AssetGalleryClientWrapper
         initialCombinedItems={[]}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
@@ -82,16 +80,13 @@ describe('AssetGalleryClientWrapper', () => {
     render(
       <AssetGalleryClientWrapper
         initialCombinedItems={mockCombinedItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
 
-    // Initial render
-    expect(screen.getByText(`${mockCombinedItems.length} items`)).toBeInTheDocument();
+    const initialAssetCount = mockCombinedItems.filter(item => item.type === 'asset').length;
+    expect(screen.getByText(`${initialAssetCount} items`)).toBeInTheDocument();
 
-    // Simulate AssetGrid calling onDataChange
     const refreshButton = screen.getByTestId('trigger-data-change');
     await act(async () => {
         fireEvent.click(refreshButton);
@@ -99,7 +94,8 @@ describe('AssetGalleryClientWrapper', () => {
     
     await waitFor(() => {
       expect(mockGetAssetsAndFoldersForGallery).toHaveBeenCalledWith('folder123');
-      expect(screen.getByText(`${newCombinedItems.length} items`)).toBeInTheDocument();
+      const updatedAssetCount = newCombinedItems.filter(item => item.type === 'asset').length;
+      expect(screen.getByText(`${updatedAssetCount} items`)).toBeInTheDocument();
     });
   });
 
@@ -108,8 +104,6 @@ describe('AssetGalleryClientWrapper', () => {
     render(
       <AssetGalleryClientWrapper
         initialCombinedItems={mockCombinedItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
@@ -132,8 +126,6 @@ describe('AssetGalleryClientWrapper', () => {
     render(
       <AssetGalleryClientWrapper
         initialCombinedItems={mockCombinedItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
@@ -155,22 +147,20 @@ describe('AssetGalleryClientWrapper', () => {
     const { rerender } = render(
       <AssetGalleryClientWrapper
         initialCombinedItems={mockCombinedItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
-    expect(screen.getByText(`${mockCombinedItems.length} items`)).toBeInTheDocument();
+    const initialAssetCount = mockCombinedItems.filter(item => item.type === 'asset').length;
+    expect(screen.getByText(`${initialAssetCount} items`)).toBeInTheDocument();
 
-    const newInitialItems: CombinedItem[] = [mockAsset1];
+    const newInitialItems: CombinedItem[] = [mockAsset1, mockAsset1];
     rerender(
       <AssetGalleryClientWrapper
         initialCombinedItems={newInitialItems}
-        initialAssets={[]}
-        initialFolders={[]}
         currentFolderId="folder123"
       />
     );
-    expect(screen.getByText(`${newInitialItems.length} items`)).toBeInTheDocument();
+    const updatedAssetCount = newInitialItems.filter(item => item.type === 'asset').length;
+    expect(screen.getByText(`${updatedAssetCount} items`)).toBeInTheDocument();
   });
 }); 

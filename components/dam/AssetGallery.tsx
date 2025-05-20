@@ -52,15 +52,15 @@ export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
     
     // Separate assets and folders from combinedItems if needed by the client wrapper
     // (Currently, the wrapper primarily uses combinedItems, but let's pass them for potential use)
-    const initialAssets = combinedItems.filter(item => item.type === 'asset') as Asset[];
-    const initialFolders = combinedItems.filter(item => item.type === 'folder') as Folder[];
+    // const initialAssets = combinedItems.filter(item => item.type === 'asset') as Asset[];
+    // const initialFolders = combinedItems.filter(item => item.type === 'folder') as Folder[];
 
     // --- Render the Client Component Wrapper, passing initial data --- 
     return (
         <AssetGalleryClientWrapper
             initialCombinedItems={combinedItems}
-            initialAssets={initialAssets} 
-            initialFolders={initialFolders}
+            // initialAssets={initialAssets} // Removed
+            // initialFolders={initialFolders} // Removed
             currentFolderId={currentFolderId} 
         />
     );

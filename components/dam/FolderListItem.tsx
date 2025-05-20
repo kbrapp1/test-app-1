@@ -76,10 +76,10 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
 
   return (
     <>
-      <div 
-        ref={setNodeRef} 
+      <div
+        ref={setNodeRef}
         className={cn(
-          "group relative min-w-[180px] max-w-[240px] flex items-center rounded-lg border border-input bg-background shadow-sm hover:bg-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-colors",
+          "group relative flex-none w-[180px] flex items-center rounded-lg border border-input bg-background shadow-sm hover:bg-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-colors",
           isOver && "bg-blue-100 dark:bg-blue-900/60 ring-2 ring-blue-500 border-transparent"
         )}
       >
@@ -92,7 +92,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
           title={folder.name}
         >
           <FolderIcon className="w-5 h-5 mr-3 shrink-0 text-blue-500" />
-          <span className="truncate text-sm font-medium text-foreground">
+          <span className="truncate text-sm font-medium text-foreground whitespace-nowrap">
             {folder.name}
           </span>
         </Link>

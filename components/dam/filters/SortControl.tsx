@@ -52,7 +52,7 @@ export function SortControl({ currentSortBy, currentSortOrder, onSortChange }: S
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-full sm:w-auto justify-between">
+        <Button variant="outline" className="w-full sm:w-auto justify-between focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary">
           {getButtonLabel()}
           <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
         </Button>

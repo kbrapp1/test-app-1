@@ -61,7 +61,7 @@ export const damTableColumns: DamColumnConfig[] = [
   {
     id: 'actions',
     headerName: '',
-    headerClassName: 'min-w-[20px] max-w-[20px] w-full whitespace-nowrap font-semibold text-right overflow-hidden text-ellipsis text-sm',
-    cellClassName: 'min-w-[20px] max-w-[20px] w-full whitespace-nowrap text-muted-foreground text-right overflow-hidden text-ellipsis text-xs',
+    headerClassName: 'sticky right-0 min-w-[20px] max-w-[20px] w-full whitespace-nowrap font-semibold text-right overflow-hidden text-ellipsis text-sm bg-muted/50 z-10',
+    cellClassName: 'sticky right-0 min-w-[20px] max-w-[20px] w-full whitespace-nowrap text-muted-foreground text-right overflow-hidden text-ellipsis text-xs bg-background z-10',
   },
 ]; 

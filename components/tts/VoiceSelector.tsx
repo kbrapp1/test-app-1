@@ -16,12 +16,13 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { getTtsVoices } from '@/lib/actions/tts';
 import { z } from 'zod';
 import { REPLICATE_MODELS } from '@/lib/config/ttsProviderConfig'; // <-- Import REPLICATE_MODELS
+import { Input } from "@/components/ui/input"; // Import Input for the search field
 
 // Define the structure for a voice object
 interface TtsVoice {
   id: string;
   name: string;
-  gender: 'Female' | 'Male';
+  gender: 'Female' | 'Male' | 'Other';
   accent: 'American' | 'British' | 'Other';
 }
 
@@ -45,13 +46,13 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
   const [voiceLoadingError, setVoiceLoadingError] = useState<string | null>(null);
   const [voicePopoverOpen, setVoicePopoverOpen] = useState(false);
   const prevProviderRef = useRef<string | undefined>(undefined); // Ref to store the previous provider
+  const [voiceSearchTerm, setVoiceSearchTerm] = useState(""); // State for voice search
 
   useEffect(() => {
     async function fetchVoices() {
       setVoiceLoadingError(null);
-      setAvailableVoices([]); // Clear previous voices immediately
-      // If no provider is selected yet, don't fetch, or fetch a default set if desired.
-      // For now, let's only fetch if a provider is selected.
+      setAvailableVoices([]);
+      setVoiceSearchTerm(""); // Reset search term when provider changes
       if (!selectedProvider) {
         setVoiceLoadingError('Please select a TTS provider first to see available voices.');
         return;
@@ -67,8 +68,10 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
         console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}, model: ${modelIdToPass || 'N/A'}`);
         const result = await getTtsVoices(selectedProvider, modelIdToPass);
         if (result.success && result.data) {
-          setAvailableVoices(result.data);
-          if (result.data.length === 0 && !result.error) {
+          // Sort voices alphabetically by name before setting them
+          const sortedVoices = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
+          setAvailableVoices(sortedVoices);
+          if (sortedVoices.length === 0 && !result.error) {
             setVoiceLoadingError(`No voices available for provider: ${selectedProvider}`);
           } else if (result.error) {
             let errorMessage = 'Unknown error';
@@ -104,20 +107,9 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
     fetchVoices();
   }, [selectedProvider]); // Depend on selectedProvider to refetch
 
-  // Effect to clear voiceId when selectedProvider has actually changed 
-  // and a voice was selected for the previous provider.
-  useEffect(() => {
-    if (prevProviderRef.current !== selectedProvider) {
-      if (field.value) { // Only clear if a voice is currently selected
-        console.log(
-          `VoiceSelector: Provider changed from '${prevProviderRef.current}' to '${selectedProvider}'. Clearing selected voice ID ('${field.value}').`
-        );
-        setValue('voiceId', '', { shouldValidate: true });
-      }
-    }
-    // Update the ref to the current provider *after* checking and potentially clearing.
-    prevProviderRef.current = selectedProvider;
-  }, [selectedProvider, field.value, setValue]);
+  const filteredVoices = availableVoices.filter(voice => 
+    voice.name.toLowerCase().includes(voiceSearchTerm.toLowerCase())
+  );
 
   return (
     <Popover open={voicePopoverOpen} onOpenChange={setVoicePopoverOpen}>
@@ -143,18 +135,26 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search voice..." />
+          <div className="p-2">
+            <Input
+              placeholder="Search voice..."
+              value={voiceSearchTerm}
+              onChange={(e) => setVoiceSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
           <CommandList>
             {voiceLoadingError && <CommandEmpty>{voiceLoadingError}</CommandEmpty>}
-            {!voiceLoadingError && availableVoices.length === 0 && <CommandEmpty>Loading voices...</CommandEmpty>}
-            {!voiceLoadingError && availableVoices.length > 0 && (
+            {!voiceLoadingError && filteredVoices.length === 0 && voiceSearchTerm && <CommandEmpty>No voices match "{voiceSearchTerm}".</CommandEmpty>}
+            {!voiceLoadingError && availableVoices.length > 0 && filteredVoices.length === 0 && !voiceSearchTerm && <CommandEmpty>No voices available.</CommandEmpty>}
+            {!voiceLoadingError && availableVoices.length === 0 && !voiceSearchTerm && <CommandEmpty>Loading voices...</CommandEmpty>}
+            {filteredVoices.length > 0 && (
               <CommandGroup>
-                {availableVoices.map((voice) => (
+                {filteredVoices.map((voice) => (
                   <CommandItem
                     value={voice.name}
                     key={voice.id}
                     onSelect={() => {
-                      // Use the passed setValue function
                       setValue("voiceId", voice.id, { shouldValidate: true });
                       setVoicePopoverOpen(false);
                     }}

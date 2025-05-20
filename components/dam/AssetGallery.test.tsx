@@ -16,12 +16,10 @@ vi.mock('@/lib/actions/dam/gallery.actions', () => ({
 // Mock the client wrapper component
 // Note: Adjust mock path if AssetGalleryClientWrapper is not in the same dir
 vi.mock('./AssetGalleryClientWrapper', () => ({ // Updated mock path
-  AssetGalleryClientWrapper: vi.fn(({ initialCombinedItems, initialAssets, initialFolders, currentFolderId }) => (
+  AssetGalleryClientWrapper: vi.fn(({ initialCombinedItems, currentFolderId }) => (
     <div data-testid="asset-gallery-client-wrapper">
       <span data-testid="current-folder-id">{currentFolderId}</span>
       <span data-testid="combined-items-count">{initialCombinedItems.length}</span>
-      <span data-testid="assets-count">{initialAssets.length}</span>
-      <span data-testid="folders-count">{initialFolders.length}</span>
     </div>
   )),
 }));
@@ -39,6 +37,8 @@ const mockAssets: Asset[] = [
     user_id: 'user1',
     organization_id: 'org1',
     created_at: new Date().toISOString(),
+    parentFolderName: '',
+    ownerName: '',
   },
   {
     id: 'asset2',
@@ -52,6 +52,8 @@ const mockAssets: Asset[] = [
     user_id: 'user1',
     organization_id: 'org1',
     created_at: new Date().toISOString(),
+    parentFolderName: '',
+    ownerName: '',
   },
 ];
 
@@ -64,6 +66,7 @@ const mockFolders: Folder[] = [
     user_id: 'user1',
     organization_id: 'org1',
     created_at: new Date().toISOString(),
+    ownerName: '',
   },
 ];
 
@@ -88,11 +91,15 @@ describe('AssetGallery Server Component', () => {
     expect(getAssetsAndFoldersForGallery).toHaveBeenCalledWith(currentFolderId);
     expect(AssetGalleryClientWrapper).toHaveBeenCalledTimes(1);
 
+    // Check that the mock was called with the correct props
+    expect(vi.mocked(AssetGalleryClientWrapper).mock.calls[0][0]).toEqual({
+      initialCombinedItems: mockCombinedItems,
+      currentFolderId: currentFolderId,
+    });
+
     expect(getByTestId('asset-gallery-client-wrapper')).toBeInTheDocument();
     expect(getByTestId('current-folder-id').textContent).toBe(currentFolderId);
     expect(getByTestId('combined-items-count').textContent).toBe(String(mockCombinedItems.length));
-    expect(getByTestId('assets-count').textContent).toBe(String(mockAssets.length)); 
-    expect(getByTestId('folders-count').textContent).toBe(String(mockFolders.length));
   });
 
   it('should display an error message when data fetching fails', async () => {

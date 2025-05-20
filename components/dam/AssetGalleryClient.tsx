@@ -133,25 +133,27 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
                 optimisticallyHiddenItemId={optimisticallyHiddenItemId}
               />
             ) : (
-              <div className='flex flex-col gap-0'>
-                <div className="flex items-center p-2 gap-4 border-b bg-muted/50 rounded-t-md">
-                  {damTableColumns.map((col) => (
-                    <div
-                      key={`header-${col.id}`}
-                      className={col.headerClassName}
-                      style={col.headerStyle}
-                    >
-                      {col.headerName}
-                    </div>
+              <div className="overflow-x-auto w-full">
+                <div className="w-full min-w-max flex flex-col gap-0">
+                  <div className="flex items-center p-2 gap-4 w-full border-b bg-muted/50 rounded-t-md">
+                    {damTableColumns.map((col) => (
+                      <div
+                        key={`header-${col.id}`}
+                        className={col.headerClassName}
+                        style={col.headerStyle}
+                      >
+                        {col.headerName}
+                      </div>
+                    ))}
+                  </div>
+                  {assets.map(asset => (
+                    <AssetListItem 
+                      key={asset.id} 
+                      item={asset}
+                      onDataChange={refreshGalleryData} 
+                    />
                   ))}
                 </div>
-                {assets.map(asset => (
-                  <AssetListItem 
-                    key={asset.id} 
-                    item={asset}
-                    onDataChange={refreshGalleryData} 
-                  />
-                ))}
               </div>
             )}
           </div>

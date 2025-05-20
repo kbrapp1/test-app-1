@@ -53,6 +53,17 @@ export async function getSpeechGenerationResult(
     let outputAudioUrl: string | null = null;
     let providerError: string | null = null;
 
+    if (provider === 'elevenlabs') {
+      // ElevenLabs TTS is synchronous; treat as succeeded immediately
+      return {
+        success: true,
+        status: ttsRecord.status,
+        audioUrl: ttsRecord.outputUrl || null,
+        error: null,
+        ttsPredictionDbId,
+      };
+    }
+    
     if (provider === 'replicate') {
       const replicatePrediction = await getReplicatePrediction(providerPredictionId);
       currentProviderStatus = replicatePrediction.status;

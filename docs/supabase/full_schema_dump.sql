@@ -1030,7 +1030,10 @@ CREATE TABLE IF NOT EXISTS "public"."TtsPrediction" (
     "organization_id" "uuid" NOT NULL,
     "prediction_provider" "text",
     "is_output_url_problematic" boolean DEFAULT false NOT NULL,
-    "output_url_last_error" "text"
+    "output_url_last_error" "text",
+    "output_storage_path" "text",
+    "output_content_type" "text",
+    "output_file_size" integer
 );
 
 
@@ -1934,10 +1937,6 @@ CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."folders
 
 
 CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."notes" FOR EACH ROW EXECUTE FUNCTION "public"."moddatetime"('updated_at');
-
-
-
-CREATE OR REPLACE TRIGGER "set_timestamp_tts_prediction" BEFORE UPDATE ON "public"."TtsPrediction" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
 
 
 
