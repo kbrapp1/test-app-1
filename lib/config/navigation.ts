@@ -27,6 +27,13 @@ import {
     LightbulbIcon,
     PaletteIcon,
     CodeIcon,
+    FlameIcon,
+    CogIcon,
+    BriefcaseIcon,
+    FilterIcon,
+    DollarSignIcon,
+    UsersRoundIcon,
+    MessageCircleIcon,
 } from "lucide-react";
 
 // Define the types for navigation items
@@ -55,7 +62,7 @@ export const navMainItems: NavItem[] = [
         icon: LayoutDashboardIcon,
     },
     {
-        title: "Documents",
+        title: "Digital Asset Management",
         url: "#",
         icon: FolderIcon,
         collapsible: true,
@@ -71,22 +78,33 @@ export const navMainItems: NavItem[] = [
         collapsible: true,
         items: [
             { title: "Team", url: "/team", icon: UsersIcon },
-            { title: "Playbooks", url: "/playbooks", icon: BookTextIcon },
             { title: "Notifications", url: "/notifications", icon: BellIcon },
             { title: "Activity Feed", url: "/activity-feed", icon: ActivityIcon },
             { title: "Approvals", url: "/approvals", icon: CheckCircleIcon },
         ],
     },
     {
-        title: "Marketing",
+        title: "Playbooks",
         url: "#",
-        icon: MegaphoneIcon,
+        icon: BookTextIcon,
         collapsible: true,
         items: [
-            { title: "Marketing Automation", url: "/marketing-automation", icon: BarChartIcon },
-            { title: "Campaign Management", url: "/campaign-management", icon: ListIcon },
             { title: "Templates Library", url: "/templates", icon: FileIcon },
+            { title: "Jobs", url: "/playbooks/jobs", icon: BriefcaseIcon },
+        ]
+    },
+    {
+        title: "Marketing Automation",
+        url: "#",
+        icon: CogIcon,
+        collapsible: true,
+        items: [
+            { title: "Campaign Management", url: "/campaign-management", icon: ListIcon },
             { title: "Content Calendar", url: "/content-calendar", icon: CalendarIcon },
+            { title: "Contacts", url: "/marketing-automation/contacts", icon: UsersIcon },
+            { title: "Leads", url: "/marketing-automation/leads", icon: FilterIcon },
+            { title: "Opportunities", url: "/marketing-automation/opportunities", icon: DollarSignIcon },
+            { title: "Customers", url: "/marketing-automation/customers", icon: UsersRoundIcon },
         ],
     },
     {
@@ -100,12 +118,13 @@ export const navMainItems: NavItem[] = [
         ],
     },
     {
-        title: "Assets",
+        title: "Ignition",
         url: "#",
-        icon: CameraIcon,
+        icon: FlameIcon,
         collapsible: true,
         items: [
             { title: "Digital Storefront", url: "/digital-storefront", icon: StoreIcon },
+            { title: "Assets", url: "/digital-storefront/assets-overview", icon: CameraIcon },
             { title: "Brand Guidelines", url: "/brand-guidelines", icon: PaletteIcon },
         ],
     },
@@ -126,6 +145,7 @@ export const navMainItems: NavItem[] = [
         collapsible: true,
         items: [
             { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon },
+            { title: "Chatbot", url: "/ai-playground/chatbot", icon: MessageCircleIcon },
         ],
     },
 ];

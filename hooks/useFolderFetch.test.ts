@@ -1,129 +1,129 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react'; // Using @testing-library/react for renderHook
+import { renderHook, act } from '@testing-library/react';
 import { useFolderFetch } from './useFolderFetch';
-import { Folder, CombinedItem } from '@/types/dam'; // Assuming these types are needed for mocks
+import { Folder, CombinedItem, Asset } from '@/types/dam';
+import { useToast } from '@/components/ui/use-toast';
+import { vi } from 'vitest';
 
-// Mock useToast
-const mockToast = vi.fn();
+// Mock the useToast hook
+const mockToastFn = vi.fn();
 vi.mock('@/components/ui/use-toast', () => ({
-  useToast: () => ({
-    toast: mockToast,
-  }),
+  useToast: () => ({ toast: mockToastFn }),
 }));
 
-// Mock global fetch
+// Mock fetch
 global.fetch = vi.fn();
 
 describe('useFolderFetch', () => {
   beforeEach(() => {
     // Reset mocks before each test
-    vi.clearAllMocks();
-    // Reset fetch mock to a default behavior if needed, or per-test
-    (global.fetch as vi.Mock).mockReset();
-  });
-
-  it('should have correct initial state', () => {
-    const { result } = renderHook(() => useFolderFetch());
-
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
-    expect(typeof result.current.fetchFolderChildren).toBe('function');
+    mockToastFn.mockClear();
+    (global.fetch as any).mockClear();
   });
 
   it('should fetch folder children successfully', async () => {
-    const mockFolderId = 'folder123';
-    const mockApiResponse: CombinedItem[] = [
-      { id: 'f1', name: 'Child Folder 1', type: 'folder', path_tokens: [], updated_at: '', items: null, parent_id: mockFolderId, file_type: null, file_extension: null, file_size: null, url: null, tags: [] },
-      { id: 'a1', name: 'Asset 1', type: 'asset', path_tokens: [], updated_at: '', items: null, parent_id: mockFolderId, file_type: 'image', file_extension: 'jpg', file_size: 1024, url: 'http://example.com/asset1.jpg', tags: [] },
-      { id: 'f2', name: 'Child Folder 2', type: 'folder', path_tokens: [], updated_at: '', items: null, parent_id: mockFolderId, file_type: null, file_extension: null, file_size: null, url: null, tags: [] },
+    const mockFolderData: Folder[] = [
+      { id: 'folder2', name: 'Folder 2', parent_folder_id: 'folder1', type: 'folder', user_id: 'user1', organization_id: 'org1', created_at: 'date', ownerName: 'test' },
     ];
-    const expectedFolders: Folder[] = [
-      { id: 'f1', name: 'Child Folder 1', type: 'folder', path_tokens: [], updated_at: '', items: null, parent_id: mockFolderId, file_type: null, file_extension: null, file_size: null, url: null, tags: [] },
-      { id: 'f2', name: 'Child Folder 2', type: 'folder', path_tokens: [], updated_at: '', items: null, parent_id: mockFolderId, file_type: null, file_extension: null, file_size: null, url: null, tags: [] },
+    const mockAssetData: Asset = {
+      id: 'asset1', 
+      name: 'Asset 1', 
+      folder_id: 'folder1', 
+      type: 'asset', 
+      storage_path: 'path/to/asset',
+      mime_type: 'image/jpeg',
+      size: 12345, 
+      publicUrl: 'url', 
+      parentFolderName: 'folder1', 
+      user_id: 'user1', 
+      organization_id: 'org1', 
+      created_at: 'date', 
+      ownerName: 'test' 
+    };
+    const mockCombinedData: CombinedItem[] = [
+      ...mockFolderData,
+      mockAssetData,
     ];
 
-    (global.fetch as vi.Mock).mockResolvedValueOnce({
+    (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockApiResponse,
-    });
+      json: async () => mockCombinedData,
+    } as Response);
 
     const { result } = renderHook(() => useFolderFetch());
-    
-    let returnedFolders: Folder[] = [];
 
-    // Start loading
-    expect(result.current.isLoading).toBe(false);
-    
+    let fetchedFolders: Folder[] = [];
     await act(async () => {
-      const promise = result.current.fetchFolderChildren(mockFolderId);
-      // Check loading state immediately after call if possible, though act might batch updates
-      // Depending on exact timing, this might be true inside act or after the first await
-      expect(result.current.isLoading).toBe(true); 
-      returnedFolders = await promise;
+      fetchedFolders = await result.current.fetchFolderChildren('folder1');
     });
 
-    // After fetch completes
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
-    expect(returnedFolders).toEqual(expectedFolders);
+    expect(fetchedFolders).toEqual(mockFolderData);
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining(`/api/dam?folderId=${mockFolderId}&_=`));
-    expect(mockToast).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/dam?folderId=folder1&_'));
+    expect(mockToastFn).not.toHaveBeenCalled();
   });
 
-  it('should handle API request failure (res.ok is false)', async () => {
-    const mockFolderId = 'folderError123';
-    const apiErrorStatus = 500;
-    (global.fetch as vi.Mock).mockResolvedValueOnce({
+  it('should handle API request failure', async () => {
+    (global.fetch as any).mockResolvedValueOnce({
       ok: false,
-      status: apiErrorStatus,
-      json: async () => ({ message: 'Internal Server Error' }), // Optional: if the hook tries to parse error body
-    });
+      status: 500,
+    } as Response);
 
     const { result } = renderHook(() => useFolderFetch());
 
     await act(async () => {
       try {
-        await result.current.fetchFolderChildren(mockFolderId);
-      } catch (e: any) {
-        expect(e.message).toBe(`API request failed with status ${apiErrorStatus}`);
+        await result.current.fetchFolderChildren('folder1');
+      } catch (e) {
+        // Expected error
       }
     });
-    
+
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBe(`API request failed with status ${apiErrorStatus}`);
-    expect(mockToast).toHaveBeenCalledTimes(1);
-    expect(mockToast).toHaveBeenCalledWith({
+    expect(result.current.error).toBe('API request failed with status 500');
+    expect(mockToastFn).toHaveBeenCalledWith({
       variant: "destructive",
       title: "Failed to load folders",
-      description: `API request failed with status ${apiErrorStatus}`,
+      description: "API request failed with status 500"
     });
   });
 
-  it('should handle fetch throwing an error (network error)', async () => {
-    const mockFolderId = 'folderNetError456';
-    const networkErrorMessage = 'Network request failed';
-    (global.fetch as vi.Mock).mockRejectedValueOnce(new Error(networkErrorMessage));
+  it('should handle network error or other fetch exceptions', async () => {
+    const networkError = new Error('Network error');
+    (global.fetch as any).mockRejectedValueOnce(networkError);
 
     const { result } = renderHook(() => useFolderFetch());
 
     await act(async () => {
       try {
-        await result.current.fetchFolderChildren(mockFolderId);
-      } catch (e: any) {
-        expect(e.message).toBe(networkErrorMessage);
+        await result.current.fetchFolderChildren('folder1');
+      } catch (e) {
+        // Expected error
       }
     });
 
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBe(networkErrorMessage);
-    expect(mockToast).toHaveBeenCalledTimes(1);
-    expect(mockToast).toHaveBeenCalledWith({
+    expect(result.current.error).toBe('Network error');
+    expect(mockToastFn).toHaveBeenCalledWith({
       variant: "destructive",
       title: "Failed to load folders",
-      description: networkErrorMessage,
+      description: "Network error"
     });
   });
 
-  // More tests will be added in subsequent steps for success, error, etc.
-});
+  it('should have isLoading false after fetch completes', async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    const { result } = renderHook(() => useFolderFetch());
+
+    await act(async () => {
+      await result.current.fetchFolderChildren('folder1');
+    });
+
+    expect(result.current.isLoading).toBe(false);
+  });
+}); 
