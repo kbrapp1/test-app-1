@@ -4,66 +4,46 @@ This document outlines the planned steps to implement the ElevenLabs Voice Explo
 
 **References:**
 *   Main TTS Build Steps: [tts-build-steps.md](mdc:docs/text-to-speech/tts-build-steps.md)
-*   UX Concept: Dedicated sub-page under "AI Playground" for voice discovery.
+*   UX Concept: Slide-out panel (similar to TTS History) for voice discovery, triggered from the TTS input form. A dedicated sub-page is an alternative if data complexity is very high.
 
 ## Phase 1: Backend & Data Foundation
 
 **Step 1: Investigate ElevenLabs `/v2/voices` API**
-*   [ ] **Research:** Thoroughly review ElevenLabs API documentation for the `/v2/voices` endpoint (or latest equivalent).
-    *   [ ] Identify request parameters for pagination (e.g., `page_size`, `next_page_token`).
-    *   [ ] Identify request parameters for searching/filtering by name, labels (gender, accent, age, style, description keywords, etc.).
-    *   [ ] Confirm the structure of the response, especially the voice object, `labels` field, and `preview_url`.
-*   [ ] **Decision:** Determine if `/v2/voices` offers sufficient server-side filtering. If not, extensive client-side filtering or DB caching will be more critical.
+*   [x] **Research:** Thoroughly review ElevenLabs API documentation for the `/v2/voices` endpoint.
+    *   [x] Identified request parameters for pagination (`page_size`, `next_page_token`).
+    *   [x] Identified request parameters for searching (`search` string for name, description, labels, category) and filtering (`category`, `voice_type`, etc.).
+    *   [x] Confirmed the structure of the response (voice object, `labels`, `description`, `preview_url`, pagination fields).
+*   [x] **Decision:** `/v2/voices` offers sufficient server-side search and basic filtering. Direct API calls will be used initially, deferring custom DB caching.
 
 **Step 2: Database Schema for Cached Voices (If Necessary)**
-*   [ ] **Decision:** Based on Step 1, decide if caching voices in our DB is necessary/beneficial. Caching is recommended if:
-    *   `/v2/voices` doesn't support robust server-side filtering by various labels.
-    *   We want to reduce API calls to ElevenLabs for browsing.
-    *   We want to augment voice data with our own tags or metadata.
-*   [ ] If caching:
-    *   [ ] Define schema for a new table (e.g., `elevenlabs_cached_voices`):
-        *   `voice_id: TEXT PRIMARY KEY` (from ElevenLabs)
-        *   `name: TEXT`
-        *   `provider: TEXT` (default 'elevenlabs')
-        *   `api_version: TEXT` (e.g., 'v1', 'v2')
-        *   `raw_labels: JSONB` (to store the full `labels` object from API)
-        *   `gender: TEXT NULLABLE` (parsed from labels)
-        *   `accent: TEXT NULLABLE` (parsed from labels)
-        *   `age_group: TEXT NULLABLE` (parsed from labels, e.g., 'young', 'middle_aged', 'old')
-        *   `description_tags: TEXT[] NULLABLE` (parsed from labels or name, e.g., ['calm', 'energetic'])
-        *   `use_cases: TEXT[] NULLABLE` (parsed from labels)
-        *   `preview_url: TEXT NULLABLE`
-        *   `is_available: BOOLEAN DEFAULT true`
-        *   `last_fetched_at: TIMESTAMPTZ`
-        *   `created_at: TIMESTAMPTZ DEFAULT now()`
-        *   `updated_at: TIMESTAMPTZ DEFAULT now()`
-    *   [ ] Create Supabase migration for the new table.
-    *   [ ] Regenerate Supabase types.
+*   [ ] **Decision:** Deferred. Will rely on direct `/v2/voices` API calls with its search/filter capabilities first. Revisit if performance or more advanced/offline filtering becomes critical.
+*   [ ] ~~If caching: ...~~ (All sub-items under this are now deferred)
 
 **Step 3: Backend Service/Actions for Voices**
-*   [ ] **If Caching:**
-    *   [ ] Create a new service `lib/services/elevenlabsVoiceCacheService.ts`.
-    *   [ ] Implement `syncElevenLabsVoices` function:
-        *   [ ] Fetches all voices from ElevenLabs `/v2/voices` (handling pagination).
-        *   [ ] Parses relevant data (name, ID, labels, preview_url).
-        *   [ ] Upserts data into `elevenlabs_cached_voices` table.
-        *   [ ] Marks voices not found in API response as `is_available = false` in our DB.
-    *   [ ] Create a Supabase Edge Function or a cron job to call `syncElevenLabsVoices` periodically (e.g., daily).
-    *   [ ] Implement `searchCachedElevenLabsVoices` Server Action:
-        *   [ ] Accepts search terms, filter parameters (gender, accent, tags, etc.), sort options, pagination.
-        *   [ ] Constructs and executes a SQL query against `elevenlabs_cached_voices`.
-        *   [ ] Returns paginated list of voices.
-*   [ ] **If NOT Caching (direct API calls with `/v2/voices` filtering):**
-    *   [ ] Enhance `lib/services/elevenlabsService.ts`.
-    *   [ ] Modify/Create `listV2Voices` function:
-        *   [ ] Accepts search/filter parameters.
-        *   [ ] Calls ElevenLabs `/v2/voices` endpoint with these parameters.
-        *   [ ] Handles pagination from the API.
-        *   [ ] Maps response to a consistent `TtsVoice` (or extended) interface.
-    *   [ ] Create `searchLiveElevenLabsVoices` Server Action that wraps `listV2Voices`.
-*   [ ] *Testing:* Unit tests for new service functions and server actions (mocking API calls, DB interactions).
+*   [ ] **Update `TtsVoice` type:** In `types/tts.ts`, extend the `TtsVoice` interface (or create a new `DetailedTtsVoice` extending it) to include:
+    *   `labels?: Record<string, string | undefined>` (to store the full `labels` object from API)
+    *   `description?: string | null` (the main voice description)
+    *   `category?: string | null`
+    *   `previewUrl?: string | null`
+    *   *(Consider other relevant fields from the v2 response if needed for display/filtering)*
+*   [ ] **Enhance `lib/services/elevenlabsService.ts` (or create `elevenlabsV2Service.ts`):**
+    *   [ ] Implement `searchOrListV2Voices` function:
+        *   [ ] Accepts parameters: `searchTerm?: string`, `filters?: { category?: string, voice_type?: string, ... }`, `sort?: { by: 'name' | 'created_at_unix', direction: 'asc' | 'desc' }`, `pagination?: { page_size?: number, next_page_token?: string }`.
+        *   [ ] Constructs the query string for `GET https://api.elevenlabs.io/v2/voices` based on provided parameters.
+        *   [ ] Handles API authentication (`xi-api-key`).
+        *   [ ] Fetches data from the API.
+        *   [ ] Parses the response, including the list of voices, `has_more`, `total_count`, and `next_page_token`.
+        *   [ ] Maps the API voice objects to our extended `TtsVoice` (or `DetailedTtsVoice`) interface.
+        *   [ ] Returns `{ voices: DetailedTtsVoice[], hasMore: boolean, totalCount: number, nextPageToken?: string, error?: string }`.
+*   [ ] **Create Server Action:** In `lib/actions/tts.ts` (or a new `elevenlabsActions.ts`):
+    *   [ ] Implement `getElevenLabsExploreVoices` Server Action:
+        *   [ ] Accepts search, filter, sort, and pagination parameters from the client.
+        *   [ ] Performs basic validation/sanitization of parameters.
+        *   [ ] Calls the `searchOrListV2Voices` service function.
+        *   [ ] Returns the result to the client, handling potential errors.
+*   [ ] *Testing:* Unit tests for the new service function and server action (mocking API calls, validating parameter construction and response mapping).
 
-**(Review Point 1: Backend strategy for fetching/storing/searching ElevenLabs voices decided and implemented.)**
+**(Review Point 1: Backend strategy for fetching/searching ElevenLabs voices via `/v2/voices` API decided and core backend components outlined.)**
 
 ## Phase 2: Frontend - Voice Explorer Page & UI
 
