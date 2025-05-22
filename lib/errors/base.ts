@@ -100,4 +100,17 @@ export class ExternalServiceError extends AppError {
   ) {
     super(message, code, 502, context);
   }
+}
+
+/**
+ * Error for conflicts with existing resources (e.g. duplicate entry)
+ */
+export class ConflictError extends AppError {
+  constructor(
+    message: string,
+    code: string = 'CONFLICT_ERROR',
+    context?: Record<string, unknown>
+  ) {
+    super(message, code, 409, context);
+  }
 } 

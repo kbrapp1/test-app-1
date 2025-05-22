@@ -6,7 +6,7 @@ import { saveTtsAudioToDam } from './saveTtsAudioToDamUsecase';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
-import { createAssetRecordInDb } from '@/lib/repositories/asset.db.repo';
+import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import type { Database } from '@/types/supabase'; // Import Database type
 
 type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
@@ -24,9 +24,16 @@ vi.mock('@/lib/services/ttsService', () => ({
   downloadAndUploadAudio: vi.fn(),
 }));
 
-vi.mock('@/lib/repositories/asset.db.repo', () => ({
-  createAssetRecordInDb: vi.fn(),
-}));
+vi.mock('@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository', () => {
+  return {
+    SupabaseAssetRepository: vi.fn().mockImplementation(() => ({
+      save: vi.fn().mockImplementation(async (asset) => ({ 
+        ...asset, 
+        id: mockGeneratedAssetId
+      }))
+    }))
+  };
+});
 
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal();
@@ -76,6 +83,8 @@ describe('saveTtsAudioToDamUsecase', () => {
     blobSize: 12345,
   };
 
+  let mockAssetRepositoryInstance: any;
+
   beforeEach(async () => {
     vi.clearAllMocks();
     mockRandomUUIDSpy.mockClear();
@@ -87,7 +96,12 @@ describe('saveTtsAudioToDamUsecase', () => {
     });
     (getActiveOrganizationId as any).mockResolvedValue(testOrgId);
     (downloadAndUploadAudio as any).mockResolvedValue(mockDownloadUploadResponse);
-    (createAssetRecordInDb as any).mockResolvedValue({ data: { id: mockGeneratedAssetId }, error: null }); 
+    
+    // Set up the repository mock
+    mockAssetRepositoryInstance = {
+      save: vi.fn().mockResolvedValue({ id: mockGeneratedAssetId })
+    };
+    (SupabaseAssetRepository as any).mockImplementation(() => mockAssetRepositoryInstance);
     
     (mockSupabaseClient.single as any).mockResolvedValue({ data: mockReplicatePrediction, error: null });
   });
@@ -106,7 +120,8 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledTimes(1);
     expect(downloadAndUploadAudio).toHaveBeenCalledWith(testAudioUrl, testOrgId, testUserId);
     
-    expect(createAssetRecordInDb).toHaveBeenCalledWith({
+    expect(SupabaseAssetRepository).toHaveBeenCalledWith(mockSupabaseClient);
+    expect(mockAssetRepositoryInstance.save).toHaveBeenCalledWith({
       id: mockGeneratedAssetId,
       name: testDesiredAssetName,
       storagePath: mockDownloadUploadResponse.storagePath,
@@ -115,6 +130,7 @@ describe('saveTtsAudioToDamUsecase', () => {
       userId: testUserId,
       organizationId: testOrgId,
       folderId: null,
+      createdAt: expect.any(Date)
     });
 
     expect(result.success).toBe(true);
@@ -138,7 +154,8 @@ describe('saveTtsAudioToDamUsecase', () => {
 
     expect(downloadAndUploadAudio).not.toHaveBeenCalled(); 
     
-    expect(createAssetRecordInDb).toHaveBeenCalledWith({
+    expect(SupabaseAssetRepository).toHaveBeenCalledWith(mockSupabaseClient);
+    expect(mockAssetRepositoryInstance.save).toHaveBeenCalledWith({
       id: mockGeneratedAssetId,
       name: testDesiredAssetName,
       storagePath: mockElevenlabsPrediction.output_storage_path,
@@ -147,6 +164,7 @@ describe('saveTtsAudioToDamUsecase', () => {
       userId: testUserId,
       organizationId: testOrgId,
       folderId: null,
+      createdAt: expect.any(Date)
     });
 
     expect(result.success).toBe(true);
@@ -168,7 +186,7 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe('Authentication failed.');
     expect(downloadAndUploadAudio).not.toHaveBeenCalled();
-    expect(createAssetRecordInDb).not.toHaveBeenCalled();
+    expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
@@ -179,7 +197,7 @@ describe('saveTtsAudioToDamUsecase', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe('Active organization context is missing.');
     expect(downloadAndUploadAudio).not.toHaveBeenCalled();
-    expect(createAssetRecordInDb).not.toHaveBeenCalled();
+    expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
@@ -190,24 +208,16 @@ describe('saveTtsAudioToDamUsecase', () => {
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
     expect(result.success).toBe(false);
     expect(result.error).toBe(serviceErrorMessage);
-    expect(createAssetRecordInDb).not.toHaveBeenCalled();
+    expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
   });
 
-  it('should return error if createAssetRecordInDb fails (for replicate)', async () => {
+  it('should return error if asset repository save fails', async () => {
     (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
     const dbErrorMessage = 'DB insert failed';
-    (createAssetRecordInDb as any).mockResolvedValueOnce({ data: null, error: { message: dbErrorMessage } });
+    mockAssetRepositoryInstance.save.mockRejectedValueOnce(new Error(dbErrorMessage));
     const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
     expect(result.success).toBe(false);
     expect(result.error).toBe(`Database error: ${dbErrorMessage}`);
-  });
-
-  it('should return error if createAssetRecordInDb returns no data/error (for replicate)', async () => {
-    (mockSupabaseClient.single as any).mockResolvedValueOnce({ data: mockReplicatePrediction, error: null });
-    (createAssetRecordInDb as any).mockResolvedValueOnce({ data: null, error: null });
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Failed to save asset metadata.');
   });
 
   it('should return a generic error for unexpected issues', async () => {

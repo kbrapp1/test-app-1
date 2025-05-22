@@ -1,6 +1,6 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { createAssetRecordInDb, type CreateAssetDbRecordInput } from '@/lib/repositories/asset.db.repo';
+import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { downloadAndUploadAudio } from '@/lib/services/ttsService';
 // import { cleanupStorageFile } from '@/lib/services/ttsService'; // For TODO
 
@@ -69,32 +69,29 @@ export async function saveTtsAudioToDam(
     const { randomUUID } = await import('crypto');
     const newAssetId = randomUUID();
     
-    const dbInput: CreateAssetDbRecordInput = {
-      id: newAssetId,
-      name: desiredAssetName,
-      storagePath: storagePathValue,
-      mimeType: contentTypeValue,
-      size: blobSizeValue,
-      userId: userId,
-      organizationId: organizationId,
-      folderId: null, 
-    };
+    // Initialize the repository
+    const assetRepository = new SupabaseAssetRepository(supabase);
+    
+    // Create asset using the new repository
+    try {
+      const newAsset = await assetRepository.save({
+        id: newAssetId,
+        name: desiredAssetName,
+        storagePath: storagePathValue,
+        mimeType: contentTypeValue,
+        size: blobSizeValue,
+        userId: userId,
+        organizationId: organizationId,
+        folderId: null,
+        createdAt: new Date(),
+      });
 
-    const { data: newAssetRecord, error: dbError } = await createAssetRecordInDb(dbInput);
-
-    if (dbError) {
+      console.log(`TTS Usecase (saveTtsAudioToDam): Created asset record in DB with ID: ${newAsset.id}`);
+      return { success: true, assetId: newAsset.id };
+    } catch (dbError: any) {
       console.error('TTS Usecase (saveTtsAudioToDam): DB error creating asset record:', dbError);
       return { success: false, error: `Database error: ${dbError.message}` };
     }
-
-    if (!newAssetRecord) {
-      console.error('TTS Usecase (saveTtsAudioToDam): Asset record creation returned no data/error.');
-      return { success: false, error: 'Failed to save asset metadata.' };
-    }
-
-    console.log(`TTS Usecase (saveTtsAudioToDam): Created asset record in DB with ID: ${newAssetRecord.id}`);
-
-    return { success: true, assetId: newAssetRecord.id };
 
   } catch (error: any) {
     console.error(`TTS Usecase (saveTtsAudioToDam): Error saving TTS audio to DAM for prediction ${ttsPredictionId}:`, error);

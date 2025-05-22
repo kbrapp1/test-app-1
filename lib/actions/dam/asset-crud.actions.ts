@@ -5,12 +5,19 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { createClient as createSupabaseUserClient } from '@/lib/supabase/server';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
-// Import Usecases
-import { moveAssetUsecase } from '@/lib/usecases/dam/moveAssetUsecase';
-import { deleteAssetUsecase } from '@/lib/usecases/dam/deleteAssetUsecase';
-import { renameAssetUsecase } from '@/lib/usecases/dam/renameAssetUsecase';
-import { addTagToAssetUsecase } from '@/lib/usecases/dam/addTagToAssetUsecase';
-import { removeTagFromAssetUsecase } from '@/lib/usecases/dam/removeTagFromAssetUsecase';
+// Import new use cases
+import { MoveAssetUseCase } from '@/lib/dam/application/use-cases/MoveAssetUseCase';
+import { DeleteAssetUseCase } from '@/lib/dam/application/use-cases/DeleteAssetUseCase';
+import { RenameAssetUseCase } from '@/lib/dam/application/use-cases/RenameAssetUseCase';
+import { AddTagToAssetUseCase } from '@/lib/dam/application/use-cases/AddTagToAssetUseCase';
+import { RemoveTagFromAssetUseCase } from '@/lib/dam/application/use-cases/RemoveTagFromAssetUseCase';
+
+// Import repositories and services needed for use cases
+import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
+import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
+import { SupabaseAssetTagRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetTagRepository';
+import { SupabaseTagRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseTagRepository';
 
 // Generic Action Result Type
 export type GenericActionResult<TData = void> = 
@@ -93,18 +100,28 @@ export async function moveAsset(
       // targetFolderId can be null, so no specific validation here unless required
       return undefined;
     },
-    executeCoreLogic: async ({ activeOrgId, params }) => {
-      const usecaseResult = await moveAssetUsecase({
-        organizationId: activeOrgId,
-        assetId: params.assetId,
-        targetFolderId: params.targetFolderId,
-      });
-      if (!usecaseResult.success) {
-        console.error('moveAsset: Usecase Error', usecaseResult.error);
-        return { success: false, error: usecaseResult.error || 'Failed to move asset.' };
+    executeCoreLogic: async ({ activeOrgId, userId, supabase, params }) => {
+      try {
+        // Create repositories
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        const folderRepository = new SupabaseFolderRepository(supabase);
+        
+        // Create use case
+        const moveAssetUseCase = new MoveAssetUseCase(assetRepository, folderRepository);
+        
+        // Execute use case
+        await moveAssetUseCase.execute({
+          assetId: params.assetId,
+          targetFolderId: params.targetFolderId,
+          organizationId: activeOrgId
+        });
+        
+        revalidatePath('/dam', 'layout');
+        return { success: true };
+      } catch (error: any) {
+        console.error('moveAsset: Use Case Error', error);
+        return { success: false, error: error.message || 'Failed to move asset.' };
       }
-      revalidatePath('/dam', 'layout');
-      return { success: true };
     },
   });
 }
@@ -119,20 +136,30 @@ export async function deleteAsset(
       if (!assetId) return 'Asset ID is required.';
       return undefined;
     },
-    executeCoreLogic: async ({ activeOrgId, params }) => {
-      const usecaseResult = await deleteAssetUsecase({
-        organizationId: activeOrgId,
-        assetId: params.assetId,
-      });
-      if (!usecaseResult.success || !usecaseResult.data) {
-        console.error('deleteAsset: Usecase Error', usecaseResult.error);
-        return { success: false, error: usecaseResult.error || 'Failed to delete asset.' };
+    executeCoreLogic: async ({ activeOrgId, supabase, params }) => {
+      try {
+        // Create repositories and services
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        const storageService = new SupabaseStorageService(supabase);
+        
+        // Create use case
+        const deleteAssetUseCase = new DeleteAssetUseCase(assetRepository, storageService);
+        
+        // Execute use case
+        const result = await deleteAssetUseCase.execute({
+          assetId: params.assetId,
+          organizationId: activeOrgId
+        });
+        
+        revalidatePath('/dam', 'layout');
+        if (result.folderId) {
+          revalidatePath(`/dam/folders/${result.folderId}`, 'layout');
+        }
+        return { success: true, data: { folderId: result.folderId } };
+      } catch (error: any) {
+        console.error('deleteAsset: Use Case Error', error);
+        return { success: false, error: error.message || 'Failed to delete asset.' };
       }
-      revalidatePath('/dam', 'layout');
-      if (usecaseResult.data.folderId) {
-        revalidatePath(`/dam/folders/${usecaseResult.data.folderId}`, 'layout');
-      }
-      return { success: true, data: { folderId: usecaseResult.data.folderId || null } };
     },
   });
 }
@@ -149,31 +176,30 @@ export async function renameAssetClient(
       if (!newName || newName.trim().length === 0) return 'New name is required.';
       return undefined;
     },
-    executeCoreLogic: async ({ activeOrgId, params }) => {
-      const usecaseResult = await renameAssetUsecase({
-        organizationId: activeOrgId,
-        assetId: params.assetId,
-        newName: params.newName,
-      });
-
-      if (!usecaseResult.success || !usecaseResult.data) {
-        console.error(
-          `renameAssetClient: Usecase Error (Code: ${usecaseResult.errorCode || 'N/A'})`,
-          usecaseResult.error
-        );
-        return { 
-          success: false, 
-          error: usecaseResult.error || 'Failed to rename asset via usecase.'
-        };
+    executeCoreLogic: async ({ activeOrgId, supabase, params }) => {
+      try {
+        // Create repository
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        
+        // Create use case
+        const renameAssetUseCase = new RenameAssetUseCase(assetRepository);
+        
+        // Execute use case
+        const result = await renameAssetUseCase.execute({
+          assetId: params.assetId,
+          newName: params.newName,
+          organizationId: activeOrgId
+        });
+        
+        revalidatePath('/dam', 'layout');
+        return { success: true, data: result };
+      } catch (error: any) {
+        console.error('renameAssetClient: Use Case Error', error);
+        return { success: false, error: error.message || 'Failed to rename asset.' };
       }
-      
-      revalidatePath('/dam', 'layout');
-      return { success: true, data: usecaseResult.data };
     },
   });
 }
-
-// No longer needed: export interface AssetTagActionResult { success: boolean; error?: string; }
 
 export async function addTagToAsset(
   formData: FormData
@@ -189,25 +215,34 @@ export async function addTagToAsset(
       if (!tagId) return 'Tag ID is required.';
       return undefined;
     },
-    executeCoreLogic: async ({ activeOrgId, params }) => {
-      const usecaseResult = await addTagToAssetUsecase({
-        organizationId: activeOrgId,
-        assetId: params.assetId,
-        tagId: params.tagId,
-      });
-
-      if (!usecaseResult.success) {
-        console.error(
-          `addTagToAsset: Usecase Error (Code: ${usecaseResult.errorCode || 'N/A'})`,
-          usecaseResult.error
+    executeCoreLogic: async ({ activeOrgId, userId, supabase, params }) => {
+      try {
+        // Create repositories
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        const tagRepository = new SupabaseTagRepository(supabase);
+        const assetTagRepository = new SupabaseAssetTagRepository(supabase);
+        
+        // Create use case
+        const addTagToAssetUseCase = new AddTagToAssetUseCase(
+          assetRepository,
+          tagRepository,
+          assetTagRepository
         );
-        return { 
-          success: false, 
-          error: usecaseResult.error || 'Failed to add tag to asset via usecase.'
-        };
+        
+        // Execute use case
+        await addTagToAssetUseCase.execute({
+          assetId: params.assetId,
+          tagId: params.tagId,
+          organizationId: activeOrgId,
+          userId: userId
+        });
+        
+        revalidatePath('/dam', 'layout');
+        return { success: true };
+      } catch (error: any) {
+        console.error('addTagToAsset: Use Case Error', error);
+        return { success: false, error: error.message || 'Failed to add tag to asset.' };
       }
-      revalidatePath('/dam', 'layout');
-      return { success: true }; // Usecase returns null data on success
     },
   });
 }
@@ -226,25 +261,33 @@ export async function removeTagFromAsset(
       if (!tagId) return 'Tag ID is required.';
       return undefined;
     },
-    executeCoreLogic: async ({ activeOrgId, params }) => {
-      const usecaseResult = await removeTagFromAssetUsecase({
-        organizationId: activeOrgId,
-        assetId: params.assetId,
-        tagId: params.tagId,
-      });
-
-      if (!usecaseResult.success) {
-        console.error(
-          `removeTagFromAsset: Usecase Error (Code: ${usecaseResult.errorCode || 'N/A'})`,
-          usecaseResult.error
+    executeCoreLogic: async ({ activeOrgId, supabase, params }) => {
+      try {
+        // Create repositories
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        const tagRepository = new SupabaseTagRepository(supabase);
+        const assetTagRepository = new SupabaseAssetTagRepository(supabase);
+        
+        // Create use case
+        const removeTagFromAssetUseCase = new RemoveTagFromAssetUseCase(
+          assetRepository,
+          tagRepository,
+          assetTagRepository
         );
-        return { 
-          success: false, 
-          error: usecaseResult.error || 'Failed to remove tag from asset via usecase.'
-        };
+        
+        // Execute use case
+        await removeTagFromAssetUseCase.execute({
+          assetId: params.assetId,
+          tagId: params.tagId,
+          organizationId: activeOrgId
+        });
+        
+        revalidatePath('/dam', 'layout');
+        return { success: true };
+      } catch (error: any) {
+        console.error('removeTagFromAsset: Use Case Error', error);
+        return { success: false, error: error.message || 'Failed to remove tag from asset.' };
       }
-      revalidatePath('/dam', 'layout');
-      return { success: true }; // Usecase returns null data on success
     },
   });
 } 

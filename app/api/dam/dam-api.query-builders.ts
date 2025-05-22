@@ -63,7 +63,7 @@ export function buildFolderBaseQueryInternal(
 ): any {
   let query = supabase
     .from('folders')
-    .select('id, name, user_id, created_at, parent_folder_id, updated_at')
+    .select('id, name, user_id, created_at, parent_folder_id, updated_at, organization_id, has_children:folders!parent_folder_id(count)')
     .eq('organization_id', activeOrgId);
 
   // Parent folder filtering (for fetchFolderContents)

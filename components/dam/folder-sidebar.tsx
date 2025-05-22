@@ -6,7 +6,8 @@ import { Folder as FolderIcon, ChevronRight, ChevronDown, Home as HomeIcon } fro
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NewFolderDialog } from './new-folder-dialog';
-import { Folder } from '@/types/dam';
+// import { Folder } from '@/types/dam'; // Remove this line
+import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder'; // Add this line
 import { FolderItem } from './FolderItem';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { useSearchParams } from 'next/navigation';
@@ -16,10 +17,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useRouter } from 'next/navigation';
 
 // Props for the main sidebar component
 export interface FolderSidebarProps {
-  initialFolders: Folder[];
+  initialFolders: DomainFolder[];
   // currentFolderId prop is still received from layout but will be overridden by searchParams
   // No need to pass it explicitly if we derive it here from searchParams
 }
@@ -29,7 +31,7 @@ export interface FolderSidebarProps {
  * Provides navigation between folders and folder management
  */
 export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
-  const { rootFolders, setInitialFolders } = useFolderStore();
+  const { rootFolders, setInitialFolders, changeVersion } = useFolderStore();
   const searchParams = useSearchParams(); // <-- Get searchParams
 
   // Determine currentFolderId from searchParams
@@ -45,7 +47,7 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
                           // For root folders it might be stable, but good to include.
                           // If setInitialFolders is guaranteed stable, then [setInitialFolders]
 
-  // isRootExpanded state is no longer used for toggling visibility
+  const router = useRouter();
   // const [isRootExpanded, setIsRootExpanded] = useState(true);
 
   return (
@@ -81,7 +83,7 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
         </Link>
       </div>
       {/* Root Folders - Children of Home */}
-      <div className="mt-1"> {/* This pl-4 is the base indentation for level 0 children */}
+      <div className="mt-1" key={`folder-list-${changeVersion}`}> {/* Use changeVersion in key */}
         {rootFolders.map(folderNode => (
           <FolderItem
             key={folderNode.id}

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Folder as FolderIcon, ChevronRight, ChevronDown, AlertCircle, MoreHorizontal } from 'lucide-react';
+import { Folder as FolderIcon, ChevronRight, ChevronDown, AlertCircle, MoreHorizontal, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { Folder } from '@/types/dam';
 import { RenameFolderDialog } from './RenameFolderDialog';
 import { DeleteFolderDialog } from './DeleteFolderDialog';
 import { 
@@ -14,7 +13,7 @@ import {
     DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useFolderStore, type FolderNode } from '@/lib/store/folderStore';
-import { useFolderFetch } from '@/hooks/useFolderFetch';
+import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 
 export interface FolderItemProps {
   folderNode: FolderNode;
@@ -31,23 +30,53 @@ export function FolderItem({
   currentFolderId,
 }: FolderItemProps) {
 
-  // Get actions and fetcher from store/hook
+  // Get actions from store
   const { toggleExpand, fetchAndSetChildren } = useFolderStore();
-  const { fetchFolderChildren } = useFolderFetch(); // Fetcher function
+  const { toast } = useToast();
 
   // Dialog state remains local
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [dialogKey, setDialogKey] = useState(0); // Key for forcing dialog re-render
+  const [dialogKey, setDialogKey] = useState(0);
   const [deleteDialogKey, setDeleteDialogKey] = useState(0);
 
-  const handleToggleExpand = async () => {
-    const aboutToExpand = !folderNode.isExpanded; // Capture state *before* toggling
-    toggleExpand(folderNode.id); // Toggle the state in the store
+  // Define the tree-specific fetcher function
+  const treeFetcherFunction = useCallback(async (parentId: string | null): Promise<DomainFolder[]> => {
+    const url = parentId 
+      ? `/api/dam/folders/tree?parentId=${parentId}` 
+      : '/api/dam/folders/tree';
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch child folders' }));
+        throw new Error(errorData.message || 'Failed to fetch child folders');
+      }
+      const jsonData = await response.json();
+      if (!Array.isArray(jsonData)) {
+        console.error('API did not return an array for child folders:', jsonData);
+        if (jsonData && typeof jsonData === 'object' && 'message' in jsonData) {
+            throw new Error(jsonData.message || 'API returned an object instead of an array for child folders.');
+        }
+        throw new Error('API did not return an array for child folders.');
+      }
+      return jsonData as DomainFolder[];
+    } catch (error) {
+      console.error('Error fetching child folders:', error);
+      toast({
+        title: "Error",
+        description: (error as Error).message || "An unexpected error occurred while fetching folder data.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [toast]);
 
-    // Use pre-toggle state for fetch decision AND ensure children haven't been fetched yet
+  const handleToggleExpand = async () => {
+    const aboutToExpand = !folderNode.isExpanded;
+    toggleExpand(folderNode.id);
+
     if (aboutToExpand && folderNode.children === null) { 
-      await fetchAndSetChildren(folderNode.id, fetchFolderChildren);
+      await fetchAndSetChildren(folderNode.id, treeFetcherFunction);
     }
   };
 
@@ -74,17 +103,17 @@ export function FolderItem({
           <Button 
             variant="ghost" 
             onClick={handleToggleExpand}
-            className="pl-2 pr-1 py-1 h-4 w-4 mr-1 flex items-center justify-center"
+            className="pl-2 pr-1 py-1 h-6 w-6 mr-1 flex items-center justify-center"
             disabled={folderNode.isLoading}
           >
             {folderNode.isLoading ? (
-              <span className="animate-spin h-2 w-2">⏳</span>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : folderNode.hasError ? (
-              <AlertCircle className="h-2 w-2 text-red-500" />
+              <AlertCircle className="h-4 w-4 text-red-500" />
             ) : folderNode.isExpanded ? (
-              <ChevronDown className="h-[0.375rem] w-[0.375rem]" />
+              <ChevronDown className="h-4 w-4" />
             ) : (
-              <ChevronRight className="h-[0.375rem] w-[0.375rem]" />
+              <ChevronRight className="h-4 w-4" />
             )}
           </Button>
           

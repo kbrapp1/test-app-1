@@ -1,22 +1,22 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Import the helper
-// cookies might still be needed for other purposes or by createClient implicitly, but not directly for getActiveOrganizationId or createClient() here
+import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { Tag } from '@/lib/dam/domain/entities/Tag'; // Import domain entity
+import { SupabaseTagRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseTagRepository';
+import { CreateTagUseCase } from '@/lib/dam/application/use-cases/CreateTagUseCase';
+import { ListTagsUseCase } from '@/lib/dam/application/use-cases/ListTagsUseCase';
+import { AppError } from '@/lib/errors/base';
 
-// Define the Tag type based on the schema
-export interface Tag {
-  id: string; // UUID
-  name: string;
-  user_id: string; // UUID
-  created_at: string; // TIMESTAMPTZ
-  organization_id: string; // UUID
-}
+// Re-export the Tag type
+export type { Tag };
 
+// Local ActionResult type, can be generalized if used elsewhere
 export interface ActionResult<T> {
   success: boolean;
   data?: T;
   error?: string;
+  errorCode?: string; // To pass specific error codes from AppError
 }
 
 /**
@@ -25,116 +25,99 @@ export interface ActionResult<T> {
 export async function createTag(
   formData: FormData,
 ): Promise<ActionResult<Tag>> {
-  const supabase = createClient(); 
-
   const name = formData.get('name') as string;
 
-  if (!name || name.trim().length === 0) {
-    return { success: false, error: 'Tag name cannot be empty.' };
-  }
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return { success: false, error: 'User not authenticated.' };
-  }
-
-  const organizationId = await getActiveOrganizationId(); // Use the helper
-  
-  if (!organizationId) {
-    return { success: false, error: 'Could not determine active organization. Please ensure you are part of an active organization.' };
-  }
-
   try {
-    const { data: newTag, error } = await supabase
-      .from('tags')
-      .insert({
-        name: name.trim(),
-        user_id: user.id,
-        organization_id: organizationId, 
-      })
-      .select()
-      .single();
+    const supabase = createSupabaseServerClient(); // For auth and repository
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (error) {
-      if (error.code === '23505') {
-        return { success: false, error: 'A tag with this name already exists in your organization.' };
-      }
-      console.error('Error creating tag:', error);
-      return { success: false, error: 'Failed to create tag. ' + error.message };
+    if (userError || !user) {
+      return { success: false, error: 'User not authenticated.', errorCode: 'USER_NOT_AUTHENTICATED' };
     }
 
-    if (!newTag) {
-        return { success: false, error: 'Failed to create tag, no data returned.' };
+    const organizationId = await getActiveOrganizationId();
+    if (!organizationId) {
+      return { success: false, error: 'Could not determine active organization.', errorCode: 'NO_ACTIVE_ORG' };
     }
 
-    return { success: true, data: newTag as Tag };
+    const tagRepository = new SupabaseTagRepository(supabase);
+    const createTagUseCase = new CreateTagUseCase(tagRepository);
+
+    const newTag = await createTagUseCase.execute({
+      name: name, // name is already trimmed by use case if needed
+      userId: user.id,
+      organizationId: organizationId,
+    });
+
+    return { success: true, data: newTag };
+
   } catch (e: any) {
-    console.error('Unexpected error creating tag:', e);
-    return { success: false, error: 'An unexpected error occurred: ' + e.message };
+    console.error('Error creating tag (action):', e);
+    if (e instanceof AppError) {
+      return { success: false, error: e.message, errorCode: e.code };
+    }
+    return { success: false, error: 'An unexpected error occurred while creating the tag.', errorCode: 'UNEXPECTED_ACTION_ERROR' };
   }
 }
 
 /**
- * Lists all tags for a given organization.
+ * Lists tags for a given organization that are currently in use.
  */
 export async function listTagsForOrganization(
   organizationId: string,
 ): Promise<ActionResult<Tag[]>> {
   if (!organizationId) {
-    return { success: false, error: 'Organization ID is required.' };
+    return { success: false, error: 'Organization ID is required.', errorCode: 'ORG_ID_REQUIRED' };
   }
 
-  const supabase = createClient(); 
-
   try {
-    const { data: tags, error } = await supabase
-      .from('tags')
-      .select('*, asset_tags!inner(tag_id)')
-      .eq('organization_id', organizationId)
-      .order('name', { ascending: true });
+    const supabase = createSupabaseServerClient();
+    const tagRepository = new SupabaseTagRepository(supabase);
+    const listTagsUseCase = new ListTagsUseCase(tagRepository);
 
-    if (error) {
-      console.error('Error listing tags:', error);
-      return { success: false, error: 'Failed to list tags. ' + error.message };
-    }
+    const tags = await listTagsUseCase.execute({ 
+      organizationId,
+      includeOrphaned: false // Only list tags that are in use
+    });
 
-    return { success: true, data: (tags as Tag[]) || [] };
+    return { success: true, data: tags };
+
   } catch (e: any) {
-    console.error('Unexpected error listing tags:', e);
-    return { success: false, error: 'An unexpected error occurred: ' + e.message };
+    console.error('Error listing tags (action):', e);
+    if (e instanceof AppError) {
+      return { success: false, error: e.message, errorCode: e.code };
+    }
+    return { success: false, error: 'An unexpected error occurred while listing tags.', errorCode: 'UNEXPECTED_ACTION_ERROR' };
   }
 }
 
 /**
  * Lists ALL tags for a given organization, including orphaned ones.
- * Intended for internal use by components like TagEditor to check for existing tag names
- * before attempting creation.
  */
 export async function getAllTagsForOrganizationInternal(
   organizationId: string,
 ): Promise<ActionResult<Tag[]>> {
   if (!organizationId) {
-    return { success: false, error: 'Organization ID is required.' };
+    return { success: false, error: 'Organization ID is required.', errorCode: 'ORG_ID_REQUIRED' };
   }
-
-  const supabase = createClient();
-
+  
   try {
-    const { data: tags, error } = await supabase
-      .from('tags')
-      .select('*') // Select all tags, no join
-      .eq('organization_id', organizationId)
-      .order('name', { ascending: true });
+    const supabase = createSupabaseServerClient();
+    const tagRepository = new SupabaseTagRepository(supabase);
+    const listTagsUseCase = new ListTagsUseCase(tagRepository);
 
-    if (error) {
-      console.error('Error listing all internal tags:', error);
-      return { success: false, error: 'Failed to list all internal tags. ' + error.message };
-    }
+    const tags = await listTagsUseCase.execute({ 
+      organizationId,
+      includeOrphaned: true // List all tags, including orphaned
+    });
 
-    return { success: true, data: (tags as Tag[]) || [] };
+    return { success: true, data: tags };
+
   } catch (e: any) {
-    console.error('Unexpected error listing all internal tags:', e);
-    return { success: false, error: 'An unexpected error occurred: ' + e.message };
+    console.error('Error listing all internal tags (action):', e);
+    if (e instanceof AppError) {
+      return { success: false, error: e.message, errorCode: e.code };
+    }
+    return { success: false, error: 'An unexpected error occurred while listing all internal tags.', errorCode: 'UNEXPECTED_ACTION_ERROR' };
   }
 } 

@@ -12,25 +12,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { getFoldersForPicker } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner';
-import { AlertTriangle, HomeIcon, SearchIcon, XIcon } from 'lucide-react';
-
-// Import the new utility and component
-import { prepareTreeData, type RawFolderData } from './folderPickerUtils';
+import { AlertTriangle, HomeIcon, SearchIcon, XIcon, ChevronRight, Loader2 } from 'lucide-react';
 import { FolderTreeItem } from './FolderTreeItem';
-
-// FolderTreeNode is now internal to folderPickerUtils or defined there if needed by FolderTreeItem props
+import { useFolderStore, type FolderNode } from '@/lib/store/folderStore';
+import { type TransformedFolder } from '@/app/api/dam/dam-api.types';
+import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 
 interface FolderPickerDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onFolderSelect: (folderId: string | null) => void;
   currentAssetFolderId?: string | null;
-  assetName?: string; 
+  assetName?: string;
 }
-
-// buildFolderTree, FolderTreeItemProps, FolderTreeItem, and getAncestors have been removed
 
 export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   isOpen,
@@ -39,84 +34,140 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   currentAssetFolderId,
   assetName,
 }) => {
-  const [rawFolders, setRawFolders] = useState<RawFolderData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null | undefined>(undefined);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    rootFolders,
+    toggleExpand: storeToggleExpand,
+    fetchAndSetChildren: storeFetchAndSetChildren,
+    setInitialFolders: storeSetInitialFolders,
+  } = useFolderStore();
 
-  const fetchFolders = useCallback(async () => {
-    setIsLoading(true);
+  const [selectedFolderIdInDialog, setSelectedFolderIdInDialog] = useState<string | null | undefined>(undefined);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isInitiallyLoading, setIsInitiallyLoading] = useState(false);
+
+  const fetcherFunction = useCallback(async (parentId: string | null): Promise<TransformedFolder[]> => {
+    const url = parentId 
+      ? `/api/dam/folders/tree?parentId=${parentId}` 
+      : '/api/dam/folders/tree';
     try {
-      const result = await getFoldersForPicker();
-      if (result.success && result.data) {
-        setRawFolders(result.data);
-      } else {
-        toast.error(result.error || 'Failed to load folders.');
-        setRawFolders([]);
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to fetch folders' }));
+        throw new Error(errorData.message || 'Failed to fetch folders');
       }
+      const jsonData = await response.json();
+      if (!Array.isArray(jsonData)) {
+        console.error('API did not return an array for folders:', jsonData);
+        if (jsonData && typeof jsonData === 'object' && 'message' in jsonData) {
+            throw new Error(jsonData.message || 'API returned an object instead of an array and it contained a message property.');
+        }
+        throw new Error('API did not return an array for folders.');
+      }
+      return jsonData as TransformedFolder[];
     } catch (error) {
-      toast.error('An unexpected error occurred while fetching folders.');
-      setRawFolders([]);
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching folders:', error);
+      toast.error((error as Error).message || 'An unexpected error occurred.');
+      return [];
     }
   }, []);
 
   useEffect(() => {
     if (isOpen) {
-      fetchFolders();
-      setSelectedFolderId(undefined); // Reset selection
-      setSearchTerm(''); // Reset search
-      setExpandedFolders(new Set()); // Collapse all
+      const loadRootFolders = async () => {
+        setIsInitiallyLoading(true);
+        try {
+          const fetchedRootTransformedFolders = await fetcherFunction(null);
+          const rootDomainFolders: DomainFolder[] = fetchedRootTransformedFolders.map(tf => ({
+            id: tf.id,
+            name: tf.name,
+            userId: tf.userId,
+            createdAt: tf.createdAt,
+            updatedAt: tf.updatedAt,
+            parentFolderId: tf.parentFolderId,
+            organizationId: tf.organizationId,
+            has_children: tf.has_children,
+          }));
+          storeSetInitialFolders(rootDomainFolders);
+        } catch (error) {
+          console.error("Error during initial root folder load sequence:", error);
+          toast.error("Failed to load initial folder structure.");
+          storeSetInitialFolders([]);
+        }
+        setIsInitiallyLoading(false);
+      };
+      loadRootFolders();
+      setSelectedFolderIdInDialog(undefined);
+      setSearchTerm('');
+    } else {
+      storeSetInitialFolders([]);
     }
-    // Optional: Clear rawFolders when dialog is fully closed (e.g., in onOpenChange(false) if needed)
-    // else { setRawFolders([]); } 
-  }, [isOpen, fetchFolders]);
+  }, [isOpen, fetcherFunction, storeSetInitialFolders]);
 
-  // Use the new prepareTreeData utility
-  const { tree: filteredFolderTree, idsToExpandOnSearch } = useMemo(
-    () => prepareTreeData(rawFolders, searchTerm),
-    [rawFolders, searchTerm]
-  );
+  const handleToggleExpand = useCallback(async (folderId: string) => {
+    storeToggleExpand(folderId);
 
-  // Auto-expand folders based on search results
-  useEffect(() => {
-    if (searchTerm && idsToExpandOnSearch.size > 0) {
-      setExpandedFolders(idsToExpandOnSearch);
-    } else if (!searchTerm) {
-      // When search is cleared, collapse all folders or maintain user's manual expansions.
-      // For simplicity, let's collapse all when search is cleared.
-      // If you want to maintain manual expansions, remove the line below or manage it differently.
-      // setExpandedFolders(new Set()); // This line is optional
+    // Check if children need to be loaded
+    // This requires finding the node in the tree. The store might eventually offer a selector for this.
+    let nodeToToggle: FolderNode | null = null;
+    const findNode = (nodes: FolderNode[], id: string): FolderNode | null => {
+      for (const node of nodes) {
+        if (node.id === id) return node;
+        if (node.children) {
+          const foundInChildren = findNode(node.children, id);
+          if (foundInChildren) return foundInChildren;
+        }
+      }
+      return null;
+    };
+    // Get the latest rootFolders from the store if possible, or use the current one.
+    // For simplicity, using the current rootFolders reference.
+    // A more reactive way would be to get the node directly from a store selector if available.
+    const currentRootFolders = useFolderStore.getState().rootFolders; 
+    nodeToToggle = findNode(currentRootFolders, folderId);
+    
+    if (nodeToToggle && nodeToToggle.isExpanded && nodeToToggle.children === null) {
+      await storeFetchAndSetChildren(folderId, fetcherFunction);
     }
-  }, [searchTerm, idsToExpandOnSearch]);
-
+  }, [storeToggleExpand, storeFetchAndSetChildren, fetcherFunction]); // rootFolders removed as a dependency to avoid re-creating callback too often; using getState()
 
   const handleSelect = (folderId: string | null) => {
-    setSelectedFolderId(folderId);
-  };
-
-  const toggleExpandFolder = (folderId: string) => {
-    setExpandedFolders(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(folderId)) {
-        newSet.delete(folderId);
-      } else {
-        newSet.add(folderId);
-      }
-      return newSet;
-    });
+    setSelectedFolderIdInDialog(folderId);
   };
 
   const handleConfirm = () => {
-    if (selectedFolderId !== undefined) { // Can be null (for Root) or a string ID
-      onFolderSelect(selectedFolderId);
+    if (selectedFolderIdInDialog !== undefined) {
+      onFolderSelect(selectedFolderIdInDialog);
     }
   };
   
-  const dialogTitle = assetName ? `Move "${assetName}"` : 'Move Asset';
-  const dialogDescription = 'Select a destination folder or move to root. You can also search for folders.';
+  const dialogTitle = assetName ? `Move \"${assetName}\"` : 'Move Asset';
+  const dialogDescription = 'Select a destination folder or move to root.';
+
+  const renderTree = (nodes: FolderNode[], level: number): React.ReactNode => {
+    return nodes.map(node => (
+      <React.Fragment key={node.id}>
+        <FolderTreeItem
+          node={node}
+          level={level}
+          selectedFolderId={selectedFolderIdInDialog}
+          currentAssetFolderId={currentAssetFolderId}
+          onSelect={handleSelect}
+          toggleExpand={handleToggleExpand} // expandedFolders prop is removed
+        />
+        {node.isExpanded && node.children && node.children.length > 0 && (
+          <div className="pl-6">
+            {renderTree(node.children, level + 1)}
+          </div>
+        )}
+        {node.isExpanded && node.isLoading && !node.children && (
+             <div className="pl-10 flex items-center text-sm text-muted-foreground py-1">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+            </div>
+        )}
+      </React.Fragment>
+    ));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -125,90 +176,58 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
-        
-        <div className="py-2">
-          <div className="relative">
+        <div className="py-4">
+          {/* TODO: Search input implementation */}
+          {/* <div className="relative mb-4">
             <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search folders..."
+              className="pl-8 w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-8 h-9"
             />
-            {searchTerm && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                onClick={() => setSearchTerm('')}
-              >
-                <XIcon className="h-4 w-4" />
-              </Button>
+          </div> */}
+          
+          <div className="py-0"> {/* Added py-0 to align with ScrollArea style below */}
+            {isInitiallyLoading ? (
+              <div className="flex items-center justify-center h-40"><Loader2 className="mr-2 h-6 w-6 animate-spin" />Loading...</div>
+            ) : rootFolders.length === 0 && !isInitiallyLoading ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground">
+                   <AlertTriangle className="w-10 h-10 mb-2" />
+                  <p className="font-semibold">No folders found</p>
+                  <p className="text-sm">There are no folders to display.</p>
+                </div>
+            ) : (
+              <ScrollArea className="h-72 w-full rounded-md border p-2">
+                <div className="space-y-1" role="tree" aria-label="Folder navigation tree">
+                  <Button
+                    variant={selectedFolderIdInDialog === null ? 'secondary' : 'ghost'}
+                    className={`w-full justify-start text-left h-auto py-2 px-3 ${
+                      currentAssetFolderId === null ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onClick={() => currentAssetFolderId !== null && handleSelect(null)}
+                    disabled={currentAssetFolderId === null}
+                    aria-pressed={selectedFolderIdInDialog === null}
+                    role="treeitem" 
+                  >
+                    <HomeIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    Root
+                  </Button>
+  
+                  {renderTree(rootFolders, 0)}
+                </div>
+              </ScrollArea>
             )}
           </div>
         </div>
-        
-        <div className="py-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-40"><p>Loading folders...</p></div>
-          ) : filteredFolderTree.length === 0 && !searchTerm && rawFolders.length === 0 && !isLoading ? (
-             <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground">
-                <AlertTriangle className="w-10 h-10 mb-2" />
-                <p className="font-semibold">No folders available.</p>
-                <p className="text-sm">You can move items to the Root.</p>
-            </div>
-          ) : filteredFolderTree.length === 0 && searchTerm ? (
-            <div className="flex items-center justify-center h-40 text-muted-foreground">
-              <p>No folders match "{searchTerm}".</p>
-            </div>
-          ) : (
-            <ScrollArea className="h-[260px] border rounded-md p-2">
-              <div className="space-y-1" role="tree" aria-label="Folder navigation tree">
-                {/* Root Option - show if not searching, or if search term allows (e.g. "root") */}
-                {/* For simplicity, always show Root if not explicitly filtered out by a very specific search */}
-                {/* The prepareTreeData doesn't filter out a conceptual "Root" item, so we add it here. */}
-                <Button
-                  variant={selectedFolderId === null ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start text-left h-auto py-2 px-3 ${
-                    currentAssetFolderId === null ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  onClick={() => currentAssetFolderId !== null && handleSelect(null)}
-                  disabled={currentAssetFolderId === null}
-                  aria-pressed={selectedFolderId === null}
-                  role="treeitem" 
-                  // aria-level and aria-setsize for root if considering full ARIA tree.
-                >
-                  <HomeIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className='truncate'>Root</span>
-                  {currentAssetFolderId === null && <span className="ml-auto text-xs text-muted-foreground">(Current)</span>}
-                </Button>
-
-                {filteredFolderTree.map((node) => (
-                  <FolderTreeItem
-                    key={node.id}
-                    node={node}
-                    level={0} // Root level items from the filtered tree
-                    selectedFolderId={selectedFolderId}
-                    currentAssetFolderId={currentAssetFolderId}
-                    onSelect={handleSelect}
-                    expandedFolders={expandedFolders}
-                    toggleExpand={toggleExpandFolder}
-                    // searchTerm={searchTerm} // Not needed by FolderTreeItem anymore
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
-
-        <DialogFooter className="mt-2">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button 
             onClick={handleConfirm} 
-            disabled={selectedFolderId === undefined || isLoading}
+            disabled={selectedFolderIdInDialog === undefined || isInitiallyLoading}
           >
             Move
           </Button>

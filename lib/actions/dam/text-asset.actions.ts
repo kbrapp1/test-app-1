@@ -5,16 +5,26 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { createClient as createSupabaseUserClient } from '@/lib/supabase/server';
 
 // Import Usecases
-import { listTextAssetsUsecase, TextAssetSummary as UsecaseTextAssetSummary } from '@/lib/usecases/dam/listTextAssetsUsecase';
-import { getAssetContentUsecase } from '@/lib/usecases/dam/getAssetContentUsecase';
-import { updateAssetTextUsecase } from '@/lib/usecases/dam/updateAssetTextUsecase';
-import { saveAsNewTextAssetUsecase } from '@/lib/usecases/dam/saveAsNewTextAssetUsecase';
+// import { listTextAssetsUsecase, TextAssetSummary as UsecaseTextAssetSummary } from '@/lib/usecases/dam/listTextAssetsUsecase'; // Old import
+import { ListTextAssetsUseCase, TextAssetSummaryDto } from '@/lib/dam/application/use-cases/ListTextAssetsUseCase'; // New import
+import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository'; // New import
+import { AppError } from '@/lib/errors/base'; // For catching specific errors
 
-// Use the imported UsecaseTextAssetSummary for the return type
-export async function listTextAssets(): Promise<{ success: boolean; data?: UsecaseTextAssetSummary[]; error?: string }> {
-  const supabaseAuthClient = createSupabaseUserClient();
+// import { getAssetContentUsecase } from '@/lib/usecases/dam/getAssetContentUsecase'; // Old import
+import { GetAssetContentUseCase } from '@/lib/dam/application/use-cases/GetAssetContentUseCase'; // New import
+import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService'; // New import
+
+// import { updateAssetTextUsecase } from '@/lib/usecases/dam/updateAssetTextUsecase'; // Old import
+import { UpdateAssetTextUseCase } from '@/lib/dam/application/use-cases/UpdateAssetTextUseCase'; // New import
+
+// import { saveAsNewTextAssetUsecase } from '@/lib/usecases/dam/saveAsNewTextAssetUsecase'; // Old import
+import { CreateTextAssetUseCase } from '@/lib/dam/application/use-cases/CreateTextAssetUseCase'; // New import
+
+// Use the new DTO for the return type
+export async function listTextAssets(): Promise<{ success: boolean; data?: TextAssetSummaryDto[]; error?: string }> {
+  const supabaseClient = createSupabaseUserClient(); // Renamed for clarity, used by repository
   try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       console.error('listTextAssets Action: Auth Error', authError);
       return { success: false, error: 'User not authenticated.' };
@@ -25,17 +35,19 @@ export async function listTextAssets(): Promise<{ success: boolean; data?: Useca
       return { success: false, error: 'Active organization not found.' };
     }
 
-    const usecaseResult = await listTextAssetsUsecase({ organizationId: activeOrgId });
+    // Instantiate repository and new use case
+    const assetRepository = new SupabaseAssetRepository(supabaseClient);
+    const listTextAssetsUseCase = new ListTextAssetsUseCase(assetRepository);
 
-    if (!usecaseResult.success || !usecaseResult.data) {
-      console.error('listTextAssets Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to list text assets via usecase.' };
-    }
+    const result = await listTextAssetsUseCase.execute({ organizationId: activeOrgId });
 
-    return { success: true, data: usecaseResult.data.assets }; 
+    return { success: true, data: result.assets };
 
   } catch (err: any) {
-    console.error('listTextAssets Action: Unexpected Error', err);
+    console.error('listTextAssets Action: Error', err);
+    if (err instanceof AppError) {
+        return { success: false, error: err.message };
+    }
     return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
 }
@@ -44,9 +56,9 @@ export async function getAssetContent(assetId: string): Promise<{ success: boole
   if (!assetId) {
     return { success: false, error: 'Asset ID is required.' };
   }
-  const supabaseAuthClient = createSupabaseUserClient();
+  const supabaseClient = createSupabaseUserClient(); // Renamed for clarity, used by repository/service
   try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       return { success: false, error: 'User not authenticated.' };
     }
@@ -55,22 +67,23 @@ export async function getAssetContent(assetId: string): Promise<{ success: boole
       return { success: false, error: 'Active organization not found.' };
     }
 
-    // Call the usecase
-    const usecaseResult = await getAssetContentUsecase({ 
+    // Instantiate repository, service, and new use case
+    const assetRepository = new SupabaseAssetRepository(supabaseClient);
+    const storageService = new SupabaseStorageService(supabaseClient);
+    const getAssetContentUseCase = new GetAssetContentUseCase(assetRepository, storageService);
+
+    const result = await getAssetContentUseCase.execute({ 
       organizationId: activeOrgId, 
       assetId 
     });
 
-    // The usecase returns { content: string } in its data field upon success.
-    if (!usecaseResult.success || typeof usecaseResult.data?.content !== 'string') {
-      console.error('getAssetContent Action: Usecase Error or no content', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to get asset content via usecase or content missing.' };
-    }
-
-    return { success: true, content: usecaseResult.data.content };
+    return { success: true, content: result.content };
 
   } catch (err: any) {
-    console.error('getAssetContent Action: Unexpected Error', err);
+    console.error('getAssetContent Action: Error', err);
+    if (err instanceof AppError) {
+        return { success: false, error: err.message };
+    }
     return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
 }
@@ -81,28 +94,30 @@ export async function updateAssetText(
 ): Promise<{ success: boolean; error?: string }> {
   if (!assetId) { return { success: false, error: 'Asset ID is required for update.' }; }
   
-  const supabaseAuthClient = createSupabaseUserClient();
+  const supabaseClient = createSupabaseUserClient();
   try {
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) { return { success: false, error: 'User not authenticated.' }; }
     const activeOrgId = await getActiveOrganizationId();
     if (!activeOrgId) { return { success: false, error: 'Active organization not found.' }; }
 
-    const usecaseResult = await updateAssetTextUsecase({
+    const assetRepository = new SupabaseAssetRepository(supabaseClient);
+    const storageService = new SupabaseStorageService(supabaseClient);
+    const updateAssetTextUseCase = new UpdateAssetTextUseCase(assetRepository, storageService);
+
+    await updateAssetTextUseCase.execute({
       organizationId: activeOrgId,
       assetId,
       newContent,
     });
 
-    if (!usecaseResult.success) {
-      console.error('updateAssetText Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to update asset text via usecase.' };
-    }
-
-    revalidatePath('/dam', 'layout');
+    revalidatePath('/dam', 'layout'); // Consider more specific revalidation if possible
     return { success: true };
   } catch (err: any) {
-    console.error('updateAssetText Action: Unexpected Error', err);
+    console.error('updateAssetText Action: Error', err);
+    if (err instanceof AppError) {
+        return { success: false, error: err.message };
+    }
     return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
 }
@@ -112,27 +127,41 @@ export async function saveAsNewTextAsset(
   desiredName: string,
   folderId?: string | null
 ): Promise<{ success: boolean; error?: string; data?: { newAssetId: string } }> {
+  const supabaseClient = createSupabaseUserClient();
   try {
-    const usecaseResult = await saveAsNewTextAssetUsecase({
+    // User and Org ID will be fetched within the action for the use case
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'User not authenticated.' };
+    }
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      return { success: false, error: 'Active organization not found.' };
+    }
+
+    const assetRepository = new SupabaseAssetRepository(supabaseClient);
+    const storageService = new SupabaseStorageService(supabaseClient);
+    const createTextAssetUseCase = new CreateTextAssetUseCase(assetRepository, storageService);
+
+    const result = await createTextAssetUseCase.execute({
+      organizationId: activeOrgId,
+      userId: user.id,
       content,
       desiredName,
       folderId,
     });
 
-    if (!usecaseResult.success || !usecaseResult.newAssetId) {
-      console.error('saveAsNewTextAsset Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to save new text asset via usecase.' };
-    }
-
     revalidatePath('/dam', 'layout');
-    // Revalidate specific folder if asset was added to one
     if (folderId) {
       revalidatePath(`/dam/folders/${folderId}`, 'layout');
     }
 
-    return { success: true, data: { newAssetId: usecaseResult.newAssetId } };
+    return { success: true, data: { newAssetId: result.newAssetId } };
   } catch (err: any) {
-    console.error('saveAsNewTextAsset Action: Unexpected error', err);
+    console.error('saveAsNewTextAsset Action: Error', err);
+    if (err instanceof AppError) {
+        return { success: false, error: err.message };
+    }
     return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
 } 

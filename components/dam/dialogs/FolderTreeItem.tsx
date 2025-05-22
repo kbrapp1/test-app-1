@@ -1,21 +1,18 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FolderIcon, ChevronRightIcon, ChevronDownIcon } from 'lucide-react';
-import type { FolderTreeNode } from './folderPickerUtils'; // Import the tree node type
+import { FolderIcon, ChevronRightIcon, ChevronDownIcon, Loader2 } from 'lucide-react';
+// import type { TreeNode } from './FolderPickerDialog'; // REMOVED: Old import
+import type { FolderNode } from '@/lib/store/folderStore'; // ADDED: New import
 
 export interface FolderTreeItemProps {
-  node: FolderTreeNode;
+  node: FolderNode; // MODIFIED: to use FolderNode
   level: number;
   selectedFolderId: string | null | undefined;
   currentAssetFolderId?: string | null;
   onSelect: (folderId: string) => void;
-  expandedFolders: Set<string>;
+  // expandedFolders: Set<string>; // REMOVED: Prop no longer needed
   toggleExpand: (folderId: string) => void;
-  // searchTerm is not directly used by FolderTreeItem for filtering its own display,
-  // as filtering is handled by prepareTreeData which constructs the tree passed to FolderTreeItem.
-  // If searchTerm were used for highlighting, it could be kept.
-  // For now, removing it if it's not used for highlighting or other direct logic here.
-  // searchTerm: string; 
+  isSelectable?: (node: FolderNode) => boolean; // MODIFIED: to use FolderNode
 }
 
 export const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
@@ -24,28 +21,35 @@ export const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
   selectedFolderId,
   currentAssetFolderId,
   onSelect,
-  expandedFolders,
+  // expandedFolders, // REMOVED
   toggleExpand,
+  isSelectable = () => true,
 }) => {
   const isCurrent = node.id === currentAssetFolderId;
   const isSelected = selectedFolderId === node.id;
-  const isExpanded = expandedFolders.has(node.id);
+  const isExpanded = node.isExpanded; // MODIFIED: Directly use node.isExpanded
+  const canSelectNode = !isCurrent && isSelectable(node);
+
+  // MODIFIED: node.has_children is from DomainFolder, node.isLoading from FolderNode (store state)
+  const hasChildrenToDisplay = node.has_children || (node.children && node.children.length > 0);
 
   return (
     <div className='flex flex-col'>
       <Button
         variant={isSelected ? 'secondary' : 'ghost'}
         className={`w-full justify-start text-left h-auto py-2 pr-3 flex items-center ${
-          isCurrent ? 'opacity-50 cursor-not-allowed' : ''
+          !canSelectNode ? 'opacity-50 cursor-not-allowed' : ''
         }`}
         style={{ paddingLeft: `${0.75 + level * 1.25}rem` }}
-        onClick={() => !isCurrent && onSelect(node.id)}
-        disabled={isCurrent}
+        onClick={() => canSelectNode && onSelect(node.id)}
+        disabled={!canSelectNode}
         aria-pressed={isSelected}
         role="treeitem"
-        aria-expanded={node.children.length > 0 ? isExpanded : undefined}
+        aria-expanded={hasChildrenToDisplay ? isExpanded : undefined}
       >
-        {node.children.length > 0 ? (
+        {node.isLoading ? ( // MODIFIED: node.isLoadingChildren to node.isLoading
+          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+        ) : hasChildrenToDisplay ? (
           <span
             role="button"
             tabIndex={0}
@@ -65,14 +69,14 @@ export const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
             {isExpanded ? <ChevronDownIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
           </span>
         ) : (
-          <span className="w-6 mr-1"></span> // Placeholder for alignment if no children
+          <span className="w-6 mr-1"></span> // Placeholder for alignment
         )}
         <FolderIcon className={`w-4 h-4 mr-2 flex-shrink-0`} />
         <span className='truncate'>{node.name}</span>
         {isCurrent && <span className="ml-auto text-xs text-muted-foreground">(Current)</span>}
       </Button>
-      {isExpanded && node.children.length > 0 && (
-        <div className='pl-0' role="group"> {/* pl-0 as padding is handled by child items */}
+      {isExpanded && node.children && node.children.length > 0 && (
+        <div className='pl-0' role="group">
           {node.children.map(childNode => (
             <FolderTreeItem
               key={childNode.id}
@@ -81,8 +85,9 @@ export const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
               selectedFolderId={selectedFolderId}
               currentAssetFolderId={currentAssetFolderId}
               onSelect={onSelect}
-              expandedFolders={expandedFolders}
+              // expandedFolders={expandedFolders} // REMOVED
               toggleExpand={toggleExpand}
+              isSelectable={isSelectable}
             />
           ))}
         </div>

@@ -19,11 +19,6 @@ import { AssetGalleryClientWrapper } from './AssetGalleryClientWrapper';
 import { NewFolderDialog } from './new-folder-dialog';
 import { DamBreadcrumbs } from './dam-breadcrumbs';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { getFolderById } from '@/lib/repositories/folder-repo';
-import { Folder } from '@/types/dam';
-
-// --- Import types from the central location --- 
-import { Asset, CombinedItem } from '@/types/dam';
 
 // --- Import the new server action --- 
 // import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/asset.actions';
@@ -48,7 +43,7 @@ export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
     }
 
     // Extract data from the successful result
-    const { combinedItems } = result.data;
+    const { items } = result.data;
     
     // Separate assets and folders from combinedItems if needed by the client wrapper
     // (Currently, the wrapper primarily uses combinedItems, but let's pass them for potential use)
@@ -58,7 +53,7 @@ export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
     // --- Render the Client Component Wrapper, passing initial data --- 
     return (
         <AssetGalleryClientWrapper
-            initialCombinedItems={combinedItems}
+            initialCombinedItems={items}
             // initialAssets={initialAssets} // Removed
             // initialFolders={initialFolders} // Removed
             currentFolderId={currentFolderId} 

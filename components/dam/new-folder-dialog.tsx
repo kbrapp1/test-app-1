@@ -18,7 +18,7 @@ import { createFolder } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner'; // Assuming you use sonner for toasts
 import { FolderPlus } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
-import { type Folder } from '@/types/dam';
+import { type Folder } from '@/lib/dam/domain/entities/Folder';
 import { useRouter } from 'next/navigation';
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"; // Import TooltipPrimitive
 

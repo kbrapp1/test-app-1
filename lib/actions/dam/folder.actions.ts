@@ -1,6 +1,6 @@
 'use server';
 
-import { Folder } from '@/types/dam';
+import { Folder } from '@/lib/dam/domain/entities/Folder';
 import {
   _authenticateAndGetOrgId,
   _revalidatePathsForFolderMutation, // This is used by createFolder directly
@@ -12,8 +12,9 @@ import { createClient as createSupabaseUserClient } from '@/lib/supabase/server'
 import { type ServiceResult } from '@/types/services'; // Added import
 import { ErrorCodes } from '@/lib/errors/constants'; // Added import
 
-// Import Usecases (only createFolderUsecase is directly used here now)
-import { createFolderUsecase } from '@/lib/usecases/dam/createFolderUsecase';
+// Import new use case
+import { CreateFolderUseCase } from '@/lib/dam/application/use-cases/CreateFolderUseCase';
+import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 
 // getFolderById is no longer needed here directly, it's used in helpers
 // import { getFolderById } from '@/lib/repositories/folder-repo';
@@ -37,21 +38,23 @@ export async function createFolder(
   const { user, activeOrgId } = authResult;
 
   try {
-    const usecaseResult = await createFolderUsecase({
-      userId: user!.id,
-      organizationId: activeOrgId!,
-      folderName: folderName.trim(),
+    // Create a repository instance
+    const supabase = createSupabaseUserClient();
+    const folderRepository = new SupabaseFolderRepository(supabase);
+    
+    // Create the use case
+    const createFolderUseCase = new CreateFolderUseCase(folderRepository);
+    
+    // Execute the use case
+    const newFolder = await createFolderUseCase.execute({
+      name: folderName.trim(),
       parentFolderId,
+      organizationId: activeOrgId!,
+      userId: user!.id
     });
 
-    if (!usecaseResult.success || !usecaseResult.data) {
-      console.error('createFolder Action: Usecase Error', usecaseResult.error);
-      return { success: false, error: usecaseResult.error || 'Failed to create folder via usecase.' };
-    }
-
-    _revalidatePathsForFolderMutation(parentFolderId, usecaseResult.data.folder.id);
+    _revalidatePathsForFolderMutation(parentFolderId, newFolder.id);
     
-    const newFolder = usecaseResult.data.folder;
     return { success: true, folder: newFolder, folderId: newFolder.id };
 
   } catch (err: any) {
@@ -141,30 +144,27 @@ export async function deleteFolderClient(
 export async function getFoldersForPicker(): Promise<ServiceResult<{ id: string; name: string; parent_folder_id: string | null }[]>> {
   const authResult = await _authenticateAndGetOrgId('getFoldersForPicker');
   if (authResult.errorResult) {
-    // Ensure errorResult.error is a string, provide a fallback if necessary
     const errorMessage = typeof authResult.errorResult.error === 'string' 
       ? authResult.errorResult.error 
       : 'Authorization failed.';
     return { success: false, error: errorMessage, errorCode: ErrorCodes.UNAUTHORIZED };
   }
-  // activeOrgId is guaranteed if errorResult is not present due to _authenticateAndGetOrgId logic
   const { activeOrgId } = authResult; 
-  const supabase = createSupabaseUserClient(); // Create client instance here
+  const supabase = createSupabaseUserClient();
+  const folderRepository = new SupabaseFolderRepository(supabase);
 
   try {
-    const { data, error } = await supabase
-      .from('folders')
-      .select('id, name, parent_folder_id')
-      .eq('organization_id', activeOrgId!) // activeOrgId is checked by _authenticateAndGetOrgId
-      .order('name', { ascending: true });
+    const domainFolders = await folderRepository.findAllByOrganizationId(activeOrgId!);
+    
+    const pickerFolders = domainFolders.map(folder => ({
+      id: folder.id,
+      name: folder.name,
+      parent_folder_id: folder.parentFolderId || null, // Map to snake_case for existing consumers
+    }));
 
-    if (error) {
-      console.error('getFoldersForPicker: Supabase error', error);
-      return { success: false, error: error.message, errorCode: ErrorCodes.DATABASE_ERROR };
-    }
-    return { success: true, data: data || [] };
+    return { success: true, data: pickerFolders };
   } catch (err: any) {
-    console.error('getFoldersForPicker: Unexpected error', err);
+    console.error('getFoldersForPicker: Error using folder repository', err);
     return { success: false, error: err.message || 'An unexpected error occurred.', errorCode: ErrorCodes.UNEXPECTED_ERROR };
   }
 } 

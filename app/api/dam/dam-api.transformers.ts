@@ -1,11 +1,12 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Asset, Folder } from '@/types/dam';
 import type { Tag } from '@/lib/actions/dam/tag.actions';
 import { getPublicUrl } from '@/lib/supabase/db-storage';
 import type {
   RawAssetFromApi,
   RawFolderFromApi,
-  TransformedDataReturn
+  TransformedDataReturn,
+  TransformedAsset,
+  TransformedFolder
 } from './dam-api.types';
 
 // Helper to fetch owner names
@@ -33,28 +34,30 @@ export async function getOwnerNames(supabase: SupabaseClient, userIds: string[])
 
 // Helper for mapping raw assets
 export function mapRawAssetsToEnrichedAssets(
-  supabase: SupabaseClient, // For getPublicUrl
+  supabase: SupabaseClient,
   rawAssets: RawAssetFromApi[], 
   ownerNamesMap: Map<string, string>, 
   parentFolderNamesMap: Map<string, string>
-): Asset[] {
+): TransformedAsset[] {
   return (rawAssets || []).map((asset) => {
     let parentFolderName: string | null = null;
     if (asset.folder_id) {
       parentFolderName = parentFolderNamesMap.get(asset.folder_id) || 'Unknown Folder';
     } else {
-      parentFolderName = 'Root'; // Assets directly under root
+      parentFolderName = 'Root';
     }
     const mappedTags: Tag[] = asset.asset_tags?.map(at => at.tags).filter((tag): tag is Tag => tag !== null) || [];
+
+    const publicUrl = asset.storage_path ? getPublicUrl(supabase, 'assets', asset.storage_path) : null;
 
     return {
       ...asset,
       type: 'asset' as const,
-      publicUrl: getPublicUrl(supabase, 'assets', asset.storage_path),
+      publicUrl: publicUrl,
       parentFolderName: parentFolderName,
       ownerName: ownerNamesMap.get(asset.user_id) || 'Unknown Owner',
       tags: mappedTags,
-      size: asset.size ?? 0, // Ensure size is always a number
+      size: asset.size ?? 0,
     };
   });
 }
@@ -63,15 +66,39 @@ export function mapRawAssetsToEnrichedAssets(
 export function mapRawFoldersToEnrichedFolders(
   rawFolders: RawFolderFromApi[], 
   ownerNamesMap: Map<string, string>, 
-  activeOrgId: string 
-): Folder[] {
-  return (rawFolders || []).map((folder) => ({
-    ...folder,
-    type: 'folder' as const,
-    ownerName: ownerNamesMap.get(folder.user_id) || 'Unknown Owner',
-    organization_id: activeOrgId,
-    // Add any other folder-specific transformations if needed
-  }));
+  activeOrgId: string // Kept for explicit organization_id if needed, though rawFolder should have it
+): TransformedFolder[] {
+  return (rawFolders || []).map((folder) => {
+    const hasChildren = folder.has_children_count && folder.has_children_count.length > 0 
+                        ? folder.has_children_count[0].count > 0 
+                        : false;
+    return {
+      id: folder.id,
+      name: folder.name,
+      // Raw snake_case fields are implicitly on `folder` from RawFolderFromApi
+      // These will be overridden by explicit camelCase mappings below if TransformedFolder doesn't include them.
+      // For clarity, we will explicitly map to the new TransformedFolder structure.
+
+      // Domain-aligned fields
+      userId: folder.user_id, 
+      createdAt: new Date(folder.created_at),
+      updatedAt: folder.updated_at ? new Date(folder.updated_at) : undefined,
+      parentFolderId: folder.parent_folder_id === undefined ? undefined : folder.parent_folder_id, // handles null correctly
+      organizationId: folder.organization_id || activeOrgId, // Prefer organization_id from folder data if present
+      has_children: hasChildren,
+
+      // Enriched fields
+      type: 'folder' as const,
+      ownerName: ownerNamesMap.get(folder.user_id) || 'Unknown Owner',
+      
+      // Deprecated snake_case fields if not part of TransformedFolder anymore 
+      // (ensure TransformedFolder type definition is the source of truth)
+      // user_id: folder.user_id, (covered by userId)
+      // created_at: folder.created_at, (covered by createdAt)
+      // updated_at: folder.updated_at, (covered by updatedAt)
+      // parent_folder_id: folder.parent_folder_id (covered by parentFolderId)
+    };
+  });
 }
 
 // Transforms and enriches raw asset and folder data

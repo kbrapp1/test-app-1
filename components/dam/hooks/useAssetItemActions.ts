@@ -1,13 +1,13 @@
 import { useTransition } from 'react';
-import { Asset } from '@/types/dam';
+import { type Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
 import { getAssetDownloadUrl } from '@/lib/actions/dam/asset-url.actions';
 import { renameAssetClient, moveAsset } from '@/lib/actions/dam/asset-crud.actions';
 import { toast as sonnerToast } from 'sonner';
 
 export interface UseAssetItemActionsProps {
   onDataChange: () => Promise<void>;
-  item: Asset; // The specific asset this instance of the hook will operate on
-  closeRenameDialog?: () => void; // Optional callbacks to close dialogs upon completion
+  item: DomainAsset;
+  closeRenameDialog?: () => void;
   closeMoveDialog?: () => void;
 }
 
@@ -34,9 +34,9 @@ export function useAssetItemActions({
     startDownloadTransition(async () => {
       try {
         const result = await getAssetDownloadUrl(item.id);
-        if (result.success && result.url) {
+        if (result.success && result.downloadUrl) {
           const link = document.createElement('a');
-          link.href = result.url;
+          link.href = result.downloadUrl;
           link.setAttribute('download', item.name || 'download');
           document.body.appendChild(link);
           link.click();
@@ -65,7 +65,7 @@ export function useAssetItemActions({
   };
 
   const handleMoveConfirm = async (targetFolderId: string | null) => {
-    if (item.folder_id === targetFolderId) {
+    if (item.folderId === targetFolderId) {
       sonnerToast.info('Asset is already in this folder.');
       closeMoveDialog?.();
       return;

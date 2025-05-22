@@ -3,13 +3,11 @@ import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { DatabaseError, ValidationError } from '@/lib/errors/base';
-import { CombinedItem } from '@/types/dam';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 import {
   applyQuickSearchLimits,
   fetchSearchResults,
-  fetchFolderContents,
 } from './dam-api.helpers';
 
 import {
@@ -20,8 +18,17 @@ import type {
   DamFilterParameters,
   DamSortParameters,
   LimitOptions,
-  DataFetchingResult
+  DataFetchingResult,
+  TransformedAsset,
+  TransformedFolder
 } from './dam-api.types';
+
+import { ListAssetsByFolderUseCase } from '@/lib/dam/application/use-cases/ListAssetsByFolderUseCase';
+import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { AssetMapper } from '@/lib/dam/infrastructure/persistence/supabase/mappers/AssetMapper';
+import { buildFolderBaseQueryInternal } from './dam-api.query-builders';
+
+export type CombinedDamItem = TransformedAsset | TransformedFolder;
 
 export async function getHandler(
   request: NextRequest,
@@ -29,11 +36,15 @@ export async function getHandler(
   supabase: SupabaseClient
 ) {
   const { searchParams } = new URL(request.url);
-  const folderId = searchParams.get('folderId');
+  let folderId = searchParams.get('folderId');
   const searchTerm = searchParams.get('q') || '';
   const quickSearch = searchParams.get('quickSearch') === 'true';
   const limitParam = searchParams.get('limit');
   const tagIdsParam = searchParams.get('tagIds');
+
+  if (folderId === '') {
+    folderId = null;
+  }
 
   const filters: DamFilterParameters = {
     type: searchParams.get('type'),
@@ -74,7 +85,48 @@ export async function getHandler(
   } else if (isGlobalFilterWithoutSearchOrFolder) {
     result = await fetchSearchResults(supabase, activeOrgId, '', tagIdsParam, filters, sortParams, limitOptions, true);
   } else {
-    result = await fetchFolderContents(supabase, activeOrgId, folderId, tagIdsParam, filters, sortParams, limitOptions);
+    let domainAssets: import('@/lib/dam/domain/entities/Asset').Asset[] = [];
+    let assetsError: Error | null = null;
+    let fetchedFolders: any[] | null = [];
+    let foldersError: Error | null = null;
+
+    try {
+      const assetRepository = new SupabaseAssetRepository(supabase);
+      const listAssetsUseCase = new ListAssetsByFolderUseCase(assetRepository);
+      domainAssets = await listAssetsUseCase.execute({ folderId, organizationId: activeOrgId });
+    } catch (e:any) {
+      console.error('Error fetching assets via use case:', e);
+      assetsError = e instanceof Error ? e : new Error('Failed to fetch assets via use case');
+    }
+
+    try {
+      let foldersQuery = buildFolderBaseQueryInternal(supabase, activeOrgId, filters, { parentFolderId: folderId });
+      if (filters.type && filters.type !== 'folder') {
+        foldersQuery = foldersQuery.limit(0);
+      }
+      const localSortBy = sortParams.sortBy || 'name';
+      const localSortOrderAsc = sortParams.sortOrder !== 'desc';
+      if (localSortBy === 'created_at' || localSortBy === 'name' || localSortBy === 'updated_at') {
+        foldersQuery = foldersQuery.order(localSortBy, { ascending: localSortOrderAsc });
+      }
+      const foldersResponse = await foldersQuery;
+      fetchedFolders = foldersResponse.data;
+      if (foldersResponse.error) {
+        foldersError = new DatabaseError('Failed to fetch folders.', foldersResponse.error.message);
+      }
+    } catch (e: any) {
+      console.error('Error fetching folders directly:', e);
+      foldersError = e instanceof Error ? e : new DatabaseError('Failed to fetch folders');
+    }
+    
+    const rawApiAssets = assetsError ? null : AssetMapper.fromDomainToRawApiArray(domainAssets);
+
+    result = {
+      assetsData: rawApiAssets,
+      foldersData: fetchedFolders,
+      assetsError,
+      foldersError,
+    };
   }
 
   if (result.foldersError || result.assetsError) {
@@ -90,16 +142,10 @@ export async function getHandler(
     result.assetsData
   );
   
-  let combinedData: CombinedItem[] = [...foldersWithDetails, ...assetsWithDetails];
+  let combinedData: CombinedDamItem[] = [...foldersWithDetails, ...assetsWithDetails];
 
   if (quickSearch && typeof parsedLimit === 'number') {
     combinedData = applyQuickSearchLimits(foldersWithDetails, assetsWithDetails, parsedLimit);
-  } else if (quickSearch && parsedLimit === undefined) {
-    // If quickSearch is true but no limit is specified, default to applying some limit or decide behavior.
-    // For now, let's assume if limit is not given with quicksearch, we don't apply specific quicksearch limit logic here,
-    // and rely on limits applied within fetchSearchResults/fetchFolderContents if any.
-    // Or, apply a default limit for quicksearch if desired.
-    // This else-if can be refined based on desired quicksearch behavior without limit.
   }
   
   const responseData = {

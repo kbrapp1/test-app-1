@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import { Folder } from '@/types/dam';
+import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { type TransformedFolder } from '@/app/api/dam/dam-api.types';
 // We might need fetch logic here, but useFolderFetch is not directly used in the store actions provided.
 // It was mentioned as a comment in the original code, so keeping the import if it might be used later elsewhere or was planned.
-import { useFolderFetch } from '@/hooks/useFolderFetch'; 
+// import { useFolderFetch } from '@/hooks/useFolderFetch'; 
 import {
   findNodeById, // Removed: local definition
   findAndUpdateNode,
@@ -11,12 +12,16 @@ import {
   buildNodeMap
 } from './folderStoreUtils'; // ADDED: Import from utils
 
-// Define the structure for a folder node in the store, including children and expansion state
-export interface FolderNode extends Folder {
-  children: FolderNode[] | null; // null if not fetched, [] if fetched and empty
+// FolderNode now extends the main DomainFolder entity
+export interface FolderNode extends DomainFolder { 
+  children: FolderNode[] | null; 
   isExpanded: boolean;
   isLoading: boolean;
   hasError: boolean;
+  // TransformedFolder specific fields like 'type' or 'ownerName' can be optionally added if needed by UI directly from FolderNode
+  // For now, keep it aligned with DomainFolder + UI state.
+  type?: 'folder'; // Optional if we want to store it from TransformedFolder
+  ownerName?: string; // Optional
 }
 
 // Define the store's state and actions
@@ -25,14 +30,14 @@ interface FolderStoreState {
   selectedFolderId: string | null; // New state for selected folder
   searchTerm: string; // New state for the search term
   changeVersion: number; // ADDED: Change indicator
-  setInitialFolders: (folders: Folder[]) => void;
+  setInitialFolders: (folders: DomainFolder[]) => void;
   toggleExpand: (folderId: string) => void;
-  fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<Folder[]>) => Promise<void>;
-  addFolder: (newFolder: Folder) => void;
+  fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<DomainFolder[]>) => Promise<void>;
+  addFolder: (newFolder: DomainFolder) => void;
   removeFolder: (folderId: string) => void;
-  updateFolderNodeInStore: (updatedFolder: Folder) => void; // ADDED: Action definition
-  setSelectedFolder: (folderId: string | null) => void; // New action
-  setSearchTerm: (term: string) => void; // New action for search
+  updateFolderNodeInStore: (updatedFolder: DomainFolder) => void;
+  setSelectedFolder: (folderId: string | null) => void;
+  setSearchTerm: (term: string) => void;
   // TODO: Add renameFolder action
 }
 
@@ -50,9 +55,10 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     const initialNodes: FolderNode[] = folders.map(f => {
       const existingNode = existingNodeMap.get(f.id);
       return {
-        ...f,
-        children: existingNode?.children ?? null, // Preserve existing children if any, otherwise null
-        isExpanded: existingNode?.isExpanded ?? false, // Preserve expansion state
+        ...f, // f is DomainFolder, spread its properties
+        // TransformedFolder specific fields like type/ownerName won't come from f
+        children: existingNode?.children ?? null, 
+        isExpanded: existingNode?.isExpanded ?? false, 
         isLoading: existingNode?.isLoading ?? false,
         hasError: existingNode?.hasError ?? false,
       };
@@ -64,9 +70,9 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     // If `folders` is meant to be the *entire* hierarchy, a tree-building step is needed here.
     // Given the original code, `folders` in `setInitialFolders` are just root folders.
     set({ 
-      rootFolders: initialNodes.filter(f => f.parent_folder_id === null).sort((a,b) => a.name.localeCompare(b.name)), 
+      rootFolders: initialNodes.filter(f => f.parentFolderId === null).sort((a,b) => a.name.localeCompare(b.name)), 
       selectedFolderId: null,
-      // changeVersion: get().changeVersion + 1 // Optionally increment on initial set/reset too
+      changeVersion: get().changeVersion + 1 // ADDED: Increment on initial set/reset too
     });
   },
 
@@ -86,15 +92,22 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     }));
 
     try {
-      const childrenData = await fetcher(folderId); // This is Folder[]
-      const childrenNodes: FolderNode[] = childrenData.map(f_child => {
-        const existingChildNode = fullCurrentStateMap.get(f_child.id); // Check if this child existed before
+      const childrenData = await fetcher(folderId); // childrenData is now DomainFolder[]
+      
+      const childrenNodes: FolderNode[] = childrenData.map(f_child => { // f_child is DomainFolder
+        const existingChildNode = fullCurrentStateMap.get(f_child.id);
+        // f_child is DomainFolder. FolderNode extends DomainFolder.
+        // Spreading f_child will correctly populate the DomainFolder parts of FolderNode.
+        // type and ownerName are optional in FolderNode and won't come from DomainFolder.
         return {
-          ...f_child,
-          children: existingChildNode?.children ?? null, // Preserve deeper children
-          isExpanded: existingChildNode?.isExpanded ?? false, // Preserve expansion of this child
+          ...f_child, // Spread DomainFolder properties
+          
+          // FolderNode specific UI state
+          children: existingChildNode?.children ?? null, 
+          isExpanded: existingChildNode?.isExpanded ?? false, 
           isLoading: existingChildNode?.isLoading ?? false,
           hasError: existingChildNode?.hasError ?? false,
+          // type and ownerName will be undefined, which is fine as they are optional in FolderNode
         };
       });
       
@@ -103,7 +116,6 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
               children: childrenNodes.sort((a,b) => a.name.localeCompare(b.name)), 
               isLoading: false, 
               hasError: false,
-              // isExpanded: true // Parent is already expanded to trigger this fetch, or was toggled.
           }))
       }));
     } catch (error) {
@@ -126,9 +138,13 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     set({ searchTerm: term });
   },
 
-  addFolder: (newFolderData: Folder) => {
+  addFolder: (newFolderData: DomainFolder) => {
+    // newFolderData is DomainFolder. FolderNode extends DomainFolder.
+    // The main difference would be if TransformedFolder had extra required fields that DomainFolder doesn't.
+    // Since TransformedFolder is now leaner, this should be fine.
     const newNode: FolderNode = {
-        ...newFolderData,
+        ...newFolderData, // Spread DomainFolder properties
+        // FolderNode specific UI state
         children: null,
         isExpanded: false, 
         isLoading: false,
@@ -137,10 +153,9 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
 
     set((state) => {
       let updatedRootFolders = [...state.rootFolders];
-      const nodeMap = buildNodeMap(updatedRootFolders); // For quick parent lookup
+      const nodeMap = buildNodeMap(updatedRootFolders); 
 
-      // Expand all ancestors
-      let parentId = newNode.parent_folder_id;
+      let parentId = newNode.parentFolderId; // Use parentFolderId from DomainFolder
       while (parentId) {
         const parentNode = nodeMap.get(parentId);
         if (parentNode) {
@@ -149,9 +164,9 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
             parentId,
             () => ({ isExpanded: true })
           );
-          parentId = parentNode.parent_folder_id;
+          parentId = parentNode.parentFolderId; // Use parentFolderId from DomainFolder
         } else {
-          parentId = null; // Parent not found in current tree, stop
+          parentId = null; 
         }
       }
       
@@ -173,15 +188,15 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   },
 
   // ADDED: Implementation for updateFolderNodeInStore
-  updateFolderNodeInStore: (updatedFolder) => {
+  updateFolderNodeInStore: (updatedFolder: DomainFolder) => {
     set((state) => ({
       rootFolders: findAndUpdateNode(
         state.rootFolders,
         updatedFolder.id,
-        (node) => ({ 
-          name: updatedFolder.name,
-          // Potentially update other fields from updatedFolder if they can change
-          // and are part of FolderNode, e.g., parent_folder_id if moving while renaming (though less common for just rename)
+        (node) => ({ // node is FolderNode
+          ...node, // Preserve existing FolderNode UI state
+          ...updatedFolder, // Overlay with updated DomainFolder fields
+          // name: updatedFolder.name, (example, spread handles this)
         })
       ),
       changeVersion: state.changeVersion + 1 // ADDED: Increment version

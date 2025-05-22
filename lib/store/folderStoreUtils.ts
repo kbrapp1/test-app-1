@@ -1,5 +1,5 @@
 import { type FolderNode } from './folderStore';
-import { type Folder } from '@/types/dam';
+// import { type Folder } from '@/lib/dam/types/dam.types';
 
 // Helper to recursively find a node by ID
 export const findNodeById = (nodes: FolderNode[], folderId: string): FolderNode | null => {
@@ -49,12 +49,12 @@ export const addNodeToParent = (
     newFolder: FolderNode,
     folderMapForAncestors?: Map<string, FolderNode> // Optional, for finding parents by ID
 ): FolderNode[] => {
-    if (newFolder.parent_folder_id === null) {
+    if (newFolder.parentFolderId === null) {
         const newNodes = [...nodes, newFolder];
         return newNodes.sort((a, b) => a.name.localeCompare(b.name));
     }
     return nodes.map(node => {
-        if (node.id === newFolder.parent_folder_id) {
+        if (node.id === newFolder.parentFolderId) {
             const updatedChildren = node.children ? [...node.children, newFolder].sort((a, b) => a.name.localeCompare(b.name)) : [newFolder];
             return { ...node, children: updatedChildren };
         }

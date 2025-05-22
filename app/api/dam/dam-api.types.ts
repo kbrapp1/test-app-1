@@ -1,5 +1,4 @@
 import type { Tag } from '@/lib/actions/dam/tag.actions';
-import { Asset, Folder } from '@/types/dam';
 
 // Original types from dam-api.helpers.ts / route.ts
 
@@ -46,7 +45,8 @@ export interface RawFolderFromApi {
   created_at: string;
   updated_at: string;
   parent_folder_id: string | null;
-  // organization_id is implicitly filtered by eq('organization_id', activeOrgId)
+  organization_id: string;
+  has_children_count?: Array<{ count: number }>;
 }
 
 // Result structure for data fetching functions
@@ -57,8 +57,41 @@ export interface DataFetchingResult {
   assetsError: Error | null;
 }
 
+// ### NEW/MODIFIED TYPES for transformed data ###
+export interface TransformedAsset {
+  id: string;
+  name: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  storage_path: string;
+  mime_type: string;
+  size: number;
+  folder_id: string | null;
+  organization_id: string;
+  // Added by transformer:
+  type: 'asset';
+  publicUrl: string | null; // Ensure getPublicUrl can return null
+  parentFolderName: string | null;
+  ownerName: string;
+  tags: Tag[]; // Tag from '@/lib/actions/dam/tag.actions'
+}
+
+export interface TransformedFolder {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  parentFolderId: string | null | undefined;
+  organizationId: string;
+  has_children: boolean;
+  type: 'folder';
+  ownerName: string;
+}
+
 // Return type for the transformation helper
 export interface TransformedDataReturn {
-  foldersWithDetails: Folder[]; // Assuming Folder is imported or defined
-  assetsWithDetails: Asset[];   // Assuming Asset is imported or defined
+  foldersWithDetails: TransformedFolder[];
+  assetsWithDetails: TransformedAsset[];
 } 

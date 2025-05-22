@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { getAssetContent, updateAssetText, saveAsNewTextAsset } from '@/lib/actions/dam/text-asset.actions';
-import { getDamAssetDownloadUrl } from '@/lib/actions/dam/asset-url.actions';
+import { getAssetDownloadUrl } from '@/lib/actions/dam/asset-url.actions';
 import { saveTtsAudioToDam } from '@/lib/actions/tts';
-import type { Asset } from '@/types/dam';
+import type { Asset } from '../lib/dam/domain/entities/Asset';
 
 interface UseTtsDamIntegrationProps {
   onTextLoaded?: (text: string, assetId: string) => void; // Callback after text is loaded
@@ -148,7 +148,7 @@ export function useTtsDamIntegration({ onTextLoaded }: UseTtsDamIntegrationProps
 
     try {
       if (outputAssetId) {
-        const result = await getDamAssetDownloadUrl(outputAssetId);
+        const result = await getAssetDownloadUrl(outputAssetId);
         if (result.success && result.downloadUrl) {
           urlToDownload = result.downloadUrl;
           try {
