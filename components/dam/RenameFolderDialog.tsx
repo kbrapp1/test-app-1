@@ -14,10 +14,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { updateFolder } from '@/lib/actions/dam/folder.actions';
+import { updateFolderAction } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
-import type { Folder } from '@/types/dam';
+import type { PlainFolder } from '@/lib/dam/types/dam.types';
+import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ const initialState: {
   error?: string;
   folderId?: string;
   parentFolderId?: string | null;
-  folder?: Folder;
+  folder?: PlainFolder;
 } = {
   success: false,
   error: undefined,
@@ -67,35 +68,36 @@ export function RenameFolderDialog({
     }
   }, [isOpen, currentName]);
 
-  const updateFolderWithId = updateFolder.bind(null, initialState);
-  
-  const dispatchAction = async (prevState: typeof initialState, formPayload: FormData) => {
-    formPayload.append('folderId', folderId);
-    formPayload.append('newName', name);
-    return updateFolderWithId(formPayload);
-  };
+  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
 
-  const [state, formAction] = useActionState(dispatchAction, initialState);
+  const { updateFolderNodeInStore: updateStoreFolder } = useFolderStore();
 
   useEffect(() => {
-    if (submissionHandled) {
-      return;
-    }
+    if (submissionHandled) return;
 
     if (state.success && state.folder) {
-      toast.success(`Folder "${currentName}" has been successfully renamed to "${state.folder.name}".`);
+      toast.success(`Folder "${currentName}" renamed to "${state.folder.name}" successfully.`);
       
-      if (updateFolderNodeInStore) {
-        updateFolderNodeInStore(state.folder);
-      }
+      // Convert PlainFolder to DomainFolder for the store
+      const domainFolder = new DomainFolder({
+        id: state.folder.id,
+        name: state.folder.name,
+        userId: state.folder.userId,
+        createdAt: state.folder.createdAt,
+        updatedAt: state.folder.updatedAt,
+        parentFolderId: state.folder.parentFolderId,
+        organizationId: state.folder.organizationId,
+        has_children: state.folder.has_children,
+      });
       
+      updateStoreFolder(domainFolder);
       setSubmissionHandled(true); 
       onClose();
     } else if (state.error) {
-      toast.error(state.error);
+      toast.error(`Error: ${state.error}`);
       setSubmissionHandled(true); 
     }
-  }, [state, currentName, name, onClose, updateFolderNodeInStore, submissionHandled]);
+  }, [state, currentName, onClose, updateStoreFolder, submissionHandled]);
 
   if (!isOpen) {
     return null;
@@ -105,6 +107,11 @@ export function RenameFolderDialog({
     if (!open) {
       onClose();
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Handle form submission
   };
 
   return (
@@ -117,6 +124,7 @@ export function RenameFolderDialog({
           </DialogDescription>
         </DialogHeader>
         <form action={formAction}>
+          <input type="hidden" name="folderId" value={folderId} />
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="folderName" className="text-right">

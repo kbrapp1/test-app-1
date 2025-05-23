@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Filter as FilterIcon, Loader2 } from 'lucide-react';
-import type { Tag } from '@/types/dam';
-import { listTagsForOrganization } from '@/lib/actions/dam/tag.actions';
+import type { PlainTag } from '@/lib/actions/dam/tag.actions';
+import { listTagsForOrganizationForClient } from '@/lib/actions/dam/tag.actions';
 
 interface DamTagFilterProps {
   activeOrgId: string | null;
@@ -23,7 +23,7 @@ export function DamTagFilter({
   onFilterChange,
   tooltipText = "Filter by tags"
 }: DamTagFilterProps) {
-  const [organizationTags, setOrganizationTags] = useState<Tag[]>([]);
+  const [organizationTags, setOrganizationTags] = useState<PlainTag[]>([]);
   const [selectedTagIdsInPopover, setSelectedTagIdsInPopover] = useState<Set<string>>(initialSelectedTagIdsFromUrl);
   const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
   const [isLoadingTags, setIsLoadingTags] = useState(false);
@@ -43,7 +43,7 @@ export function DamTagFilter({
       const fetchTags = async () => {
         setIsLoadingTags(true);
         try {
-          const result = await listTagsForOrganization(activeOrgId);
+          const result = await listTagsForOrganizationForClient(activeOrgId);
           if (result.success && result.data) {
             setOrganizationTags(result.data.sort((a, b) => a.name.localeCompare(b.name)));
           } else {

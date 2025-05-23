@@ -87,12 +87,10 @@ export default function TextToSpeechPage() {
   }, [headlessPlayAudio, headlessPauseAudio, headlessResumeAudio, headlessStopAudio, isHeadlessPlayerPlaying, headlessPlayerUrl]);
 
   const handleViewInDam = useCallback((item: TtsPredictionRow) => {
-    console.log('View in DAM clicked for:', item);
     // TODO: Implement DAM navigation
   }, []);
 
   const handleDeleteItem = useCallback(async (item: TtsPredictionRow) => {
-    console.log('Delete clicked for:', item);
     // TODO: Implement delete logic
   }, []);
 

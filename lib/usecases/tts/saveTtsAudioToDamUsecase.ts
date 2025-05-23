@@ -16,8 +16,6 @@ export async function saveTtsAudioToDam(
   ttsPredictionId: string
 ): Promise<{ success: boolean; assetId?: string; error?: string }> {
   try {
-    console.log(`TTS Usecase (saveTtsAudioToDam): Saving audio for prediction ${ttsPredictionId} to DAM.`);
-
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -48,7 +46,6 @@ export async function saveTtsAudioToDam(
     let blobSizeValue: number;
 
     if (ttsPrediction.prediction_provider === 'elevenlabs') {
-      console.log('TTS Usecase (saveTtsAudioToDam): ElevenLabs provider. Using stored asset details.');
       if (!ttsPrediction.output_storage_path || !ttsPrediction.output_content_type || ttsPrediction.output_file_size === null) {
         console.error('TTS Usecase (saveTtsAudioToDam): ElevenLabs prediction missing stored asset details.');
         return { success: false, error: 'ElevenLabs prediction is missing necessary stored asset details (path, type, or size).' };
@@ -56,14 +53,11 @@ export async function saveTtsAudioToDam(
       storagePathValue = ttsPrediction.output_storage_path;
       contentTypeValue = ttsPrediction.output_content_type;
       blobSizeValue = ttsPrediction.output_file_size;
-      console.log(`TTS Usecase (saveTtsAudioToDam): Using existing ElevenLabs asset at ${storagePathValue}`);
     } else {
-      console.log(`TTS Usecase (saveTtsAudioToDam): Provider ${ttsPrediction.prediction_provider || 'unknown'}. Downloading and uploading from ${audioUrl}`);
       const uploadResult = await downloadAndUploadAudio(audioUrl, organizationId, userId);
       storagePathValue = uploadResult.storagePath;
       contentTypeValue = uploadResult.contentType;
       blobSizeValue = uploadResult.blobSize;
-      console.log(`TTS Usecase (saveTtsAudioToDam): Audio uploaded to ${storagePathValue}`);
     }
 
     const { randomUUID } = await import('crypto');
@@ -86,7 +80,6 @@ export async function saveTtsAudioToDam(
         createdAt: new Date(),
       });
 
-      console.log(`TTS Usecase (saveTtsAudioToDam): Created asset record in DB with ID: ${newAsset.id}`);
       return { success: true, assetId: newAsset.id };
     } catch (dbError: any) {
       console.error('TTS Usecase (saveTtsAudioToDam): DB error creating asset record:', dbError);

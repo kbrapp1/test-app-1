@@ -16,8 +16,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, HomeIcon, SearchIcon, XIcon, ChevronRight, Loader2 } from 'lucide-react';
 import { FolderTreeItem } from './FolderTreeItem';
 import { useFolderStore, type FolderNode } from '@/lib/store/folderStore';
-import { type TransformedFolder } from '@/app/api/dam/dam-api.types';
-import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 
 interface FolderPickerDialogProps {
   isOpen: boolean;
@@ -45,17 +44,20 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isInitiallyLoading, setIsInitiallyLoading] = useState(false);
 
-  const fetcherFunction = useCallback(async (parentId: string | null): Promise<TransformedFolder[]> => {
+  const fetcherFunction = useCallback(async (parentId: string | null): Promise<DomainFolder[]> => {
     const url = parentId 
       ? `/api/dam/folders/tree?parentId=${parentId}` 
       : '/api/dam/folders/tree';
+    
     try {
       const response = await fetch(url);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to fetch folders' }));
         throw new Error(errorData.message || 'Failed to fetch folders');
       }
       const jsonData = await response.json();
+      
       if (!Array.isArray(jsonData)) {
         console.error('API did not return an array for folders:', jsonData);
         if (jsonData && typeof jsonData === 'object' && 'message' in jsonData) {
@@ -63,7 +65,33 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
         }
         throw new Error('API did not return an array for folders.');
       }
-      return jsonData as TransformedFolder[];
+      
+      // The API now returns plain objects from toPlainObject(), create Folder instances directly
+      const plainFolders = jsonData as Array<{
+        id: string;
+        name: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt?: Date;
+        parentFolderId?: string | null;
+        organizationId: string;
+        has_children?: boolean;
+      }>;
+      
+      const domainFolders: DomainFolder[] = plainFolders.map(pf => 
+        new DomainFolder({
+          id: pf.id,
+          name: pf.name,
+          userId: pf.userId,
+          createdAt: new Date(pf.createdAt),
+          updatedAt: pf.updatedAt ? new Date(pf.updatedAt) : undefined,
+          parentFolderId: pf.parentFolderId,
+          organizationId: pf.organizationId,
+          has_children: pf.has_children,
+        })
+      );
+      
+      return domainFolders;
     } catch (error) {
       console.error('Error fetching folders:', error);
       toast.error((error as Error).message || 'An unexpected error occurred.');
@@ -76,17 +104,7 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
       const loadRootFolders = async () => {
         setIsInitiallyLoading(true);
         try {
-          const fetchedRootTransformedFolders = await fetcherFunction(null);
-          const rootDomainFolders: DomainFolder[] = fetchedRootTransformedFolders.map(tf => ({
-            id: tf.id,
-            name: tf.name,
-            userId: tf.userId,
-            createdAt: tf.createdAt,
-            updatedAt: tf.updatedAt,
-            parentFolderId: tf.parentFolderId,
-            organizationId: tf.organizationId,
-            has_children: tf.has_children,
-          }));
+          const rootDomainFolders = await fetcherFunction(null);
           storeSetInitialFolders(rootDomainFolders);
         } catch (error) {
           console.error("Error during initial root folder load sequence:", error);

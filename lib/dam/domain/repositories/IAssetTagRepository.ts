@@ -53,4 +53,12 @@ export interface IAssetTagRepository {
    * @returns Promise<boolean> True if the update was successful.
    */
   updateTagsForAsset(assetId: string, tagIds: string[], organizationId: string, userId: string): Promise<boolean>;
+
+  /**
+   * Checks if a specific tag is linked to any assets within an organization.
+   * @param tagId The ID of the tag.
+   * @param organizationId The ID of the organization.
+   * @returns Promise<boolean> True if the tag is linked to at least one asset, false otherwise.
+   */
+  isTagLinked(tagId: string, organizationId: string): Promise<boolean>;
 } 

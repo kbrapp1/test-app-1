@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { CombinedItem } from '@/types/dam';
+import type { CombinedItem } from '@/lib/dam/types/component';
 
 interface UseAssetGalleryDataProps {
   currentFolderId: string | null;

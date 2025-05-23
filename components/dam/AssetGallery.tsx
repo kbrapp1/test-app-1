@@ -27,6 +27,45 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { Suspense } from 'react';
 // import { DamAssetUploadDialog } from './DamAssetUploadDialog'; // Removed - file not found
 import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/gallery.actions';
+import { GalleryItemDto } from '@/lib/dam/application/use-cases/ListFolderContentsUseCase';
+import { CombinedItem, ComponentAsset, ComponentFolder } from '@/lib/dam/types/component';
+
+// Helper function to convert GalleryItemDto to CombinedItem
+function convertGalleryItemToCombinedItem(item: GalleryItemDto): CombinedItem {
+    if (item.type === 'folder') {
+        return {
+            type: 'folder',
+            id: item.id,
+            name: item.name,
+            createdAt: item.createdAt,
+            // Fill in required properties with defaults or empty values
+            userId: '', // These would ideally come from the DTO, but are not available
+            parentFolderId: null,
+            organizationId: '',
+            has_children: false,
+            ownerName: '',
+        } as ComponentFolder;
+    } else {
+        return {
+            type: 'asset',
+            id: item.id,
+            name: item.name,
+            created_at: item.createdAt.toISOString(),
+            mime_type: item.mimeType,
+            publicUrl: item.publicUrl || null,
+            // Fill in required properties with defaults or empty values
+            user_id: '',
+            updated_at: null,
+            storage_path: '',
+            size: 0,
+            folder_id: null,
+            organization_id: '',
+            ownerName: '',
+            parentFolderName: null,
+            tags: [],
+        } as ComponentAsset;
+    }
+}
 
 interface AssetGalleryProps {
     currentFolderId: string | null;
@@ -42,8 +81,9 @@ export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
         return <p className="text-red-500">{errorMessage}</p>;
     }
 
-    // Extract data from the successful result
+    // Extract data from the successful result and convert to CombinedItem[]
     const { items } = result.data;
+    const combinedItems = items.map(convertGalleryItemToCombinedItem);
     
     // Separate assets and folders from combinedItems if needed by the client wrapper
     // (Currently, the wrapper primarily uses combinedItems, but let's pass them for potential use)
@@ -53,7 +93,7 @@ export async function AssetGallery({ currentFolderId }: AssetGalleryProps) {
     // --- Render the Client Component Wrapper, passing initial data --- 
     return (
         <AssetGalleryClientWrapper
-            initialCombinedItems={items}
+            initialCombinedItems={combinedItems}
             // initialAssets={initialAssets} // Removed
             // initialFolders={initialFolders} // Removed
             currentFolderId={currentFolderId} 

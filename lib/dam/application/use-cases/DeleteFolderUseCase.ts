@@ -19,7 +19,7 @@ export class DeleteFolderUseCase {
     }
 
     // 1. Verify the folder exists and belongs to the organization before attempting to delete.
-    const folderToDelete = await this.folderRepository.findById(folderId);
+    const folderToDelete = await this.folderRepository.findById(folderId, organizationId);
     if (!folderToDelete || folderToDelete.organizationId !== organizationId) {
       // Important to throw NotFoundError here, because the repository's delete 
       // might just return false if RLS prevents access or row doesn't exist,
@@ -31,15 +31,7 @@ export class DeleteFolderUseCase {
     // The repository's delete method should handle checks for children (assets/subfolders)
     // and throw an error (e.g., a specific DatabaseError or ConflictError) if it cannot be deleted.
     try {
-      const success = await this.folderRepository.delete(folderId);
-      // If delete returns false without throwing, it might indicate a non-exceptional failure (e.g. RLS silently prevented it)
-      // However, our repo throws DatabaseError if children exist. If it returns false for other reasons, we might want to clarify.
-      if (!success) {
-          // This case might be rare if repo throws for known delete blockers.
-          // Could indicate a subtle issue or an RLS restriction not resulting in a thrown error by Supabase client.
-          console.warn(`Deletion of folder ${folderId} returned false from repository without throwing an error.`);
-          throw new Error(`Deletion of folder "${folderToDelete.name}" failed for an unspecified reason.`);
-      }
+      await this.folderRepository.delete(folderId, organizationId);
       return true;
     } catch (error) {
       // The repository's delete method might throw a DatabaseError or ConflictError if it contains children.

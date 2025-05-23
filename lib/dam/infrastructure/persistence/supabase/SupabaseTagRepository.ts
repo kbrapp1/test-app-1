@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ITagRepository } from '../../../domain/repositories/ITagRepository';
+import { ITagRepository, CreateTagData, UpdateTagData } from '../../../domain/repositories/ITagRepository';
 import { Tag } from '../../../domain/entities/Tag';
 import { TagMapper, RawTagDbRecord } from './mappers/TagMapper';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
@@ -81,8 +81,8 @@ export class SupabaseTagRepository implements ITagRepository {
     return data ? TagMapper.toDomain(data as RawTagDbRecord) : null;
   }
 
-  async save(tagData: Omit<Tag, 'id' | 'createdAt'>): Promise<Tag> {
-    const persistenceData = TagMapper.toPersistence(tagData);
+  async save(tagData: CreateTagData): Promise<Tag> {
+    const persistenceData = TagMapper.toCreatePersistence(tagData);
     const { data, error } = await this.supabase
       .from('tags')
       .insert(persistenceData)
@@ -101,5 +101,59 @@ export class SupabaseTagRepository implements ITagRepository {
       throw new DatabaseError('Could not save tag.', 'DB_SAVE_TAG_ERROR', { originalError: error?.message });
     }
     return TagMapper.toDomain(data as RawTagDbRecord);
+  }
+
+  async update(tagId: string, data: UpdateTagData): Promise<Tag | null> {
+    if (!tagId) {
+      throw new ValidationError('Tag ID is required for update.');
+    }
+    if (!data.name || data.name.trim() === '') {
+      throw new ValidationError('Tag name cannot be empty for update.');
+    }
+
+    const persistenceData = TagMapper.toUpdatePersistence(data);
+
+    const { data: updatedData, error } = await this.supabase
+      .from('tags')
+      .update(persistenceData)
+      .eq('id', tagId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('SupabaseTagRepository Error - update:', error.message);
+      if (error.code === '23505') { // Unique constraint violation for name in org
+        throw new ConflictError(
+          `A tag with the name "${data.name}" already exists in this organization.`,
+          'DUPLICATE_TAG_NAME',
+          { originalError: error.message, conflictingName: data.name }
+        );
+      }
+      throw new DatabaseError('Could not update tag.', 'DB_UPDATE_TAG_ERROR', { originalError: error.message });
+    }
+    if (!updatedData) {
+      return null; // Or throw NotFoundError if preferred when update affects 0 rows
+    }
+    return TagMapper.toDomain(updatedData as RawTagDbRecord);
+  }
+
+  async delete(tagId: string): Promise<boolean> {
+    if (!tagId) {
+      throw new ValidationError('Tag ID is required for deletion.');
+    }
+    // Note: isTagLinked check should be done in the use case, not here.
+    // The repository is responsible for the deletion operation itself.
+    const { error } = await this.supabase
+      .from('tags')
+      .delete()
+      .eq('id', tagId);
+
+    if (error) {
+      console.error('SupabaseTagRepository Error - delete:', error.message);
+      throw new DatabaseError('Could not delete tag.', 'DB_DELETE_TAG_ERROR', { originalError: error.message });
+    }
+    // Supabase delete returns no error if row not found or on successful delete.
+    // We consider it a success if no error is thrown.
+    return true;
   }
 } 

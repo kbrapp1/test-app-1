@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
-import { Asset, CombinedItem } from '@/types/dam';
+import { ComponentAsset as Asset, CombinedItem } from '@/lib/dam/types/component';
 import { AssetGridItem } from './AssetGridItem';
 import { useGridDimensions } from '@/hooks/useGridDimensions';
 

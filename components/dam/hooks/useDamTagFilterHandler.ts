@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { useDamUrlManager } from '@/lib/hooks/useDamUrlManager';
+import { useDamUrlManager } from './useDamUrlManager';
 
 interface UseDamTagFilterHandlerProps {
   gallerySearchTerm: string;

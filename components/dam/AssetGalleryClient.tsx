@@ -3,7 +3,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AssetGrid } from './AssetGrid';
 import { FolderListItem } from './FolderListItem';
-import type { CombinedItem, Folder, Asset } from '@/types/dam';
+import type { 
+  CombinedItem, 
+  ComponentFolder as Folder, 
+  ComponentAsset as Asset 
+} from '@/lib/dam/types/component';
 import {
   DndContext,
   pointerWithin,

@@ -8,8 +8,8 @@ import { useToast } from '@/components/ui/use-toast';
 
 // Import helpers from their new locations
 import { processAuthFromUrlHelper, handleOnboardingError } from '@/lib/auth/onboardingAuthUtils';
-import { callCompleteOnboardingFunctionHelper } from '@/lib/services/onboardingService';
-import { updateUserProfileHelper } from '@/lib/services/profileService';
+import { completeOnboardingMembership } from '@/lib/services/onboardingService';
+import { updateUserProfile } from '@/lib/services/profileService';
 import { validateOnboardingForm } from '@/lib/forms/onboardingValidation';
 
 // Helper functions are now external
@@ -40,7 +40,7 @@ export function useOnboarding() {
   // Helper function within the hook for auto-completing onboarding
   const _tryAutoCompleteOnboarding = async () => {
     try {
-      await callCompleteOnboardingFunctionHelper(supabase);
+      await completeOnboardingMembership(supabase);
       toast({
         title: 'Welcome Back!',
         description: 'Processing your access and redirecting to the dashboard...',
@@ -104,11 +104,11 @@ export function useOnboarding() {
   // Helper function within the hook for core onboarding steps after auth update
   const _performCoreOnboardingSteps = async (user: User, currentFullName: string) => {
     // Call Edge Function to complete membership/roles
-    await callCompleteOnboardingFunctionHelper(supabase);
+    await completeOnboardingMembership(supabase);
 
     // Update Public Profile (optional, log errors)
     try {
-      await updateUserProfileHelper(supabase, user, currentFullName);
+      await updateUserProfile(supabase, user);
     } catch (profileErr: any) {
        console.warn("Profile update failed:", profileErr.message);
        toast({
@@ -141,16 +141,11 @@ export function useOnboarding() {
 
       await _performCoreOnboardingSteps(userAfterAuthUpdate, fullName);
 
+      // Refresh the session to get updated claims
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Error refreshing session after onboarding:', refreshError);
-        toast({
-          title: 'Session Sync Issue',
-          description: 'Could not immediately sync your session. You might need to log in again if you experience issues.',
-          variant: 'default'
-        });
-      } else {
-        console.log('Session refreshed successfully after onboarding.');
+        throw new Error('Failed to refresh session after onboarding.');
       }
 
       setIsComplete(true);

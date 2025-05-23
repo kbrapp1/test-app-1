@@ -6,7 +6,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { moveAsset } from '@/lib/actions/dam/asset-crud.actions';
-import type { Asset, CombinedItem } from '@/types/dam';
+import type { ComponentAsset as Asset, CombinedItem } from '@/lib/dam/types/component';
 import type { useToast } from '@/components/ui/use-toast'; // Import type
 
 interface UseAssetDragAndDropProps {

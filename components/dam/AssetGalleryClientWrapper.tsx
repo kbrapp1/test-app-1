@@ -2,15 +2,53 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { AssetGrid } from './AssetGrid';
-import { Asset, Folder, CombinedItem } from '@/types/dam';
+import { ComponentAsset as Asset, ComponentFolder as Folder, CombinedItem } from '@/lib/dam/types/component';
 import { getAssetsAndFoldersForGallery } from '@/lib/actions/dam/gallery.actions'; // Action to refetch data
 import { useToast } from '@/components/ui/use-toast';
+import { GalleryItemDto } from '@/lib/dam/application/use-cases/ListFolderContentsUseCase';
 
 interface AssetGalleryClientWrapperProps {
     initialCombinedItems: CombinedItem[];
     // initialAssets: Asset[]; // We might not need to pass these separately if combinedItems is comprehensive
     // initialFolders: Folder[];
     currentFolderId: string | null;
+}
+
+// Helper function to convert GalleryItemDto to CombinedItem
+function convertGalleryItemToCombinedItem(item: GalleryItemDto): CombinedItem {
+    if (item.type === 'folder') {
+        return {
+            type: 'folder',
+            id: item.id,
+            name: item.name,
+            createdAt: item.createdAt,
+            // Fill in required properties with defaults or empty values
+            userId: '', // These would ideally come from the DTO, but are not available
+            parentFolderId: null,
+            organizationId: '',
+            has_children: false,
+            ownerName: '',
+        } as Folder;
+    } else {
+        return {
+            type: 'asset',
+            id: item.id,
+            name: item.name,
+            created_at: item.createdAt.toISOString(),
+            mime_type: item.mimeType,
+            publicUrl: item.publicUrl || null,
+            // Fill in required properties with defaults or empty values
+            user_id: '',
+            updated_at: null,
+            storage_path: '',
+            size: 0,
+            folder_id: null,
+            organization_id: '',
+            ownerName: '',
+            parentFolderName: null,
+            tags: [],
+        } as Asset;
+    }
 }
 
 export function AssetGalleryClientWrapper({
@@ -35,7 +73,9 @@ export function AssetGalleryClientWrapper({
             // console.log(`[ClientWrapper] handleDataChange triggered. Refetching for folder: ${currentFolderId}`);
             const result = await getAssetsAndFoldersForGallery(currentFolderId);
             if (result.success && result.data) {
-                setItems(result.data.combinedItems);
+                // Convert GalleryItemDto[] to CombinedItem[]
+                const convertedItems = result.data.items.map(convertGalleryItemToCombinedItem);
+                setItems(convertedItems);
                 // toast({ title: "Gallery updated" }); // Optional: notify user of refresh
             } else {
                 toast({ title: "Error refreshing gallery", description: result.error || "Could not fetch updated items.", variant: "destructive" });

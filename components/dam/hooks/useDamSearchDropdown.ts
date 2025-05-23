@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { CombinedItem } from '@/types/dam';
+import type { CombinedItem } from '@/lib/dam/types/component';
 
 interface UseDamSearchDropdownProps {
   debouncedSearchTerm: string;

@@ -1,61 +1,58 @@
-import type { Tag as ImportedTag } from '@/lib/actions/dam/tag.actions';
-
 /**
  * Shared type definitions for Digital Asset Management (DAM) module
+ * 
+ * This file contains only general utility types and re-exports.
+ * Domain-specific types should be in their respective modules:
+ * - Domain entities: lib/dam/domain/entities/
+ * - DTOs: lib/dam/application/dto/
+ * - Infrastructure types: lib/dam/infrastructure/
  */
 
-// Re-export Tag type for wider use
-export type Tag = ImportedTag;
+// DAM Domain Layer Re-exports
+export type { Asset } from '../domain/entities/Asset';
+export type { Folder } from '../domain/entities/Folder';
+export type { Tag } from '../domain/entities/Tag';
 
-// Base type shared by assets and folders
-// export interface BaseItem {
-//   id: string;
-//   name: string;
-//   user_id: string;
-//   organization_id: string;
-//   created_at: string;
-//   type: 'asset' | 'folder';
-//   ownerName: string | null;
-// }
+// Repository Interfaces - organized by layer separation
+export type { IAssetRepository, CreateAssetData, UpdateAssetData } from '../domain/repositories/IAssetRepository';
+export type { IFolderRepository, CreateFolderData, UpdateFolderData, FolderTreeNode } from '../domain/repositories/IFolderRepository';
+export type { ITagRepository, CreateTagData, UpdateTagData } from '../domain/repositories/ITagRepository';
 
-// Asset specific properties
-// export interface Asset extends BaseItem {
-//   type: 'asset';
-//   storage_path: string;
-//   mime_type: string;
-//   size: number;
-//   folder_id: string | null;
-//   publicUrl: string;
-//   parentFolderName: string | null;
-//   tags?: Tag[];
-// }
+// Application Layer DTOs - clean search/filter criteria
+export type {
+  AssetSearchCriteria,
+  FolderSearchCriteria,
+  DamFilterParameters,
+  DamSortParameters,
+  LimitOptions,
+} from '../application/dto/SearchCriteriaDTO';
 
-// Folder specific properties
-// export interface Folder extends BaseItem {
-//   type: 'folder';
-//   parent_folder_id: string | null;
-// }
+// Application Layer DTOs - upload functionality  
+export type {
+  UploadAssetDTO,
+} from '../application/dto/UploadAssetDTO';
 
-// Combined type for components that handle both
-// export type CombinedItem = Asset | Folder;
-
-// API response types
-// export interface ApiResponse {
-//   success: boolean;
-//   message?: string;
-//   data?: CombinedItem[];
-//   error?: string;
-// }
-
-// Error type for fetch responses
+// General utility types that don't belong in specific layers
 export interface FetchError extends Error {
   status?: number;
   message: string;
 }
 
-// Upload form data structure
+// Legacy upload form data - consider moving to DTO if still needed
 export interface UploadFormData {
   files: File[];
   userId: string;
   folderId?: string | null;
+}
+
+// Plain object types for server-client component serialization
+export interface PlainFolder {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  parentFolderId?: string | null;
+  organizationId: string;
+  has_children?: boolean;
 } 

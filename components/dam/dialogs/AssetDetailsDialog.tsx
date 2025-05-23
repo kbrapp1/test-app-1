@@ -11,11 +11,11 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Asset } from '@/types/dam'; // Corrected import path
+import { ComponentAsset as Asset } from '@/lib/dam/types/component'; // Corrected import path
 import { format as formatDateFns } from 'date-fns'; // Aliased to avoid conflict if any
 import { formatBytes } from '@/lib/utils'; // Corrected import
 import { Badge } from '@/components/ui/badge'; // Import Badge
-import type { Tag } from '@/lib/actions/dam/tag.actions'; // Import Tag
+import type { PlainTag } from '@/lib/actions/dam/tag.actions'; // Import PlainTag instead of Tag
 import { TagEditor } from '@/components/dam/TagEditor'; // Import TagEditor
 import { toast } from 'sonner'; // New import for sonner
 import { removeTagFromAsset } from '@/lib/actions/dam/asset-crud.actions'; // Import removeTagFromAsset
@@ -54,7 +54,7 @@ export const AssetDetailsDialog: React.FC<AssetDetailsDialogProps> = ({
     return null; 
   }
 
-  const handleTagAdded = (newlyAddedTag: Tag, allCurrentTagsForAsset: Tag[]) => {
+  const handleTagAdded = (newlyAddedTag: PlainTag, allCurrentTagsForAsset: PlainTag[]) => {
     setDisplayedAsset(prevAsset => {
       if (!prevAsset) return null;
       const existingTagIds = new Set((prevAsset.tags || []).map(t => t.id));
@@ -70,7 +70,7 @@ export const AssetDetailsDialog: React.FC<AssetDetailsDialogProps> = ({
     }
   };
 
-  const handleRemoveTag = async (tagToRemove: Tag) => {
+  const handleRemoveTag = async (tagToRemove: PlainTag) => {
     if (!displayedAsset) return;
     setIsUpdatingTag(true);
     const formData = new FormData();
@@ -134,7 +134,7 @@ export const AssetDetailsDialog: React.FC<AssetDetailsDialogProps> = ({
             value={(
               (displayedAsset.tags && displayedAsset.tags.length > 0) ? (
                 <div className="flex flex-wrap gap-1">
-                  {displayedAsset.tags.map((tag: Tag) => (
+                  {displayedAsset.tags.map((tag: PlainTag) => (
                     <Badge key={tag.id} variant="secondary" className="text-xs group/badge relative pr-7">
                       {tag.name}
                       <button 

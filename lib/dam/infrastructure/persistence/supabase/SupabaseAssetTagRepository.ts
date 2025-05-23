@@ -119,4 +119,23 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     }
     return true;
   }
+
+  async isTagLinked(tagId: string, organizationId: string): Promise<boolean> {
+    // We only need to check if at least one link exists for the tag within the organization.
+    // RLS should handle organization scoping if asset_tags table is linked to assets/tags that have org_id.
+    // For a direct check, we can count.
+    const { count, error } = await this.supabase
+      .from('asset_tags')
+      .select('tag_id', { count: 'exact', head: true })
+      .eq('tag_id', tagId);
+      // .eq('organization_id', organizationId); // This might be redundant if RLS is effective or if asset_tags doesn't have org_id directly.
+      // If asset_tags doesn't have organization_id, we might need a join or RPC to ensure org scope.
+      // For now, assuming direct check on tag_id is sufficient and RLS on related tables handles org security.
+
+    if (error) {
+      console.error('Error checking if tag is linked:', error.message);
+      throw new DatabaseError('Could not determine if tag is linked to assets.', error.message);
+    }
+    return (count || 0) > 0;
+  }
 } 

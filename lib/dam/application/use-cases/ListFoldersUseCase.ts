@@ -1,11 +1,13 @@
 import { Folder } from '../../domain/entities/Folder';
 import { IFolderRepository } from '../../domain/repositories/IFolderRepository';
 import { ValidationError } from '@/lib/errors/base';
+import type { DamSortParameters, DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
 
 interface ListFoldersUseCaseParams {
   parentId: string | null; // ID of the parent folder, or null for root folders
   organizationId: string;
-  // Future: pagination, sorting
+  sortParams?: DamSortParameters;
+  filters?: DamFilterParameters;
 }
 
 export class ListFoldersUseCase {
@@ -13,7 +15,9 @@ export class ListFoldersUseCase {
 
   async execute({ 
     parentId,
-    organizationId 
+    organizationId,
+    sortParams,
+    filters,
   }: ListFoldersUseCaseParams): Promise<Folder[]> {
     // parentId can be null, which is fine. Organization ID is required.
     if (!organizationId) {
@@ -21,8 +25,12 @@ export class ListFoldersUseCase {
     }
 
     try {
-      // This relies on a new method in IFolderRepository
-      const folders = await this.folderRepository.findFoldersByParentId(parentId, organizationId);
+      const folders = await this.folderRepository.findFoldersByParentId(
+        parentId, 
+        organizationId,
+        sortParams,
+        filters
+      );
       return folders;
     } catch (error) {
       console.error(`Error listing folders for parent ${parentId} in use case:`, error);

@@ -1,12 +1,36 @@
 import { Asset } from '../entities/Asset';
+import type { AssetSearchCriteria, DamSortParameters, DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
+
+// Define interfaces for repository input data
+export interface CreateAssetData {
+  id?: string; // Optional for auto-generation
+  userId: string;
+  name: string;
+  storagePath: string;
+  mimeType: string;
+  size: number;
+  folderId?: string | null;
+  organizationId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface UpdateAssetData {
+  name?: string;
+  folderId?: string | null;
+  storagePath?: string;
+  mimeType?: string;
+  size?: number;
+  updatedAt?: Date;
+}
 
 export interface IAssetRepository {
   findById(id: string): Promise<Asset | null>;
-  findByFolderId(folderId: string | null, organizationId: string): Promise<Asset[]>;
+  findByFolderId(folderId: string | null, organizationId: string, sortParams?: DamSortParameters, filters?: DamFilterParameters): Promise<Asset[]>;
   findByName(name: string, organizationId: string, folderId?: string | null): Promise<Asset[]>;
-  search(query: string, organizationId: string, folderId?: string | null, mimeTypes?: string[], tags?: string[]): Promise<Asset[]>;
-  save(asset: Asset): Promise<Asset>;
-  update(assetId: string, data: Partial<Omit<Asset, 'id' | 'organizationId' | 'userId' | 'createdAt'>>): Promise<Asset | null>;
+  search(criteria: AssetSearchCriteria): Promise<Asset[]>;
+  save(assetData: CreateAssetData): Promise<Asset>;
+  update(assetId: string, data: UpdateAssetData): Promise<Asset | null>;
   delete(id: string): Promise<boolean>;
   getStoragePath(assetId: string): Promise<string | null>; // Added for direct path retrieval
   // Potentially add methods for batch operations, counting assets, etc.

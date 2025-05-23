@@ -28,6 +28,7 @@ alwaysApply: false
       - `page.tsx` <!-- Main page component for DAM dashboard. -->
       - `upload/` <!-- Sub-route for uploading assets. -->
         - `page.tsx` <!-- Page component for asset upload interface. -->
+      - `layout.tsx` <!-- Layout for DAM pages. -->
     - `dashboard/` <!-- Feature: Main dashboard section. -->
       - `data.json` <!-- Static data used by the dashboard for charts/metrics. -->
       - `page.tsx` <!-- Page component for main app dashboard. -->
@@ -56,13 +57,18 @@ alwaysApply: false
       - `page.tsx` <!-- Page component for managing team members. -->
   - `api/` <!-- Directory for API route handlers. -->
     - `dam/` <!-- API routes related to DAM. -->
-      - `dam-api.helpers.ts` <!-- Core data fetching and utility functions for DAM API (e.g., fetchSearchResults, fetchFolderContents). -->
-      - `dam-api.query-builders.ts` <!-- Utility functions for constructing Supabase queries for DAM. -->
-      - `dam-api.transformers.ts` <!-- Utility functions for transforming raw DAM data from Supabase. -->
+      - `asset/[assetId]/route.ts` <!-- API route for specific asset operations. -->
+      - `folders/[folderId]/children/route.ts` <!-- API route for folder children. -->
+      - `folders/[folderId]/path/route.ts` <!-- API route for folder path. -->
+      - `folders/[folderId]/route.ts` <!-- API route for specific folder operations. -->
+      - `folders/route.ts` <!-- API route for general folder operations. -->
+      - `folders/tree/route.ts` <!-- API route for folder tree structure. -->
+      - `route.ts` <!-- Main API route for retrieving and managing DAM items. -->
+      - `upload/route.ts` <!-- API handler for file uploads to storage. -->
+      - `dam-api.helpers.ts` <!-- Legacy: Core data fetching and utility functions for DAM API. (To be refactored) -->
+      - `dam-api.query-builders.ts` <!-- Legacy: Utility functions for constructing Supabase queries for DAM. (To be refactored) -->
+      - `dam-api.transformers.ts` <!-- Legacy: Utility functions for transforming raw DAM data. (To be refactored) -->
       - `dam-api.types.ts` <!-- TypeScript type definitions for DAM API. -->
-      - `route.ts` <!-- API route for retrieving and managing digital assets. -->
-      - `upload/` <!-- API route for handling asset uploads. -->
-        - `route.ts` <!-- API handler for file uploads to storage. -->
     - `profile/` <!-- API routes related to user profiles. -->
       - `route.ts` <!-- API route for fetching and updating user profiles. -->
     - `team/` <!-- API routes related to team management. -->
@@ -267,34 +273,39 @@ alwaysApply: false
     - `DAM_Build_Steps.md`
     - `DAM_FSD.md`
     - `DAM_Roadmap.md`
-  - `features/`
-  - `general/`
-    - `deployment_steps.md`
-    - `quick-tips.md`
-    - `test-instructions.md`
-  - `misc-docs/`
-    - `error-codes.md`
-    - `error-handling-patterns.md`
-    - `error-troubleshooting.md`
-    - `error_handling_steps.md`
-    - `form-system-migration.md`
-  - `multi-tenant/`
-  - `roles/`
-  - `starters/`
-    - `project-structure.md`
-    - `stack-rules.md`
-  - `supabase/`
-  - `team-members-completed/`
-    - `Team_Members_Build_Steps.md`
-  - `text-to-speech/`
-    - `tts-build-steps.md`
-    - `tts-fsd.md`
-    - `tts-ux-design.md`
-  - `project-structure-full.txt` <!-- Full project structure text file. -->
-  - `README.md` <!-- Readme for the hooks directory. -->
-  - `useCopyToClipboard.ts` <!-- Hook for copying text to clipboard. -->
-  - `useDamUrlManager.ts` <!-- Hook for managing DAM URL parameters (folder, search, tags). -->
-  - `useDebounce.ts` <!-- Hook for debouncing values. -->
+    - `dam_api_refactor_steps.md` <!-- New refactoring plan for DAM API layer. -->
+    - `dam_refactor_to_lib_build_steps.md` <!-- Completed refactor plan for lib/dam. -->
+    - `completed/` <!-- Contains old/completed documentation. -->
+      - `cleanup_legacy_files.md`
+      - `migration_guide.md`
+    - `features/`
+    - `general/`
+      - `deployment_steps.md`
+      - `quick-tips.md`
+      - `test-instructions.md`
+    - `misc-docs/`
+      - `error-codes.md`
+      - `error-handling-patterns.md`
+      - `error-troubleshooting.md`
+      - `error_handling_steps.md`
+      - `form-system-migration.md`
+    - `multi-tenant/`
+    - `roles/`
+    - `starters/`
+      - `project-structure.md`
+      - `stack-rules.md`
+    - `supabase/`
+    - `team-members-completed/`
+      - `Team_Members_Build_Steps.md`
+    - `text-to-speech/`
+      - `tts-build-steps.md`
+      - `tts-fsd.md`
+      - `tts-ux-design.md`
+    - `project-structure-full.txt` <!-- Full project structure text file. -->
+    - `README.md` <!-- Readme for the hooks directory. -->
+    - `useCopyToClipboard.ts` <!-- Hook for copying text to clipboard. -->
+    - `useDamUrlManager.ts` <!-- Hook for managing DAM URL parameters (folder, search, tags). -->
+    - `useDebounce.ts` <!-- Hook for debouncing values. -->
 - `hooks/` <!-- Custom React hooks for reusable component logic. -->
   - `README.md` <!-- Readme for the hooks directory. -->
   - `useCompleteOnboarding.ts` <!-- Hook for handling user onboarding completion flow. -->
@@ -326,7 +337,10 @@ alwaysApply: false
       - `asset-crud.actions.ts`
       - `asset-url.actions.ts`
       - `folder.actions.ts`
+      - `gallery.actions.ts`
       - `tag.actions.ts`
+      - `text-asset.actions.ts`
+      - `folder.action.helpers.ts`
     - `ai/`
     - `users/`
   - `auth/`
@@ -338,87 +352,69 @@ alwaysApply: false
     - `app.ts`
     - `site.ts`
     - `supabase.ts`
-  - `dam/`
-    - `dam.utils.ts`
-    - `sort.utils.ts`
+  - `dam/` <!-- Digital Asset Management core module using clean architecture -->
+    - `index.ts` <!-- Barrel file for lib/dam module -->
+    - `types/` <!-- Shared type definitions for DAM module -->
+      - `dam.types.ts` <!-- Type definitions for DAM entities and operations -->
+      - `index.ts` <!-- Type exports -->
+    - `application/` <!-- Application layer - use cases and services -->
+      - `dto/` <!-- Data Transfer Objects -->
+        - `UploadAssetDTO.ts` <!-- DTO for asset uploads -->
+      - `services/` <!-- Services orchestrating use cases -->
+        - `AssetService.ts` <!-- Asset management service -->
+        - `FolderService.ts` <!-- Folder management service -->
+      - `use-cases/` <!-- Business logic use cases -->
+        - `AddTagToAssetUseCase.ts` <!-- Use case for adding tags to assets -->
+        - `CreateFolderUseCase.ts` <!-- Use case for folder creation -->
+        - `CreateTagUseCase.ts` <!-- Use case for tag creation -->
+        - `CreateTextAssetUseCase.ts` <!-- Use case for creating text assets -->
+        - `DeleteAssetUseCase.ts` <!-- Use case for asset deletion -->
+        - `DeleteFolderUseCase.ts` <!-- Use case for folder deletion -->
+        - `GetAssetContentUseCase.ts` <!-- Use case for retrieving asset content -->
+        - `GetAssetDetailsUseCase.ts` <!-- Use case for retrieving asset metadata -->
+        - `GetFolderPathUseCase.ts` <!-- Use case for retrieving folder paths -->
+        - `ListAssetsByFolderUseCase.ts` <!-- Use case for listing assets in a folder -->
+        - `ListFolderChildrenUseCase.ts` <!-- Use case for listing folder children -->
+        - `ListFolderContentsUseCase.ts` <!-- Use case for listing folder contents (assets and subfolders) -->
+        - `ListFoldersUseCase.ts` <!-- Use case for listing all folders -->
+        - `ListTagsUseCase.ts` <!-- Use case for listing all tags -->
+        - `ListTextAssetsUseCase.ts` <!-- Use case for listing text assets -->
+        - `MoveAssetUseCase.ts` <!-- Use case for moving assets between folders -->
+        - `RemoveTagFromAssetUseCase.ts` <!-- Use case for removing tags from assets -->
+        - `RenameAssetUseCase.ts` <!-- Use case for renaming assets -->
+        - `UpdateAssetTextUseCase.ts` <!-- Use case for updating text assets -->
+        - `UpdateFolderUseCase.ts` <!-- Use case for updating folders -->
+        - `UploadAssetUseCase.ts` <!-- Use case for uploading assets -->
+    - `domain/` <!-- Domain layer - core business objects and interfaces -->
+      - `entities/` <!-- Domain entities -->
+        - `Asset.ts` <!-- Asset entity class -->
+        - `Folder.ts` <!-- Folder entity class -->
+        - `Tag.ts` <!-- Tag entity class -->
+        - `index.ts` <!-- Entity exports -->
+      - `repositories/` <!-- Repository interfaces -->
+        - `IAssetRepository.ts` <!-- Asset repository interface -->
+        - `IAssetTagRepository.ts` <!-- Asset-Tag relationship repository interface -->
+        - `IFolderRepository.ts` <!-- Folder repository interface -->
+        - `IStorageService.ts` <!-- Storage service interface -->
+        - `ITagRepository.ts` <!-- Tag repository interface -->
+        - `index.ts` <!-- Repository interface exports -->
+      - `value-objects/` <!-- Value objects for domain entities -->
+        - `.gitkeep` <!-- Placeholder for future value objects -->
+    - `infrastructure/` <!-- Infrastructure layer - implementation of repositories -->
+      - `persistence/` <!-- Data storage implementations -->
+        - `supabase/` <!-- Supabase-specific implementations -->
+          - `SupabaseAssetRepository.ts` <!-- Supabase implementation of asset repository -->
+          - `SupabaseAssetTagRepository.ts` <!-- Supabase implementation of asset-tag repository -->
+          - `SupabaseFolderRepository.ts` <!-- Supabase implementation of folder repository -->
+          - `SupabaseTagRepository.ts` <!-- Supabase implementation of tag repository -->
+          - `mappers/` <!-- Mappers for converting between domain entities and database models -->
+            - `AssetMapper.ts` <!-- Mapper for Asset entity <-> database -->
+            - `FolderMapper.ts` <!-- Mapper for Folder entity <-> database -->
+            - `TagMapper.ts` <!-- Mapper for Tag entity <-> database -->
+      - `storage/` <!-- File storage implementations -->
+        - `SupabaseStorageService.ts` <!-- Supabase Storage implementation -->
+    - `repositories/` <!-- Legacy repository layer - to be migrated to new architecture -->
+      - `.gitkeep` <!-- Placeholder file -->
+  - `dam.utils.ts`
+  - `sort.utils.ts`
   - `errors/`
-    - `__tests__/`
-    - `base.ts`
-    - `constants.ts`
-    - `error-handler.ts`
-    - `utils.ts`
-  - `forms/`
-    - `__tests__/`
-    - `actions.ts`
-    - `config.ts`
-    - `utils.ts`
-  - `hooks/` <!-- Utility hooks related to core logic (non-UI specific). -->
-    - `usePrevious.ts` <!-- Hook to get the previous value of a prop or state. -->
-  - `logging/`
-    - `config.ts`
-    - `logger.ts`
-  - `middleware/`
-    - `__tests__/`
-    - `config.ts`
-    - `middleware.ts`
-  - `replicate/`
-    - `ReplicateClient.ts`
-    - `config.ts`
-  - `repositories/` <!-- Data access layer, interacts directly with the database or storage. -->
-    - `asset.db.repo.ts` <!-- Functions for CRUD operations on asset metadata in the database. -->
-    - `asset.storage.repo.ts` <!-- Functions for interacting with asset files in Supabase Storage. -->
-    - `asset-tag.repo.ts` <!-- Functions for managing the asset-tag relationship table. -->
-    - `folder-repo.ts` <!-- Functions for CRUD operations on folders. -->
-    - `tag-repo.ts` <!-- Functions for CRUD operations on tags. -->
-  - `schemas/`
-    - `auth.schemas.ts`
-    - `dam.schemas.ts`
-    - `folder.schemas.ts`
-    - `forms.schemas.ts`
-    - `index.ts`
-    - `notes.schemas.ts`
-    - `onboarding.schemas.ts`
-    - `organization.schemas.ts`
-    - `profile.schemas.ts`
-    - `tag.schemas.ts`
-    - `team.schemas.ts`
-    - `tts.schemas.ts`
-  - `services/` <!-- Service layer, orchestrates repository calls and business logic. -->
-    - `asset-core.service.ts` <!-- Core services for asset management (move, delete, rename, download URL). -->
-    - `asset-tag.service.ts` <!-- Services for managing tags on assets (add, remove). -->
-    - `auth-service.ts` <!-- Services for authentication and user management. -->
-    - `folder-service.ts` <!-- Services for folder management. -->
-    - `onboarding-service.ts` <!-- Services for user onboarding. -->
-    - `tag-service.ts` <!-- Services for managing tags (CRUD, linking). -->
-    - `text-asset-service.ts` <!-- Services specifically for text-based assets. -->
-    - `ttsService.ts` <!-- Services for Text-to-Speech functionality. -->
-  - `store/`
-    - `appStore.ts`
-    - `folderStore.ts`
-    - `modalStore.ts`
-    - `onboardingStore.ts`
-    - `sidebarStore.ts`
-    - `tagStore.ts`
-  - `supabase/`
-    - `admin.ts`
-    - `client.ts`
-    - `config.ts`
-    - `migrations.ts`
-    - `server.ts`
-    - `utils.ts`
-  - `usecases/` <!-- Usecase layer, encapsulates specific application workflows. -->
-    - `dam/` <!-- Usecases related to Digital Asset Management. -->
-      - `addTagToAssetUsecase.ts` <!-- Usecase for adding a tag to an asset. -->
-      - `deleteAssetUsecase.ts` <!-- Usecase for deleting an asset. -->
-      - `getAssetDownloadUrlUsecase.ts` <!-- Usecase for getting an asset download URL. -->
-      - `moveAssetUsecase.ts` <!-- Usecase for moving an asset to a different folder. -->
-      - `removeTagFromAssetUsecase.ts` <!-- Usecase for removing a tag from an asset. -->
-      - `renameAssetUsecase.ts` <!-- Usecase for renaming an asset. -->
-      - `uploadAssetUsecase.ts` <!-- Usecase for handling the asset upload process. -->
-    - `onboarding/`
-    - `tts/`
-      - `getTtsVoicesUsecase.ts`
-      - `listTtsCreationsUsecase.ts`
-      - `saveTtsAudioToDamUsecase.ts`
-      - `submitTtsCreationUsecase.ts`
-  - `utils/`

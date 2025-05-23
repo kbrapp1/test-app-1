@@ -54,10 +54,11 @@ export async function saveTtsAudioToDam(
       .eq('id', ttsPredictionId);
 
     if (linkError) {
-      console.error('TTS Action (saveTtsAudioToDam): Error linking asset ID to TTS prediction:', linkError);
-      return { ...result, error: `Asset created, but linking failed: ${linkError.message}` };
+      console.error('TTS Action (saveTtsAudioToDam): Error linking asset to prediction:', linkError);
+      return { success: false, error: 'Failed to link asset to prediction.' };
     }
-    console.log(`TTS Action (saveTtsAudioToDam): Successfully linked asset ${result.assetId} to prediction ${ttsPredictionId}`);
+
+    return { success: true, assetId: result.assetId };
   }
 
   return result;
@@ -89,26 +90,18 @@ export async function markTtsUrlProblematic(
       return { success: false, error: 'Authentication failed.' };
     }
 
-    const updateData: Database['public']['Tables']['TtsPrediction']['Update'] = {
-      is_output_url_problematic: true,
-      updatedAt: new Date().toISOString(), // Keep updatedAt fresh
-    };
-
-    if (errorMessage) {
-      updateData.output_url_last_error = errorMessage;
-    }
-
     const { error: updateError } = await supabase
       .from('TtsPrediction')
-      .update(updateData)
+      .update({ 
+        is_output_url_problematic: true,
+        error_message: errorMessage 
+      })
       .eq('id', ttsPredictionId);
 
     if (updateError) {
-      console.error('Error updating TtsPrediction to mark URL as problematic:', updateError);
-      return { success: false, error: updateError.message };
+      console.error('TTS Action (markTtsPredictionAsProblematic): Error updating prediction:', updateError);
     }
 
-    console.log(`TtsPrediction ${ttsPredictionId} marked as problematic. Error: ${errorMessage || 'N/A'}`);
     return { success: true };
 
   } catch (e: any) {

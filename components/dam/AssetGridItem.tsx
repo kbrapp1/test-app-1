@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { Asset, Folder, CombinedItem } from '@/types/dam';
+import React, { useRef, useEffect, useState } from 'react';
+import { ComponentAsset as Asset, ComponentFolder as Folder, CombinedItem } from '@/lib/dam/types/component';
 import { AssetThumbnail, AssetThumbnailRef } from './AssetThumbnail';
 import { FolderThumbnail } from './FolderThumbnail';
 import { Folder as FolderIcon, FileText } from 'lucide-react';
@@ -15,6 +15,25 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import type { Tag } from '@/lib/actions/dam/tag.actions';
+import type { Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
+
+// Helper function to convert component Asset to domain Asset
+function componentAssetToDomainAsset(componentAsset: Asset): DomainAsset {
+  return {
+    id: componentAsset.id,
+    userId: componentAsset.user_id,
+    name: componentAsset.name,
+    storagePath: componentAsset.storage_path,
+    mimeType: componentAsset.mime_type,
+    size: componentAsset.size,
+    createdAt: new Date(componentAsset.created_at),
+    updatedAt: componentAsset.updated_at ? new Date(componentAsset.updated_at) : undefined,
+    folderId: componentAsset.folder_id,
+    organizationId: componentAsset.organization_id,
+    tags: componentAsset.tags,
+    publicUrl: componentAsset.publicUrl || undefined,
+  };
+}
 
 export interface AssetGridItemProps {
   item: CombinedItem;
@@ -44,9 +63,11 @@ export const AssetGridItem = React.forwardRef<
     closeMoveDialog,
   } = useAssetItemDialogs();
 
-  // Ensure actions hook is only instantiated for assets
-  const itemActions = item.type === 'asset' ? useAssetItemActions({
-    item: item as Asset,
+  const isFolder = item.type === 'folder';
+  const asset = !isFolder ? (item as Asset) : null;
+
+  const itemActions = asset ? useAssetItemActions({
+    item: componentAssetToDomainAsset(asset),
     onDataChange,
     closeRenameDialog,
     closeMoveDialog,
@@ -125,12 +146,11 @@ export const AssetGridItem = React.forwardRef<
       {item.type === 'asset' ? (
         <AssetThumbnail
           ref={assetThumbnailRef}
-          src={(item as Asset).publicUrl}
-          alt={item.name}
-          assetId={item.id}
+          src={(item as Asset).publicUrl || ''}
+          alt={(item as Asset).name}
+          assetId={(item as Asset).id}
           folderId={(item as Asset).folder_id}
-          type={'asset'}
-          isPriority={index !== undefined && priorityThreshold !== undefined && index < priorityThreshold}
+          type="asset"
           mimeType={(item as Asset).mime_type}
           onDataChange={onDataChange}
         />

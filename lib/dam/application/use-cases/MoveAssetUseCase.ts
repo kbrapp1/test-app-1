@@ -41,7 +41,7 @@ export class MoveAssetUseCase {
 
     // 4. If moving to a folder (not root), verify the target folder exists and belongs to the organization
     if (targetFolderId !== null) {
-      const targetFolder = await this.folderRepository.findById(targetFolderId);
+      const targetFolder = await this.folderRepository.findById(targetFolderId, organizationId);
       if (!targetFolder) {
         throw new NotFoundError(`Target folder with ID ${targetFolderId} not found.`);
       }

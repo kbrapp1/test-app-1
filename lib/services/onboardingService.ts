@@ -1,6 +1,6 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
-export async function callCompleteOnboardingFunctionHelper(supabase: SupabaseClient): Promise<boolean> {
+export async function completeOnboardingMembership(supabase: SupabaseClient): Promise<void> {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !session) {
     throw new Error('Session expired or not found when trying to complete onboarding.');
@@ -21,7 +21,4 @@ export async function callCompleteOnboardingFunctionHelper(supabase: SupabaseCli
     console.error('Error invoking complete-onboarding-membership:', errorMessage, { funcError, data });
     throw new Error(errorMessage);
   }
-
-  console.log('Successfully invoked complete-onboarding-membership function:', data);
-  return true;
-} 
+}

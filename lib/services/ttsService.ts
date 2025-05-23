@@ -30,7 +30,6 @@ export async function createReplicatePrediction(input: StartSpeechInput, modelId
   if (!modelId) {
     throw new Error('Replicate modelId (version) is required to create a prediction.');
   }
-  console.log(`Service: Starting prediction for voice: ${input.voiceId} using model: ${modelId}`);
   const prediction = await replicateClient.predictions.create({
     version: modelId, // Use the passed modelId
     input: {
@@ -102,8 +101,6 @@ export async function downloadAndUploadAudio(
         `Downloaded file is not audio (type: ${contentType}). The link might be for an error page or invalid content.`
       );
     }
-
-    console.log('Service: Fetched audio from Replicate. Content-Type:', contentType);
   } catch (fetchError) {
     console.error('Service: Error fetching audio from Replicate URL:', fetchError);
     throw new Error('Failed to download generated audio.');
@@ -144,8 +141,6 @@ export async function cleanupStorageFile(storagePath: string): Promise<void> {
     const { error } = await supabaseAdmin.storage.from('assets').remove([storagePath]);
     if (error) {
       console.error('Service: Failed to cleanup orphaned storage file:', storagePath, error);
-    } else {
-      console.log('Service: Cleaned up orphaned storage file:', storagePath);
     }
   } catch (cleanupError) {
     console.error('Service: Exception during storage cleanup:', cleanupError);

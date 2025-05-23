@@ -1,5 +1,7 @@
 import React, { useState, useTransition } from 'react';
-import type { CombinedItem, Asset, Tag } from '@/types/dam';
+import type { CombinedItem, ComponentAsset as Asset } from '@/lib/dam/types/component';
+import type { Tag } from '@/lib/actions/dam/tag.actions';
+import type { Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
 import { useAssetItemDialogs } from './hooks/useAssetItemDialogs';
 import { useAssetItemActions } from './hooks/useAssetItemActions';
 import { deleteAsset } from '@/lib/actions/dam/asset-crud.actions';
@@ -7,6 +9,24 @@ import { toast } from 'sonner';
 import { damTableColumns } from './dam-column-config';
 import { AssetListItemDialogs } from './AssetListItemDialogs';
 import { getCellContent } from './AssetListItemCell';
+
+// Helper function to convert component Asset to domain Asset
+function componentAssetToDomainAsset(componentAsset: Asset): DomainAsset {
+  return {
+    id: componentAsset.id,
+    userId: componentAsset.user_id,
+    name: componentAsset.name,
+    storagePath: componentAsset.storage_path,
+    mimeType: componentAsset.mime_type,
+    size: componentAsset.size,
+    createdAt: new Date(componentAsset.created_at),
+    updatedAt: componentAsset.updated_at ? new Date(componentAsset.updated_at) : undefined,
+    folderId: componentAsset.folder_id,
+    organizationId: componentAsset.organization_id,
+    tags: componentAsset.tags,
+    publicUrl: componentAsset.publicUrl || undefined,
+  };
+}
 
 export interface AssetListItemProps {
   item: CombinedItem;
@@ -24,7 +44,7 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({ item, onDataChange
   } = useAssetItemDialogs();
 
   const itemActions = asset ? useAssetItemActions({ 
-    item: asset,
+    item: componentAssetToDomainAsset(asset),
     onDataChange,
     closeRenameDialog,
     closeMoveDialog,
@@ -65,7 +85,17 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({ item, onDataChange
     });
   };
 
-  const lastModified = item.created_at;
+  // Use the appropriate timestamp for "Last Modified" display
+  let lastModified: string;
+  if (asset) {
+    // For assets, use updated_at if available, otherwise fall back to created_at
+    lastModified = asset.updated_at || asset.created_at;
+  } else {
+    // For folders, use updatedAt if available, otherwise fall back to createdAt
+    const folder = item as any; // Type assertion since we know it's a folder
+    lastModified = folder.updatedAt ? folder.updatedAt.toISOString() : folder.createdAt.toISOString();
+  }
+
   const fileSize = asset?.size ? `${(asset.size / 1024).toFixed(1)} KB` : '-';
 
   const MAX_INLINE_TAGS = 3;

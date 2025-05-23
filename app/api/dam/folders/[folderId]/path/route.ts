@@ -16,14 +16,18 @@ interface RouteContext {
 }
 
 const createGetFolderPathHandler = (folderId: string): AuthenticatedHandler => {
-  // activeOrgId is not directly used by GetFolderPathUseCase as per current definition,
-  // but could be passed if validation against org was added to use case or repo's getPath.
   return async (_request: NextRequest, _user: User, supabase: SupabaseClient) => {
     const folderRepository = new SupabaseFolderRepository(supabase);
     const getPathUseCase = new GetFolderPathUseCase(folderRepository);
 
     try {
-      const path = await getPathUseCase.execute({ folderId });
+      // Get active organization ID for security validation
+      const activeOrgId = await getActiveOrganizationId();
+      if (!activeOrgId) {
+        return NextResponse.json({ message: 'Active organization not found.' }, { status: 400 });
+      }
+
+      const path = await getPathUseCase.execute({ folderId, organizationId: activeOrgId });
       return NextResponse.json(path, { status: 200 });
     } catch (error) {
       if (error instanceof ValidationError || error instanceof NotFoundError) {
@@ -45,13 +49,6 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
   if (!folderId) {
     return NextResponse.json({ message: 'Folder ID is required in the path.' }, { status: 400 });
   }
-  
-  // Optional: Verify activeOrgId if strict per-org validation is needed before calling use case,
-  // even if the use case itself doesn't take it for this specific operation.
-  // const activeOrgId = await getActiveOrganizationId();
-  // if (!activeOrgId) {
-  //   return NextResponse.json({ message: 'Active organization not found.' }, { status: 400 });
-  // }
 
   const handler = createGetFolderPathHandler(folderId);
   return withErrorHandling(withAuth(handler))(request, context);

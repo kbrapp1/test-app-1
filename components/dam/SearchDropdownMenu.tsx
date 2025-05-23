@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Loader2, Folder as FolderIconLucide, FileText as FileIconLucide } from 'lucide-react';
-import type { CombinedItem } from '@/types/dam';
+import type { CombinedItem } from '@/lib/dam/types/component';
 
 interface SearchDropdownMenuProps {
   items: CombinedItem[];

@@ -1,5 +1,5 @@
 import { Tag } from '@/lib/dam/domain/entities/Tag';
-import { ITagRepository } from '@/lib/dam/domain/repositories/ITagRepository';
+import { ITagRepository, CreateTagData } from '@/lib/dam/domain/repositories/ITagRepository';
 import { AppError, ConflictError, ValidationError } from '@/lib/errors/base';
 // import { Usecase } from '@/lib/usecases/usecase.interface'; // Removed
 
@@ -36,11 +36,14 @@ export class CreateTagUseCase { // Removed implements Usecase<CreateTagInput, Ta
     }
 
     try {
-      const newTag = await this.tagRepository.save({
+      // Use plain data object for repository
+      const tagData: CreateTagData = {
         name: trimmedName,
         userId: input.userId,
         organizationId: input.organizationId,
-      });
+      };
+      
+      const newTag = await this.tagRepository.save(tagData);
       return newTag;
     } catch (error: any) {
       if (error instanceof AppError) { // Re-throw known AppErrors

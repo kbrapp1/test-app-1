@@ -18,7 +18,11 @@ const listFoldersForTreeHandler = (parentId: string | null, activeOrgId: string)
         parentId,
         organizationId: activeOrgId,
       });
-      return NextResponse.json(folders, { status: 200 });
+      
+      // Convert domain entities to plain objects for proper JSON serialization
+      const plainFolders = folders.map(folder => folder.toPlainObject());
+      
+      return NextResponse.json(plainFolders, { status: 200 });
     } catch (error) {
       if (error instanceof ValidationError) {
         return NextResponse.json({ message: error.message }, { status: error.statusCode });

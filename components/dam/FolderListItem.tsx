@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Folder as FolderType } from '@/types/dam';
-import { Folder as FolderIcon, MoreHorizontal, Edit3, Trash2 } from 'lucide-react';
+import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { FolderIcon, MoreHorizontal, Edit3, Trash2 } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import {
@@ -16,11 +16,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { InputDialog } from './dialogs/InputDialog';
 import { ConfirmationDialog } from './dialogs/ConfirmationDialog';
-import { renameFolderClient, deleteFolderClient } from '@/lib/actions/dam/folder.actions';
+import { renameFolderClientAction, deleteFolderClientAction } from '@/lib/actions/dam/folder.actions';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface FolderListItemProps {
-  folder: FolderType;
+  folder: DomainFolder;
   onDataChange: () => void;
 }
 
@@ -39,7 +39,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
 
   const handleRenameSubmit = async (newName: string) => {
     try {
-      const result = await renameFolderClient(folder.id, newName);
+      const result = await renameFolderClientAction(folder.id, newName);
       if (result.success) {
         toast({ title: 'Folder renamed', description: `Folder "${folder.name}" was successfully renamed to "${newName}".` });
         onDataChange();
@@ -57,7 +57,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteFolderClient(folder.id);
+      const result = await deleteFolderClientAction(folder.id);
       if (result.success) {
         toast({ title: 'Folder Deleted', description: `Folder "${folder.name}" was successfully deleted.` });
         onDataChange();

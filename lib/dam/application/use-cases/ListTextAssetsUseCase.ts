@@ -13,11 +13,19 @@ const TEXT_MIME_TYPES = [
 ] as const;
 
 // Define what a summary of a text asset should look like for the use case response
-// This matches the old use case's TextAssetSummary
+// Updated to include all required fields for Asset domain entity
 export interface TextAssetSummaryDto {
   id: string;
   name: string;
-  createdAt: Date; // Asset entity has createdAt as Date
+  userId: string;
+  storagePath: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+  updatedAt?: Date;
+  folderId?: string | null;
+  organizationId: string;
+  publicUrl?: string;
 }
 
 interface ListTextAssetsUseCaseRequest {
@@ -37,19 +45,37 @@ export class ListTextAssetsUseCase {
     }
 
     try {
-      // Use the search method with an empty query and specified MIME types
-      const assets = await this.assetRepository.search(
-        '', // No specific search query, lists all matching criteria
+      // Use the search method with AssetSearchCriteria
+      const assets = await this.assetRepository.search({
         organizationId,
-        undefined, // No specific folder
-        [...TEXT_MIME_TYPES]
+        searchTerm: '', // No specific search query, lists all matching criteria
+        folderId: undefined, // No specific folder constraint
+        filters: {
+          // Don't use the type filter with comma-separated values since it won't work
+          // Instead, we'll filter after getting all assets
+        },
+      });
+
+      // Filter assets to only include text types
+      const textAssets = assets.filter(asset => 
+        TEXT_MIME_TYPES.includes(asset.mimeType as any)
       );
 
-      const assetSummaries: TextAssetSummaryDto[] = assets.map((asset) => ({
-        id: asset.id.toString(),
-        name: asset.name,
-        createdAt: asset.createdAt,
-      }));
+      const assetSummaries: TextAssetSummaryDto[] = textAssets.map((asset) => {
+        return {
+          id: asset.id.toString(),
+          name: asset.name,
+          userId: asset.userId,
+          storagePath: asset.storagePath,
+          mimeType: asset.mimeType,
+          size: asset.size,
+          createdAt: asset.createdAt,
+          updatedAt: asset.updatedAt,
+          folderId: asset.folderId,
+          organizationId: asset.organizationId,
+          publicUrl: asset.publicUrl,
+        };
+      });
 
       return { assets: assetSummaries };
     } catch (error: any) {

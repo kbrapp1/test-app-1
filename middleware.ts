@@ -49,6 +49,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Skip auth redirects for API routes - they handle their own authentication
+  if (pathname.startsWith('/api/')) {
+    return response
+  }
+
   // Define public routes that don't require authentication
   const publicRoutes = [
     '/login',

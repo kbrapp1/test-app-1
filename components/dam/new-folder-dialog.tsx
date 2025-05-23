@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { createFolder } from '@/lib/actions/dam/folder.actions';
+import { createFolderAction } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner'; // Assuming you use sonner for toasts
 import { FolderPlus } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
@@ -51,7 +51,7 @@ export function NewFolderDialog({
 }: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { addFolder } = useFolderStore();
-  const [state, formAction, isPending] = useActionState(createFolder, initialState);
+  const [state, formAction, isPending] = useActionState(createFolderAction, initialState);
   const formRef = useRef<HTMLFormElement>(null); // Ref to reset form
   const router = useRouter();
 

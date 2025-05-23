@@ -21,9 +21,11 @@ import {
   MoveIcon, 
   Star, 
   ArchiveIcon, 
-  FolderKanban 
+  FolderKanban,
+  Heart,
+  Archive,
 } from 'lucide-react';
-import { Asset } from '@/types/dam';
+import { ComponentAsset as Asset } from '@/lib/dam/types/component';
 
 interface AssetActionDropdownMenuProps {
   item: Asset;
@@ -91,12 +93,12 @@ export const AssetActionDropdownMenu: React.FC<AssetActionDropdownMenuProps> = (
                 )}
                 <span>Move</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Add to Favorites clicked for', item.name)}>
-                <Star className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => {/* TODO: Implement add to favorites */}}>
+                <Heart className="mr-2 h-4 w-4" />
                 <span>Add to Favorites</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Archive clicked for', item.name)}>
-                <ArchiveIcon className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => {/* TODO: Implement archive */}}>
+                <Archive className="mr-2 h-4 w-4" />
                 <span>Archive</span>
               </DropdownMenuItem>
             </DropdownMenuSubContent>

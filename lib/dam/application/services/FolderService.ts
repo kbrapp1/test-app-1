@@ -71,7 +71,7 @@ export class FolderService {
 
     try {
       // Get the folder to check ownership and parent folder ID
-      const folder = await this.folderRepository.findById(folderId);
+      const folder = await this.folderRepository.findById(folderId, organizationId);
       if (!folder) {
         return { 
           success: false, 
@@ -105,7 +105,7 @@ export class FolderService {
 
       const updatedFolder = await this.folderRepository.update(folderId, { 
         name: newName.trim() 
-      });
+      }, organizationId);
 
       if (!updatedFolder) {
         return { 
@@ -136,7 +136,7 @@ export class FolderService {
 
     try {
       // Get the folder to check ownership and parent folder ID
-      const folder = await this.folderRepository.findById(folderId);
+      const folder = await this.folderRepository.findById(folderId, organizationId);
       if (!folder) {
         return { 
           success: false, 
@@ -156,14 +156,7 @@ export class FolderService {
       const parentFolderId = folder.parentFolderId ?? null;
 
       // The repository.delete method already checks for children and throws if found
-      const deleted = await this.folderRepository.delete(folderId);
-      if (!deleted) {
-        return { 
-          success: false, 
-          error: 'Failed to delete folder.', 
-          errorCode: ErrorCodes.DATABASE_ERROR 
-        };
-      }
+      await this.folderRepository.delete(folderId, organizationId);
 
       return { 
         success: true, 

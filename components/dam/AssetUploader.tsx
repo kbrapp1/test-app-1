@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast as sonnerToast } from "sonner"; // Import sonner directly
 import { createClient } from '@/lib/supabase/client'; // Import browser client
 import type { User } from '@supabase/supabase-js';
-import { FetchError, UploadFormData } from '@/types/dam';
+import { UploadFormData } from '@/lib/dam/types/component';
 import { useRouter } from 'next/navigation'; // <-- Import useRouter
 
 // Define accepted file types

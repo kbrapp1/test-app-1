@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Search, UploadCloud, XIcon } from 'lucide-react';
 import { SearchDropdownMenu } from './SearchDropdownMenu';
-import type { CombinedItem } from '@/types/dam';
+import type { CombinedItem } from '@/lib/dam/types/component';
 import { useDamSearchInput } from './hooks/useDamSearchInput';
 import { useDamSearchDropdown } from './hooks/useDamSearchDropdown';
 import { DamTagFilter } from './DamTagFilter';
-import { useDamUrlManager } from '@/lib/hooks/useDamUrlManager';
+import { useDamUrlManager } from '@/components/dam/hooks/useDamUrlManager';
 import { useDamTagFilterHandler } from './hooks/useDamTagFilterHandler';
 import { DamUploadButton } from './DamUploadButton';
 

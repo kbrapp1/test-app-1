@@ -1,5 +1,6 @@
 import React from 'react';
-import type { CombinedItem, Asset, Tag } from '@/types/dam';
+import type { CombinedItem, ComponentAsset as Asset } from '@/lib/dam/types/component';
+import type { Tag } from '@/lib/actions/dam/tag.actions';
 import { Folder as FolderIcon, FileText as FileIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Asset } from '@/types/dam';
+import { ComponentAsset as Asset } from '@/lib/dam/types/component';
 
 interface DialogState<T> {
   isOpen: boolean;

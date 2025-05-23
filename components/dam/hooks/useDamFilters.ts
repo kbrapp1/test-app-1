@@ -28,6 +28,7 @@ export interface UseDamFiltersReturn extends DamFilterState {
   setCurrentTagIds: (value: string | undefined) => void;
   isAnyFilterActive: boolean;
   clearAllFilters: () => void;
+  updateUrlParams: (paramsToUpdate: Partial<Omit<DamFilterState, 'folderId'> & { folderId?: string | null }>) => void;
 }
 
 // Helper function to get typed search params
@@ -70,10 +71,6 @@ export function useDamFilters(currentFolderIdFromView: string | null): UseDamFil
         newParams.delete('filterDateEnd');
       }
     }
-    if (paramsToUpdate.hasOwnProperty('filterCreationDateOption') && paramsToUpdate.filterCreationDateOption === undefined) {
-      newParams.delete('filterDateStart');
-      newParams.delete('filterDateEnd');
-    }
 
     const finalSizeOption = newParams.get('filterSizeOption');
     if (finalSizeOption !== 'custom') {
@@ -84,29 +81,10 @@ export function useDamFilters(currentFolderIdFromView: string | null): UseDamFil
         newParams.delete('filterSizeMax');
       }
     }
-    if (paramsToUpdate.hasOwnProperty('filterSizeOption') && paramsToUpdate.filterSizeOption === undefined) {
-      newParams.delete('filterSizeMin');
-      newParams.delete('filterSizeMax');
-    }
-    
-    const sortByIsBeingExplicitlySet = paramsToUpdate.hasOwnProperty('sortBy');
-    const currentSortByInNewParams = newParams.get('sortBy');
-    if (sortByIsBeingExplicitlySet && paramsToUpdate.sortBy === undefined) {
-      newParams.delete('sortOrder');
-    } 
-    else if (!currentSortByInNewParams) { 
-        newParams.delete('sortOrder');
-    }
 
-    if (currentFolderIdFromView) {
-      newParams.set('folderId', currentFolderIdFromView);
-    } else {
-      newParams.delete('folderId');
-    }
-    
     const queryString = newParams.toString();
-    router.push(queryString ? `/dam?${queryString}` : '/dam', { scroll: false });
-  }, [searchParams, router, currentFolderIdFromView]);
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname);
+  }, [searchParams, router, pathname]);
 
   // isAnyFilterActive still uses currentParams for simplicity, but its source string is the same.
   const isAnyFilterActive = useMemo(() => {
@@ -159,9 +137,8 @@ export function useDamFilters(currentFolderIdFromView: string | null): UseDamFil
   
   const setSortOrder = useCallback((value: SortOrderValue | undefined) => {
     const currentSortByValue = getTypedParam<SortByValue>(searchParams, 'sortBy');
-    if (currentSortByValue) {
-        updateUrlParams({ sortOrder: value });
-    }
+    const newSortBy = value ? (currentSortByValue || 'name') : undefined;
+    updateUrlParams({ sortBy: newSortBy, sortOrder: value });
   }, [updateUrlParams, searchParams]);
 
   const setCurrentTagIds = useCallback((value: string | undefined) => {
@@ -203,5 +180,6 @@ export function useDamFilters(currentFolderIdFromView: string | null): UseDamFil
     setCurrentTagIds,
     isAnyFilterActive,
     clearAllFilters,
+    updateUrlParams,
   };
 }

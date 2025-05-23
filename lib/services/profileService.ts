@@ -1,25 +1,25 @@
 import { SupabaseClient, User } from '@supabase/supabase-js';
 
-export async function updateUserProfileHelper(supabase: SupabaseClient, user: User, name: string): Promise<void> {
+export async function updateUserProfile(supabase: SupabaseClient, user: User): Promise<void> {
   if (!user?.id || !user?.email) {
-    // Log a warning but don't throw, as onboarding might succeed even if profile update fails
     console.warn('Cannot update profile: User object is incomplete. Skipping profile upsert.', { userId: user?.id, userEmail: user?.email });
     return;
   }
 
+  const profileData = {
+    id: user.id,
+    email: user.email,
+    full_name: user.user_metadata?.full_name || null,
+    avatar_url: user.user_metadata?.avatar_url || null,
+    updated_at: new Date().toISOString(),
+  };
+
   const { error: profileError } = await supabase
-    .from('profiles')
-    .upsert({
-      id: user.id,
-      full_name: name,
-      email: user.email
-    }, { onConflict: 'id' });
+    .from('Profile')
+    .upsert(profileData, { onConflict: 'id' });
 
   if (profileError) {
-    // Log the error but rethrow it so the calling context (_handleError in the hook) can decide how to inform the user (e.g., non-critical toast)
     console.error('Error upserting profile:', profileError);
-    throw new Error(`Failed to update profile: ${profileError.message}`);
+    throw new Error(`Profile update failed: ${profileError.message}`);
   }
-
-  console.log('User profile updated successfully for user:', user.id);
-} 
+}

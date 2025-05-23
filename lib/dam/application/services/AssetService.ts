@@ -39,7 +39,7 @@ export class AssetService {
 
       // If moving to a folder, verify the folder exists
       if (targetFolderId !== null) {
-        const folder = await this.folderRepository.findById(targetFolderId);
+        const folder = await this.folderRepository.findById(targetFolderId, organizationId);
         if (!folder) {
           return { success: false, error: 'Target folder not found in this organization.', errorCode: ErrorCodes.RESOURCE_NOT_FOUND };
         }

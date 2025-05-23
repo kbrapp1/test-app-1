@@ -49,8 +49,8 @@ export class CreateFolderUseCase {
     }
     
 
-    // 3. Create the folder
-    const folderToCreate: Pick<Folder, 'name' | 'parentFolderId' | 'organizationId' | 'userId'> = {
+    // 3. Create the folder - use plain object structure for repository
+    const folderToCreate = {
       name: name.trim(),
       parentFolderId,
       organizationId,
@@ -58,7 +58,7 @@ export class CreateFolderUseCase {
     };
 
     try {
-      const createdFolder = await this.folderRepository.save(folderToCreate);
+      const createdFolder = await this.folderRepository.create(folderToCreate);
       return createdFolder;
     } catch (error) {
       console.error('Error saving folder in use case:', error);

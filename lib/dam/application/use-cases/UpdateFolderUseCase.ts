@@ -1,5 +1,5 @@
 import { Folder } from '../../domain/entities/Folder';
-import { IFolderRepository } from '../../domain/repositories/IFolderRepository';
+import { IFolderRepository, UpdateFolderData } from '../../domain/repositories/IFolderRepository';
 import { ValidationError, NotFoundError, ConflictError } from '@/lib/errors/base';
 
 interface UpdateFolderUseCaseParams {
@@ -33,7 +33,7 @@ export class UpdateFolderUseCase {
     }
 
     // 1. Fetch the existing folder to ensure it exists and for context
-    const existingFolder = await this.folderRepository.findById(folderId);
+    const existingFolder = await this.folderRepository.findById(folderId, organizationId);
     if (!existingFolder || existingFolder.organizationId !== organizationId) {
       throw new NotFoundError(`Folder with ID "${folderId}" not found in this organization.`);
     }
@@ -44,7 +44,7 @@ export class UpdateFolderUseCase {
         throw new ValidationError('A folder cannot be its own parent.');
       }
       if (parentFolderId !== null) {
-        const newParent = await this.folderRepository.findById(parentFolderId);
+        const newParent = await this.folderRepository.findById(parentFolderId, organizationId);
         if (!newParent || newParent.organizationId !== organizationId) {
           throw new ValidationError(
             `New parent folder with ID "${parentFolderId}" not found in this organization.`
@@ -53,6 +53,10 @@ export class UpdateFolderUseCase {
         // Additional check: prevent circular dependencies (e.g. moving a parent into its own child)
         // This might involve checking the entire path of the newParent to ensure folderId is not in it.
         // For simplicity, this is omitted here but is important for robust folder structures.
+        const parentPath = await this.folderRepository.getPath(parentFolderId, organizationId);
+        if (parentPath.includes(`/${existingFolder.name}/`)) { // Simple circular dependency check
+          throw new ValidationError('Cannot move a folder into one of its own subfolders.');
+        }
       }
     }
 
@@ -74,8 +78,8 @@ export class UpdateFolderUseCase {
       }
     }
 
-    // 4. Prepare update data
-    const updateData: Partial<Pick<Folder, 'name' | 'parentFolderId'>> = {};
+    // 4. Prepare update data - use the new UpdateFolderData interface
+    const updateData: UpdateFolderData = {};
     if (name !== undefined) {
       updateData.name = name.trim();
     }
@@ -85,7 +89,7 @@ export class UpdateFolderUseCase {
 
     // 5. Perform the update
     try {
-      const updatedFolder = await this.folderRepository.update(folderId, updateData);
+      const updatedFolder = await this.folderRepository.update(folderId, updateData, organizationId);
       if (!updatedFolder) {
         // This might happen if RLS prevents update or row is gone, already handled by findById check mostly
         throw new NotFoundError(`Folder with ID "${folderId}" could not be updated or was not found after update.`);

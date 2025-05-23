@@ -12,7 +12,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { deleteFolder } from '@/lib/actions/dam/folder.actions';
+import { deleteFolderAction } from '@/lib/actions/dam/folder.actions';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useFolderStore } from '@/lib/store/folderStore';
@@ -39,7 +39,7 @@ export function DeleteFolderDialog({ isOpen, onClose, folderId, folderName, onDe
   if (!isOpen) return null;
   const router = useRouter();
   // Bind deleteFolder action
-  const [state, formAction, isPending] = useActionState(deleteFolder, initialState);
+  const [state, formAction, isPending] = useActionState(deleteFolderAction, initialState);
   const { removeFolder } = useFolderStore(); // Get store action
 
   // Show toast and close dialog on success or show error

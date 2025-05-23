@@ -4,24 +4,23 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { FolderSidebar } from '@/components/dam/folder-sidebar';
 // import type { Folder } from '@/types/dam'; // REMOVED Old import
-import type { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder'; // ADDED Correct import
+import type { Folder as DomainFolder, PlainFolder } from '@/lib/dam/types/dam.types'; // UPDATED to use shared types
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository'; // ADDED import
 
-// Function to fetch root folders
-async function fetchFolders(supabase: SupabaseClient): Promise<DomainFolder[]> { // MODIFIED Return type
+// Function to fetch root folders and convert to plain objects
+async function fetchFolders(supabase: SupabaseClient): Promise<PlainFolder[]> { // MODIFIED Return type
   const activeOrgId = await getActiveOrganizationId();
   if (!activeOrgId) return [];
-  console.log('[DamLayout] Fetching root folders for org:', activeOrgId);
   const repo = new SupabaseFolderRepository(supabase); // Use repository that handles mapping via FolderMapper
   let folders: DomainFolder[] = [];
   try {
     folders = await repo.findRootFolders(activeOrgId);
-    console.log('[DamLayout] Fetched root folders:', folders.length);
   } catch (error) {
     console.error('Error fetching root folders in repository:', error);
   }
-  return folders;
+  // Convert domain entities to plain objects for client component serialization
+  return folders.map(folder => folder.toPlainObject());
 }
 
 export default async function DamLayout({

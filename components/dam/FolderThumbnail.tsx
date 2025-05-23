@@ -6,7 +6,7 @@ import { Folder as FolderIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation'; // Import router for prefetch
 import { useDroppable } from '@dnd-kit/core'; // Import useDroppable
 import { cn } from '@/lib/utils'; // Import cn for conditional classes
-import type { Folder } from '@/types/dam'; // Corrected import
+import type { ComponentFolder as Folder } from '@/lib/dam/types/component'; // Corrected import
 
 interface FolderThumbnailProps {
   folder: Folder & { type: 'folder' }; // Add type from CombinedItem in AssetGallery

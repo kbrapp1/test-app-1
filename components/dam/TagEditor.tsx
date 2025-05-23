@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Asset } from '@/types/dam';
-import { Tag } from '@/lib/actions/dam/tag.actions';
+import { ComponentAsset as Asset } from '@/lib/dam/types/component';
+import { PlainTag } from '@/lib/actions/dam/tag.actions';
 import {
-  listTagsForOrganization,
-  getAllTagsForOrganizationInternal,
-  createTag,
+  listTagsForOrganizationForClient,
+  getAllTagsForOrganizationInternalForClient,
+  createTagForClient,
 } from '@/lib/actions/dam/tag.actions';
 import { addTagToAsset } from '@/lib/actions/dam/asset-crud.actions'; // Corrected import path
 
@@ -31,8 +31,8 @@ import { cn } from "@/lib/utils"; // For conditional class names
 interface TagEditorProps {
   assetId: string;
   organizationId: string;
-  currentTags: Tag[];
-  onTagAdded: (newlyAddedTag: Tag, allCurrentTags: Tag[]) => void; // Callback after a tag is successfully added
+  currentTags: PlainTag[];
+  onTagAdded: (newlyAddedTag: PlainTag, allCurrentTags: PlainTag[]) => void; // Callback after a tag is successfully added
   // Consider onTagRemoved if this component also handles removal
 }
 
@@ -43,9 +43,9 @@ export const TagEditor: React.FC<TagEditorProps> = ({
   onTagAdded,
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const [availableActiveTags, setAvailableActiveTags] = useState<Tag[]>([]); // Tags from listTagsForOrganization (active, not on current asset)
-  const [allOrgTags, setAllOrgTags] = useState<Tag[]>([]); // All tags from getAllTagsForOrganizationInternal
-  const [suggestions, setSuggestions] = useState<Tag[]>([]); // Filtered suggestions based on input (derived from availableActiveTags)
+  const [availableActiveTags, setAvailableActiveTags] = useState<PlainTag[]>([]); // Tags from listTagsForOrganization (active, not on current asset)
+  const [allOrgTags, setAllOrgTags] = useState<PlainTag[]>([]); // All tags from getAllTagsForOrganizationInternal
+  const [suggestions, setSuggestions] = useState<PlainTag[]>([]); // Filtered suggestions based on input (derived from availableActiveTags)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -57,7 +57,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({
       setError(null);
       
       // Fetch all tags for existence checking
-      const allTagsResult = await getAllTagsForOrganizationInternal(organizationId);
+      const allTagsResult = await getAllTagsForOrganizationInternalForClient(organizationId);
       if (allTagsResult.success && allTagsResult.data) {
         setAllOrgTags(allTagsResult.data);
       } else {
@@ -67,7 +67,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({
       }
 
       // Fetch active tags for suggestions (tags on other assets)
-      const activeTagsResult = await listTagsForOrganization(organizationId);
+      const activeTagsResult = await listTagsForOrganizationForClient(organizationId);
       if (activeTagsResult.success && activeTagsResult.data) {
         const currentTagIds = new Set(currentTags.map(t => t.id));
         // availableActiveTags are those active in the org but not on the current asset
@@ -107,7 +107,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({
     }
   }, [inputValue, availableActiveTags, currentTags]);
 
-  const handleSelectSuggestion = async (tag: Tag) => {
+  const handleSelectSuggestion = async (tag: PlainTag) => {
     setIsLoading(true);
     setError(null);
     const formData = new FormData();
@@ -164,7 +164,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({
       createFormData.append('name', trimmedTagName);
 
       try {
-        const createResult = await createTag(createFormData);
+        const createResult = await createTagForClient(createFormData);
         if (createResult.success && createResult.data) {
           const newTag = createResult.data;
           
@@ -192,7 +192,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({
   const canCreateNew = inputValue.trim() !== '' && !exactMatchInAllOrgTags && !exactMatchInCurrentTags;
 
   // Suggestions for display in the dropdown:
-  let displaySuggestions: Tag[] = [];
+  let displaySuggestions: PlainTag[] = [];
   // Filter out tags already on the current asset from the available active tags once
   const activeTagsToShow = availableActiveTags.filter(orgTag => !currentTags.some(ct => ct.id === orgTag.id));
 

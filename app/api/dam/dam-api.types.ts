@@ -1,27 +1,38 @@
 import type { Tag } from '@/lib/actions/dam/tag.actions';
+import type { DamFilterParameters, DamSortParameters, LimitOptions } from '@/lib/dam/application/dto/SearchCriteriaDTO';
+
+// Plain Tag interface for API serialization (to avoid React serialization errors with domain entities)
+export interface PlainTag {
+  id: string;
+  name: string;
+  userId: string;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
 
 // Original types from dam-api.helpers.ts / route.ts
 
-export interface DamFilterParameters {
-  type?: string | null;
-  creationDateOption?: string | null;
-  dateStart?: string | null;
-  dateEnd?: string | null;
-  ownerId?: string | null;
-  sizeOption?: string | null;
-  sizeMin?: string | null;
-  sizeMax?: string | null;
-}
+// export interface DamFilterParameters {
+//   type?: string | null;
+//   creationDateOption?: string | null;
+//   dateStart?: string | null;
+//   dateEnd?: string | null;
+//   ownerId?: string | null;
+//   sizeOption?: string | null;
+//   sizeMin?: string | null;
+//   sizeMax?: string | null;
+// }
 
-export interface DamSortParameters {
-  sortBy?: string | null;
-  sortOrder?: 'asc' | 'desc' | null;
-}
+// export interface DamSortParameters {
+//   sortBy?: string | null;
+//   sortOrder?: 'asc' | 'desc' | null;
+// }
 
-export interface LimitOptions {
-  quickSearch: boolean;
-  parsedLimit?: number;
-}
+// export interface LimitOptions {
+//   quickSearch: boolean;
+//   parsedLimit?: number;
+// }
 
 // Raw data types from Supabase
 export interface RawAssetFromApi {
@@ -29,7 +40,7 @@ export interface RawAssetFromApi {
   name: string;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   storage_path: string;
   mime_type: string;
   size: number;
@@ -43,7 +54,7 @@ export interface RawFolderFromApi {
   name: string;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   parent_folder_id: string | null;
   organization_id: string;
   has_children_count?: Array<{ count: number }>;
@@ -63,7 +74,7 @@ export interface TransformedAsset {
   name: string;
   user_id: string;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   storage_path: string;
   mime_type: string;
   size: number;
@@ -74,7 +85,7 @@ export interface TransformedAsset {
   publicUrl: string | null; // Ensure getPublicUrl can return null
   parentFolderName: string | null;
   ownerName: string;
-  tags: Tag[]; // Tag from '@/lib/actions/dam/tag.actions'
+  tags: PlainTag[]; // Use PlainTag for serialization instead of Tag domain entities
 }
 
 export interface TransformedFolder {

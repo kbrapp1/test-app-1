@@ -3,8 +3,7 @@ import { ValidationError, NotFoundError } from '@/lib/errors/base';
 
 interface GetFolderPathUseCaseParams {
   folderId: string;
-  // organizationId might be relevant if getPath needs to be scoped, 
-  // but IFolderRepository.getPath currently only takes folderId.
+  organizationId: string; // Required for security and validation
 }
 
 interface PathSegment {
@@ -15,9 +14,12 @@ interface PathSegment {
 export class GetFolderPathUseCase {
   constructor(private folderRepository: IFolderRepository) {}
 
-  async execute({ folderId }: GetFolderPathUseCaseParams): Promise<PathSegment[]> {
+  async execute({ folderId, organizationId }: GetFolderPathUseCaseParams): Promise<string> {
     if (!folderId) {
       throw new ValidationError('Folder ID is required to get its path.');
+    }
+    if (!organizationId) {
+      throw new ValidationError('Organization ID is required to get folder path.');
     }
 
     // Optional: Check if the folder exists first. 
@@ -28,11 +30,10 @@ export class GetFolderPathUseCase {
     // }
 
     try {
-      const path = await this.folderRepository.getPath(folderId);
-      if (path.length === 0 && folderId !== 'root') { // Assuming 'root' isn't a real ID but a concept for root
-        // This check depends on how get_folder_path RPC behaves for non-existent IDs.
-        // If RPC returns empty for invalid ID, check if folder exists to throw NotFoundError.
-        const folderExists = await this.folderRepository.findById(folderId);
+      const path = await this.folderRepository.getPath(folderId, organizationId);
+      if (path === '/' && folderId !== 'root') { // If we get root path but folderId isn't root
+        // Check if folder exists to throw NotFoundError if it doesn't exist.
+        const folderExists = await this.folderRepository.findById(folderId, organizationId);
         if(!folderExists) {
             throw new NotFoundError(`Folder with ID "${folderId}" not found, cannot get path.`);
         }

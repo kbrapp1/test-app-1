@@ -1,11 +1,64 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { IFolderRepository, FolderTreeNode } from '../../../domain/repositories/IFolderRepository';
+import { IFolderRepository, FolderTreeNode, CreateFolderData, UpdateFolderData } from '../../../domain/repositories/IFolderRepository';
 import { Folder } from '../../../domain/entities/Folder';
 import { Asset } from '../../../domain/entities/Asset';
 import { FolderMapper, RawFolderDbRecord } from './mappers/FolderMapper';
 import { AssetMapper, RawAssetDbRecord as RawAssetDbRecordForAsset } from './mappers/AssetMapper';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/errors/base';
+import type { DamFilterParameters, DamSortParameters, FolderSearchCriteria } from '../../../application/dto/SearchCriteriaDTO';
+
+// Utility function to apply date filters (adapted from app/api/dam/dam-api.query-builders.ts)
+function applyFolderDateFiltersToQuery(query: any, filters: DamFilterParameters): any {
+  if (!filters.creationDateOption) {
+    return query;
+  }
+
+  const now = new Date();
+  let dateFilterValue: string;
+  let dateEndFilterValue: string | undefined;
+
+  switch (filters.creationDateOption) {
+    case 'today':
+      dateFilterValue = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+      query = query.gte('created_at', dateFilterValue);
+      break;
+    case 'last7days':
+      const last7DaysDate = new Date(now.valueOf());
+      last7DaysDate.setUTCDate(now.getUTCDate() - 7);
+      dateFilterValue = new Date(Date.UTC(last7DaysDate.getUTCFullYear(), last7DaysDate.getUTCMonth(), last7DaysDate.getUTCDate())).toISOString();
+      query = query.gte('created_at', dateFilterValue);
+      break;
+    case 'last30days':
+      const last30DaysDate = new Date(now.valueOf());
+      last30DaysDate.setUTCDate(now.getUTCDate() - 30);
+      dateFilterValue = new Date(Date.UTC(last30DaysDate.getUTCFullYear(), last30DaysDate.getUTCMonth(), last30DaysDate.getUTCDate())).toISOString();
+      query = query.gte('created_at', dateFilterValue);
+      break;
+    case 'thisYear':
+      dateFilterValue = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)).toISOString();
+      query = query.gte('created_at', dateFilterValue);
+      break;
+    case 'lastYear':
+      dateFilterValue = new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)).toISOString();
+      dateEndFilterValue = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)).toISOString();
+      query = query.gte('created_at', dateFilterValue).lt('created_at', dateEndFilterValue);
+      break;
+    case 'custom':
+      if (filters.dateStart) {
+        const [year, month, day] = filters.dateStart.split('-').map(Number);
+        dateFilterValue = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)).toISOString();
+        query = query.gte('created_at', dateFilterValue);
+      }
+      if (filters.dateEnd) {
+        const [year, month, day] = filters.dateEnd.split('-').map(Number);
+        dateEndFilterValue = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
+        query = query.lte('created_at', dateEndFilterValue);
+      }
+      break;
+  }
+  return query;
+}
 
 export class SupabaseFolderRepository implements IFolderRepository {
   private supabase: SupabaseClient;
@@ -14,11 +67,12 @@ export class SupabaseFolderRepository implements IFolderRepository {
     this.supabase = supabaseClient || createSupabaseServerClient();
   }
 
-  async findById(id: string): Promise<Folder | null> {
+  async findById(id: string, organizationId: string): Promise<Folder | null> {
     const { data, error } = await this.supabase
       .from('folders')
       .select('*, has_children:folders!parent_folder_id(count)')
       .eq('id', id)
+      .eq('organization_id', organizationId)
       .maybeSingle();
 
     if (error) {
@@ -35,7 +89,12 @@ export class SupabaseFolderRepository implements IFolderRepository {
     return this.findFoldersByParentId(null, organizationId);
   }
 
-  async findFoldersByParentId(parentId: string | null, organizationId: string): Promise<Folder[]> {
+  async findFoldersByParentId(
+    parentId: string | null, 
+    organizationId: string,
+    sortParams?: DamSortParameters,
+    filters?: DamFilterParameters,
+  ): Promise<Folder[]> {
     let query = this.supabase
       .from('folders')
       .select('*, has_children:folders!parent_folder_id(count)')
@@ -47,7 +106,36 @@ export class SupabaseFolderRepository implements IFolderRepository {
       query = query.eq('parent_folder_id', parentId);
     }
     
-    query = query.order('name', { ascending: true });
+    // Apply filters
+    if (filters) {
+      if (filters.ownerId) {
+        query = query.eq('user_id', filters.ownerId);
+      }
+      // Date filters
+      query = applyFolderDateFiltersToQuery(query, filters);
+      
+      // Type filter for folders:
+      // If filters.type is defined and is not 'folder', it means we are looking for specific asset types,
+      // so no folders should be returned. This specific logic might be better handled in a use case
+      // that combines asset and folder fetching if that's the scenario.
+      // For a method that *only* fetches folders, if type is specified and it's not 'folder',
+      // it implies an empty result for folders.
+      if (filters.type && filters.type !== 'folder') {
+        return []; // Return empty array as no folders match an asset-specific type filter
+      }
+    }
+
+    // Apply sorting
+    let effectiveSortBy = sortParams?.sortBy || 'name';
+    const sortOrderAsc = (sortParams?.sortOrder || 'asc') === 'asc';
+
+    const validFolderSortColumns = ['name', 'created_at', 'updated_at']; // Define valid sort columns for folders
+    if (!validFolderSortColumns.includes(effectiveSortBy)) {
+      // If sortBy is not valid for folders (e.g., 'size'), default to 'name'
+      effectiveSortBy = 'name';
+    }
+
+    query = query.order(effectiveSortBy, { ascending: sortOrderAsc });
 
     const { data, error } = await query;
 
@@ -104,64 +192,65 @@ export class SupabaseFolderRepository implements IFolderRepository {
     return [...childFolders, ...childAssets];
   }
 
-  async getPath(folderId: string): Promise<{ id: string; name: string }[]> {
+  async getPath(folderId: string, organizationId: string): Promise<string> {
     const { data, error } = await this.supabase.rpc('get_folder_path', { p_folder_id: folderId });
 
     if (error) {
       console.error('Error fetching folder path:', error.message);
       throw new DatabaseError('Could not fetch folder path.', error.message);
     }
-    return data || [];
-  }
-
-  async save(folderData: Pick<Folder, 'name' | 'parentFolderId' | 'organizationId' | 'userId'>): Promise<Folder> {
-    const persistenceData = FolderMapper.toPersistence(folderData);
     
-    const { data, error } = await this.supabase
-      .from('folders')
-      .insert(persistenceData)
-      .select()
-      .single();
-
-    if (error || !data) {
-      console.error('Error saving folder:', error?.message);
-      throw new DatabaseError('Could not save folder.', error?.message);
+    // Convert array path to string path (e.g., "/folder1/folder2/folder3")
+    if (!data || data.length === 0) {
+      return '/';
     }
-    return FolderMapper.toDomain(data as RawFolderDbRecord);
+    
+    const pathSegments = (data as { id: string; name: string }[]).map(segment => segment.name);
+    return '/' + pathSegments.join('/');
   }
 
-  async update(folderId: string, data: Partial<Pick<Folder, 'name' | 'parentFolderId'>>): Promise<Folder | null> {
-    const persistenceData = FolderMapper.toUpdatePersistence(data);
+  async save(folderData: CreateFolderData): Promise<Folder> {
+    return this.create(folderData);
+  }
+
+  async update(id: string, updates: UpdateFolderData, organizationId: string): Promise<Folder> {
+    const persistenceData = FolderMapper.toUpdatePersistence(updates);
 
     if (Object.keys(persistenceData).length === 0) {
-      return this.findById(folderId);
+      const existing = await this.findById(id, organizationId);
+      if (!existing) {
+        throw new NotFoundError('Folder not found for update.');
+      }
+      return existing;
     }
 
     const { data: updatedData, error } = await this.supabase
       .from('folders')
       .update(persistenceData)
-      .eq('id', folderId)
+      .eq('id', id)
+      .eq('organization_id', organizationId)
       .select()
       .single();
 
     if (error) {
       console.error('Error updating folder:', error.message);
       if (error.code === 'PGRST116') { 
-        return null;
+        throw new NotFoundError('Folder not found for update.');
       }
       throw new DatabaseError('Could not update folder.', error.message);
     }
     if (!updatedData) { 
-        return null;
+      throw new NotFoundError('Folder not found for update.');
     }
     return FolderMapper.toDomain(updatedData as RawFolderDbRecord);
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, organizationId: string): Promise<void> {
     const { data: childFoldersResult, error: childFoldersError } = await this.supabase
       .from('folders')
       .select('id', { count: 'exact', head: true })
-      .eq('parent_folder_id', id);
+      .eq('parent_folder_id', id)
+      .eq('organization_id', organizationId);
 
     if (childFoldersError) {
       console.error('Error checking for child folders before delete:', childFoldersError.message);
@@ -175,7 +264,8 @@ export class SupabaseFolderRepository implements IFolderRepository {
     const { data: childAssetsResult, error: childAssetsError } = await this.supabase
       .from('assets')
       .select('id', { count: 'exact', head: true })
-      .eq('folder_id', id);
+      .eq('folder_id', id)
+      .eq('organization_id', organizationId);
 
     if (childAssetsError) {
       console.error('Error checking for child assets before delete:', childAssetsError.message);
@@ -189,13 +279,13 @@ export class SupabaseFolderRepository implements IFolderRepository {
     const { error } = await this.supabase
       .from('folders')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('organization_id', organizationId);
 
     if (error) {
       console.error('Error deleting folder:', error.message);
-      return false; 
+      throw new DatabaseError('Could not delete folder.', error.message);
     }
-    return true;
   }
 
   async getFolderTree(organizationId: string, parentFolderId?: string | null): Promise<FolderTreeNode[]> {
@@ -206,10 +296,15 @@ export class SupabaseFolderRepository implements IFolderRepository {
       for (const folder of folders) {
         const children = await this.findFoldersByParentId(folder.id, organizationId);
         const childTreeNodes = await buildTree(children);
-        treeNodes.push({
-          ...folder,
-          children: childTreeNodes,
-        });
+        
+        // Create a new FolderTreeNode by extending the existing Folder with children
+        const treeNode: FolderTreeNode = Object.assign(
+          Object.create(Object.getPrototypeOf(folder)), // Preserve the Folder class prototype
+          folder, // Copy all properties
+          { children: childTreeNodes } // Add children property
+        );
+        
+        treeNodes.push(treeNode);
       }
       return treeNodes;
     };
@@ -264,9 +359,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     return (data || []).map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
   }
 
-  async create(folderData: Omit<Folder, 'id' | 'createdAt' | 'updatedAt'>): Promise<Folder> {
-    // Minimal stub for now, full implementation should use FolderMapper.toCreatePersistence
-    // and handle insertion. This is just to satisfy the linter for the current task.
+  async create(folderData: CreateFolderData): Promise<Folder> {
     const persistenceData = FolderMapper.toCreatePersistence(folderData);
     const { data, error } = await this.supabase
       .from('folders')
@@ -275,9 +368,64 @@ export class SupabaseFolderRepository implements IFolderRepository {
       .single();
 
     if (error || !data) {
-      console.error('Error creating folder (stubbed implementation):', error?.message);
-      throw new DatabaseError('Could not create folder (stubbed).', error?.message);
+      console.error('Error creating folder:', error?.message);
+      throw new DatabaseError('Could not create folder.', error?.message);
     }
     return FolderMapper.toDomain(data as RawFolderDbRecord);
+  }
+
+  async search(
+    organizationId: string, 
+    searchQuery: string, 
+    currentFolderIdForContext?: string | null, 
+    limitOptions?: { offset?: number; limit?: number }, 
+    sortParams?: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Folder[]> {
+    let query = this.supabase
+      .from('folders')
+      .select('*, has_children:folders!parent_folder_id(count)')
+      .eq('organization_id', organizationId);
+
+    if (searchQuery) {
+      query = query.ilike('name', `%${searchQuery}%`);
+    }
+
+    // Parent folder filtering for search (if specified)
+    if (currentFolderIdForContext === null) {
+      query = query.is('parent_folder_id', null);
+    } else if (currentFolderIdForContext !== undefined) {
+      query = query.eq('parent_folder_id', currentFolderIdForContext);
+    }
+
+    // Sorting for search results
+    let effectiveSortBySearch = sortParams?.sortBy || 'name';
+    const sortOrderAscSearch = (sortParams?.sortOrder || 'asc') === 'asc';
+
+    const validFolderSortColumnsSearch = ['name', 'created_at', 'updated_at'];
+    if (!validFolderSortColumnsSearch.includes(effectiveSortBySearch)) {
+      effectiveSortBySearch = 'name';
+    }
+
+    query = query.order(effectiveSortBySearch, { ascending: sortOrderAscSearch });
+
+    // Apply limit/pagination from limitOptions
+    if (limitOptions?.limit !== undefined && limitOptions.limit > 0) {
+      const limit = limitOptions.limit;
+      query = query.limit(limit);
+      
+      if (limitOptions.offset !== undefined && limitOptions.offset > 0) {
+        const from = limitOptions.offset;
+        const to = from + limit - 1;
+        query = query.range(from, to);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error searching folders:', error.message);
+      throw new DatabaseError('Could not search folders.', error.message);
+    }
+    return (data || []).map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
   }
 } 

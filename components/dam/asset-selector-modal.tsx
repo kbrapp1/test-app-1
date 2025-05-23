@@ -10,13 +10,14 @@ import { ScrollArea } from "@/components/ui/scroll-area"; // For potentially lon
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileTextIcon, AlertCircleIcon, SearchIcon } from 'lucide-react';
-import { Asset } from '@/types/dam'; // Import the shared Asset type
+import { ComponentAsset as Asset } from '@/lib/dam/types/component'; // Keep for potential future use
+import { TextAssetSummaryDto } from '@/lib/dam/application/use-cases/ListTextAssetsUseCase'; // Import the correct type
 
 interface AssetSelectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Use the imported Asset type for the callback
-  onAssetSelect: (asset: Asset) => void; 
+  // Use the TextAssetSummaryDto type for the callback since that's what listTextAssets returns
+  onAssetSelect: (asset: TextAssetSummaryDto) => void; 
   trigger?: React.ReactNode;
 }
 
@@ -27,9 +28,8 @@ export function AssetSelectorModal({
   trigger
 }: AssetSelectorModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  // Use the imported Asset type for state
-  const [assets, setAssets] = useState<Asset[]>([]); 
   const [error, setError] = useState<string | null>(null);
+  const [assets, setAssets] = useState<TextAssetSummaryDto[]>([]); // Updated type
   const [hasFetched, setHasFetched] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   // Add state for the debounced search term
@@ -59,16 +59,7 @@ export function AssetSelectorModal({
           try {
             const result = await listTextAssets(); 
             if (result.success && result.data) {
-              const validAssets = result.data.map(item => ({
-                ...item,
-                type: 'asset',
-                publicUrl: '', 
-                storage_path: '', 
-                mime_type: 'text/plain', 
-                size: 0, 
-                folder_id: null 
-              })) as Asset[];
-              setAssets(validAssets); // Store all fetched assets
+              setAssets(result.data); // Use the TextAssetSummaryDto data directly
             } else {
               setError(result.error || 'Failed to fetch assets.');
             }
@@ -101,8 +92,8 @@ export function AssetSelectorModal({
     // Use debouncedSearchTerm for filtering
   }, [assets, debouncedSearchTerm]);
 
-  // Use the imported Asset type for the parameter
-  const handleSelect = (asset: Asset) => { 
+  // Use the TextAssetSummaryDto type for the parameter since that's what listTextAssets returns
+  const handleSelect = (asset: TextAssetSummaryDto) => { 
     onAssetSelect(asset);
     onOpenChange(false);
   };

@@ -105,9 +105,7 @@ export function useHeadlessAudioPlayer(): UseHeadlessAudioPlayerReturn {
       }
     };
     currentAudioElement.onended = () => {
-      // When audio ends naturally
-      console.log('[HeadlessPlayer] onended. Current URL before clearState(isEnded): ', currentlyPlayingUrl);
-      clearState({ isEnded: true }); // Pass a flag to clear URL as well
+      clearState({ isEnded: true });
     };
     currentAudioElement.onerror = (e) => {
       const mediaError = currentAudioElement.error;

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Asset } from '@/types/dam';
+import type { ComponentAsset as Asset } from '@/lib/dam/types/component';
 import { InputDialog } from '@/components/dam/dialogs/InputDialog';
 import { AssetDetailsDialog } from '@/components/dam/dialogs/AssetDetailsDialog';
 import { FolderPickerDialog } from '@/components/dam/dialogs/FolderPickerDialog';

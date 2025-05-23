@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import { AssetSelectorModal } from '@/components/dam/asset-selector-modal';
-import type { Asset } from '@/types/dam';
+import { Asset } from '@/lib/dam/domain/entities/Asset';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,12 +98,10 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
   });
 
   const activeAudioUrl = generatedAudioUrl || null;
-  console.log('[TtsInterface] Rendering. activeAudioUrl:', activeAudioUrl, 'generatedAudioUrl:', generatedAudioUrl); // DEBUG
 
   // Effect to handle form re-initialization from history
   useEffect(() => {
     if (formInitialValues) {
-      console.log('[TtsInterface] Effect: formInitialValues changed.', formInitialValues); // DEBUG
       resetTtsState(); // Always reset first to clear any ongoing generation/polling
       
       form.reset({
@@ -119,11 +117,9 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
           dbId: formInitialValues.dbId,
           status: formInitialValues.outputUrl ? 'succeeded' : null // Or a specific 'loaded_from_history' status
         });
-        console.log('[TtsInterface] Called loadPrediction with:', formInitialValues.outputUrl, formInitialValues.dbId);
       } else {
         // If no outputUrl, ensure everything is fully reset (resetTtsState already did most of this)
         // This branch might be redundant if resetTtsState is comprehensive enough
-        console.log('[TtsInterface] No outputUrl in formInitialValues, relying on resetTtsState.');
       }
     }
   }, [formInitialValues, form, resetTtsState, loadPrediction]); // Added loadPrediction to dependencies
@@ -165,7 +161,6 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
   const handleDeletePrediction = useCallback(async () => {
     if (!ttsPredictionDbId) return;
     setIsDeleting(true);
-    console.log("TODO: Call delete action with ID:", ttsPredictionDbId);
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     toast({ title: "Info", description: "Delete functionality not fully implemented yet." });
     setIsDeleting(false);
@@ -210,7 +205,23 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
         <AssetSelectorModal
           open={isDamModalOpen}
           onOpenChange={setIsDamModalOpen}
-          onAssetSelect={loadTextFromAsset}
+          onAssetSelect={(assetSummary) => {
+            // Convert TextAssetSummaryDto to domain Asset for loadTextFromAsset
+            const domainAsset = new Asset({
+              id: assetSummary.id,
+              name: assetSummary.name,
+              userId: assetSummary.userId,
+              storagePath: assetSummary.storagePath,
+              mimeType: assetSummary.mimeType,
+              size: assetSummary.size,
+              createdAt: assetSummary.createdAt,
+              updatedAt: assetSummary.updatedAt,
+              folderId: assetSummary.folderId,
+              organizationId: assetSummary.organizationId,
+              publicUrl: assetSummary.publicUrl,
+            });
+            loadTextFromAsset(domainAsset);
+          }}
         />
       </div>
     </TooltipProvider>

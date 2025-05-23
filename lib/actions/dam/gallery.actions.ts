@@ -11,7 +11,6 @@ import { AppError } from '@/lib/errors/base';
 export async function getAssetsAndFoldersForGallery(
   currentFolderId: string | null
 ): Promise<{ success: boolean; data?: { items: GalleryItemDto[] }; error?: string }> {
-  console.log(`[Action] Fetching gallery for folder: ${currentFolderId}`);
   const supabaseClient = createSupabaseServerClient();
   try {
     const activeOrgId = await getActiveOrganizationId();

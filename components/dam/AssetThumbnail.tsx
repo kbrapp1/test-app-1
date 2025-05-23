@@ -73,7 +73,6 @@ const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>(({
   
   useImperativeHandle(ref, () => ({
     triggerDeleteDialog: () => {
-      console.log('AssetThumbnail: triggerDeleteDialog called!');
       setIsAlertOpen(true);
     }
   }));

@@ -6,8 +6,8 @@ import { Folder as FolderIcon, ChevronRight, ChevronDown, Home as HomeIcon } fro
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NewFolderDialog } from './new-folder-dialog';
-// import { Folder } from '@/types/dam'; // Remove this line
-import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder'; // Add this line
+import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder'; // Import as value for constructor
+import type { PlainFolder } from '@/lib/dam/types/dam.types'; // Import as type
 import { FolderItem } from './FolderItem';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { useSearchParams } from 'next/navigation';
@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 
 // Props for the main sidebar component
 export interface FolderSidebarProps {
-  initialFolders: DomainFolder[];
+  initialFolders: PlainFolder[];
   // currentFolderId prop is still received from layout but will be overridden by searchParams
   // No need to pass it explicitly if we derive it here from searchParams
 }
@@ -39,11 +39,30 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
   const actualCurrentFolderId = folderIdFromParams || null;
 
   useEffect(() => {
-    // Remove the console log once we confirm it works as expected
-    // console.log('FolderSidebar: Initializing store state...');
-    setInitialFolders(initialFolders);
+    try {
+      // Convert plain objects back to domain entities for the store
+      const domainFolders = initialFolders.map(plainFolder => {
+        const domainFolder = new DomainFolder({
+          id: plainFolder.id,
+          name: plainFolder.name,
+          userId: plainFolder.userId,
+          createdAt: plainFolder.createdAt,
+          updatedAt: plainFolder.updatedAt,
+          parentFolderId: plainFolder.parentFolderId,
+          organizationId: plainFolder.organizationId,
+          has_children: plainFolder.has_children,
+        });
+        
+        return domainFolder;
+      });
+      
+      setInitialFolders(domainFolders);
+    } catch (error) {
+      console.error('Error converting folders to domain entities:', error);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFolders, setInitialFolders]); // initialFolders from layout props can be a dependency if it can change.
+  }, [initialFolders, setInitialFolders]);
+                          // initialFolders from layout props can be a dependency if it can change.
                           // For root folders it might be stable, but good to include.
                           // If setInitialFolders is guaranteed stable, then [setInitialFolders]
 

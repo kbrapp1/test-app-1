@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useDamTagFilterHandler } from './useDamTagFilterHandler';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { useDamUrlManager } from '@/lib/hooks/useDamUrlManager';
+import { useDamUrlManager } from '@/components/dam/hooks/useDamUrlManager';
 import type { Mock } from 'vitest';
 import { useSearchParams } from 'next/navigation';
 
@@ -14,7 +14,7 @@ vi.mock('@/lib/auth/server-action', () => ({
   getActiveOrganizationId: vi.fn(),
 }));
 
-vi.mock('@/lib/hooks/useDamUrlManager', () => ({
+vi.mock('@/components/dam/hooks/useDamUrlManager', () => ({
   useDamUrlManager: vi.fn(),
 }));
 

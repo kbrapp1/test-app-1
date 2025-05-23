@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,6 +138,18 @@ export function CreationDateFilter({
 
   const displayFormat = 'MMM d, yyyy';
 
+  const handleStartDateSelect = useCallback((date: Date | undefined) => {
+    if (date) {
+      setTempStartDate(date);
+    }
+  }, [setTempStartDate]);
+
+  const handleEndDateSelect = useCallback((date: Date | undefined) => {
+    if (date) {
+      setTempEndDate(date);
+    }
+  }, [setTempEndDate]);
+
   return (
     <div className="flex items-center group">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -195,7 +207,7 @@ export function CreationDateFilter({
                   <Calendar
                     mode="single"
                     selected={tempStartDate}
-                    onSelect={(date) => { setTempStartDate(date); setIsStartDatePopoverOpen(false); }}
+                    onSelect={handleStartDateSelect}
                     disabled={(date) => tempEndDate ? date > tempEndDate : false}
                     initialFocus
                   />
@@ -213,7 +225,7 @@ export function CreationDateFilter({
                   <Calendar
                     mode="single"
                     selected={tempEndDate}
-                    onSelect={(date) => { setTempEndDate(date); setIsEndDatePopoverOpen(false); }}
+                    onSelect={handleEndDateSelect}
                     disabled={(date) => tempStartDate ? date < tempStartDate : false}
                     initialFocus
                   />

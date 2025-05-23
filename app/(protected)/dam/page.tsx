@@ -23,7 +23,6 @@ import {
 */
 
 // import { AssetGalleryClient } from '@/components/dam/AssetGalleryClient'; // Now rendered by DamPageClientView
-import type { Folder } from '@/types/dam'; // Still needed for fetchBreadcrumbPathRecursive if it uses Folder type directly
 import { DamBreadcrumbs, type BreadcrumbItemData } from '@/components/dam/dam-breadcrumbs';
 // import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Not directly used here, but auth context is via withAuth
 import { DamPageClientView } from '@/components/dam/DamPageClientView';

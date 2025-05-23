@@ -49,6 +49,7 @@ export function DamPageClientView({
     currentTagIds,
     isAnyFilterActive,
     clearAllFilters,
+    updateUrlParams,
   } = useDamFilters(currentFolderId);
 
   const [organizationMembers, setOrganizationMembers] = useState<Array<{id: string, name: string}>>([]);
@@ -101,11 +102,16 @@ export function DamPageClientView({
   }, []);
 
   const handleSortChange = (newSortBy: SortByValue | undefined, newSortOrder: SortOrderValue | undefined) => {
-    setSortBy(newSortBy);
-    if (newSortOrder !== undefined) {
-        setSortOrder(newSortOrder);
-    } else if (newSortBy && !sortOrder) {
-        setSortOrder('asc'); 
+    // Update both parameters together using updateUrlParams directly to avoid race conditions
+    if (newSortBy && newSortOrder) {
+      // Both are provided, set them together
+      updateUrlParams({ sortBy: newSortBy, sortOrder: newSortOrder });
+    } else if (newSortBy) {
+      // Only sortBy provided, use default order
+      updateUrlParams({ sortBy: newSortBy, sortOrder: 'asc' });
+    } else {
+      // Clear sorting
+      updateUrlParams({ sortBy: undefined, sortOrder: undefined });
     }
   };
 

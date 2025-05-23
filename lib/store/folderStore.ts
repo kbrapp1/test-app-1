@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
-import { type TransformedFolder } from '@/app/api/dam/dam-api.types';
 // We might need fetch logic here, but useFolderFetch is not directly used in the store actions provided.
 // It was mentioned as a comment in the original code, so keeping the import if it might be used later elsewhere or was planned.
 // import { useFolderFetch } from '@/hooks/useFolderFetch'; 
@@ -54,25 +53,24 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
 
     const initialNodes: FolderNode[] = folders.map(f => {
       const existingNode = existingNodeMap.get(f.id);
-      return {
-        ...f, // f is DomainFolder, spread its properties
-        // TransformedFolder specific fields like type/ownerName won't come from f
+      
+      // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
+      const node = Object.assign(f, {
         children: existingNode?.children ?? null, 
         isExpanded: existingNode?.isExpanded ?? false, 
         isLoading: existingNode?.isLoading ?? false,
         hasError: existingNode?.hasError ?? false,
-      };
+      }) as FolderNode;
+      
+      return node;
     });
-    // This simplistic mapping might break tree structure if folders are re-parented or deleted.
-    // A more robust approach would rebuild the tree from the new flat list `folders` 
-    // while preserving states of nodes that still exist.
-    // For now, let's assume `folders` is a flat list of root folders primarily.
-    // If `folders` is meant to be the *entire* hierarchy, a tree-building step is needed here.
-    // Given the original code, `folders` in `setInitialFolders` are just root folders.
+    
+    const rootNodes = initialNodes.filter(f => f.parentFolderId === null).sort((a,b) => a.name.localeCompare(b.name));
+    
     set({ 
-      rootFolders: initialNodes.filter(f => f.parentFolderId === null).sort((a,b) => a.name.localeCompare(b.name)), 
+      rootFolders: rootNodes, 
       selectedFolderId: null,
-      changeVersion: get().changeVersion + 1 // ADDED: Increment on initial set/reset too
+      changeVersion: get().changeVersion + 1
     });
   },
 
@@ -96,19 +94,14 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
       
       const childrenNodes: FolderNode[] = childrenData.map(f_child => { // f_child is DomainFolder
         const existingChildNode = fullCurrentStateMap.get(f_child.id);
-        // f_child is DomainFolder. FolderNode extends DomainFolder.
-        // Spreading f_child will correctly populate the DomainFolder parts of FolderNode.
-        // type and ownerName are optional in FolderNode and won't come from DomainFolder.
-        return {
-          ...f_child, // Spread DomainFolder properties
-          
-          // FolderNode specific UI state
+        
+        // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
+        return Object.assign(f_child, {
           children: existingChildNode?.children ?? null, 
           isExpanded: existingChildNode?.isExpanded ?? false, 
           isLoading: existingChildNode?.isLoading ?? false,
           hasError: existingChildNode?.hasError ?? false,
-          // type and ownerName will be undefined, which is fine as they are optional in FolderNode
-        };
+        }) as FolderNode;
       });
       
       set((state) => ({ 
@@ -139,17 +132,13 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   },
 
   addFolder: (newFolderData: DomainFolder) => {
-    // newFolderData is DomainFolder. FolderNode extends DomainFolder.
-    // The main difference would be if TransformedFolder had extra required fields that DomainFolder doesn't.
-    // Since TransformedFolder is now leaner, this should be fine.
-    const newNode: FolderNode = {
-        ...newFolderData, // Spread DomainFolder properties
-        // FolderNode specific UI state
+    // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
+    const newNode: FolderNode = Object.assign(newFolderData, {
         children: null,
         isExpanded: false, 
         isLoading: false,
         hasError: false,
-    };
+    }) as FolderNode;
 
     set((state) => {
       let updatedRootFolders = [...state.rootFolders];
