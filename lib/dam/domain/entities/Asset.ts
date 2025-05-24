@@ -8,6 +8,22 @@ export class AssetValidationError extends Error {
   }
 }
 
+export interface AssetProps {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  storagePath: string;
+  mimeType: string;
+  size: number;
+  folderId?: string | null;
+  organizationId: string;
+  tags?: Tag[];
+  publicUrl?: string | null;
+  folderName?: string | null;
+}
+
 export class Asset {
   public readonly id: string;
   public readonly userId: string;
@@ -21,6 +37,7 @@ export class Asset {
   public readonly organizationId: string;
   public readonly tags?: Tag[];
   public readonly publicUrl?: string;
+  private _folderName?: string | null;
 
   constructor(data: {
     id: string;
@@ -35,6 +52,7 @@ export class Asset {
     organizationId: string;
     tags?: Tag[];
     publicUrl?: string;
+    folderName?: string | null;
   }) {
     // Validate required fields
     this.validateRequiredFields(data);
@@ -57,6 +75,7 @@ export class Asset {
     this.organizationId = data.organizationId;
     this.tags = data.tags;
     this.publicUrl = data.publicUrl;
+    this._folderName = data.folderName;
   }
 
   // Getters
@@ -70,6 +89,10 @@ export class Asset {
 
   get folderId(): string | null | undefined {
     return this._folderId;
+  }
+
+  get folderName(): string | null | undefined {
+    return this._folderName;
   }
 
   // Business Methods
@@ -227,7 +250,7 @@ export class Asset {
     // Check for invalid characters
     const invalidChars = /[<>:"/\\|?*\x00-\x1f]/;
     if (invalidChars.test(trimmedName)) {
-      throw new AssetValidationError('Asset name contains invalid characters');
+      throw new AssetValidationError('Asset name contains invalid characters. Avoid <, >, :, ", /, \, |, ?, *, and control characters.');
     }
   }
 
@@ -249,7 +272,7 @@ export class Asset {
     }
     
     if (!mimeType.includes('/')) {
-      throw new AssetValidationError('Invalid mime type format');
+      throw new AssetValidationError('Invalid mime type format. Expected format: type/subtype (e.g., image/jpeg)');
     }
   }
 
@@ -267,6 +290,9 @@ export class Asset {
    * Creates an Asset instance from database data
    */
   static fromDatabaseRow(row: any): Asset {
+    if (!row) {
+      throw new AssetValidationError('Database row cannot be null or undefined.');
+    }
     return new Asset({
       id: row.id,
       userId: row.user_id || row.userId,
@@ -275,31 +301,19 @@ export class Asset {
       mimeType: row.mime_type || row.mimeType,
       size: row.size,
       createdAt: new Date(row.created_at || row.createdAt),
-      updatedAt: row.updated_at || row.updatedAt ? new Date(row.updated_at || row.updatedAt) : undefined,
+      updatedAt: row.updated_at ? new Date(row.updated_at || row.updatedAt) : undefined,
       folderId: row.folder_id || row.folderId,
       organizationId: row.organization_id || row.organizationId,
       tags: row.tags,
-      publicUrl: row.public_url || row.publicUrl
+      publicUrl: row.public_url || row.publicUrl,
+      folderName: row.folder_name || row.folderName,
     });
   }
 
   /**
    * Converts the Asset to a plain object (for serialization)
    */
-  toPlainObject(): {
-    id: string;
-    userId: string;
-    name: string;
-    storagePath: string;
-    mimeType: string;
-    size: number;
-    createdAt: Date;
-    updatedAt?: Date;
-    folderId?: string | null;
-    organizationId: string;
-    tags?: Tag[];
-    publicUrl?: string;
-  } {
+  toPlainObject(): AssetProps {
     return {
       id: this.id,
       userId: this.userId,
@@ -312,7 +326,8 @@ export class Asset {
       folderId: this._folderId,
       organizationId: this.organizationId,
       tags: this.tags,
-      publicUrl: this.publicUrl
+      publicUrl: this.publicUrl,
+      folderName: this._folderName,
     };
   }
 } 

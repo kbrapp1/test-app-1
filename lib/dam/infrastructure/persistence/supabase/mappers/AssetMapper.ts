@@ -10,6 +10,7 @@ export interface RawAssetDbRecord {
   user_id: string;
   organization_id: string;
   folder_id: string | null;
+  folder_name?: string | null;
   storage_path: string;
   mime_type: string;
   size: number;
@@ -48,6 +49,7 @@ export class AssetMapper {
       createdAt: new Date(raw.created_at),
       updatedAt: raw.updated_at ? new Date(raw.updated_at) : undefined,
       folderId: raw.folder_id,
+      folderName: raw.folder_name,
       organizationId: raw.organization_id,
       tags: tags.length > 0 ? tags : undefined,
     });

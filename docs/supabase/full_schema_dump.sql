@@ -395,6 +395,19 @@ $$;
 ALTER FUNCTION "public"."trigger_set_timestamp"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_saved_searches_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_saved_searches_updated_at"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "storage"."can_insert_object"("bucketid" "text", "name" "text", "owner" "uuid", "metadata" "jsonb") RETURNS "void"
     LANGUAGE "plpgsql"
     AS $$
@@ -1291,6 +1304,26 @@ COMMENT ON COLUMN "public"."roles"."description" IS 'Optional description of the
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."saved_searches" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "description" "text",
+    "user_id" "uuid" NOT NULL,
+    "organization_id" "uuid" NOT NULL,
+    "search_criteria" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "is_global" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "last_used_at" timestamp with time zone,
+    "use_count" integer DEFAULT 0 NOT NULL,
+    CONSTRAINT "saved_searches_name_length" CHECK ((("char_length"("name") > 0) AND ("char_length"("name") <= 100))),
+    CONSTRAINT "saved_searches_use_count_non_negative" CHECK (("use_count" >= 0))
+);
+
+
+ALTER TABLE "public"."saved_searches" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."tags" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "name" "text" NOT NULL,
@@ -1640,6 +1673,11 @@ ALTER TABLE ONLY "public"."roles"
 
 
 
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."tags"
     ADD CONSTRAINT "tags_org_name_unique" UNIQUE ("organization_id", "name");
 
@@ -1880,6 +1918,18 @@ CREATE INDEX "idx_folders_parent_folder_id" ON "public"."folders" USING "btree" 
 
 
 
+CREATE INDEX "idx_saved_searches_last_used" ON "public"."saved_searches" USING "btree" ("last_used_at" DESC NULLS LAST);
+
+
+
+CREATE INDEX "idx_saved_searches_org_use_count" ON "public"."saved_searches" USING "btree" ("organization_id", "use_count" DESC);
+
+
+
+CREATE INDEX "idx_saved_searches_user_org" ON "public"."saved_searches" USING "btree" ("user_id", "organization_id");
+
+
+
 CREATE UNIQUE INDEX "bname" ON "storage"."buckets" USING "btree" ("name");
 
 
@@ -1937,6 +1987,10 @@ CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."folders
 
 
 CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."notes" FOR EACH ROW EXECUTE FUNCTION "public"."moddatetime"('updated_at');
+
+
+
+CREATE OR REPLACE TRIGGER "update_saved_searches_updated_at_trigger" BEFORE UPDATE ON "public"."saved_searches" FOR EACH ROW EXECUTE FUNCTION "public"."update_saved_searches_updated_at"();
 
 
 
@@ -2101,6 +2155,16 @@ ALTER TABLE ONLY "public"."organizations"
 
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -2328,11 +2392,27 @@ CREATE POLICY "Team members can view their team memberships" ON "public"."team_u
 ALTER TABLE "public"."TtsPrediction" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "Users can create their own saved searches" ON "public"."saved_searches" FOR INSERT TO "authenticated" WITH CHECK ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
+CREATE POLICY "Users can delete their own saved searches" ON "public"."saved_searches" FOR DELETE TO "authenticated" USING ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
 CREATE POLICY "Users can insert their own profile" ON "public"."profiles" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
 
 
 
 CREATE POLICY "Users can update their own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "Users can update their own saved searches" ON "public"."saved_searches" FOR UPDATE TO "authenticated" USING ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
+CREATE POLICY "Users can view saved searches in their organization" ON "public"."saved_searches" FOR SELECT TO "authenticated" USING (("organization_id" = "public"."get_active_organization_id"()));
 
 
 
@@ -2369,6 +2449,9 @@ ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."roles" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."saved_searches" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."tags" ENABLE ROW LEVEL SECURITY;
@@ -2540,6 +2623,12 @@ GRANT ALL ON FUNCTION "public"."trigger_set_timestamp"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "service_role";
+
+
+
 GRANT ALL ON TABLE "auth"."audit_log_entries" TO "dashboard_user";
 GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE "auth"."audit_log_entries" TO "postgres";
 GRANT SELECT ON TABLE "auth"."audit_log_entries" TO "postgres" WITH GRANT OPTION;
@@ -2698,6 +2787,12 @@ GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 GRANT ALL ON TABLE "public"."roles" TO "anon";
 GRANT ALL ON TABLE "public"."roles" TO "authenticated";
 GRANT ALL ON TABLE "public"."roles" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."saved_searches" TO "anon";
+GRANT ALL ON TABLE "public"."saved_searches" TO "authenticated";
+GRANT ALL ON TABLE "public"."saved_searches" TO "service_role";
 
 
 

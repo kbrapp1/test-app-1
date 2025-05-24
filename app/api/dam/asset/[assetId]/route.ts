@@ -3,9 +3,13 @@ import { withAuth, AuthenticatedHandler } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { NotFoundError } from '@/lib/errors/base';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 import { GetAssetDetailsUseCase } from '@/lib/dam/application/use-cases/GetAssetDetailsUseCase';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { UpdateAssetMetadataUseCase } from '@/lib/dam/application/use-cases/UpdateAssetMetadataUseCase';
+import { DeleteAssetUseCase } from '@/lib/dam/application/use-cases/DeleteAssetUseCase';
+import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 
 interface RouteContext {
   params: {
@@ -13,24 +17,39 @@ interface RouteContext {
   };
 }
 
-// This is the actual handler that withAuth will call
+// Enhanced GET handler with support for detailed asset information
 const createAssetDetailsHandler = (assetId: string): AuthenticatedHandler => {
   return async (req: NextRequest, user: User, supabase: SupabaseClient) => {
+    const { searchParams } = new URL(req.url);
+    const includeDownloadUrl = searchParams.get('download') === 'true';
+    const isDetailView = searchParams.get('details') === 'true';
+
     const assetRepository = new SupabaseAssetRepository(supabase);
-    const getAssetDetailsUseCase = new GetAssetDetailsUseCase(assetRepository);
 
     try {
-      const asset = await getAssetDetailsUseCase.execute({ assetId });
+      if (isDetailView) {
+        // Use enhanced use case for detailed view
+        const storageService = new SupabaseStorageService(supabase);
+        const getAssetDetailsUseCase = new GetAssetDetailsUseCase(assetRepository, storageService);
+        
+        const assetDetails = await getAssetDetailsUseCase.execute({
+          assetId,
+          includeDownloadUrl,
+        });
 
-      if (!asset) {
-        throw new NotFoundError(`Asset with ID ${assetId} not found.`);
+        return NextResponse.json(assetDetails);
+      } else {
+        // Simple asset fetch for basic information
+        const storageService = new SupabaseStorageService(supabase);
+        const getAssetDetailsUseCase = new GetAssetDetailsUseCase(assetRepository, storageService);
+        const asset = await getAssetDetailsUseCase.execute({ assetId });
+
+        if (!asset) {
+          throw new NotFoundError(`Asset with ID ${assetId} not found.`);
+        }
+
+        return NextResponse.json(asset);
       }
-
-      // TODO: Later, ensure the fetched asset's organizationId matches the user's activeOrgId
-      // This check might be better placed within the use case or repository for security if not handled by RLS alone.
-      // Example: if (!isUserMemberOfOrg(user, asset.organizationId, supabase)) throw new ForbiddenError();
-
-      return NextResponse.json(asset);
     } catch (error) {
       if (error instanceof NotFoundError) {
         return NextResponse.json({ error: error.message }, { status: 404 });
@@ -41,9 +60,9 @@ const createAssetDetailsHandler = (assetId: string): AuthenticatedHandler => {
   };
 };
 
-// This is the function Next.js will call for the route
+// GET route handler
 async function routeHandler(request: NextRequest, context: RouteContext) {
-  const assetId = context.params.assetId;
+  const assetId = (await context.params).assetId;
 
   if (!assetId) {
     return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 });
@@ -55,4 +74,140 @@ async function routeHandler(request: NextRequest, context: RouteContext) {
   return withErrorHandling(authenticatedSpecificAssetHandler)(request);
 }
 
-export { routeHandler as GET }; 
+export { routeHandler as GET };
+
+// PATCH route handler with authentication
+const createUpdateAssetHandler = (assetId: string): AuthenticatedHandler => {
+  return async (req: NextRequest, user: User, supabase: SupabaseClient) => {
+    try {
+      const body = await req.json();
+      
+      const assetRepository = new SupabaseAssetRepository(supabase);
+      const useCase = new UpdateAssetMetadataUseCase(assetRepository);
+      
+      const result = await useCase.execute({
+        assetId,
+        updates: {
+          name: body.name,
+          folderId: body.folderId,
+        },
+      });
+
+      return NextResponse.json({
+        success: result.success,
+        message: result.message,
+        asset: result.asset.toPlainObject(),
+      });
+    } catch (error) {
+      console.error('Error updating asset:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return NextResponse.json(
+            { error: 'Asset not found' },
+            { status: 404 }
+          );
+        }
+        
+        if (error.message.includes('cannot be renamed') || 
+            error.message.includes('cannot be moved')) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 400 }
+          );
+        }
+      }
+
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+  };
+};
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { assetId: string } }
+) {
+  const assetId = (await params).assetId;
+  
+  if (!assetId) {
+    return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 });
+  }
+
+  const updateHandler = createUpdateAssetHandler(assetId);
+  const authenticatedUpdateHandler = withAuth(updateHandler);
+  
+  return withErrorHandling(authenticatedUpdateHandler)(request);
+}
+
+// DELETE route handler with authentication
+const createDeleteAssetHandler = (assetId: string): AuthenticatedHandler => {
+  return async (req: NextRequest, user: User, supabase: SupabaseClient) => {
+    try {
+      // Get user's active organization from JWT custom claims
+      const organizationId = await getActiveOrganizationId();
+      
+      if (!organizationId) {
+        return NextResponse.json(
+          { error: 'Organization context required' },
+          { status: 400 }
+        );
+      }
+
+      const assetRepository = new SupabaseAssetRepository(supabase);
+      const storageService = new SupabaseStorageService(supabase);
+      const useCase = new DeleteAssetUseCase(assetRepository, storageService);
+      
+      await useCase.execute({ 
+        assetId, 
+        organizationId 
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Asset deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return NextResponse.json(
+            { error: 'Asset not found' },
+            { status: 404 }
+          );
+        }
+        
+        if (error.message.includes('cannot be deleted')) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 400 }
+          );
+        }
+      }
+
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+  };
+};
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { assetId: string } }
+) {
+  const assetId = (await params).assetId;
+  
+  if (!assetId) {
+    return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 });
+  }
+
+  const deleteHandler = createDeleteAssetHandler(assetId);
+  const authenticatedDeleteHandler = withAuth(deleteHandler);
+  
+  return withErrorHandling(authenticatedDeleteHandler)(request);
+} 

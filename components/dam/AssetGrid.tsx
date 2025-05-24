@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import { ComponentAsset as Asset, CombinedItem } from '@/lib/dam/types/component';
-import { AssetGridItem } from './AssetGridItem';
+import { AssetGridItem } from '@/lib/dam/presentation/components/assets';
 import { useGridDimensions } from '@/hooks/useGridDimensions';
 
 interface AssetGridProps {

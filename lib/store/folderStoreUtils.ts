@@ -21,10 +21,18 @@ export const findAndUpdateNode = (
 ): FolderNode[] => {
   return nodes.map(node => {
     if (node.id === folderId) {
-      return { ...node, ...updateFn(node) };
+      const updates = updateFn(node);
+      // Explicitly preserve domain entity properties that might have getters
+      const preservedNode = {
+        ...node,
+        name: node.name, // Explicitly preserve the name getter
+        parentFolderId: node.parentFolderId, // Explicitly preserve the parentFolderId getter
+        ...updates
+      } as FolderNode; // Type assertion to handle domain entity spread
+      return preservedNode;
     }
     if (node.children) {
-      return { ...node, children: findAndUpdateNode(node.children, folderId, updateFn) };
+      return { ...node, children: findAndUpdateNode(node.children, folderId, updateFn) } as FolderNode;
     }
     return node;
   });
@@ -56,10 +64,10 @@ export const addNodeToParent = (
     return nodes.map(node => {
         if (node.id === newFolder.parentFolderId) {
             const updatedChildren = node.children ? [...node.children, newFolder].sort((a, b) => a.name.localeCompare(b.name)) : [newFolder];
-            return { ...node, children: updatedChildren };
+            return { ...node, children: updatedChildren } as FolderNode; // Type assertion to handle domain entity spread
         }
         if (node.children) {
-            return { ...node, children: addNodeToParent(node.children, newFolder, folderMapForAncestors) };
+            return { ...node, children: addNodeToParent(node.children, newFolder, folderMapForAncestors) } as FolderNode;
         }
         return node;
     });

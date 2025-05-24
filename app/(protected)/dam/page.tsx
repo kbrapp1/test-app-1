@@ -22,10 +22,10 @@ import {
 } from "@/components/ui/tooltip"; // TooltipProvider is in client component
 */
 
-// import { AssetGalleryClient } from '@/components/dam/AssetGalleryClient'; // Now rendered by DamPageClientView
-import { DamBreadcrumbs, type BreadcrumbItemData } from '@/components/dam/dam-breadcrumbs';
+
+// Domain imports
+import { DamPageClient, type BreadcrumbItemData } from '@/lib/dam/presentation/components/page';
 // import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Not directly used here, but auth context is via withAuth
-import { DamPageClientView } from '@/components/dam/DamPageClientView';
 
 export const dynamic = 'force-dynamic'; // REINSTATED
 
@@ -65,7 +65,7 @@ export default async function DamGalleryPage({
   const resolvedSearchParams = await searchParams;
   // Access searchParams with optional chaining after casting to any
   const folderIdParamInput = resolvedSearchParams?.folderId;
-  const qParamInput = resolvedSearchParams?.q;
+  const searchParamInput = resolvedSearchParams?.search;
 
   const currentFolderId =
     Array.isArray(folderIdParamInput) ? folderIdParamInput[0] :
@@ -73,8 +73,8 @@ export default async function DamGalleryPage({
     null;
 
   const currentSearchTerm = 
-    Array.isArray(qParamInput) ? qParamInput[0] :
-    typeof qParamInput === 'string' ? qParamInput :
+    Array.isArray(searchParamInput) ? searchParamInput[0] :
+    typeof searchParamInput === 'string' ? searchParamInput :
     '';
 
   // Now proceed with Supabase client creation and other async operations
@@ -112,7 +112,7 @@ export default async function DamGalleryPage({
           </div> 
         */}
 
-        <DamPageClientView 
+        <DamPageClient 
           initialCurrentFolderId={currentFolderId} 
           initialCurrentSearchTerm={currentSearchTerm} 
           breadcrumbPath={breadcrumbPath} // Pass breadcrumbPath as a prop

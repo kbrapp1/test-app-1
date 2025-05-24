@@ -86,7 +86,7 @@ export class SupabaseAssetRepository implements IAssetRepository {
   async findById(id: string): Promise<Asset | null> {
     const { data, error } = await this.supabase
       .from('assets')
-      .select('*, asset_tags(tags(*))')
+      .select('*, folder:folders(name), asset_tags(tags(*))')
       .eq('id', id)
       .single();
 
@@ -96,7 +96,13 @@ export class SupabaseAssetRepository implements IAssetRepository {
     }
     if (!data) return null;
     
-    const domainAsset = AssetMapper.toDomain(data as unknown as RawAssetDbRecord);
+    const rawDataForMapper: any = { ...data };
+    if (data.folder && data.folder.name) {
+      rawDataForMapper.folder_name = data.folder.name;
+    }
+    delete rawDataForMapper.folder;
+
+    const domainAsset = AssetMapper.toDomain(rawDataForMapper as unknown as RawAssetDbRecord);
     return this.addPublicUrlToAsset(domainAsset);
   }
 
@@ -409,6 +415,7 @@ export class SupabaseAssetRepository implements IAssetRepository {
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,
         folderId: asset.folderId,
+        folderName: asset.folderName,
         organizationId: asset.organizationId,
         tags: asset.tags,
         publicUrl: urlData.publicUrl,

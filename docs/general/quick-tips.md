@@ -111,3 +111,6 @@ npx vitest --project=storybook
 ```
 * Runs tests specifically configured for the Storybook environment using the Vitest workspace.
 * Useful for interaction tests or tests dependent on Storybook setup. 
+
+### Supbase production data schema dump
+npx supabase db dump --schema public --schema auth --schema storage --file "./docs/supabase/full_schema_dump.sql"

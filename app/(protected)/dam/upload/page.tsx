@@ -6,7 +6,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { AssetUploader } from '@/components/dam/AssetUploader';
+import { AssetUploader } from '@/lib/dam/presentation/components/upload/AssetUploader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -39,8 +39,7 @@ export default async function DamUploadPage({
           </Button>
         </Link>
       </div>
-      {/* Removed Test Button - will move logic into AssetUploader if needed */}
-      {/* Pass currentFolderId to the uploader */}
+      {/* Use the new domain-based AssetUploader component */}
       <AssetUploader currentFolderId={currentFolderId} />
     </main>
   );

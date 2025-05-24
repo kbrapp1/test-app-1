@@ -4,417 +4,827 @@ globs:
 alwaysApply: false
 ---
 # Project Structure Overview
-<!-- For a detailed list of technologies and versions used, see [stack-rules.md](mdc:docs/starters/stack-rules.md) -->
 
-- `__mocks__/` <!-- Mocks for testing. -->
-  - `next/` <!-- Mocks for Next.js components/functions. -->
-- `.cursor/` <!-- Folder for Cursor IDE specific configurations. -->
-  - `rules/` <!-- Contains custom rules for Cursor AI. -->
-    - `cursor_rules.mdc` <!-- Rules for formatting Cursor rules. -->
-    - `self_improve.mdc` <!-- Rules for improving Cursor rules over time. -->
-    - `project-structure.mdc` <!-- This file: Overview of the project's directory structure. -->
-    - `typescript.mdc` <!-- TypeScript specific coding rules. -->
-- `.storybook/` <!-- Configuration for Storybook, a UI component development environment. -->
-  - `main.ts` <!-- Main Storybook configuration file. -->
-  - `preview.tsx` <!-- Storybook preview configuration (global decorators, parameters). -->
-  - `vitest.setup.ts` <!-- Setup file for Vitest within Storybook context. -->
-- `app/` <!-- Main application directory for Next.js App Router. -->
-  - `(protected)/` <!-- Route group for authenticated routes. -->
-    - `layout.tsx` <!-- Layout specific to protected routes. -->
-    - `ai-playground/` <!-- Feature: AI Playground section. -->
-      - `text-to-speech/`
-        - `page.tsx` <!-- Page component for Text-to-Speech feature UI. -->
-    - `dam/` <!-- Feature: Digital Asset Management section. -->
-      - `page.tsx` <!-- Main page component for DAM dashboard. -->
-      - `upload/` <!-- Sub-route for uploading assets. -->
-        - `page.tsx` <!-- Page component for asset upload interface. -->
-      - `layout.tsx` <!-- Layout for DAM pages. -->
-    - `dashboard/` <!-- Feature: Main dashboard section. -->
-      - `data.json` <!-- Static data used by the dashboard for charts/metrics. -->
-      - `page.tsx` <!-- Page component for main app dashboard. -->
-    - `documents/` <!-- Feature: Document management section. -->
-      - `notes/` <!-- Sub-section for notes. -->
-        - `actions.ts` <!-- Server actions for creating, editing, and deleting notes. -->
-        - `page.tsx` <!-- Page component for displaying and managing notes. -->
-    - `playbooks/` <!-- Feature: Playbooks section. -->
-      - `page.tsx` <!-- Page component for Playbooks UI. -->
-    - `settings/` <!-- Feature: User settings section. -->
-      - `layout.tsx` <!-- Layout with navigation for all settings pages. -->
-      - `page.tsx` <!-- Main settings overview page. -->
-      - `danger/` <!-- Sub-section for dangerous settings (e.g., account deletion). -->
-        - `page.tsx` <!-- Page with account deletion and other danger zone settings. -->
-      - `email/` <!-- Sub-section for email settings. -->
-        - `page.tsx` <!-- Page for updating user email address. -->
-      - `org-roles/`
-        - `page.tsx` <!-- Page for managing organization roles and permissions. -->
-      - `password/` <!-- Sub-section for password settings. -->
-        - `page.tsx` <!-- Page for updating user password. -->
-      - `profile/` <!-- Sub-section for user profile settings. -->
-        - `page.tsx` <!-- Page for updating user profile information. -->
-      - `security/` <!-- Sub-section for security settings. -->
-        - `page.tsx` <!-- Page for security settings like 2FA. -->
-    - `team/` <!-- Feature: Team management section. -->
-      - `page.tsx` <!-- Page component for managing team members. -->
-  - `api/` <!-- Directory for API route handlers. -->
-    - `dam/` <!-- API routes related to DAM. -->
-      - `asset/[assetId]/route.ts` <!-- API route for specific asset operations. -->
-      - `folders/[folderId]/children/route.ts` <!-- API route for folder children. -->
-      - `folders/[folderId]/path/route.ts` <!-- API route for folder path. -->
-      - `folders/[folderId]/route.ts` <!-- API route for specific folder operations. -->
-      - `folders/route.ts` <!-- API route for general folder operations. -->
-      - `folders/tree/route.ts` <!-- API route for folder tree structure. -->
-      - `route.ts` <!-- Main API route for retrieving and managing DAM items. -->
-      - `upload/route.ts` <!-- API handler for file uploads to storage. -->
-      - `dam-api.helpers.ts` <!-- Legacy: Core data fetching and utility functions for DAM API. (To be refactored) -->
-      - `dam-api.query-builders.ts` <!-- Legacy: Utility functions for constructing Supabase queries for DAM. (To be refactored) -->
-      - `dam-api.transformers.ts` <!-- Legacy: Utility functions for transforming raw DAM data. (To be refactored) -->
-      - `dam-api.types.ts` <!-- TypeScript type definitions for DAM API. -->
-    - `profile/` <!-- API routes related to user profiles. -->
-      - `route.ts` <!-- API route for fetching and updating user profiles. -->
-    - `team/` <!-- API routes related to team management. -->
-      - `upload/` <!-- Specific API route possibly for team-related uploads. -->
-        - `route.ts` <!-- API handler for team member profile picture uploads. -->
-  - `auth/` <!-- Routes related to authentication. -->
-    - `confirm/` <!-- Handles user confirmation actions. -->
-      - `confirm-logic.tsx` <!-- Client-side logic for email confirmation process. -->
-      - `page.tsx` <!-- Page component displaying confirmation status. -->
-    - `callback/` <!-- Handles callbacks from authentication providers. -->
-  - `login/` <!-- Public login page route. -->
-    - `forgot/` <!-- Password recovery flow. -->
-    - `page.tsx` <!-- Login page with authentication form. -->
-    - `reset/`
-      - `password/`
-        - `page.tsx` <!-- Page for setting a new password after reset. -->
-  - `onboarding/`
-    - `page.tsx` <!-- User onboarding flow after registration. -->
-  - `signup/` <!-- Public signup page route. -->
-    - `page.tsx` <!-- Registration page with signup form. -->
-  - `error.tsx` <!-- Error boundary UI for the entire app. -->
-  - `globals.css` <!-- Global CSS styles and Tailwind imports. -->
-  - `layout.tsx` <!-- Root layout with providers and global elements. -->
-  - `page.tsx` <!-- Root landing page (homepage). -->
-- `components/` <!-- Reusable UI components. -->
-  - `app-providers.tsx` <!-- Component for wrapping the app with context providers. -->
-  - `app-sidebar.tsx` <!-- Main application sidebar navigation component. -->
-  - `chart-area-interactive.tsx` <!-- Interactive area chart with hover effects. -->
-  - `command-palette.tsx` <!-- Command palette (Cmd+K) for quick navigation. -->
-  - `data-table.tsx` <!-- Reusable data table with sorting and filtering. -->
-  - `error-boundary.tsx` <!-- Error boundary to catch and display UI errors. -->
-  - `nav-documents.tsx` <!-- Navigation for document section with folder structure. -->
-  - `nav-main.tsx` <!-- Main navigation links for the application. -->
-  - `nav-secondary.tsx` <!-- Secondary contextual navigation component. -->
-  - `nav-user.tsx` <!-- User menu dropdown with profile/logout options. -->
-  - `section-cards.tsx` <!-- Grid of feature cards for dashboard sections. -->
-  - `site-header.tsx` <!-- Main header with logo and navigation. -->
-  - `theme-provider.tsx` <!-- Theme context provider for light/dark mode. -->
-  - `theme-toggle.tsx` <!-- Toggle button for switching theme modes. -->
-  - `auth/` <!-- Components related to authentication forms. -->
-    - `login-form.tsx` <!-- Form for user authentication with email/password. -->
-    - `signup-form.tsx` <!-- User registration form component. -->
-  - `dam/` <!-- Components specific to the Digital Asset Management feature. -->
-    - `asset-selector-modal.tsx` <!-- Modal for selecting assets from the library. -->
-    - `AssetActionDropdownMenu.tsx` <!-- Dropdown menu component for asset-specific actions (e.g., rename, move, download). -->
-    - `AssetGallery.tsx` <!-- Server component for displaying asset gallery. -->
-    - `AssetGalleryClient.tsx` <!-- Client component for interactive asset gallery. -->
-    - `AssetGalleryClientWrapper.tsx` <!-- Client wrapper managing state and refetching for AssetGallery. -->
-    - `AssetGrid.tsx` <!-- Grid layout for displaying assets. -->
-    - `AssetGridItem.tsx` <!-- Individual asset item within the grid. -->
-    - `AssetListItem.tsx` <!-- Component for displaying a single asset in a list format. -->
-    - `AssetThumbnail.tsx` <!-- Thumbnail display for assets with preview. -->
-    - `AssetUploader.tsx` <!-- Component for uploading and processing assets. -->
-    - `dam-breadcrumbs.tsx` <!-- Breadcrumb navigation for DAM folders. -->
-    - `dam-column-config.ts` <!-- Configuration for DAM table/grid columns. -->
-    - `DamPageClientView.tsx` <!-- Client-side logic and layout for the main DAM page. -->
-    - `DamSearchBar.tsx` <!-- Search bar component for DAM, handling input and displaying SearchDropdownMenu. -->
-    - `DamTagFilter.tsx` <!-- Component for filtering DAM assets by tags. -->
-    - `folder-sidebar.tsx` <!-- Sidebar for navigating DAM folder structure. -->
-    - `FolderItem.tsx` <!-- Component for individual folder item display. -->
-    - `FolderListItem.tsx` <!-- Component for displaying a folder as a list item, used in new DAM view. -->
-    - `FolderThumbnail.tsx` <!-- Thumbnail representation of a folder. -->
-    - `new-folder-dialog.tsx` <!-- Dialog for creating new folders in DAM. -->
-    - `SearchDropdownMenu.tsx` <!-- Dropdown menu component displaying search results for the DAM search bar. -->
-    - `TagEditor.tsx` <!-- Component for editing tags on an asset. -->
-    - `dialogs/` <!-- Reusable dialog components for DAM operations. -->
-      - `AssetDetailsDialog.tsx` <!-- Dialog for viewing detailed information about an asset. -->
-      - `ConfirmationDialog.tsx` <!-- Generic dialog for confirming actions (e.g., delete). -->
-      - `InputDialog.tsx` <!-- Generic dialog for single text input (e.g., rename, create). -->
-      - `FolderPickerDialog.tsx` <!-- Dialog for selecting a folder, e.g., for moving assets. -->
-      - `folderPickerUtils.ts` <!-- Utility functions for the folder picker dialog (e.g., tree building, filtering). -->
-      - `FolderTreeItem.tsx` <!-- Component for rendering an individual item in the folder picker tree. -->
-    - `filters/` <!-- Components for DAM filtering controls. -->
-      - `CreationDateFilter.tsx` <!-- Filter component for asset/folder creation date. -->
-      - `OwnerFilter.tsx` <!-- Filter component for asset/folder owner. -->
-      - `SizeFilter.tsx` <!-- Filter component for asset size. -->
-      - `SortControl.tsx` <!-- Component for controlling sort order of assets/folders. -->
-      - `TypeFilter.tsx` <!-- Filter component for asset/folder type. -->
-    - `hooks/` <!-- Custom React hooks specific to DAM components. -->
-      - `useAssetItemActions.ts` <!-- Hook for managing asset item actions (download, rename, move) and their pending states. -->
-      - `useAssetItemDialogs.ts` <!-- Hook for managing dialog states (open/close, data) for asset items. -->
-      - `useDamSearchDropdown.ts` <!-- Hook for managing DAM search dropdown state and results. -->
-      - `useDamSearchInput.ts` <!-- Hook for managing DAM search input state and debouncing. -->
-  - `error/` <!-- Components related to error display. -->
-    - `__tests__/`
-    - `error-boundary.tsx` <!-- Component to catch and handle React errors. -->
-    - `error-fallback.tsx` <!-- UI displayed when an error is caught. -->
-  - `forms/` <!-- Reusable form field components and utilities. -->
-    - `fields/` <!-- Individual, specific form field components. -->
-      - `CheckboxField.tsx` <!-- Standardized checkbox field component. -->
-      - `CustomField.tsx` <!-- Standardized wrapper for custom field render logic. -->
-      - `SwitchField.tsx` <!-- Standardized switch field component. -->
-      - `TextareaField.tsx` <!-- Standardized textarea field component. -->
-      - `TextField.tsx` <!-- Standardized text input field component. -->
-    - `FormFieldTypes.ts` <!-- Shared TypeScript interfaces for form field props. -->
-    - `FormField.tsx` <!-- Barrel file re-exporting all field components and types. -->
-    - `FormWrapper.tsx` <!-- Wrapper for form with standard styling and layout. -->
-    - `index.ts` <!-- Deprecated? FormField.tsx acts as the barrel now. -->
-    - `README.md` <!-- Documentation for the form components system. -->
-    - `SelectField.tsx` <!-- Dropdown select field with validation. -->
-  - `notes/` <!-- Components specific to the notes feature. -->
-    - `add-note-dialog.tsx` <!-- Dialog for creating a new note. -->
-    - `add-note-form.tsx` <!-- Form for note creation within dialog. -->
-    - `note-edit-form.tsx` <!-- Form for editing existing notes. -->
-    - `note-list-item.tsx` <!-- Individual note display in the list. -->
-    - `note-list.tsx` <!-- List of all user notes with filtering. -->
-  - `providers/` <!-- React Context providers. -->
-    - `toast-provider.tsx` <!-- Provider for toast notifications system. -->
-  - `settings/` <!-- Components specific to the settings feature. -->
-    - `AddMemberDialog.tsx` <!-- Dialog for adding members to organization. -->
-    - `danger-zone.tsx` <!-- Component for dangerous settings like deletion. -->
-    - `email-form.tsx` <!-- Form for updating email settings. -->
-    - `OrgMemberCard.tsx` <!-- Card component for displaying organization members. -->
-    - `OrgMembersDesktopTable.tsx` <!-- Desktop-specific table view for organization members. -->
-    - `OrgMembersTable.columns.tsx` <!-- Column definitions for the organization members table. -->
-    - `OrgMembersTable.tsx` <!-- Presentation component for displaying organization members (table/cards). -->
-    - `OrgRoleManager.tsx` <!-- Component for managing organization roles. -->
-    - `password-form.tsx` <!-- Form for updating passwords. -->
-    - `profile-form.tsx` <!-- Form for updating user profiles. -->
-    - `security-section.tsx` <!-- Security settings section component. -->
-  - `team/` <!-- Components specific to the team management feature. -->
-    - `AddTeamMemberDialog.tsx` <!-- Dialog for inviting new team members. -->
-    - `AddTeamMemberForm.tsx` <!-- Form for adding new team members. -->
-    - `TeamMemberCard.tsx` <!-- Card displaying team member info and controls. -->
-    - `TeamMemberList.tsx` <!-- List of all team members with filtering. -->
-  - `tts/` <!-- Text-to-Speech components. -->
-    - `tts-interface.tsx` <!-- User interface for text-to-speech conversion. -->
-    - `TtsHistoryItem.tsx` <!-- Component for an individual item in the TTS generation history list. -->
-    - `TtsHistoryItemActions.tsx` <!-- Actions for a TTS history item (e.g., retry, delete). -->
-    - `TtsHistoryItemErrorDisplay.tsx` <!-- Component to display errors for a TTS history item. -->
-    - `TtsHistoryItemInfo.tsx` <!-- Component displaying information for a TTS history item. -->
-    - `TtsHistoryList.tsx` <!-- Component for displaying the list of TTS history items. -->
-    - `TtsHistoryPanel.tsx` <!-- Component to display a list of past TTS generations. -->
-    - `TtsHistoryPanelHeader.tsx` <!-- Header component for the TTS history panel. -->
-    - `TtsHistoryPanelSearch.tsx` <!-- Search input component for the TTS history panel. -->
-    - `TtsInputCard.tsx` <!-- Component containing the input form (text, voice selection) and DAM text actions for the TTS interface. -->
-    - `TtsOutputCard.tsx` <!-- Component displaying the generated audio, status, errors, and DAM audio actions for the TTS interface. -->
-    - `ttsHistoryUtils.ts` <!-- Utility functions for TTS history. -->
-    - `useTtsHistory.ts` <!-- Hook for managing TTS history data and state. -->
-    - `useTtsHistoryItemState.ts` <!-- Hook for managing state of a TTS history item. -->
-    - `VoiceSelector.tsx` <!-- Component for selecting a TTS voice using a Popover and Command list. -->
-  - `ui/` <!-- Base UI components (often from shadcn/ui). -->
-    - `accordion.tsx` <!-- Collapsible content panels component. -->
-    - `alert-dialog.tsx` <!-- Modal dialog for important alerts requiring action. -->
-    - `alert.tsx` <!-- Colored alert/notification banners. -->
-    - `aspect-ratio.tsx` <!-- Component for maintaining specific aspect ratios. -->
-    - `avatar.tsx` <!-- User profile picture/icon component. -->
-    - `badge.tsx` <!-- Small status indicator component. -->
-    - `breadcrumb.tsx` <!-- Hierarchical navigation breadcrumb component. -->
-    - `button.stories.tsx` <!-- Storybook documentation for button variants. -->
-    - `button.tsx` <!-- Customizable button component with variants. -->
-    - `calendar.tsx` <!-- Date picker calendar component. -->
-    - `card.tsx` <!-- Container card component with header/footer. -->
-    - `carousel.tsx` <!-- Image/content slider carousel component. -->
-    - `chart.tsx` <!-- Data visualization chart components. -->
-    - `checkbox.tsx` <!-- Custom styled checkbox input. -->
-    - `collapsible.tsx` <!-- Expandable/collapsible content section. -->
-    - `command.tsx` <!-- Command menu interface component. -->
-    - `context-menu.tsx` <!-- Right-click context menu component. -->
-    - `dialog.tsx` <!-- Modal dialog/popup component. -->
-    - `drawer.tsx` <!-- Side drawer/panel that slides in. -->
-    - `dropdown-menu.tsx` <!-- Dropdown menu component. -->
-    - `empty-state.tsx` <!-- Component for displaying when no content exists. -->
-    - `form.tsx` <!-- Form components with React Hook Form integration. -->
-    - `hover-card.tsx` <!-- Card that appears on hover. -->
-    - `input-otp.tsx` <!-- One-time password input component. -->
-    - `input.module.css` <!-- CSS module for custom input styles (e.g., hiding search cancel button). -->
-    - `input.tsx` <!-- Text input field component. -->
-    - `label.tsx` <!-- Form field label component. -->
-    - `menubar.tsx` <!-- Horizontal menu bar component. -->
-    - `navigation-menu.tsx` <!-- Dropdown navigation menu component. -->
-    - `pagination.tsx` <!-- Pagination controls for multi-page content. -->
-    - `popover.tsx` <!-- Popup content that appears on click/hover. -->
-    - `progress.tsx` <!-- Progress bar/indicator component. -->
-    - `radio-group.tsx` <!-- Group of radio button options. -->
-    - `resizable.tsx` <!-- Component with resizable panels/sections. -->
-    - `scroll-area.tsx` <!-- Custom scrollable container component. -->
-    - `select.tsx` <!-- Dropdown select menu component. -->
-    - `separator.tsx` <!-- Horizontal/vertical divider line. -->
-    - `sheet.tsx` <!-- Slide-in panel component. -->
-    - `sidebar.tsx` <!-- Application sidebar navigation component. -->
-    - `skeleton.tsx` <!-- Loading placeholder component. -->
-    - `slider.tsx` <!-- Range slider input component. -->
-    - `sonner.tsx` <!-- Toast notification integration component. -->
-    - `switch.tsx` <!-- Toggle switch component. -->
-    - `table.tsx` <!-- Data table component. -->
-    - `tabs.tsx` <!-- Tabbed interface component. -->
-    - `textarea.tsx` <!-- Multi-line text input component. -->
-    - `toast.tsx` <!-- Toast notification component. -->
-    - `toaster.tsx` <!-- Container for managing toast notifications. -->
-    - `toggle-group.tsx` <!-- Group of toggle buttons. -->
-    - `toggle.tsx` <!-- Toggle button component. -->
-    - `tooltip.tsx` <!-- Hover tooltip component. -->
-    - `use-mobile.tsx` <!-- Hook for detecting mobile viewport. -->
-    - `use-toast.ts` <!-- Hook for showing toast notifications. -->
-    - `useWaveSurfer.ts` <!-- Hook for integrating WaveSurfer.js for audio visualization. -->
-- `context/` <!-- React Context API providers and consumers. -->
-  - `palette-context.tsx` <!-- Context for managing color palettes or themes. -->
-  - `AuthContext.tsx` <!-- Context for authentication status and user data. -->
-- `docs/` <!-- Project documentation files. -->
-  - `DAM/`
-    - `DAM_Build_Steps.md`
-    - `DAM_FSD.md`
-    - `DAM_Roadmap.md`
-    - `dam_api_refactor_steps.md` <!-- New refactoring plan for DAM API layer. -->
-    - `dam_refactor_to_lib_build_steps.md` <!-- Completed refactor plan for lib/dam. -->
-    - `completed/` <!-- Contains old/completed documentation. -->
-      - `cleanup_legacy_files.md`
-      - `migration_guide.md`
-    - `features/`
-    - `general/`
-      - `deployment_steps.md`
-      - `quick-tips.md`
-      - `test-instructions.md`
-    - `misc-docs/`
-      - `error-codes.md`
-      - `error-handling-patterns.md`
-      - `error-troubleshooting.md`
-      - `error_handling_steps.md`
-      - `form-system-migration.md`
-    - `multi-tenant/`
-    - `roles/`
-    - `starters/`
-      - `project-structure.md`
-      - `stack-rules.md`
-    - `supabase/`
-    - `team-members-completed/`
-      - `Team_Members_Build_Steps.md`
-    - `text-to-speech/`
-      - `tts-build-steps.md`
-      - `tts-fsd.md`
-      - `tts-ux-design.md`
-    - `project-structure-full.txt` <!-- Full project structure text file. -->
-    - `README.md` <!-- Readme for the hooks directory. -->
-    - `useCopyToClipboard.ts` <!-- Hook for copying text to clipboard. -->
-    - `useDamUrlManager.ts` <!-- Hook for managing DAM URL parameters (folder, search, tags). -->
-    - `useDebounce.ts` <!-- Hook for debouncing values. -->
-- `hooks/` <!-- Custom React hooks for reusable component logic. -->
-  - `README.md` <!-- Readme for the hooks directory. -->
-  - `useCompleteOnboarding.ts` <!-- Hook for handling user onboarding completion flow. -->
-  - `useCopyToClipboard.ts` <!-- Hook for copying text to clipboard. -->
-  - `useDamUrlManager.ts` <!-- Hook for managing DAM URL parameters (folder, search, tags). -->
-  - `useDebounce.ts` <!-- Hook for debouncing values. -->
-  - `useEventListener.ts` <!-- Hook for managing event listeners. -->
-  - `useFolderFetch.ts` <!-- Hook for fetching and caching folder structure data. -->
-  - `useForm.ts` <!-- Generic hook for managing form state and validation. -->
-  - `useGridDimensions.ts` <!-- Hook for calculating responsive grid layout dimensions. -->
-  - `useHeadlessAudioPlayer.ts` <!-- Hook for managing audio playback without a UI, for background tasks or previews. -->
-  - `useIntersectionObserver.ts` <!-- Hook for observing element visibility. -->
-  - `useIsomorphicLayoutEffect.ts` <!-- Hook for layout effect in SSR/CSR. -->
-  - `useLocalStorage.ts` <!-- Hook for interacting with browser local storage. -->
-  - `useMediaQuery.ts` <!-- Hook for tracking media query matches. -->
-  - `useOnboarding.ts` <!-- Hook for managing state, logic, and side effects for the user onboarding flow. -->
-  - `useOrgMemberActions.ts` <!-- Hook encapsulating actions for organization members (role change, remove, resend invite, reset pw). -->
-  - `useOrgMembers.ts` <!-- Hook for fetching and managing organization members and roles. -->
-  - `usePagination.ts` <!-- Hook for managing pagination state. -->
-  - `useTtsDamIntegration.ts` <!-- Hook for managing DAM interactions (loading text, saving audio) within the TTS feature. -->
-  - `useTtsGeneration.ts` <!-- Hook for managing TTS generation state, polling, and results. -->
-  - `useTtsSaveAsDialog.ts` <!-- Hook for managing the "Save As" dialog functionality in TTS. -->
-- `lib/` <!-- Core libraries, utilities, and business logic. -->
-  - `__mocks__/`
-    - `errors/`
-    - `supabase/`
-  - `actions/`
-    - `dam/`
-      - `asset-crud.actions.ts`
-      - `asset-url.actions.ts`
-      - `folder.actions.ts`
-      - `gallery.actions.ts`
-      - `tag.actions.ts`
-      - `text-asset.actions.ts`
-      - `folder.action.helpers.ts`
-    - `ai/`
-    - `users/`
-  - `auth/`
-    - `__tests__/`
-    - `config.ts`
-    - `server-action.ts`
-    - `utils.ts`
-  - `config/`
-    - `app.ts`
-    - `site.ts`
-    - `supabase.ts`
-  - `dam/` <!-- Digital Asset Management core module using clean architecture -->
-    - `index.ts` <!-- Barrel file for lib/dam module -->
-    - `types/` <!-- Shared type definitions for DAM module -->
-      - `dam.types.ts` <!-- Type definitions for DAM entities and operations -->
-      - `index.ts` <!-- Type exports -->
-    - `application/` <!-- Application layer - use cases and services -->
-      - `dto/` <!-- Data Transfer Objects -->
-        - `UploadAssetDTO.ts` <!-- DTO for asset uploads -->
-      - `services/` <!-- Services orchestrating use cases -->
-        - `AssetService.ts` <!-- Asset management service -->
-        - `FolderService.ts` <!-- Folder management service -->
-      - `use-cases/` <!-- Business logic use cases -->
-        - `AddTagToAssetUseCase.ts` <!-- Use case for adding tags to assets -->
-        - `CreateFolderUseCase.ts` <!-- Use case for folder creation -->
-        - `CreateTagUseCase.ts` <!-- Use case for tag creation -->
-        - `CreateTextAssetUseCase.ts` <!-- Use case for creating text assets -->
-        - `DeleteAssetUseCase.ts` <!-- Use case for asset deletion -->
-        - `DeleteFolderUseCase.ts` <!-- Use case for folder deletion -->
-        - `GetAssetContentUseCase.ts` <!-- Use case for retrieving asset content -->
-        - `GetAssetDetailsUseCase.ts` <!-- Use case for retrieving asset metadata -->
-        - `GetFolderPathUseCase.ts` <!-- Use case for retrieving folder paths -->
-        - `ListAssetsByFolderUseCase.ts` <!-- Use case for listing assets in a folder -->
-        - `ListFolderChildrenUseCase.ts` <!-- Use case for listing folder children -->
-        - `ListFolderContentsUseCase.ts` <!-- Use case for listing folder contents (assets and subfolders) -->
-        - `ListFoldersUseCase.ts` <!-- Use case for listing all folders -->
-        - `ListTagsUseCase.ts` <!-- Use case for listing all tags -->
-        - `ListTextAssetsUseCase.ts` <!-- Use case for listing text assets -->
-        - `MoveAssetUseCase.ts` <!-- Use case for moving assets between folders -->
-        - `RemoveTagFromAssetUseCase.ts` <!-- Use case for removing tags from assets -->
-        - `RenameAssetUseCase.ts` <!-- Use case for renaming assets -->
-        - `UpdateAssetTextUseCase.ts` <!-- Use case for updating text assets -->
-        - `UpdateFolderUseCase.ts` <!-- Use case for updating folders -->
-        - `UploadAssetUseCase.ts` <!-- Use case for uploading assets -->
-    - `domain/` <!-- Domain layer - core business objects and interfaces -->
-      - `entities/` <!-- Domain entities -->
-        - `Asset.ts` <!-- Asset entity class -->
-        - `Folder.ts` <!-- Folder entity class -->
-        - `Tag.ts` <!-- Tag entity class -->
-        - `index.ts` <!-- Entity exports -->
-      - `repositories/` <!-- Repository interfaces -->
-        - `IAssetRepository.ts` <!-- Asset repository interface -->
-        - `IAssetTagRepository.ts` <!-- Asset-Tag relationship repository interface -->
-        - `IFolderRepository.ts` <!-- Folder repository interface -->
-        - `IStorageService.ts` <!-- Storage service interface -->
-        - `ITagRepository.ts` <!-- Tag repository interface -->
-        - `index.ts` <!-- Repository interface exports -->
-      - `value-objects/` <!-- Value objects for domain entities -->
-        - `.gitkeep` <!-- Placeholder for future value objects -->
-    - `infrastructure/` <!-- Infrastructure layer - implementation of repositories -->
-      - `persistence/` <!-- Data storage implementations -->
-        - `supabase/` <!-- Supabase-specific implementations -->
-          - `SupabaseAssetRepository.ts` <!-- Supabase implementation of asset repository -->
-          - `SupabaseAssetTagRepository.ts` <!-- Supabase implementation of asset-tag repository -->
-          - `SupabaseFolderRepository.ts` <!-- Supabase implementation of folder repository -->
-          - `SupabaseTagRepository.ts` <!-- Supabase implementation of tag repository -->
-          - `mappers/` <!-- Mappers for converting between domain entities and database models -->
-            - `AssetMapper.ts` <!-- Mapper for Asset entity <-> database -->
-            - `FolderMapper.ts` <!-- Mapper for Folder entity <-> database -->
-            - `TagMapper.ts` <!-- Mapper for Tag entity <-> database -->
-      - `storage/` <!-- File storage implementations -->
-        - `SupabaseStorageService.ts` <!-- Supabase Storage implementation -->
-    - `repositories/` <!-- Legacy repository layer - to be migrated to new architecture -->
-      - `.gitkeep` <!-- Placeholder file -->
-  - `dam.utils.ts`
-  - `sort.utils.ts`
-  - `errors/`
+This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DDD)** patterns, following enterprise-level organization.
+
+## Key Architecture Patterns
+
+- **Feature-Based Organization**: Code is grouped by business domain (DAM, TTS, Auth, etc.)
+- **DDD in DAM Module**: Domain entities, repositories, and use cases properly separated
+- **Co-located Tests**: Tests live alongside the code they test
+- **Clean Architecture**: Clear separation between UI, business logic, and data layers
+
+## Navigation Guide
+
+### 🎯 Core Business Features
+```
+app/(protected)/          # Protected application routes
+├── dam/                  # Digital Asset Management
+├── ai-playground/        # AI features (TTS, chatbot)
+├── marketing-automation/ # CRM-like features
+└── settings/            # User/org settings
+```
+
+### 🧩 Reusable Components
+```
+components/
+├── ui/                  # Base UI components (shadcn/ui)
+├── dam/                 # DAM-specific components
+├── tts/                 # Text-to-speech components
+└── auth/                # Authentication forms
+```
+
+### ⚡ Business Logic Layer
+```
+lib/
+├── actions/             # Server actions (Next.js)
+├── dam/                 # DDD-structured DAM domain
+│   ├── domain/          # Entities, repositories
+│   ├── application/     # Use cases, services
+│   └── infrastructure/  # Supabase implementations
+├── services/            # External service integrations
+└── schemas/             # Validation schemas
+```
+
+### 🗄️ Data & API Layer
+```
+app/api/                 # REST API endpoints
+supabase/                # Database schema & edge functions
+```
+
+## Quick Start Navigation
+
+1. **New Feature**: Start in `app/(protected)/[feature]/`
+2. **Reusable UI**: Check `components/ui/` first
+3. **Business Logic**: Look in `lib/actions/` or `lib/[domain]/`
+4. **API Integration**: Check `lib/services/` or `app/api/`
+5. **Database Changes**: Start in `supabase/migrations/`
+
+## Domain-Specific Patterns
+
+### DAM (Digital Asset Management)
+- Follows **Clean Architecture** with DDD
+- **Domain Layer**: `lib/dam/domain/` (entities, repositories)
+- **Application Layer**: `lib/dam/application/` (use cases, DTOs)
+- **Infrastructure Layer**: `lib/dam/infrastructure/` (Supabase implementations)
+
+### Text-to-Speech (TTS)
+- **Components**: `components/tts/`
+- **Business Logic**: `lib/usecases/tts/`
+- **Service Integration**: `lib/services/elevenlabsService.ts`
+
+### Authentication & Authorization
+- **Middleware**: `lib/auth/middleware.ts`
+- **Server Actions**: `lib/auth/server-action.ts`
+- **Components**: `components/auth/`
+
+## File Naming Conventions
+
+- **Components**: PascalCase (`AssetGallery.tsx`)
+- **Pages**: lowercase (`page.tsx`, `layout.tsx`)
+- **Utilities**: camelCase (`folderPickerUtils.ts`)
+- **Tests**: `.test.tsx` or `.test.ts`
+- **Types**: `.types.ts`
+
+## Best Practices Followed
+
+✅ **Co-located Tests**: Tests next to implementation  
+✅ **Feature Isolation**: Each domain is self-contained  
+✅ **Type Safety**: Comprehensive TypeScript usage  
+✅ **Clean Separation**: UI, business logic, and data layers separated  
+✅ **Documentation**: Extensive docs for complex features  
+
+## Areas for Future Enhancement
+
+Consider these optimizations as the codebase grows:
+
+- **Barrel Exports**: Add `index.ts` files in component folders for cleaner imports
+- **Shared Types**: Consider a dedicated `types/` folder for cross-domain types
+- **E2E Tests**: Add Playwright/Cypress tests in a dedicated `e2e/` folder
+
+---
+
+*This structure supports both rapid feature development and long-term maintainability.*
+
+D:\Projects\test-app-1
+|   .env.example
+|   .env.local
+|   .eslintrc.json
+|   .gitignore
+|   components.json
+|   LICENSE
+|   middleware.ts
+|   next-env.d.ts
+|   next.config.mjs
+|   package.json
+|   pnpm-lock.yaml
+|   pnpm-workspace.yaml
+|   postcss.config.mjs
+|   project-structure.txt
+|   README.md
+|   tsconfig.json
+|   tsconfig.tsbuildinfo
+|   vitest.config.ts
+|   vitest.setup.ts
+|   vitest.shims.d.ts
+|   vitest.workspace.ts
+|   
++---app
+|   |   error.tsx
+|   |   globals.css
+|   |   layout.tsx
+|   |   page.tsx
+|   |   
+|   +---(protected)
+|   |   |   layout.tsx
+|   |   |   
+|   |   +---activity-feed
+|   |   |       page.tsx
+|   |   |       
+|   |   +---ai-playground
+|   |   |   +---chatbot
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   \---text-to-speech
+|   |   |           page.tsx
+|   |   |           
+|   |   +---approvals
+|   |   |       page.tsx
+|   |   |       
+|   |   +---brand-guidelines
+|   |   |       page.tsx
+|   |   |       
+|   |   +---campaign-management
+|   |   |       page.tsx
+|   |   |       
+|   |   +---content-calendar
+|   |   |       page.tsx
+|   |   |       
+|   |   +---dam
+|   |   |   |   layout.tsx
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   \---upload
+|   |   |           page.tsx
+|   |   |           
+|   |   +---dashboard
+|   |   |       data.json
+|   |   |       page.tsx
+|   |   |       
+|   |   +---developer-api
+|   |   |       page.tsx
+|   |   |       
+|   |   +---digital-storefront
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   \---assets-overview
+|   |   |           page.tsx
+|   |   |           
+|   |   +---documents
+|   |   |   \---notes
+|   |   |           actions.ts
+|   |   |           helpers.ts
+|   |   |           page.tsx
+|   |   |           
+|   |   +---insights
+|   |   |       page.tsx
+|   |   |       
+|   |   +---integrations
+|   |   |       page.tsx
+|   |   |       
+|   |   +---marketing-automation
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   +---contacts
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---customers
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---leads
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   \---opportunities
+|   |   |           page.tsx
+|   |   |           
+|   |   +---notifications
+|   |   |       page.tsx
+|   |   |       
+|   |   +---playbooks
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   \---jobs
+|   |   |           page.tsx
+|   |   |           
+|   |   +---reporting
+|   |   |       page.tsx
+|   |   |       
+|   |   +---settings
+|   |   |   |   layout.tsx
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   +---danger
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---email
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---org-roles
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---password
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---profile
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   \---security
+|   |   |           page.tsx
+|   |   |           
+|   |   +---team
+|   |   |       page.tsx
+|   |   |       
+|   |   \---templates
+|   |           page.tsx
+|   |           
+|   +---api
+|   |   +---dam
+|   |   |   |   dam-api.types.ts
+|   |   |   |   route.ts
+|   |   |   |   
+|   |   |   +---asset
+|   |   |   |   \---[assetId]
+|   |   |   |           route.ts
+|   |   |   |           
+|   |   |   +---folders
+|   |   |   |   |   route.ts
+|   |   |   |   |   
+|   |   |   |   +---tree
+|   |   |   |   |       route.ts
+|   |   |   |   |       
+|   |   |   |   \---[folderId]
+|   |   |   |       |   route.ts
+|   |   |   |       |   
+|   |   |   |       +---children
+|   |   |   |       |       route.ts
+|   |   |   |       |       
+|   |   |   |       \---path
+|   |   |   |               route.ts
+|   |   |   |               
+|   |   |   \---upload
+|   |   |           route.ts
+|   |   |           
+|   |   +---profile
+|   |   |       route.ts
+|   |   |       
+|   |   \---team
+|   |       +---members
+|   |       |       route.ts
+|   |       |       
+|   |       \---upload
+|   |               route.ts
+|   |               
+|   +---auth
+|   |   \---confirm
+|   |           confirm-logic.tsx
+|   |           page.tsx
+|   |           
+|   +---login
+|   |   |   page.tsx
+|   |   |   
+|   |   +---forgot
+|   |   |       page.tsx
+|   |   |       
+|   |   \---reset
+|   |       \---password
+|   |               page.tsx
+|   |               
+|   +---onboarding
+|   |       page.tsx
+|   |       
+|   \---signup
+|           page.tsx
+|           
++---components
+|   |   app-providers.tsx
+|   |   app-sidebar.tsx
+|   |   chart-area-interactive.tsx
+|   |   command-palette.tsx
+|   |   data-table.tsx
+|   |   error-boundary.tsx
+|   |   nav-documents.tsx
+|   |   nav-main.tsx
+|   |   nav-secondary.tsx
+|   |   nav-user.tsx
+|   |   section-cards.tsx
+|   |   site-header.tsx
+|   |   theme-provider.tsx
+|   |   theme-toggle.tsx
+|   |   
+|   +---auth
+|   |       login-form.tsx
+|   |       signup-form.tsx
+|   |       
+|   +---dam
+|   |   |   asset-selector-modal.tsx
+|   |   |   AssetActionDropdownMenu.tsx
+|   |   |   AssetGallery.tsx
+|   |   |   AssetGalleryClient.tsx
+|   |   |   AssetGalleryClientWrapper.tsx
+|   |   |   AssetGrid.tsx
+|   |   |   AssetGridItem.tsx
+|   |   |   AssetListItem.tsx
+|   |   |   AssetListItemCell.tsx
+|   |   |   AssetListItemDialogs.tsx
+|   |   |   AssetThumbnail.tsx
+|   |   |   AssetUploader.tsx
+|   |   |   dam-breadcrumbs.tsx
+|   |   |   dam-column-config.ts
+|   |   |   DamPageClientView.tsx
+|   |   |   DamSearchBar.tsx
+|   |   |   DamTagFilter.tsx
+|   |   |   DamUploadButton.tsx
+|   |   |   DeleteFolderDialog.tsx
+|   |   |   folder-sidebar.tsx
+|   |   |   FolderItem.tsx
+|   |   |   FolderListItem.tsx
+|   |   |   FolderThumbnail.tsx
+|   |   |   new-folder-dialog.tsx
+|   |   |   RenameFolderDialog.tsx
+|   |   |   SearchDropdownMenu.tsx
+|   |   |   TagEditor.tsx
+|   |   |   
+|   |   +---dialogs
+|   |   |       AssetDetailsDialog.tsx
+|   |   |       ConfirmationDialog.tsx
+|   |   |       FolderPickerDialog.tsx
+|   |   |       folderPickerUtils.ts
+|   |   |       FolderTreeItem.tsx
+|   |   |       InputDialog.tsx
+|   |   |       
+|   |   +---filters
+|   |   |       CreationDateFilter.tsx
+|   |   |       OwnerFilter.tsx
+|   |   |       SizeFilter.tsx
+|   |   |       SizeFilterCustomView.tsx
+|   |   |       SizeFilterListView.tsx
+|   |   |       SortControl.tsx
+|   |   |       TypeFilter.tsx
+|   |   |       
+|   |   \---hooks
+|   |           useAssetDragAndDrop.ts
+|   |           useAssetGalleryData.ts
+|   |           useAssetItemActions.ts
+|   |           useAssetItemDialogs.ts
+|   |           useDamFilters.ts
+|   |           useDamSearchDropdown.ts
+|   |           useDamSearchInput.ts
+|   |           useDamTagFilterHandler.ts
+|   |           useDamUrlManager.ts
+|   |           
+|   +---error
+|   |       error-boundary.tsx
+|   |       error-fallback.tsx
+|   |       
+|   +---forms
+|   |   |   CheckboxField.tsx
+|   |   |   CustomField.tsx
+|   |   |   FormField.tsx
+|   |   |   FormFieldTypes.ts
+|   |   |   FormWrapper.tsx
+|   |   |   index.ts
+|   |   |   README.md
+|   |   |   SelectField.tsx
+|   |   |   SwitchField.tsx
+|   |   |   TextareaField.tsx
+|   |   |   TextField.tsx
+|   |   |   
+|   |   \---fields
+|   |           CheckboxField.tsx
+|   |           CustomField.tsx
+|   |           SwitchField.tsx
+|   |           TextareaField.tsx
+|   |           TextField.tsx
+|   |           
+|   +---notes
+|   |       add-note-dialog.tsx
+|   |       add-note-form.tsx
+|   |       note-edit-form.tsx
+|   |       note-list-item.tsx
+|   |       note-list.tsx
+|   |       
+|   +---providers
+|   |       toast-provider.tsx
+|   |       
+|   +---settings
+|   |       AddMemberDialog.tsx
+|   |       danger-zone.tsx
+|   |       email-form.tsx
+|   |       OrgMemberCard.tsx
+|   |       OrgMembersDesktopTable.tsx
+|   |       OrgMembersTable.columns.tsx
+|   |       OrgMembersTable.tsx
+|   |       OrgRoleManager.tsx
+|   |       password-form.tsx
+|   |       profile-form.tsx
+|   |       RemoveMemberDialog.tsx
+|   |       security-section.tsx
+|   |       
+|   +---team
+|   |       AddTeamMemberDialog.tsx
+|   |       AddTeamMemberForm.tsx
+|   |       TeamMemberCard.tsx
+|   |       TeamMemberList.tsx
+|   |       
+|   +---tts
+|   |       SaveAsDialog.tsx
+|   |       tts-interface.tsx
+|   |       TtsHistoryItem.tsx
+|   |       TtsHistoryItemActions.tsx
+|   |       TtsHistoryItemErrorDisplay.tsx
+|   |       TtsHistoryItemInfo.tsx
+|   |       TtsHistoryList.tsx
+|   |       TtsHistoryPanel.tsx
+|   |       TtsHistoryPanelHeader.tsx
+|   |       TtsHistoryPanelSearch.tsx
+|   |       ttsHistoryUtils.ts
+|   |       TtsInputCard.tsx
+|   |       TtsOutputCard.tsx
+|   |       useTtsHistory.ts
+|   |       useTtsHistoryItemState.ts
+|   |       VoiceSelector.tsx
+|   |       
+|   \---ui
+|           accordion.tsx
+|           alert-dialog.tsx
+|           alert.tsx
+|           aspect-ratio.tsx
+|           avatar.tsx
+|           badge.tsx
+|           breadcrumb.tsx
+|           button.stories.tsx
+|           button.tsx
+|           calendar.tsx
+|           card.tsx
+|           carousel.tsx
+|           chart.tsx
+|           checkbox.tsx
+|           collapsible.tsx
+|           command.tsx
+|           context-menu.tsx
+|           dialog.tsx
+|           drawer.tsx
+|           dropdown-menu.tsx
+|           empty-state.tsx
+|           form.tsx
+|           hover-card.tsx
+|           input-otp.tsx
+|           input.module.css
+|           input.tsx
+|           label.tsx
+|           menubar.tsx
+|           navigation-menu.tsx
+|           pagination.tsx
+|           popover.tsx
+|           progress.tsx
+|           radio-group.tsx
+|           resizable.tsx
+|           scroll-area.tsx
+|           select.tsx
+|           separator.tsx
+|           sheet.tsx
+|           sidebar.tsx
+|           skeleton.tsx
+|           slider.tsx
+|           sonner.tsx
+|           switch.tsx
+|           table.tsx
+|           tabs.tsx
+|           textarea.tsx
+|           toast.tsx
+|           toaster.tsx
+|           toggle-group.tsx
+|           toggle.tsx
+|           tooltip.tsx
+|           use-mobile.tsx
+|           use-toast.ts
+|           useWaveSurfer.ts
+|           waveform-audio-player.tsx
+|           
++---context
+|       palette-context.tsx
+|       
++---docs
+|   +---DAM
+|   |   |   dam_advanced_navigation_build_steps.md
+|   |   |   DAM_Build_Steps.md
+|   |   |   dam_ddd_completion_checklist.md
+|   |   |   dam_enhanced_visuals_build_steps.md
+|   |   |   DAM_FSD.md
+|   |   |   dam_performance_ux_at_scale_build_steps.md
+|   |   |   DAM_Roadmap.md
+|   |   |   
+|   |   +---completed
+|   |   |       Add_Member_Build_Steps.md
+|   |   |       cleanup_legacy_files.md
+|   |   |       cleanup_summary.md
+|   |   |       dam_actions_refactor_steps-done.md
+|   |   |       dam_api_refactor_steps.md
+|   |   |       dam_context_menus_build_steps.md
+|   |   |       dam_ddd_finalization_steps.md
+|   |   |       dam_refactor_to_lib_build_steps.md
+|   |   |       dam_search_filtering_sorting_build_steps.md
+|   |   |       dam_tagging_system_build_steps.md
+|   |   |       legacy_code_transition_plan.md
+|   |   |       migration_guide.md
+|   |   |       phase2_migration_plan.md
+|   |   |       
+|   |   \---memories
+|   |           dam_search_dropdown_double_click_issue.md
+|   |           
+|   +---general
+|   |       deployment_steps.md
+|   |       platform-vision.md
+|   |       quick-tips.md
+|   |       test-instructions.md
+|   |       
+|   +---misc-docs
+|   |       error-codes.md
+|   |       error-handling-patterns.md
+|   |       error-troubleshooting.md
+|   |       error_handling_steps.md
+|   |       form-system-migration.md
+|   |       
+|   +---multi-tenant
+|   |       dam-multi-tenant-integration-done.md
+|   |       multi-tenant-build-steps.md
+|   |       notes-multi-tenant-integration.md
+|   |       user-creation-build-steps-completed.md
+|   |       
+|   +---playbook
+|   |       npm_packages_for_playbook_system.md
+|   |       playbook_prd.md
+|   |       
+|   +---refactor
+|   |       lib_layer_refactor_steps-done.md
+|   |       
+|   +---roles
+|   |       Add_Member_Build_Steps-completed.md
+|   |       Role_System_build_Steps-completed.md
+|   |       
+|   +---self-service-reporting
+|   |       self_service_reporting_schema_fsd_updated.md
+|   |       self_service_reporting_schema_prd_updated.md
+|   |       
+|   +---starters
+|   |       stack-rules.md
+|   |       
+|   +---supabase
+|   |       full_schema_dump.sql
+|   |       supabase_remote_first_workflow.mdc
+|   |       
+|   +---team-members-completed
+|   |       Team_Members_Build_Steps.md
+|   |       
+|   \---text-to-speech
+|       |   tts-build-steps.md
+|       |   tts-elevenlabs-voice-explorer-build-steps.md
+|       |   tts-fsd.md
+|       |   tts-history-panel-build-steps.md
+|       |   tts-ux-design.md
+|       |   tts_ddd_migration_checklist.md
+|       |   
+|       \---completed
+|               tts-elevenlabs-build-steps.md
+|               
++---hooks
+|       useAddMemberForm.ts
+|       useCompleteOnboarding.ts
+|       useGridDimensions.ts
+|       useHeadlessAudioPlayer.ts
+|       useOrgMemberActions.ts
+|       useOrgMembers.ts
+|       useTtsDamIntegration.ts
+|       useTtsGeneration.ts
+|       useTtsSaveAsDialog.ts
+|       
++---lib
+|   |   helpers.ts
+|   |   utils.ts
+|   |   
+|   +---actions
+|   |   |   members.ts
+|   |   |   team.ts
+|   |   |   tts.ts
+|   |   |   
+|   |   \---dam
+|   |           asset-crud.actions.ts
+|   |           asset-url.actions.ts
+|   |           folder.actions.ts
+|   |           gallery.actions.ts
+|   |           index.ts
+|   |           tag.actions.ts
+|   |           text-asset.actions.ts
+|   |           
+|   +---auth
+|   |   |   action-wrapper.ts
+|   |   |   authorization.ts
+|   |   |   examples.md
+|   |   |   index.ts
+|   |   |   middleware.ts
+|   |   |   onboardingAuthUtils.ts
+|   |   |   roles.ts
+|   |   |   server-action.ts
+|   |           
+|   +---config
+|   |       navigation.ts
+|   |       ttsConstants.ts
+|   |       ttsProviderConfig.ts
+|   |       
+|   +---dam
+|   |   |   index.ts
+|   |   |   
+|   |   +---application
+|   |   |   +---dto
+|   |   |   |       SearchCriteriaDTO.ts
+|   |   |   |       UploadAssetDTO.ts
+|   |   |   |       
+|   |   |   +---services
+|   |   |   |       AssetService.ts
+|   |   |   |       FolderService.ts
+|   |   |   |       
+|   |   |   \---use-cases
+|   |   |           AddTagToAssetUseCase.ts
+|   |   |           CreateFolderUseCase.ts
+|   |   |           CreateTagUseCase.ts
+|   |   |           CreateTextAssetUseCase.ts
+|   |   |           DeleteAssetUseCase.ts
+|   |   |           DeleteFolderUseCase.ts
+|   |   |           DeleteTagUseCase.ts
+|   |   |           GetAssetContentUseCase.ts
+|   |   |           GetAssetDetailsUseCase.ts
+|   |   |           GetFolderPathUseCase.ts
+|   |   |           ListAssetsByFolderUseCase.ts
+|   |   |           ListFolderChildrenUseCase.ts
+|   |   |           ListFolderContentsUseCase.ts
+|   |   |           ListFoldersUseCase.ts
+|   |   |           ListTagsUseCase.ts
+|   |   |           ListTextAssetsUseCase.ts
+|   |   |           MoveAssetUseCase.ts
+|   |   |           RemoveTagFromAssetUseCase.ts
+|   |   |           RenameAssetUseCase.ts
+|   |   |           SearchDamItemsUseCase.ts
+|   |   |           UpdateAssetTextUseCase.ts
+|   |   |           UpdateFolderUseCase.ts
+|   |   |           UpdateTagUseCase.ts
+|   |   |           UploadAssetUseCase.ts
+|   |   |           
+|   |   +---domain
+|   |   |   +---entities
+|   |   |   |       Asset.ts
+|   |   |   |       Folder.ts
+|   |   |   |       index.ts
+|   |   |   |       Tag.ts
+|   |   |   |       
+|   |   |   +---repositories
+|   |   |   |       IAssetRepository.ts
+|   |   |   |       IAssetTagRepository.ts
+|   |   |   |       IFolderRepository.ts
+|   |   |   |       index.ts
+|   |   |   |       IStorageService.ts
+|   |   |   |       ITagRepository.ts
+|   |   |   |       
+|   |   |   \---value-objects
+|   |   |           .gitkeep
+|   |   |           
+|   |   +---infrastructure
+|   |   |   +---persistence
+|   |   |   |   \---supabase
+|   |   |   |       |   SupabaseAssetRepository.ts
+|   |   |   |       |   SupabaseAssetTagRepository.ts
+|   |   |   |       |   SupabaseFolderRepository.ts
+|   |   |   |       |   SupabaseTagRepository.ts
+|   |   |   |       |   
+|   |   |   |       \---mappers
+|   |   |   |               AssetMapper.ts
+|   |   |   |               FolderMapper.ts
+|   |   |   |               TagMapper.ts
+|   |   |   |               
+|   |   |   \---storage
+|   |   |           SupabaseStorageService.ts
+|   |   |           
+|   |   \---types
+|   |           component.ts
+|   |           dam.types.ts
+|   |           index.ts
+|   |           
+|   +---errors
+|   |   |   base.ts
+|   |   |   client.tsx
+|   |   |   constants.ts
+|   |   |   factory.ts
+|   |           
+|   +---forms
+|   |   |   error-handling-factories.ts
+|   |   |   error-handling-types.ts
+|   |   |   error-handling-utils.ts
+|   |   |   error-handling.ts
+|   |   |   index.ts
+|   |   |   onboardingValidation.ts
+|   |   |   README.md
+|   |   |   useFormWithValidation.ts
+|   |   |   validation.ts
+|   |           
+|   +---hooks
+|   |       useOnboarding.ts
+|   |       useUser.ts
+|   |       
+|   +---logging
+|   |       index.ts
+|   |       
+|   +---middleware
+|   |   |   error.ts
+|   |           
+|   +---replicate
+|   |       client.ts
+|   |       
+|   +---schemas
+|   |       team.ts
+|   |       ttsSchemas.ts
+|   |       
+|   +---services
+|   |       elevenlabsService.ts
+|   |       onboardingService.ts
+|   |       profileService.ts
+|   |       ttsService.ts
+|   |       
+|   +---store
+|   |       folderStore.ts
+|   |       folderStoreUtils.ts
+|   |       
+|   +---supabase
+|   |       auth-middleware.ts
+|   |       client.ts
+|   |       db-auth.ts
+|   |       db-queries.ts
+|   |       db-storage.ts
+|   |       db.ts
+|   |       README.md
+|   |       server.ts
+|   |       
+|   +---usecases
+|   |   \---tts
+|   |       |   getSpeechGenerationResultUsecase.ts
+|   |       |   getTtsHistoryUsecase.ts
+|   |       |   getTtsVoicesUsecase.ts
+|   |       |   saveTtsAudioToDamUsecase.ts
+|   |       |   saveTtsHistoryUsecase.ts
+|   |       |   startSpeechGenerationUsecase.ts
+|   |               
+|   \---__mocks__
+|       |   logging.ts
+|       |   
+|       +---errors
+|       |       base.ts
+|       |       
+|       \---supabase
+|               db.ts
+|               server.ts         
++---supabase
+|   |   .gitignore
+|   |   auth_hooks_guidelines.mdc
+|   |   config.toml
+|   |   supabase-storage-setup.md
+|   |   
+|   \---functions
+|       +---admin-resend-invitation
+|       |       index.ts
+|       |       
+|       +---admin-reset-password
+|       |       index.ts
+|       |       
+|       +---complete-onboarding-membership
+|       |       deno.jsonc
+|       |       import_map.json
+|       |       index.ts
+|       |       
+|       +---invite-member
+|       |       deno.d.ts
+|       |       deno.json
+|       |       index.ts
+|       |       
+|       +---set-active-org-claim
+|       |       index.ts
+|       |       
+|       \---_shared
+|               cors.ts
+|               errors.ts
+|               
+\---types
+        notes.ts
+        repositories.ts
+        services.ts
+        settings.ts
+        supabase.ts
+        team.ts
+        tts.ts

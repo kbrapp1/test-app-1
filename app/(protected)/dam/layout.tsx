@@ -2,7 +2,7 @@ import React from 'react';
 import { cookies } from 'next/headers';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { FolderSidebar } from '@/components/dam/folder-sidebar';
+import { FolderSidebar } from '@/lib/dam/presentation/components/navigation';
 // import type { Folder } from '@/types/dam'; // REMOVED Old import
 import type { Folder as DomainFolder, PlainFolder } from '@/lib/dam/types/dam.types'; // UPDATED to use shared types
 import { getActiveOrganizationId } from '@/lib/auth/server-action';

@@ -8,9 +8,9 @@ import { ThemeToggle } from "./theme-toggle"
 import { Button } from "@/components/ui/button"
 import { SearchIcon, List, LayoutGrid } from "lucide-react"
 import { usePalette } from "@/context/palette-context"
-import { DamSearchBar } from "@/components/dam/DamSearchBar"
+import { DamSearchBar } from "@/lib/dam/presentation/components/search/DamSearchBar"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import type { ViewMode } from "@/components/dam/AssetGalleryClient"
+import type { ViewMode } from "@/lib/dam/presentation/types/interfaces"
 
 export function SiteHeader() {
   const { setOpen: setPaletteOpen } = usePalette();
@@ -19,7 +19,28 @@ export function SiteHeader() {
 
   // Props for DamSearchBar, derived from URL or defaults
   const currentFolderIdForDamSearch = pathname.startsWith('/dam') ? searchParams.get('folderId') : null;
-  const gallerySearchTermForDamSearch = pathname.startsWith('/dam') ? searchParams.get('q') || '' : '';
+  const gallerySearchTermForDamSearch = pathname.startsWith('/dam') ? searchParams.get('search') || searchParams.get('q') || '' : '';
+
+  // Extract current filters and sort params from URL for saved search functionality
+  const currentFilters = pathname.startsWith('/dam') ? {
+    type: searchParams.get('type') || undefined,
+    creationDateOption: searchParams.get('creationDateOption') || undefined,
+    dateStart: searchParams.get('dateStart') || undefined,
+    dateEnd: searchParams.get('dateEnd') || undefined,
+    ownerId: searchParams.get('ownerId') || undefined,
+    sizeOption: searchParams.get('sizeOption') || undefined,
+    sizeMin: searchParams.get('sizeMin') || undefined,
+    sizeMax: searchParams.get('sizeMax') || undefined,
+  } : undefined;
+
+  const currentSortParams = pathname.startsWith('/dam') ? {
+    sortBy: searchParams.get('sortBy') || undefined,
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
+  } : undefined;
+
+  const currentTagIds = pathname.startsWith('/dam') ? 
+    searchParams.get('tagIds')?.split(',').filter(id => id.trim()) || [] : 
+    undefined;
 
   // ViewMode state and effects - only active for DAM pages
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -53,6 +74,9 @@ export function SiteHeader() {
             <DamSearchBar 
               currentFolderId={currentFolderIdForDamSearch}
               gallerySearchTerm={gallerySearchTermForDamSearch}
+              currentFilters={currentFilters}
+              currentSortParams={currentSortParams}
+              currentTagIds={currentTagIds}
             />
           </div>
         )}

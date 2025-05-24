@@ -77,6 +77,7 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   toggleExpand: (folderId) => {
     set((state) => ({
       rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({
+        ...node,
         isExpanded: !node.isExpanded,
       })),
     }));
@@ -86,7 +87,11 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     const fullCurrentStateMap = buildNodeMap(get().rootFolders); // Get map of the entire current tree
 
     set((state) => ({ 
-        rootFolders: findAndUpdateNode(state.rootFolders, folderId, () => ({ isLoading: true, hasError: false }))
+        rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({ 
+          ...node,
+          isLoading: true, 
+          hasError: false 
+        }))
     }));
 
     try {
@@ -106,6 +111,7 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
       
       set((state) => ({ 
           rootFolders: findAndUpdateNode(state.rootFolders, folderId, (parentNode) => ({ 
+              ...parentNode,
               children: childrenNodes.sort((a,b) => a.name.localeCompare(b.name)), 
               isLoading: false, 
               hasError: false,
@@ -114,7 +120,8 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     } catch (error) {
       console.error("Error fetching children:", error);
       set((state) => ({ 
-          rootFolders: findAndUpdateNode(state.rootFolders, folderId, () => ({ 
+          rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({ 
+              ...node,
               isLoading: false, 
               hasError: true, 
               children: [] 
@@ -151,7 +158,10 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
           updatedRootFolders = findAndUpdateNode(
             updatedRootFolders,
             parentId,
-            () => ({ isExpanded: true })
+            (node) => ({ 
+              ...node,
+              isExpanded: true 
+            })
           );
           parentId = parentNode.parentFolderId; // Use parentFolderId from DomainFolder
         } else {
@@ -178,17 +188,36 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
 
   // ADDED: Implementation for updateFolderNodeInStore
   updateFolderNodeInStore: (updatedFolder: DomainFolder) => {
-    set((state) => ({
-      rootFolders: findAndUpdateNode(
+    console.log('🏪 Store: updateFolderNodeInStore called with:', {
+      id: updatedFolder.id,
+      name: updatedFolder.name,
+      fullFolder: updatedFolder
+    });
+    
+    set((state) => {
+      const newRootFolders = findAndUpdateNode(
         state.rootFolders,
         updatedFolder.id,
-        (node) => ({ // node is FolderNode
-          ...node, // Preserve existing FolderNode UI state
-          ...updatedFolder, // Overlay with updated DomainFolder fields
-          // name: updatedFolder.name, (example, spread handles this)
-        })
-      ),
-      changeVersion: state.changeVersion + 1 // ADDED: Increment version
-    }));
+        (node) => {
+          console.log('🔧 Store: Updating node:', {
+            oldName: node.name,
+            newName: updatedFolder.name,
+            nodeId: node.id
+          });
+          return {
+            ...node, // Preserve existing FolderNode UI state
+            ...updatedFolder, // Overlay with updated DomainFolder fields
+            name: updatedFolder.name, // Explicitly set the name
+          };
+        }
+      );
+      
+      console.log('🏪 Store: State updated, changeVersion:', state.changeVersion + 1);
+      
+      return {
+        rootFolders: newRootFolders,
+        changeVersion: state.changeVersion + 1
+      };
+    });
   },
 })); 
