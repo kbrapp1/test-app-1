@@ -1,29 +1,17 @@
-// DAM Presentation Layer Hooks
-// Domain-driven hooks for state management and data fetching
+// Domain-Driven Design Hooks Organization
+// Export all hooks organized by domain
 
-// ✅ Completed migrations
-// TODO: Fix TypeScript resolution issue
-// export { useDamGalleryData } from './useDamGalleryData';
-// export type { DomainGalleryState } from './useDamGalleryData';
+// Asset Management
+export * from './assets';
 
-export { useDamDragAndDrop } from './useDamDragAndDrop';
+// Search & Filtering
+export * from './search';
 
-// ✅ Other working hooks
-export { useSavedSearches } from './useSavedSearches';
-export { useAssetUpload } from './useAssetUpload';
-export { useFolderNavigation } from './useFolderNavigation';
+// Navigation & UI
+export * from './navigation';
 
-// ✅ Migrated hooks from Phase 4, 5B & 5C
-export { useDamSearchInput } from './useDamSearchInput';
-export { useDamSearchDropdown } from './useDamSearchDropdown';
-export { useDamUrlManager } from './useDamUrlManager';
-export { useDamTagFilterHandler } from './useDamTagFilterHandler';
-export { useDamFilters, type SortByValue, type SortOrderValue, type DamFilterState, type UseDamFiltersReturn } from './useDamFilters';
-export { useAssetItemActions, type UseAssetItemActionsProps, type UseAssetItemActionsReturn } from './useAssetItemActions';
-export { useAssetItemDialogs, type UseAssetItemDialogsReturn } from './useAssetItemDialogs';
+// Gallery & Data Management
+export * from './gallery';
 
-// TODO: Migrate remaining hooks from components/dam/hooks/
-// ✅ useAssetItemDialogs (completed in Phase 5A)
-
-// Placeholder to avoid linter errors
-export {}; 
+// Services (existing)
+export * from './services'; 

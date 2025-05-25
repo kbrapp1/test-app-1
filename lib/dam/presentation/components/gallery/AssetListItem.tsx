@@ -1,0 +1,243 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, Eye, Edit3, Navigation, Trash2, Image, Video, Music, FileText, File } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
+import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+interface AssetListItemProps {
+  asset: GalleryItemDto & { type: 'asset' };
+  onViewDetails: () => void;
+  onRename: () => void;
+  onMove: () => void;
+  onDelete: () => void;
+  onClick: () => void;
+  isOptimisticallyHidden?: boolean;
+}
+
+// Safe date formatting helper
+const formatDate = (date: Date | string): string => {
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    const now = new Date();
+    const diffInMs = now.getTime() - dateObj.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    
+    return dateObj.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  } catch (error) {
+    return 'Unknown date';
+  }
+};
+
+// File size formatting helper
+const formatFileSize = (bytes: number): string => {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
+export const AssetListItem: React.FC<AssetListItemProps> = ({
+  asset,
+  onViewDetails,
+  onRename,
+  onMove,
+  onDelete,
+  onClick,
+  isOptimisticallyHidden = false
+}) => {
+  const [imageError, setImageError] = useState(false);
+  const isImage = asset.mimeType?.toLowerCase().startsWith('image/');
+
+  // Drag and drop functionality
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: asset.id,
+    data: { type: 'asset', item: asset },
+  });
+
+  // Optimized style for smooth dragging
+  const style: React.CSSProperties = {
+    // Use translate3d for hardware acceleration
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    // Enable hardware acceleration
+    willChange: isDragging ? 'transform' : 'auto',
+    // Disable pointer events on children when dragging to prevent interference
+    pointerEvents: isDragging ? 'none' : 'auto',
+  };
+
+  const getAssetIcon = () => {
+    const mimeType = asset.mimeType?.toLowerCase() || '';
+    
+    if (mimeType.startsWith('image/')) return <Image className="w-5 h-5 text-green-600" />;
+    if (mimeType.startsWith('video/')) return <Video className="w-5 h-5 text-purple-600" />;
+    if (mimeType.startsWith('audio/')) return <Music className="w-5 h-5 text-orange-600" />;
+    if (mimeType.includes('text')) return <FileText className="w-5 h-5 text-gray-600" />;
+    
+    return <File className="w-5 h-5 text-gray-500" />;
+  };
+
+  const getAssetTypeLabel = () => {
+    const mimeType = asset.mimeType?.toLowerCase() || '';
+    
+    if (mimeType.startsWith('image/')) return 'Image';
+    if (mimeType.startsWith('video/')) return 'Video';
+    if (mimeType.startsWith('audio/')) return 'Audio';
+    if (mimeType.includes('pdf')) return 'PDF';
+    if (mimeType.includes('text')) return 'Text';
+    
+    return 'File';
+  };
+
+  return (
+    <div 
+      ref={setNodeRef}
+      {...attributes}
+      className={`relative flex items-center p-3 border border-gray-200 rounded-lg bg-white cursor-pointer transition-all duration-200 group ${
+        isDragging || isOptimisticallyHidden
+          ? 'opacity-0' // Hide original during drag or when optimistically hidden
+          : 'hover:bg-gray-50/70 hover:border-gray-300 hover:shadow-md' // More subtle hover effects
+      }`}
+      style={style}
+      onClick={onClick}
+    >
+      <div className="flex-shrink-0 mr-3">
+        <div 
+          className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing hover:bg-gray-200 transition-colors"
+          {...listeners}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {isImage && asset.publicUrl && !imageError ? (
+            <img
+              src={asset.publicUrl}
+              alt={asset.name}
+              loading="lazy"
+              className="w-full h-full object-cover rounded-lg"
+              onError={() => setImageError(true)}
+              draggable="false"
+            />
+          ) : (
+            getAssetIcon()
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium truncate text-gray-900">{asset.name}</h3>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+            {getAssetTypeLabel()}
+          </span>
+          
+          <span className="text-xs text-gray-400">|</span>
+          
+          <span className="text-xs text-gray-500">{formatFileSize(asset.size)}</span>
+          
+          {/* Tags display - show up to 2 tags with overflow indicator */}
+          {asset.tags && asset.tags.length > 0 && (
+            <>
+              <span className="text-xs text-gray-400">|</span>
+              {asset.tags.slice(0, 2).map(tag => (
+                <span 
+                  key={tag.id} 
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 transition-colors cursor-pointer"
+                  title={tag.name}
+                >
+                  {tag.name}
+                </span>
+              ))}
+              {asset.tags.length > 2 && (
+                <span className="text-xs text-gray-400 font-medium">
+                  +{asset.tags.length - 2} more
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Responsive metadata columns */}
+      <div className="hidden md:flex flex-col items-end text-right mr-4 min-w-0">
+        <p className="text-xs text-gray-500 truncate">
+          {asset.userFullName || `User ${asset.userId.slice(0, 8)}...`}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {formatDate(asset.createdAt)}
+        </p>
+      </div>
+      
+      {/* Mobile-only date */}
+      <div className="md:hidden flex-shrink-0 text-right mr-4">
+        <p className="text-xs text-gray-500">
+          {formatDate(asset.createdAt)}
+        </p>
+      </div>
+      {/* Action Menu */}
+      <div className={`flex-shrink-0 opacity-0 group-hover:opacity-100 z-20 ${
+        isDragging ? '' : 'transition-opacity duration-200'
+      }`}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0 bg-white/90 hover:bg-white shadow-sm border border-gray-200/50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-600" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}>
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              onRename();
+            }}>
+              <Edit3 className="mr-2 h-4 w-4" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              onMove();
+            }}>
+              <Navigation className="mr-2 h-4 w-4" />
+              Move
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-red-600" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}; 

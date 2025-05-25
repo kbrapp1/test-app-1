@@ -9,8 +9,9 @@ This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DD
 
 ## Key Architecture Patterns
 
-- **Feature-Based Organization**: Code is grouped by business domain (DAM, TTS, Auth, etc.)
-- **DDD in DAM Module**: Domain entities, repositories, and use cases properly separated
+- **Feature-Based Organization**: Code is grouped by business domain (DAM, TTS, Auth, Marketing Automation, etc.)
+- **DDD in DAM Module**: Fully migrated - Domain entities, repositories, and use cases properly separated
+- **Progressive DDD Migration**: Other domains will be migrated to DDD patterns later
 - **Co-located Tests**: Tests live alongside the code they test
 - **Clean Architecture**: Clear separation between UI, business logic, and data layers
 
@@ -19,72 +20,143 @@ This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DD
 ### 🎯 Core Business Features
 ```
 app/(protected)/          # Protected application routes
-├── dam/                  # Digital Asset Management
+├── dam/                  # Digital Asset Management (DDD-migrated)
 ├── ai-playground/        # AI features (TTS, chatbot)
+│   ├── chatbot/         # AI chatbot interface
+│   └── text-to-speech/  # Text-to-speech playground
 ├── marketing-automation/ # CRM-like features
-└── settings/            # User/org settings
+│   ├── contacts/        # Contact management
+│   ├── customers/       # Customer management
+│   ├── leads/           # Lead tracking
+│   └── opportunities/   # Sales opportunities
+├── settings/            # User/org settings
+│   ├── profile/         # User profile settings
+│   ├── security/        # Security settings
+│   ├── org-roles/       # Organization role management
+│   └── danger/          # Dangerous operations
+├── team/                # Team management
+├── documents/           # Document management
+│   └── notes/           # Note-taking system
+├── playbooks/           # Business playbooks
+├── reporting/           # Analytics and reporting
+└── integrations/        # Third-party integrations
 ```
 
 ### 🧩 Reusable Components
 ```
 components/
 ├── ui/                  # Base UI components (shadcn/ui)
-├── dam/                 # DAM-specific components
 ├── tts/                 # Text-to-speech components
-└── auth/                # Authentication forms
+├── auth/                # Authentication forms
+├── team/                # Team management components
+├── settings/            # Settings page components
+├── forms/               # Reusable form components
+│   └── fields/          # Form field components
+├── notes/               # Note-taking components
+└── providers/           # React context providers
 ```
 
 ### ⚡ Business Logic Layer
 ```
 lib/
 ├── actions/             # Server actions (Next.js)
-├── dam/                 # DDD-structured DAM domain
-│   ├── domain/          # Entities, repositories
-│   ├── application/     # Use cases, services
-│   └── infrastructure/  # Supabase implementations
+│   ├── dam/             # DAM server actions
+│   ├── members.ts       # Member management actions
+│   ├── team.ts          # Team actions
+│   └── tts.ts           # TTS actions
+├── dam/                 # DDD-structured DAM domain (MIGRATED)
+│   ├── domain/          # Entities, repositories, value objects
+│   ├── application/     # Use cases, services, DTOs
+│   ├── infrastructure/  # Supabase implementations
+│   ├── presentation/    # React components, hooks, types
+│   ├── types/           # Domain-specific TypeScript types
+│   └── index.ts         # Public API exports
+├── usecases/            # Use cases for other domains
+│   └── tts/             # TTS business logic (pre-DDD)
 ├── services/            # External service integrations
-└── schemas/             # Validation schemas
+├── schemas/             # Validation schemas
+├── auth/                # Authentication & authorization
+├── hooks/               # Custom React hooks
+└── forms/               # Form utilities and validation
 ```
 
 ### 🗄️ Data & API Layer
 ```
 app/api/                 # REST API endpoints
+├── dam/                 # DAM API routes
+│   ├── asset/           # Asset operations
+│   ├── folders/         # Folder operations
+│   └── upload/          # File upload handling
+├── team/                # Team management API
+└── profile/             # User profile API
 supabase/                # Database schema & edge functions
+├── functions/           # Supabase Edge Functions
+└── migrations/          # Database migrations
+```
+
+### 📚 Documentation & Configuration
+```
+docs/                    # Comprehensive feature documentation
+├── DAM/                 # DAM feature docs and build steps
+├── text-to-speech/      # TTS feature documentation
+├── multi-tenant/        # Multi-tenancy implementation
+├── roles/               # Role system documentation
+└── general/             # General platform documentation
 ```
 
 ## Quick Start Navigation
 
 1. **New Feature**: Start in `app/(protected)/[feature]/`
-2. **Reusable UI**: Check `components/ui/` first
-3. **Business Logic**: Look in `lib/actions/` or `lib/[domain]/`
+2. **Reusable UI**: Check `components/ui/` first, then domain-specific components
+3. **Business Logic**: 
+   - **DAM**: Use `lib/dam/` (DDD structure)
+   - **Other domains**: Check `lib/actions/` or `lib/usecases/`
 4. **API Integration**: Check `lib/services/` or `app/api/`
 5. **Database Changes**: Start in `supabase/migrations/`
+6. **Documentation**: Check `docs/[domain]/` for feature-specific docs
 
 ## Domain-Specific Patterns
 
-### DAM (Digital Asset Management)
-- Follows **Clean Architecture** with DDD
-- **Domain Layer**: `lib/dam/domain/` (entities, repositories)
-- **Application Layer**: `lib/dam/application/` (use cases, DTOs)
+### DAM (Digital Asset Management) ✅ DDD-Migrated
+- Follows **Clean Architecture** with full DDD implementation
+- **Domain Layer**: `lib/dam/domain/` (entities, repositories, value objects)
+- **Application Layer**: `lib/dam/application/` (use cases, services, DTOs)
 - **Infrastructure Layer**: `lib/dam/infrastructure/` (Supabase implementations)
+- **Presentation Layer**: `lib/dam/presentation/` (React components, hooks, domain types)
+- **Types Layer**: `lib/dam/types/` (Domain-specific TypeScript definitions)
+- **Public API**: `lib/dam/index.ts` (Centralized exports for clean imports)
 
-### Text-to-Speech (TTS)
+### Text-to-Speech (TTS) 🔄 Legacy Structure (Migration Planned)
 - **Components**: `components/tts/`
-- **Business Logic**: `lib/usecases/tts/`
+- **Business Logic**: `lib/usecases/tts/` (use case pattern)
 - **Service Integration**: `lib/services/elevenlabsService.ts`
+- **Server Actions**: `lib/actions/tts.ts`
 
-### Authentication & Authorization
+### Authentication & Authorization 🔄 Legacy Structure (Migration Planned)
 - **Middleware**: `lib/auth/middleware.ts`
 - **Server Actions**: `lib/auth/server-action.ts`
 - **Components**: `components/auth/`
+- **Authorization Logic**: `lib/auth/authorization.ts`
+
+### Team Management 🔄 Legacy Structure (Migration Planned)
+- **Components**: `components/team/`, `components/settings/`
+- **Server Actions**: `lib/actions/team.ts`, `lib/actions/members.ts`
+- **API Routes**: `app/api/team/`
+
+### Notes System 🔄 Legacy Structure (Migration Planned)
+- **Components**: `components/notes/`
+- **Page Logic**: `app/(protected)/documents/notes/`
+- **Types**: `types/notes.ts`
 
 ## File Naming Conventions
 
-- **Components**: PascalCase (`AssetGallery.tsx`)
+- **Components**: PascalCase (`AssetGallery.tsx`, `TtsInterface.tsx`)
 - **Pages**: lowercase (`page.tsx`, `layout.tsx`)
-- **Utilities**: camelCase (`folderPickerUtils.ts`)
+- **Utilities**: camelCase (`folderPickerUtils.ts`, `ttsHistoryUtils.ts`)
 - **Tests**: `.test.tsx` or `.test.ts`
 - **Types**: `.types.ts`
+- **Server Actions**: `[domain].actions.ts`
+- **Use Cases**: `[UseCase]UseCase.ts`
 
 ## Best Practices Followed
 
@@ -92,739 +164,53 @@ supabase/                # Database schema & edge functions
 ✅ **Feature Isolation**: Each domain is self-contained  
 ✅ **Type Safety**: Comprehensive TypeScript usage  
 ✅ **Clean Separation**: UI, business logic, and data layers separated  
-✅ **Documentation**: Extensive docs for complex features  
+✅ **Documentation**: Extensive docs for complex features in `docs/`  
+✅ **DDD in DAM**: Proper domain-driven design implementation  
+✅ **Progressive Migration**: Gradual migration to DDD patterns  
+
+## Migration Status & Future Plans
+
+### ✅ Completed Migrations
+- **DAM Domain**: Fully migrated to DDD architecture
+- **Multi-tenant Support**: Integrated across the platform
+- **Role System**: Complete role-based access control
+- **Team Management**: Full team member management system
+
+### 🔄 Planned DDD Migrations
+The following domains are candidates for DDD migration:
+
+1. **Text-to-Speech (TTS)**
+   - Current: Use case pattern in `lib/usecases/tts/`
+   - Target: Full DDD with `lib/tts/domain|application|infrastructure/`
+
+2. **Authentication & Authorization**
+   - Current: Mixed in `lib/auth/`
+   - Target: DDD structure with proper domain separation
+
+3. **Team Management**
+   - Current: Server actions and components
+   - Target: DDD with team domain modeling
+
+4. **Marketing Automation**
+   - Current: Basic page structure
+   - Target: Full CRM domain with DDD
+
+5. **Reporting & Analytics**
+   - Current: Basic implementation
+   - Target: Analytics domain with DDD
 
 ## Areas for Future Enhancement
 
 Consider these optimizations as the codebase grows:
 
+- **Complete DDD Migration**: Migrate remaining domains to DDD structure
 - **Barrel Exports**: Add `index.ts` files in component folders for cleaner imports
-- **Shared Types**: Consider a dedicated `types/` folder for cross-domain types
+- **Shared Types**: Consolidate cross-domain types in dedicated folders
 - **E2E Tests**: Add Playwright/Cypress tests in a dedicated `e2e/` folder
+- **API Documentation**: Generate API docs from the growing API layer
+- **Component Library**: Formalize the component system with Storybook
+- **Performance Monitoring**: Add performance tracking for the growing feature set
 
 ---
 
-*This structure supports both rapid feature development and long-term maintainability.*
-
-D:\Projects\test-app-1
-|   .env.example
-|   .env.local
-|   .eslintrc.json
-|   .gitignore
-|   components.json
-|   LICENSE
-|   middleware.ts
-|   next-env.d.ts
-|   next.config.mjs
-|   package.json
-|   pnpm-lock.yaml
-|   pnpm-workspace.yaml
-|   postcss.config.mjs
-|   project-structure.txt
-|   README.md
-|   tsconfig.json
-|   tsconfig.tsbuildinfo
-|   vitest.config.ts
-|   vitest.setup.ts
-|   vitest.shims.d.ts
-|   vitest.workspace.ts
-|   
-+---app
-|   |   error.tsx
-|   |   globals.css
-|   |   layout.tsx
-|   |   page.tsx
-|   |   
-|   +---(protected)
-|   |   |   layout.tsx
-|   |   |   
-|   |   +---activity-feed
-|   |   |       page.tsx
-|   |   |       
-|   |   +---ai-playground
-|   |   |   +---chatbot
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   \---text-to-speech
-|   |   |           page.tsx
-|   |   |           
-|   |   +---approvals
-|   |   |       page.tsx
-|   |   |       
-|   |   +---brand-guidelines
-|   |   |       page.tsx
-|   |   |       
-|   |   +---campaign-management
-|   |   |       page.tsx
-|   |   |       
-|   |   +---content-calendar
-|   |   |       page.tsx
-|   |   |       
-|   |   +---dam
-|   |   |   |   layout.tsx
-|   |   |   |   page.tsx
-|   |   |   |   
-|   |   |   \---upload
-|   |   |           page.tsx
-|   |   |           
-|   |   +---dashboard
-|   |   |       data.json
-|   |   |       page.tsx
-|   |   |       
-|   |   +---developer-api
-|   |   |       page.tsx
-|   |   |       
-|   |   +---digital-storefront
-|   |   |   |   page.tsx
-|   |   |   |   
-|   |   |   \---assets-overview
-|   |   |           page.tsx
-|   |   |           
-|   |   +---documents
-|   |   |   \---notes
-|   |   |           actions.ts
-|   |   |           helpers.ts
-|   |   |           page.tsx
-|   |   |           
-|   |   +---insights
-|   |   |       page.tsx
-|   |   |       
-|   |   +---integrations
-|   |   |       page.tsx
-|   |   |       
-|   |   +---marketing-automation
-|   |   |   |   page.tsx
-|   |   |   |   
-|   |   |   +---contacts
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---customers
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---leads
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   \---opportunities
-|   |   |           page.tsx
-|   |   |           
-|   |   +---notifications
-|   |   |       page.tsx
-|   |   |       
-|   |   +---playbooks
-|   |   |   |   page.tsx
-|   |   |   |   
-|   |   |   \---jobs
-|   |   |           page.tsx
-|   |   |           
-|   |   +---reporting
-|   |   |       page.tsx
-|   |   |       
-|   |   +---settings
-|   |   |   |   layout.tsx
-|   |   |   |   page.tsx
-|   |   |   |   
-|   |   |   +---danger
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---email
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---org-roles
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---password
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---profile
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   \---security
-|   |   |           page.tsx
-|   |   |           
-|   |   +---team
-|   |   |       page.tsx
-|   |   |       
-|   |   \---templates
-|   |           page.tsx
-|   |           
-|   +---api
-|   |   +---dam
-|   |   |   |   dam-api.types.ts
-|   |   |   |   route.ts
-|   |   |   |   
-|   |   |   +---asset
-|   |   |   |   \---[assetId]
-|   |   |   |           route.ts
-|   |   |   |           
-|   |   |   +---folders
-|   |   |   |   |   route.ts
-|   |   |   |   |   
-|   |   |   |   +---tree
-|   |   |   |   |       route.ts
-|   |   |   |   |       
-|   |   |   |   \---[folderId]
-|   |   |   |       |   route.ts
-|   |   |   |       |   
-|   |   |   |       +---children
-|   |   |   |       |       route.ts
-|   |   |   |       |       
-|   |   |   |       \---path
-|   |   |   |               route.ts
-|   |   |   |               
-|   |   |   \---upload
-|   |   |           route.ts
-|   |   |           
-|   |   +---profile
-|   |   |       route.ts
-|   |   |       
-|   |   \---team
-|   |       +---members
-|   |       |       route.ts
-|   |       |       
-|   |       \---upload
-|   |               route.ts
-|   |               
-|   +---auth
-|   |   \---confirm
-|   |           confirm-logic.tsx
-|   |           page.tsx
-|   |           
-|   +---login
-|   |   |   page.tsx
-|   |   |   
-|   |   +---forgot
-|   |   |       page.tsx
-|   |   |       
-|   |   \---reset
-|   |       \---password
-|   |               page.tsx
-|   |               
-|   +---onboarding
-|   |       page.tsx
-|   |       
-|   \---signup
-|           page.tsx
-|           
-+---components
-|   |   app-providers.tsx
-|   |   app-sidebar.tsx
-|   |   chart-area-interactive.tsx
-|   |   command-palette.tsx
-|   |   data-table.tsx
-|   |   error-boundary.tsx
-|   |   nav-documents.tsx
-|   |   nav-main.tsx
-|   |   nav-secondary.tsx
-|   |   nav-user.tsx
-|   |   section-cards.tsx
-|   |   site-header.tsx
-|   |   theme-provider.tsx
-|   |   theme-toggle.tsx
-|   |   
-|   +---auth
-|   |       login-form.tsx
-|   |       signup-form.tsx
-|   |       
-|   +---dam
-|   |   |   asset-selector-modal.tsx
-|   |   |   AssetActionDropdownMenu.tsx
-|   |   |   AssetGallery.tsx
-|   |   |   AssetGalleryClient.tsx
-|   |   |   AssetGalleryClientWrapper.tsx
-|   |   |   AssetGrid.tsx
-|   |   |   AssetGridItem.tsx
-|   |   |   AssetListItem.tsx
-|   |   |   AssetListItemCell.tsx
-|   |   |   AssetListItemDialogs.tsx
-|   |   |   AssetThumbnail.tsx
-|   |   |   AssetUploader.tsx
-|   |   |   dam-breadcrumbs.tsx
-|   |   |   dam-column-config.ts
-|   |   |   DamPageClientView.tsx
-|   |   |   DamSearchBar.tsx
-|   |   |   DamTagFilter.tsx
-|   |   |   DamUploadButton.tsx
-|   |   |   DeleteFolderDialog.tsx
-|   |   |   folder-sidebar.tsx
-|   |   |   FolderItem.tsx
-|   |   |   FolderListItem.tsx
-|   |   |   FolderThumbnail.tsx
-|   |   |   new-folder-dialog.tsx
-|   |   |   RenameFolderDialog.tsx
-|   |   |   SearchDropdownMenu.tsx
-|   |   |   TagEditor.tsx
-|   |   |   
-|   |   +---dialogs
-|   |   |       AssetDetailsDialog.tsx
-|   |   |       ConfirmationDialog.tsx
-|   |   |       FolderPickerDialog.tsx
-|   |   |       folderPickerUtils.ts
-|   |   |       FolderTreeItem.tsx
-|   |   |       InputDialog.tsx
-|   |   |       
-|   |   +---filters
-|   |   |       CreationDateFilter.tsx
-|   |   |       OwnerFilter.tsx
-|   |   |       SizeFilter.tsx
-|   |   |       SizeFilterCustomView.tsx
-|   |   |       SizeFilterListView.tsx
-|   |   |       SortControl.tsx
-|   |   |       TypeFilter.tsx
-|   |   |       
-|   |   \---hooks
-|   |           useAssetDragAndDrop.ts
-|   |           useAssetGalleryData.ts
-|   |           useAssetItemActions.ts
-|   |           useAssetItemDialogs.ts
-|   |           useDamFilters.ts
-|   |           useDamSearchDropdown.ts
-|   |           useDamSearchInput.ts
-|   |           useDamTagFilterHandler.ts
-|   |           useDamUrlManager.ts
-|   |           
-|   +---error
-|   |       error-boundary.tsx
-|   |       error-fallback.tsx
-|   |       
-|   +---forms
-|   |   |   CheckboxField.tsx
-|   |   |   CustomField.tsx
-|   |   |   FormField.tsx
-|   |   |   FormFieldTypes.ts
-|   |   |   FormWrapper.tsx
-|   |   |   index.ts
-|   |   |   README.md
-|   |   |   SelectField.tsx
-|   |   |   SwitchField.tsx
-|   |   |   TextareaField.tsx
-|   |   |   TextField.tsx
-|   |   |   
-|   |   \---fields
-|   |           CheckboxField.tsx
-|   |           CustomField.tsx
-|   |           SwitchField.tsx
-|   |           TextareaField.tsx
-|   |           TextField.tsx
-|   |           
-|   +---notes
-|   |       add-note-dialog.tsx
-|   |       add-note-form.tsx
-|   |       note-edit-form.tsx
-|   |       note-list-item.tsx
-|   |       note-list.tsx
-|   |       
-|   +---providers
-|   |       toast-provider.tsx
-|   |       
-|   +---settings
-|   |       AddMemberDialog.tsx
-|   |       danger-zone.tsx
-|   |       email-form.tsx
-|   |       OrgMemberCard.tsx
-|   |       OrgMembersDesktopTable.tsx
-|   |       OrgMembersTable.columns.tsx
-|   |       OrgMembersTable.tsx
-|   |       OrgRoleManager.tsx
-|   |       password-form.tsx
-|   |       profile-form.tsx
-|   |       RemoveMemberDialog.tsx
-|   |       security-section.tsx
-|   |       
-|   +---team
-|   |       AddTeamMemberDialog.tsx
-|   |       AddTeamMemberForm.tsx
-|   |       TeamMemberCard.tsx
-|   |       TeamMemberList.tsx
-|   |       
-|   +---tts
-|   |       SaveAsDialog.tsx
-|   |       tts-interface.tsx
-|   |       TtsHistoryItem.tsx
-|   |       TtsHistoryItemActions.tsx
-|   |       TtsHistoryItemErrorDisplay.tsx
-|   |       TtsHistoryItemInfo.tsx
-|   |       TtsHistoryList.tsx
-|   |       TtsHistoryPanel.tsx
-|   |       TtsHistoryPanelHeader.tsx
-|   |       TtsHistoryPanelSearch.tsx
-|   |       ttsHistoryUtils.ts
-|   |       TtsInputCard.tsx
-|   |       TtsOutputCard.tsx
-|   |       useTtsHistory.ts
-|   |       useTtsHistoryItemState.ts
-|   |       VoiceSelector.tsx
-|   |       
-|   \---ui
-|           accordion.tsx
-|           alert-dialog.tsx
-|           alert.tsx
-|           aspect-ratio.tsx
-|           avatar.tsx
-|           badge.tsx
-|           breadcrumb.tsx
-|           button.stories.tsx
-|           button.tsx
-|           calendar.tsx
-|           card.tsx
-|           carousel.tsx
-|           chart.tsx
-|           checkbox.tsx
-|           collapsible.tsx
-|           command.tsx
-|           context-menu.tsx
-|           dialog.tsx
-|           drawer.tsx
-|           dropdown-menu.tsx
-|           empty-state.tsx
-|           form.tsx
-|           hover-card.tsx
-|           input-otp.tsx
-|           input.module.css
-|           input.tsx
-|           label.tsx
-|           menubar.tsx
-|           navigation-menu.tsx
-|           pagination.tsx
-|           popover.tsx
-|           progress.tsx
-|           radio-group.tsx
-|           resizable.tsx
-|           scroll-area.tsx
-|           select.tsx
-|           separator.tsx
-|           sheet.tsx
-|           sidebar.tsx
-|           skeleton.tsx
-|           slider.tsx
-|           sonner.tsx
-|           switch.tsx
-|           table.tsx
-|           tabs.tsx
-|           textarea.tsx
-|           toast.tsx
-|           toaster.tsx
-|           toggle-group.tsx
-|           toggle.tsx
-|           tooltip.tsx
-|           use-mobile.tsx
-|           use-toast.ts
-|           useWaveSurfer.ts
-|           waveform-audio-player.tsx
-|           
-+---context
-|       palette-context.tsx
-|       
-+---docs
-|   +---DAM
-|   |   |   dam_advanced_navigation_build_steps.md
-|   |   |   DAM_Build_Steps.md
-|   |   |   dam_ddd_completion_checklist.md
-|   |   |   dam_enhanced_visuals_build_steps.md
-|   |   |   DAM_FSD.md
-|   |   |   dam_performance_ux_at_scale_build_steps.md
-|   |   |   DAM_Roadmap.md
-|   |   |   
-|   |   +---completed
-|   |   |       Add_Member_Build_Steps.md
-|   |   |       cleanup_legacy_files.md
-|   |   |       cleanup_summary.md
-|   |   |       dam_actions_refactor_steps-done.md
-|   |   |       dam_api_refactor_steps.md
-|   |   |       dam_context_menus_build_steps.md
-|   |   |       dam_ddd_finalization_steps.md
-|   |   |       dam_refactor_to_lib_build_steps.md
-|   |   |       dam_search_filtering_sorting_build_steps.md
-|   |   |       dam_tagging_system_build_steps.md
-|   |   |       legacy_code_transition_plan.md
-|   |   |       migration_guide.md
-|   |   |       phase2_migration_plan.md
-|   |   |       
-|   |   \---memories
-|   |           dam_search_dropdown_double_click_issue.md
-|   |           
-|   +---general
-|   |       deployment_steps.md
-|   |       platform-vision.md
-|   |       quick-tips.md
-|   |       test-instructions.md
-|   |       
-|   +---misc-docs
-|   |       error-codes.md
-|   |       error-handling-patterns.md
-|   |       error-troubleshooting.md
-|   |       error_handling_steps.md
-|   |       form-system-migration.md
-|   |       
-|   +---multi-tenant
-|   |       dam-multi-tenant-integration-done.md
-|   |       multi-tenant-build-steps.md
-|   |       notes-multi-tenant-integration.md
-|   |       user-creation-build-steps-completed.md
-|   |       
-|   +---playbook
-|   |       npm_packages_for_playbook_system.md
-|   |       playbook_prd.md
-|   |       
-|   +---refactor
-|   |       lib_layer_refactor_steps-done.md
-|   |       
-|   +---roles
-|   |       Add_Member_Build_Steps-completed.md
-|   |       Role_System_build_Steps-completed.md
-|   |       
-|   +---self-service-reporting
-|   |       self_service_reporting_schema_fsd_updated.md
-|   |       self_service_reporting_schema_prd_updated.md
-|   |       
-|   +---starters
-|   |       stack-rules.md
-|   |       
-|   +---supabase
-|   |       full_schema_dump.sql
-|   |       supabase_remote_first_workflow.mdc
-|   |       
-|   +---team-members-completed
-|   |       Team_Members_Build_Steps.md
-|   |       
-|   \---text-to-speech
-|       |   tts-build-steps.md
-|       |   tts-elevenlabs-voice-explorer-build-steps.md
-|       |   tts-fsd.md
-|       |   tts-history-panel-build-steps.md
-|       |   tts-ux-design.md
-|       |   tts_ddd_migration_checklist.md
-|       |   
-|       \---completed
-|               tts-elevenlabs-build-steps.md
-|               
-+---hooks
-|       useAddMemberForm.ts
-|       useCompleteOnboarding.ts
-|       useGridDimensions.ts
-|       useHeadlessAudioPlayer.ts
-|       useOrgMemberActions.ts
-|       useOrgMembers.ts
-|       useTtsDamIntegration.ts
-|       useTtsGeneration.ts
-|       useTtsSaveAsDialog.ts
-|       
-+---lib
-|   |   helpers.ts
-|   |   utils.ts
-|   |   
-|   +---actions
-|   |   |   members.ts
-|   |   |   team.ts
-|   |   |   tts.ts
-|   |   |   
-|   |   \---dam
-|   |           asset-crud.actions.ts
-|   |           asset-url.actions.ts
-|   |           folder.actions.ts
-|   |           gallery.actions.ts
-|   |           index.ts
-|   |           tag.actions.ts
-|   |           text-asset.actions.ts
-|   |           
-|   +---auth
-|   |   |   action-wrapper.ts
-|   |   |   authorization.ts
-|   |   |   examples.md
-|   |   |   index.ts
-|   |   |   middleware.ts
-|   |   |   onboardingAuthUtils.ts
-|   |   |   roles.ts
-|   |   |   server-action.ts
-|   |           
-|   +---config
-|   |       navigation.ts
-|   |       ttsConstants.ts
-|   |       ttsProviderConfig.ts
-|   |       
-|   +---dam
-|   |   |   index.ts
-|   |   |   
-|   |   +---application
-|   |   |   +---dto
-|   |   |   |       SearchCriteriaDTO.ts
-|   |   |   |       UploadAssetDTO.ts
-|   |   |   |       
-|   |   |   +---services
-|   |   |   |       AssetService.ts
-|   |   |   |       FolderService.ts
-|   |   |   |       
-|   |   |   \---use-cases
-|   |   |           AddTagToAssetUseCase.ts
-|   |   |           CreateFolderUseCase.ts
-|   |   |           CreateTagUseCase.ts
-|   |   |           CreateTextAssetUseCase.ts
-|   |   |           DeleteAssetUseCase.ts
-|   |   |           DeleteFolderUseCase.ts
-|   |   |           DeleteTagUseCase.ts
-|   |   |           GetAssetContentUseCase.ts
-|   |   |           GetAssetDetailsUseCase.ts
-|   |   |           GetFolderPathUseCase.ts
-|   |   |           ListAssetsByFolderUseCase.ts
-|   |   |           ListFolderChildrenUseCase.ts
-|   |   |           ListFolderContentsUseCase.ts
-|   |   |           ListFoldersUseCase.ts
-|   |   |           ListTagsUseCase.ts
-|   |   |           ListTextAssetsUseCase.ts
-|   |   |           MoveAssetUseCase.ts
-|   |   |           RemoveTagFromAssetUseCase.ts
-|   |   |           RenameAssetUseCase.ts
-|   |   |           SearchDamItemsUseCase.ts
-|   |   |           UpdateAssetTextUseCase.ts
-|   |   |           UpdateFolderUseCase.ts
-|   |   |           UpdateTagUseCase.ts
-|   |   |           UploadAssetUseCase.ts
-|   |   |           
-|   |   +---domain
-|   |   |   +---entities
-|   |   |   |       Asset.ts
-|   |   |   |       Folder.ts
-|   |   |   |       index.ts
-|   |   |   |       Tag.ts
-|   |   |   |       
-|   |   |   +---repositories
-|   |   |   |       IAssetRepository.ts
-|   |   |   |       IAssetTagRepository.ts
-|   |   |   |       IFolderRepository.ts
-|   |   |   |       index.ts
-|   |   |   |       IStorageService.ts
-|   |   |   |       ITagRepository.ts
-|   |   |   |       
-|   |   |   \---value-objects
-|   |   |           .gitkeep
-|   |   |           
-|   |   +---infrastructure
-|   |   |   +---persistence
-|   |   |   |   \---supabase
-|   |   |   |       |   SupabaseAssetRepository.ts
-|   |   |   |       |   SupabaseAssetTagRepository.ts
-|   |   |   |       |   SupabaseFolderRepository.ts
-|   |   |   |       |   SupabaseTagRepository.ts
-|   |   |   |       |   
-|   |   |   |       \---mappers
-|   |   |   |               AssetMapper.ts
-|   |   |   |               FolderMapper.ts
-|   |   |   |               TagMapper.ts
-|   |   |   |               
-|   |   |   \---storage
-|   |   |           SupabaseStorageService.ts
-|   |   |           
-|   |   \---types
-|   |           component.ts
-|   |           dam.types.ts
-|   |           index.ts
-|   |           
-|   +---errors
-|   |   |   base.ts
-|   |   |   client.tsx
-|   |   |   constants.ts
-|   |   |   factory.ts
-|   |           
-|   +---forms
-|   |   |   error-handling-factories.ts
-|   |   |   error-handling-types.ts
-|   |   |   error-handling-utils.ts
-|   |   |   error-handling.ts
-|   |   |   index.ts
-|   |   |   onboardingValidation.ts
-|   |   |   README.md
-|   |   |   useFormWithValidation.ts
-|   |   |   validation.ts
-|   |           
-|   +---hooks
-|   |       useOnboarding.ts
-|   |       useUser.ts
-|   |       
-|   +---logging
-|   |       index.ts
-|   |       
-|   +---middleware
-|   |   |   error.ts
-|   |           
-|   +---replicate
-|   |       client.ts
-|   |       
-|   +---schemas
-|   |       team.ts
-|   |       ttsSchemas.ts
-|   |       
-|   +---services
-|   |       elevenlabsService.ts
-|   |       onboardingService.ts
-|   |       profileService.ts
-|   |       ttsService.ts
-|   |       
-|   +---store
-|   |       folderStore.ts
-|   |       folderStoreUtils.ts
-|   |       
-|   +---supabase
-|   |       auth-middleware.ts
-|   |       client.ts
-|   |       db-auth.ts
-|   |       db-queries.ts
-|   |       db-storage.ts
-|   |       db.ts
-|   |       README.md
-|   |       server.ts
-|   |       
-|   +---usecases
-|   |   \---tts
-|   |       |   getSpeechGenerationResultUsecase.ts
-|   |       |   getTtsHistoryUsecase.ts
-|   |       |   getTtsVoicesUsecase.ts
-|   |       |   saveTtsAudioToDamUsecase.ts
-|   |       |   saveTtsHistoryUsecase.ts
-|   |       |   startSpeechGenerationUsecase.ts
-|   |               
-|   \---__mocks__
-|       |   logging.ts
-|       |   
-|       +---errors
-|       |       base.ts
-|       |       
-|       \---supabase
-|               db.ts
-|               server.ts         
-+---supabase
-|   |   .gitignore
-|   |   auth_hooks_guidelines.mdc
-|   |   config.toml
-|   |   supabase-storage-setup.md
-|   |   
-|   \---functions
-|       +---admin-resend-invitation
-|       |       index.ts
-|       |       
-|       +---admin-reset-password
-|       |       index.ts
-|       |       
-|       +---complete-onboarding-membership
-|       |       deno.jsonc
-|       |       import_map.json
-|       |       index.ts
-|       |       
-|       +---invite-member
-|       |       deno.d.ts
-|       |       deno.json
-|       |       index.ts
-|       |       
-|       +---set-active-org-claim
-|       |       index.ts
-|       |       
-|       \---_shared
-|               cors.ts
-|               errors.ts
-|               
-\---types
-        notes.ts
-        repositories.ts
-        services.ts
-        settings.ts
-        supabase.ts
-        team.ts
-        tts.ts
+*This structure supports both rapid feature development and long-term maintainability, with a clear migration path toward full DDD architecture.*

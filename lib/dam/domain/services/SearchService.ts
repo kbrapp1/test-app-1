@@ -1,7 +1,11 @@
 import { SearchCriteria } from '../value-objects/SearchCriteria';
-import { GalleryItemDto } from '../../application/use-cases/ListFolderContentsUseCase';
-import { GetDamDataUseCase, GetDamDataResult } from '../../application/use-cases/GetDamDataUseCase';
+import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GetDamDataUseCase, GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
 import { DamApiRequestDto } from '../../application/dto/DamApiRequestDto';
+import { SearchMapper } from './SearchMapper';
+import { SearchValidation } from './SearchValidation';
+import { SearchCriteriaFactory } from './SearchCriteriaFactory';
+import { SearchUtilities } from './SearchUtilities';
 
 /**
  * Domain Service for Search Operations
@@ -62,39 +66,14 @@ export class SearchService {
 
       const result: GetDamDataResult = await this.getDamDataUseCase.execute(request);
 
-      // Convert domain entities to GalleryItemDto format
-      const items: GalleryItemDto[] = [
-        ...result.folders.map(folder => ({
-          id: folder.id,
-          name: folder.name,
-          type: 'folder' as const,
-          createdAt: folder.createdAt,
-          updatedAt: folder.updatedAt,
-          mimeType: null,
-          fileSize: null,
-          userId: folder.userId,
-          folderId: folder.parentFolderId,
-        })),
-        ...result.assets.map(asset => ({
-          id: asset.id,
-          name: asset.name,
-          type: 'asset' as const,
-          createdAt: asset.createdAt,
-          updatedAt: asset.updatedAt,
-          mimeType: asset.mimeType,
-          fileSize: asset.size,
-          userId: asset.userId,
-          folderId: asset.folderId,
-        })),
-      ];
-
-      const totalItems = items.length;
+      // Convert domain entities to GalleryItemDto format using mapper
+      const items = SearchMapper.mapDomainResultToGalleryItems(result);
 
       return {
         items,
-        totalItems,
+        totalItems: items.length,
         hasMore: false, // GetDamDataUseCase doesn't implement pagination yet
-        searchExecuted: criteria.hasSearchTerm() || criteria.hasFilters(),
+        searchExecuted: SearchUtilities.hasActiveSearch(criteria),
       };
     } catch (error) {
       console.error('Search execution failed:', error);
@@ -120,13 +99,7 @@ export class SearchService {
     }
 
     try {
-      const criteria = new SearchCriteria({
-        searchTerm: searchTerm.trim(),
-        folderId,
-        limit,
-        quickSearch: true,
-      });
-
+      const criteria = SearchCriteriaFactory.forAutocomplete(searchTerm, folderId, limit);
       const result = await this.executeSearch(criteria, organizationId);
 
       return {
@@ -148,58 +121,14 @@ export class SearchService {
    * Validate if a search term is acceptable
    */
   validateSearchTerm(searchTerm: string): { valid: boolean; error?: string } {
-    const trimmed = searchTerm.trim();
-
-    if (trimmed.length === 0) {
-      return { valid: true }; // Empty search is valid (clears search)
-    }
-
-    if (trimmed.length > 255) {
-      return { 
-        valid: false, 
-        error: 'Search term cannot exceed 255 characters' 
-      };
-    }
-
-    // Add any other business rules for search terms
-    const invalidChars = /[<>]/;
-    if (invalidChars.test(trimmed)) {
-      return { 
-        valid: false, 
-        error: 'Search term contains invalid characters' 
-      };
-    }
-
-    return { valid: true };
+    return SearchValidation.validateSearchTerm(searchTerm);
   }
 
   /**
    * Create search criteria from URL parameters
    */
   createSearchCriteriaFromParams(searchParams: URLSearchParams): SearchCriteria {
-    const tagIds = searchParams.get('tagIds');
-    
-    return new SearchCriteria({
-      searchTerm: searchParams.get('search') || undefined,
-      folderId: searchParams.get('folderId') || null,
-      tagIds: tagIds ? tagIds.split(',').filter(id => id.trim()) : [],
-      filters: {
-        type: searchParams.get('type') || undefined,
-        creationDateOption: searchParams.get('creationDateOption') || undefined,
-        dateStart: searchParams.get('dateStart') || undefined,
-        dateEnd: searchParams.get('dateEnd') || undefined,
-        ownerId: searchParams.get('ownerId') || undefined,
-        sizeOption: searchParams.get('sizeOption') || undefined,
-        sizeMin: searchParams.get('sizeMin') || undefined,
-        sizeMax: searchParams.get('sizeMax') || undefined,
-      },
-      sortParams: {
-        sortBy: searchParams.get('sortBy') || undefined,
-        sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
-      },
-      limit: parseInt(searchParams.get('limit') || '20'),
-      quickSearch: searchParams.get('quickSearch') === 'true',
-    });
+    return SearchCriteriaFactory.fromUrlParams(searchParams);
   }
 
   /**
@@ -209,14 +138,7 @@ export class SearchService {
     callback: (criteria: SearchCriteria) => void,
     delay: number = 300
   ): (criteria: SearchCriteria) => void {
-    let timeoutId: NodeJS.Timeout;
-
-    return (criteria: SearchCriteria) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        callback(criteria);
-      }, delay);
-    };
+    return SearchUtilities.createDebouncedSearch(callback, delay);
   }
 
   /**
@@ -226,32 +148,13 @@ export class SearchService {
     criteria1: SearchCriteria,
     criteria2: SearchCriteria
   ): boolean {
-    return criteria1.equals(criteria2);
+    return SearchUtilities.areSearchCriteriaEquivalent(criteria1, criteria2);
   }
 
   /**
    * Generate a user-friendly description of current search state
    */
   generateSearchDescription(criteria: SearchCriteria): string {
-    const parts: string[] = [];
-
-    if (criteria.hasSearchTerm()) {
-      parts.push(`"${criteria.searchTerm}"`);
-    }
-
-    if (criteria.tagIds.length > 0) {
-      parts.push(`${criteria.tagIds.length} tag${criteria.tagIds.length > 1 ? 's' : ''}`);
-    }
-
-    const filterCount = Object.keys(criteria.filters).length;
-    if (filterCount > 0) {
-      parts.push(`${filterCount} filter${filterCount > 1 ? 's' : ''}`);
-    }
-
-    if (parts.length === 0) {
-      return 'All assets';
-    }
-
-    return `Search: ${parts.join(' + ')}`;
+    return SearchUtilities.generateSearchDescription(criteria);
   }
 } 

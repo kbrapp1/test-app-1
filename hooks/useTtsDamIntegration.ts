@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { getAssetContent, updateAssetText, saveAsNewTextAsset } from '@/lib/actions/dam/text-asset.actions';
-import { getAssetDownloadUrl } from '@/lib/actions/dam/asset-url.actions';
+import { getAssetContent, updateAssetText, saveAsNewTextAsset } from '@/lib/dam';
+import { getAssetDownloadUrl } from '@/lib/dam';
 import { saveTtsAudioToDam } from '@/lib/actions/tts';
 import type { Asset } from '../lib/dam/domain/entities/Asset';
 

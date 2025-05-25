@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAssetUpload } from '../../hooks/useAssetUpload';
+import { useAssetUpload } from '../../hooks/assets/useAssetUpload';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';

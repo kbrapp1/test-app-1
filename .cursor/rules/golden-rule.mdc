@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. high-priority: Always use DDD design best-practices, coding, achitecture, compliance etc.
+2. dont build or use pnpm/npm run build
+3. dont run dev or use pnpm run dev, etc (next js hotloads after each change)
+4. when doing markdown files (md), only ues test. e.g. no emojis, etc
+
+When writing code or refactoring follow this DDD principle
+1. Single Responsibility Principle
+-> Each service has one clear purpose
+-> Hook focuses only on state coordination
+-> keep to 200-250 lines if possible

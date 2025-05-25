@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { InputDialog } from '../dialogs/InputDialog';
 import { ConfirmationDialog } from '../dialogs/ConfirmationDialog';
-import { renameFolderClientAction, deleteFolderClientAction } from '@/lib/actions/dam/folder.actions';
+import { renameFolderClientAction, deleteFolderClientAction } from '@/lib/dam';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface FolderListItemProps {

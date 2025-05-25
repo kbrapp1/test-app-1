@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Home as HomeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDroppable } from '@dnd-kit/core';
 import { NewFolderDialog } from '@/lib/dam/presentation/components/dialogs/NewFolderDialog';
 import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 import type { PlainFolder } from '@/lib/dam/types/dam.types';
@@ -48,6 +49,17 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
   const folderIdFromParams = searchParams.get('folderId');
   const currentFolderId = folderIdFromParams || null;
 
+  // Drop zone for Home folder (null folderId)
+  const { setNodeRef: setHomeNodeRef, isOver: isHomeOver } = useDroppable({
+    id: 'sidebar-home-folder',
+    data: { 
+      type: 'folder', 
+      item: { id: null, name: 'Home' },
+      folderId: null, // Keep original folder ID for the move operation
+      accepts: ['asset', 'folder']
+    }
+  });
+
   useEffect(() => {
     try {
       // Convert plain objects to domain entities for store management
@@ -90,16 +102,25 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
       </div>
 
       {/* Home Folder Navigation */}
-      <div className={cn(
-        "flex items-center rounded-md mb-1 pl-4 py-2",
-        currentFolderId === null 
-          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" 
-          : "hover:bg-muted/50 text-gray-700 dark:text-gray-300"
-      )}>
+      <div 
+        ref={setHomeNodeRef}
+        className={cn(
+          "flex items-center rounded-md mb-1 pl-4 py-2 transition-all duration-200",
+          currentFolderId === null 
+            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" 
+            : "hover:bg-muted/50 text-gray-700 dark:text-gray-300",
+          isHomeOver && "bg-blue-100 dark:bg-blue-800 ring-1 ring-blue-300"
+        )}
+      >
         <Link href="/dam" className="flex-1 flex items-center truncate">
           <>
-            <HomeIcon className="h-4 w-4 mr-2 shrink-0" /> 
+            <HomeIcon className={`h-4 w-4 mr-2 shrink-0 ${isHomeOver ? 'text-blue-600 animate-pulse' : ''}`} /> 
             <span className="font-medium text-sm">Home</span>
+            {isHomeOver && (
+              <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] ml-1 shrink-0 font-medium">
+                Drop
+              </span>
+            )}
           </>
         </Link>
       </div>

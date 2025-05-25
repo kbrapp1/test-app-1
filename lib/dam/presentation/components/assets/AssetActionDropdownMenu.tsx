@@ -25,10 +25,10 @@ import {
   Heart,
   Archive,
 } from 'lucide-react';
-import { ComponentAsset as Asset } from '@/lib/dam/types/component';
+import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 export interface AssetActionDropdownMenuProps {
-  item: Asset;
+  item: GalleryItemDto;
   onViewDetails: (e: React.MouseEvent) => void;
   onOpenRenameDialog: (e: React.MouseEvent) => void;
   onOpenMoveDialog: (e: React.MouseEvent) => void;
@@ -58,8 +58,8 @@ export const AssetActionDropdownMenu: React.FC<AssetActionDropdownMenuProps> = (
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="p-1 h-auto">
-          <MoreHorizontal className="w-4 h-4" />
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 bg-white/90 hover:bg-white shadow-sm border border-gray-200/50">
+          <MoreHorizontal className="w-3.5 h-3.5 text-gray-600" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 

@@ -14,7 +14,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { UploadAssetUseCase } from '@/lib/dam/application/use-cases/UploadAssetUseCase';
+import { UploadAssetUseCase } from '@/lib/dam/application/use-cases/assets';
 import { UploadAssetDTO } from '@/lib/dam/application/dto/UploadAssetDTO';
 
 // Simple type for upload result items (different from Asset)

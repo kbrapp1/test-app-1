@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ChevronRight, Home, Folder } from 'lucide-react';
-import { FolderNavigationDto } from '../../../application/use-cases/NavigateToFolderUseCase';
+import { FolderNavigationDto } from '../../../application/use-cases/folders/NavigateToFolderUseCase';
 
 /**
  * FolderBreadcrumbs - Domain-Driven Navigation Component
@@ -53,7 +53,7 @@ export const FolderBreadcrumbs: React.FC<FolderBreadcrumbsProps> = ({
 
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-1" aria-label="Folder navigation">
-        {navigation.breadcrumbs.map((breadcrumb, index) => (
+        {navigation.breadcrumbs.map((breadcrumb: any, index: number) => (
           <React.Fragment key={breadcrumb.id || 'root'}>
             {index > 0 && (
               <ChevronRight className="w-4 h-4 text-gray-400" />

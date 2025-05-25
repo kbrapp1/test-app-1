@@ -4,11 +4,10 @@ import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { NotFoundError } from '@/lib/errors/base';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
-import { GetAssetDetailsUseCase } from '@/lib/dam/application/use-cases/GetAssetDetailsUseCase';
+import { GetAssetDetailsUseCase, UpdateAssetMetadataUseCase, DeleteAssetUseCase } from '@/lib/dam/application/use-cases/assets';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { UpdateAssetMetadataUseCase } from '@/lib/dam/application/use-cases/UpdateAssetMetadataUseCase';
-import { DeleteAssetUseCase } from '@/lib/dam/application/use-cases/DeleteAssetUseCase';
 import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 
 interface RouteContext {
@@ -160,10 +159,26 @@ const createDeleteAssetHandler = (assetId: string): AuthenticatedHandler => {
       const storageService = new SupabaseStorageService(supabase);
       const useCase = new DeleteAssetUseCase(assetRepository, storageService);
       
-      await useCase.execute({ 
+      const result = await useCase.execute({ 
         assetId, 
         organizationId 
       });
+
+      // Comprehensive cache invalidation for asset deletion (matching server action)
+      revalidatePath('/dam', 'layout');
+      revalidatePath('/dam', 'page');
+      if (result.folderId) {
+        revalidatePath(`/dam/folders/${result.folderId}`, 'layout');
+        revalidatePath(`/dam/folders/${result.folderId}`, 'page');
+      } else {
+        // If no folder (root level), revalidate root gallery
+        revalidatePath('/dam', 'layout');
+      }
+      
+      // Revalidate any gallery or asset list components
+      revalidateTag('dam-gallery');
+      revalidateTag('dam-assets');
+      revalidateTag(`asset-${assetId}`);
 
       return NextResponse.json({
         success: true,

@@ -1,11 +1,11 @@
 'use client';
 import React from 'react';
 import { Loader2, Folder as FolderIconLucide, FileText as FileIconLucide } from 'lucide-react';
-import type { CombinedItem } from '../../../types/component';
+import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 interface SearchDropdownMenuProps {
-  items: CombinedItem[];
-  onSelect: (item: CombinedItem) => void;
+  items: GalleryItemDto[];
+  onSelect: (item: GalleryItemDto) => void;
   isLoading: boolean;
   searchTermForDisplay: string;
   onViewAllResults: () => void;

@@ -11,4 +11,9 @@ export type { FolderSidebarProps } from './FolderSidebar';
 export { FolderNavigationItem } from './FolderNavigationItem';
 export type { FolderNavigationItemProps } from './FolderNavigationItem';
 
+// Extracted navigation components (following DDD Single Responsibility Principle)
+export * from './components';
+export * from './hooks';
+export * from './services';
+
 // Progress: All core navigation components migrated ✅ 

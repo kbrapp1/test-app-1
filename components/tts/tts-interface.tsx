@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
-import { AssetSelectorModal } from '@/components/dam/asset-selector-modal';
+import { AssetSelectorModal } from '@/lib/dam/presentation/components/dialogs';
 import { Asset } from '@/lib/dam/domain/entities/Asset';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";

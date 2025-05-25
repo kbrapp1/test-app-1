@@ -1,20 +1,13 @@
-// Types for lib/dam module
-export {};
+// DAM Types - Domain and Application Layer Types
 
-// Re-export component types
+// Re-export domain types
+export type { Asset, Folder, Tag } from './dam.types';
+
+// Re-export application DTOs
 export type {
-  ComponentAsset as Asset,
-  ComponentFolder as Folder,
-  CombinedItem,
-  ComponentFilterParameters as DamFilterParameters,
-  ComponentSortParameters as DamSortParameters,
-  UploadFormData,
-} from './component';
+  DamFilterParameters,
+  DamSortParameters,
+  AssetSearchCriteria,
+} from '../application/dto/SearchCriteriaDTO';
 
-// Re-export domain types for convenience
-export type { Asset as DomainAsset } from '../domain/entities/Asset';
-export type { Folder as DomainFolder } from '../domain/entities/Folder';
-export type { Tag as DomainTag } from '../domain/entities/Tag';
-
-// Re-export tag types
-export type { Tag } from '@/lib/actions/dam/tag.actions'; 
+export type { UploadAssetDTO } from '../application/dto/UploadAssetDTO'; 

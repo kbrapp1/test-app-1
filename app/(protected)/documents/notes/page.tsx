@@ -2,6 +2,9 @@ import React from 'react';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
 import { PlusCircleIcon } from 'lucide-react'; // Icon for Add button
 

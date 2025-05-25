@@ -1,5 +1,7 @@
 import { Asset } from '../../../../domain/entities/Asset';
+import { AssetFactory } from '../../../../domain/entities/AssetFactory';
 import { Tag } from '../../../../domain/entities/Tag';
+import { TagFactory } from '../../../../domain/entities/TagFactory';
 
 // This type might come from Supabase generated types or be manually defined based on asset.db.repo.ts
 export interface RawAssetDbRecord {
@@ -15,6 +17,7 @@ export interface RawAssetDbRecord {
   mime_type: string;
   size: number;
   asset_tags: Array<{ tags: RawTagDbRecord | null }> | null; // Raw tag records from database
+  user?: { full_name: string | null } | null; // User profile information
   // Potentially other raw fields from the 'assets' table
 }
 
@@ -33,25 +36,26 @@ export class AssetMapper {
     const tags: Tag[] = (raw.asset_tags || [])
       .map(at => at.tags)
       .filter(Boolean)
-      .map(rawTag => Tag.fromDatabaseRow(rawTag));
+      .map(rawTag => TagFactory.fromDatabaseRow(rawTag));
 
     // Sanitize the asset name to handle existing data that might have invalid characters
     const sanitizedName = this.sanitizeAssetName(raw.name);
 
-    // Use Asset constructor to create a proper class instance
-    return new Asset({
+    // Use AssetFactory to create domain instance from database data
+    return AssetFactory.fromDatabaseRow({
       id: raw.id,
-      userId: raw.user_id,
+      user_id: raw.user_id,
       name: sanitizedName,
-      storagePath: raw.storage_path,
-      mimeType: raw.mime_type,
+      storage_path: raw.storage_path,
+      mime_type: raw.mime_type,
       size: raw.size,
-      createdAt: new Date(raw.created_at),
-      updatedAt: raw.updated_at ? new Date(raw.updated_at) : undefined,
-      folderId: raw.folder_id,
-      folderName: raw.folder_name,
-      organizationId: raw.organization_id,
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
+      folder_id: raw.folder_id,
+      folder_name: raw.folder_name,
+      organization_id: raw.organization_id,
       tags: tags.length > 0 ? tags : undefined,
+      user_full_name: raw.user?.full_name || null,
     });
   }
 

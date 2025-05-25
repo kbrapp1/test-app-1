@@ -114,3 +114,6 @@ npx vitest --project=storybook
 
 ### Supbase production data schema dump
 npx supabase db dump --schema public --schema auth --schema storage --file "./docs/supabase/full_schema_dump.sql"
+
+### Get folder and file structure of current project
+tree /f /a > output.txt

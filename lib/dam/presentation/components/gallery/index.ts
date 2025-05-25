@@ -1,39 +1,33 @@
 // Gallery Components - DAM Presentation Layer
-// These exports track the migration progress from components/dam/
+// Active production components
 
-// ✅ COMPLETED MIGRATIONS:
+// ✅ PRODUCTION COMPONENTS:
 
-// ✅ AssetGallery.tsx - Server component with domain use cases
-// - Location: lib/dam/presentation/components/gallery/AssetGallery.tsx
-// - Uses ListFolderContentsUseCase instead of server actions
-// - Clean DDD architecture with proper dependency direction
-// - Ready for use in DAM pages
-
-// ✅ AssetGalleryClient.tsx - Client component with domain hooks
-// - Location: lib/dam/presentation/components/gallery/AssetGalleryClient.tsx
+// ✅ AssetGalleryClient.tsx - Main client component with domain hooks
 // - Uses useDamGalleryData hook with GalleryItemDto
 // - Domain-driven state management
-// - Supports grid/list view modes
+// - Supports grid/list view modes with drag & drop
 
-// ✅ DomainGallery.tsx - Combined demonstration component
-// - Location: lib/dam/presentation/components/gallery/DomainGallery.tsx
-// - Shows server vs client rendering approaches
-// - Educational component for DDD architecture comparison
-// - Supports multiple rendering modes
+// ✅ AssetGalleryRenderer.tsx - Rendering logic component
+// - Handles view mode switching and item rendering
+// - Clean separation of concerns
 
-// TODO: Enable these exports after resolving module paths
-// export { AssetGallery } from './AssetGallery';
-// export { AssetGalleryClient } from './AssetGalleryClient';
-// export { DomainGallery } from './DomainGallery';
+// ✅ Individual Item Components:
+// - AssetGridItem.tsx - Grid view asset rendering
+// - AssetListItem.tsx - List view asset rendering  
+// - FolderItem.tsx - Folder rendering for both views
 
-// TODO: Migrate remaining components
-// export { default as AssetGalleryClientWrapper } from './AssetGalleryClientWrapper';
-// export { default as AssetGrid } from './AssetGrid';
+// ✅ Layout Components:
+// - GalleryLayout.tsx - Main layout wrapper
+// - GalleryDialogs.tsx - Dialog management
 
-// Types
-// export type { AssetGalleryProps, AssetGridProps } from '../types/interfaces';
+// Export main components
+export { AssetGalleryClient } from './AssetGalleryClient';
+export { AssetGalleryRenderer } from './AssetGalleryRenderer';
+export { GalleryLayout } from './GalleryLayout';
+export { GalleryDialogs } from './GalleryDialogs';
 
-// Progress: 3/5 core gallery components migrated ✅
-
-// Placeholder for now
-export {}; 
+// Export item components
+export { AssetGridItem } from './AssetGridItem';
+export { AssetListItem } from './AssetListItem';
+export { FolderItem } from './FolderItem'; 

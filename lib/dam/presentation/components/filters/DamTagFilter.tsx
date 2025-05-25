@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Filter as FilterIcon, Loader2 } from 'lucide-react';
-import type { PlainTag } from '@/lib/actions/dam/tag.actions';
-import { useTagFilter } from '../../hooks/useTagFilter';
+import type { PlainTag } from '../../../application/dto/DamApiRequestDto';
+import { useTagFilter } from '../../hooks/search/useTagFilter';
 
 interface DamTagFilterProps {
   organizationId: string | null;

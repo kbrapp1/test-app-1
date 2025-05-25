@@ -1,10 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useState, useTransition, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useTransition, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { deleteAsset } from '@/lib/actions/dam/asset-crud.actions';
+import { DeleteAssetUseCase } from '../../../application/use-cases/assets/DeleteAssetUseCase';
+import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
+import { createClient } from '@/lib/supabase/client';
+import { jwtDecode } from 'jwt-decode';
 import { CircleX, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 
 import {
@@ -99,21 +103,51 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
     }
   }, [src, mimeType, fallbackSrc]);
 
+  // DDD helper function for authentication
+  const getAuthContext = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('No session found');
+    }
+
+    const decodedToken = jwtDecode<any>(session.access_token);
+    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+    
+    if (!activeOrgId) {
+      throw new Error('No active organization found');
+    }
+
+    return { supabase, user, activeOrgId };
+  }, []);
+
   const handleDeleteConfirm = async () => {
     startTransition(async () => {
       try {
-        const result = await deleteAsset(assetId);
-        if (result.success) {
-          toast.success(`Asset "${alt}" deleted successfully.`);
-          await onDataChange();
-        } else {
-          toast.error(result.error || 'Failed to delete asset.');
-        }
+        const { supabase, activeOrgId } = await getAuthContext();
+        const assetRepository = new SupabaseAssetRepository(supabase);
+        const storageService = new SupabaseStorageService(supabase);
+        const deleteUseCase = new DeleteAssetUseCase(assetRepository, storageService);
+
+        await deleteUseCase.execute({
+          assetId,
+          organizationId: activeOrgId,
+        });
+
+        toast.success(`Asset "${alt}" deleted successfully.`);
+        await onDataChange();
       } catch (error: any) {
         console.error("Delete action failed:", error);
         toast.error(error.message || 'An unexpected error occurred during deletion.');
+      } finally {
+        setIsAlertOpen(false);
       }
-      setIsAlertOpen(false);
     });
   };
 

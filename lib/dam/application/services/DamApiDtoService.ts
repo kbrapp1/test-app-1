@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
 import { DamApiResponseDto, CombinedDamItem, TransformedAsset, TransformedFolder } from '../dto/DamApiRequestDto';
-import { GetDamDataResult } from '../use-cases/GetDamDataUseCase';
+import { GetDamDataResult } from '../use-cases/search/GetDamDataUseCase';
 import { DamSortParameters, LimitOptions } from '../dto/SearchCriteriaDTO';
 
 export class DamApiDtoService {

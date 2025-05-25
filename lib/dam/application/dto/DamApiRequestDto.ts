@@ -1,7 +1,7 @@
 import { DamFilterParameters, DamSortParameters, LimitOptions } from './SearchCriteriaDTO';
 
-// Re-export existing API types for compatibility
-export type { TransformedAsset, TransformedFolder, PlainTag } from '../../../../app/api/dam/dam-api.types';
+// Re-export API response types for compatibility
+export type { TransformedAsset, TransformedFolder, PlainTag, CombinedDamItem } from './ApiResponseDto';
 
 export interface DamApiRequestDto {
   // Core parameters
@@ -26,15 +26,11 @@ export interface DamApiRequestDto {
 }
 
 export interface DamApiResponseDto {
-  data: CombinedDamItem[];
+  data: import('./ApiResponseDto').CombinedDamItem[];
   totalItems: number;
   metadata?: {
     searchTerm?: string;
     currentFolder?: string;
     appliedFilters?: Record<string, any>;
   };
-}
-
-// Import the existing types and create a union
-import type { TransformedAsset, TransformedFolder } from '../../../../app/api/dam/dam-api.types';
-export type CombinedDamItem = TransformedAsset | TransformedFolder; 
+} 

@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { createFolderAction } from '@/lib/actions/dam/folder.actions';
+import { createFolderActionForm } from '@/lib/dam';
 import { toast } from 'sonner';
 import { FolderPlus } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
@@ -50,7 +50,7 @@ const initialState: ActionState = {
  * 
  * Follows DDD principles:
  * - Uses domain entities (Folder)
- * - Delegates to domain actions (createFolderAction)
+ * - Delegates to domain actions (createFolderActionForm)
  * - Clean separation of UI and business logic
  * - Proper error handling and optimistic updates
  */
@@ -62,7 +62,7 @@ export function NewFolderDialog({
 }: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { addFolder } = useFolderStore();
-  const [state, formAction, isPending] = useActionState(createFolderAction, initialState);
+  const [state, formAction, isPending] = useActionState(createFolderActionForm, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 

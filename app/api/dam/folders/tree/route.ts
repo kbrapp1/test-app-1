@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedHandler } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { ListFoldersUseCase } from '@/lib/dam/application/use-cases/ListFoldersUseCase';
+import { ListFoldersUseCase } from '@/lib/dam/application/use-cases/folders';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { ValidationError, AppError } from '@/lib/errors/base';
 

@@ -5,56 +5,13 @@
  * rendering uploaded images.
  */
 
-import Link from 'next/link';
-import { cookies } from 'next/headers';
-// import { ReadonlyURLSearchParams } from 'next/navigation'; // No longer directly used here
-// import { Button } from '@/components/ui/button'; // Moved to client component
-// import { UploadCloud, Search, X } from 'lucide-react'; // Moved to client component
-import { createServerClient } from '@supabase/ssr';
-import type { SupabaseClient } from '@supabase/supabase-js';
-// import { Input } from '@/components/ui/input'; // Moved to client component
-/*
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"; // TooltipProvider is in client component
-*/
-
-
 // Domain imports
-import { DamPageClient, type BreadcrumbItemData } from '@/lib/dam/presentation/components/page';
-// import { getActiveOrganizationId } from '@/lib/auth/server-action'; // Not directly used here, but auth context is via withAuth
+import { DamWorkspaceView } from '@/lib/dam/presentation/components/workspace';
+import type { BreadcrumbItemData } from '@/lib/dam/presentation/components/navigation';
+import { getFolderNavigation } from '@/lib/dam/application/actions/navigation.actions';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic'; // REINSTATED
-
-// Optimized function to fetch breadcrumb path using a recursive CTE
-async function fetchBreadcrumbPathRecursive(supabase: SupabaseClient, folderId: string | null): Promise<BreadcrumbItemData[]> {
-  const path: BreadcrumbItemData[] = [{ id: null, name: 'Root', href: '/dam' }];
-
-  if (!folderId) {
-    return path;
-  }
-
-  const rpcRaw = await supabase.rpc('get_folder_path', { p_folder_id: folderId }) as unknown;
-  const { data: rpcData, error } = rpcRaw as { data: { id: string; name: string }[] | null; error: unknown };
-
-  if (error) {
-    console.error('Error fetching folder path via RPC:', error);
-    path.push({ id: folderId, name: 'Error', href: `/dam?folderId=${folderId}` });
-    return path;
-  }
-
-  const rpcRows = rpcData ?? [];
-  const rpcPath = rpcRows.map(p => ({
-    id: p.id,
-    name: p.name,
-    href: `/dam?folderId=${p.id}`
-  }));
-
-  return [...path, ...rpcPath];
-}
 
 export default async function DamGalleryPage({
   searchParams,
@@ -77,21 +34,15 @@ export default async function DamGalleryPage({
     typeof searchParamInput === 'string' ? searchParamInput :
     '';
 
-  // Now proceed with Supabase client creation and other async operations
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: async (name: string) => {
-          const cookieStore = await cookies();
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
-
-  const breadcrumbPath = await fetchBreadcrumbPathRecursive(supabase, currentFolderId);
+  // Use DDD-compliant server action instead of direct database access
+  const navigationResult = await getFolderNavigation(currentFolderId);
+  
+  // Handle folder not found - redirect to root
+  if (navigationResult.shouldRedirect && navigationResult.redirectTo) {
+    redirect(navigationResult.redirectTo);
+  }
+  
+  const breadcrumbPath = navigationResult.breadcrumbs;
 
   return (
     // <TooltipProvider> REMOVED: Now inside DamPageClientView or not needed at this level
@@ -112,7 +63,7 @@ export default async function DamGalleryPage({
           </div> 
         */}
 
-        <DamPageClient 
+        <DamWorkspaceView 
           initialCurrentFolderId={currentFolderId} 
           initialCurrentSearchTerm={currentSearchTerm} 
           breadcrumbPath={breadcrumbPath} // Pass breadcrumbPath as a prop

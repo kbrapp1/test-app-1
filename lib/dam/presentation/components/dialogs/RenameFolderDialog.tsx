@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { updateFolderAction } from '@/lib/actions/dam/folder.actions';
+import { updateFolderAction } from '@/lib/dam';
 import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
 import type { PlainFolder } from '@/lib/dam/types/dam.types';

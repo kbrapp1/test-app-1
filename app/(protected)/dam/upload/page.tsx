@@ -10,7 +10,9 @@ import { AssetUploader } from '@/lib/dam/presentation/components/upload/AssetUpl
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-// This is a Server Component, remove 'use client'
+// Force dynamic rendering since we use searchParams
+export const dynamic = 'force-dynamic';
+
 export default async function DamUploadPage({
   searchParams,
 }: {

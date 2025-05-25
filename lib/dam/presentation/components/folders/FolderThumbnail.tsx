@@ -6,7 +6,7 @@ import { Folder as FolderIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
-import type { ComponentFolder as Folder } from '@/lib/dam/types/component';
+import type { Folder } from '../../../domain/entities/Folder';
 
 export interface FolderThumbnailProps {
   folder: Folder & { type: 'folder' };
@@ -30,6 +30,7 @@ export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
     data: { // Pass data that might be useful
       type: folder.type, // Should be 'folder'
       name: folder.name,
+      accepts: ['asset'], // Specify that this folder accepts assets
     }
   });
 
