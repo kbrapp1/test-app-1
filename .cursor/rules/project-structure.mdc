@@ -87,7 +87,7 @@ lib/
 │   # NOTE: DAM actions moved to lib/dam/application/actions/
 ├── dam/                 # ✅ COMPLETE DDD-structured DAM domain
 │   ├── domain/          # Domain layer (entities, repositories, services)
-│   │   ├── entities/    # Domain entities (Asset, Folder, Tag, etc.)
+│   │   ├── entities/    # Domain entities (Asset, Folder, Tag, Selection, etc.)
 │   │   │   ├── Asset.ts
 │   │   │   ├── AssetFactory.ts
 │   │   │   ├── AssetTypeChecker.ts
@@ -98,6 +98,10 @@ lib/
 │   │   │   ├── TagUtilities.ts
 │   │   │   ├── TagValidation.ts
 │   │   │   ├── SavedSearch.ts
+│   │   │   ├── Selection.ts
+│   │   │   ├── SelectionFactory.ts
+│   │   │   ├── __tests__/
+│   │   │   │   └── Selection.test.ts
 │   │   │   └── index.ts
 │   │   ├── repositories/ # Repository interfaces
 │   │   │   ├── IAssetRepository.ts
@@ -114,15 +118,23 @@ lib/
 │   │   │   ├── SearchService.ts
 │   │   │   ├── SearchUtilities.ts
 │   │   │   ├── SearchValidation.ts
+│   │   │   ├── BulkOperationValidator.ts
+│   │   │   ├── SelectionOperations.ts
+│   │   │   ├── SelectionValidator.ts
 │   │   │   └── index.ts
 │   │   └── value-objects/ # Value objects
-│   │       └── SearchCriteria.ts
+│   │       ├── SearchCriteria.ts
+│   │       ├── BulkOperation.ts
+│   │       ├── BulkOperationFactory.ts
+│   │       ├── BulkOperationValidation.ts
+│   │       └── index.ts
 │   ├── application/     # Application layer (use cases, services, DTOs)
 │   │   ├── actions/     # Server actions (Next.js specific)
 │   │   │   ├── folder.actions.ts
 │   │   │   ├── getAssetDownloadUrl.action.ts
 │   │   │   ├── navigation.actions.ts
 │   │   │   ├── savedSearches.actions.ts
+│   │   │   ├── selection.actions.ts
 │   │   │   ├── textAsset.actions.ts
 │   │   │   └── index.ts
 │   │   ├── dto/         # Data Transfer Objects
@@ -169,6 +181,13 @@ lib/
 │   │       │   ├── SaveSearchUseCase.ts
 │   │       │   ├── SearchDamItemsUseCase.ts
 │   │       │   └── index.ts
+│   │       ├── selection/ # Selection and bulk operations
+│   │       │   ├── BulkDeleteAssetsUseCase.ts
+│   │       │   ├── BulkDownloadAssetsUseCase.ts
+│   │       │   ├── BulkMoveAssetsUseCase.ts
+│   │       │   ├── BulkTagAssetsUseCase.ts
+│   │       │   ├── UpdateSelectionUseCase.ts
+│   │       │   └── index.ts
 │   │       ├── tags/    # Tag-related use cases
 │   │       │   ├── AddTagToAssetUseCase.ts
 │   │       │   ├── CreateTagUseCase.ts
@@ -186,6 +205,7 @@ lib/
 │   │   │   └── supabase/
 │   │   │       ├── SupabaseAssetRepository.ts
 │   │   │       ├── SupabaseAssetTagRepository.ts
+│   │   │       ├── SupabaseBatchRepository.ts
 │   │   │       ├── SupabaseFolderRepository.ts
 │   │   │       ├── SupabaseSavedSearchRepository.ts
 │   │   │       ├── SupabaseTagRepository.ts
@@ -207,13 +227,15 @@ lib/
 │   │   │           ├── FolderTreeService.ts
 │   │   │           └── index.ts
 │   │   └── storage/
-│   │       └── SupabaseStorageService.ts
+│   │       ├── SupabaseStorageService.ts
+│   │       └── SupabaseBatchStorageService.ts
 │   ├── presentation/   # Presentation layer (React components, hooks)
 │   │   ├── components/ # Domain-specific React components
 │   │   │   ├── assets/  # Asset components
 │   │   │   │   ├── AssetActionDropdownMenu.tsx
 │   │   │   │   ├── AssetThumbnail.tsx
 │   │   │   │   ├── DomainTagEditor.tsx
+│   │   │   │   ├── SelectableAssetGridItem.tsx
 │   │   │   │   ├── TagCreationOption.tsx
 │   │   │   │   ├── TagEditorEmptyState.tsx
 │   │   │   │   ├── TagSuggestionList.tsx
@@ -221,6 +243,9 @@ lib/
 │   │   │   ├── dialogs/ # Modal dialogs
 │   │   │   │   ├── AssetDetailsModal.tsx
 │   │   │   │   ├── AssetSelectorModal.tsx
+│   │   │   │   ├── BulkDeleteDialog.tsx
+│   │   │   │   ├── BulkMoveDialog.tsx
+│   │   │   │   ├── BulkOperationDialogs.tsx
 │   │   │   │   ├── ConfirmationDialog.tsx
 │   │   │   │   ├── DeleteFolderDialog.tsx
 │   │   │   │   ├── DialogShowcase.tsx
@@ -272,6 +297,7 @@ lib/
 │   │   │   ├── folders/ # Folder components
 │   │   │   │   ├── FolderListItem.tsx
 │   │   │   │   ├── FolderThumbnail.tsx
+│   │   │   │   ├── SelectableFolderItem.tsx
 │   │   │   │   └── index.ts
 │   │   │   ├── gallery/ # Gallery components
 │   │   │   │   ├── AssetGalleryClient.tsx
@@ -325,6 +351,13 @@ lib/
 │   │   │   │   │   ├── SearchInputHandler.ts
 │   │   │   │   │   └── index.ts
 │   │   │   │   └── index.ts
+│   │   │   ├── selection/ # Selection and multi-select components
+│   │   │   │   ├── MultiSelectToggle.tsx
+│   │   │   │   ├── SelectionCheckbox.tsx
+│   │   │   │   ├── SelectionModeToggle.tsx
+│   │   │   │   ├── SelectionOverlay.tsx
+│   │   │   │   ├── SelectionToolbar.tsx
+│   │   │   │   └── index.ts
 │   │   │   ├── upload/  # Upload components
 │   │   │   │   ├── AssetUploader.tsx
 │   │   │   │   └── DamUploadButton.tsx
@@ -366,6 +399,9 @@ lib/
 │   │   │   │   ├── useDamTagFilterHandler.ts
 │   │   │   │   ├── useSavedSearches.ts
 │   │   │   │   ├── useTagFilter.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── selection/ # Selection-related hooks
+│   │   │   │   ├── useMultiSelect.ts
 │   │   │   │   └── index.ts
 │   │   │   ├── services/ # Hook service utilities
 │   │   │   │   ├── FilterActionsService.ts
@@ -440,6 +476,7 @@ docs/                    # Comprehensive feature documentation
 │   │   ├── folder-picker-dialog-refactor.md
 │   │   └── presentation-layer-ddd-assessment.md
 │   ├── memories/        # Historical documentation
+│   ├── dam_multi_select_build_steps.md # Multi-select system implementation guide
 │   └── DAM_Architecture_Overview.md # Current overview
 ├── text-to-speech/      # TTS feature documentation
 │   └── completed/       # Completed TTS docs
