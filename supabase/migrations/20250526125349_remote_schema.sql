@@ -65,6 +65,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
+CREATE OR REPLACE FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'auth'
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.organization_memberships om1
+    JOIN public.organization_memberships om2 ON om1.organization_id = om2.organization_id
+    WHERE om1.user_id = auth.uid() AND om2.user_id = p_target_user_id
+  );
+$$;
+
+
+ALTER FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."check_email_domain"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -158,18 +174,101 @@ $$;
 ALTER FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") RETURNS TABLE("id" "uuid", "name" "text")
+    LANGUAGE "sql" STABLE
+    AS $$
+  SELECT
+    p.id AS id,
+    COALESCE(p.full_name, p.email, 'Unnamed User') AS name
+  FROM
+    public.organization_memberships om
+  JOIN
+    public.profiles p ON om.user_id = p.id
+  WHERE
+    om.organization_id = target_org_id
+  ORDER BY
+    name;
+$$;
+
+
+ALTER FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") RETURNS TABLE("id" "uuid", "invited_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+    SELECT
+      u.id,
+      u.invited_at
+    FROM auth.users u
+    JOIN public.organization_memberships m
+      ON u.id = m.user_id
+    WHERE
+      u.id = ANY(user_ids_to_check)
+      AND m.organization_id = p_organization_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+begin
+  insert into public.profiles (id, email)
+  values (new.id, new.email);
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_user_email_update"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+begin
+  update public.profiles set email = new.email where id = new.id;
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."handle_user_email_update"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_user_last_sign_in_update"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE public.profiles
+  SET last_sign_in_at = NEW.last_sign_in_at
+  WHERE id = NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."handle_user_last_sign_in_update"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."is_user_admin_of_organization"("org_id" "uuid") RETURNS boolean
     LANGUAGE "sql" SECURITY DEFINER
-    SET "search_path" TO 'public', 'auth', 'pg_temp'
     AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.organization_memberships om
-    WHERE om.organization_id = org_id
-      AND om.user_id = auth.uid()::uuid -- Explicitly cast auth.uid() to uuid
-      AND om.role = 'admin'::text
-  );
-$$;
+          SELECT EXISTS (
+            SELECT 1
+            FROM public.organization_memberships om
+            JOIN public.roles r ON om.role_id = r.id
+            WHERE om.organization_id = org_id
+              AND om.user_id = auth.uid()
+              AND r.name = 'admin'
+          );
+        $$;
 
 
 ALTER FUNCTION "public"."is_user_admin_of_organization"("org_id" "uuid") OWNER TO "postgres";
@@ -199,13 +298,26 @@ CREATE OR REPLACE FUNCTION "public"."trigger_set_timestamp"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-  NEW."updatedAt" = NOW();
+  NEW.updated_at = NOW();
   RETURN NEW;
 END;
 $$;
 
 
 ALTER FUNCTION "public"."trigger_set_timestamp"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_saved_searches_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_saved_searches_updated_at"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -225,7 +337,13 @@ CREATE TABLE IF NOT EXISTS "public"."TtsPrediction" (
     "outputAssetId" "uuid",
     "voiceId" "text",
     "errorMessage" "text",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "prediction_provider" "text",
+    "is_output_url_problematic" boolean DEFAULT false NOT NULL,
+    "output_url_last_error" "text",
+    "output_storage_path" "text",
+    "output_content_type" "text",
+    "output_file_size" integer
 );
 
 
@@ -233,6 +351,18 @@ ALTER TABLE "public"."TtsPrediction" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."TtsPrediction"."organization_id" IS 'FK to the organization this record belongs to.';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."prediction_provider" IS 'Identifies the source of the TTS prediction (e.g., replicate, elevenlabs).';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."is_output_url_problematic" IS 'Flags if the output_url has been identified as problematic (e.g., expired, inaccessible).';
+
+
+
+COMMENT ON COLUMN "public"."TtsPrediction"."output_url_last_error" IS 'Stores the last error message encountered when trying to use the output_url.';
 
 
 
@@ -254,7 +384,8 @@ CREATE TABLE IF NOT EXISTS "public"."assets" (
     "size" integer NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "folder_id" "uuid",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 ALTER TABLE ONLY "public"."assets" FORCE ROW LEVEL SECURITY;
@@ -273,7 +404,8 @@ CREATE TABLE IF NOT EXISTS "public"."folders" (
     "user_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "parent_folder_id" "uuid",
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 ALTER TABLE ONLY "public"."folders" FORCE ROW LEVEL SECURITY;
@@ -347,6 +479,7 @@ CREATE TABLE IF NOT EXISTS "public"."organization_memberships" (
     "role" "text" DEFAULT 'member'::"text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "role_id" "uuid" NOT NULL,
     CONSTRAINT "organization_memberships_role_check" CHECK (("role" = ANY (ARRAY['admin'::"text", 'member'::"text", 'editor'::"text", 'viewer'::"text"])))
 );
 
@@ -377,6 +510,10 @@ COMMENT ON COLUMN "public"."organization_memberships"."created_at" IS 'Timestamp
 
 
 COMMENT ON COLUMN "public"."organization_memberships"."updated_at" IS 'Timestamp of when the membership was last updated.';
+
+
+
+COMMENT ON COLUMN "public"."organization_memberships"."role_id" IS 'Foreign key referencing the role of the user in the organization.';
 
 
 
@@ -423,12 +560,75 @@ COMMENT ON COLUMN "public"."organizations"."updated_at" IS 'Timestamp of when th
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+    "id" "uuid" NOT NULL,
+    "email" "text",
+    "full_name" "text",
+    "avatar_url" "text",
+    "created_at" timestamp with time zone DEFAULT "timezone"('utc'::"text", "now"()),
+    "last_sign_in_at" timestamp with time zone
+);
+
+
+ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."roles" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "description" "text",
+    "created_at" timestamp with time zone DEFAULT "timezone"('utc'::"text", "now"()) NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "timezone"('utc'::"text", "now"()) NOT NULL
+);
+
+
+ALTER TABLE "public"."roles" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."roles" IS 'Stores user roles within organizations (e.g., admin, member, editor).';
+
+
+
+COMMENT ON COLUMN "public"."roles"."id" IS 'Unique identifier for the role.';
+
+
+
+COMMENT ON COLUMN "public"."roles"."name" IS 'Unique name of the role (e.g., ''admin'', ''member'').';
+
+
+
+COMMENT ON COLUMN "public"."roles"."description" IS 'Optional description of the role and its permissions.';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."saved_searches" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "description" "text",
+    "user_id" "uuid" NOT NULL,
+    "organization_id" "uuid" NOT NULL,
+    "search_criteria" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "is_global" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "last_used_at" timestamp with time zone,
+    "use_count" integer DEFAULT 0 NOT NULL,
+    CONSTRAINT "saved_searches_name_length" CHECK ((("char_length"("name") > 0) AND ("char_length"("name") <= 100))),
+    CONSTRAINT "saved_searches_use_count_non_negative" CHECK (("use_count" >= 0))
+);
+
+
+ALTER TABLE "public"."saved_searches" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."tags" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "name" "text" NOT NULL,
     "user_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "color" "text" DEFAULT 'blue'::"text" NOT NULL,
+    CONSTRAINT "tags_color_check" CHECK (("color" = ANY (ARRAY['blue'::"text", 'green'::"text", 'yellow'::"text", 'red'::"text", 'purple'::"text", 'pink'::"text", 'indigo'::"text", 'gray'::"text", 'orange'::"text", 'teal'::"text", 'emerald'::"text", 'lime'::"text"])))
 );
 
 
@@ -436,6 +636,10 @@ ALTER TABLE "public"."tags" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."tags"."organization_id" IS 'FK to the organization this record belongs to.';
+
+
+
+COMMENT ON COLUMN "public"."tags"."color" IS 'Visual color identifier for the tag - assigned deterministically based on tag name for consistency';
 
 
 
@@ -506,30 +710,12 @@ ALTER TABLE ONLY "public"."asset_tags"
 
 
 ALTER TABLE ONLY "public"."assets"
-    ADD CONSTRAINT "assets_org_folder_name_unique" UNIQUE ("organization_id", "folder_id", "name");
-
-
-
-COMMENT ON CONSTRAINT "assets_org_folder_name_unique" ON "public"."assets" IS 'Ensures asset names are unique within a folder in an organization.';
-
-
-
-ALTER TABLE ONLY "public"."assets"
     ADD CONSTRAINT "assets_pkey" PRIMARY KEY ("id");
 
 
 
 ALTER TABLE ONLY "public"."assets"
     ADD CONSTRAINT "assets_storage_path_key" UNIQUE ("storage_path");
-
-
-
-ALTER TABLE ONLY "public"."folders"
-    ADD CONSTRAINT "folders_org_parent_name_unique" UNIQUE ("organization_id", "parent_folder_id", "name");
-
-
-
-COMMENT ON CONSTRAINT "folders_org_parent_name_unique" ON "public"."folders" IS 'Ensures folder names are unique within a parent folder in an organization.';
 
 
 
@@ -570,6 +756,26 @@ ALTER TABLE ONLY "public"."organizations"
 
 ALTER TABLE ONLY "public"."organizations"
     ADD CONSTRAINT "organizations_slug_key" UNIQUE ("slug");
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."roles"
+    ADD CONSTRAINT "roles_name_key" UNIQUE ("name");
+
+
+
+ALTER TABLE ONLY "public"."roles"
+    ADD CONSTRAINT "roles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_pkey" PRIMARY KEY ("id");
 
 
 
@@ -623,6 +829,22 @@ CREATE INDEX "idx_folders_parent_folder_id" ON "public"."folders" USING "btree" 
 
 
 
+CREATE INDEX "idx_saved_searches_last_used" ON "public"."saved_searches" USING "btree" ("last_used_at" DESC NULLS LAST);
+
+
+
+CREATE INDEX "idx_saved_searches_org_use_count" ON "public"."saved_searches" USING "btree" ("organization_id", "use_count" DESC);
+
+
+
+CREATE INDEX "idx_saved_searches_user_org" ON "public"."saved_searches" USING "btree" ("user_id", "organization_id");
+
+
+
+CREATE INDEX "idx_tags_color" ON "public"."tags" USING "btree" ("color");
+
+
+
 CREATE OR REPLACE TRIGGER "handle_organization_memberships_updated_at" BEFORE UPDATE ON "public"."organization_memberships" FOR EACH ROW EXECUTE FUNCTION "public"."moddatetime"('updated_at');
 
 
@@ -635,11 +857,19 @@ CREATE OR REPLACE TRIGGER "handle_teams_updated_at" BEFORE UPDATE ON "public"."t
 
 
 
+CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."assets" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
+
+
+
+CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."folders" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
+
+
+
 CREATE OR REPLACE TRIGGER "handle_updated_at" BEFORE UPDATE ON "public"."notes" FOR EACH ROW EXECUTE FUNCTION "public"."moddatetime"('updated_at');
 
 
 
-CREATE OR REPLACE TRIGGER "set_timestamp_tts_prediction" BEFORE UPDATE ON "public"."TtsPrediction" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
+CREATE OR REPLACE TRIGGER "update_saved_searches_updated_at_trigger" BEFORE UPDATE ON "public"."saved_searches" FOR EACH ROW EXECUTE FUNCTION "public"."update_saved_searches_updated_at"();
 
 
 
@@ -674,7 +904,7 @@ ALTER TABLE ONLY "public"."asset_tags"
 
 
 ALTER TABLE ONLY "public"."assets"
-    ADD CONSTRAINT "assets_folder_id_fkey" FOREIGN KEY ("folder_id") REFERENCES "public"."folders"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "assets_folder_id_fkey" FOREIGN KEY ("folder_id") REFERENCES "public"."folders"("id") ON DELETE CASCADE;
 
 
 
@@ -689,7 +919,12 @@ ALTER TABLE ONLY "public"."assets"
 
 
 ALTER TABLE ONLY "public"."folders"
-    ADD CONSTRAINT "fk_folders_parent_folder" FOREIGN KEY ("parent_folder_id") REFERENCES "public"."folders"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "fk_folders_parent_folder" FOREIGN KEY ("parent_folder_id") REFERENCES "public"."folders"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."organization_memberships"
+    ADD CONSTRAINT "fk_organization_memberships_user_id" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -724,12 +959,32 @@ ALTER TABLE ONLY "public"."organization_memberships"
 
 
 ALTER TABLE ONLY "public"."organization_memberships"
+    ADD CONSTRAINT "organization_memberships_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."organization_memberships"
     ADD CONSTRAINT "organization_memberships_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."organizations"
     ADD CONSTRAINT "organizations_owner_user_id_fkey" FOREIGN KEY ("owner_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."saved_searches"
+    ADD CONSTRAINT "saved_searches_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -775,6 +1030,18 @@ CREATE POLICY "Admins can view all memberships of organizations they administe" 
 
 
 
+CREATE POLICY "Admins can view profiles of members in their managed organizati" ON "public"."profiles" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM (("public"."organization_memberships" "admin_membership"
+     JOIN "public"."roles" "admin_role" ON (("admin_membership"."role_id" = "admin_role"."id")))
+     JOIN "public"."organization_memberships" "member_membership" ON (("admin_membership"."organization_id" = "member_membership"."organization_id")))
+  WHERE (("admin_membership"."user_id" = "auth"."uid"()) AND ("admin_role"."name" = 'admin'::"text") AND ("member_membership"."user_id" = "profiles"."id")))));
+
+
+
+CREATE POLICY "Allow authenticated users to read roles" ON "public"."roles" FOR SELECT TO "authenticated" USING (true);
+
+
+
 CREATE POLICY "Asset Tags: Org members can manage tags for their org assets" ON "public"."asset_tags" USING (((EXISTS ( SELECT 1
    FROM ("public"."assets" "a"
      JOIN "public"."organization_memberships" "om" ON (("a"."organization_id" = "om"."organization_id")))
@@ -786,6 +1053,10 @@ CREATE POLICY "Asset Tags: Org members can manage tags for their org assets" ON 
 
 
 CREATE POLICY "Assets access based on active organization" ON "public"."assets" TO "authenticated" USING (("organization_id" = "public"."get_active_organization_id"())) WITH CHECK (("organization_id" = "public"."get_active_organization_id"()));
+
+
+
+CREATE POLICY "Enable user access to their notes in active organization" ON "public"."notes" USING ((("organization_id" = "public"."get_active_organization_id"()) AND ("user_id" = "auth"."uid"()))) WITH CHECK ((("organization_id" = "public"."get_active_organization_id"()) AND ("user_id" = "auth"."uid"())));
 
 
 
@@ -806,20 +1077,23 @@ CREATE POLICY "Members can view their organizations" ON "public"."organizations"
 
 
 CREATE POLICY "Org admins can manage memberships of teams in their org" ON "public"."team_user_memberships" USING ((EXISTS ( SELECT 1
-   FROM ("public"."teams" "t"
+   FROM (("public"."teams" "t"
      JOIN "public"."organization_memberships" "om" ON (("t"."organization_id" = "om"."organization_id")))
-  WHERE (("t"."id" = "team_user_memberships"."team_id") AND ("om"."user_id" = "auth"."uid"()) AND ("om"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM ("public"."teams" "t"
+     JOIN "public"."roles" "r" ON (("om"."role_id" = "r"."id")))
+  WHERE (("t"."id" = "team_user_memberships"."team_id") AND ("om"."user_id" = "auth"."uid"()) AND ("r"."name" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM (("public"."teams" "t"
      JOIN "public"."organization_memberships" "om" ON (("t"."organization_id" = "om"."organization_id")))
-  WHERE (("t"."id" = "team_user_memberships"."team_id") AND ("om"."user_id" = "auth"."uid"()) AND ("om"."role" = 'admin'::"text")))));
+     JOIN "public"."roles" "r" ON (("om"."role_id" = "r"."id")))
+  WHERE (("t"."id" = "team_user_memberships"."team_id") AND ("om"."user_id" = "auth"."uid"()) AND ("r"."name" = 'admin'::"text")))));
 
 
 
 CREATE POLICY "Org members can interact with teams in their org" ON "public"."teams" USING ((EXISTS ( SELECT 1
    FROM "public"."organization_memberships" "om"
   WHERE (("om"."organization_id" = "teams"."organization_id") AND ("om"."user_id" = "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."organization_memberships" "om"
-  WHERE (("om"."organization_id" = "teams"."organization_id") AND ("om"."user_id" = "auth"."uid"()) AND ("om"."role" = ANY (ARRAY['admin'::"text", 'editor'::"text"]))))));
+   FROM ("public"."organization_memberships" "om"
+     JOIN "public"."roles" "r" ON (("om"."role_id" = "r"."id")))
+  WHERE (("om"."organization_id" = "teams"."organization_id") AND ("om"."user_id" = "auth"."uid"()) AND ("r"."name" = ANY (ARRAY['admin'::"text", 'editor'::"text"]))))));
 
 
 
@@ -829,21 +1103,13 @@ CREATE POLICY "Organization members can access their org data in TtsPrediction" 
 
 
 
-CREATE POLICY "Organization members can access their org data in notes" ON "public"."notes" USING (((EXISTS ( SELECT 1
-   FROM "public"."organization_memberships" "om"
-  WHERE (("om"."organization_id" = "notes"."organization_id") AND ("om"."user_id" = "auth"."uid"())))) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid"))) WITH CHECK ((("organization_id" = "public"."get_active_organization_id"()) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid")));
-
-
-
 CREATE POLICY "Organization members can access their org data in tags" ON "public"."tags" USING (((EXISTS ( SELECT 1
    FROM "public"."organization_memberships" "om"
   WHERE (("om"."organization_id" = "tags"."organization_id") AND ("om"."user_id" = "auth"."uid"())))) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid"))) WITH CHECK ((("organization_id" = "public"."get_active_organization_id"()) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid")));
 
 
 
-CREATE POLICY "Organization members can access their org data in team_members" ON "public"."team_members" USING (((EXISTS ( SELECT 1
-   FROM "public"."organization_memberships" "om"
-  WHERE (("om"."organization_id" = "team_members"."organization_id") AND ("om"."user_id" = "auth"."uid"())))) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid"))) WITH CHECK ((("organization_id" = "public"."get_active_organization_id"()) OR ("auth"."uid"() = 'abade2e0-646c-4e80-bddd-98333a56f1f7'::"uuid")));
+CREATE POLICY "Organization members can view profiles via func" ON "public"."profiles" FOR SELECT TO "authenticated" USING ("public"."are_users_in_same_org"("id"));
 
 
 
@@ -859,6 +1125,15 @@ CREATE POLICY "Superusers can manage teams" ON "public"."teams" USING (("auth"."
 
 
 
+CREATE POLICY "Team Member RLS Policy" ON "public"."team_members" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."organization_memberships" "om"
+  WHERE (("om"."organization_id" = "team_members"."organization_id") AND ("om"."user_id" = "auth"."uid"()))))) WITH CHECK ((("organization_id" = "public"."get_active_organization_id"()) AND (EXISTS ( SELECT 1
+   FROM ("public"."organization_memberships" "om"
+     JOIN "public"."roles" "r" ON (("om"."role_id" = "r"."id")))
+  WHERE (("om"."organization_id" = "public"."get_active_organization_id"()) AND ("om"."user_id" = "auth"."uid"()) AND ("r"."name" = 'admin'::"text"))))));
+
+
+
 CREATE POLICY "Team members can view their team memberships" ON "public"."team_user_memberships" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM ("public"."teams" "t"
      JOIN "public"."organization_memberships" "om" ON (("t"."organization_id" = "om"."organization_id")))
@@ -869,7 +1144,35 @@ CREATE POLICY "Team members can view their team memberships" ON "public"."team_u
 ALTER TABLE "public"."TtsPrediction" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "Users can create their own saved searches" ON "public"."saved_searches" FOR INSERT TO "authenticated" WITH CHECK ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
+CREATE POLICY "Users can delete their own saved searches" ON "public"."saved_searches" FOR DELETE TO "authenticated" USING ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
+CREATE POLICY "Users can insert their own profile" ON "public"."profiles" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "Users can update their own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "Users can update their own saved searches" ON "public"."saved_searches" FOR UPDATE TO "authenticated" USING ((("user_id" = "auth"."uid"()) AND ("organization_id" = "public"."get_active_organization_id"())));
+
+
+
+CREATE POLICY "Users can view saved searches in their organization" ON "public"."saved_searches" FOR SELECT TO "authenticated" USING (("organization_id" = "public"."get_active_organization_id"()));
+
+
+
 CREATE POLICY "Users can view their own membership entries" ON "public"."organization_memberships" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users can view their own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
@@ -892,6 +1195,15 @@ ALTER TABLE "public"."organization_memberships" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."organizations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."roles" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."saved_searches" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."tags" ENABLE ROW LEVEL SECURITY;
@@ -1086,6 +1398,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."are_users_in_same_org"("p_target_user_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "anon";
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."check_email_domain"() TO "service_role";
@@ -1116,6 +1434,36 @@ GRANT ALL ON FUNCTION "public"."get_folder_path"("p_folder_id" "uuid") TO "servi
 
 
 
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_organization_members_with_profiles"("target_org_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_users_invitation_details"("user_ids_to_check" "uuid"[], "p_organization_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_user_email_update"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_user_email_update"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_user_email_update"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_user_last_sign_in_update"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_user_last_sign_in_update"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_user_last_sign_in_update"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."is_user_admin_of_organization"("org_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_user_admin_of_organization"("org_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_user_admin_of_organization"("org_id" "uuid") TO "service_role";
@@ -1138,6 +1486,12 @@ GRANT ALL ON FUNCTION "public"."moddatetime"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."trigger_set_timestamp"() TO "anon";
 GRANT ALL ON FUNCTION "public"."trigger_set_timestamp"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."trigger_set_timestamp"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_saved_searches_updated_at"() TO "service_role";
 
 
 
@@ -1201,6 +1555,24 @@ GRANT ALL ON TABLE "public"."organization_memberships" TO "service_role";
 GRANT ALL ON TABLE "public"."organizations" TO "anon";
 GRANT ALL ON TABLE "public"."organizations" TO "authenticated";
 GRANT ALL ON TABLE "public"."organizations" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."roles" TO "anon";
+GRANT ALL ON TABLE "public"."roles" TO "authenticated";
+GRANT ALL ON TABLE "public"."roles" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."saved_searches" TO "anon";
+GRANT ALL ON TABLE "public"."saved_searches" TO "authenticated";
+GRANT ALL ON TABLE "public"."saved_searches" TO "service_role";
 
 
 
