@@ -15,6 +15,7 @@ interface GalleryDialogsProps {
   onAssetDeleted: (assetId: string) => void;
   dialogManager: any;
   moveDialog: any;
+  onCloseMoveDialog: () => void;
   activeFolderId: string | null;
   onMoveAssetConfirm: (folderId: string | null) => void;
   onRenameAssetSubmit: (newName: string) => void;
@@ -30,6 +31,7 @@ export const GalleryDialogs: React.FC<GalleryDialogsProps> = ({
   onAssetDeleted,
   dialogManager,
   moveDialog,
+  onCloseMoveDialog,
   activeFolderId,
   onMoveAssetConfirm,
   onRenameAssetSubmit,
@@ -120,7 +122,7 @@ export const GalleryDialogs: React.FC<GalleryDialogsProps> = ({
           isOpen={moveDialog.isOpen}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
-              // This should call closeMoveDialog from the parent
+              onCloseMoveDialog();
             }
           }}
           onFolderSelect={onMoveAssetConfirm}

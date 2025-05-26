@@ -1,10 +1,12 @@
 import { Tag } from '../../../../domain/entities/Tag';
 import { CreateTagData, UpdateTagData } from '../../../../domain/repositories/ITagRepository';
+import { TagColor, TagColorName } from '../../../../domain/value-objects/TagColor';
 
 // Raw data structure from Supabase 'tags' table
 export interface RawTagDbRecord {
   id: string;
   name: string;
+  color: string;
   user_id: string;
   created_at: string; // ISO date string
   organization_id: string;
@@ -18,6 +20,7 @@ export class TagMapper {
     return new Tag({
       id: raw.id,
       name: raw.name,
+      color: raw.color as TagColorName,
       userId: raw.user_id,
       organizationId: raw.organization_id,
       createdAt: new Date(raw.created_at),
@@ -27,20 +30,26 @@ export class TagMapper {
 
   // For creating a new tag
   static toCreatePersistence(tagData: CreateTagData): Omit<RawTagDbRecord, 'id' | 'created_at' | 'updated_at'> {
+    // Use deterministic color assignment if no color provided
+    const assignedColor = tagData.color || TagColor.createForTagName(tagData.name).colorName;
+    
     return {
       name: tagData.name,
+      color: assignedColor,
       user_id: tagData.userId,
       organization_id: tagData.organizationId,
     };
   }
 
   // For updating an existing tag (handles partial data)
-  static toUpdatePersistence(tagData: UpdateTagData): Partial<Pick<RawTagDbRecord, 'name'>> {
-    const persistenceRecord: Partial<Pick<RawTagDbRecord, 'name'>> = {};
+  static toUpdatePersistence(tagData: UpdateTagData): Partial<Pick<RawTagDbRecord, 'name' | 'color'>> {
+    const persistenceRecord: Partial<Pick<RawTagDbRecord, 'name' | 'color'>> = {};
     if (tagData.name !== undefined) {
       persistenceRecord.name = tagData.name;
     }
-    // Add other updatable fields here if any
+    if (tagData.color !== undefined) {
+      persistenceRecord.color = tagData.color;
+    }
     return persistenceRecord;
   }
 

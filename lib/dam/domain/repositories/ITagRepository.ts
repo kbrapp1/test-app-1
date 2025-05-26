@@ -1,14 +1,17 @@
 import { Tag } from '../entities/Tag';
+import { TagColorName } from '../value-objects/TagColor';
 
 // Define interfaces for repository input data
 export interface CreateTagData {
   name: string;
+  color?: TagColorName;
   userId: string;
   organizationId: string;
 }
 
 export interface UpdateTagData {
   name?: string;
+  color?: TagColorName;
 }
 
 export interface ITagRepository {

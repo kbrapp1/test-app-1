@@ -1,10 +1,10 @@
 import React from 'react';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
-import { AssetGridItem } from './AssetGridItem';
 import { AssetListItem } from './AssetListItem';
-import { FolderItem } from './FolderItem';
-import { SelectableAssetGridItem } from '../assets/SelectableAssetGridItem';
+import { FolderItem } from './folder-item';
+import { SelectableEnhancedAssetGridItem } from '../assets/SelectableEnhancedAssetGridItem';
 import { SelectableFolderItem } from '../folders/SelectableFolderItem';
+import { EnhancedAssetGridItem } from './enhanced/EnhancedAssetGridItem';
 
 interface AssetGalleryRendererProps {
   viewMode: 'grid' | 'list';
@@ -52,17 +52,17 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
           {assets.map(asset => {
             const actions = createAssetActions(asset);
             
-            // Use selectable component when multi-select is enabled
+            // Use enhanced selectable component when multi-select is enabled
             if (enableMultiSelect && multiSelect) {
               return (
-                <SelectableAssetGridItem 
+                <SelectableEnhancedAssetGridItem 
                   key={asset.id} 
                   asset={asset}
                   onClick={() => onItemClick(asset)}
                   isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
                   isSelected={multiSelect.isSelected(asset.id, 'asset')}
                   isSelecting={multiSelect.isSelecting}
-                  onSelectionChange={(selected) => {
+                  onSelectionChange={(selected: boolean) => {
                     // Always use toggleItem for consistent multi-select behavior
                       multiSelect.toggleItem(asset.id, 'asset');
                   }}
@@ -71,9 +71,9 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
               );
             }
             
-            // Default non-selectable component
+            // Default non-selectable component with enhanced click vs drag
             return (
-              <AssetGridItem 
+              <EnhancedAssetGridItem 
                 key={asset.id} 
                 asset={asset}
                 onClick={() => onItemClick(asset)}
@@ -129,7 +129,7 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
                 isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
                 isSelected={multiSelect.isSelected(folder.id, 'folder')}
                 isSelecting={multiSelect.isSelecting}
-                onSelectionChange={(selected) => {
+                onSelectionChange={(selected: boolean) => {
                   // Always use toggleItem for consistent multi-select behavior
                   multiSelect.toggleItem(folder.id, 'folder');
                 }}
@@ -170,7 +170,7 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
               isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
               isSelected={multiSelect.isSelected(folder.id, 'folder')}
               isSelecting={multiSelect.isSelecting}
-              onSelectionChange={(selected) => {
+              onSelectionChange={(selected: boolean) => {
                 // Always use toggleItem for consistent multi-select behavior
                 multiSelect.toggleItem(folder.id, 'folder');
               }}

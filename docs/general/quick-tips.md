@@ -117,3 +117,6 @@ npx supabase db dump --schema public --schema auth --schema storage --file "./do
 
 ### Get folder and file structure of current project
 tree /f /a > output.txt
+
+### Copy Folder
+xcopy "test-app-1" "test-app-1-copy" /E /I /H /Y

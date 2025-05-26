@@ -13,7 +13,7 @@
 // - Clean separation of concerns
 
 // ✅ Individual Item Components:
-// - AssetGridItem.tsx - Grid view asset rendering
+// - EnhancedAssetGridItem.tsx - Grid view asset rendering with click vs drag
 // - AssetListItem.tsx - List view asset rendering  
 // - FolderItem.tsx - Folder rendering for both views
 
@@ -28,6 +28,6 @@ export { GalleryLayout } from './GalleryLayout';
 export { GalleryDialogs } from './GalleryDialogs';
 
 // Export item components
-export { AssetGridItem } from './AssetGridItem';
+export { EnhancedAssetGridItem } from './enhanced/EnhancedAssetGridItem';
 export { AssetListItem } from './AssetListItem';
-export { FolderItem } from './FolderItem'; 
+export { FolderItem } from './folder-item'; 

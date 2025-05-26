@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useAssetGalleryState } from '../../hooks/assets/useAssetGalleryState';
+import { useAssetGalleryState } from '../../hooks/assets/gallery';
 import { useAssetGalleryHandlers } from '../../hooks/assets/useAssetGalleryHandlers';
 import { AssetGalleryRenderer } from './AssetGalleryRenderer';
 import { GalleryLayout } from './GalleryLayout';
@@ -93,7 +93,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       window.removeEventListener('damDragDropClear', handleDragDropClear);
       window.removeEventListener('damDataRefresh', handleDataRefresh);
     };
-  }, [state.addOptimisticallyHiddenItem, state.removeOptimisticallyHiddenItem, state.refreshGalleryData]);
+  }, [state]);
   
   // Extract event handlers
   const handlers = useAssetGalleryHandlers({
@@ -176,6 +176,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
           isVisible={state.multiSelect.isSelecting}
           onClearSelection={state.multiSelect.clearSelection}
           onSelectAll={() => state.multiSelect?.selectAll(state.items)}
+          onSelectAllFiles={() => state.multiSelect?.handleSelectAllFiles(state.items)}
+          onSelectAllFolders={() => state.multiSelect?.handleSelectAllFolders(state.items)}
           onMove={() => state.multiSelect?.handleBulkOperation('move')}
           onDelete={() => state.multiSelect?.handleBulkOperation('delete')}
           onDownload={() => state.multiSelect?.handleBulkOperation('download')}
@@ -192,6 +194,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         onAssetDeleted={handlers.handleAssetDeleted}
         dialogManager={state.dialogManager}
         moveDialog={state.assetItemDialogs.moveDialog}
+        onCloseMoveDialog={state.assetItemDialogs.closeMoveDialog}
         activeFolderId={state.activeFolderId}
         onMoveAssetConfirm={handlers.handleMoveAssetConfirm}
         onRenameAssetSubmit={handlers.handleRenameAssetSubmit}

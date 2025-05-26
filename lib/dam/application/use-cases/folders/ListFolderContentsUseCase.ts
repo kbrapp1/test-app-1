@@ -22,7 +22,7 @@ export type GalleryItemDto =
       size: number; 
       userId: string; 
       userFullName?: string | null; 
-      tags?: { id: string; name: string; }[]; 
+      tags?: { id: string; name: string; color: string; }[]; 
       folderName?: string | null; 
     };
 
@@ -81,7 +81,7 @@ export class ListFolderContentsUseCase {
           size: asset.size,
           userId: asset.userId,
           userFullName: asset.userFullName,
-          tags: asset.tags?.map(tag => ({ id: tag.id, name: tag.name })) || [],
+          tags: asset.tags?.map(tag => ({ id: tag.id, name: tag.name, color: tag.colorName })) || [],
           folderName: asset.folderName,
         };
       });

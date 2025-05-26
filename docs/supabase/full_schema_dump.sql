@@ -1329,7 +1329,9 @@ CREATE TABLE IF NOT EXISTS "public"."tags" (
     "name" "text" NOT NULL,
     "user_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "organization_id" "uuid" NOT NULL
+    "organization_id" "uuid" NOT NULL,
+    "color" "text" DEFAULT 'blue'::"text" NOT NULL,
+    CONSTRAINT "tags_color_check" CHECK (("color" = ANY (ARRAY['blue'::"text", 'green'::"text", 'yellow'::"text", 'red'::"text", 'purple'::"text", 'pink'::"text", 'indigo'::"text", 'gray'::"text", 'orange'::"text", 'teal'::"text", 'emerald'::"text", 'lime'::"text"])))
 );
 
 
@@ -1337,6 +1339,10 @@ ALTER TABLE "public"."tags" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."tags"."organization_id" IS 'FK to the organization this record belongs to.';
+
+
+
+COMMENT ON COLUMN "public"."tags"."color" IS 'Visual color identifier for the tag - assigned deterministically based on tag name for consistency';
 
 
 
@@ -1927,6 +1933,10 @@ CREATE INDEX "idx_saved_searches_org_use_count" ON "public"."saved_searches" USI
 
 
 CREATE INDEX "idx_saved_searches_user_org" ON "public"."saved_searches" USING "btree" ("user_id", "organization_id");
+
+
+
+CREATE INDEX "idx_tags_color" ON "public"."tags" USING "btree" ("color");
 
 
 

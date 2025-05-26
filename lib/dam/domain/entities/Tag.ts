@@ -1,5 +1,6 @@
 import { TagValidation } from './TagValidation';
 import { TagUtilities } from './TagUtilities';
+import { TagColor, TagColorName } from '../value-objects/TagColor';
 
 // Domain exceptions for Tag
 export class TagValidationError extends Error {
@@ -12,6 +13,7 @@ export class TagValidationError extends Error {
 export class Tag {
   public readonly id: string;
   private _name: string;
+  private _color: TagColor;
   public readonly userId: string;
   public readonly organizationId: string;
   public readonly createdAt: Date;
@@ -24,6 +26,7 @@ export class Tag {
     organizationId: string;
     createdAt: Date;
     updatedAt?: Date;
+    color?: TagColorName;
   }) {
     // Validate using domain service
     TagValidation.validateRequiredFields(data);
@@ -32,6 +35,7 @@ export class Tag {
     // Assign values
     this.id = data.id;
     this._name = data.name.trim();
+    this._color = data.color ? TagColor.fromStringSafe(data.color) : TagColor.createForTagName(data.name);
     this.userId = data.userId;
     this.organizationId = data.organizationId;
     this.createdAt = data.createdAt;
@@ -41,6 +45,14 @@ export class Tag {
   // Getters
   get name(): string {
     return this._name;
+  }
+
+  get color(): TagColor {
+    return this._color;
+  }
+
+  get colorName(): TagColorName {
+    return this._color.colorName;
   }
 
   // Business Methods
@@ -109,6 +121,41 @@ export class Tag {
     return TagValidation.validateIntegrity(this._name);
   }
 
+  /**
+   * Changes the tag color
+   */
+  changeColor(newColor: TagColorName): Tag {
+    const newTagColor = TagColor.fromString(newColor);
+    return new Tag({
+      id: this.id,
+      name: this._name,
+      userId: this.userId,
+      organizationId: this.organizationId,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+      color: newColor
+    });
+  }
+
+  /**
+   * Gets CSS classes for displaying this tag
+   */
+  getCssClasses(): string {
+    return this._color.getCssClasses();
+  }
+
+  /**
+   * Gets Tailwind classes for this tag
+   */
+  getTailwindClasses(): {
+    background: string;
+    text: string;
+    border: string;
+    hover: string;
+  } {
+    return this._color.getTailwindClasses();
+  }
+
 
 
   /**
@@ -117,6 +164,7 @@ export class Tag {
   toPlainObject(): {
     id: string;
     name: string;
+    color: TagColorName;
     userId: string;
     organizationId: string;
     createdAt: Date;
@@ -125,6 +173,7 @@ export class Tag {
     return {
       id: this.id,
       name: this._name,
+      color: this._color.colorName,
       userId: this.userId,
       organizationId: this.organizationId,
       createdAt: this.createdAt,

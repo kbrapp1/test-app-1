@@ -6,12 +6,12 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { useCallback } from 'react';
-import { MoveAssetUseCase } from '../../application/use-cases/assets/MoveAssetUseCase';
-import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
+import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
+import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { createClient } from '@/lib/supabase/client';
 import { jwtDecode } from 'jwt-decode';
-import type { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import type { useToast } from '@/components/ui/use-toast'; // Import type
 
 interface UseAssetDragAndDropProps {

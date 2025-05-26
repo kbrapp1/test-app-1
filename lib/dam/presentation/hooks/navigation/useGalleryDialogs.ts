@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 interface GalleryDialogState {
   // Asset dialogs

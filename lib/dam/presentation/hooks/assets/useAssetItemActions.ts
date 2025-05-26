@@ -1,11 +1,11 @@
 import { useTransition, useCallback } from 'react';
 import { type Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
-import { GetAssetDownloadUrlUseCase } from '../../application/use-cases/assets/GetAssetDownloadUrlUseCase';
-import { RenameAssetUseCase } from '../../application/use-cases/assets/RenameAssetUseCase';
-import { MoveAssetUseCase } from '../../application/use-cases/assets/MoveAssetUseCase';
-import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseStorageService';
+import { GetAssetDownloadUrlUseCase } from '../../../application/use-cases/assets/GetAssetDownloadUrlUseCase';
+import { RenameAssetUseCase } from '../../../application/use-cases/assets/RenameAssetUseCase';
+import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
+import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
+import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@/lib/supabase/client';
 import { jwtDecode } from 'jwt-decode';
 import { toast as sonnerToast } from 'sonner';

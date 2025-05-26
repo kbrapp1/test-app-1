@@ -1,6 +1,10 @@
 // Value Objects - Domain Layer
 export * from './SearchCriteria';
 export * from './BulkOperation';
+export * from './TagColor';
+
+// Domain Services
+export { TagColorService } from '../services/TagColorService';
 
 // Bulk Operation Value Objects
 export type {

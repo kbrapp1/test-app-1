@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Asset } from '../../domain/entities/Asset';
+import type { Asset } from '../../../domain/entities/Asset';
 
 interface DialogState<T> {
   isOpen: boolean;

@@ -78,7 +78,8 @@ export const useAssetDetailsModal = ({
       };
     });
     AssetTagService.showTagAddedSuccess(newTag.name);
-  }, []);
+    onAssetUpdated?.();
+  }, [onAssetUpdated]);
 
   const handleTagRemoved = useCallback(async (tagToRemove: PlainTag) => {
     if (!state.asset?.id) return;
@@ -95,11 +96,12 @@ export const useAssetDetailsModal = ({
         };
       });
       AssetTagService.showTagRemovedSuccess(tagToRemove.name);
+      onAssetUpdated?.();
     } catch (error) {
       setState(prev => ({ ...prev, isUpdatingTag: false }));
       AssetTagService.showTagRemoveError(error as Error);
     }
-  }, [state.asset?.id]);
+  }, [state.asset?.id, onAssetUpdated]);
 
   const handleSaveEdit = useCallback(async () => {
     if (!state.asset || !state.editName.trim()) return;

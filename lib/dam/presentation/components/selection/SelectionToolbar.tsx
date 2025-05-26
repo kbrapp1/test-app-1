@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   X, 
   Move, 
@@ -12,7 +13,10 @@ import {
   Tag, 
   Copy,
   CheckSquare,
-  Square
+  Square,
+  ChevronDown,
+  File,
+  Folder
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +26,8 @@ interface SelectionToolbarProps {
   isVisible: boolean;
   onClearSelection: () => void;
   onSelectAll: () => void;
+  onSelectAllFiles: () => void;
+  onSelectAllFolders: () => void;
   onMove: () => void;
   onDelete: () => void;
   onDownload: () => void;
@@ -38,6 +44,8 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   isVisible,
   onClearSelection,
   onSelectAll,
+  onSelectAllFiles,
+  onSelectAllFolders,
   onMove,
   onDelete,
   onDownload,
@@ -66,7 +74,7 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
       "px-4 py-3 flex items-center gap-3",
       "transition-all duration-200 ease-in-out",
       "min-w-[400px] max-w-[600px]",
-        className
+      className
     )}>
       {/* Selection Info */}
       <div className="flex items-center gap-2 min-w-0">
@@ -89,20 +97,47 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-1">
-        {/* Select All / Clear Selection Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={isAllSelected ? onClearSelection : onSelectAll}
-          className="h-8 px-2"
-          title={isAllSelected ? "Clear selection" : "Select all"}
-          >
-            {isAllSelected ? (
-            <Square className="w-4 h-4" />
-          ) : (
+        {/* Select All Options Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2"
+              title="Selection options"
+            >
+              {isAllSelected ? (
+                <Square className="w-4 h-4" />
+              ) : (
+                <CheckSquare className="w-4 h-4" />
+              )}
+              <ChevronDown className="w-3 h-3 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem 
+              onClick={isAllSelected ? onClearSelection : onSelectAll}
+              className="flex items-center gap-2"
+            >
               <CheckSquare className="w-4 h-4" />
-            )}
-          </Button>
+              {isAllSelected ? "Clear All" : "Select All"}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={onSelectAllFiles}
+              className="flex items-center gap-2"
+            >
+              <File className="w-4 h-4" />
+              Select All Files
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={onSelectAllFolders}
+              className="flex items-center gap-2"
+            >
+              <Folder className="w-4 h-4" />
+              Select All Folders
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Move */}
           <Button

@@ -8,6 +8,7 @@
 export interface PlainTag {
   id: string;
   name: string;
+  color: string;
   userId: string;
   organizationId: string;
   createdAt: Date;

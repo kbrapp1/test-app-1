@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AssetDetailsDto } from '../../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { DomainTagEditor } from '../../assets/DomainTagEditor';
+import { ColoredTag } from '../../assets/ColoredTag';
+import { TagColorName } from '../../../../domain/value-objects/TagColor';
 import type { PlainTag } from '../../../../application/dto/DamApiRequestDto';
 
 // Utility function for date formatting
@@ -133,30 +135,16 @@ export const AssetTagsSection: React.FC<AssetTagsSectionProps> = ({
       {(asset?.tags && asset.tags.length > 0) ? (
         <div className="flex flex-wrap gap-2">
           {asset.tags.map((tag: PlainTag) => (
-            <Badge 
-              key={tag.id} 
-              variant="secondary" 
-              className="text-xs group/badge relative pr-8 py-1.5 hover:bg-gray-200 transition-colors"
-            >
-              {tag.name}
-              <button 
-                onClick={() => !isUpdatingTag && onRemoveTag(tag)}
-                disabled={isUpdatingTag}
-                className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full p-0.5 hover:bg-red-100 disabled:opacity-50 transition-colors group-hover/badge:opacity-100 opacity-70"
-                aria-label={`Remove tag ${tag.name}`}
-              >
-                {isUpdatingTag ? (
-                  <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <svg className="h-3 w-3 text-gray-500 hover:text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </button>
-            </Badge>
+            <ColoredTag
+              key={tag.id}
+              name={tag.name}
+              color={tag.color as TagColorName}
+              size="sm"
+              removable={true}
+              onRemove={() => !isUpdatingTag && onRemoveTag(tag)}
+              disabled={isUpdatingTag}
+              className="transition-all duration-200"
+            />
           ))}
         </div>
       ) : (

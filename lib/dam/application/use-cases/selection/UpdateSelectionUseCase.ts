@@ -5,7 +5,7 @@ import { Asset } from '../../../domain/entities/Asset';
 import { Folder } from '../../../domain/entities/Folder';
 import { AppError, ValidationError } from '@/lib/errors/base';
 
-export type SelectionAction = 'add' | 'remove' | 'toggle' | 'range' | 'all' | 'clear' | 'setMode';
+export type SelectionAction = 'add' | 'remove' | 'toggle' | 'range' | 'all' | 'allFiles' | 'allFolders' | 'clear' | 'setMode';
 
 interface UpdateSelectionUseCaseRequest {
   selection: Selection;
@@ -60,6 +60,14 @@ export class UpdateSelectionUseCase {
 
         case 'all':
           updatedSelection = this.handleSelectAllAction(selection, items);
+          break;
+
+        case 'allFiles':
+          updatedSelection = this.handleSelectAllFilesAction(selection, items);
+          break;
+
+        case 'allFolders':
+          updatedSelection = this.handleSelectAllFoldersAction(selection, items);
           break;
 
         case 'clear':
@@ -145,6 +153,22 @@ export class UpdateSelectionUseCase {
     }
 
     return SelectionOperations.selectAll(selection, items);
+  }
+
+  private handleSelectAllFilesAction(selection: Selection, items?: Array<Asset | Folder>): Selection {
+    if (!items || items.length === 0) {
+      throw new ValidationError('Items array is required for select all files action');
+    }
+
+    return SelectionOperations.selectAllFiles(selection, items);
+  }
+
+  private handleSelectAllFoldersAction(selection: Selection, items?: Array<Asset | Folder>): Selection {
+    if (!items || items.length === 0) {
+      throw new ValidationError('Items array is required for select all folders action');
+    }
+
+    return SelectionOperations.selectAllFolders(selection, items);
   }
 
   private handleSetModeAction(

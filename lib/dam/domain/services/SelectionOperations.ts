@@ -2,6 +2,11 @@ import { Selection } from '../entities/Selection';
 import { Asset } from '../entities/Asset';
 import { Folder } from '../entities/Folder';
 
+// Type for presentation layer DTOs
+type GalleryItemDto = 
+  | { type: 'folder'; id: string; name: string; createdAt: Date; }
+  | { type: 'asset'; id: string; name: string; createdAt: Date; mimeType: string; publicUrl?: string; size: number; userId: string; userFullName?: string | null; tags?: { id: string; name: string; color: string; }[]; folderName?: string | null; };
+
 /**
  * Selection Operations Domain Service - Handles complex selection operations.
  * Follows DDD principles with focused responsibility.
@@ -45,16 +50,113 @@ export class SelectionOperations {
   static selectAll(
     selection: Selection,
     items: Array<Asset | Folder>
+  ): Selection;
+  static selectAll(
+    selection: Selection,
+    items: GalleryItemDto[]
+  ): Selection;
+  static selectAll(
+    selection: Selection,
+    items: Array<Asset | Folder> | GalleryItemDto[]
   ): Selection {
-    const assetIds = items
-      .filter(item => 'mimeType' in item)
-      .map(item => item.id);
+    if (items.length === 0) return selection;
     
-    const folderIds = items
-      .filter(item => !('mimeType' in item))
-      .map(item => item.id);
+    // Check if it's DTO format
+    const isDto = 'type' in items[0];
+    
+    if (isDto) {
+      const dtoItems = items as GalleryItemDto[];
+      const assetIds = dtoItems
+        .filter(item => item.type === 'asset')
+        .map(item => item.id);
+      
+      const folderIds = dtoItems
+        .filter(item => item.type === 'folder')
+        .map(item => item.id);
 
-    return Selection.createFromIds(assetIds, folderIds, selection.id);
+      return Selection.createFromIds(assetIds, folderIds, selection.id);
+    } else {
+      const domainItems = items as Array<Asset | Folder>;
+      const assetIds = domainItems
+        .filter(item => 'mimeType' in item)
+        .map(item => item.id);
+      
+      const folderIds = domainItems
+        .filter(item => !('mimeType' in item))
+        .map(item => item.id);
+
+      return Selection.createFromIds(assetIds, folderIds, selection.id);
+    }
+  }
+
+  /** Select all files (assets) from a list */
+  static selectAllFiles(
+    selection: Selection,
+    items: Array<Asset | Folder>
+  ): Selection;
+  static selectAllFiles(
+    selection: Selection,
+    items: GalleryItemDto[]
+  ): Selection;
+  static selectAllFiles(
+    selection: Selection,
+    items: Array<Asset | Folder> | GalleryItemDto[]
+  ): Selection {
+    if (items.length === 0) return selection;
+    
+    // Check if it's DTO format
+    const isDto = 'type' in items[0];
+    
+    if (isDto) {
+      const dtoItems = items as GalleryItemDto[];
+      const assetIds = dtoItems
+        .filter(item => item.type === 'asset')
+        .map(item => item.id);
+      
+      return Selection.createFromIds(assetIds, [], selection.id);
+    } else {
+      const domainItems = items as Array<Asset | Folder>;
+      const assetIds = domainItems
+        .filter(item => 'mimeType' in item)
+        .map(item => item.id);
+      
+      return Selection.createFromIds(assetIds, [], selection.id);
+    }
+  }
+
+  /** Select all folders from a list */
+  static selectAllFolders(
+    selection: Selection,
+    items: Array<Asset | Folder>
+  ): Selection;
+  static selectAllFolders(
+    selection: Selection,
+    items: GalleryItemDto[]
+  ): Selection;
+  static selectAllFolders(
+    selection: Selection,
+    items: Array<Asset | Folder> | GalleryItemDto[]
+  ): Selection {
+    if (items.length === 0) return selection;
+    
+    // Check if it's DTO format
+    const isDto = 'type' in items[0];
+    
+    if (isDto) {
+      const dtoItems = items as GalleryItemDto[];
+      const folderIds = dtoItems
+        .filter(item => item.type === 'folder')
+        .map(item => item.id);
+
+      return Selection.createFromIds([], folderIds, selection.id);
+    } else {
+      const domainItems = items as Array<Asset | Folder>;
+      const folderIds = domainItems
+        .filter(item => !('mimeType' in item))
+        .map(item => item.id);
+
+      return Selection.createFromIds([], folderIds, selection.id);
+    }
   }
 
   /** Toggle multiple items at once */

@@ -1,11 +1,13 @@
-// Domain exceptions for Folder
-export class FolderValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'FolderValidationError';
-  }
-}
+import { FolderValidation, FolderValidationError } from './folder/FolderValidation';
+import { FolderOperations } from './folder/FolderOperations';
 
+/**
+ * Core Folder domain entity
+ * 
+ * Single Responsibility: Entity data and essential behavior
+ * Follows DDD principles with clear separation of concerns
+ * Delegates complex operations to specialized domain services
+ */
 export class Folder {
   public readonly id: string;
   private _name: string;
@@ -26,12 +28,10 @@ export class Folder {
     organizationId: string;
     has_children?: boolean;
   }) {
-    // Validate required fields
-    this.validateRequiredFields(data);
-    
-    // Validate business rules
-    this.validateName(data.name);
-    this.validateParentFolder(data.parentFolderId);
+    // Validate using dedicated validation service
+    FolderValidation.validateRequiredFields(data);
+    FolderValidation.validateName(data.name);
+    FolderValidation.validateParentFolder(data.parentFolderId);
     
     // Assign values
     this.id = data.id;
@@ -44,7 +44,7 @@ export class Folder {
     this.has_children = data.has_children;
   }
 
-  // Getters
+  // Essential getters
   get name(): string {
     return this._name;
   }
@@ -53,235 +53,91 @@ export class Folder {
     return this._parentFolderId;
   }
 
-  // Business Methods
+  // Delegated business operations using domain services
   
   /**
    * Validates if the folder can be renamed to the given name
    */
   canBeRenamedTo(newName: string): boolean {
-    try {
-      this.validateName(newName);
-      return newName.trim() !== this._name;
-    } catch {
-      return false;
-    }
+    return FolderOperations.canBeRenamedTo(this._name, newName);
   }
 
   /**
    * Validates if the folder can be moved to the target parent folder
    */
-  canBeMovedTo(targetParentFolderId: string | null): boolean {
-    // Folder can be moved if target parent is different from current
-    if (targetParentFolderId === this._parentFolderId) {
-      return false;
-    }
-    
-    // Cannot move folder to itself or its descendants (circular reference check)
-    if (targetParentFolderId === this.id) {
-      return false;
-    }
-    
-    return true;
+  canBeMovedTo(
+    targetParentFolderId: string | null,
+    folderHierarchy?: Map<string, { parentFolderId?: string | null }>
+  ): boolean {
+    return FolderOperations.canBeMovedTo(
+      this.id, 
+      this._parentFolderId, 
+      targetParentFolderId, 
+      folderHierarchy
+    );
   }
 
   /**
    * Checks if the folder can be deleted
    */
   canBeDeleted(): boolean {
-    // Folder can be deleted if it has no children
-    // Note: This should ideally be checked against actual database state
-    return !this.has_children;
+    return FolderOperations.canBeDeleted(this.has_children);
   }
 
   /**
    * Checks if this folder is a root folder (has no parent)
    */
   isRootFolder(): boolean {
-    return !this._parentFolderId;
+    return FolderOperations.isRootFolder(this._parentFolderId);
   }
 
   /**
    * Checks if this folder is a child of the specified parent folder
    */
   isChildOf(parentFolderId: string): boolean {
-    return this._parentFolderId === parentFolderId;
+    return FolderOperations.isChildOf(this._parentFolderId, parentFolderId);
   }
 
   /**
    * Gets the folder depth level (0 for root, 1 for first level, etc.)
-   * Note: This requires the full folder hierarchy to calculate accurately
    */
-  getDepthLevel(folderHierarchy?: Map<string, Folder>): number {
-    if (this.isRootFolder()) {
-      return 0;
-    }
-    
-    if (!folderHierarchy || !this._parentFolderId) {
-      // If we don't have hierarchy info, estimate based on parent existence
-      return this._parentFolderId ? 1 : 0;
-    }
-    
-    let depth = 0;
-    let currentFolderId: string | null = this._parentFolderId;
-    
-    while (currentFolderId && depth < 100) { // Safety limit to prevent infinite loops
-      const parentFolder = folderHierarchy.get(currentFolderId);
-      if (!parentFolder) break;
-      
-      depth++;
-      currentFolderId = parentFolder.parentFolderId || null;
-    }
-    
-    return depth;
+  getDepthLevel(folderHierarchy?: Map<string, { parentFolderId?: string | null }>): number {
+    return FolderOperations.getDepthLevel(this.id, this._parentFolderId, folderHierarchy);
   }
 
   /**
    * Validates if a folder can be created as a child of this folder
    */
   canCreateChildFolder(childName: string): boolean {
-    try {
-      this.validateName(childName);
-      return true;
-    } catch {
-      return false;
-    }
+    return FolderOperations.canCreateChildFolder(childName);
   }
 
   /**
    * Gets a display path for the folder (useful for breadcrumbs)
-   * Note: This requires the full folder hierarchy to build the complete path
    */
-  getDisplayPath(folderHierarchy?: Map<string, Folder>): string {
-    if (this.isRootFolder()) {
-      return this._name;
-    }
-    
-    if (!folderHierarchy || !this._parentFolderId) {
-      return this._name;
-    }
-    
-    const pathParts: string[] = [];
-    let currentFolder: Folder | undefined = this;
-    
-    while (currentFolder && pathParts.length < 100) { // Safety limit
-      pathParts.unshift(currentFolder.name);
-      
-      if (currentFolder.isRootFolder()) {
-        break;
-      }
-      
-      currentFolder = currentFolder._parentFolderId ? 
-        folderHierarchy.get(currentFolder._parentFolderId) : 
-        undefined;
-    }
-    
-    return pathParts.join(' / ');
+  getDisplayPath(folderHierarchy?: Map<string, { name: string; parentFolderId?: string | null }>): string {
+    return FolderOperations.getDisplayPath(this._name, this._parentFolderId, folderHierarchy);
   }
 
   /**
    * Checks if the folder name would conflict with system reserved names
    */
   hasReservedName(): boolean {
-    const reservedNames = [
-      'con', 'prn', 'aux', 'nul',
-      'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
-      'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9'
-    ];
-    
-    return reservedNames.includes(this._name.toLowerCase());
+    return FolderValidation.isReservedName(this._name);
   }
 
   /**
    * Validates folder structure integrity
    */
-  validateStructuralIntegrity(folderHierarchy?: Map<string, Folder>): string[] {
-    const errors: string[] = [];
-    
-    // Check for circular references
-    if (this.hasCircularReference(folderHierarchy)) {
-      errors.push('Circular reference detected in folder hierarchy');
-    }
-    
-    // Check for reserved names
-    if (this.hasReservedName()) {
-      errors.push('Folder name conflicts with system reserved names');
-    }
-    
-    return errors;
-  }
-
-  // Validation Methods (Private)
-  
-  private validateRequiredFields(data: any): void {
-    const requiredFields = ['id', 'name', 'userId', 'createdAt', 'organizationId'];
-    
-    for (const field of requiredFields) {
-      if (!data[field]) {
-        throw new FolderValidationError(`${field} is required`);
-      }
-    }
-  }
-
-  private validateName(name: string): void {
-    if (!name || typeof name !== 'string') {
-      throw new FolderValidationError('Folder name is required');
-    }
-    
-    const trimmedName = name.trim();
-    if (trimmedName.length === 0) {
-      throw new FolderValidationError('Folder name cannot be empty');
-    }
-    
-    if (trimmedName.length > 255) {
-      throw new FolderValidationError('Folder name cannot exceed 255 characters');
-    }
-
-    // Check for invalid characters (same as file system restrictions)
-    const invalidChars = /[<>:"/\\|?*\x00-\x1f]/;
-    if (invalidChars.test(trimmedName)) {
-      throw new FolderValidationError('Folder name contains invalid characters');
-    }
-
-    // Check for names that start or end with spaces or dots
-    if (trimmedName.startsWith('.') || trimmedName.endsWith('.') || 
-        trimmedName.startsWith(' ') || trimmedName.endsWith(' ')) {
-      throw new FolderValidationError('Folder name cannot start or end with spaces or dots');
-    }
-  }
-
-  private validateParentFolder(parentFolderId?: string | null): void {
-    // Parent folder can be null (root folder) or a valid UUID string
-    if (parentFolderId !== null && parentFolderId !== undefined) {
-      if (typeof parentFolderId !== 'string' || parentFolderId.trim().length === 0) {
-        throw new FolderValidationError('Parent folder ID must be a valid string or null');
-      }
-    }
-  }
-
-  private hasCircularReference(folderHierarchy?: Map<string, Folder>): boolean {
-    if (!folderHierarchy || !this._parentFolderId) {
-      return false;
-    }
-    
-    const visitedIds = new Set<string>();
-    let currentFolderId: string | null = this._parentFolderId;
-    
-    while (currentFolderId) {
-      if (visitedIds.has(currentFolderId) || currentFolderId === this.id) {
-        return true; // Circular reference found
-      }
-      
-      visitedIds.add(currentFolderId);
-      const parentFolder = folderHierarchy.get(currentFolderId);
-      currentFolderId = parentFolder?.parentFolderId || null;
-      
-      // Safety check to prevent infinite loops
-      if (visitedIds.size > 100) {
-        return true;
-      }
-    }
-    
-    return false;
+  validateStructuralIntegrity(
+    folderHierarchy?: Map<string, { name: string; parentFolderId?: string | null }>
+  ): string[] {
+    return FolderOperations.validateStructuralIntegrity(
+      this.id, 
+      this._name, 
+      this._parentFolderId, 
+      folderHierarchy
+    );
   }
 
   // Factory Methods
@@ -347,4 +203,7 @@ export class Folder {
       has_children: this.has_children
     };
   }
-} 
+}
+
+// Re-export the validation error for backward compatibility
+export { FolderValidationError }; 

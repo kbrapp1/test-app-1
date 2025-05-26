@@ -176,10 +176,10 @@ export function DamWorkspaceView({
   return (
     <DamErrorBoundary>
       <div 
-        className="flex flex-col h-full"
+        className="flex flex-col"
         style={{
-          paddingBottom: selectedCount > 0 ? '6rem' : '0',
-          transition: 'padding-bottom 0.3s ease-out'
+          height: selectedCount > 0 ? 'calc(100% - 7rem)' : '100%',
+          transition: 'height 0.3s ease-out'
         }}
       >
         <div className="pl-1 pr-4 pt-2 pb-4 md:pl-1 md:pr-6 md:pt-2 md:pb-6 space-y-4">

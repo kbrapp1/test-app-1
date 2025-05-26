@@ -7,6 +7,8 @@ import { MoreHorizontal, Eye, Edit3, Navigation, Trash2, Image, Video, Music, Fi
 import { useDraggable } from '@dnd-kit/core';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { SelectionOverlay } from '../selection/SelectionOverlay';
+import { ColoredTag } from '../assets/ColoredTag';
+import { TagColorName } from '../../../domain/value-objects/TagColor';
 
 interface AssetListItemProps {
   asset: GalleryItemDto & { type: 'asset' };
@@ -185,13 +187,13 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
             <>
               <span className="text-xs text-gray-400">|</span>
               {asset.tags.slice(0, 2).map(tag => (
-                <span 
-                  key={tag.id} 
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 transition-colors cursor-pointer"
-                  title={tag.name}
-                >
-                  {tag.name}
-                </span>
+                <ColoredTag
+                  key={tag.id}
+                  name={tag.name}
+                  color={(tag as any).color as TagColorName || 'blue'}
+                  size="sm"
+                  className="text-xs"
+                />
               ))}
               {asset.tags.length > 2 && (
                 <span className="text-xs text-gray-400 font-medium">
