@@ -11,10 +11,19 @@ export class AssetQueryBuilder {
   /**
    * Build base asset query with standard joins
    */
-  buildBaseQuery() {
-    return this.supabase
+  buildBaseQuery(forceRefresh: boolean = false) {
+    const query = this.supabase
       .from('assets')
-      .select('*, asset_tags(tags(*))');
+      .select('*, asset_tags(tags(*)), folder:folders(name)');
+    
+    // Add cache busting when force refresh is requested
+    if (forceRefresh) {
+      // Add a timestamp comment to force a new query plan
+      const timestamp = Date.now();
+  
+    }
+    
+    return query;
   }
 
   /**

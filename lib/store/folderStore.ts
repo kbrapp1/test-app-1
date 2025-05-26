@@ -37,6 +37,9 @@ interface FolderStoreState {
   updateFolderNodeInStore: (updatedFolder: DomainFolder) => void;
   setSelectedFolder: (folderId: string | null) => void;
   setSearchTerm: (term: string) => void;
+  forceRefresh: () => void;
+  refreshFolderTree: () => void;
+  refetchFolderData: () => Promise<void>;
   // TODO: Add renameFolder action
 }
 
@@ -48,7 +51,12 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   changeVersion: 0, // ADDED: Initialize change indicator
 
   setInitialFolders: (folders) => {
+    // Safeguard: Don't overwrite existing folders with empty array
     const currentState = get();
+    if (folders.length === 0 && currentState.rootFolders.length > 0) {
+      return;
+    }
+    
     const existingNodeMap = buildNodeMap(currentState.rootFolders);
 
     const initialNodes: FolderNode[] = folders.map(f => {
@@ -188,22 +196,11 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
 
   // ADDED: Implementation for updateFolderNodeInStore
   updateFolderNodeInStore: (updatedFolder: DomainFolder) => {
-    console.log('🏪 Store: updateFolderNodeInStore called with:', {
-      id: updatedFolder.id,
-      name: updatedFolder.name,
-      fullFolder: updatedFolder
-    });
-    
     set((state) => {
       const newRootFolders = findAndUpdateNode(
         state.rootFolders,
         updatedFolder.id,
         (node) => {
-          console.log('🔧 Store: Updating node:', {
-            oldName: node.name,
-            newName: updatedFolder.name,
-            nodeId: node.id
-          });
           return {
             ...node, // Preserve existing FolderNode UI state
             ...updatedFolder, // Overlay with updated DomainFolder fields
@@ -212,12 +209,56 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
         }
       );
       
-      console.log('🏪 Store: State updated, changeVersion:', state.changeVersion + 1);
-      
       return {
         rootFolders: newRootFolders,
         changeVersion: state.changeVersion + 1
       };
     });
+  },
+
+  forceRefresh: () => {
+    set((state) => ({
+      changeVersion: state.changeVersion + 1
+    }));
+  },
+
+  refreshFolderTree: () => {
+    // Force a refresh of the folder tree by incrementing the change version
+    // This will trigger components that depend on changeVersion to re-render
+    set((state) => ({
+      changeVersion: state.changeVersion + 1
+    }));
+  },
+
+  refetchFolderData: async () => {
+    try {
+      // Import the server action to fetch fresh folder data
+      const { getRootFolders } = await import('@/lib/dam/application/actions/navigation.actions');
+      const freshFolders = await getRootFolders();
+      
+      // Convert plain folders to domain entities
+      const { Folder: DomainFolder } = await import('@/lib/dam/domain/entities/Folder');
+      const domainFolders = freshFolders.map(plainFolder => {
+        return new DomainFolder({
+          id: plainFolder.id,
+          name: plainFolder.name,
+          userId: plainFolder.userId,
+          createdAt: plainFolder.createdAt,
+          updatedAt: plainFolder.updatedAt,
+          parentFolderId: plainFolder.parentFolderId,
+          organizationId: plainFolder.organizationId,
+          has_children: plainFolder.has_children,
+        });
+      });
+      
+      // Update the store with fresh data
+      get().setInitialFolders(domainFolders);
+    } catch (error) {
+      console.error('Error refetching folder data:', error);
+      // Still increment version to trigger re-render even if fetch failed
+      set((state) => ({
+        changeVersion: state.changeVersion + 1
+      }));
+    }
   },
 })); 

@@ -37,8 +37,21 @@ export class AssetDataProcessor {
    * Process array of raw database records
    */
   async processRawDataArray(rawData: any[]): Promise<Asset[]> {
+    // Handle folder name mapping for each record
+    const processedData = rawData.map(data => {
+      const rawDataForMapper: any = { ...data };
+      
+      // Handle folder name mapping
+      if (data.folder && data.folder.name) {
+        rawDataForMapper.folder_name = data.folder.name;
+      }
+      delete rawDataForMapper.folder;
+      
+      return rawDataForMapper;
+    });
+    
     // Enrich with user profiles (batch operation)
-    const enrichedAssets = await this.profileService.enrichAssetsWithProfiles(rawData);
+    const enrichedAssets = await this.profileService.enrichAssetsWithProfiles(processedData);
     
     // Convert to domain entities and add public URLs
     return enrichedAssets.map(raw => this.mapRawToDomainWithPublicUrl(raw as unknown as RawAssetDbRecord));

@@ -132,6 +132,7 @@ export async function getHandler(
     userId: asset.userId,
     userFullName: asset.userFullName,
     tags: asset.tags?.map((tag: { id: string; name: string }) => ({ id: tag.id, name: tag.name })) || [],
+    folderName: asset.folderName,
   }));
 
   // Combine transformed items

@@ -6,6 +6,8 @@ import { useAssetGalleryHandlers } from '../../hooks/assets/useAssetGalleryHandl
 import { AssetGalleryRenderer } from './AssetGalleryRenderer';
 import { GalleryLayout } from './GalleryLayout';
 import { GalleryDialogs } from './GalleryDialogs';
+import { SelectionToolbar } from '../selection/SelectionToolbar';
+import { BulkOperationDialogs } from '../dialogs/BulkOperationDialogs';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
@@ -25,6 +27,9 @@ interface AssetGalleryClientProps {
   enableNavigation?: boolean;
   showNavigationUI?: boolean;
   onFolderNavigate?: (folderId: string | null) => void;
+  // Multi-select props
+  enableMultiSelect?: boolean;
+  onSelectionChange?: (selectedAssets: string[], selectedFolders: string[]) => void;
 }
 
 /**
@@ -42,10 +47,18 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     enableNavigation = false,
     showNavigationUI = true,
     onFolderNavigate,
+    enableMultiSelect = false,
+    onSelectionChange,
   } = props;
 
   // Extract state management
-  const state = useAssetGalleryState({ ...props, enableNavigation, onFolderNavigate });
+  const state = useAssetGalleryState({ 
+    ...props, 
+    enableNavigation, 
+    onFolderNavigate,
+    enableMultiSelect,
+    onSelectionChange 
+  });
 
   // Listen for global drag and drop events
   useEffect(() => {
@@ -54,7 +67,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       const itemId = customEvent.detail?.itemId || customEvent.detail?.assetId;
       if (itemId) {
         // Set optimistic hiding for the dragged item (asset or folder)
-        state.setOptimisticallyHiddenItemId(itemId);
+        state.addOptimisticallyHiddenItem(itemId);
       }
     };
 
@@ -62,8 +75,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       const customEvent = event as CustomEvent<{ itemId: string; itemType: string; assetId?: string }>;
       const itemId = customEvent.detail?.itemId || customEvent.detail?.assetId;
       if (itemId) {
-        // Clear optimistic hiding
-        state.setOptimisticallyHiddenItemId(null);
+        // Clear optimistic hiding for this specific item
+        state.removeOptimisticallyHiddenItem(itemId);
       }
     };
 
@@ -80,7 +93,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       window.removeEventListener('damDragDropClear', handleDragDropClear);
       window.removeEventListener('damDataRefresh', handleDataRefresh);
     };
-  }, [state.setOptimisticallyHiddenItemId, state.refreshGalleryData]);
+  }, [state.addOptimisticallyHiddenItem, state.removeOptimisticallyHiddenItem, state.refreshGalleryData]);
   
   // Extract event handlers
   const handlers = useAssetGalleryHandlers({
@@ -93,7 +106,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     closeMoveDialog: state.assetItemDialogs.closeMoveDialog,
     openMoveDialog: state.assetItemDialogs.openMoveDialog,
     setSelectedAssetId: state.setSelectedAssetId,
-    setOptimisticallyHiddenItemId: state.setOptimisticallyHiddenItemId,
+    addOptimisticallyHiddenItem: state.addOptimisticallyHiddenItem,
     updateItems: state.updateItems,
     refreshGalleryData: state.refreshGalleryData,
     onFolderNavigate,
@@ -110,7 +123,10 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       onFolderAction={state.dialogManager.openFolderAction}
       createAssetActions={handlers.createAssetActions}
       renderType="assets"
-      optimisticallyHiddenItemId={state.optimisticallyHiddenItemId}
+      optimisticallyHiddenItemIds={state.optimisticallyHiddenItemIds}
+      // Multi-select props
+      enableMultiSelect={enableMultiSelect}
+      multiSelect={state.multiSelect}
     />
   );
 
@@ -124,6 +140,9 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       onFolderAction={state.dialogManager.openFolderAction}
       createAssetActions={handlers.createAssetActions}
       renderType="folders"
+      // Multi-select props
+      enableMultiSelect={enableMultiSelect}
+      multiSelect={state.multiSelect}
     />
   );
 
@@ -141,10 +160,30 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         folders={state.folders}
         assets={state.visibleAssets}
         searchTerm={props.searchTerm}
-                    enableNavigation={enableNavigation}
+        enableNavigation={enableNavigation}
         renderFolders={renderFolders}
         renderAssets={renderAssets}
+        // Multi-select props
+        enableMultiSelect={enableMultiSelect}
+        multiSelect={state.multiSelect}
       />
+
+      {/* Selection Toolbar */}
+      {enableMultiSelect && state.multiSelect && state.multiSelect.isSelecting && (
+        <SelectionToolbar
+          selectedCount={state.multiSelect.selectedCount}
+          totalCount={state.items.length}
+          isVisible={state.multiSelect.isSelecting}
+          onClearSelection={state.multiSelect.clearSelection}
+          onSelectAll={() => state.multiSelect?.selectAll(state.items)}
+          onMove={() => state.multiSelect?.handleBulkOperation('move')}
+          onDelete={() => state.multiSelect?.handleBulkOperation('delete')}
+          onDownload={() => state.multiSelect?.handleBulkOperation('download')}
+          onAddTags={() => state.multiSelect?.handleBulkOperation('addTags')}
+          selectedAssets={state.multiSelect.selectedAssets}
+          selectedFolders={state.multiSelect.selectedFolders}
+        />
+      )}
 
       <GalleryDialogs
         selectedAssetId={state.selectedAssetId}
@@ -159,10 +198,23 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         onDeleteAssetConfirm={handlers.handleDeleteAssetConfirm}
         onFolderActionComplete={() => {
           state.dialogManager.closeFolderAction();
-          state.refreshGalleryData();
+          state.refreshGalleryData(true); // Force refresh after folder operations
         }}
         onRefresh={state.refreshGalleryData}
       />
+
+      {/* Bulk Operation Dialogs */}
+      {enableMultiSelect && (
+        <BulkOperationDialogs
+          bulkDialogs={state.bulkDialogs}
+          onClose={state.closeBulkDialog}
+          onOperationComplete={() => {
+            state.refreshGalleryData(true); // Force refresh after bulk operations
+            state.multiSelect?.clearSelection();
+          }}
+          currentFolderId={state.activeFolderId}
+        />
+      )}
     </>
   );
 };

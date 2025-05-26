@@ -6,12 +6,30 @@ import { AppError, ValidationError, DatabaseError } from '@/lib/errors/base';
 
 // DTO to represent items in the folder listing (gallery view)
 export type GalleryItemDto = 
-  | { type: 'folder'; id: string; name: string; createdAt: Date; } 
-  | { type: 'asset'; id: string; name: string; createdAt: Date; mimeType: string; publicUrl?: string; size: number; userId: string; userFullName?: string | null; tags?: { id: string; name: string; }[]; };
+  | { 
+      type: 'folder'; 
+      id: string; 
+      name: string; 
+      createdAt: Date; 
+    } 
+  | { 
+      type: 'asset'; 
+      id: string; 
+      name: string; 
+      createdAt: Date; 
+      mimeType: string; 
+      publicUrl?: string; 
+      size: number; 
+      userId: string; 
+      userFullName?: string | null; 
+      tags?: { id: string; name: string; }[]; 
+      folderName?: string | null; 
+    };
 
 interface ListFolderContentsUseCaseRequest {
   organizationId: string;
   currentFolderId: string | null;
+  forceRefresh?: boolean;
 }
 
 interface ListFolderContentsUseCaseResponse {
@@ -27,7 +45,7 @@ export class ListFolderContentsUseCase {
   public async execute(
     request: ListFolderContentsUseCaseRequest
   ): Promise<ListFolderContentsUseCaseResponse> {
-    const { organizationId, currentFolderId } = request;
+    const { organizationId, currentFolderId, forceRefresh } = request;
 
     if (!organizationId) {
       throw new ValidationError('Organization ID is required.');
@@ -64,6 +82,7 @@ export class ListFolderContentsUseCase {
           userId: asset.userId,
           userFullName: asset.userFullName,
           tags: asset.tags?.map(tag => ({ id: tag.id, name: tag.name })) || [],
+          folderName: asset.folderName,
         };
       });
 
@@ -82,7 +101,6 @@ export class ListFolderContentsUseCase {
 
       return { items: combinedItems };
     } catch (error: any) {
-      console.error('Error in ListFolderContentsUseCase:', error);
       if (error instanceof AppError) {
         throw error;
       }

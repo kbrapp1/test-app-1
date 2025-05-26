@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { MoreHorizontal, Eye, Edit3, Navigation, Trash2, Image, Video, Music, FileText, File } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { SelectionOverlay } from '../selection/SelectionOverlay';
 
 interface AssetListItemProps {
   asset: GalleryItemDto & { type: 'asset' };
@@ -15,6 +16,10 @@ interface AssetListItemProps {
   onDelete: () => void;
   onClick: () => void;
   isOptimisticallyHidden?: boolean;
+  // Selection props
+  isSelected?: boolean;
+  isSelecting?: boolean;
+  onSelectionChange?: (selected: boolean) => void;
 }
 
 // Safe date formatting helper
@@ -60,7 +65,10 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
   onMove,
   onDelete,
   onClick,
-  isOptimisticallyHidden = false
+  isOptimisticallyHidden = false,
+  isSelected,
+  isSelecting,
+  onSelectionChange
 }) => {
   const [imageError, setImageError] = useState(false);
   const isImage = asset.mimeType?.toLowerCase().startsWith('image/');
@@ -104,30 +112,47 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
     return 'File';
   };
 
+  // Handle click behavior - always trigger onClick, selection handled by overlay
+  const handleClick = () => {
+    onClick();
+  };
+
   return (
-    <div 
-      ref={setNodeRef}
-      {...attributes}
-      className={`relative flex items-center p-3 border border-gray-200 rounded-lg bg-white cursor-pointer transition-all duration-200 group ${
-        isDragging || isOptimisticallyHidden
-          ? 'opacity-0' // Hide original during drag or when optimistically hidden
-          : 'hover:bg-gray-50/70 hover:border-gray-300 hover:shadow-md' // More subtle hover effects
-      }`}
-      style={style}
-      onClick={onClick}
+    <SelectionOverlay
+      isSelected={isSelected || false}
+      onSelectionChange={onSelectionChange}
+      className="w-full"
     >
-      <div className="flex-shrink-0 mr-3">
+      <div 
+        ref={setNodeRef}
+        {...attributes}
+        className={`relative flex items-center p-3 border border-gray-200 rounded-lg bg-white transition-all duration-200 group cursor-pointer ${
+          isDragging || isOptimisticallyHidden
+            ? 'opacity-0'
+            : 'hover:bg-gray-50/70 hover:border-gray-300 hover:shadow-md'
+        }`}
+        style={style}
+        onClick={handleClick}
+      >
+      <div className="flex-shrink-0 mr-3 relative">
         <div 
-          className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing hover:bg-gray-200 transition-colors"
-          {...listeners}
-          onMouseDown={(e) => e.stopPropagation()}
+          className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-200 relative hover:bg-gray-200"
         >
+          {/* Drag handle covering entire thumbnail while avoiding checkbox area */}
+          <div 
+            className="absolute inset-0 z-5 cursor-grab active:cursor-grabbing"
+            style={{
+              clipPath: 'polygon(0 28px, 100% 0, 100% 100%, 0 100%), polygon(28px 0, 100% 0, 100% 28px, 28px 28px)'
+            }}
+            {...listeners}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
           {isImage && asset.publicUrl && !imageError ? (
             <img
               src={asset.publicUrl}
               alt={asset.name}
               loading="lazy"
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-lg transition-transform duration-200 hover:scale-105"
               onError={() => setImageError(true)}
               draggable="false"
             />
@@ -146,6 +171,14 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
           <span className="text-xs text-gray-400">|</span>
           
           <span className="text-xs text-gray-500">{formatFileSize(asset.size)}</span>
+          
+          {/* Folder name display */}
+          <>
+            <span className="text-xs text-gray-400">|</span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-600 border border-gray-200">
+              📁 {asset.folderName || 'Root'}
+            </span>
+          </>
           
           {/* Tags display - show up to 2 tags with overflow indicator */}
           {asset.tags && asset.tags.length > 0 && (
@@ -195,10 +228,10 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 w-7 p-0 bg-white/90 hover:bg-white shadow-sm border border-gray-200/50"
+              className="h-7 w-7 p-0 bg-white/90 hover:bg-white hover:border-blue-500 hover:shadow-md hover:scale-110 focus:bg-white focus:border-blue-500 focus:shadow-md focus:scale-110 focus:ring-2 focus:ring-blue-500/20 shadow-sm border border-gray-300 transition-all duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="h-3.5 w-3.5 text-gray-600" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -239,5 +272,6 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
         </DropdownMenu>
       </div>
     </div>
+    </SelectionOverlay>
   );
 }; 

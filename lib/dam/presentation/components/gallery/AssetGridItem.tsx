@@ -75,12 +75,12 @@ export const AssetGridItem: React.FC<AssetGridItemProps> = ({
   const getAssetIcon = () => {
     const mimeType = asset.mimeType?.toLowerCase() || '';
     
-    if (mimeType.startsWith('image/')) return <Image className="w-6 h-6 text-green-600" />;
-    if (mimeType.startsWith('video/')) return <Video className="w-6 h-6 text-purple-600" />;
-    if (mimeType.startsWith('audio/')) return <Music className="w-6 h-6 text-orange-600" />;
-    if (mimeType.includes('text')) return <FileText className="w-6 h-6 text-gray-600" />;
+    if (mimeType.startsWith('image/')) return <Image className="w-9 h-9 text-green-600" />;
+    if (mimeType.startsWith('video/')) return <Video className="w-9 h-9 text-purple-600" />;
+    if (mimeType.startsWith('audio/')) return <Music className="w-9 h-9 text-orange-600" />;
+    if (mimeType.includes('text')) return <FileText className="w-9 h-9 text-gray-600" />;
     
-    return <File className="w-6 h-6 text-gray-500" />;
+    return <File className="w-9 h-9 text-gray-500" />;
   };
 
   return (
@@ -97,30 +97,7 @@ export const AssetGridItem: React.FC<AssetGridItemProps> = ({
     >
 
 
-      {/* Tag indicator - always visible if asset has tags */}
-      {asset.tags && asset.tags.length > 0 && (
-        <div className="absolute bottom-2 right-2 z-50">
-          <div 
-            className="flex items-center justify-center w-6 h-6 bg-white/90 rounded-full shadow-sm border border-gray-200 hover:bg-white hover:shadow-md transition-all duration-200 cursor-pointer"
-            onMouseEnter={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setTooltipPosition({
-                x: rect.left + rect.width / 2,
-                y: rect.bottom + 8
-              });
-              setShowTooltip(true);
-            }}
-            onMouseLeave={() => setShowTooltip(false)}
-          >
-            <Tag className="w-3 h-3 text-gray-600" />
-            {asset.tags.length > 1 && (
-              <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">
-                {asset.tags.length}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Portal tooltip that appears below the icon */}
       {showTooltip && asset.tags && asset.tags.length > 0 && typeof document !== 'undefined' && createPortal(
@@ -147,19 +124,19 @@ export const AssetGridItem: React.FC<AssetGridItemProps> = ({
         document.body
       )}
 
-      {/* Action Menu - Better Positioning */}
+      {/* Action Menu */}
       <div className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 z-20 ${
-        isDragging ? '' : 'transition-opacity duration-200' // Only apply transitions when not dragging
+        isDragging ? '' : 'transition-opacity duration-200'
       }`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 w-7 p-0 bg-white/90 hover:bg-white shadow-sm border border-gray-200/50"
+              className="h-7 w-7 p-0 bg-white/90 hover:bg-white hover:border-blue-500 hover:shadow-md hover:scale-110 focus:bg-white focus:border-blue-500 focus:shadow-md focus:scale-110 focus:ring-2 focus:ring-blue-500/20 shadow-sm border border-gray-300 transition-all duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="h-3.5 w-3.5 text-gray-600" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -200,34 +177,75 @@ export const AssetGridItem: React.FC<AssetGridItemProps> = ({
         </DropdownMenu>
       </div>
       
-      <div className="flex flex-col items-center text-center">
-        {/* Image Thumbnail or Icon - Draggable */}
+      {/* Asset preview - Full width with aspect ratio */}
+      <div className="aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden relative">
+        {/* Drag handle - covers the entire thumbnail for better UX */}
         <div 
-          className={`w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center mb-3 overflow-hidden cursor-grab active:cursor-grabbing ${
-            isDragging ? 'bg-gray-200' : 'group-hover:bg-gray-200 transition-colors duration-200'
-          }`}
+          className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
           {...listeners}
           onMouseDown={(e) => e.stopPropagation()}
-        >
-          {isImage && asset.publicUrl && !imageError ? (
-            <img
-              src={asset.publicUrl}
-              alt={asset.name}
-              loading="lazy"
-              className="w-full h-full object-cover rounded-lg"
-              onError={() => setImageError(true)}
-              draggable="false"
-            />
-          ) : (
-            getAssetIcon()
-          )}
+        />
+        
+        {isImage && asset.publicUrl && !imageError ? (
+          <img
+            src={asset.publicUrl}
+            alt={asset.name}
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+            onError={() => setImageError(true)}
+            loading="lazy"
+            draggable="false"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            {getAssetIcon()}
+          </div>
+        )}
+        
+        {/* File type badge - only visible on hover */}
+        <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {asset.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
-        <h3 className="font-medium text-sm text-gray-900 mb-2 truncate w-full" title={asset.name}>
+      </div>
+
+      {/* Asset info */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium text-gray-900 truncate text-sm flex-1">
           {asset.name}
         </h3>
-        <p className="text-xs text-gray-500">
-          {formatDate(asset.createdAt)}
-        </p>
+        
+          {/* Tag indicator in name row */}
+          {asset.tags && asset.tags.length > 0 && (
+            <div 
+              className="flex-shrink-0 relative p-1 -m-1 rounded-md hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltipPosition({
+                  x: rect.left + rect.width / 2,
+                  y: rect.bottom + 8
+                });
+                setShowTooltip(true);
+              }}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              <div className="flex items-center justify-center w-5 h-5 bg-gray-100 rounded-full hover:bg-gray-200 transition-all duration-200">
+                <Tag className="w-3 h-3 text-gray-600" />
+              </div>
+              {asset.tags.length > 1 && (
+                <span className="absolute -top-1 -right-1 bg-gray-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium text-[10px] leading-none z-10">
+                  {asset.tags.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>{formatDate(asset.createdAt)}</span>
+          {asset.size && (
+            <span>{(asset.size / 1024 / 1024).toFixed(1)} MB</span>
+          )}
+        </div>
       </div>
     </div>
   );

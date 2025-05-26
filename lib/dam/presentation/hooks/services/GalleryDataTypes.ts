@@ -49,6 +49,6 @@ export interface DomainGalleryState {
 export interface UseDamGalleryDataReturn extends DomainGalleryState {
   fetchData: (forceRefresh?: boolean) => Promise<void>;
   updateItems: (newItems: GalleryItemDto[]) => void;
-  folders: GalleryItemDto[];
-  assets: GalleryItemDto[];
+  folders: (GalleryItemDto & { type: 'folder' })[];
+  assets: (GalleryItemDto & { type: 'asset' })[];
 } 

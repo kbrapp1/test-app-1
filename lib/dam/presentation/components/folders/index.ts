@@ -10,3 +10,5 @@ export type { FolderThumbnailProps } from './FolderThumbnail';
 // TODO: Enable these exports after component migration
 // export { FolderItem } from './FolderItem';
 // export { FolderSidebar } from './FolderSidebar'; 
+
+export { SelectableFolderItem } from './SelectableFolderItem'; 

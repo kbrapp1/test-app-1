@@ -3,6 +3,8 @@ import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolde
 import { AssetGridItem } from './AssetGridItem';
 import { AssetListItem } from './AssetListItem';
 import { FolderItem } from './FolderItem';
+import { SelectableAssetGridItem } from '../assets/SelectableAssetGridItem';
+import { SelectableFolderItem } from '../folders/SelectableFolderItem';
 
 interface AssetGalleryRendererProps {
   viewMode: 'grid' | 'list';
@@ -18,7 +20,10 @@ interface AssetGalleryRendererProps {
     onDelete: () => void;
   };
   renderType: 'assets' | 'folders';
-  optimisticallyHiddenItemId?: string | null;
+  optimisticallyHiddenItemIds?: Set<string>;
+  // Multi-select props
+  enableMultiSelect?: boolean;
+  multiSelect?: any;
 }
 
 /**
@@ -36,7 +41,9 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
   onFolderAction,
   createAssetActions,
   renderType,
-  optimisticallyHiddenItemId,
+  optimisticallyHiddenItemIds,
+  enableMultiSelect,
+  multiSelect,
 }) => {
   if (renderType === 'assets') {
     if (viewMode === 'grid') {
@@ -44,12 +51,33 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {assets.map(asset => {
             const actions = createAssetActions(asset);
+            
+            // Use selectable component when multi-select is enabled
+            if (enableMultiSelect && multiSelect) {
+              return (
+                <SelectableAssetGridItem 
+                  key={asset.id} 
+                  asset={asset}
+                  onClick={() => onItemClick(asset)}
+                  isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
+                  isSelected={multiSelect.isSelected(asset.id, 'asset')}
+                  isSelecting={multiSelect.isSelecting}
+                  onSelectionChange={(selected) => {
+                    // Always use toggleItem for consistent multi-select behavior
+                      multiSelect.toggleItem(asset.id, 'asset');
+                  }}
+                  {...actions}
+                />
+              );
+            }
+            
+            // Default non-selectable component
             return (
               <AssetGridItem 
                 key={asset.id} 
                 asset={asset}
                 onClick={() => onItemClick(asset)}
-                isOptimisticallyHidden={asset.id === optimisticallyHiddenItemId}
+                isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
                 {...actions}
               />
             );
@@ -67,7 +95,14 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
               key={asset.id} 
               asset={asset}
               onClick={() => onItemClick(asset)}
-              isOptimisticallyHidden={asset.id === optimisticallyHiddenItemId}
+              isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
+              // Selection props
+              isSelected={enableMultiSelect && multiSelect ? multiSelect.isSelected(asset.id, 'asset') : false}
+              isSelecting={enableMultiSelect && multiSelect ? multiSelect.isSelecting : false}
+              onSelectionChange={enableMultiSelect && multiSelect ? (selected) => {
+                // Always use toggleItem for consistent multi-select behavior
+                  multiSelect.toggleItem(asset.id, 'asset');
+              } : undefined}
               {...actions}
             />
           );
@@ -80,7 +115,30 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
   if (viewMode === 'grid') {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        {folders.map(folder => (
+        {folders.map(folder => {
+          // Use selectable component when multi-select is enabled
+          if (enableMultiSelect && multiSelect) {
+            return (
+              <SelectableFolderItem 
+                key={folder.id} 
+                folder={folder}
+                onClick={() => onItemClick(folder)}
+                enableNavigation={enableNavigation}
+                onAction={onFolderAction}
+                variant="grid"
+                isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
+                isSelected={multiSelect.isSelected(folder.id, 'folder')}
+                isSelecting={multiSelect.isSelecting}
+                onSelectionChange={(selected) => {
+                  // Always use toggleItem for consistent multi-select behavior
+                  multiSelect.toggleItem(folder.id, 'folder');
+                }}
+              />
+            );
+          }
+          
+          // Default non-selectable component
+          return (
           <FolderItem 
             key={folder.id} 
             folder={folder}
@@ -88,16 +146,40 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
             enableNavigation={enableNavigation}
             onAction={onFolderAction}
             variant="grid"
-            isOptimisticallyHidden={folder.id === optimisticallyHiddenItemId}
-          />
-        ))}
+              isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
+            />
+          );
+        })}
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-      {folders.map(folder => (
+      {folders.map(folder => {
+        // Use selectable component when multi-select is enabled
+        if (enableMultiSelect && multiSelect) {
+          return (
+            <SelectableFolderItem 
+              key={folder.id} 
+              folder={folder}
+              onClick={() => onItemClick(folder)}
+              enableNavigation={enableNavigation}
+              onAction={onFolderAction}
+              variant="list"
+              isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
+              isSelected={multiSelect.isSelected(folder.id, 'folder')}
+              isSelecting={multiSelect.isSelecting}
+              onSelectionChange={(selected) => {
+                // Always use toggleItem for consistent multi-select behavior
+                multiSelect.toggleItem(folder.id, 'folder');
+              }}
+            />
+          );
+        }
+        
+        // Default non-selectable component
+        return (
         <FolderItem 
           key={folder.id} 
           folder={folder}
@@ -105,9 +187,10 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
           enableNavigation={enableNavigation}
           onAction={onFolderAction}
           variant="list"
-          isOptimisticallyHidden={folder.id === optimisticallyHiddenItemId}
-        />
-      ))}
+            isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
+          />
+        );
+      })}
     </div>
   );
 }; 

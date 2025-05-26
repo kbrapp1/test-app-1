@@ -50,7 +50,9 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
     setState(prev => ({ 
       ...prev, 
       loading: true, 
-      error: undefined 
+      error: undefined,
+      // Clear items when force refreshing to ensure fresh data
+      ...(forceRefresh && { items: [] })
     }));
 
     try {
@@ -72,7 +74,7 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
 
       // Create service instance inside the callback to avoid dependency issues
       const galleryDataService = new GalleryDataService();
-      const result = await galleryDataService.fetchGalleryData(params);
+      const result = await galleryDataService.fetchGalleryData(params, forceRefresh);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch gallery data');
@@ -123,8 +125,8 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
   }, [fetchData]);
 
   // Computed properties for UI convenience
-  const folders = state.items.filter(item => item.type === 'folder');
-  const assets = state.items.filter(item => item.type === 'asset');
+  const folders = state.items.filter(item => item.type === 'folder') as (GalleryItemDto & { type: 'folder' })[];
+  const assets = state.items.filter(item => item.type === 'asset') as (GalleryItemDto & { type: 'asset' })[];
 
   return {
     ...state,

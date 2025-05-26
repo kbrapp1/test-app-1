@@ -75,12 +75,35 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
   }, []);
 
   // Domain Service: Drag Operation Factory
-  const createDragOperation = useCallback((event: DragEndEvent): DragOperation | null => {
+  const createDragOperation = useCallback((event: DragEndEvent, activeItemData?: any): DragOperation | null => {
     const { active, over } = event;
+    
     if (!active || !over) return null;
 
-    const itemType = active.data.current?.type;
+    // Use provided activeItemData if available, otherwise fall back to event data
+    const itemData = activeItemData || active.data.current;
+    const itemType = itemData?.type;
     if (itemType !== 'asset' && itemType !== 'folder') return null;
+
+    // Check if this is a valid drop target for our drag and drop system
+    const dropZoneData = over.data.current;
+    
+    // If there's no drop zone data, this might be an upload area or invalid target
+    if (!dropZoneData) {
+      return null;
+    }
+    
+    // Check if the drop zone accepts our item type
+    const acceptsAssets = dropZoneData?.accepts?.includes('asset');
+    const acceptsFolders = dropZoneData?.accepts?.includes('folder');
+    
+    if (itemType === 'asset' && !acceptsAssets) {
+      return null;
+    }
+    
+    if (itemType === 'folder' && !acceptsFolders) {
+      return null;
+    }
 
     // Extract target folder ID from different drop zone types
     let targetId: string | null = null;
@@ -93,7 +116,6 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
     }
 
     // Override with explicit folder ID from drop zone data
-    const dropZoneData = over.data.current;
     if (dropZoneData?.folderId !== undefined) {
       targetId = dropZoneData.folderId;
     }
@@ -102,7 +124,7 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
       itemId: active.id as string,
       itemType,
       targetId,
-      sourceItem: active.data.current?.item,
+      sourceItem: itemData?.item,
     };
   }, []);
 
@@ -167,14 +189,111 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
   }, [getAuthContext]);
 
   // Application Service: Orchestrate Drag Operation
-  const handleDragEnd = async (event: DragEndEvent) => {
-    console.log('🔄 Processing drag operation...');
+  const handleDragEnd = async (event: DragEndEvent, selectionState?: { selectedAssets: string[], selectedFolders: string[] }, activeItemData?: any) => {
     
     // 1. Create domain operation
-    const operation = createDragOperation(event);
-    if (!operation) return;
+    const operation = createDragOperation(event, activeItemData);
+    if (!operation) {
+      // No valid drop target - operation was cancelled
+      return { success: false, cancelled: true };
+    }
 
-    // 2. Validate operation
+    // 2. Check if this is a multi-select operation
+    let selectedAssets: string[] = [];
+    let selectedFolders: string[] = [];
+    
+    if (selectionState) {
+      // Use provided selection state (preferred)
+      selectedAssets = selectionState.selectedAssets;
+      selectedFolders = selectionState.selectedFolders;
+    } else {
+      // Fallback to event-based selection retrieval
+      const selectionPromise = new Promise<void>((resolve) => {
+        const handleSelectionResponse = (event: CustomEvent) => {
+          selectedAssets = event.detail.selectedAssets || [];
+          selectedFolders = event.detail.selectedFolders || [];
+          window.removeEventListener('damSelectionUpdate', handleSelectionResponse as EventListener);
+          resolve();
+        };
+        window.addEventListener('damSelectionUpdate', handleSelectionResponse as EventListener);
+        window.dispatchEvent(new CustomEvent('damGetSelection'));
+        
+        // Fallback timeout
+        setTimeout(() => {
+          window.removeEventListener('damSelectionUpdate', handleSelectionResponse as EventListener);
+          resolve();
+        }, 100);
+      });
+      
+      await selectionPromise;
+    }
+
+    // Determine if we're doing a bulk operation
+    const isDraggedItemSelected = (operation.itemType === 'asset' && selectedAssets.includes(operation.itemId)) ||
+                                 (operation.itemType === 'folder' && selectedFolders.includes(operation.itemId));
+    
+    const isBulkOperation = isDraggedItemSelected && (selectedAssets.length + selectedFolders.length > 1);
+
+    if (isBulkOperation) {
+      // Handle bulk move operation
+      
+      try {
+        // Use the bulk move action
+        const formData = new FormData();
+        formData.append('assetIds', JSON.stringify(selectedAssets));
+        formData.append('folderIds', JSON.stringify(selectedFolders));
+        formData.append('targetFolderId', operation.targetId === null ? 'null' : operation.targetId || '');
+        
+        // Import the bulk move action
+        const { bulkMoveItems } = await import('../../../application/actions/selection.actions');
+        const result = await bulkMoveItems(formData);
+        
+        if (result.success) {
+          const totalItems = selectedAssets.length + selectedFolders.length;
+          onToast({ 
+            title: `${totalItems} items moved successfully!`,
+            description: `Moved ${totalItems} item${totalItems > 1 ? 's' : ''} to ${operation.targetId ? 'folder' : 'root'}.`
+          });
+          
+          // Dispatch folder update event if folders were moved
+          if (selectedFolders.length > 0) {
+            window.dispatchEvent(new CustomEvent('folderUpdated', {
+              detail: { type: 'move', folderIds: selectedFolders }
+            }));
+          }
+          
+          // Exit selection mode after successful bulk move
+          // Use a longer delay to ensure all UI updates are complete
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('damExitSelectionMode'));
+          }, 300);
+          
+          // Refresh data for consistency
+          if (onRefreshData) {
+            await onRefreshData();
+          }
+          return { success: true };
+        } else {
+          throw new Error(result.error || 'Bulk move failed');
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+        
+        onToast({ 
+          title: 'Error moving items', 
+          description: errorMessage, 
+          variant: 'destructive' 
+        });
+        
+        // Refresh data to revert optimistic updates
+        if (onRefreshData) {
+          await onRefreshData();
+        }
+        return { success: false, error: errorMessage };
+      }
+    }
+
+    // 3. Single item operation - validate operation
     const validation = validateDragOperation(operation, event.over?.data.current);
     if (!validation.isValid) {
       onToast({ 
@@ -182,29 +301,35 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
         description: validation.reason,
         variant: validation.reason?.includes('already') ? 'default' : 'destructive'
       });
-      return;
+      return { success: false, cancelled: true, reason: validation.reason };
     }
 
-    // 3. Execute optimistic update
+    // 4. Execute optimistic update for single item
     onItemsUpdate(prevItems => prevItems.filter(item => item.id !== operation.itemId));
 
     try {
-      // 4. Execute domain operation
+      // 5. Execute domain operation for single item
       if (operation.itemType === 'asset') {
         await executeAssetMove(operation);
         onToast({ title: 'Asset moved successfully!' });
       } else {
         await executeFolderMove(operation);
         onToast({ title: 'Folder moved successfully!' });
+        
+        // Dispatch folder update event for folder tree refresh
+        window.dispatchEvent(new CustomEvent('folderUpdated', {
+          detail: { type: 'move', folderId: operation.itemId }
+        }));
       }
 
-      // 5. Refresh data for consistency
+      // 6. Refresh data for consistency
       if (onRefreshData) {
         await onRefreshData();
       }
+      
+      return { success: true };
 
     } catch (error) {
-      console.error(`Move ${operation.itemType} error:`, error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
       
       onToast({ 
@@ -217,6 +342,8 @@ export function useDamDragAndDrop({ onItemsUpdate, onToast, onRefreshData }: Use
       if (onRefreshData) {
         await onRefreshData();
       }
+      
+      return { success: false, error: errorMessage };
     }
   };
 

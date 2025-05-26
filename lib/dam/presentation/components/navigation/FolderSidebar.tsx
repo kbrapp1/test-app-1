@@ -18,11 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-/**
- * Props for the main sidebar component
- */
-export interface FolderSidebarProps {
-  /** Initial folders data passed from server-side */
+interface FolderSidebarProps {
   initialFolders: PlainFolder[];
 }
 
@@ -34,6 +30,7 @@ export interface FolderSidebarProps {
  * - Recursive folder tree display
  * - Folder management capabilities
  * - Domain entity integration
+ * - Fast server-side folder loading
  * 
  * @component
  * @example
@@ -41,9 +38,14 @@ export interface FolderSidebarProps {
  * <FolderSidebar initialFolders={serverFolders} />
  * ```
  */
-export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
-  const { rootFolders, setInitialFolders, changeVersion } = useFolderStore();
+export function FolderSidebar({ initialFolders }: FolderSidebarProps) {
+  const { rootFolders, setInitialFolders, changeVersion, refetchFolderData } = useFolderStore();
   const searchParams = useSearchParams();
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+
+
+
 
   // Determine current folder ID from URL parameters
   const folderIdFromParams = searchParams.get('folderId');
@@ -60,29 +62,60 @@ export function FolderSidebar({ initialFolders = [] }: FolderSidebarProps) {
     }
   });
 
+  // Load server-provided folders into store (run only once)
   useEffect(() => {
-    try {
-      // Convert plain objects to domain entities for store management
-      const domainFolders = initialFolders.map(plainFolder => {
-        const domainFolder = new DomainFolder({
-          id: plainFolder.id,
-          name: plainFolder.name,
-          userId: plainFolder.userId,
-          createdAt: plainFolder.createdAt,
-          updatedAt: plainFolder.updatedAt,
-          parentFolderId: plainFolder.parentFolderId,
-          organizationId: plainFolder.organizationId,
-          has_children: plainFolder.has_children,
-        });
-        
-        return domainFolder;
-      });
-      
-      setInitialFolders(domainFolders);
-    } catch (error) {
-      console.error('Error converting folders to domain entities:', error);
+    // Skip if already initialized or no folders to process
+    if (hasInitialized || initialFolders.length === 0) {
+      return;
     }
-  }, [initialFolders, setInitialFolders]);
+    
+    const domainFolders = initialFolders.map(plainFolder => {
+      return new DomainFolder({
+        id: plainFolder.id,
+        name: plainFolder.name,
+        userId: plainFolder.userId,
+        createdAt: plainFolder.createdAt,
+        updatedAt: plainFolder.updatedAt,
+        parentFolderId: plainFolder.parentFolderId,
+        organizationId: plainFolder.organizationId,
+        has_children: plainFolder.has_children,
+      });
+    });
+    
+    setInitialFolders(domainFolders);
+    setHasInitialized(true);
+  }, [initialFolders, hasInitialized, setInitialFolders]);
+
+  // Listen for folder move events from drag and drop operations
+  useEffect(() => {
+    const handleDataRefresh = async () => {
+      // Refresh the folder tree when folders are moved
+      await refetchFolderData();
+    };
+
+    const handleFolderUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { type } = customEvent.detail || {};
+      
+      // Refresh folder tree for any folder operations (rename, delete, move)
+      if (type === 'rename' || type === 'delete' || type === 'move') {
+        await refetchFolderData();
+      }
+    };
+
+    // Listen for general data refresh events (includes folder moves)
+    window.addEventListener('damDataRefresh', handleDataRefresh);
+    
+    // Listen for specific folder update events
+    window.addEventListener('folderUpdated', handleFolderUpdate);
+
+    return () => {
+      window.removeEventListener('damDataRefresh', handleDataRefresh);
+      window.removeEventListener('folderUpdated', handleFolderUpdate);
+    };
+  }, [refetchFolderData]);
+
+
 
   return (
     <aside className="w-55 border-r bg-background px-4 pt-2 pb-4 flex flex-col h-full overflow-y-auto">

@@ -23,6 +23,8 @@ interface GalleryLayoutProps {
   enableNavigation: boolean;
   renderFolders: () => React.ReactNode;
   renderAssets: () => React.ReactNode;
+  enableMultiSelect?: boolean;
+  multiSelect?: any;
 }
 
 const LoadingState: React.FC = () => (
@@ -95,6 +97,8 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   enableNavigation,
   renderFolders,
   renderAssets,
+  enableMultiSelect = false,
+  multiSelect,
 }) => {
   // Handle loading state
   if ((loading && isFirstLoad) || (folderNavigation?.loading && !folderNavigation.navigation)) {
@@ -127,6 +131,8 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
         folderNavigation={folderNavigation}
         activeFolderId={activeFolderId}
         onRefresh={onRefresh}
+        enableMultiSelect={enableMultiSelect}
+        multiSelect={multiSelect}
       />
 
       {hasContent ? (
@@ -135,6 +141,8 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           assets={assets}
           renderFolders={renderFolders}
           renderAssets={renderAssets}
+          enableMultiSelect={enableMultiSelect}
+          multiSelect={multiSelect}
         />
       ) : (
         !loading && (

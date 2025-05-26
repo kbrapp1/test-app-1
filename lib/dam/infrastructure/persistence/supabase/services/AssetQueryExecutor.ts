@@ -122,17 +122,20 @@ export class AssetQueryExecutor {
    * Execute delete operation
    */
   async executeDelete(id: string): Promise<boolean> {
-    const { error } = await this.supabase
+    const { data, error } = await this.supabase
       .from('assets')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) {
       console.error(`Error deleting asset ${id}:`, error);
       return false;
     }
     
-    return true;
+    // Check if any rows were actually deleted
+    const deletedCount = data ? data.length : 0;
+    return deletedCount > 0;
   }
 
   /**

@@ -38,6 +38,12 @@ export interface IFolderRepository {
   findAllByOrganizationId(organizationId: string): Promise<Folder[]>;
   create(folder: CreateFolderData): Promise<Folder>;
   save(folder: CreateFolderData): Promise<Folder>;
-  search(organizationId: string, searchQuery: string, currentFolderIdForContext?: string | null, limitOptions?: { offset?: number; limit?: number }, sortParams?: { sortBy?: string; sortOrder?: 'asc' | 'desc' }): Promise<Folder[]>;
+  search(
+    organizationId: string, 
+    searchQuery: string, 
+    currentFolderIdForContext?: string | null, 
+    limitOptions?: { offset?: number; limit?: number }, 
+    sortParams?: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Folder[]>;
   // Potentially: move(folderId: string, newParentFolderId: string | null)
 } 

@@ -76,14 +76,20 @@ export function DeleteFolderDialog({
       
       // Navigate to parent folder or root after delete
       const parentPath = state.parentFolderId ? `/dam?folderId=${state.parentFolderId}` : '/dam';
-      router.push(parentPath);
-      router.refresh();
+      
+      // Close dialog first, then navigate to prevent race conditions
       onClose(); 
+      
+      // Small delay to ensure dialog closes and state updates
+      setTimeout(() => {
+        router.push(parentPath);
+        router.refresh();
       
       // Call optional callback
       if (onDeleted) {
         onDeleted();
       }
+      }, 100);
     } else if (state.error) {
       toast.error(`Error: ${state.error}`);
     }

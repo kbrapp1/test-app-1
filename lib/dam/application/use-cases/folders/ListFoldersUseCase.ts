@@ -31,9 +31,10 @@ export class ListFoldersUseCase {
         sortParams,
         filters
       );
+      
       return folders;
     } catch (error) {
-      console.error(`Error listing folders for parent ${parentId} in use case:`, error);
+      console.error(`❌ ListFoldersUseCase: Error listing folders for parent ${parentId}:`, error);
       throw error; // Re-throw or wrap
     }
   }

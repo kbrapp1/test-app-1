@@ -68,7 +68,12 @@ export function NewFolderDialog({
 
   useEffect(() => {
     if (state.success) {
+      // Close dialog immediately to prevent brief reappearance
+      setIsOpen(false);
+      formRef.current?.reset();
+      
       toast.success('Folder created successfully!');
+      
       if (state.folder) {
         // Convert PlainFolder to DomainFolder for the store
         const domainFolder = new Folder({
@@ -83,12 +88,21 @@ export function NewFolderDialog({
         });
         
         addFolder(domainFolder);
+        
+        // Small delay to ensure dialog closes before navigation
+        setTimeout(() => {
         router.push(`/dam?folderId=${state.folder.id}`);
+          
+          // Call optional callback after navigation
+          if (onFolderCreated) {
+            onFolderCreated();
       }
-      setIsOpen(false);
-      formRef.current?.reset();
+        }, 100);
+      } else {
+        // Call callback immediately if no folder to navigate to
       if (onFolderCreated) {
         onFolderCreated();
+        }
       }
     } else if (state.error) {
       toast.error(`Error: ${state.error}`);

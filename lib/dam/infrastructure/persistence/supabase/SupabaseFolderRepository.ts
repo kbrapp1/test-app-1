@@ -81,7 +81,9 @@ export class SupabaseFolderRepository implements IFolderRepository {
     query = this.queryBuilder.applySorting(query, sortParams);
 
     const data = await this.queryExecutor.executeQuery(query, `fetching folders for parent ${parentId}`);
-    return data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    const folders = data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    
+    return folders;
   }
   
   async findByName(name: string, organizationId: string, parentFolderId?: string | null): Promise<Folder | null> {

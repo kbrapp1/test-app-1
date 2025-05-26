@@ -9,6 +9,8 @@ export { ConfirmationDialog, DeleteAssetConfirmation } from './ConfirmationDialo
 export { AssetDetailsModal } from './AssetDetailsModal';
 export { AssetSelectorModal } from './AssetSelectorModal';
 export { DialogShowcase } from './DialogShowcase';
+export { BulkMoveDialog } from './BulkMoveDialog';
+export { BulkDeleteDialog } from './BulkDeleteDialog';
 
 export type { InputDialogProps } from './InputDialog';
 export type { FolderTreeItemProps } from './FolderTreeItem';

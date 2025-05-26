@@ -13,5 +13,8 @@ export * from './tags';
 // Search and Data Retrieval
 export * from './search';
 
+// Selection Management
+export * from './selection';
+
 // Common/Utility
 export * from './common'; 

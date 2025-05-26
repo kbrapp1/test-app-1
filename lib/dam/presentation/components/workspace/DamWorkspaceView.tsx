@@ -42,6 +42,8 @@ export function DamWorkspaceView({
   
   const router = useRouter();
   
+
+  
   // Extract state management to domain hook
   const workspaceState = useDamPageState({
     initialCurrentFolderId,
@@ -96,6 +98,35 @@ export function DamWorkspaceView({
     updateBreadcrumbs();
   }, [workspaceState.currentFolderId, initialCurrentFolderId, initialBreadcrumbPath, breadcrumbPath]);
 
+  // Listen for folder updates to refresh breadcrumbs
+  useEffect(() => {
+    const handleFolderUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { type, folderId, newName } = customEvent.detail;
+      
+      // If the renamed folder is in our current breadcrumb path, refresh breadcrumbs
+      if (type === 'rename') {
+        const isInBreadcrumbPath = breadcrumbPath.some(crumb => crumb.id === folderId);
+        const isCurrentFolder = workspaceState.currentFolderId === folderId;
+        
+        if (isInBreadcrumbPath || isCurrentFolder) {
+          setBreadcrumbLoading(true);
+          try {
+            const { breadcrumbs } = await getFolderNavigation(workspaceState.currentFolderId);
+            setBreadcrumbPath(breadcrumbs);
+          } catch (error) {
+            console.error('Failed to update breadcrumbs after folder rename:', error);
+          } finally {
+            setBreadcrumbLoading(false);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('folderUpdated', handleFolderUpdate);
+    return () => window.removeEventListener('folderUpdated', handleFolderUpdate);
+  }, [breadcrumbPath, workspaceState.currentFolderId]);
+
   // Extract filter management (already domain-driven)
   const {
     filterType,
@@ -131,6 +162,11 @@ export function DamWorkspaceView({
     closeMoveDialog,
   } = useAssetItemDialogs();
 
+  // Multi-select state management - always enabled with hover-based selection
+  const [selectedCount, setSelectedCount] = useState(0);
+
+
+
   // Handle asset move with proper domain entity conversion
   const handleMoveAssetConfirm = async (selectedFolderId: string | null) => {
     if (!moveDialog.data) return;
@@ -139,7 +175,13 @@ export function DamWorkspaceView({
 
   return (
     <DamErrorBoundary>
-      <div className="flex flex-col h-full">
+      <div 
+        className="flex flex-col h-full"
+        style={{
+          paddingBottom: selectedCount > 0 ? '6rem' : '0',
+          transition: 'padding-bottom 0.3s ease-out'
+        }}
+      >
         <div className="pl-1 pr-4 pt-2 pb-4 md:pl-1 md:pr-6 md:pt-2 md:pb-6 space-y-4">
           <WorkspaceHeader
             gallerySearchTerm={workspaceState.gallerySearchTerm}
@@ -161,6 +203,7 @@ export function DamWorkspaceView({
             sortOrder={sortOrder}
             isAnyFilterActive={isAnyFilterActive}
             organizationMembers={workspaceHandlers.organizationMembers}
+            selectedCount={selectedCount}
             setFilterType={setFilterType}
             setFilterCreationDateOption={setFilterCreationDateOption}
             setFilterOwnerId={setFilterOwnerId}
@@ -170,6 +213,7 @@ export function DamWorkspaceView({
           />
         </div>
 
+        <div className="flex-1">
         <AssetGalleryClient 
           key={`${workspaceState.currentFolderId || 'root'}-${workspaceState.refreshKey}`}
           viewMode={workspaceState.viewMode} 
@@ -189,7 +233,14 @@ export function DamWorkspaceView({
           enableNavigation={true}
           showNavigationUI={false}
           onFolderNavigate={handleFolderNavigation}
+          enableMultiSelect={true}
+          onSelectionChange={(selectedAssets, selectedFolders) => {
+            setSelectedCount(selectedAssets.length + selectedFolders.length);
+          }}
         />
+        </div>
+
+
 
         {/* Render FolderPickerDialog for moving assets */}
         {moveDialog.isOpen && moveDialog.data && (

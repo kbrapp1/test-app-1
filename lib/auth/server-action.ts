@@ -39,8 +39,11 @@ interface DecodedAccessToken {
 }
 
 /**
- * Retrieves the active organization ID from the user's JWT custom claims.
- * This is intended for use in server-side logic (Server Actions, Route Handlers, Server Components).
+ * Retrieves the active organization ID with fallback strategy for reliability.
+ * 
+ * Strategy:
+ * 1. Try JWT custom claims (fast, works when Edge Function has run)
+ * 2. Fallback to user.app_metadata (reliable, always available)
  * 
  * @returns The active organization ID (UUID string) or null if not found or user is not authenticated.
  */
@@ -49,39 +52,42 @@ export async function getActiveOrganizationId(): Promise<string | null> {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
   if (sessionError || !session) {
-    // console.error('GetActiveOrganizationId: Supabase session error or no session', sessionError);
-    // Removed previous console.log for user.app_metadata as we now decode token
     return null;
   }
 
-  if (!session.access_token) {
-    // console.warn('GetActiveOrganizationId: No access_token in session.');
-    return null;
+  // Strategy 1: Try JWT custom claims first (fast path)
+  if (session.access_token) {
+    try {
+      const decodedToken = jwtDecode<DecodedAccessToken>(session.access_token);
+      const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+      
+      if (activeOrgId && typeof activeOrgId === 'string' && activeOrgId.length > 0) {
+        return activeOrgId;
+      }
+    } catch (e) {
+      // JWT decode failed, continue to fallback
+    }
   }
 
+  // Strategy 2: Fallback to user.app_metadata (reliable path)
   try {
-    // Decode the access token to get the claims
-    const decodedToken = jwtDecode<DecodedAccessToken>(session.access_token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    // console.log('GetActiveOrganizationId: Decoded JWT:', JSON.stringify(decodedToken, null, 2));
-
-    // Access the claim based on your Edge Function's structure from the JWT
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
-
-    if (!activeOrgId) {
-      // console.warn('GetActiveOrganizationId: active_organization_id NOT FOUND in decoded JWT custom_claims.');
+    if (userError || !user) {
       return null;
     }
 
-    if (typeof activeOrgId === 'string' && activeOrgId.length > 0) {
-      // console.log('GetActiveOrganizationId: Successfully retrieved active_organization_id from JWT:', activeOrgId);
+    const activeOrgId = user.app_metadata?.active_organization_id;
+    
+    if (activeOrgId && typeof activeOrgId === 'string' && activeOrgId.length > 0) {
       return activeOrgId;
-    } else {
-      // console.warn('GetActiveOrganizationId: Retrieved active_organization_id from JWT was not a valid string:', activeOrgId);
-      return null;
     }
   } catch (e) {
-    // console.error('GetActiveOrganizationId: Error decoding JWT or accessing claims:', e);
-    return null;
+    // Silent fallback - log only in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('GetActiveOrganizationId: Error accessing user metadata:', e);
+    }
   }
+
+  return null;
 } 

@@ -10,8 +10,8 @@ This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DD
 ## Key Architecture Patterns
 
 - **Feature-Based Organization**: Code is grouped by business domain (DAM, TTS, Auth, Marketing Automation, etc.)
-- **DDD in DAM Module**: Fully migrated - Domain entities, repositories, and use cases properly separated
-- **Progressive DDD Migration**: Other domains will be migrated to DDD patterns later
+- **DDD in DAM Module**: ✅ **FULLY MIGRATED** - Complete DDD implementation with domain entities, repositories, use cases, and presentation layers
+- **Progressive DDD Migration**: Other domains will be migrated to DDD patterns following the DAM blueprint
 - **Co-located Tests**: Tests live alongside the code they test
 - **Clean Architecture**: Clear separation between UI, business logic, and data layers
 
@@ -20,7 +20,10 @@ This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DD
 ### 🎯 Core Business Features
 ```
 app/(protected)/          # Protected application routes
-├── dam/                  # Digital Asset Management (DDD-migrated)
+├── dam/                  # Digital Asset Management (✅ DDD-migrated)
+│   ├── page.tsx         # Main DAM gallery page
+│   ├── layout.tsx       # DAM layout wrapper
+│   └── upload/          # Asset upload page
 ├── ai-playground/        # AI features (TTS, chatbot)
 │   ├── chatbot/         # AI chatbot interface
 │   └── text-to-speech/  # Text-to-speech playground
@@ -33,16 +36,30 @@ app/(protected)/          # Protected application routes
 │   ├── profile/         # User profile settings
 │   ├── security/        # Security settings
 │   ├── org-roles/       # Organization role management
+│   ├── email/           # Email settings
+│   ├── password/        # Password management
 │   └── danger/          # Dangerous operations
 ├── team/                # Team management
 ├── documents/           # Document management
-│   └── notes/           # Note-taking system
+│   └── notes/           # Note-taking system (✅ Dynamic rendering fixed)
 ├── playbooks/           # Business playbooks
+│   └── jobs/            # Playbook jobs
 ├── reporting/           # Analytics and reporting
-└── integrations/        # Third-party integrations
+├── integrations/        # Third-party integrations
+├── notifications/       # Notification center
+├── approvals/           # Approval workflows
+├── brand-guidelines/    # Brand management
+├── campaign-management/ # Marketing campaigns
+├── content-calendar/    # Content planning
+├── developer-api/       # API documentation
+├── digital-storefront/  # Digital storefront
+│   └── assets-overview/ # Asset overview
+├── insights/            # Business insights
+├── activity-feed/       # Activity tracking
+└── templates/           # Template management
 ```
 
-### 🧩 Reusable Components
+### 🧩 Reusable Components (Legacy - Being Phased Out)
 ```
 components/
 ├── ui/                  # Base UI components (shadcn/ui)
@@ -53,30 +70,328 @@ components/
 ├── forms/               # Reusable form components
 │   └── fields/          # Form field components
 ├── notes/               # Note-taking components
-└── providers/           # React context providers
+├── providers/           # React context providers
+└── error/               # Error handling components
+
+# NOTE: DAM components have been migrated to lib/dam/presentation/
+# Legacy components/dam/ folder has been removed
 ```
 
 ### ⚡ Business Logic Layer
 ```
 lib/
-├── actions/             # Server actions (Next.js)
-│   ├── dam/             # DAM server actions
+├── actions/             # Server actions (Next.js) - Non-DAM domains
 │   ├── members.ts       # Member management actions
 │   ├── team.ts          # Team actions
 │   └── tts.ts           # TTS actions
-├── dam/                 # DDD-structured DAM domain (MIGRATED)
-│   ├── domain/          # Entities, repositories, value objects
-│   ├── application/     # Use cases, services, DTOs
-│   ├── infrastructure/  # Supabase implementations
-│   ├── presentation/    # React components, hooks, types
+│   # NOTE: DAM actions moved to lib/dam/application/actions/
+├── dam/                 # ✅ COMPLETE DDD-structured DAM domain
+│   ├── domain/          # Domain layer (entities, repositories, services)
+│   │   ├── entities/    # Domain entities (Asset, Folder, Tag, etc.)
+│   │   │   ├── Asset.ts
+│   │   │   ├── AssetFactory.ts
+│   │   │   ├── AssetTypeChecker.ts
+│   │   │   ├── AssetValidation.ts
+│   │   │   ├── Folder.ts
+│   │   │   ├── Tag.ts
+│   │   │   ├── TagFactory.ts
+│   │   │   ├── TagUtilities.ts
+│   │   │   ├── TagValidation.ts
+│   │   │   ├── SavedSearch.ts
+│   │   │   └── index.ts
+│   │   ├── repositories/ # Repository interfaces
+│   │   │   ├── IAssetRepository.ts
+│   │   │   ├── IAssetTagRepository.ts
+│   │   │   ├── IFolderRepository.ts
+│   │   │   ├── ITagRepository.ts
+│   │   │   ├── ISavedSearchRepository.ts
+│   │   │   ├── IStorageService.ts
+│   │   │   └── index.ts
+│   │   ├── services/     # Domain services
+│   │   │   ├── AuthContextService.ts
+│   │   │   ├── SearchCriteriaFactory.ts
+│   │   │   ├── SearchMapper.ts
+│   │   │   ├── SearchService.ts
+│   │   │   ├── SearchUtilities.ts
+│   │   │   ├── SearchValidation.ts
+│   │   │   └── index.ts
+│   │   └── value-objects/ # Value objects
+│   │       └── SearchCriteria.ts
+│   ├── application/     # Application layer (use cases, services, DTOs)
+│   │   ├── actions/     # Server actions (Next.js specific)
+│   │   │   ├── folder.actions.ts
+│   │   │   ├── getAssetDownloadUrl.action.ts
+│   │   │   ├── navigation.actions.ts
+│   │   │   ├── savedSearches.actions.ts
+│   │   │   ├── textAsset.actions.ts
+│   │   │   └── index.ts
+│   │   ├── dto/         # Data Transfer Objects
+│   │   │   ├── ApiResponseDto.ts
+│   │   │   ├── DamApiRequestDto.ts
+│   │   │   ├── SearchCriteriaDTO.ts
+│   │   │   └── UploadAssetDTO.ts
+│   │   ├── services/    # Application services
+│   │   │   ├── AssetOperationsService.ts
+│   │   │   ├── AssetService.ts
+│   │   │   ├── AssetTagService.ts
+│   │   │   ├── DamApiDtoService.ts
+│   │   │   └── FolderService.ts
+│   │   └── use-cases/   # Use cases organized by domain
+│   │       ├── assets/  # Asset-related use cases
+│   │       │   ├── CreateTextAssetUseCase.ts
+│   │       │   ├── DeleteAssetUseCase.ts
+│   │       │   ├── GetAssetContentUseCase.ts
+│   │       │   ├── GetAssetDetailsUseCase.ts
+│   │       │   ├── GetAssetDownloadUrlUseCase.ts
+│   │       │   ├── ListAssetsByFolderUseCase.ts
+│   │       │   ├── ListTextAssetsUseCase.ts
+│   │       │   ├── MoveAssetUseCase.ts
+│   │       │   ├── RenameAssetUseCase.ts
+│   │       │   ├── UpdateAssetMetadataUseCase.ts
+│   │       │   ├── UpdateAssetTextUseCase.ts
+│   │       │   ├── UploadAssetUseCase.ts
+│   │       │   └── index.ts
+│   │       ├── folders/ # Folder-related use cases
+│   │       │   ├── CreateFolderUseCase.ts
+│   │       │   ├── DeleteFolderUseCase.ts
+│   │       │   ├── GetFolderPathUseCase.ts
+│   │       │   ├── ListFolderChildrenUseCase.ts
+│   │       │   ├── ListFolderContentsUseCase.ts
+│   │       │   ├── ListFoldersUseCase.ts
+│   │       │   ├── MoveFolderUseCase.ts
+│   │       │   ├── NavigateToFolderUseCase.ts
+│   │       │   ├── UpdateFolderUseCase.ts
+│   │       │   └── index.ts
+│   │       ├── search/  # Search-related use cases
+│   │       │   ├── ExecuteSavedSearchUseCase.ts
+│   │       │   ├── GetDamDataUseCase.ts
+│   │       │   ├── ListSavedSearchesUseCase.ts
+│   │       │   ├── SaveSearchUseCase.ts
+│   │       │   ├── SearchDamItemsUseCase.ts
+│   │       │   └── index.ts
+│   │       ├── tags/    # Tag-related use cases
+│   │       │   ├── AddTagToAssetUseCase.ts
+│   │       │   ├── CreateTagUseCase.ts
+│   │       │   ├── DeleteTagUseCase.ts
+│   │       │   ├── ListTagsUseCase.ts
+│   │       │   ├── RemoveTagFromAssetUseCase.ts
+│   │       │   ├── UpdateTagUseCase.ts
+│   │       │   └── index.ts
+│   │       ├── common/  # Common use cases
+│   │       │   ├── ParseDamApiRequestUseCase.ts
+│   │       │   └── index.ts
+│   │       └── index.ts
+│   ├── infrastructure/ # Infrastructure layer (Supabase implementations)
+│   │   ├── persistence/
+│   │   │   └── supabase/
+│   │   │       ├── SupabaseAssetRepository.ts
+│   │   │       ├── SupabaseAssetTagRepository.ts
+│   │   │       ├── SupabaseFolderRepository.ts
+│   │   │       ├── SupabaseSavedSearchRepository.ts
+│   │   │       ├── SupabaseTagRepository.ts
+│   │   │       ├── mappers/  # Data mappers
+│   │   │       │   ├── AssetMapper.ts
+│   │   │       │   ├── FolderMapper.ts
+│   │   │       │   └── TagMapper.ts
+│   │   │       └── services/ # Infrastructure services
+│   │   │           ├── AssetDataProcessor.ts
+│   │   │           ├── AssetDateFilter.ts
+│   │   │           ├── AssetProfileService.ts
+│   │   │           ├── AssetQueryBuilder.ts
+│   │   │           ├── AssetQueryExecutor.ts
+│   │   │           ├── AssetTagService.ts
+│   │   │           ├── AssetUrlService.ts
+│   │   │           ├── FolderDateFilter.ts
+│   │   │           ├── FolderQueryBuilder.ts
+│   │   │           ├── FolderQueryExecutor.ts
+│   │   │           ├── FolderTreeService.ts
+│   │   │           └── index.ts
+│   │   └── storage/
+│   │       └── SupabaseStorageService.ts
+│   ├── presentation/   # Presentation layer (React components, hooks)
+│   │   ├── components/ # Domain-specific React components
+│   │   │   ├── assets/  # Asset components
+│   │   │   │   ├── AssetActionDropdownMenu.tsx
+│   │   │   │   ├── AssetThumbnail.tsx
+│   │   │   │   ├── DomainTagEditor.tsx
+│   │   │   │   ├── TagCreationOption.tsx
+│   │   │   │   ├── TagEditorEmptyState.tsx
+│   │   │   │   ├── TagSuggestionList.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── dialogs/ # Modal dialogs
+│   │   │   │   ├── AssetDetailsModal.tsx
+│   │   │   │   ├── AssetSelectorModal.tsx
+│   │   │   │   ├── ConfirmationDialog.tsx
+│   │   │   │   ├── DeleteFolderDialog.tsx
+│   │   │   │   ├── DialogShowcase.tsx
+│   │   │   │   ├── FolderPickerDialog.tsx
+│   │   │   │   ├── FolderTreeItem.tsx
+│   │   │   │   ├── InputDialog.tsx
+│   │   │   │   ├── NewFolderDialog.tsx
+│   │   │   │   ├── RenameFolderDialog.tsx
+│   │   │   │   ├── folderPickerUtils.ts
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── FolderTreeRenderer.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── useFolderPicker.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── sections/
+│   │   │   │   │   ├── AssetDetailsHeader.tsx
+│   │   │   │   │   ├── AssetPreviewSection.tsx
+│   │   │   │   │   ├── LoadingSpinner.tsx
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── FolderFetcher.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── error/   # Error handling components
+│   │   │   │   ├── DamErrorBoundary.tsx
+│   │   │   │   ├── FolderNotFoundHandler.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── filters/ # Filter components
+│   │   │   │   ├── CreationDateFilter.tsx
+│   │   │   │   ├── DamTagFilter.tsx
+│   │   │   │   ├── OwnerFilter.tsx
+│   │   │   │   ├── SizeFilter.tsx
+│   │   │   │   ├── SizeFilterCustomView.tsx
+│   │   │   │   ├── SizeFilterListView.tsx
+│   │   │   │   ├── SortControl.tsx
+│   │   │   │   ├── TypeFilter.tsx
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── CustomDateRangePicker.tsx
+│   │   │   │   │   ├── DateOptionsList.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── useDateFilter.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── DateFilterService.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── folders/ # Folder components
+│   │   │   │   ├── FolderListItem.tsx
+│   │   │   │   ├── FolderThumbnail.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── gallery/ # Gallery components
+│   │   │   │   ├── AssetGalleryClient.tsx
+│   │   │   │   ├── AssetGalleryRenderer.tsx
+│   │   │   │   ├── AssetGridItem.tsx
+│   │   │   │   ├── AssetListItem.tsx
+│   │   │   │   ├── FolderItem.tsx
+│   │   │   │   ├── GalleryDialogs.tsx
+│   │   │   │   ├── GalleryLayout.tsx
+│   │   │   │   ├── sections/
+│   │   │   │   │   ├── ContentSections.tsx
+│   │   │   │   │   ├── EmptyState.tsx
+│   │   │   │   │   ├── GalleryHeader.tsx
+│   │   │   │   │   └── UploadProgress.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── navigation/ # Navigation components
+│   │   │   │   ├── DamBreadcrumbs.tsx
+│   │   │   │   ├── FolderBreadcrumbs.tsx
+│   │   │   │   ├── FolderNavigationItem.tsx
+│   │   │   │   ├── FolderSidebar.tsx
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── FolderActionsMenu.tsx
+│   │   │   │   │   ├── FolderExpandButton.tsx
+│   │   │   │   │   ├── FolderLink.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── useFolderNavigation.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── FolderTreeFetcher.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── search/  # Search components
+│   │   │   │   ├── DamSearchBar.tsx
+│   │   │   │   ├── SavedSearchButton.tsx
+│   │   │   │   ├── SearchDropdownMenu.tsx
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── SavedSearchBrowseTab.tsx
+│   │   │   │   │   ├── SavedSearchDialog.tsx
+│   │   │   │   │   ├── SavedSearchList.tsx
+│   │   │   │   │   ├── SavedSearchSaveTab.tsx
+│   │   │   │   │   ├── SearchActions.tsx
+│   │   │   │   │   ├── SearchCriteriaPreview.tsx
+│   │   │   │   │   ├── SearchForm.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── useSearchBarState.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── SavedSearchHandler.ts
+│   │   │   │   │   ├── SearchInputHandler.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── upload/  # Upload components
+│   │   │   │   ├── AssetUploader.tsx
+│   │   │   │   └── DamUploadButton.tsx
+│   │   │   ├── workspace/ # Workspace layout
+│   │   │   │   ├── DamWorkspaceView.tsx
+│   │   │   │   ├── layout/
+│   │   │   │   │   ├── WorkspaceFilters.tsx
+│   │   │   │   │   ├── WorkspaceHeader.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── DamDragDropProvider.tsx
+│   │   │   └── index.ts
+│   │   ├── hooks/       # Domain-specific React hooks
+│   │   │   ├── assets/  # Asset-related hooks
+│   │   │   │   ├── useAssetDetailsModal.ts
+│   │   │   │   ├── useAssetDragAndDrop.ts
+│   │   │   │   ├── useAssetGalleryHandlers.tsx
+│   │   │   │   ├── useAssetGalleryState.tsx
+│   │   │   │   ├── useAssetItemActions.ts
+│   │   │   │   ├── useAssetItemDialogs.ts
+│   │   │   │   ├── useAssetUpload.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── gallery/ # Gallery-related hooks
+│   │   │   │   ├── useDamDragAndDrop.ts
+│   │   │   │   ├── useDamGalleryData.ts
+│   │   │   │   ├── useTagEditor.tsx
+│   │   │   │   └── index.ts
+│   │   │   ├── navigation/ # Navigation-related hooks
+│   │   │   │   ├── useDamPageHandlers.ts
+│   │   │   │   ├── useDamPageState.ts
+│   │   │   │   ├── useDamUrlManager.ts
+│   │   │   │   ├── useFolderNavigation.ts
+│   │   │   │   ├── useGalleryDialogs.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── search/  # Search-related hooks
+│   │   │   │   ├── useDamFilters.ts
+│   │   │   │   ├── useDamSearchDropdown.ts
+│   │   │   │   ├── useDamSearchInput.ts
+│   │   │   │   ├── useDamTagFilterHandler.ts
+│   │   │   │   ├── useSavedSearches.ts
+│   │   │   │   ├── useTagFilter.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── services/ # Hook service utilities
+│   │   │   │   ├── FilterActionsService.ts
+│   │   │   │   ├── FilterTypes.ts
+│   │   │   │   ├── GalleryDataService.ts
+│   │   │   │   ├── GalleryDataTypes.ts
+│   │   │   │   ├── TagEditorAuthService.ts
+│   │   │   │   ├── TagEditorComputationService.ts
+│   │   │   │   ├── TagEditorDataService.ts
+│   │   │   │   ├── TagEditorTypes.ts
+│   │   │   │   ├── UrlParameterService.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   ├── types/       # Presentation layer types
+│   │   │   └── interfaces.ts
+│   │   └── index.ts
 │   ├── types/           # Domain-specific TypeScript types
+│   │   ├── dam.types.ts
+│   │   └── index.ts
 │   └── index.ts         # Public API exports
-├── usecases/            # Use cases for other domains
-│   └── tts/             # TTS business logic (pre-DDD)
+├── usecases/            # Use cases for other domains (pre-DDD)
+│   └── tts/             # TTS business logic
 ├── services/            # External service integrations
 ├── schemas/             # Validation schemas
 ├── auth/                # Authentication & authorization
-├── hooks/               # Custom React hooks
+├── hooks/               # Custom React hooks (global)
 └── forms/               # Form utilities and validation
 ```
 
@@ -85,12 +400,28 @@ lib/
 app/api/                 # REST API endpoints
 ├── dam/                 # DAM API routes
 │   ├── asset/           # Asset operations
+│   │   └── [assetId]/   # Individual asset operations
 │   ├── folders/         # Folder operations
-│   └── upload/          # File upload handling
+│   │   ├── [folderId]/  # Individual folder operations
+│   │   │   ├── children/ # Folder children
+│   │   │   └── path/    # Folder path
+│   │   └── tree/        # Folder tree
+│   ├── upload/          # File upload handling
+│   ├── route.ts         # Main DAM API endpoint
+│   └── dam-api.types.ts # API type definitions
 ├── team/                # Team management API
-└── profile/             # User profile API
+│   ├── members/         # Team member operations
+│   └── upload/          # Team file uploads
+├── profile/             # User profile API
+└── [other domains]/     # Other API endpoints
 supabase/                # Database schema & edge functions
 ├── functions/           # Supabase Edge Functions
+│   ├── _shared/         # Shared function utilities
+│   ├── admin-resend-invitation/
+│   ├── admin-reset-password/
+│   ├── complete-onboarding-membership/
+│   ├── invite-member/
+│   └── set-active-org-claim/
 └── migrations/          # Database migrations
 ```
 
@@ -98,18 +429,57 @@ supabase/                # Database schema & edge functions
 ```
 docs/                    # Comprehensive feature documentation
 ├── DAM/                 # DAM feature docs and build steps
+│   ├── completed/       # ✅ Completed migration documentation
+│   │   ├── DAM_Architecture_Overview.md
+│   │   ├── component-organization-ddd-analysis.md
+│   │   ├── creation-date-filter-refactor.md
+│   │   ├── dam_actions_to_ddd_migration_build_steps.md
+│   │   ├── dam_ddd_completion_checklist.md
+│   │   ├── dam_ddd_component_migration_build_steps.md
+│   │   ├── folder-not-found-error-fix.md
+│   │   ├── folder-picker-dialog-refactor.md
+│   │   └── presentation-layer-ddd-assessment.md
+│   ├── memories/        # Historical documentation
+│   └── DAM_Architecture_Overview.md # Current overview
 ├── text-to-speech/      # TTS feature documentation
+│   └── completed/       # Completed TTS docs
+├── refactor/            # Refactoring documentation
+│   ├── completed/       # ✅ Completed refactors
+│   │   ├── dam-search-bar-refactor.md
+│   │   ├── folder-navigation-item-refactor.md
+│   │   └── lib_layer_refactor_steps-done.md
+│   └── folder-repository-refactor.md # Ongoing refactors
 ├── multi-tenant/        # Multi-tenancy implementation
 ├── roles/               # Role system documentation
+├── self-service-reporting/ # Reporting documentation
+├── team-members-completed/ # Team management docs
+├── supabase/            # Supabase-specific documentation
+├── starters/            # Starter templates
+├── playbook/            # Playbook documentation
+├── misc-docs/           # Miscellaneous documentation
 └── general/             # General platform documentation
+    └── quick-tips.md    # Development tips
+```
+
+### 🛠️ Development Tools & Scripts
+```
+scripts/                 # Development scripts
+└── create-domain.js     # Domain creation utility
+
+.cursor/                 # Cursor IDE configuration
+└── rules/               # Cursor rules for development
+    ├── cursor_rules.mdc # Core development rules
+    ├── golden-rule.mdc  # Golden development principles
+    ├── project-structure.mdc # This file
+    └── self_improve.mdc # Self-improvement guidelines
 ```
 
 ## Quick Start Navigation
 
 1. **New Feature**: Start in `app/(protected)/[feature]/`
-2. **Reusable UI**: Check `components/ui/` first, then domain-specific components
+2. **Reusable UI**: Check `components/ui/` first, then domain-specific components in `lib/[domain]/presentation/components/`
 3. **Business Logic**: 
-   - **DAM**: Use `lib/dam/` (DDD structure)
+   - **DAM**: Use `lib/dam/` (Complete DDD structure)
    - **Other domains**: Check `lib/actions/` or `lib/usecases/`
 4. **API Integration**: Check `lib/services/` or `app/api/`
 5. **Database Changes**: Start in `supabase/migrations/`
@@ -117,13 +487,28 @@ docs/                    # Comprehensive feature documentation
 
 ## Domain-Specific Patterns
 
-### DAM (Digital Asset Management) ✅ DDD-Migrated
-- Follows **Clean Architecture** with full DDD implementation
-- **Domain Layer**: `lib/dam/domain/` (entities, repositories, value objects)
-- **Application Layer**: `lib/dam/application/` (use cases, services, DTOs)
-- **Infrastructure Layer**: `lib/dam/infrastructure/` (Supabase implementations)
-- **Presentation Layer**: `lib/dam/presentation/` (React components, hooks, domain types)
-- **Types Layer**: `lib/dam/types/` (Domain-specific TypeScript definitions)
+### DAM (Digital Asset Management) ✅ **FULLY MIGRATED TO DDD**
+- **Complete Clean Architecture** implementation following DDD principles
+- **Domain Layer**: `lib/dam/domain/` 
+  - Entities with factories and validation
+  - Repository interfaces
+  - Domain services
+  - Value objects
+- **Application Layer**: `lib/dam/application/`
+  - Use cases organized by feature (assets, folders, search, tags, common)
+  - Application services
+  - DTOs for data transfer
+  - Server actions for Next.js integration
+- **Infrastructure Layer**: `lib/dam/infrastructure/`
+  - Supabase repository implementations
+  - Data mappers
+  - Infrastructure services (query builders, data processors)
+  - Storage service implementations
+- **Presentation Layer**: `lib/dam/presentation/`
+  - React components organized by feature
+  - Custom hooks with service utilities
+  - Domain-specific types
+  - Complete component hierarchy with proper separation
 - **Public API**: `lib/dam/index.ts` (Centralized exports for clean imports)
 
 ### Text-to-Speech (TTS) 🔄 Legacy Structure (Migration Planned)
@@ -145,7 +530,7 @@ docs/                    # Comprehensive feature documentation
 
 ### Notes System 🔄 Legacy Structure (Migration Planned)
 - **Components**: `components/notes/`
-- **Page Logic**: `app/(protected)/documents/notes/`
+- **Page Logic**: `app/(protected)/documents/notes/` (✅ Dynamic rendering fixed)
 - **Types**: `types/notes.ts`
 
 ## File Naming Conventions
@@ -157,6 +542,9 @@ docs/                    # Comprehensive feature documentation
 - **Types**: `.types.ts`
 - **Server Actions**: `[domain].actions.ts`
 - **Use Cases**: `[UseCase]UseCase.ts`
+- **Services**: `[Name]Service.ts`
+- **Factories**: `[Entity]Factory.ts`
+- **Mappers**: `[Entity]Mapper.ts`
 
 ## Best Practices Followed
 
@@ -165,23 +553,32 @@ docs/                    # Comprehensive feature documentation
 ✅ **Type Safety**: Comprehensive TypeScript usage  
 ✅ **Clean Separation**: UI, business logic, and data layers separated  
 ✅ **Documentation**: Extensive docs for complex features in `docs/`  
-✅ **DDD in DAM**: Proper domain-driven design implementation  
-✅ **Progressive Migration**: Gradual migration to DDD patterns  
+✅ **Complete DDD in DAM**: Full domain-driven design implementation with all layers  
+✅ **Progressive Migration**: Gradual migration to DDD patterns following DAM blueprint  
+✅ **Dynamic Rendering**: Proper Next.js 15 dynamic rendering configuration  
+✅ **Barrel Exports**: Comprehensive `index.ts` files for clean imports  
+✅ **Service Layer**: Proper separation of concerns with service utilities  
 
 ## Migration Status & Future Plans
 
 ### ✅ Completed Migrations
-- **DAM Domain**: Fully migrated to DDD architecture
+- **DAM Domain**: ✅ **FULLY MIGRATED** to complete DDD architecture
+  - All legacy `components/dam/` moved to `lib/dam/presentation/`
+  - All legacy `lib/actions/dam/` moved to `lib/dam/application/actions/`
+  - Complete domain, application, infrastructure, and presentation layers
+  - Comprehensive use case organization by feature
+  - Full service layer with proper separation of concerns
 - **Multi-tenant Support**: Integrated across the platform
 - **Role System**: Complete role-based access control
 - **Team Management**: Full team member management system
+- **Dynamic Rendering**: Fixed Next.js 15 dynamic rendering issues
 
 ### 🔄 Planned DDD Migrations
-The following domains are candidates for DDD migration:
+The following domains are candidates for DDD migration using the DAM blueprint:
 
 1. **Text-to-Speech (TTS)**
    - Current: Use case pattern in `lib/usecases/tts/`
-   - Target: Full DDD with `lib/tts/domain|application|infrastructure/`
+   - Target: Full DDD with `lib/tts/domain|application|infrastructure|presentation/`
 
 2. **Authentication & Authorization**
    - Current: Mixed in `lib/auth/`
@@ -199,18 +596,22 @@ The following domains are candidates for DDD migration:
    - Current: Basic implementation
    - Target: Analytics domain with DDD
 
+6. **Notes System**
+   - Current: Components and page logic
+   - Target: DDD with document domain modeling
+
 ## Areas for Future Enhancement
 
 Consider these optimizations as the codebase grows:
 
-- **Complete DDD Migration**: Migrate remaining domains to DDD structure
-- **Barrel Exports**: Add `index.ts` files in component folders for cleaner imports
-- **Shared Types**: Consolidate cross-domain types in dedicated folders
+- **Complete DDD Migration**: Migrate remaining domains to DDD structure using DAM as blueprint
+- **Component Library**: Formalize the component system with Storybook
 - **E2E Tests**: Add Playwright/Cypress tests in a dedicated `e2e/` folder
 - **API Documentation**: Generate API docs from the growing API layer
-- **Component Library**: Formalize the component system with Storybook
 - **Performance Monitoring**: Add performance tracking for the growing feature set
+- **Cross-Domain Types**: Consolidate shared types across domains
+- **Domain Events**: Implement domain events for cross-domain communication
 
 ---
 
-*This structure supports both rapid feature development and long-term maintainability, with a clear migration path toward full DDD architecture.*
+*This structure demonstrates a mature DDD implementation in the DAM domain, providing a clear blueprint for migrating other domains. The architecture supports both rapid feature development and long-term maintainability with enterprise-level organization.*

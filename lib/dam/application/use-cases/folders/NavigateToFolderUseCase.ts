@@ -66,7 +66,24 @@ export class NavigateToFolderUseCase {
     // Get the target folder
     const folder = await this.folderRepository.findById(folderId, organizationId);
     if (!folder) {
-      throw new NotFoundError(`Folder with ID ${folderId} not found`);
+      // If folder not found, redirect to root instead of throwing error
+      // This handles cases where user is on a deleted folder URL
+      return {
+        currentFolder: {
+          id: null,
+          name: 'Root',
+          path: '/',
+        },
+        breadcrumbs: [
+          {
+            id: null,
+            name: 'Root',
+            isClickable: false,
+          },
+        ],
+        parentFolderId: null,
+        canNavigateUp: false,
+      };
     }
 
     // Build breadcrumb trail

@@ -10,8 +10,9 @@ export class GalleryDataService {
    * Fetches gallery data based on provided parameters
    * Uses appropriate use case based on whether filters are applied
    */
-  async fetchGalleryData(params: GalleryDataParams): Promise<GalleryDataResult> {
+  async fetchGalleryData(params: GalleryDataParams, forceRefresh: boolean = false): Promise<GalleryDataResult> {
     try {
+      
       // Import use cases dynamically to avoid client-side bundling issues
       const { GetDamDataUseCase } = await import('../../../application/use-cases/search/GetDamDataUseCase');
       const { ListFolderContentsUseCase } = await import('../../../application/use-cases/folders/ListFolderContentsUseCase');
@@ -37,13 +38,14 @@ export class GalleryDataService {
       if (hasFilters) {
         items = await this.fetchFilteredData(params, user.id, activeOrgId, assetRepository, folderRepository);
       } else {
-        items = await this.fetchFolderContents(params, activeOrgId, assetRepository, folderRepository);
+        items = await this.fetchFolderContents(params, activeOrgId, assetRepository, folderRepository, forceRefresh);
       }
+
+
 
       return { success: true, data: { items } };
 
     } catch (error) {
-      console.error('Error in fetchGalleryData:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -179,7 +181,8 @@ export class GalleryDataService {
     params: GalleryDataParams,
     activeOrgId: string,
     assetRepository: any,
-    folderRepository: any
+    folderRepository: any,
+    forceRefresh: boolean = false
   ): Promise<GalleryItemDto[]> {
     const { ListFolderContentsUseCase } = await import('../../../application/use-cases/folders/ListFolderContentsUseCase');
     const listFolderContentsUseCase = new ListFolderContentsUseCase(assetRepository, folderRepository);
@@ -187,6 +190,7 @@ export class GalleryDataService {
     const result = await listFolderContentsUseCase.execute({
       organizationId: activeOrgId,
       currentFolderId: params.currentFolderId,
+      forceRefresh,
     });
 
     return result.items;

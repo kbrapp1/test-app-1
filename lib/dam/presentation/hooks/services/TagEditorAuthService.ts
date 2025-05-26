@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
 import { AuthContext } from './TagEditorTypes';
 
 /**
@@ -11,6 +9,10 @@ export class TagEditorAuthService {
    * Gets authentication context including user and organization
    */
   async getAuthContext(): Promise<AuthContext> {
+    // Dynamic imports to avoid SSR issues
+    const { createClient } = await import('@/lib/supabase/client');
+    const { jwtDecode } = await import('jwt-decode');
+    
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     

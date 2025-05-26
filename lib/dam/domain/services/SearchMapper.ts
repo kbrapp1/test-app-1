@@ -28,6 +28,7 @@ export class SearchMapper {
         userId: asset.userId,
         userFullName: asset.userFullName,
         tags: asset.tags?.map((tag: any) => ({ id: tag.id, name: tag.name })) || [],
+        folderName: asset.folderName,
       })),
     ];
   }
@@ -59,6 +60,7 @@ export class SearchMapper {
       userId: asset.userId,
       userFullName: asset.userFullName,
       tags: asset.tags?.map((tag: any) => ({ id: tag.id, name: tag.name })) || [],
+      folderName: asset.folderName,
     }));
   }
 } 

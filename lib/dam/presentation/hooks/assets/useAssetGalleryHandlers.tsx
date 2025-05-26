@@ -25,7 +25,7 @@ interface UseAssetGalleryHandlersProps {
   closeMoveDialog: ReturnType<typeof useAssetItemDialogs>['closeMoveDialog'];
   openMoveDialog: ReturnType<typeof useAssetItemDialogs>['openMoveDialog'];
   setSelectedAssetId: (id: string | null) => void;
-  setOptimisticallyHiddenItemId: (id: string | null) => void;
+  addOptimisticallyHiddenItem: (id: string) => void;
   updateItems: (items: GalleryItemDto[]) => void;
   refreshGalleryData: (force?: boolean) => Promise<void>;
   onFolderNavigate?: (folderId: string | null) => void;
@@ -41,7 +41,7 @@ export const useAssetGalleryHandlers = ({
   closeMoveDialog,
   openMoveDialog,
   setSelectedAssetId,
-  setOptimisticallyHiddenItemId,
+  addOptimisticallyHiddenItem,
   updateItems,
   refreshGalleryData,
   onFolderNavigate,
@@ -138,7 +138,7 @@ export const useAssetGalleryHandlers = ({
 
   // Asset lifecycle handlers
   const handleAssetUpdated = useCallback(() => {
-    refreshGalleryData();
+    refreshGalleryData(true); // Force refresh to update folder names
   }, [refreshGalleryData]);
   
   const handleAssetDeleted = useCallback((assetId: string) => {
@@ -177,7 +177,7 @@ export const useAssetGalleryHandlers = ({
       sonnerToast.success('Asset moved', {
         description: `"${moveDialog.data.name}" has been moved successfully.`,
       });
-      refreshGalleryData();
+      refreshGalleryData(true); // Force refresh to update folder names
     } catch (error) {
       sonnerToast.error('Failed to move asset', { description: (error as Error).message });
     } finally {
@@ -192,7 +192,7 @@ export const useAssetGalleryHandlers = ({
       await renameAssetUseCase(dialogManager.renameAssetDialog.asset.id, newName);
       sonnerToast.success(`Asset renamed to "${newName}"`);
       dialogManager.closeRenameAsset();
-      refreshGalleryData();
+      refreshGalleryData(true); // Force refresh to update folder names
     } catch (error) {
       sonnerToast.error((error as Error).message || 'Failed to rename asset');
     }
@@ -204,17 +204,26 @@ export const useAssetGalleryHandlers = ({
     const assetToDelete = dialogManager.deleteAssetDialog.asset;
 
     try {
-      setOptimisticallyHiddenItemId(assetToDelete.id);
-      await deleteAssetUseCase(assetToDelete.id);
+      addOptimisticallyHiddenItem(assetToDelete.id);
+      
+      // Use the API route instead of direct use case to ensure proper cache invalidation
+      const response = await fetch(`/api/dam/asset/${assetToDelete.id}`, { 
+        method: 'DELETE' 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Failed to delete asset (${response.status})`);
+      }
+      
       sonnerToast.success(`Asset "${assetToDelete.name}" deleted successfully`);
       dialogManager.closeDeleteAsset();
       await refreshGalleryData(true);
-      setTimeout(() => setOptimisticallyHiddenItemId(null), 100);
     } catch (error) {
       sonnerToast.error((error as Error).message || 'Failed to delete asset');
-      setOptimisticallyHiddenItemId(null);
+      // Note: We don't need to manually clear the hidden item since refreshGalleryData will reset the state
     }
-  }, [dialogManager.deleteAssetDialog.asset, refreshGalleryData, dialogManager.closeDeleteAsset, setOptimisticallyHiddenItemId, deleteAssetUseCase]);
+  }, [dialogManager.deleteAssetDialog.asset, refreshGalleryData, dialogManager.closeDeleteAsset, addOptimisticallyHiddenItem]);
 
   // Asset action creators
   const createAssetActions = useCallback((asset: GalleryItemDto & { type: 'asset' }) => ({

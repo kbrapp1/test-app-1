@@ -35,8 +35,8 @@ export async function getRootFolders(): Promise<PlainFolder[]> {
     );
 
     const organizationId = await getActiveOrganizationId();
+    
     if (!organizationId) {
-      console.warn('No active organization found');
       return [];
     }
 
@@ -50,9 +50,10 @@ export async function getRootFolders(): Promise<PlainFolder[]> {
     });
 
     // Convert domain entities to plain objects for client serialization
-    return folders.map(folder => folder.toPlainObject());
+    const plainFolders = folders.map(folder => folder.toPlainObject());
+    return plainFolders;
   } catch (error) {
-    console.error('Error fetching root folders:', error);
+    console.error('❌ getRootFolders: Error fetching root folders:', error);
     return [];
   }
 }

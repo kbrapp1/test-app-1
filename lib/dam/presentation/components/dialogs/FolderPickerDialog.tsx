@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { FolderTreeRenderer } from './components/FolderTreeRenderer';
 import { useFolderPicker } from './hooks/useFolderPicker';
+import { Loader2 } from 'lucide-react';
 
 interface FolderPickerDialogProps {
   isOpen: boolean;
@@ -19,6 +20,11 @@ interface FolderPickerDialogProps {
   onFolderSelect: (folderId: string | null) => void;
   currentAssetFolderId?: string | null;
   assetName?: string;
+  // Optional custom title and description for bulk operations
+  dialogTitle?: string;
+  dialogDescription?: string;
+  // Loading state for move operation
+  isMoving?: boolean;
 }
 
 export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
@@ -27,6 +33,9 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   onFolderSelect,
   currentAssetFolderId,
   assetName,
+  dialogTitle: customDialogTitle,
+  dialogDescription: customDialogDescription,
+  isMoving = false,
 }) => {
   // Use domain hook for state management and business logic
   const {
@@ -41,13 +50,19 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   } = useFolderPicker({ isOpen });
 
   const handleConfirm = () => {
+    // Ensure we always pass a valid value (string or null, never undefined)
     if (selectedFolderId !== undefined) {
       onFolderSelect(selectedFolderId);
+    } else {
+      // This shouldn't happen since the button is disabled when undefined,
+      // but as a safety measure, we'll treat undefined as null (root)
+  
+      onFolderSelect(null);
     }
   };
   
-  const dialogTitle = assetName ? `Move \"${assetName}\"` : 'Move Asset';
-  const dialogDescription = 'Select a destination folder or move to root.';
+  const dialogTitle = customDialogTitle || (assetName ? `Move \"${assetName}\"` : 'Move Asset');
+  const dialogDescription = customDialogDescription || 'Select a destination folder or move to root.';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -81,14 +96,19 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isMoving}
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleConfirm} 
-            disabled={selectedFolderId === undefined || isInitiallyLoading}
+            disabled={selectedFolderId === undefined || isInitiallyLoading || isMoving}
           >
-            Move
+            {isMoving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isMoving ? 'Moving...' : 'Move'}
           </Button>
         </DialogFooter>
       </DialogContent>

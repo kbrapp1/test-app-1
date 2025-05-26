@@ -65,15 +65,42 @@ export function RenameFolderDialog({
   folderId,
   currentName,
 }: RenameFolderDialogProps) {
-    const [name, setName] = useState(currentName);  const [submissionHandled, setSubmissionHandled] = useState(false);    const { updateFolderNodeInStore } = useFolderStore();  useEffect(() => {    if (isOpen) {      setName(currentName);      setSubmissionHandled(false);     }  }, [isOpen, currentName]);  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
+  const [name, setName] = useState(currentName);
+  const [submissionHandled, setSubmissionHandled] = useState(false);
+  const { updateFolderNodeInStore, forceRefresh } = useFolderStore();
 
   useEffect(() => {
-    if (submissionHandled) return;
+    if (isOpen) {
+      setName(currentName);
+      setSubmissionHandled(false);
+    }
+  }, [isOpen, currentName]);
+  
+  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
+
+  useEffect(() => {
+    if (submissionHandled) {
+      return;
+    }
 
     if (state.success && state.folder) {
       toast.success(`Folder renamed to "${state.folder.name}" successfully.`);
       
-            // Convert PlainFolder to DomainFolder for the store      const domainFolder = new DomainFolder({        id: state.folder.id,        name: state.folder.name,        userId: state.folder.userId,        createdAt: state.folder.createdAt,        updatedAt: state.folder.updatedAt,        parentFolderId: state.folder.parentFolderId,        organizationId: state.folder.organizationId,        has_children: state.folder.has_children,      });            console.log('🔄 Updating folder in store:', {        folderId: domainFolder.id,        oldName: currentName,        newName: domainFolder.name,        folderObject: domainFolder      });            updateFolderNodeInStore(domainFolder);
+      // Convert PlainFolder to DomainFolder for the store
+      const domainFolder = new DomainFolder({
+        id: state.folder.id,
+        name: state.folder.name,
+        userId: state.folder.userId,
+        createdAt: state.folder.createdAt,
+        updatedAt: state.folder.updatedAt,
+        parentFolderId: state.folder.parentFolderId,
+        organizationId: state.folder.organizationId,
+        has_children: state.folder.has_children,
+      });
+      
+      // Update folder in store and refresh tree
+      updateFolderNodeInStore(domainFolder);
+      forceRefresh();
       
       // Dispatch global event for gallery refresh
       window.dispatchEvent(new CustomEvent('folderUpdated', { 
@@ -90,7 +117,7 @@ export function RenameFolderDialog({
       toast.error(`Error: ${state.error}`);
       setSubmissionHandled(true); 
     }
-  }, [state, currentName, onClose, updateFolderNodeInStore, submissionHandled]);
+  }, [state, currentName, onClose, updateFolderNodeInStore, forceRefresh, submissionHandled]);
 
   if (!isOpen) {
     return null;

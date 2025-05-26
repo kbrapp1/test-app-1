@@ -7,6 +7,7 @@ import {
   SizeFilter, 
   SortControl 
 } from '../../filters';
+import { MultiSelectToggle } from '../../selection/MultiSelectToggle';
 import type { SortByValue, SortOrderValue } from '../../../hooks/search/useDamFilters';
 
 export interface WorkspaceFiltersProps {
@@ -26,6 +27,9 @@ export interface WorkspaceFiltersProps {
   // Organization data
   organizationMembers: Array<{id: string, name: string}>;
   
+  // Multi-select states (optional) - selectedCount for display only
+  selectedCount?: number;
+  
   // Filter handlers
   setFilterType: (type: string | undefined) => void;
   setFilterCreationDateOption: (option: string | undefined, startDate?: string, endDate?: string) => void;
@@ -33,6 +37,9 @@ export interface WorkspaceFiltersProps {
   setFilterSizeOption: (option: string | undefined, minSize?: number, maxSize?: number) => void;
   handleSortChange: (newSortBy: SortByValue | undefined, newSortOrder: SortOrderValue | undefined) => void;
   clearAllFilters: () => void;
+  
+  // Multi-select handlers (optional)
+  onToggleMultiSelect?: () => void;
 }
 
 /**
@@ -61,12 +68,14 @@ export const WorkspaceFilters: React.FC<WorkspaceFiltersProps> = ({
   sortOrder,
   isAnyFilterActive,
   organizationMembers,
+  selectedCount = 0,
   setFilterType,
   setFilterCreationDateOption,
   setFilterOwnerId,
   setFilterSizeOption,
   handleSortChange,
   clearAllFilters,
+  onToggleMultiSelect,
 }) => {
   return (
     <div className="flex flex-wrap items-center gap-2 pb-2">
@@ -100,6 +109,13 @@ export const WorkspaceFilters: React.FC<WorkspaceFiltersProps> = ({
         currentSortOrder={sortOrder || null}
         onSortChange={handleSortChange} 
       />
+      
+      {/* Selection count display - only show when items are selected */}
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          <span className="font-medium">{selectedCount} selected</span>
+        </div>
+      )}
       
       {isAnyFilterActive && (
         <Button 

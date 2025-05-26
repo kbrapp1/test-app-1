@@ -22,6 +22,7 @@ export const findAndUpdateNode = (
   return nodes.map(node => {
     if (node.id === folderId) {
       const updates = updateFn(node);
+      
       // Explicitly preserve domain entity properties that might have getters
       const preservedNode = {
         ...node,
@@ -29,6 +30,7 @@ export const findAndUpdateNode = (
         parentFolderId: node.parentFolderId, // Explicitly preserve the parentFolderId getter
         ...updates
       } as FolderNode; // Type assertion to handle domain entity spread
+      
       return preservedNode;
     }
     if (node.children) {

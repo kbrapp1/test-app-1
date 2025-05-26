@@ -49,11 +49,9 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
         onDataChange();
         setIsRenameDialogOpen(false);
       } else {
-        console.error("Error renaming folder, raw result.error:", result.error);
         toast({ title: 'Error Renaming', description: result.error || 'An unknown error occurred.' });
       }
     } catch (error) {
-      console.error("Caught error in handleRenameSubmit:", error);
       toast({ title: 'Submit Error', description: 'An unexpected error occurred while submitting the new name.' });
     }
   };
@@ -67,11 +65,9 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
         onDataChange();
         setIsDeleteDialogOpen(false);
       } else {
-        console.error("Error deleting folder, raw result.error:", result.error);
         toast({ title: 'Error Deleting Folder', description: result.error || 'An unknown error occurred.', variant: 'destructive' });
       }
     } catch (error) {
-      console.error("Caught error in handleDeleteConfirm:", error);
       toast({ title: 'Delete Error', description: 'An unexpected error occurred while deleting the folder.', variant: 'destructive' });
     } finally {
       setIsDeleting(false);
@@ -103,8 +99,12 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
         <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 bg-white/80 backdrop-blur-sm border border-gray-300 hover:bg-white hover:border-blue-500 hover:shadow-md hover:scale-110 focus:bg-white focus:border-blue-500 focus:shadow-md focus:scale-110 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+              >
+                <MoreHorizontal className="h-4 w-4 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
                 <span className="sr-only">Actions for folder {folder.name}</span>
               </Button>
             </DropdownMenuTrigger>

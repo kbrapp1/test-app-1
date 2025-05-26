@@ -18,6 +18,8 @@ export const FolderLink: React.FC<FolderLinkProps> = ({
   folderNode,
   isOver,
 }) => {
+
+  
   return (
     <Link
       href={`/dam?folderId=${folderNode.id}`}

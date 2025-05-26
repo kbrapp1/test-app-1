@@ -8,6 +8,8 @@ export { AssetActionDropdownMenu } from './AssetActionDropdownMenu';
 export type { AssetActionDropdownMenuProps } from './AssetActionDropdownMenu';
 export { DomainTagEditor } from './DomainTagEditor';
 export type { DomainTagEditorProps } from './DomainTagEditor';
+export { SelectableAssetGridItem } from './SelectableAssetGridItem';
+export type { SelectableAssetGridItemProps } from './SelectableAssetGridItem';
 
 // TODO: Enable these exports after component migration
 // export { AssetUploader } from './AssetUploader'; 

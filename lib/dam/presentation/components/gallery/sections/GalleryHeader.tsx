@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Navigation } from 'lucide-react';
+import { Navigation, CheckSquare } from 'lucide-react';
 import { FolderBreadcrumbs } from '../../navigation/FolderBreadcrumbs';
 import { NewFolderDialog } from '../../dialogs/NewFolderDialog';
 
@@ -12,6 +12,9 @@ interface GalleryHeaderProps {
   folderNavigation?: any;
   activeFolderId: string | null;
   onRefresh: () => void;
+  // Multi-select props
+  enableMultiSelect?: boolean;
+  multiSelect?: any;
 }
 
 export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
@@ -20,9 +23,11 @@ export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
   folderNavigation,
   activeFolderId,
   onRefresh,
+  enableMultiSelect = false,
+  multiSelect,
 }) => {
   if (!showNavigationUI || !enableNavigation || !folderNavigation?.navigation) {
-    return null;
+    return null; // Multi-select is now handled by workspace-level controls
   }
 
   return (
@@ -33,6 +38,17 @@ export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
           Folder Navigation
         </h3>
         <div className="flex items-center space-x-2">
+          {enableMultiSelect && (
+            <Button
+              variant={multiSelect?.isSelecting ? "default" : "outline"}
+              size="sm"
+              onClick={multiSelect?.toggleSelectionMode}
+              className="flex items-center gap-2"
+            >
+              <CheckSquare className="w-4 h-4" />
+              {multiSelect?.isSelecting ? 'Exit Selection' : 'Select Items'}
+            </Button>
+          )}
           <NewFolderDialog
             currentFolderId={activeFolderId}
             asIcon={false}
