@@ -76,7 +76,10 @@ export class GalleryDataService {
     // Decode JWT to get organization ID
     const { jwtDecode } = await import('jwt-decode');
     const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+    
+    // Try to get organization ID from custom_claims first (auth hook), then fallback to app_metadata
+    let activeOrgId = decodedToken.custom_claims?.active_organization_id || 
+                      decodedToken.app_metadata?.active_organization_id;
     
     if (!activeOrgId) {
       return { success: false, error: 'No active organization found' };

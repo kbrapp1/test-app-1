@@ -21,7 +21,10 @@ export class AuthContextService {
     if (!session?.access_token) throw new Error('No session found');
 
     const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+    
+    // Try to get organization ID from custom_claims first (auth hook), then fallback to app_metadata
+    const activeOrgId = decodedToken.custom_claims?.active_organization_id || 
+                        decodedToken.app_metadata?.active_organization_id;
     if (!activeOrgId) throw new Error('No active organization found');
 
     return { supabase, user, activeOrgId };

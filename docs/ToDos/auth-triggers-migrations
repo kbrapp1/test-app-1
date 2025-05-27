@@ -1,0 +1,255 @@
+# Missing Auth Triggers Issue and Resolution
+
+## Overview
+
+This document explains a critical issue discovered where auth triggers were missing from production but present in development, causing manual user creation to fail in production while working correctly in development.
+
+## Problem Description
+
+### Symptoms
+- Manual user creation works in development Supabase dashboard
+- Manual user creation fails in production Supabase dashboard
+- Users created in production cannot access DAM section (get "No active organization found" error)
+- Frontend code looking for `custom_claims.active_organization_id` in JWT tokens
+
+### Root Cause
+Auth triggers that handle user profile creation and organization setup were missing from migration files, causing a discrepancy between environments:
+
+- **Development Environment**: Has auth triggers (added manually or from older setup)
+- **Production Environment**: Missing auth triggers (only has what's in migrations)
+
+## Technical Analysis
+
+### Missing Triggers in Production
+The following triggers were present in development but missing in production:
+
+```sql
+-- Trigger for new user creation
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Trigger for user email updates  
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE OF email ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_email_update();
+
+-- Trigger for user last sign in updates
+CREATE TRIGGER on_auth_user_last_sign_in_updated
+  AFTER UPDATE OF last_sign_in_at ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_last_sign_in_update();
+
+-- Trigger for email domain validation
+CREATE TRIGGER before_user_insert_check_domain
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.check_email_domain();
+```
+
+### Functions vs Triggers
+The migration files contained the **functions** but not the **triggers**:
+- ✅ `handle_new_user()` function exists
+- ✅ `handle_user_email_update()` function exists  
+- ✅ `handle_user_last_sign_in_update()` function exists
+- ✅ `check_email_domain()` function exists
+- ❌ Auth triggers calling these functions were missing
+
+### Environment Comparison
+
+#### Development Environment User Data
+```json
+{
+  "raw_app_meta_data": {
+    "role": "admin",
+    "provider": "email", 
+    "providers": ["email"],
+    "active_organization_id": "ce099184-5169-474e-be71-4fcb9e5e94f8"
+  },
+  "raw_user_meta_data": {
+    "name": "Kip Rapp",
+    "email_verified": true
+  }
+}
+```
+
+#### Production Environment User Data (Before Fix)
+```json
+{
+  "raw_app_meta_data": {
+    "provider": "email",
+    "providers": ["email"],
+    "active_organization_id": "c8cfef2b-7db2-495f-aca1-87183acacb82"
+  },
+  "raw_user_meta_data": {
+    "email_verified": true
+  }
+}
+```
+
+## Resolution Steps
+
+### 1. Immediate Fix Applied
+Added missing auth triggers directly to production using Supabase MCP:
+
+```sql
+-- Applied via mcp_supabase_apply_migration
+CREATE OR REPLACE FUNCTION handle_new_user() RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email) VALUES (NEW.id, NEW.email);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ... other functions ...
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ... other triggers ...
+```
+
+### 2. Frontend Code Enhancement
+Updated frontend services to check both JWT locations for organization ID:
+
+```typescript
+// Before (only checked custom_claims)
+const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+
+// After (checks both locations)
+const activeOrgId = decodedToken.custom_claims?.active_organization_id || 
+                    decodedToken.app_metadata?.active_organization_id;
+```
+
+Files updated:
+- `lib/dam/presentation/hooks/services/GalleryDataService.ts`
+- `lib/dam/presentation/hooks/gallery/drag-drop/services/AuthContextService.ts`
+- `lib/dam/domain/services/AuthContextService.ts`
+
+### 3. Long-term Solution Required
+Create a proper migration file to ensure consistency across all environments:
+
+**File**: `supabase/migrations/20250127000000_add_auth_triggers.sql`
+```sql
+-- Add missing auth triggers that should have been included in initial migration
+-- These triggers are essential for proper user profile creation and management
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE OF email ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_email_update();
+
+CREATE TRIGGER on_auth_user_last_sign_in_updated
+  AFTER UPDATE OF last_sign_in_at ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_last_sign_in_update();
+
+CREATE TRIGGER before_user_insert_check_domain
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.check_email_domain();
+```
+
+## Why This Happened
+
+### Common Supabase Migration Issue
+This is a common issue with Supabase projects where:
+
+1. **Auth Schema Limitations**: The `auth` schema is managed by Supabase and migrations typically only cover the `public` schema
+2. **Manual Development Setup**: Auth triggers were likely added manually to development during initial setup
+3. **Migration Gap**: These manual additions weren't captured in the initial migration files
+4. **Production Deployment**: Production only received what was in the migration files
+
+### Auth Hook vs App Metadata
+The system uses two mechanisms for organization context:
+
+1. **Auth Hook (`set-active-org-claim`)**: Sets `custom_claims` in JWT during login
+2. **Direct App Metadata**: Sets `active_organization_id` in user's `app_metadata`
+
+The auth hook relies on proper user setup (including triggers) to function correctly.
+
+## Verification Steps
+
+### Check Triggers Exist
+```sql
+SELECT 
+  n.nspname as schema_name,
+  c.relname as table_name,
+  t.tgname as trigger_name
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE n.nspname = 'auth'
+  AND NOT t.tgisinternal
+ORDER BY schema_name, table_name, trigger_name;
+```
+
+Expected results:
+- `before_user_insert_check_domain`
+- `on_auth_user_created`
+- `on_auth_user_last_sign_in_updated`
+- `on_auth_user_updated`
+
+### Test User Creation Flow
+1. Create user manually in Supabase dashboard
+2. Assign to organization membership
+3. User logs in
+4. Check that profile is created automatically
+5. Verify DAM access works
+
+## Prevention
+
+### Migration Best Practices
+1. **Capture All Schema Changes**: Ensure auth triggers are included in migrations
+2. **Environment Parity**: Regularly compare development and production schemas
+3. **Documentation**: Document any manual schema changes that need to be migrated
+4. **Testing**: Test user creation flow in all environments
+
+### Schema Comparison Script
+Consider creating a script to compare schemas between environments:
+
+```sql
+-- Compare triggers between environments
+SELECT 
+  'dev' as environment,
+  t.tgname as trigger_name,
+  c.relname as table_name
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+WHERE c.relname = 'users' AND NOT t.tgisinternal;
+```
+
+## Related Files
+
+### Migration Files
+- `supabase/migrations/20240527010000_init-schema.sql` - Contains functions but missing triggers
+- `supabase/migrations/20250526122800_more-init-updates.sql` - Function updates
+- `supabase/migrations/20250127000000_add_auth_triggers.sql` - **TO BE CREATED**
+
+### Frontend Files Modified
+- `lib/dam/presentation/hooks/services/GalleryDataService.ts`
+- `lib/dam/presentation/hooks/gallery/drag-drop/services/AuthContextService.ts`
+- `lib/dam/domain/services/AuthContextService.ts`
+
+### Edge Functions
+- `supabase/functions/set-active-org-claim/index.ts` - Auth hook for JWT claims
+
+## Lessons Learned
+
+1. **Auth triggers are critical** for proper user lifecycle management
+2. **Migration completeness** is essential for environment parity
+3. **Frontend resilience** should handle multiple data sources
+4. **Schema validation** should be part of deployment process
+5. **Documentation** of manual changes prevents future issues
+
+## Status
+
+- ✅ **Immediate Fix Applied**: Auth triggers added to production
+- ✅ **Frontend Enhanced**: Code now handles both JWT claim locations  
+- ⏳ **Migration Pending**: Need to create proper migration file
+- ⏳ **Testing Required**: Verify user creation flow works consistently
+
+---
+
+*Last Updated: January 27, 2025*
+*Issue Resolved By: AI Assistant via Supabase MCP*
