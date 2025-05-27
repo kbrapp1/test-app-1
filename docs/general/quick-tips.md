@@ -47,7 +47,7 @@ If you want to delete make changes in both dbs
 2. delete the local migration files (e.g. migration file that just made that test table)
 3. supabase migration repair --status reverted 20250526122800 <- timestamp of that migration file 20250526122800_add-test-table
 
-## Supabase code changes in main/dev and push to release/prod
+## Cursor code changes in main/dev and push to release/prod
 1. Make code changes in dev -> commit -> sync to GitHub to update main branch in GitHub (and updates vercel dev)
 2. Change cursor branch to release
 3. click 3 dots -> pull to get latest changes from GitHub
