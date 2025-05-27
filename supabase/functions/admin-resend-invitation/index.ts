@@ -89,7 +89,12 @@ Deno.serve(async (req: Request) => {
 
     console.log(`admin-resend-invitation: Attempting to resend invitation for email: ${email}, orgId: ${organizationId}, roleId: ${roleId}`);
     // Determine redirect URL for invitation
-    const origin = req.headers.get('Origin') || Deno.env.get("PUBLIC_APP_URL");
+    let origin = req.headers.get('Origin');
+    if (!origin) {
+      // Fallback to environment variables or default
+      origin = Deno.env.get("PUBLIC_APP_URL") || 'https://test-app-1-beta.vercel.app';
+    }
+    console.log(`admin-resend-invitation: Using origin for redirect: ${origin}`);
     const redirectTo = `${origin}/onboarding`;
 
     // Ensure the target user exists and belongs to the same organization

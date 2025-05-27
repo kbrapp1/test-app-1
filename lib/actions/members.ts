@@ -39,9 +39,27 @@ export async function inviteMemberToOrganization(
     }
 
     // Determine the correct application URL based on the environment
-    const appUrl = process.env.NODE_ENV === 'development' 
-                   ? (process.env.NEXT_PUBLIC_APP_URL_DEV || 'http://localhost:3000') 
-                   : (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL);
+    let appUrl: string;
+    
+    if (process.env.NODE_ENV === 'development') {
+      // Local development environment - use localhost
+      appUrl = process.env.NEXT_PUBLIC_APP_URL_DEV || 'http://localhost:3000';
+    } else {
+      // Deployed environment (Vercel dev/staging/production)
+      // VERCEL_URL is automatically set by Vercel to the current deployment's URL
+      const vercelUrl = process.env.VERCEL_URL;
+      if (vercelUrl) {
+        // This will be the correct URL for whichever Vercel environment we're in
+        // - test-app-1-beta.vercel.app for main branch (dev environment)
+        // - your-production-url.vercel.app for release branch (production environment)
+        appUrl = `https://${vercelUrl}`;
+      } else {
+        // Fallback for non-Vercel deployments or if VERCEL_URL is missing
+        appUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://test-app-1-beta.vercel.app';
+      }
+    }
+
+    console.log('Determined app URL for invite:', appUrl);
 
     const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/invite-member`;
     

@@ -41,8 +41,20 @@ export default function ConfirmLogic() {
         console.error('Auth Confirm: User not found after potential code exchange.', getUserError)
         router.replace('/login?error=confirmation_failed')
       } else {
-        // User found, session likely established, redirect to dashboard
-        router.replace('/dashboard')
+        // User found, session likely established
+        const user = data.user
+        
+        // Check if this is an invited user who needs to complete onboarding
+        const userMetadata = user.user_metadata || {}
+        const isInvitedUser = userMetadata.invited_to_org_id && userMetadata.assigned_role_id
+        
+        if (isInvitedUser) {
+          console.log('Auth Confirm: Invited user detected, redirecting to onboarding')
+          router.replace('/onboarding')
+        } else {
+          console.log('Auth Confirm: Regular user, redirecting to dashboard')
+          router.replace('/dashboard')
+        }
       }
     }
 

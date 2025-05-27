@@ -108,7 +108,9 @@ serve(async (req: Request) => {
     if (!baseUrlForRedirect) {
       const originFromHeader = req.headers.get('Origin');
       const publicAppUrlEnv = Deno.env.get("PUBLIC_APP_URL");
-      baseUrlForRedirect = originFromHeader || publicAppUrlEnv || 'http://localhost:3000';
+      // Fallback hierarchy: Origin header -> PUBLIC_APP_URL env -> fallback
+      // Note: explicit_app_url should always be provided by the client action
+      baseUrlForRedirect = originFromHeader || publicAppUrlEnv || 'https://test-app-1-beta.vercel.app';
       console.log("explicit_app_url not provided, using fallback. Origin header:", originFromHeader, "PUBLIC_APP_URL env:", publicAppUrlEnv);
     } else {
       console.log("Using explicitly provided app_url:", explicit_app_url);

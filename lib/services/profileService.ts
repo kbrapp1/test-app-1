@@ -11,15 +11,14 @@ export async function updateUserProfile(supabase: SupabaseClient, user: User): P
     email: user.email,
     full_name: user.user_metadata?.full_name || null,
     avatar_url: user.user_metadata?.avatar_url || null,
-    updated_at: new Date().toISOString(),
   };
 
   const { error: profileError } = await supabase
-    .from('Profile')
+    .from('profiles')
     .upsert(profileData, { onConflict: 'id' });
 
   if (profileError) {
     console.error('Error upserting profile:', profileError);
-    throw new Error(`Profile update failed: ${profileError.message}`);
+    throw new Error(`Profile update failed: ${profileError.message || 'Unknown error'}`);
   }
 }

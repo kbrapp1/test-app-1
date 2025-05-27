@@ -7,6 +7,106 @@ alwaysApply: false
 
 This is a **Next.js 13+ App Router** application with **Domain-Driven Design (DDD)** patterns, following enterprise-level organization.
 
+## Environment Architecture
+
+### 🌍 Deployment Environments
+
+#### **Local Development**
+- **URL**: `http://localhost:3000`
+- **Frontend**: Next.js dev server (`pnpm dev`)
+- **Database**: Supabase dev project (`test-app-1`, ID: `zzapbmpqkqeqsrqwttzd`)
+- **Configuration**: `.env.local` file
+- **Edge Functions**: Deployed manually via CLI to dev Supabase project
+- **Branch**: Any local branch
+- **Use Case**: Development, testing, debugging
+
+#### **Vercel Dev Environment**
+- **URL**: `https://test-app-1-beta.vercel.app`
+- **Frontend**: Vercel deployment (auto-deploy from `main` branch)
+- **Database**: Supabase dev project (`test-app-1`, ID: `zzapbmpqkqeqsrqwttzd`)
+- **Configuration**: Vercel environment variables (should point to dev Supabase)
+- **Edge Functions**: Supabase dev project
+- **Branch**: `main` branch
+- **Use Case**: Staging, preview, team testing
+
+#### **Vercel Production Environment**
+- **URL**: `https://main-app-eight-navy.vercel.app`
+- **Frontend**: Vercel deployment (auto-deploy from `release` branch)
+- **Database**: Supabase production project (`main-app-1`, ID: `awtjzxyuhcejzxmzoqwr`)
+- **Configuration**: Vercel environment variables (points to production Supabase)
+- **Edge Functions**: Supabase production project
+- **Branch**: `release` branch
+- **Use Case**: Live production, end users
+
+### 🗄️ Database Architecture
+
+#### **Supabase Dev Project** (`test-app-1`)
+- **Project ID**: `zzapbmpqkqeqsrqwttzd`
+- **Used By**: Local development + Vercel dev environment
+- **Data**: Development/test data only
+- **Migrations**: Applied during development
+- **Edge Functions**: Dev versions of functions
+
+#### **Supabase Production Project** (`main-app-1`)
+- **Project ID**: `awtjzxyuhcejzxmzoqwr`
+- **Used By**: Vercel production environment
+- **Data**: Live production data
+- **Migrations**: Applied from `release` branch
+- **Edge Functions**: Production versions of functions
+
+### 🚀 Deployment Flow
+
+#### **Development Workflow**
+1. **Code Changes**: Work on any branch locally
+2. **Local Testing**: Test against dev Supabase (`zzapbmpqkqeqsrqwttzd`)
+3. **Edge Functions**: Deploy manually to dev Supabase for testing
+4. **Push to `main`**: Auto-deploys to Vercel dev environment
+5. **Staging Testing**: Test on `https://test-app-1-beta.vercel.app`
+
+#### **Production Workflow**
+1. **Merge to `release`**: Auto-deploys to Vercel production
+2. **Edge Functions**: Deploy manually to production Supabase (`awtjzxyuhcejzxmzoqwr`)
+3. **Database Migrations**: Apply to production Supabase
+4. **Live Testing**: Verify on `https://main-app-eight-navy.vercel.app`
+
+### 🔧 Configuration Management
+
+#### **Environment Variables**
+- **Local**: `.env.local` (points to dev Supabase)
+- **Vercel Dev**: Vercel dashboard env vars (should point to dev Supabase)
+- **Vercel Prod**: Vercel dashboard env vars (points to production Supabase)
+
+#### **Supabase CLI Linking**
+- **Current Link**: Production project (`awtjzxyuhcejzxmzoqwr`) stored in `supabase/.temp/project-ref`
+- **Switch Projects**: Use `npx supabase link --project-ref [PROJECT_ID]`
+- **Deploy Functions**: `npx supabase functions deploy` (deploys to currently linked project)
+
+#### **Key Environment Variables**
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[anon-key]
+SUPABASE_SERVICE_ROLE_KEY=[service-role-key]
+
+# App URLs (for edge functions)
+NEXT_PUBLIC_APP_URL_DEV=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=[production-url]
+```
+
+### 📋 Environment Checklist
+
+#### **Before Deploying Edge Functions**
+- [ ] Verify which Supabase project is linked (`npx supabase projects list`)
+- [ ] Check environment variables are set (`npx supabase secrets list`)
+- [ ] Deploy to correct environment (dev vs production)
+
+#### **Before Production Release**
+- [ ] Test on Vercel dev environment
+- [ ] Deploy edge functions to production Supabase
+- [ ] Verify production environment variables
+- [ ] Apply database migrations to production
+- [ ] Merge to `release` branch
+
 ## Key Architecture Patterns
 
 - **Feature-Based Organization**: Code is grouped by business domain (DAM, TTS, Auth, Marketing Automation, etc.)
