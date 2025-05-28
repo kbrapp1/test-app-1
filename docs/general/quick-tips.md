@@ -11,6 +11,8 @@ npm run test:watch
 * Note the extra `--` needed to pass flags through npm to the Vitest command.
 
 ### Supbase production data schema dump
+npx supabase link --project-ref awtjzxyuhcejzxmzoqwr | gdYSVWQZ$aV2EC$ (production)
+npx supabase link --project-ref zzapbmpqkqeqsrqwttzd | NcxiGGn!Q.C@H6T (dev)
 npx supabase db dump --schema public --schema auth --schema storage --file "./docs/supabase/full_schema_dump.sql"
 
 ### Get folder and file structure of current project
@@ -59,4 +61,4 @@ If you want to delete make changes in both dbs
 2. npx supabase functions deploy | for all
 3. npx supabase functions deploy [edge-function] e.g. invite-member
 
-note: for set-active-org-claim, make sure the Enforce JWT Verification= OFF
+note: for set-active-org-claim edge function, make sure the Enforce JWT Verification= OFF

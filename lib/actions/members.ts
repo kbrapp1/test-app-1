@@ -46,16 +46,17 @@ export async function inviteMemberToOrganization(
       appUrl = process.env.NEXT_PUBLIC_APP_URL_DEV || 'http://localhost:3000';
     } else {
       // Deployed environment (Vercel dev/staging/production)
-      // VERCEL_URL is automatically set by Vercel to the current deployment's URL
-      const vercelUrl = process.env.VERCEL_URL;
-      if (vercelUrl) {
-        // This will be the correct URL for whichever Vercel environment we're in
-        // - test-app-1-beta.vercel.app for main branch (dev environment)
-        // - your-production-url.vercel.app for release branch (production environment)
-        appUrl = `https://${vercelUrl}`;
+      // Prioritize explicitly set NEXT_PUBLIC_SITE_URL for production
+      if (process.env.NEXT_PUBLIC_SITE_URL) {
+        appUrl = process.env.NEXT_PUBLIC_SITE_URL;
       } else {
-        // Fallback for non-Vercel deployments or if VERCEL_URL is missing
-        appUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://test-app-1-beta.vercel.app';
+        // Fallback to VERCEL_URL (automatically set by Vercel)
+        const vercelUrl = process.env.VERCEL_URL;
+        if (vercelUrl) {
+          appUrl = `https://${vercelUrl}`;
+        } else {
+          appUrl = 'https://test-app-1-beta.vercel.app';
+        }
       }
     }
 
