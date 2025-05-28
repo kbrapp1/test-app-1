@@ -322,6 +322,13 @@ VALUES ('[ORG_ID]', 'yourdomain.com', NOW());
 3. Verify user has organization membership
 4. Manually set app_metadata if needed (temporary fix)
 
+### 12.2 Invitation Emails Don't Redirect to /onboarding
+**Cause:** Client code prioritizing `VERCEL_URL` over `NEXT_PUBLIC_SITE_URL`
+**Solution:**
+1. Check Edge Function logs for the "Final 'redirectTo' URL" message
+2. Ensure `NEXT_PUBLIC_SITE_URL` is set correctly in Vercel environment variables
+3. If still wrong, update client code in `lib/actions/members.ts` to prioritize `NEXT_PUBLIC_SITE_URL` over `VERCEL_URL`
+
 ### 12.2 Storage Access Denied
 **Cause:** RLS policies not configured correctly
 **Solution:**
