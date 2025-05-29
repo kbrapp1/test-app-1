@@ -77,24 +77,67 @@ serve(async (req: Request, connInfo: ConnInfo)=>{
     );
 
     let activeOrganizationId: string | null = null;
-    const { data: memberships, error: membershipError } = await supabaseAdminClient
-      .from('organization_memberships')
-      .select('organization_id, role_id, roles(name)')
-      .eq('user_id', userId)
-      .returns<{ organization_id: string; role_id: string; roles: { name: string } }[]>();
-
-    if (membershipError) {
-      console.error('Error fetching organization memberships:', membershipError);
-    } else if (memberships && memberships.length > 0) {
-      const adminMembership = memberships.find((m) => m.roles?.name === 'admin');
-      if (adminMembership) {
-        activeOrganizationId = adminMembership.organization_id;
+    
+    // First, check if user already has an active organization in their metadata
+    const { data: userData, error: userError } = await supabaseAdminClient.auth.admin.getUserById(userId);
+    const existingOrgId = userData?.user?.user_metadata?.active_organization_id;
+    
+    if (existingOrgId) {
+      console.log(`User already has active organization in metadata: ${existingOrgId}`);
+      
+      // Check if user has access to this organization (either membership or super admin)
+      const { data: profile } = await supabaseAdminClient
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', userId)
+        .single();
+      
+      const isSuperAdmin = profile?.is_super_admin || false;
+      
+      if (isSuperAdmin) {
+        console.log(`User is super admin, allowing access to organization: ${existingOrgId}`);
+        activeOrganizationId = existingOrgId;
       } else {
-        activeOrganizationId = memberships[0].organization_id;
+        // Check if user is a member of the existing organization
+        const { data: membership } = await supabaseAdminClient
+          .from('organization_memberships')
+          .select('organization_id')
+          .eq('user_id', userId)
+          .eq('organization_id', existingOrgId)
+          .single();
+        
+        if (membership) {
+          console.log(`User has membership in existing organization: ${existingOrgId}`);
+          activeOrganizationId = existingOrgId;
+        } else {
+          console.log(`User no longer has access to organization: ${existingOrgId}, will fallback to memberships`);
+        }
       }
-      console.log(`Selected active_organization_id: ${activeOrganizationId} for user ${userId}`);
-    } else {
-      console.log(`No organization memberships found for user ${userId}.`);
+    }
+    
+    // If no valid existing organization, fall back to membership-based selection
+    if (!activeOrganizationId) {
+      console.log('No valid existing organization found, selecting from memberships...');
+      
+      const { data: memberships, error: membershipError } = await supabaseAdminClient
+        .from('organization_memberships')
+        .select('organization_id, role_id, roles(name)')
+        .eq('user_id', userId)
+        .returns<{ organization_id: string; role_id: string; roles: { name: string } }[]>();
+
+      if (membershipError) {
+        console.error('Error fetching organization memberships:', membershipError);
+      } else if (memberships && memberships.length > 0) {
+        const adminMembership = memberships.find((m) => m.roles?.name === 'admin');
+        if (adminMembership) {
+          activeOrganizationId = adminMembership.organization_id;
+        } else {
+          activeOrganizationId = memberships[0].organization_id;
+        }
+        console.log(`Selected active_organization_id from memberships: ${activeOrganizationId} for user ${userId}`);
+      } else {
+        console.log(`No organization memberships found for user ${userId}.`);
+      }
     }
 
     const baseClaims = payload.claims || {};

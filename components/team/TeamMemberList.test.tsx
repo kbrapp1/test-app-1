@@ -1,7 +1,7 @@
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { TeamMemberList } from './TeamMemberList';
-import { TeamMember } from '@/lib/actions/team';
+import { TeamMember } from '@/types/team';
 
 // Mock the TeamMemberCard component to isolate testing TeamMemberList
 vi.mock('./TeamMemberCard', () => ({

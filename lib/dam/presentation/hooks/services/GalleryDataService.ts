@@ -63,6 +63,28 @@ export class GalleryDataService {
     const { createClient } = await import('@/lib/supabase/client');
     const supabase = createClient();
     
+    // Force session refresh if recent organization switch detected
+    if (typeof window !== 'undefined') {
+      const orgSwitchSuccess = localStorage.getItem('org_switch_success');
+      if (orgSwitchSuccess) {
+        try {
+          const { timestamp } = JSON.parse(orgSwitchSuccess);
+          // If switch happened within last 5 seconds, force session refresh
+          if (Date.now() - timestamp < 5000) {
+            console.log('🔄 DAM: Recent org switch detected, forcing session refresh...');
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.warn('⚠️ DAM: Session refresh failed:', refreshError.message);
+            } else {
+              console.log('✅ DAM: Session refreshed successfully');
+            }
+          }
+        } catch (e) {
+          console.warn('Error parsing org switch info:', e);
+        }
+      }
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return { success: false, error: 'User not authenticated' };
@@ -80,6 +102,25 @@ export class GalleryDataService {
     // Try to get organization ID from custom_claims first (auth hook), then fallback to app_metadata
     let activeOrgId = decodedToken.custom_claims?.active_organization_id || 
                       decodedToken.app_metadata?.active_organization_id;
+    
+    // If no organization found but we have localStorage fallback, try refreshing again
+    if (!activeOrgId && typeof window !== 'undefined') {
+      const fallbackOrgId = localStorage.getItem('active_organization_id');
+      if (fallbackOrgId) {
+        console.log('🔄 DAM: No org in JWT but found in localStorage, forcing refresh...');
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError) {
+          const { data: { session: refreshedSession } } = await supabase.auth.getSession();
+          if (refreshedSession?.access_token) {
+            const refreshedToken = jwtDecode<any>(refreshedSession.access_token);
+            activeOrgId = refreshedToken.custom_claims?.active_organization_id || 
+                         refreshedToken.app_metadata?.active_organization_id || 
+                         fallbackOrgId;
+            console.log('✅ DAM: Got organization after refresh:', activeOrgId);
+          }
+        }
+      }
+    }
     
     if (!activeOrgId) {
       return { success: false, error: 'No active organization found' };

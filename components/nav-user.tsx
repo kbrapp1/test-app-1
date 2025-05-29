@@ -12,6 +12,8 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
+import type { Profile } from "@/lib/auth"
+import { SuperAdminBadgeCompact } from "@/components/auth/SuperAdminBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -36,17 +38,42 @@ export function NavUser() {
   const supabase = createClient()
 
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true); 
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       // Event and session logs removed for cleanup
       if (!isMounted) return;
       const newUser = session?.user ?? null;
       setCurrentUser(newUser);
+
+      // Fetch profile data if user exists
+      if (newUser) {
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', newUser.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching profile:', error);
+            setProfile(null);
+          } else {
+            setProfile(profileData);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setProfile(null);
+        }
+      } else {
+        setProfile(null);
+      }
+
       setIsLoading(false); 
     });
 
@@ -127,7 +154,10 @@ export function NavUser() {
                   {userEmail}
                 </span>
               </div>
-              <MoreVerticalIcon className="ml-auto size-4" />
+              <div className="flex items-center gap-2">
+                <SuperAdminBadgeCompact profile={profile} />
+                <MoreVerticalIcon className="ml-auto size-4" />
+              </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -148,6 +178,7 @@ export function NavUser() {
                     {userEmail}
                   </span>
                 </div>
+                <SuperAdminBadgeCompact profile={profile} />
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

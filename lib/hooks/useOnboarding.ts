@@ -3,14 +3,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { User, UserIdentity } from '@supabase/supabase-js';
+import { SupabaseClient, User, UserIdentity } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 
 // Import helpers from their new locations
 import { processAuthFromUrlHelper, handleOnboardingError } from '@/lib/auth/onboardingAuthUtils';
-import { completeOnboardingMembership } from '@/lib/services/onboardingService';
-import { updateUserProfile } from '@/lib/services/profileService';
 import { validateOnboardingForm } from '@/lib/forms/onboardingValidation';
+
+// Auth services - updated imports
+import { completeOnboardingMembership, updateUserProfile } from '@/lib/auth';
 
 // Helper functions are now external
 

@@ -11,6 +11,17 @@ export * from './roles';
 // Authorization utilities
 export * from './authorization';
 
+// Super Admin functionality
+export * from './super-admin';
+
+// Services
+export { updateUserProfile } from './services/profileService';
+export { completeOnboardingMembership } from './services/onboardingService';
+
+// Actions
+export { inviteMemberToOrganization } from './actions/members';
+export { getTeamMembers, addTeamMember } from './actions/team';
+
 // Middleware for API routes
 export { withAuth, type AuthenticatedHandler, type AuthOptions } from './middleware';
 

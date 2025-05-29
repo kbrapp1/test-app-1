@@ -1,4 +1,4 @@
-import { getTeamMembers } from '@/lib/actions/team';
+import { getTeamMembers } from '@/lib/auth';
 import { TeamMemberList } from '@/components/team/TeamMemberList';
 import { AddTeamMemberDialog } from '@/components/team/AddTeamMemberDialog';
 

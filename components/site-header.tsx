@@ -53,15 +53,14 @@ export function SiteHeader() {
         setViewMode(storedViewMode);
       }
     }
-  }, [isDamPage]); // Runs when isDamPage changes (effectively on mount for relevant pages)
+  }, [isDamPage]);
 
   useEffect(() => {
     if (isDamPage) {
       localStorage.setItem('damViewMode', viewMode);
-      // Dispatch custom event when localStorage is updated by SiteHeader
       window.dispatchEvent(new CustomEvent('damViewModeChange', { detail: { newViewMode: viewMode } }));
     }
-  }, [viewMode, isDamPage]); // Runs when viewMode or isDamPage changes
+  }, [viewMode, isDamPage]);
 
   return (
     <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear pt-4">

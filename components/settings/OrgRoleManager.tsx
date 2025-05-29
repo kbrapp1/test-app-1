@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AddMemberDialog } from './AddMemberDialog';
 import type { OrgMember } from '@/types/settings';
-import { useOrgMembers } from '@/hooks/useOrgMembers';
-import { useOrgMemberActions } from '@/hooks/useOrgMemberActions';
+import { useOrgMembers } from '@/lib/auth/hooks/useOrgMembers';
+import { useOrgMemberActions } from '@/lib/auth/hooks/useOrgMemberActions';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import { OrgMembersTable } from './OrgMembersTable';
 
