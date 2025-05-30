@@ -1,263 +1,173 @@
 import { create } from 'zustand';
 import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
-// We might need fetch logic here, but useFolderFetch is not directly used in the store actions provided.
-// It was mentioned as a comment in the original code, so keeping the import if it might be used later elsewhere or was planned.
-// import { useFolderFetch } from '@/hooks/useFolderFetch'; 
-import {
-  findNodeById, // Removed: local definition
-  findAndUpdateNode,
-  findAndRemoveNode,
-  addNodeToParent,
-  buildNodeMap
-} from './folderStoreUtils'; // ADDED: Import from utils
+import { FolderTreeService } from './services/FolderTreeService';
+import { FolderDataService } from './services/FolderDataService';
+import { FolderStateService } from './services/FolderStateService';
+import { findAndRemoveNode } from './folderStoreUtils';
 
-// FolderNode now extends the main DomainFolder entity
+// FolderNode extends the main DomainFolder entity
 export interface FolderNode extends DomainFolder { 
   children: FolderNode[] | null; 
   isExpanded: boolean;
   isLoading: boolean;
   hasError: boolean;
-  // TransformedFolder specific fields like 'type' or 'ownerName' can be optionally added if needed by UI directly from FolderNode
-  // For now, keep it aligned with DomainFolder + UI state.
-  type?: 'folder'; // Optional if we want to store it from TransformedFolder
-  ownerName?: string; // Optional
+  type?: 'folder';
+  ownerName?: string;
 }
 
-// Define the store's state and actions
+// Store state and actions interface
 interface FolderStoreState {
   rootFolders: FolderNode[];
-  selectedFolderId: string | null; // New state for selected folder
-  searchTerm: string; // New state for the search term
-  changeVersion: number; // ADDED: Change indicator
+  selectedFolderId: string | null;
+  searchTerm: string;
+  changeVersion: number;
+  
+  // State coordination actions
   setInitialFolders: (folders: DomainFolder[]) => void;
   toggleExpand: (folderId: string) => void;
   fetchAndSetChildren: (folderId: string, fetcher: (id: string) => Promise<DomainFolder[]>) => Promise<void>;
   addFolder: (newFolder: DomainFolder) => void;
   removeFolder: (folderId: string) => void;
+  moveFolder: (folderId: string, newParentFolderId: string | null) => void;
   updateFolderNodeInStore: (updatedFolder: DomainFolder) => void;
   setSelectedFolder: (folderId: string | null) => void;
   setSearchTerm: (term: string) => void;
   forceRefresh: () => void;
   refreshFolderTree: () => void;
   refetchFolderData: () => Promise<void>;
-  // TODO: Add renameFolder action
 }
 
-// Create the Zustand store
+/**
+ * Zustand Store: Folder State Coordination
+ * 
+ * Single Responsibility: State management coordination
+ * Orchestrates folder operations using domain services
+ */
 export const useFolderStore = create<FolderStoreState>((set, get) => ({
-  rootFolders: [],
-  selectedFolderId: null, // Initialize selectedFolderId
-  searchTerm: '', // Initialize search term
-  changeVersion: 0, // ADDED: Initialize change indicator
+  // Initial state
+  ...FolderStateService.createInitialState(),
 
   setInitialFolders: (folders) => {
-    // Safeguard: Don't overwrite existing folders with empty array
     const currentState = get();
-    if (folders.length === 0 && currentState.rootFolders.length > 0) {
+    
+    if (!FolderStateService.shouldUpdateFolders(folders, currentState.rootFolders)) {
       return;
     }
     
-    const existingNodeMap = buildNodeMap(currentState.rootFolders);
-
-    const initialNodes: FolderNode[] = folders.map(f => {
-      const existingNode = existingNodeMap.get(f.id);
-      
-      // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
-      const node = Object.assign(f, {
-        children: existingNode?.children ?? null, 
-        isExpanded: existingNode?.isExpanded ?? false, 
-        isLoading: existingNode?.isLoading ?? false,
-        hasError: existingNode?.hasError ?? false,
-      }) as FolderNode;
-      
-      return node;
-    });
+    const folderNodes = FolderTreeService.createFolderNodes(folders, currentState.rootFolders);
+    const rootNodes = FolderTreeService.getRootFolders(folderNodes);
     
-    const rootNodes = initialNodes.filter(f => f.parentFolderId === null).sort((a,b) => a.name.localeCompare(b.name));
-    
-    set({ 
-      rootFolders: rootNodes, 
+    set(FolderStateService.createStateUpdate({
+      rootFolders: rootNodes,
       selectedFolderId: null,
-      changeVersion: get().changeVersion + 1
-    });
+    }, currentState.changeVersion));
   },
 
   toggleExpand: (folderId) => {
     set((state) => ({
-      rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({
-        ...node,
-        isExpanded: !node.isExpanded,
-      })),
+      rootFolders: FolderStateService.toggleFolderExpansion(state.rootFolders, folderId),
     }));
   },
 
   fetchAndSetChildren: async (folderId, fetcher) => {
-    const fullCurrentStateMap = buildNodeMap(get().rootFolders); // Get map of the entire current tree
-
-    set((state) => ({ 
-        rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({ 
-          ...node,
-          isLoading: true, 
-          hasError: false 
-        }))
+    // Set loading state
+    set((state) => ({
+      rootFolders: FolderTreeService.setFolderLoading(state.rootFolders, folderId, true),
     }));
 
     try {
-      const childrenData = await fetcher(folderId); // childrenData is now DomainFolder[]
+      const childrenData = await fetcher(folderId);
       
-      const childrenNodes: FolderNode[] = childrenData.map(f_child => { // f_child is DomainFolder
-        const existingChildNode = fullCurrentStateMap.get(f_child.id);
-        
-        // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
-        return Object.assign(f_child, {
-          children: existingChildNode?.children ?? null, 
-          isExpanded: existingChildNode?.isExpanded ?? false, 
-          isLoading: existingChildNode?.isLoading ?? false,
-          hasError: existingChildNode?.hasError ?? false,
-        }) as FolderNode;
-      });
-      
-      set((state) => ({ 
-          rootFolders: findAndUpdateNode(state.rootFolders, folderId, (parentNode) => ({ 
-              ...parentNode,
-              children: childrenNodes.sort((a,b) => a.name.localeCompare(b.name)), 
-              isLoading: false, 
-              hasError: false,
-          }))
+      set((state) => ({
+        rootFolders: FolderTreeService.setFolderChildren(
+          state.rootFolders, 
+          folderId, 
+          childrenData
+        ),
       }));
     } catch (error) {
       console.error("Error fetching children:", error);
-      set((state) => ({ 
-          rootFolders: findAndUpdateNode(state.rootFolders, folderId, (node) => ({ 
-              ...node,
-              isLoading: false, 
-              hasError: true, 
-              children: [] 
-          }))
+      set((state) => ({
+        rootFolders: FolderTreeService.setFolderError(state.rootFolders, folderId),
       }));
     }
   },
 
-  setSelectedFolder: (folderId) => { // Implement setSelectedFolder
-    set({ selectedFolderId: folderId });
-  },
-
-  setSearchTerm: (term) => { // Implement setSearchTerm
-    set({ searchTerm: term });
-  },
-
-  addFolder: (newFolderData: DomainFolder) => {
-    // Create a proper FolderNode by assigning additional properties to the DomainFolder instance
-    const newNode: FolderNode = Object.assign(newFolderData, {
-        children: null,
-        isExpanded: false, 
-        isLoading: false,
-        hasError: false,
-    }) as FolderNode;
-
+  addFolder: (newFolder) => {
     set((state) => {
-      let updatedRootFolders = [...state.rootFolders];
-      const nodeMap = buildNodeMap(updatedRootFolders); 
-
-      let parentId = newNode.parentFolderId; // Use parentFolderId from DomainFolder
-      while (parentId) {
-        const parentNode = nodeMap.get(parentId);
-        if (parentNode) {
-          updatedRootFolders = findAndUpdateNode(
-            updatedRootFolders,
-            parentId,
-            (node) => ({ 
-              ...node,
-              isExpanded: true 
-            })
-          );
-          parentId = parentNode.parentFolderId; // Use parentFolderId from DomainFolder
-        } else {
-          parentId = null; 
-        }
-      }
+      const updatedFolders = FolderTreeService.addFolderToTree(state.rootFolders, newFolder);
       
-      updatedRootFolders = addNodeToParent(updatedRootFolders, newNode);
-      
-      return { 
-        rootFolders: updatedRootFolders,
-        selectedFolderId: newNode.id,
-        changeVersion: state.changeVersion + 1 // ADDED: Increment version
-      };
+      return FolderStateService.createStateUpdate({
+        rootFolders: updatedFolders,
+        selectedFolderId: newFolder.id,
+      }, state.changeVersion);
     });
   },
 
   removeFolder: (folderId) => {
-    set((state) => ({ 
-      rootFolders: findAndRemoveNode(state.rootFolders, folderId),
-      changeVersion: state.changeVersion + 1 // ADDED: Increment version
-    }));
+    set((state) => 
+      FolderStateService.createStateUpdate({
+        rootFolders: findAndRemoveNode(state.rootFolders, folderId),
+      }, state.changeVersion)
+    );
   },
 
-  // ADDED: Implementation for updateFolderNodeInStore
-  updateFolderNodeInStore: (updatedFolder: DomainFolder) => {
+  moveFolder: (folderId, newParentFolderId) => {
     set((state) => {
-      const newRootFolders = findAndUpdateNode(
-        state.rootFolders,
-        updatedFolder.id,
-        (node) => {
-          return {
-            ...node, // Preserve existing FolderNode UI state
-            ...updatedFolder, // Overlay with updated DomainFolder fields
-            name: updatedFolder.name, // Explicitly set the name
-          };
-        }
+      const updatedFolders = FolderTreeService.moveFolderInTree(
+        state.rootFolders, 
+        folderId, 
+        newParentFolderId
       );
       
-      return {
-        rootFolders: newRootFolders,
-        changeVersion: state.changeVersion + 1
-      };
+      return FolderStateService.createStateUpdate({
+        rootFolders: updatedFolders,
+      }, state.changeVersion);
     });
+  },
+
+  updateFolderNodeInStore: (updatedFolder) => {
+    set((state) => {
+      const updatedFolders = FolderStateService.updateFolderData(
+        state.rootFolders, 
+        updatedFolder
+      );
+      
+      return FolderStateService.createStateUpdate({
+        rootFolders: updatedFolders,
+      }, state.changeVersion);
+    });
+  },
+
+  setSelectedFolder: (folderId) => {
+    set(FolderStateService.updateSelectedFolder(folderId));
+  },
+
+  setSearchTerm: (term) => {
+    set(FolderStateService.updateSearchTerm(term));
   },
 
   forceRefresh: () => {
     set((state) => ({
-      changeVersion: state.changeVersion + 1
+      changeVersion: FolderStateService.incrementChangeVersion(state.changeVersion),
     }));
   },
 
   refreshFolderTree: () => {
-    // Force a refresh of the folder tree by incrementing the change version
-    // This will trigger components that depend on changeVersion to re-render
     set((state) => ({
-      changeVersion: state.changeVersion + 1
+      changeVersion: FolderStateService.incrementChangeVersion(state.changeVersion),
     }));
   },
 
   refetchFolderData: async () => {
     try {
-      // Import the server action to fetch fresh folder data
-      const { getRootFolders } = await import('@/lib/dam/application/actions/navigation.actions');
-      const freshFolders = await getRootFolders();
-      
-      // Convert plain folders to domain entities
-      const { Folder: DomainFolder } = await import('@/lib/dam/domain/entities/Folder');
-      const domainFolders = freshFolders.map(plainFolder => {
-        return new DomainFolder({
-          id: plainFolder.id,
-          name: plainFolder.name,
-          userId: plainFolder.userId,
-          createdAt: plainFolder.createdAt,
-          updatedAt: plainFolder.updatedAt,
-          parentFolderId: plainFolder.parentFolderId,
-          organizationId: plainFolder.organizationId,
-          has_children: plainFolder.has_children,
-        });
-      });
-      
-      // Update the store with fresh data
-      get().setInitialFolders(domainFolders);
+      const freshFolders = await FolderDataService.fetchRootFolders();
+      get().setInitialFolders(freshFolders);
     } catch (error) {
       console.error('Error refetching folder data:', error);
-      // Still increment version to trigger re-render even if fetch failed
+      // Trigger re-render even if fetch failed
       set((state) => ({
-        changeVersion: state.changeVersion + 1
+        changeVersion: FolderStateService.incrementChangeVersion(state.changeVersion),
       }));
     }
   },

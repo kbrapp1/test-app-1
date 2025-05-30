@@ -28,7 +28,7 @@ import type {
  */
 
 function parseRequestParameters(searchParams: URLSearchParams) {
-  const searchTerm = searchParams.get('q') || '';
+  const searchTerm = searchParams.get('q') || searchParams.get('search') || '';
   const quickSearch = searchParams.get('quickSearch') === 'true';
   const limitParam = searchParams.get('limit');
   const tagIdsParam = searchParams.get('tagIds');

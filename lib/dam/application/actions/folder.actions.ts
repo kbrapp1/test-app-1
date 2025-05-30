@@ -26,7 +26,8 @@ function revalidatePathsAfterFolderMutation(
   parentFolderId?: string | null,
   folderId?: string
 ) {
-  revalidatePath('/dam', 'layout');
+  // Remove revalidatePath('/dam', 'layout') since we're using client-side fetching
+  // revalidatePath('/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
   if (parentFolderId) {
     revalidateTag(`folder-${parentFolderId}-children`);
   }

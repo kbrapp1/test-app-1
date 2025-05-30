@@ -71,85 +71,101 @@ export function useUser() {
 
   useEffect(() => {
     let isMounted = true;
+    let cleanup: (() => void) | null = null;
 
     // Reusable sign-out handler with toast notification and redirect
     const handleSignOut = async (reason: string) => {
       if (!isMounted) return;
-      console.warn(`Signing out due to: ${reason}`);
+      
       toast({
         title: "Session Ended",
         description: reason,
         variant: "destructive",
       });
-      // Redirect immediately after showing toast
+
+      // Clear state immediately to prevent hook errors
+      if (isMounted) {
+        setUser(null);
+        setIsLoading(false);
+      }
+
+      // Cleanup any pending operations
+      if (cleanup) {
+        cleanup();
+      }
+
+      // Redirect immediately
       router.push('/login'); 
 
-      // Still attempt sign out, but don't necessarily wait for it
+      // Still attempt sign out, but don't wait for it
       try {
         await supabase.auth.signOut();
       } catch (signOutError) {
-        console.error("Error during sign out:", signOutError);
-        // If signout fails, ensure state is cleared (onAuthStateChange might not fire)
-        if (isMounted) {
-            setUser(null);
-            setIsLoading(false);
-        }
-      }
-      // Explicitly set loading to false if mounted after initiating sign out/redirect
-      if (isMounted) {
-          setIsLoading(false);
+        // Silent fail - we've already cleared state and redirected
       }
     };
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-      setUser(session?.user ?? null);
+      
+      const user = session?.user ?? null;
+      setUser(user);
       setIsLoading(false);
+      
+      // If user becomes null (logout), trigger cleanup
+      if (!user && _event === 'SIGNED_OUT') {
+        // Clear any remaining state
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
-    // Initial check
+    // Store cleanup function
+    cleanup = () => {
+      authListener?.subscription?.unsubscribe();
+    };
+
+    // Initial check with better error handling
     const checkInitialUser = async () => {
+      if (!isMounted) return;
+      
       try {
         const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
+        
+        if (!isMounted) return; // Check again after async operation
         
         if (error) {
           const isInvalidTokenError =
             error.message.includes('Invalid Refresh Token') ||
+            error.message.includes('JWT expired') ||
             (error instanceof Error && 'status' in error && (error as any).status === 400);
 
           if (isInvalidTokenError) {
-            console.warn('Invalid refresh token detected on initial check. Signing out.');
-            handleSignOut("Your session is invalid or expired. Please log in again.");
-            // State update will happen via onAuthStateChange after signOut triggers
-            // No need to set user/loading state here directly if handleSignOut runs
+            handleSignOut("Your session has expired. Please log in again.");
+            return;
           } else {
             // Handle other errors during initial fetch
-            console.error('Error fetching initial user:', error);
-            if (isMounted) {
-              setUser(null);
-              setIsLoading(false);
-            }
+            setUser(null);
+            setIsLoading(false);
           }
-        } else if (isMounted) {
+        } else {
           // Success case: user fetched
           setUser(fetchedUser);
           setIsLoading(false);
         }
       } catch (catchError: any) {
-        // Catch unexpected errors during the getUser call itself (e.g., network)
-        console.error('Unexpected error during initial user check:', catchError);
+        if (!isMounted) return;
         
-        // Check if the caught error *itself* indicates an invalid token
+        // Check if the caught error indicates an invalid token
         const isInvalidTokenErrorInCatch =
             catchError?.message?.includes('Invalid Refresh Token') ||
+            catchError?.message?.includes('JWT expired') ||
             catchError?.status === 400;
 
         if (isInvalidTokenErrorInCatch) {
-           console.warn('Invalid refresh token detected during catch. Signing out.');
            handleSignOut("Could not verify your session. Please log in again.");
-           // State update will happen via onAuthStateChange after signOut triggers
-        } else if (isMounted) {
+        } else {
           // If it's a different unexpected error, clear user and stop loading
           setUser(null);
           setIsLoading(false);
@@ -161,7 +177,9 @@ export function useUser() {
 
     return () => {
       isMounted = false;
-      authListener?.subscription?.unsubscribe();
+      if (cleanup) {
+        cleanup();
+      }
     };
   }, [supabase, toast, router]);
 

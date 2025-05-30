@@ -66,11 +66,10 @@ export function SuperAdminBadge({
 
   return (
     <Badge
-      variant="destructive"
       className={cn(
         'inline-flex items-center font-medium',
-        'bg-red-600 hover:bg-red-700',
-        'border-red-700',
+        'bg-blue-600 hover:bg-blue-700',
+        'border-blue-700',
         'text-white',
         sizeClasses[size],
         className
@@ -116,7 +115,7 @@ export function SuperAdminIcon({ profile, className }: Pick<SuperAdminBadgeProps
   return (
     <Shield
       className={cn(
-        'h-4 w-4 text-red-600 flex-shrink-0',
+        'h-4 w-4 text-blue-600 flex-shrink-0',
         className
       )}
       aria-label="Super Admin"

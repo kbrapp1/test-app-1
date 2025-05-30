@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home as HomeIcon } from 'lucide-react';
+import { Home as HomeIcon, FolderPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { NewFolderDialog } from '@/lib/dam/presentation/components/dialogs/NewFolderDialog';
+import { Button } from "@/components/ui/button";
 import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 import type { PlainFolder } from '@/lib/dam/types/dam.types';
 import { FolderNavigationItem } from '.';
@@ -18,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface FolderSidebarProps {
+export interface FolderSidebarProps {
   initialFolders: PlainFolder[];
 }
 

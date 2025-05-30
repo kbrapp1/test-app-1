@@ -202,7 +202,6 @@ export function DamWorkspaceView({
             sortBy={sortBy}
             sortOrder={sortOrder}
             isAnyFilterActive={isAnyFilterActive}
-            organizationMembers={workspaceHandlers.organizationMembers}
             selectedCount={selectedCount}
             setFilterType={setFilterType}
             setFilterCreationDateOption={setFilterCreationDateOption}
@@ -215,7 +214,7 @@ export function DamWorkspaceView({
 
         <div className="flex-1">
         <AssetGalleryClient 
-          key={`${workspaceState.currentFolderId || 'root'}-${workspaceState.refreshKey}`}
+          key={`${workspaceState.currentFolderId || 'root'}`}
           viewMode={workspaceState.viewMode} 
           currentFolderId={workspaceState.currentFolderId}
           searchTerm={workspaceState.gallerySearchTerm}

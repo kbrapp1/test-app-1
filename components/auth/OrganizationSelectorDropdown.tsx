@@ -104,7 +104,7 @@ export function OrganizationSelectorDropdown({
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-red-600" />
+                  <Shield className="h-4 w-4 text-blue-600" />
                   <span>All Organizations</span>
                 </div>
                 {isAllOrgsMode && <Check className="h-4 w-4" />}

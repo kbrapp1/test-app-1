@@ -97,7 +97,7 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   enableNavigation,
   renderFolders,
   renderAssets,
-  enableMultiSelect = false,
+  enableMultiSelect = true,
   multiSelect,
 }) => {
   // Handle loading state

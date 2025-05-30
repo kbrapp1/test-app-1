@@ -60,9 +60,10 @@ async function postHandler(req: NextRequest, user: User, supabase: any) {
   let secondary_image_path: string | null = null; // Initialize for potential cleanup
 
   try {
-    const activeOrgId = user.app_metadata?.active_organization_id;
+    // Use database-first organization context (single source of truth)
+    const { data: activeOrgId, error: orgError } = await supabase.rpc('get_active_organization_id');
 
-    if (!activeOrgId) {
+    if (orgError || !activeOrgId) {
       // No need to clean up files here as they haven't been uploaded yet
       throw new DatabaseError('User does not have an active organization set. Cannot add team member.'); 
     }

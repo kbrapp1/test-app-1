@@ -47,7 +47,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     enableNavigation = false,
     showNavigationUI = true,
     onFolderNavigate,
-    enableMultiSelect = false,
+    enableMultiSelect = true,
     onSelectionChange,
   } = props;
 

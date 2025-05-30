@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,11 +22,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { OrganizationSelector } from '@/components/auth/OrganizationSelector';
+import { OrganizationSwitcher } from "@/lib/organization/presentation/components/OrganizationSwitcher";
+import { SuperAdminBadge } from "@/components/auth/SuperAdminBadge";
 import { Mail, User as UserIcon, Building2, Shield, Crown, Users } from 'lucide-react';
-import type { Profile } from '@/lib/auth';
+import { useOrganization } from "@/lib/organization/application/providers/OrganizationProvider";
+import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider";
+import { createClient } from '@/lib/supabase/client';
 
-// Define Zod schema for profile data
+/**
+ * Profile Form Component - Presentation Layer
+ * 
+ * Single Responsibility: Profile editing form
+ * Now uses centralized UserProfileProvider to eliminate redundant profile fetching
+ * Reduced complexity by leveraging shared state management
+ */
+
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name cannot be empty." }),
 });
@@ -38,237 +46,94 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export function ProfileForm() {
   const supabase = createClient();
   const { toast } = useToast();
-  const [email, setEmail] = useState<string>("Loading...");
-  const [organizationName, setOrganizationName] = useState<string | null>("Loading...");
-  const [userRole, setUserRole] = useState<string | null>("Loading...");
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
+  const { user, profile, isLoading: isProfileLoading, refreshProfile } = useUserProfile();
+  const [organizationName, setOrganizationName] = useState<string>("Loading...");
+  const [userRole, setUserRole] = useState<string>("Loading...");
+  const [isFormLoading, setIsFormLoading] = useState(false);
+
+  // Use organization context for role/org info
+  const { 
+    currentContext, 
+    activeOrganizationId, 
+    accessibleOrganizations,
+    isLoading: isOrgLoading 
+  } = useOrganization();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: { name: "" },
-    mode: "onChange",
   });
 
-  const { reset, formState: { isSubmitting, isLoading, isValid, errors }, handleSubmit, control } = form;
+  const { reset } = form;
 
-  // Get user initials for avatar
   const getUserInitials = (name: string) => {
     return name
       .split(' ')
-      .map(n => n[0])
+      .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
   };
 
-  // Fetch user data and set default form values
+  // Update form when profile changes
   useEffect(() => {
-    let isMounted = true;
-    const fetchUserAndOrgData = async () => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (!isMounted) return;
-
-      if (userError) {
-        console.error('Error fetching user:', userError.message);
-        toast({ variant: "destructive", title: "Error fetching user data", description: userError.message });
-        setEmail("Error loading email");
-        setOrganizationName("Error loading org");
-        setUserRole("Error loading role");
-      } else if (userData?.user) {
-        const user = userData.user;
-        
-        // Get profile data for OrganizationSelector
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (!isMounted) return;
-        setProfile(profileData);
-
-        // Set the form name from profile.full_name or user_metadata.name as fallback
-        const displayName = profileData?.full_name || user.user_metadata?.name || "";
-        reset({ name: displayName });
-        setEmail(user.email || "No email found");
-
-        // Get active organization from user_metadata (where org switching stores it)
-        const activeOrgId = user.user_metadata?.active_organization_id || user.app_metadata?.active_organization_id;
-        console.log('📋 Profile Form: Active org selection logic:');
-        console.log('📋 Profile Form: user_metadata.active_organization_id:', user.user_metadata?.active_organization_id);
-        console.log('📋 Profile Form: app_metadata.active_organization_id:', user.app_metadata?.active_organization_id);
-        console.log('📋 Profile Form: Final selected activeOrgId:', activeOrgId);
-        
-        // Check localStorage as fallback if metadata doesn't have active org
-        let finalActiveOrgId = activeOrgId;
-        if (!finalActiveOrgId && typeof window !== 'undefined') {
-          const fallbackOrgId = localStorage.getItem('active_organization_id');
-          if (fallbackOrgId) {
-            console.log('📋 Profile Form: Using localStorage fallback:', fallbackOrgId);
-            finalActiveOrgId = fallbackOrgId;
-          }
-        }
-        
-        setActiveOrganizationId(finalActiveOrgId || null);
-        
-        if (finalActiveOrgId) {
-          // Fetch organization name
-          const { data: orgData, error: orgError } = await supabase
-            .from('organizations')
-            .select('name')
-            .eq('id', finalActiveOrgId)
-            .single();
-          
-          if (!isMounted) return;
-          if (orgError) {
-            console.error('Error fetching organization:', orgError.message);
-            setOrganizationName('N/A');
-          } else {
-            setOrganizationName(orgData?.name || 'N/A');
-          }
-
-          // For super admins, don't fetch role from memberships if they're viewing an org they're not a member of
-          // Just show "Super Admin" as their role
-          if (profileData?.is_super_admin) {
-            setUserRole('N/A'); // Will be overridden by super admin display in UI
-          } else {
-            // Fetch user role in that organization for regular users
-            const { data: membershipData, error: membershipError } = await supabase
-              .from('organization_memberships')
-              .select('role_id, roles(name)')
-              .eq('user_id', user.id)
-              .eq('organization_id', finalActiveOrgId)
-              .single<{ role_id: string; roles: { name: string } | null }>();
-
-            if (!isMounted) return;
-            if (membershipError) {
-              console.error('Error fetching user role:', membershipError.message);
-              setUserRole('N/A');
-            } else {
-              const roleName = membershipData?.roles?.name;
-              setUserRole(roleName || 'N/A');
-            }
-          }
-        } else {
-          setOrganizationName('N/A (No active org)');
-          setUserRole('N/A');
-        }
-      } else {
-        reset({ name: "" });
-        setEmail("Not logged in");
-        setOrganizationName("Not logged in");
-        setUserRole("Not logged in");
-      }
-    };
-    fetchUserAndOrgData();
-    return () => { isMounted = false; };
-  }, [supabase, toast, reset]);
-
-  // Watch for changes in activeOrganizationId and update org data
-  useEffect(() => {
-    console.log('📋 Profile Form: activeOrganizationId changed to:', activeOrganizationId);
-    console.log('📋 Profile Form: Current profile:', profile);
-    
-    const loadOrganizationData = async () => {
-      if (!profile) {
-        console.log('📋 Profile Form: No profile, returning early');
-        return;
-      }
-      
-      if (activeOrganizationId) {
-        console.log('📋 Profile Form: Fetching organization data for:', activeOrganizationId);
-        // Fetch organization name for the active org
-        const { data: orgData, error } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', activeOrganizationId)
-          .single();
-        
-        console.log('📋 Profile Form: Organization query result:', { orgData, error });
-        setOrganizationName(orgData?.name || 'N/A');
-      } else {
-        console.log('📋 Profile Form: No active org, setting to "All Organizations"');
-        // Handle case where no org is selected (could be "All Organizations" mode)
-        setOrganizationName('All Organizations');
-      }
-    };
-
-    loadOrganizationData();
-  }, [activeOrganizationId, profile, supabase]);
-
-  // Handle organization change callback to force UI update
-  const handleOrganizationChange = async (orgId: string | null) => {
-    console.log('📋 Profile Form: handleOrganizationChange called with:', orgId);
-    
-    // Immediately update the active organization ID
-    setActiveOrganizationId(orgId);
-    
-    // Refetch user data to ensure we have the latest session
-    console.log('📋 Profile Form: Refetching user data after org change...');
-    try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('📋 Profile Form: Error refetching user:', userError);
-        return;
-      }
-      
-      if (userData?.user) {
-        console.log('📋 Profile Form: Refetched user data:', userData.user.user_metadata);
-        // Update the form with any new data
-        const displayName = profile?.full_name || userData.user.user_metadata?.name || "";
-        reset({ name: displayName });
-      }
-    } catch (error) {
-      console.error('📋 Profile Form: Error in handleOrganizationChange:', error);
+    if (profile) {
+      const displayName = profile.full_name || user?.user_metadata?.name || "";
+      reset({ name: displayName });
     }
-  };
+  }, [profile, user, reset]);
+
+  // Update organization info when context changes
+  useEffect(() => {
+    if (isOrgLoading || !activeOrganizationId) return;
+
+    if (currentContext) {
+      const currentOrg = accessibleOrganizations.find(org => org.organization_id === activeOrganizationId);
+      setOrganizationName(currentOrg?.organization_name || 'Unknown Organization');
+
+      if (profile?.is_super_admin) {
+        setUserRole('Super Admin');
+      } else {
+        setUserRole(currentOrg?.role_name || 'N/A');
+      }
+    } else {
+      setOrganizationName('No Active Organization');
+      setUserRole('N/A');
+    }
+  }, [activeOrganizationId, currentContext, accessibleOrganizations, isOrgLoading, profile]);
 
   const onSubmit = async (data: ProfileFormValues) => {
+    if (!user?.id) {
+      toast({ variant: "destructive", title: "Authentication Error", description: "User not found. Please log in again." });
+      return;
+    }
+
+    setIsFormLoading(true);
     try {
-      console.log('Form submission started with data:', data);
-      
-      const { data: { user }, error: getUserError } = await supabase.auth.getUser(); 
-      if (getUserError || !user) {
-        console.error('Authentication error:', getUserError);
-        toast({ variant: "destructive", title: "Authentication Error", description: "User not found. Please log in again." });
-        return;
-      }
-
-      console.log('User authenticated:', user.id);
-
-      // Update the profile name in the profiles table
-      console.log('Attempting to update profile with full_name:', data.name);
-      const { error, data: updateResult } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ full_name: data.name })
-        .eq('id', user.id)
-        .select();
-
-      console.log('Update result:', updateResult);
-      console.log('Update error:', error);
+        .eq('id', user.id);
 
       if (error) {
-        console.error('Error updating profile:', error);
         toast({ variant: "destructive", title: "Error updating profile", description: error.message });
         return;
       }
 
-      console.log('Profile updated successfully, now updating user metadata');
-      
-      console.log('All updates complete');
       toast({ title: "Profile updated", description: "Your name has been successfully updated." });
-      
-      // Force form to recognize the submission is complete
+      await refreshProfile(); // Refresh the shared profile state
       form.reset({ name: data.name });
       
     } catch (error) {
-      console.error('Error in profile update:', error);
       toast({ variant: "destructive", title: "Error", description: "Failed to update profile. Please try again." });
+    } finally {
+      setIsFormLoading(false);
     }
   };
 
-  if (isLoading || email === "Loading..." || organizationName === "Loading..." || userRole === "Loading...") {
+  const isLoading = isProfileLoading || isOrgLoading || !user;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-2">
@@ -280,186 +145,133 @@ export function ProfileForm() {
   }
 
   const currentName = form.watch('name');
+  const email = user?.email || "No email found";
 
   return (
-    <div className="space-y-6">
-      {/* Profile Header Card */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-start space-x-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src="" />
-              <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
-                {currentName ? getUserInitials(currentName) : 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                {currentName || 'User Profile'}
-                {profile?.is_super_admin && (
-                  <Badge variant="destructive" className="gap-1">
-                    <Crown className="w-3 h-3" />
-                    Super Admin
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription className="flex items-center gap-1">
-                <Mail className="w-4 h-4" />
+    <div className="space-y-8">
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-3xl font-bold">Profile Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your personal information and account preferences.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="md:col-span-1">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src="" alt={currentName} />
+                  <AvatarFallback className="text-lg">{getUserInitials(currentName)}</AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="text-xl">{currentName || 'No Name'}</CardTitle>
+              <CardDescription className="flex items-center justify-center gap-2">
+                <Mail className="h-4 w-4" />
                 {email}
               </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Profile Details Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="w-5 h-5" />
-            Personal Information
-          </CardTitle>
-          <CardDescription>
-            Update your personal details and preferences.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email-display" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email Address
-                  </Label>
-                  <Input 
-                    id="email-display" 
-                    type="email" 
-                    value={email} 
-                    disabled 
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Email address changes must be done through your authentication provider.
-                  </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Building2 className="h-4 w-4" />
+                  <span>Organization</span>
                 </div>
-
-                <FormField
-                  control={control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <UserIcon className="w-4 h-4" />
-                        Display Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This name will be visible to other users in your organization.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <p className="font-medium">{organizationName}</p>
               </div>
-
-              <div className="flex justify-end pt-4">
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || !isValid}
-                  className="min-w-[120px]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Saving...
-                    </>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4" />
+                  <span>Role</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {userRole === 'Super Admin' ? (
+                    <SuperAdminBadge profile={profile} />
                   ) : (
-                    'Save Changes'
+                    <Badge variant="secondary">
+                      {userRole}
+                    </Badge>
                   )}
-                </Button>
+                </div>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
 
-      {/* Organization & Access Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" />
-            Organization & Access
-          </CardTitle>
-          <CardDescription>
-            Manage your organization membership and permissions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Current Organization
-              </Label>
-              {profile ? (
-                <div className="space-y-2">
-                  <div className="border rounded-md p-2 bg-background">
-                    <OrganizationSelector 
-                      profile={profile}
-                      activeOrganizationId={activeOrganizationId}
-                      size="md"
-                      className="w-full"
-                      onOrganizationChange={handleOrganizationChange}
+              <Separator />
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4" />
+                  <span>Switch Organization</span>
+                </div>
+                <div className="w-full overflow-hidden">
+                  <OrganizationSwitcher />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>
+                Update your personal details below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Email cannot be changed from this form.
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Enter your full name" 
+                              {...field} 
+                              disabled={isFormLoading}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            This is the name that will be displayed across the platform.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {profile?.is_super_admin 
-                      ? "🚀 As a super admin, click the dropdown above to switch between organizations or view all organizations."
-                      : "Switch between organizations you have access to. Your role and permissions may vary by organization."
-                    }
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="w-full h-10 bg-muted animate-pulse rounded-md" />
-                  <p className="text-sm text-muted-foreground">Loading organizations...</p>
-                </div>
-              )}
-            </div>
 
-            <Separator />
-
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Access Level
-              </Label>
-              <div className="flex items-center gap-3">
-                {profile?.is_super_admin ? (
-                  <Badge variant="destructive" className="gap-1 text-sm py-1 px-3">
-                    <Crown className="w-4 h-4" />
-                    Super Administrator
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="gap-1 text-sm py-1 px-3">
-                    <Shield className="w-4 h-4" />
-                    {userRole || 'Member'}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {profile?.is_super_admin 
-                  ? "You have full administrative privileges across all organizations, including user management, billing, and system configuration."
-                  : `Your current role within ${organizationName || 'this organization'} determines what actions you can perform and what data you can access.`
-                }
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      disabled={!form.formState.isDirty || isFormLoading}
+                    >
+                      {isFormLoading ? "Updating..." : "Update Profile"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 } 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { ViewMode } from '../types/interfaces';
+import type { ViewMode } from '../../types/interfaces';
 
 export interface UseDamPageStateParams {
   initialCurrentFolderId: string | null;
@@ -96,7 +96,9 @@ export function useDamPageState({
 
   // Gallery refresh handler
   const handleGalleryRefresh = () => {
-    setRefreshKey(prevKey => prevKey + 1);
+    // Instead of changing refreshKey (which causes component remount),
+    // dispatch a custom event for the gallery to refresh internally
+    window.dispatchEvent(new CustomEvent('damDataRefresh'));
   };
 
   return {

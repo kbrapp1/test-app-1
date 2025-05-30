@@ -9,16 +9,18 @@ import { useOrgMembers } from '@/lib/auth/hooks/useOrgMembers';
 import { useOrgMemberActions } from '@/lib/auth/hooks/useOrgMemberActions';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import { OrgMembersTable } from './OrgMembersTable';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 export function OrgRoleManager() {
   const supabase = createClient();
   const { toast } = useToast();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
   const [removingMember, setRemovingMember] = useState<OrgMember | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
+
+  const { activeOrganizationId } = useOrganization();
 
   const { members, roles, loading: dataLoading, error: dataError } = useOrgMembers(activeOrganizationId, debouncedSearchTerm);
 
@@ -32,14 +34,13 @@ export function OrgRoleManager() {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchInitialData = async () => {
+    const fetchUserId = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (isMounted) {
         setCurrentUserId(userData.user?.id ?? null);
-        setActiveOrganizationId(userData.user?.app_metadata?.active_organization_id ?? null);
       }
     };
-    fetchInitialData();
+    fetchUserId();
     return () => { isMounted = false; };
   }, [supabase]);
 

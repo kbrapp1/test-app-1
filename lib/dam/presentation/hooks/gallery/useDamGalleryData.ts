@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { 
   GalleryDataService,
@@ -9,16 +9,18 @@ import {
   UseDamGalleryDataReturn,
   GalleryDataParams
 } from '../services';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 /**
  * Domain-driven hook for DAM gallery data management
  * 
- * REFACTORED TO DDD ARCHITECTURE:
- * - Uses dedicated service for data fetching logic
- * - Maintains clean separation of concerns with DDD layers
- * - Focuses solely on state coordination and React lifecycle
- * - Provides proper error handling and loading states
- * - Follows single responsibility principle
+ * SIMPLIFIED ARCHITECTURE:
+ * - Single effect for data fetching
+ * - Proper organization context integration
+ * - Clean error handling without timeouts
+ * - Eliminates race conditions
+ * - Memoized params to prevent excessive re-renders
+ * - Request deduplication for development mode
  */
 export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryDataReturn {
   const {
@@ -37,6 +39,9 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
     sortOrder,
   } = props;
 
+  // Organization context integration
+  const { activeOrganizationId, isLoading: isOrgLoading } = useOrganization();
+
   // State management
   const [state, setState] = useState<DomainGalleryState>({
     items: [],
@@ -45,60 +50,22 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
     error: undefined,
   });
 
-  // Fetch data using the service
-  const fetchData = useCallback(async (forceRefresh: boolean = false) => {
-    setState(prev => ({ 
-      ...prev, 
-      loading: true, 
-      error: undefined,
-      // Clear items when force refreshing to ensure fresh data
-      ...(forceRefresh && { items: [] })
-    }));
-
-    try {
-      const params: GalleryDataParams = {
-        currentFolderId,
-        searchTerm,
-        tagIds,
-        filterType,
-        filterCreationDateOption,
-        filterDateStart,
-        filterDateEnd,
-        filterOwnerId,
-        filterSizeOption,
-        filterSizeMin,
-        filterSizeMax,
-        sortBy,
-        sortOrder,
-      };
-
-      // Create service instance inside the callback to avoid dependency issues
-      const galleryDataService = new GalleryDataService();
-      const result = await galleryDataService.fetchGalleryData(params, forceRefresh);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch gallery data');
-      }
-
-      setState(prev => ({
-        ...prev,
-        items: result.data?.items || [],
-        loading: false,
-        isFirstLoad: false,
-        error: undefined,
-      }));
-
-    } catch (error) {
-      console.error('Error fetching DAM gallery data:', error);
-      setState(prev => ({
-        ...prev,
-        items: [],
-        loading: false,
-        isFirstLoad: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }));
-    }
-  }, [
+  // Memoize params to prevent unnecessary effect triggers
+  const params = useMemo((): GalleryDataParams => ({
+    currentFolderId,
+    searchTerm,
+    tagIds: tagIds?.split(',').filter(id => id.trim()) || [],
+    filterType,
+    filterCreationDateOption,
+    filterDateStart,
+    filterDateEnd,
+    filterOwnerId,
+    filterSizeOption,
+    filterSizeMin: filterSizeMin ? parseFloat(filterSizeMin) : undefined,
+    filterSizeMax: filterSizeMax ? parseFloat(filterSizeMax) : undefined,
+    sortBy,
+    sortOrder: sortOrder as 'asc' | 'desc' | undefined,
+  }), [
     currentFolderId,
     searchTerm,
     tagIds,
@@ -114,15 +81,141 @@ export function useDamGalleryData(props: UseDamGalleryDataProps): UseDamGalleryD
     sortOrder,
   ]);
 
-  // Update state setter for external manipulations (e.g., optimistic updates)
+  // Single effect for data fetching with organization context
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      // Handle organization still loading
+      if (isOrgLoading) {
+        return;
+      }
+
+      // Handle no active organization
+      if (!activeOrganizationId) {
+        if (isMounted) {
+          setState(prev => ({ 
+            ...prev, 
+            loading: false, 
+            isFirstLoad: false,
+            items: [],
+            error: 'No active organization selected'
+          }));
+        }
+        return;
+      }
+
+      // Start loading
+      if (isMounted) {
+        setState(prev => ({ 
+          ...prev, 
+          loading: true, 
+          error: undefined
+        }));
+      }
+
+      try {
+        const galleryDataService = new GalleryDataService();
+        const result = await galleryDataService.fetchGalleryData(params, false);
+        
+        if (!isMounted) {
+          return; // Component unmounted
+        }
+
+        if (!result.success) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            isFirstLoad: false,
+            error: result.error || 'Failed to fetch gallery data'
+          }));
+          return;
+        }
+
+        const items = result.data?.items || [];
+
+        setState(prev => ({
+          ...prev,
+          items: items,
+          loading: false,
+          isFirstLoad: false,
+          error: undefined,
+        }));
+
+      } catch (error) {
+        if (isMounted) {
+          setState(prev => ({
+            ...prev,
+            items: [],
+            loading: false,
+            isFirstLoad: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }));
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    // Simplified dependencies using memoized params
+    activeOrganizationId,
+    isOrgLoading,
+    params
+  ]);
+
+  // Manual refresh function
+  const fetchData = useCallback(async (forceRefresh: boolean = false) => {
+    if (isOrgLoading || !activeOrganizationId) {
+      return;
+    }
+
+    setState(prev => ({ 
+      ...prev, 
+      loading: true, 
+      error: undefined,
+      ...(forceRefresh && { items: [] })
+    }));
+
+    try {
+      const galleryDataService = new GalleryDataService();
+      const result = await galleryDataService.fetchGalleryData(params, forceRefresh);
+      
+      if (!result.success) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: result.error || 'Failed to fetch gallery data'
+        }));
+        return;
+      }
+
+      const items = result.data?.items || [];
+
+      setState(prev => ({
+        ...prev,
+        items: items,
+        loading: false,
+        error: undefined,
+      }));
+
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        items: [],
+        loading: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    }
+  }, [activeOrganizationId, isOrgLoading, params]);
+
+  // Update state setter for external manipulations
   const updateItems = useCallback((newItems: GalleryItemDto[]) => {
     setState(prev => ({ ...prev, items: newItems }));
   }, []);
-
-  // Effect to fetch data when dependencies change
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   // Computed properties for UI convenience
   const folders = state.items.filter(item => item.type === 'folder') as (GalleryItemDto & { type: 'folder' })[];

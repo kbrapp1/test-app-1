@@ -184,6 +184,8 @@ export class SupabaseFolderRepository implements IFolderRepository {
     query = this.queryBuilder.applyPagination(query, limitOptions);
 
     const data = await this.queryExecutor.executeQuery(query, 'searching folders');
-    return data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    const result = data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    
+    return result;
   }
 } 

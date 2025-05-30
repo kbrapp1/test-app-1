@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
 import type { PlainFolder } from '@/lib/dam/types/dam.types';
 import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { useRouter } from 'next/navigation';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;
@@ -65,24 +66,18 @@ export function RenameFolderDialog({
   folderId,
   currentName,
 }: RenameFolderDialogProps) {
-  const [name, setName] = useState(currentName);
-  const [submissionHandled, setSubmissionHandled] = useState(false);
+  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
   const { updateFolderNodeInStore, forceRefresh } = useFolderStore();
+  const [newName, setNewName] = useState(currentName || '');
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
-      setName(currentName);
-      setSubmissionHandled(false);
+      setNewName(currentName);
     }
   }, [isOpen, currentName]);
   
-  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
-
   useEffect(() => {
-    if (submissionHandled) {
-      return;
-    }
-
     if (state.success && state.folder) {
       toast.success(`Folder renamed to "${state.folder.name}" successfully.`);
       
@@ -111,13 +106,11 @@ export function RenameFolderDialog({
         } 
       }));
       
-      setSubmissionHandled(true); 
       onClose();
     } else if (state.error) {
       toast.error(`Error: ${state.error}`);
-      setSubmissionHandled(true); 
     }
-  }, [state, currentName, onClose, updateFolderNodeInStore, forceRefresh, submissionHandled]);
+  }, [state, currentName, onClose, updateFolderNodeInStore, forceRefresh]);
 
   if (!isOpen) {
     return null;
@@ -148,8 +141,8 @@ export function RenameFolderDialog({
               <Input
                 id="folderName"
                 name="newNameInput"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
                 className="col-span-3"
                 required
               />

@@ -1,8 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from 'next/navigation'
-import type { User } from "@supabase/supabase-js"
 import {
   BellIcon,
   CreditCardIcon,
@@ -12,7 +10,6 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
-import type { Profile } from "@/lib/auth"
 import { SuperAdminBadgeCompact } from "@/components/auth/SuperAdminBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -31,70 +28,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider"
 
+/**
+ * Navigation User Component
+ * 
+ * Single Responsibility: Display user navigation dropdown
+ * Now uses centralized UserProfileProvider to eliminate redundant profile fetching
+ * Reduced from 211 lines to ~90 lines following golden rule
+ */
 export function NavUser() {
   const { isMobile } = useSidebar()
   const router = useRouter()
   const supabase = createClient()
-
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true); 
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Event and session logs removed for cleanup
-      if (!isMounted) return;
-      const newUser = session?.user ?? null;
-      setCurrentUser(newUser);
-
-      // Fetch profile data if user exists
-      if (newUser) {
-        try {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', newUser.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching profile:', error);
-            setProfile(null);
-          } else {
-            setProfile(profileData);
-          }
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
-      }
-
-      setIsLoading(false); 
-    });
-
-    return () => {
-      isMounted = false;
-      if (authListener?.subscription) {
-        authListener.subscription.unsubscribe();
-      }
-    };
-  }, [supabase]);
+  const { user: currentUser, profile, isLoading } = useUserProfile()
 
   const handleLogout = async () => {
     try {
         await supabase.auth.signOut();
     } catch (error) {
         console.error('Error signing out:', error);
-        // Still attempt to clear state and redirect even if signOut fails
     }
-    setCurrentUser(null); // Clear user state locally
     router.push('/login');
-    // router.refresh(); // Optional: Force refresh if needed
   }
 
   const getInitials = (email: string | undefined): string => {
@@ -121,17 +76,14 @@ export function NavUser() {
     )
   }
 
-  // Display nothing or a login link if not logged in (or adapt as needed)
+  // Display nothing if not logged in
   if (!currentUser) {
-    // console.log('[NavUser Render] Rendering Null (No User)'); // REMOVED
-    return null // Or potentially a Login button
+    return null
   }
 
-  // --- User is logged in --- 
-  // console.log('[NavUser Render] Rendering User Info'); // REMOVED
   const userEmail = currentUser.email ?? 'No Email'
-  const userName = currentUser.user_metadata?.name ?? userEmail.split('@')[0] // Fallback to email prefix
-  const avatarUrl = currentUser.user_metadata?.avatar_url // Check for avatar_url in metadata
+  const userName = currentUser.user_metadata?.name ?? userEmail.split('@')[0]
+  const avatarUrl = currentUser.user_metadata?.avatar_url
   const fallbackInitials = getInitials(userEmail)
 
   return (
@@ -144,7 +96,6 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                 {/* Use avatarUrl from metadata if available */}
                 <AvatarImage src={avatarUrl ?? undefined} alt={userName} />
                 <AvatarFallback className="rounded-lg">{fallbackInitials}</AvatarFallback>
               </Avatar>
@@ -160,8 +111,9 @@ export function NavUser() {
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+          
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -178,28 +130,26 @@ export function NavUser() {
                     {userEmail}
                   </span>
                 </div>
-                <SuperAdminBadgeCompact profile={profile} />
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              {/* TODO: Link these items to actual pages */}
-              <DropdownMenuItem>
-                <UserCircleIcon />
-                Account
+              <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
+                <UserCircleIcon className="mr-2 h-4 w-4" />
+                Profile Settings
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
+                <BellIcon className="mr-2 h-4 w-4" />
                 Notifications
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <CreditCardIcon className="mr-2 h-4 w-4" />
+                Billing
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}> {/* Add onClick handler */}
-              <LogOutIcon />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOutIcon className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

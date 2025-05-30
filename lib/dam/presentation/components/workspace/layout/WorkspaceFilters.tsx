@@ -24,9 +24,6 @@ export interface WorkspaceFiltersProps {
   sortOrder: SortOrderValue | undefined;
   isAnyFilterActive: boolean;
   
-  // Organization data
-  organizationMembers: Array<{id: string, name: string}>;
-  
   // Multi-select states (optional) - selectedCount for display only
   selectedCount?: number;
   
@@ -67,7 +64,6 @@ export const WorkspaceFilters: React.FC<WorkspaceFiltersProps> = ({
   sortBy,
   sortOrder,
   isAnyFilterActive,
-  organizationMembers,
   selectedCount = 0,
   setFilterType,
   setFilterCreationDateOption,
@@ -94,7 +90,6 @@ export const WorkspaceFilters: React.FC<WorkspaceFiltersProps> = ({
       <OwnerFilter 
         selectedOwnerId={filterOwnerId} 
         onOwnerChange={setFilterOwnerId} 
-        members={organizationMembers} 
       />
       
       <SizeFilter 

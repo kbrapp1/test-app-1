@@ -48,7 +48,7 @@ interface AssetGalleryStateProps {
 export const useAssetGalleryState = (props: AssetGalleryStateProps) => {
   const { 
     currentFolderId, 
-    enableMultiSelect = false, 
+    enableMultiSelect = true, 
     enableNavigation, 
     onFolderNavigate, 
     onSelectionChange 

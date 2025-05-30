@@ -45,6 +45,7 @@ export class TagEditorDataService {
     const allTags: PlainTag[] = allTagsEntities.map((tag: any) => ({
       id: tag.id,
       name: tag.name,
+      color: tag.colorName,
       userId: tag.userId,
       organizationId: tag.organizationId,
       createdAt: tag.createdAt,
@@ -54,6 +55,7 @@ export class TagEditorDataService {
     const usedTags: PlainTag[] = usedTagsEntities.map((tag: any) => ({
       id: tag.id,
       name: tag.name,
+      color: tag.colorName,
       userId: tag.userId,
       organizationId: tag.organizationId,
       createdAt: tag.createdAt,
@@ -81,6 +83,7 @@ export class TagEditorDataService {
     return {
       id: newTagEntity.id,
       name: newTagEntity.name,
+      color: newTagEntity.colorName,
       userId: newTagEntity.userId,
       organizationId: newTagEntity.organizationId,
       createdAt: newTagEntity.createdAt,

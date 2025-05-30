@@ -19,7 +19,7 @@ export const ContentSections: React.FC<ContentSectionsProps> = ({
   assets,
   renderFolders,
   renderAssets,
-  enableMultiSelect = false,
+  enableMultiSelect = true,
   multiSelect,
 }) => {
   const selectedFolderCount = enableMultiSelect && multiSelect ? multiSelect.selectedFolders.length : 0;

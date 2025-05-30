@@ -76,11 +76,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {enableNavigation && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400">or</span>
-              <NewFolderDialog
-                currentFolderId={activeFolderId}
-                asIcon={false}
-                onFolderCreated={onRefresh}
-              />
+              <Button variant="outline">
+                New Folder
+              </Button>
             </div>
           )}
         </div>

@@ -1,14 +1,17 @@
-import { useTransition, useCallback } from 'react';
-import { type Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
+import { useCallback, useTransition } from 'react';
+import { toast as sonnerToast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
+
+// DAM DDD imports
 import { GetAssetDownloadUrlUseCase } from '../../../application/use-cases/assets/GetAssetDownloadUrlUseCase';
+import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
+import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
+import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { type Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
 import { RenameAssetUseCase } from '../../../application/use-cases/assets/RenameAssetUseCase';
 import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
-import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
-import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
-import { toast as sonnerToast } from 'sonner';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 /**
  * Props for the asset item actions hook
@@ -102,7 +105,10 @@ export function useAssetItemActions({
   const [isPendingRename, startRenameTransition] = useTransition();
   const [isPendingMove, startMoveTransition] = useTransition();
 
-  // DDD helper function for authentication
+  // Use organization context to avoid duplicate RPC calls
+  const { activeOrganizationId } = useOrganization();
+
+  // Simplified auth function - no more RPC calls
   const getAuthContext = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -111,20 +117,12 @@ export function useAssetItemActions({
       throw new Error('User not authenticated');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('No session found');
-    }
-
-    const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
-    
-    if (!activeOrgId) {
+    if (!activeOrganizationId) {
       throw new Error('No active organization found');
     }
 
-    return { supabase, user, activeOrgId };
-  }, []);
+    return { supabase, user, activeOrgId: activeOrganizationId };
+  }, [activeOrganizationId]);
 
   /**
    * Handles asset download by fetching download URL and triggering browser download

@@ -93,6 +93,11 @@ export function NewFolderDialog({
         setTimeout(() => {
         router.push(`/dam?folderId=${state.folder.id}`);
           
+          // Dispatch gallery refresh event after navigation to ensure fresh data
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('damDataRefresh'));
+          }, 200);
+          
           // Call optional callback after navigation
           if (onFolderCreated) {
             onFolderCreated();

@@ -7,7 +7,7 @@ export * from './FilterTypes';
 export * from './UrlParameterService';
 export * from './FilterActionsService';
 
-// Gallery data services
+// Gallery data services and types
 export { GalleryDataService } from './GalleryDataService';
 export * from './GalleryDataTypes';
 

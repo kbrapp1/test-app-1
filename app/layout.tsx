@@ -14,7 +14,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AppProviders } from "@/components/app-providers"
-import { ErrorBoundary } from "@/components/error/error-boundary";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {

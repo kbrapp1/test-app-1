@@ -6,6 +6,7 @@
  */
 
 import type { BulkMoveSelection, DragOperation, DragEndResult } from '../types';
+import { useFolderStore } from '@/lib/store/folderStore';
 
 export interface BulkMoveCallbacks {
   onToast: (toast: { title: string; description?: string; variant?: 'default' | 'destructive' }) => void;
@@ -29,6 +30,14 @@ export class BulkMoveOperationsService {
     const { onToast, onRefreshData } = callbacks;
     
     try {
+      // Optimistically update folder positions in store for immediate UI feedback
+      if (selectedFolders.length > 0) {
+        const { moveFolder } = useFolderStore.getState();
+        selectedFolders.forEach(folderId => {
+          moveFolder(folderId, operation.targetId);
+        });
+      }
+      
       // Use the bulk move action
       const formData = new FormData();
       formData.append('assetIds', JSON.stringify(selectedAssets));
@@ -70,16 +79,20 @@ export class BulkMoveOperationsService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
       
+      // Revert optimistic folder moves if the operation failed
+      if (selectedFolders.length > 0) {
+        // Refresh data to revert folder positions
+        if (onRefreshData) {
+          await onRefreshData();
+        }
+      }
+      
       onToast({ 
         title: 'Error moving items', 
         description: errorMessage, 
         variant: 'destructive' 
       });
       
-      // Refresh data to revert optimistic updates
-      if (onRefreshData) {
-        await onRefreshData();
-      }
       return { success: false, error: errorMessage };
     }
   }

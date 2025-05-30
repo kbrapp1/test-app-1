@@ -23,7 +23,7 @@ export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
   folderNavigation,
   activeFolderId,
   onRefresh,
-  enableMultiSelect = false,
+  enableMultiSelect = true,
   multiSelect,
 }) => {
   if (!showNavigationUI || !enableNavigation || !folderNavigation?.navigation) {
@@ -49,11 +49,9 @@ export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
               {multiSelect?.isSelecting ? 'Exit Selection' : 'Select Items'}
             </Button>
           )}
-          <NewFolderDialog
-            currentFolderId={activeFolderId}
-            asIcon={false}
-            onFolderCreated={onRefresh}
-          />
+          <Button variant="outline" size="sm">
+            New Folder
+          </Button>
           <Button
             variant="outline"
             size="sm"

@@ -8,8 +8,8 @@ import { DeleteAssetUseCase } from '../../../application/use-cases/assets/Delete
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
 import { CircleX, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 import {
     AlertDialog,
@@ -80,6 +80,9 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   
+  // Use organization context to avoid duplicate RPC calls
+  const { activeOrganizationId } = useOrganization();
+  
   useImperativeHandle(ref, () => ({
     triggerDeleteDialog: () => {
       setIsAlertOpen(true);
@@ -103,7 +106,7 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
     }
   }, [src, mimeType, fallbackSrc]);
 
-  // DDD helper function for authentication
+  // Simplified auth function - no more RPC calls
   const getAuthContext = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -112,20 +115,12 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
       throw new Error('User not authenticated');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('No session found');
-    }
-
-    const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
-    
-    if (!activeOrgId) {
+    if (!activeOrganizationId) {
       throw new Error('No active organization found');
     }
 
-    return { supabase, user, activeOrgId };
-  }, []);
+    return { supabase, user, activeOrgId: activeOrganizationId };
+  }, [activeOrganizationId]);
 
   const handleDeleteConfirm = async () => {
     startTransition(async () => {

@@ -1,28 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { jwtDecode } from 'jwt-decode';
 import { createClient } from '@/lib/supabase/client';
 import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
+import { Asset as DomainAsset } from '../../../domain/entities/Asset';
 import type { SortByValue, SortOrderValue } from '../search/useDamFilters';
-import type { Asset as DomainAsset } from '../../../domain/entities/Asset';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 export interface UseDamPageHandlersParams {
-  updateUrlParams: (params: { 
-    sortBy?: SortByValue | undefined; 
-    sortOrder?: SortOrderValue | undefined; 
-  }) => void;
+  updateUrlParams: (params: any) => void;
   handleGalleryRefresh: () => void;
   closeMoveDialog: () => void;
 }
 
 export interface UseDamPageHandlersReturn {
-  // Organization members
-  organizationMembers: Array<{id: string, name: string}>;
-  
   // Action handlers
   handleSortChange: (newSortBy: SortByValue | undefined, newSortOrder: SortOrderValue | undefined) => void;
   handleMoveAssetConfirm: (selectedFolderId: string | null, moveAsset: DomainAsset) => Promise<void>;
@@ -32,10 +26,12 @@ export interface UseDamPageHandlersReturn {
  * useDamPageHandlers - Domain Hook for DAM Page Business Logic
  * 
  * Handles complex business operations:
- * - Organization members fetching
  * - Sort parameter management
  * - Asset move operations using DDD use cases
  * - Error handling and user feedback
+ * 
+ * NOTE: Organization members are now handled by shared organization context
+ * to avoid duplicate API calls and improve performance.
  */
 export function useDamPageHandlers({
   updateUrlParams,
@@ -43,29 +39,9 @@ export function useDamPageHandlers({
   closeMoveDialog,
 }: UseDamPageHandlersParams): UseDamPageHandlersReturn {
   
-  // Organization members state
-  const [organizationMembers, setOrganizationMembers] = useState<Array<{id: string, name: string}>>([]);
-
-  // Fetch organization members on mount
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await fetch('/api/team/members');
-        if (!response.ok) {
-          console.error('Failed to fetch organization members', response.statusText);
-          setOrganizationMembers([]);
-          return;
-        }
-        const data = await response.json();
-        setOrganizationMembers(data.members || []);
-      } catch (error) {
-        console.error('Error fetching organization members:', error);
-        setOrganizationMembers([]);
-      }
-    };
-    fetchMembers();
-  }, []);
-
+  // Get organization context to avoid duplicate RPC calls
+  const { activeOrganizationId } = useOrganization();
+  
   // Sort change handler
   const handleSortChange = useCallback((
     newSortBy: SortByValue | undefined, 
@@ -95,6 +71,12 @@ export function useDamPageHandlers({
       return;
     }
 
+    if (!activeOrganizationId) {
+      toast.error('Error moving asset', { description: 'No active organization found.' });
+      closeMoveDialog();
+      return;
+    }
+
     try {
       // Get auth context for DDD use case
       const supabase = createClient();
@@ -104,27 +86,16 @@ export function useDamPageHandlers({
         throw new Error('User not authenticated');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No session found');
-      }
-
-      const decodedToken = jwtDecode<any>(session.access_token);
-      const activeOrgId = decodedToken.custom_claims?.active_organization_id;
-      
-      if (!activeOrgId) {
-        throw new Error('No active organization found');
-      }
-
-      // Use DDD pattern
+      // Use organization context from provider (eliminates get_active_organization_id RPC call)
       const assetRepository = new SupabaseAssetRepository(supabase);
       const folderRepository = new SupabaseFolderRepository(supabase);
       const moveUseCase = new MoveAssetUseCase(assetRepository, folderRepository);
 
+      // Use organization ID from context instead of RPC call
       await moveUseCase.execute({
         assetId: moveAsset.id,
         targetFolderId: selectedFolderId,
-        organizationId: activeOrgId,
+        organizationId: activeOrganizationId,
       });
 
       toast.success('Asset moved', {
@@ -138,12 +109,9 @@ export function useDamPageHandlers({
     } finally {
       closeMoveDialog();
     }
-  }, [handleGalleryRefresh, closeMoveDialog]);
+  }, [activeOrganizationId, handleGalleryRefresh, closeMoveDialog]);
 
   return {
-    // Organization members
-    organizationMembers,
-    
     // Action handlers
     handleSortChange,
     handleMoveAssetConfirm,

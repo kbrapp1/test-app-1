@@ -10,7 +10,6 @@ import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAsse
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
 import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import type { useToast } from '@/components/ui/use-toast'; // Import type
 
@@ -49,15 +48,10 @@ export function useAssetDragAndDrop({
       throw new Error('User not authenticated');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('No session found');
-    }
-
-    const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
+    // Use database-first organization context (single source of truth)
+    const { data: activeOrgId, error } = await supabase.rpc('get_active_organization_id');
     
-    if (!activeOrgId) {
+    if (error || !activeOrgId) {
       throw new Error('No active organization found');
     }
 

@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,19 +16,38 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { AddTeamMemberForm } from './AddTeamMemberForm';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlusCircle } from 'lucide-react';
 
 export function AddTeamMemberDialog() {
   const [open, setOpen] = useState(false);
-  const { auth, isLoading } = useUser();
+  const [mounted, setMounted] = useState(false);
+  
+  // Use centralized user profile provider
+  const { user, profile, isLoading } = useUserProfile();
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Don't render until mounted and we have user data
+  if (!mounted || !user) {
+    return null;
+  }
 
   const handleSuccess = () => {
     setOpen(false);
   };
 
-  const isButtonDisabled = isLoading || !auth.isAdmin;
+  // Check if user is admin (using profile data or fallback to user metadata)
+  const isAdmin = profile?.is_super_admin || 
+                  user?.app_metadata?.role === 'admin' || 
+                  user?.app_metadata?.role === 'super-admin';
+
+  const isButtonDisabled = isLoading || !isAdmin;
   // The dialog should only open if the button is NOT disabled
   const canOpenDialog = !isButtonDisabled;
 

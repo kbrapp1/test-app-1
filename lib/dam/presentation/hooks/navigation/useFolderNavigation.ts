@@ -3,7 +3,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { NavigateToFolderUseCase, FolderNavigationDto } from '../../../application/use-cases/folders/NavigateToFolderUseCase';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { createClient } from '@/lib/supabase/client';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+// TEMPORARILY DISABLED TO TEST API CALLS
+// import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 /**
  * useFolderNavigation - Domain-Driven Navigation Hook
@@ -38,6 +40,7 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
   });
 
   const { toast } = useToast();
+  const { activeOrganizationId, isLoading: isOrgLoading } = useOrganization();
 
   // Initialize repositories and use case
   const supabase = createClient();
@@ -45,11 +48,16 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
   const navigateToFolderUseCase = new NavigateToFolderUseCase(folderRepository);
 
   const navigateToFolder = useCallback(async (folderId: string | null) => {
+    // Don't navigate if organization is still loading
+    if (isOrgLoading) {
+      return;
+    }
+
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Get organization context
-      const organizationId = await getActiveOrganizationId();
+      // Get organization context from provider (eliminates Server Action call)
+      const organizationId = activeOrganizationId;
       if (!organizationId) {
         throw new Error('Organization context not found');
       }
@@ -83,7 +91,7 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
         variant: 'destructive',
       });
     }
-  }, [navigateToFolderUseCase, toast]);
+  }, [navigateToFolderUseCase, toast, activeOrganizationId, isOrgLoading]);
 
   const refresh = useCallback(async () => {
     await navigateToFolder(state.currentFolderId);
@@ -101,8 +109,11 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
 
   // Initialize navigation on mount or when initial folder changes
   useEffect(() => {
-    navigateToFolder(initialFolderId);
-  }, [initialFolderId]); // Don't include navigateToFolder to avoid infinite loops
+    // Only navigate when organization is loaded
+    if (!isOrgLoading) {
+      navigateToFolder(initialFolderId);
+    }
+  }, [initialFolderId, isOrgLoading]); // Include isOrgLoading to trigger when org loads
 
   return {
     ...state,

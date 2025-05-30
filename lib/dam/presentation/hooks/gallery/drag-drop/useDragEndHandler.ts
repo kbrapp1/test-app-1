@@ -14,12 +14,14 @@ import { SelectionStateService } from './services/SelectionStateService';
 import { BulkMoveOperationsService } from './operations/BulkMoveOperationsService';
 import { MoveOperationsService } from './operations/MoveOperationsService';
 import type { DragEndParams, DragEndResult, UseDamDragAndDropProps } from './types';
+import { useFolderStore } from '@/lib/store/folderStore';
 
 export function useDragEndHandler({
   onItemsUpdate,
   onToast,
   onRefreshData
 }: UseDamDragAndDropProps) {
+  const { moveFolder } = useFolderStore();
   
   const handleDragEnd = useCallback(async (
     event: DragEndEvent, 
@@ -29,56 +31,53 @@ export function useDragEndHandler({
     
     // 1. Create domain operation
     const operation = DragOperationFactory.createFromEvent(event, activeItemData);
+    
     if (!operation) {
-      // No valid drop target - operation was cancelled
-      return { success: false, cancelled: true };
+      // No valid operation created
+      return { success: false, error: 'Invalid drag operation' };
     }
 
-    // 2. Get current selection state
-    const selection = await SelectionStateService.getCurrentSelection(selectionState);
-
-    // 3. Check if this is a bulk operation
-    const isBulkOperation = BulkMoveOperationsService.shouldPerformBulkMove(operation, selection);
-
-    if (isBulkOperation) {
-      // Handle bulk move operation
-      return BulkMoveOperationsService.executeBulkMove(
+    // 2. Handle bulk move operations
+    if (selectionState && (selectionState.selectedAssets.length > 0 || selectionState.selectedFolders.length > 0)) {
+      return await BulkMoveOperationsService.executeBulkMove(
         operation,
-        selection,
+        { selectedAssets: selectionState.selectedAssets, selectedFolders: selectionState.selectedFolders },
         { onToast, onRefreshData }
       );
     }
 
-    // 4. Single item operation - validate operation
-    const validation = DragValidationService.validate(operation, event.over?.data.current);
-    if (!validation.isValid) {
+    // 3. Early validation for circular dependency (folder moves)
+    if (operation.itemType === 'folder' && operation.targetId === operation.itemId) {
       onToast({ 
-        title: validation.reason?.includes('already') ? 'No Change' : 'Invalid Move',
-        description: validation.reason,
-        variant: validation.reason?.includes('already') ? 'default' : 'destructive'
+        title: 'Cannot move folder', 
+        description: 'A folder cannot be moved into itself.', 
+        variant: 'destructive' 
       });
-      return { success: false, cancelled: true, reason: validation.reason };
+      return { success: false, error: 'Circular dependency detected' };
     }
 
-    // 5. Execute optimistic update for single item
-    onItemsUpdate(prevItems => prevItems.filter(item => item.id !== operation.itemId));
+    // 4. Exit selection mode for single item operations
+    window.dispatchEvent(new CustomEvent('damExitSelectionMode'));
 
     try {
-      // 6. Execute domain operation for single item
+      // 5. Execute domain operation for single item
       if (operation.itemType === 'asset') {
         await MoveOperationsService.executeAssetMove(operation);
         onToast({ title: 'Asset moved successfully!' });
       } else {
+        // Update store immediately for folder moves
+        moveFolder(operation.itemId, operation.targetId);
+        
         await MoveOperationsService.executeFolderMove(operation);
         onToast({ title: 'Folder moved successfully!' });
         
-        // Dispatch folder update event for folder tree refresh
+        // Dispatch folder update event for gallery refresh
         window.dispatchEvent(new CustomEvent('folderUpdated', {
           detail: { type: 'move', folderId: operation.itemId }
         }));
       }
 
-      // 7. Refresh data for consistency
+      // 6. Refresh data for consistency (but store should already be updated)
       if (onRefreshData) {
         await onRefreshData();
       }
@@ -87,6 +86,13 @@ export function useDragEndHandler({
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      
+      // Revert optimistic folder move if it failed
+      if (operation.itemType === 'folder') {
+        // Move folder back to original location
+        const originalParentId = activeItemData?.parentFolderId || null;
+        moveFolder(operation.itemId, originalParentId);
+      }
       
       onToast({ 
         title: `Error moving ${operation.itemType}`, 
@@ -101,7 +107,7 @@ export function useDragEndHandler({
       
       return { success: false, error: errorMessage };
     }
-  }, [onItemsUpdate, onToast, onRefreshData]);
+  }, [onItemsUpdate, onToast, onRefreshData, moveFolder]);
 
   return { handleDragEnd };
 } 

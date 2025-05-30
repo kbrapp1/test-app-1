@@ -116,8 +116,8 @@ export async function updateAssetText(
       newContent,
     });
 
-    // Cache invalidation for updated content
-    revalidatePath('/dam', 'layout');
+    // Cache invalidation for updated content - removed /dam revalidation for client-side fetching
+    // revalidatePath('/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
     return { success: true };
 
   } catch (err: any) {
@@ -159,8 +159,8 @@ export async function saveAsNewTextAsset(
       folderId,
     });
 
-    // Cache invalidation for new content
-    revalidatePath('/dam', 'layout');
+    // Cache invalidation for new content - removed /dam revalidation for client-side fetching
+    // revalidatePath('/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
     if (folderId) {
       revalidatePath(`/dam/folders/${folderId}`, 'layout');
     }

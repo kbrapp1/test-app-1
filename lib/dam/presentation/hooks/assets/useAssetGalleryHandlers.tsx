@@ -8,12 +8,12 @@ import { SupabaseAssetRepository } from '../../../infrastructure/persistence/sup
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
 import { Asset as DomainAsset } from '../../../domain/entities/Asset';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { useFolderNavigation } from '../navigation/useFolderNavigation';
 import { useGalleryDialogs } from '../navigation/useGalleryDialogs';
 import { useAssetItemDialogs } from './useAssetItemDialogs';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 interface UseAssetGalleryHandlersProps {
   activeFolderId: string | null;
@@ -47,8 +47,11 @@ export const useAssetGalleryHandlers = ({
   onFolderNavigate,
 }: UseAssetGalleryHandlersProps) => {
   const { toast } = useToast();
+  
+  // Use organization context to avoid duplicate RPC calls
+  const { activeOrganizationId } = useOrganization();
 
-  // DDD helper functions
+  // Simplified auth function - no more RPC calls
   const getAuthContext = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -57,20 +60,12 @@ export const useAssetGalleryHandlers = ({
       throw new Error('User not authenticated');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('No session found');
-    }
-
-    const decodedToken = jwtDecode<any>(session.access_token);
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id;
-    
-    if (!activeOrgId) {
+    if (!activeOrganizationId) {
       throw new Error('No active organization found');
     }
 
-    return { supabase, user, activeOrgId };
-  }, []);
+    return { supabase, user, activeOrgId: activeOrganizationId };
+  }, [activeOrganizationId]);
 
   const moveAssetUseCase = useCallback(async (assetId: string, targetFolderId: string | null) => {
     const { supabase, activeOrgId } = await getAuthContext();

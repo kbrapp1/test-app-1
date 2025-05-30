@@ -4,22 +4,24 @@ import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolde
 export interface GalleryDataParams {
   currentFolderId: string | null;
   searchTerm?: string;
-  tagIds?: string;
+  tagIds?: string[];
   filterType?: string;
   filterCreationDateOption?: string;
   filterDateStart?: string;
   filterDateEnd?: string;
   filterOwnerId?: string;
   filterSizeOption?: string;
-  filterSizeMin?: string;
-  filterSizeMax?: string;
+  filterSizeMin?: number;
+  filterSizeMax?: number;
   sortBy?: string;
   sortOrder?: string;
 }
 
 export interface GalleryDataResult {
   success: boolean;
-  data?: { items: GalleryItemDto[] };
+  data?: {
+    items: GalleryItemDto[];
+  };
   error?: string;
 }
 

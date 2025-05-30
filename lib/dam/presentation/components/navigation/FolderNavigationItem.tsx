@@ -126,20 +126,24 @@ export function FolderNavigationItem({
       </div>
 
       {/* Management Dialogs */}
-      <RenameFolderDialog 
-        key={`rename-${dialogKey}`}
-        isOpen={isRenameDialogOpen} 
-        onClose={() => setIsRenameDialogOpen(false)}
-        folderId={folderNode.id}
-        currentName={folderNode.name}
-      />
-      <DeleteFolderDialog
-        key={`delete-${deleteDialogKey}`}
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        folderId={folderNode.id}
-        folderName={folderNode.name}
-      />
+      {(
+        <>
+          <RenameFolderDialog 
+            key={`rename-${dialogKey}`}
+            isOpen={isRenameDialogOpen} 
+            onClose={() => setIsRenameDialogOpen(false)}
+            folderId={folderNode.id}
+            currentName={folderNode.name}
+          />
+          <DeleteFolderDialog
+            key={`delete-${deleteDialogKey}`}
+            isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            folderId={folderNode.id}
+            folderName={folderNode.name}
+          />
+        </>
+      )}
     </div>
   );
 } 

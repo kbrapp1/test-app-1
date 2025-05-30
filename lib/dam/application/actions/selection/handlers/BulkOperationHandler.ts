@@ -50,8 +50,8 @@ export class BulkOperationHandler {
         userId: request.userId
       });
 
-      // 4. Revalidate DAM pages
-      revalidatePath('/(protected)/dam', 'layout');
+      // 4. Revalidate DAM pages - removed for client-side fetching
+      // revalidatePath('/(protected)/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
 
       return { success: true };
 
@@ -112,9 +112,9 @@ export class BulkOperationHandler {
         };
       }
 
-      // 5. Revalidate DAM pages
-      revalidatePath('/dam');
-      revalidatePath('/dam/[...path]', 'page');
+      // 5. Revalidate DAM pages - removed for client-side fetching  
+      // revalidatePath('/dam'); // REMOVED - causes unnecessary POST /dam calls
+      // revalidatePath('/dam/[...path]', 'page'); // REMOVED - causes unnecessary POST /dam calls
 
       return { success: true };
 
@@ -151,9 +151,9 @@ export class BulkOperationHandler {
 
       // TODO: Implement bulk tag use case when available
       
-      // 3. Revalidate DAM pages
-      revalidatePath('/dam');
-      revalidatePath('/dam/[...path]', 'page');
+      // 3. Revalidate DAM pages - removed for client-side fetching
+      // revalidatePath('/dam'); // REMOVED - causes unnecessary POST /dam calls
+      // revalidatePath('/dam/[...path]', 'page'); // REMOVED - causes unnecessary POST /dam calls
 
       return { success: true };
 

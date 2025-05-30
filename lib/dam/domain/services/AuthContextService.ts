@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
-import { jwtDecode } from 'jwt-decode';
 
 export interface AuthContext {
-  supabase: ReturnType<typeof createClient>;
+  supabase: any;
   user: any;
   activeOrgId: string;
 }
@@ -17,15 +16,9 @@ export class AuthContextService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error('No session found');
-
-    const decodedToken = jwtDecode<any>(session.access_token);
-    
-    // Try to get organization ID from custom_claims first (auth hook), then fallback to app_metadata
-    const activeOrgId = decodedToken.custom_claims?.active_organization_id || 
-                        decodedToken.app_metadata?.active_organization_id;
-    if (!activeOrgId) throw new Error('No active organization found');
+    // Use database-first organization context (single source of truth)
+    const { data: activeOrgId, error } = await supabase.rpc('get_active_organization_id');
+    if (error || !activeOrgId) throw new Error('No active organization found');
 
     return { supabase, user, activeOrgId };
   }

@@ -53,8 +53,8 @@ export function DeleteFolderDialog({
   if (!isOpen) return null;
   
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(deleteFolderActionForm, initialState);
   const { removeFolder } = useFolderStore();
+  const [state, formAction, isPending] = useActionState(deleteFolderActionForm, initialState);
 
   // Show toast and close dialog on success or show error
   useEffect(() => {

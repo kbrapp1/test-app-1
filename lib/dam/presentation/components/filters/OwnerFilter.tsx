@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,101 +18,90 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
-
-interface Member {
-  id: string;
-  name: string;
-}
+import { useTeamMembers } from '@/lib/auth/providers/TeamMembersProvider';
 
 interface OwnerFilterProps {
   selectedOwnerId: string | undefined;
   onOwnerChange: (ownerId: string | undefined) => void;
-  members?: Member[];
 }
 
-const DUMMY_MEMBERS: Member[] = [];
+/**
+ * OwnerFilter - Domain-Focused Asset Owner Filtering Component
+ * 
+ * Single Responsibility: Asset ownership filtering within organization context
+ * Now uses centralized TeamMembersProvider to eliminate redundant API calls
+ * Follows DDD principles with clean separation of concerns
+ */
+export const OwnerFilter: React.FC<OwnerFilterProps> = ({
+  selectedOwnerId,
+  onOwnerChange,
+}) => {
+  const { members, isLoading: loading } = useTeamMembers();
 
-const OWNER_OPTIONS = [
-  { value: '', label: 'Anyone' },
-];
-
-export function OwnerFilter({ selectedOwnerId, onOwnerChange, members = DUMMY_MEMBERS }: OwnerFilterProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectedValueForGroup = selectedOwnerId === undefined ? '' : selectedOwnerId;
-  
-  let currentButtonLabel = 'Anyone';
-  const staticOption = OWNER_OPTIONS.find(opt => opt.value === selectedValueForGroup);
-  if (staticOption) {
-    currentButtonLabel = staticOption.label;
-  } else if (selectedValueForGroup) {
-    const member = members.find(m => m.id === selectedValueForGroup);
-    if (member) {
-      currentButtonLabel = member.name.length > 25 ? member.name.substring(0, 22) + '...' : member.name;
-    } else {
-      currentButtonLabel = selectedValueForGroup.substring(0,8) + '...'; 
-    }
-  }
-
-  const handleValueChange = (value: string) => {
-    onOwnerChange(value === '' ? undefined : value);
-    setIsOpen(false);
-  };
-
-  const handleClearFilter = () => {
-    onOwnerChange(undefined);
-    setIsOpen(false);
-  };
+  const selectedMember = members.find(member => member.id === selectedOwnerId);
+  const hasSelection = !!selectedOwnerId;
 
   return (
-    <div className="flex items-center group">
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
-            className={`flex items-center justify-start gap-2 px-3 h-10 ${selectedOwnerId && selectedOwnerId !== '' ? 'rounded-r-none border-r-0' : ''} group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0`}
-          >
-            <UsersIcon size={16} />
-            <span className="truncate">Owner: {currentButtonLabel}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-60">
-          <DropdownMenuRadioGroup value={selectedValueForGroup} onValueChange={handleValueChange}>
-            {OWNER_OPTIONS.map(option => (
-              <DropdownMenuRadioItem key={option.value || 'anyone-key'} value={option.value}>
-                {option.label}
-              </DropdownMenuRadioItem>
-            ))}
-            { members && members.length > 0 && <DropdownMenuSeparator /> } 
-            { members && members.length > 0 && <DropdownMenuLabel>Organization Members</DropdownMenuLabel>} 
-            { members && members.map(member => (
-              <TooltipProvider key={member.id} delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuRadioItem value={member.id}>
-                      <span className="block max-w-[calc(100%-1rem)] overflow-hidden text-ellipsis whitespace-nowrap">
-                        {member.name}
-                      </span>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`h-8 ${hasSelection ? 'border-blue-300 bg-blue-50 text-blue-700' : ''}`}
+              >
+                <UsersIcon className="h-4 w-4 mr-1" />
+                {hasSelection ? (
+                  <span className="max-w-[100px] truncate">
+                    {selectedMember?.name || 'Unknown User'}
+                  </span>
+                ) : (
+                  'Owner'
+                )}
+                {hasSelection && (
+                  <XIcon 
+                    className="h-3 w-3 ml-1" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOwnerChange(undefined);
+                    }}
+                  />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[200px]">
+              <DropdownMenuLabel>Filter by Owner</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup 
+                value={selectedOwnerId || ''} 
+                onValueChange={(value) => onOwnerChange(value || undefined)}
+              >
+                <DropdownMenuRadioItem value="">All Owners</DropdownMenuRadioItem>
+                {loading ? (
+                  <DropdownMenuRadioItem value="" disabled>
+                    Loading members...
+                  </DropdownMenuRadioItem>
+                ) : members.length > 0 ? (
+                  members.map((member) => (
+                    <DropdownMenuRadioItem key={member.id} value={member.id}>
+                      <span className="truncate">{member.name}</span>
                     </DropdownMenuRadioItem>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="start">
-                    <p>{member.name}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ))} 
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {(selectedOwnerId && selectedOwnerId !== '') && (
-        <Button
-          variant="outline"
-          className="h-10 w-10 p-0 rounded-l-none -ml-px flex items-center justify-center hover:bg-muted-foreground/10 group-focus-within:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
-          onClick={handleClearFilter}
-          aria-label="Clear owner filter"
-        >
-          <XIcon size={16} className="text-muted-foreground group-focus-within:text-primary" />
-        </Button>
-      )}
-    </div>
+                  ))
+                ) : (
+                  <DropdownMenuRadioItem value="" disabled>
+                    No members found
+                  </DropdownMenuRadioItem>
+                )}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Filter assets by owner</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
-} 
+}; 

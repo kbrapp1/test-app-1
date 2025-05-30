@@ -164,16 +164,14 @@ const createDeleteAssetHandler = (assetId: string): AuthenticatedHandler => {
         organizationId 
       });
 
-      // Comprehensive cache invalidation for asset deletion (matching server action)
-      revalidatePath('/dam', 'layout');
-      revalidatePath('/dam', 'page');
+      // Comprehensive cache invalidation for asset deletion - removed /dam revalidation for client-side fetching
+      // revalidatePath('/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
+      // revalidatePath('/dam', 'page'); // REMOVED - causes unnecessary POST /dam calls
       if (result.folderId) {
         revalidatePath(`/dam/folders/${result.folderId}`, 'layout');
         revalidatePath(`/dam/folders/${result.folderId}`, 'page');
-      } else {
-        // If no folder (root level), revalidate root gallery
-        revalidatePath('/dam', 'layout');
       }
+      // If no folder (root level), no need to revalidate /dam since we use client-side fetching
       
       // Revalidate any gallery or asset list components
       revalidateTag('dam-gallery');
