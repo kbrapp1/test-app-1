@@ -47,11 +47,21 @@ export class AssetQueryBuilder {
 
   /**
    * Apply search term filter to query
+   * Enhanced to search across multiple fields for better results
    */
   applySearchFilter(query: any, searchTerm?: string) {
-    if (searchTerm) {
-      return query.ilike('name', `%${searchTerm}%`);
+    if (searchTerm && searchTerm.trim() !== '') {
+      // Escape the search term to prevent SQL injection
+      const escapedTerm = searchTerm.replace(/[%_\\]/g, '\\$&');
+      
+      // Search across multiple fields using OR conditions
+      // Note: Use proper Supabase OR syntax
+      return query.or(
+        `name.ilike.%${escapedTerm}%,` +
+        `storage_path.ilike.%${escapedTerm}%`
+      );
     }
+    
     return query;
   }
 

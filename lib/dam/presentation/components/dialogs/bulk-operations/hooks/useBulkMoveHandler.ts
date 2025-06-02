@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { bulkMoveItems } from '../../../../../application/actions/selection.actions';
+import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 
 interface UseBulkMoveHandlerParams {
   selectedAssets: string[];
@@ -20,34 +20,28 @@ export function useBulkMoveHandler({
   onOperationComplete,
   onClose
 }: UseBulkMoveHandlerParams) {
+  const bulkMoveMutation = useBulkMove();
 
   const handleBulkMove = useCallback(async (targetFolderId: string | null) => {
     try {
-      const formData = new FormData();
-      formData.append('assetIds', JSON.stringify(selectedAssets));
-      formData.append('folderIds', JSON.stringify(selectedFolders));
-      formData.append('targetFolderId', targetFolderId === null ? 'null' : targetFolderId || '');
+      await bulkMoveMutation.mutateAsync({
+        assetIds: selectedAssets,
+        folderIds: selectedFolders,
+        targetFolderId
+      });
       
-      const result = await bulkMoveItems(formData);
-      
-      if (result.success) {
-        const totalItems = selectedAssets.length + selectedFolders.length;
-        toast.success('Items moved successfully', {
-          description: `${totalItems} item${totalItems > 1 ? 's' : ''} moved successfully.`
-        });
-        onOperationComplete();
-        onClose();
-      } else {
-        toast.error('Move failed', {
-          description: result.error || 'Failed to move items. Please try again.'
-        });
-      }
+      const totalItems = selectedAssets.length + selectedFolders.length;
+      toast.success('Items moved successfully', {
+        description: `${totalItems} item${totalItems > 1 ? 's' : ''} moved successfully.`
+      });
+      onOperationComplete();
+      onClose();
     } catch (error) {
       toast.error('Move failed', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
       });
     }
-  }, [selectedAssets, selectedFolders, onOperationComplete, onClose]);
+  }, [selectedAssets, selectedFolders, onOperationComplete, onClose, bulkMoveMutation]);
 
   return {
     handleBulkMove

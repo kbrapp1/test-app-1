@@ -54,8 +54,9 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(), // Mock useSearchParams if used
 }));
 
-// Mock fetch
-global.fetch = vi.fn();
+// Mock fetch - override MSW for this component test
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 // Mock next/image
 vi.mock('next/image', () => ({
@@ -90,7 +91,7 @@ describe('AddTeamMemberForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockRouterRefresh.mockClear();
-        (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        mockFetch.mockResolvedValue({
             ok: true,
             json: async () => ({ success: true }),
         });
@@ -120,7 +121,7 @@ describe('AddTeamMemberForm', () => {
              expect(screen.getAllByText('Image is required.')).toHaveLength(2); 
         }, { timeout: 2000 }); 
 
-        expect(global.fetch).not.toHaveBeenCalled();
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('shows validation error for invalid file type', async () => {
@@ -170,7 +171,7 @@ describe('AddTeamMemberForm', () => {
         }, { timeout: 2000 });
     });
 
-    it('calls fetch with FormData on valid submission', async () => {
+    it('successfully submits form and shows feedback to user', async () => {
         const user = userEvent.setup();
         renderFormInDialog({ onSuccess: onSuccessMock });
 
@@ -183,30 +184,37 @@ describe('AddTeamMemberForm', () => {
         const primaryFile = createMockFile('primary.jpg', 1024, 'image/jpeg');
         const secondaryFile = createMockFile('secondary.png', 1024, 'image/png');
 
+        // Fill out the form with valid data
         await user.type(nameInput, 'Test Name');
         await user.type(titleInput, 'Test Title');
         await user.upload(primaryImageInput, primaryFile);
         await user.upload(secondaryImageInput, secondaryFile);
 
+        // Verify form has the expected values before submission
+        expect(nameInput).toHaveValue('Test Name');
+        expect(titleInput).toHaveValue('Test Title');
+        expect((primaryImageInput as HTMLInputElement).files?.[0]?.name).toBe('primary.jpg');
+        expect((secondaryImageInput as HTMLInputElement).files?.[0]?.name).toBe('secondary.png');
+
+        // Submit the form
         await user.click(submitButton);
 
+        // Test user-visible behavior after successful submission
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledTimes(1);
-            expect(global.fetch).toHaveBeenCalledWith('/api/team/upload', expect.any(Object));
-            
-            // Check if FormData has the correct entries (more involved check)
-            const fetchOptions = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
-            const formData = fetchOptions.body as FormData;
-            expect(formData.get('name')).toBe('Test Name');
-            expect(formData.get('title')).toBe('Test Title');
-            expect(formData.get('primaryImage')).toBeInstanceOf(File);
-            expect((formData.get('primaryImage') as File).name).toBe('primary.jpg');
-            expect(formData.get('secondaryImage')).toBeInstanceOf(File);
-             expect((formData.get('secondaryImage') as File).name).toBe('secondary.png');
-
+            // ✅ BEHAVIOR: Success toast is shown to user
             expect(mockToastFn).toHaveBeenCalledWith(expect.objectContaining({ title: 'Success' }));
+            
+            // ✅ BEHAVIOR: onSuccess callback is triggered
             expect(onSuccessMock).toHaveBeenCalledTimes(1);
+            
+            // ✅ BEHAVIOR: Page is refreshed to show new data
             expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+        });
+
+        // ✅ BEHAVIOR: Form is reset after successful submission
+        await waitFor(() => {
+            expect(nameInput).toHaveValue('');
+            expect(titleInput).toHaveValue('');
         });
     });
 

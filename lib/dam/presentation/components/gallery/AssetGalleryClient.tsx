@@ -8,6 +8,7 @@ import { GalleryLayout } from './GalleryLayout';
 import { GalleryDialogs } from './GalleryDialogs';
 import { SelectionToolbar } from '../selection/SelectionToolbar';
 import { BulkOperationDialogs } from '../dialogs/BulkOperationDialogs';
+import { useCacheInvalidation } from '@/lib/infrastructure/query';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
@@ -51,6 +52,9 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     onSelectionChange,
   } = props;
 
+  // Cache invalidation hook
+  const { invalidateByPattern } = useCacheInvalidation();
+
   // Extract state management
   const state = useAssetGalleryState({ 
     ...props, 
@@ -84,14 +88,31 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       state.refreshGalleryData();
     };
 
+    const handleReactQueryCacheInvalidation = (event: Event) => {
+      const customEvent = event as CustomEvent<{ patterns: string[]; queries: string[] }>;
+      const { patterns } = customEvent.detail || {};
+      
+      // Invalidate the React Query cache patterns directly
+      if (patterns && patterns.length > 0) {
+        patterns.forEach(pattern => {
+          invalidateByPattern(pattern);
+        });
+      }
+      
+      // Also force a refetch of current query as backup
+      state.refreshGalleryData(true);
+    };
+
     window.addEventListener('damDragDropUpdate', handleDragDropUpdate);
     window.addEventListener('damDragDropClear', handleDragDropClear);
     window.addEventListener('damDataRefresh', handleDataRefresh);
+    window.addEventListener('reactQueryInvalidateCache', handleReactQueryCacheInvalidation);
 
     return () => {
       window.removeEventListener('damDragDropUpdate', handleDragDropUpdate);
       window.removeEventListener('damDragDropClear', handleDragDropClear);
       window.removeEventListener('damDataRefresh', handleDataRefresh);
+      window.removeEventListener('reactQueryInvalidateCache', handleReactQueryCacheInvalidation);
     };
   }, [state]);
   
@@ -116,8 +137,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
   const renderAssets = () => (
     <AssetGalleryRenderer
       viewMode={viewMode}
-      folders={state.folders}
-      assets={state.visibleAssets}
+      folders={state.folders.filter(item => item.type === 'folder') as any}
+      assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
       enableNavigation={enableNavigation}
       onItemClick={handlers.handleItemClick}
       onFolderAction={state.dialogManager.openFolderAction}
@@ -133,8 +154,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
   const renderFolders = () => (
     <AssetGalleryRenderer
       viewMode={viewMode}
-      folders={state.folders}
-      assets={state.visibleAssets}
+      folders={state.folders.filter(item => item.type === 'folder') as any}
+      assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
       enableNavigation={enableNavigation}
       onItemClick={handlers.handleItemClick}
       onFolderAction={state.dialogManager.openFolderAction}
@@ -157,8 +178,8 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         activeFolderId={state.activeFolderId}
         upload={state.upload}
         onRefresh={state.refreshGalleryData}
-        folders={state.folders}
-        assets={state.visibleAssets}
+        folders={state.folders.filter(item => item.type === 'folder') as any}
+        assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
         searchTerm={props.searchTerm}
         enableNavigation={enableNavigation}
         renderFolders={renderFolders}

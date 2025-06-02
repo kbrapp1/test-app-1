@@ -1,31 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useApiQuery } from '@/lib/infrastructure/query';
+import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 interface UseDamSearchDropdownProps {
   debouncedSearchTerm: string;
-  currentFolderId: string | null;
-  mainSearchedTerm: string | null; // To prevent dropdown for just-submitted main search
-  gallerySearchTerm: string; // To avoid re-fetching if term matches current gallery search
+  currentFolderId?: string;
+  mainSearchedTerm?: string;
+  gallerySearchTerm?: string;
   inputFocused: boolean;
-  searchContainerRef: React.RefObject<HTMLDivElement | null>; // Allow null from parent
+  searchContainerRef?: React.RefObject<HTMLElement>;
 }
 
 interface UseDamSearchDropdownReturn {
   isDropdownOpen: boolean;
   dropdownResults: GalleryItemDto[];
   isDropdownLoading: boolean;
-  setIsDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>; // Allow parent to close
+  setIsDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
  * Domain presentation hook for managing search dropdown autocomplete functionality
  * 
- * Handles:
- * - Autocomplete search results fetching
- * - Dropdown open/close state management
- * - Loading states for search requests
- * - Click-outside to close behavior
- * - Request cancellation for stale requests
+ * MIGRATED TO REACT QUERY:
+ * - Uses useSearchQuery for debounced search results
+ * - Automatic request cancellation and deduplication
+ * - No more manual fetch controllers or state management
+ * - Click-outside behavior preserved
  */
 export function useDamSearchDropdown({
   debouncedSearchTerm,
@@ -33,102 +33,87 @@ export function useDamSearchDropdown({
   mainSearchedTerm,
   gallerySearchTerm,
   inputFocused,
-  searchContainerRef, // Use this for click-outside
+  searchContainerRef,
 }: UseDamSearchDropdownProps): UseDamSearchDropdownReturn {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [dropdownResults, setDropdownResults] = useState<GalleryItemDto[]>([]);
-  const [isDropdownLoading, setIsDropdownLoading] = useState(false);
 
-  const fetchControllerRef = useRef(0);
+  // Build search URL with query parameters
+  const searchUrl = `/api/dam`;
+  
+  // Build full URL with search term manually since useSearchQuery expects base URL
+  const fullSearchUrl = useMemo(() => {
+    if (!debouncedSearchTerm?.trim()) return searchUrl;
+    
+    const params = new URLSearchParams();
+    params.set('folderId', currentFolderId ?? '');
+    params.set('limit', '5');
+    params.set('quickSearch', 'true');
+    params.set('q', debouncedSearchTerm);
+    
+    return `${searchUrl}?${params.toString()}`;
+  }, [debouncedSearchTerm, currentFolderId, searchUrl]);
+  
+  // Use React Query for search with debouncing - use useApiQuery directly instead of useSearchQuery
+  const {
+    data: searchResponse,
+    isLoading,
+    error
+  } = useApiQuery<{ data?: GalleryItemDto[]; totalItems?: number }>(
+    ['dam-dropdown-search', debouncedSearchTerm, currentFolderId || ''],
+    fullSearchUrl || searchUrl, // Provide fallback to ensure we have a valid URL
+    {},
+    {
+      enabled: Boolean(debouncedSearchTerm?.trim()),
+      staleTime: 30 * 1000, // 30 seconds
+    }
+  );
 
+  const dropdownResults = searchResponse?.data || [];
+
+  // Handle dropdown open/close logic
   useEffect(() => {
-    if (debouncedSearchTerm.trim() !== '' && debouncedSearchTerm.trim() === mainSearchedTerm) {
+    const shouldShowDropdown = Boolean(
+      debouncedSearchTerm?.trim() && 
+      inputFocused && 
+      !isLoading &&
+      !error
+    );
+
+    if (shouldShowDropdown) {
+      setIsDropdownOpen(true);
+    } else if (!inputFocused || !debouncedSearchTerm?.trim()) {
       setIsDropdownOpen(false);
-      setDropdownResults([]);
-      return;
     }
+  }, [debouncedSearchTerm, inputFocused, isLoading, error]);
 
-    if (debouncedSearchTerm.trim() === '') {
-      fetchControllerRef.current++;
-      setIsDropdownOpen(false);
-      setDropdownResults([]);
-      setIsDropdownLoading(false);
-      return;
-    }
-
-    // Avoid re-fetching if the debounced term is already the main gallery search term
-    // and the dropdown is not currently open (e.g., user clicked away and then refocused)
-    // unless the input is focused and we might want to show previous results.
-    if (debouncedSearchTerm === gallerySearchTerm && gallerySearchTerm !== '' && !isDropdownOpen && !inputFocused) {
-      return;
-    }
-    if (debouncedSearchTerm === gallerySearchTerm && gallerySearchTerm !== '' && isDropdownOpen && dropdownResults.length > 0) {
-        // If already open with this term, no need to re-fetch
-        return;
-    }
-
-    const currentFetchId = ++fetchControllerRef.current;
-    const fetchResults = async () => {
-      if (debouncedSearchTerm.trim() === '') {
-        if (fetchControllerRef.current === currentFetchId) {
-          setIsDropdownOpen(false);
-          setDropdownResults([]);
-          setIsDropdownLoading(false);
-        }
-        return;
-      }
-
-      setIsDropdownLoading(true);
-      const apiUrl = `/api/dam?folderId=${currentFolderId ?? ''}&q=${encodeURIComponent(debouncedSearchTerm)}&limit=5&quickSearch=true&_=${Date.now()}`;
-      try {
-        const res = await fetch(apiUrl, { cache: 'no-store' });
-        if (fetchControllerRef.current !== currentFetchId) return; // Stale request
-
-        if (!res.ok) throw new Error('Failed to fetch suggestions');
-        // The API returns an object with a `data` array and `totalItems`
-        const jsonResponse = await res.json() as { data?: GalleryItemDto[]; totalItems?: number };
-        const items: GalleryItemDto[] = Array.isArray(jsonResponse.data) ? jsonResponse.data : [];
-
-        if (fetchControllerRef.current === currentFetchId) {
-          setDropdownResults(items);
-          if (debouncedSearchTerm.trim() !== '' && items.length > 0 && inputFocused) {
-            setIsDropdownOpen(true);
-          } else if (debouncedSearchTerm.trim() !== '' && items.length === 0 && inputFocused) {
-            // Show dropdown even with no results to display "no results" message
-            setIsDropdownOpen(true);
-          } else if (!inputFocused && items.length === 0) {
-            setIsDropdownOpen(false); // If not focused and no results, hide
-          }
-          // If input is not focused but we got results, keep it closed until focus
-        }
-      } catch (error) {
-        if (fetchControllerRef.current === currentFetchId) {
-          console.error('Error fetching dropdown search results:', error);
-          setDropdownResults([]);
-          // Show dropdown with error/no results message if focused
-          if (debouncedSearchTerm.trim() !== '' && inputFocused) setIsDropdownOpen(true);
-          else setIsDropdownOpen(false);
-        }
-      }
-      if (fetchControllerRef.current === currentFetchId) {
-        setIsDropdownLoading(false);
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef?.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
       }
     };
 
-    // Just call fetchResults directly if other conditions pass
-    fetchResults();
-  }, [debouncedSearchTerm, currentFolderId, mainSearchedTerm, gallerySearchTerm, inputFocused]);
-
-  useEffect(() => {
-    // Effect for click-outside to close dropdown
-    function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [searchContainerRef]); // Depend on the passed ref
+  }, [isDropdownOpen, searchContainerRef]);
 
-  return { isDropdownOpen, dropdownResults, isDropdownLoading, setIsDropdownOpen };
+  // Close dropdown when main search term changes (user navigated to search results)
+  useEffect(() => {
+    if (mainSearchedTerm !== gallerySearchTerm) {
+      setIsDropdownOpen(false);
+    }
+  }, [mainSearchedTerm, gallerySearchTerm]);
+
+  return {
+    isDropdownOpen,
+    dropdownResults,
+    isDropdownLoading: isLoading,
+    setIsDropdownOpen,
+  };
 } 

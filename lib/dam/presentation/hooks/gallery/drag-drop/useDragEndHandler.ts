@@ -11,10 +11,10 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { DragOperationFactory } from './services/DragOperationFactory';
 import { DragValidationService } from './services/DragValidationService';
 import { SelectionStateService } from './services/SelectionStateService';
-import { BulkMoveOperationsService } from './operations/BulkMoveOperationsService';
 import { MoveOperationsService } from './operations/MoveOperationsService';
 import type { DragEndParams, DragEndResult, UseDamDragAndDropProps } from './types';
 import { useFolderStore } from '@/lib/store/folderStore';
+import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 
 export function useDragEndHandler({
   onItemsUpdate,
@@ -22,6 +22,7 @@ export function useDragEndHandler({
   onRefreshData
 }: UseDamDragAndDropProps) {
   const { moveFolder } = useFolderStore();
+  const bulkMoveMutation = useBulkMove();
   
   const handleDragEnd = useCallback(async (
     event: DragEndEvent, 
@@ -37,13 +38,65 @@ export function useDragEndHandler({
       return { success: false, error: 'Invalid drag operation' };
     }
 
-    // 2. Handle bulk move operations
+    // 2. Handle bulk move operations using React Query mutation
     if (selectionState && (selectionState.selectedAssets.length > 0 || selectionState.selectedFolders.length > 0)) {
-      return await BulkMoveOperationsService.executeBulkMove(
-        operation,
-        { selectedAssets: selectionState.selectedAssets, selectedFolders: selectionState.selectedFolders },
-        { onToast, onRefreshData }
-      );
+      try {
+        // Optimistically update folder positions in store for immediate UI feedback
+        if (selectionState.selectedFolders.length > 0) {
+          selectionState.selectedFolders.forEach(folderId => {
+            moveFolder(folderId, operation.targetId);
+          });
+        }
+
+        await bulkMoveMutation.mutateAsync({
+          assetIds: selectionState.selectedAssets,
+          folderIds: selectionState.selectedFolders,
+          targetFolderId: operation.targetId
+        });
+
+        const totalItems = selectionState.selectedAssets.length + selectionState.selectedFolders.length;
+        onToast({ 
+          title: `${totalItems} items moved successfully!`,
+          description: `Moved ${totalItems} item${totalItems > 1 ? 's' : ''} to ${operation.targetId ? 'folder' : 'root'}.`
+        });
+        
+        // Dispatch folder update event if folders were moved
+        if (selectionState.selectedFolders.length > 0) {
+          window.dispatchEvent(new CustomEvent('folderUpdated', {
+            detail: { type: 'move', folderIds: selectionState.selectedFolders }
+          }));
+        }
+        
+        // Exit selection mode after successful bulk move
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('damExitSelectionMode'));
+        }, 300);
+        
+        // Refresh data for consistency
+        if (onRefreshData) {
+          await onRefreshData();
+        }
+        
+        return { success: true };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+        
+        // Revert optimistic folder moves if the operation failed
+        if (selectionState.selectedFolders.length > 0) {
+          // Refresh data to revert folder positions
+          if (onRefreshData) {
+            await onRefreshData();
+          }
+        }
+        
+        onToast({ 
+          title: 'Error moving items', 
+          description: errorMessage, 
+          variant: 'destructive' 
+        });
+        
+        return { success: false, error: errorMessage };
+      }
     }
 
     // 3. Early validation for circular dependency (folder moves)
@@ -107,7 +160,7 @@ export function useDragEndHandler({
       
       return { success: false, error: errorMessage };
     }
-  }, [onItemsUpdate, onToast, onRefreshData, moveFolder]);
+  }, [onItemsUpdate, onToast, onRefreshData, moveFolder, bulkMoveMutation]);
 
   return { handleDragEnd };
 } 

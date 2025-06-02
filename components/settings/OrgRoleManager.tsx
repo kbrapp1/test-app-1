@@ -20,9 +20,12 @@ export function OrgRoleManager() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
 
-  const { activeOrganizationId } = useOrganization();
+  const { activeOrganizationId, isLoading: isLoadingOrganization } = useOrganization();
 
-  const { members, roles, loading: dataLoading, error: dataError } = useOrgMembers(activeOrganizationId, debouncedSearchTerm);
+  const { members, roles, loading: dataLoading, error: dataError } = useOrgMembers(
+    isLoadingOrganization ? null : activeOrganizationId, 
+    debouncedSearchTerm
+  );
 
   const { 
     updatingMemberId,
@@ -83,9 +86,14 @@ export function OrgRoleManager() {
         className="mb-4"
       />
 
-      {dataLoading ? (
+      {(dataLoading || isLoadingOrganization) ? (
         <div className="p-4 text-center text-sm text-muted-foreground">
-          {debouncedSearchTerm ? 'Searching members...' : 'Loading organization members...'}
+          {isLoadingOrganization 
+            ? 'Loading organization context...' 
+            : debouncedSearchTerm 
+            ? 'Searching members...' 
+            : 'Loading organization members...'
+          }
         </div>
       ) : dataError ? (
         <div className="p-4 text-center text-sm text-red-600">

@@ -53,12 +53,16 @@ export {
   createFolderAction,
   renameFolderClientAction,
   deleteFolderClientAction,
-  updateFolderAction,
-  createFolderActionForm,
-  deleteFolderActionForm,
+
   getRootFolders,
   getFolderNavigation
 } from './application/actions';
+
+// Export performance optimization services
+export { 
+  ApiDeduplicationService,
+  apiDeduplicationService 
+} from './application/services/ApiDeduplicationService';
 
 // Export repository interfaces (types only)
 export type { IAssetRepository } from './domain/repositories/IAssetRepository';

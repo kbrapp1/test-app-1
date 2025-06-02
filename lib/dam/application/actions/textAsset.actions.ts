@@ -8,6 +8,7 @@ import type { TextAssetSummaryDto } from '../use-cases/assets/ListTextAssetsUseC
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseStorageService';
 import { AppError } from '@/lib/errors/base';
+import { apiDeduplicationService } from '../services/ApiDeduplicationService';
 
 /**
  * Server Actions: Text Asset Management
@@ -17,6 +18,18 @@ import { AppError } from '@/lib/errors/base';
  */
 
 export async function listTextAssets(): Promise<{ success: boolean; data?: TextAssetSummaryDto[]; error?: string }> {
+  
+  return apiDeduplicationService.deduplicateServerAction(
+    'listTextAssets',
+    [],
+    async () => {
+      return await executeListTextAssets();
+    },
+    1500 // 1.5 second deduplication window
+  );
+}
+
+async function executeListTextAssets(): Promise<{ success: boolean; data?: TextAssetSummaryDto[]; error?: string }> {
   try {
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -174,4 +187,6 @@ export async function saveAsNewTextAsset(
     }
     return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
-} 
+}
+
+ 

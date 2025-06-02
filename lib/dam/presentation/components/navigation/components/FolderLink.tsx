@@ -28,9 +28,9 @@ export const FolderLink: React.FC<FolderLinkProps> = ({
       <FolderIcon className={`h-5 w-5 mr-2 flex-shrink-0 ${isOver ? 'text-blue-600 animate-pulse' : ''}`} />
       <span 
         className="truncate font-medium text-sm flex-1" 
-        title={folderNode.name || '[NO NAME]'}
+        title={folderNode.name || 'Loading...'}
       >
-        {folderNode.name || '[NO NAME]'}
+        {folderNode.name || <span className="text-muted-foreground italic">Loading...</span>}
       </span>
       {isOver && (
         <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] ml-1 shrink-0 font-medium">

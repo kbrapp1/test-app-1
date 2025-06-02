@@ -1,54 +1,13 @@
-drop policy "Superusers can manage organization domains" on "public"."organization_domains";
+drop policy if exists "Superusers can manage organization domains" on "public"."organization_domains";
 
-drop policy "Organization members can access their org data in TtsPrediction" on "public"."TtsPrediction";
+drop policy if exists "Organization members can access their org data in TtsPrediction" on "public"."TtsPrediction";
 
-drop policy "Asset Tags: Org members can manage tags for their org assets" on "public"."asset_tags";
+drop policy if exists "Asset Tags: Org members can manage tags for their org assets" on "public"."asset_tags";
 
-drop policy "Members can read domains of their organizations" on "public"."organization_domains";
+drop policy if exists "Members can read domains of their organizations" on "public"."organization_domains";
 
-create policy "Super admins can manage all asset tags"
-on "public"."asset_tags"
-as permissive
-for all
-to authenticated
-using (is_super_admin())
-with check (is_super_admin());
-
-
-create policy "Super admins can manage organization domains"
-on "public"."organization_domains"
-as permissive
-for all
-to public
-using (is_super_admin())
-with check (is_super_admin());
-
-
-create policy "Super admins can manage all profiles"
-on "public"."profiles"
-as permissive
-for all
-to authenticated
-using (is_super_admin())
-with check (is_super_admin());
-
-
-create policy "Super admins can manage all saved searches"
-on "public"."saved_searches"
-as permissive
-for all
-to authenticated
-using (is_super_admin())
-with check (is_super_admin());
-
-
-create policy "Super admins can manage all team members"
-on "public"."team_members"
-as permissive
-for all
-to authenticated
-using (is_super_admin())
-with check (is_super_admin());
+-- Note: Super admin policies are already created in migration 20250529013555
+-- These CREATE statements have been removed to avoid duplicates
 
 
 create policy "Organization members can access their org data in TtsPrediction"

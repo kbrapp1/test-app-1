@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/supabase/auth-middleware';
+import { User, SupabaseClient } from '@supabase/supabase-js';
+import { withErrorHandling } from '@/lib/middleware/error';
+import { DatabaseError } from '@/lib/errors/base';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 // interface Profile { // No longer directly needed here
@@ -18,19 +21,34 @@ interface Member {
   name: string;
 }
 
-export async function GET() {
-  // console.log('[TEAM_MEMBERS_GET_RPC] Received request');
+export async function getHandler(
+  request: NextRequest,
+  user: User,
+  supabase: SupabaseClient
+) {
   try {
-    const supabase = createClient();
-    const activeOrgId = await getActiveOrganizationId();
-    // console.log('[TEAM_MEMBERS_GET_RPC] Active Org ID:', activeOrgId);
-
+    // Get organization context with refresh logic
+    let activeOrgId = await getActiveOrganizationId();
+    
+    // If no organization found, try forcing a session refresh
     if (!activeOrgId) {
-      // console.warn('[TEAM_MEMBERS_GET_RPC] Active organization not found');
-      return NextResponse.json({ error: 'Active organization not found' }, { status: 401 });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (!refreshError) {
+            activeOrgId = await getActiveOrganizationId();
+          }
+        }
+      } catch (refreshError) {
+        console.warn('Team Members API: Session refresh failed:', refreshError);
+      }
     }
 
-    // console.log(`[TEAM_MEMBERS_GET_RPC] Calling RPC for org: ${activeOrgId}`);
+    if (!activeOrgId) {
+      return NextResponse.json({ error: 'Active organization not found' }, { status: 401 });
+    }
     
     const { data: members, error: rpcError } = await supabase.rpc(
       'get_organization_members_with_profiles',
@@ -38,22 +56,21 @@ export async function GET() {
     );
 
     if (rpcError) {
-      console.error('[TEAM_MEMBERS_GET_RPC] Supabase RPC error:', JSON.stringify(rpcError, null, 2)); // Keep critical error logs
+      console.error('[TEAM_MEMBERS_GET_RPC] Supabase RPC error:', JSON.stringify(rpcError, null, 2));
       return NextResponse.json({ error: 'Failed to fetch organization members via RPC', details: rpcError.message }, { status: 500 });
     }
 
-    // console.log('[TEAM_MEMBERS_GET_RPC] Raw data from RPC:', JSON.stringify(members, null, 2));
-
     if (!members) {
-      // console.log('[TEAM_MEMBERS_GET_RPC] No members found (or RPC returned null unexpectedly), returning empty array.');
       return NextResponse.json({ members: [] });
     }
     
-    // console.log('[TEAM_MEMBERS_GET_RPC] Processed members (from RPC):', JSON.stringify(members, null, 2));
-    return NextResponse.json({ members: members as Member[] }); 
+    return NextResponse.json({ 
+      members: members as Member[],
+      organizationId: activeOrgId // Include for debugging
+    }); 
 
   } catch (error) {
-    console.error('[TEAM_MEMBERS_GET_RPC] CATCH_BLOCK_ERROR:', error); // Keep critical error logs
+    console.error('[TEAM_MEMBERS_GET_RPC] CATCH_BLOCK_ERROR:', error);
     let errorMessage = 'Internal server error';
     let errorDetails: any = {};
     if (error instanceof Error) {
@@ -64,10 +81,11 @@ export async function GET() {
     } else {
       errorDetails = { error: String(error) };
     }
-    // console.error('[TEAM_MEMBERS_GET_RPC] Full error details:', JSON.stringify(errorDetails, null, 2)); // Optional: comment out if too verbose
     return NextResponse.json({ error: 'An unexpected error occurred', details: errorMessage }, { status: 500 });
   }
 }
+
+export const GET = withErrorHandling(withAuth(getHandler));
 
 // Basic check to ensure the route is hit - can be removed later
 export async function OPTIONS() {

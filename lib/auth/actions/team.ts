@@ -4,8 +4,21 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { TeamMember } from '@/types/team';
+import { apiDeduplicationService } from '@/lib/dam/application/services/ApiDeduplicationService';
 
 export async function getTeamMembers(): Promise<TeamMember[]> {
+  
+  return apiDeduplicationService.deduplicateServerAction(
+    'getTeamMembers',
+    [],
+    async () => {
+      return await executeGetTeamMembers();
+    },
+    1500 // 1.5 second deduplication window
+  );
+}
+
+async function executeGetTeamMembers(): Promise<TeamMember[]> {
   const supabase = createClient();
 
   const { data: membersData, error } = await supabase

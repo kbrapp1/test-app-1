@@ -1,4 +1,4 @@
-create table "public"."organization_access_log" (
+create table if not exists "public"."organization_access_log" (
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "organization_id" uuid,
@@ -13,7 +13,7 @@ create table "public"."organization_access_log" (
 
 alter table "public"."organization_access_log" enable row level security;
 
-create table "public"."user_organization_context" (
+create table if not exists "public"."user_organization_context" (
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "active_organization_id" uuid,
@@ -25,7 +25,7 @@ create table "public"."user_organization_context" (
 
 alter table "public"."user_organization_context" enable row level security;
 
-create table "public"."user_organization_permissions" (
+create table if not exists "public"."user_organization_permissions" (
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "organization_id" uuid not null,
@@ -40,75 +40,37 @@ create table "public"."user_organization_permissions" (
 
 alter table "public"."user_organization_permissions" enable row level security;
 
-CREATE INDEX idx_org_access_log_action ON public.organization_access_log USING btree (action);
+CREATE INDEX IF NOT EXISTS idx_org_access_log_action ON public.organization_access_log USING btree (action);
 
-CREATE INDEX idx_org_access_log_created_at ON public.organization_access_log USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_org_access_log_created_at ON public.organization_access_log USING btree (created_at DESC);
 
-CREATE INDEX idx_org_access_log_org_time ON public.organization_access_log USING btree (organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_org_access_log_org_time ON public.organization_access_log USING btree (organization_id, created_at DESC);
 
-CREATE INDEX idx_org_access_log_user_time ON public.organization_access_log USING btree (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_org_access_log_user_time ON public.organization_access_log USING btree (user_id, created_at DESC);
 
-CREATE UNIQUE INDEX idx_user_org_active_permission ON public.user_organization_permissions USING btree (user_id, organization_id) WHERE (revoked_at IS NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_org_active_permission ON public.user_organization_permissions USING btree (user_id, organization_id) WHERE (revoked_at IS NULL);
 
-CREATE INDEX idx_user_org_context_org_id ON public.user_organization_context USING btree (active_organization_id);
+CREATE INDEX IF NOT EXISTS idx_user_org_context_org_id ON public.user_organization_context USING btree (active_organization_id);
 
-CREATE INDEX idx_user_org_context_user_id ON public.user_organization_context USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_org_context_user_id ON public.user_organization_context USING btree (user_id);
 
-CREATE INDEX idx_user_org_permissions_active ON public.user_organization_permissions USING btree (user_id) WHERE (revoked_at IS NULL);
+CREATE INDEX IF NOT EXISTS idx_user_org_permissions_active ON public.user_organization_permissions USING btree (user_id) WHERE (revoked_at IS NULL);
 
-CREATE INDEX idx_user_org_permissions_user_org ON public.user_organization_permissions USING btree (user_id, organization_id);
+CREATE INDEX IF NOT EXISTS idx_user_org_permissions_user_org ON public.user_organization_permissions USING btree (user_id, organization_id);
 
-CREATE UNIQUE INDEX organization_access_log_pkey ON public.organization_access_log USING btree (id);
+CREATE UNIQUE INDEX IF NOT EXISTS organization_access_log_pkey ON public.organization_access_log USING btree (id);
 
-CREATE UNIQUE INDEX user_organization_context_pkey ON public.user_organization_context USING btree (id);
+CREATE UNIQUE INDEX IF NOT EXISTS user_organization_context_pkey ON public.user_organization_context USING btree (id);
 
-CREATE UNIQUE INDEX user_organization_context_user_id_key ON public.user_organization_context USING btree (user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS user_organization_context_user_id_key ON public.user_organization_context USING btree (user_id);
 
-CREATE UNIQUE INDEX user_organization_permissions_pkey ON public.user_organization_permissions USING btree (id);
+CREATE UNIQUE INDEX IF NOT EXISTS user_organization_permissions_pkey ON public.user_organization_permissions USING btree (id);
 
-alter table "public"."organization_access_log" add constraint "organization_access_log_pkey" PRIMARY KEY using index "organization_access_log_pkey";
+-- Note: Primary key constraints are already created when tables are created with PRIMARY KEY columns
+-- These constraint additions have been removed to avoid duplicates
 
-alter table "public"."user_organization_context" add constraint "user_organization_context_pkey" PRIMARY KEY using index "user_organization_context_pkey";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_pkey" PRIMARY KEY using index "user_organization_permissions_pkey";
-
-alter table "public"."organization_access_log" add constraint "organization_access_log_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) not valid;
-
-alter table "public"."organization_access_log" validate constraint "organization_access_log_organization_id_fkey";
-
-alter table "public"."organization_access_log" add constraint "organization_access_log_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) not valid;
-
-alter table "public"."organization_access_log" validate constraint "organization_access_log_user_id_fkey";
-
-alter table "public"."user_organization_context" add constraint "user_organization_context_active_organization_id_fkey" FOREIGN KEY (active_organization_id) REFERENCES organizations(id) ON DELETE SET NULL not valid;
-
-alter table "public"."user_organization_context" validate constraint "user_organization_context_active_organization_id_fkey";
-
-alter table "public"."user_organization_context" add constraint "user_organization_context_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_organization_context" validate constraint "user_organization_context_user_id_fkey";
-
-alter table "public"."user_organization_context" add constraint "user_organization_context_user_id_key" UNIQUE using index "user_organization_context_user_id_key";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_granted_by_fkey" FOREIGN KEY (granted_by) REFERENCES auth.users(id) not valid;
-
-alter table "public"."user_organization_permissions" validate constraint "user_organization_permissions_granted_by_fkey";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_organization_permissions" validate constraint "user_organization_permissions_organization_id_fkey";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_revoked_by_fkey" FOREIGN KEY (revoked_by) REFERENCES auth.users(id) not valid;
-
-alter table "public"."user_organization_permissions" validate constraint "user_organization_permissions_revoked_by_fkey";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES roles(id) not valid;
-
-alter table "public"."user_organization_permissions" validate constraint "user_organization_permissions_role_id_fkey";
-
-alter table "public"."user_organization_permissions" add constraint "user_organization_permissions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_organization_permissions" validate constraint "user_organization_permissions_user_id_fkey";
+-- Note: Foreign key constraints are already created when tables are created with REFERENCES clauses
+-- These constraint additions have been removed to avoid duplicates
 
 set check_function_bodies = off;
 
@@ -446,60 +408,15 @@ grant truncate on table "public"."user_organization_permissions" to "service_rol
 
 grant update on table "public"."user_organization_permissions" to "service_role";
 
-create policy "Admins can view organization audit logs"
-on "public"."organization_access_log"
-as permissive
-for select
-to authenticated
-using ((organization_id IN ( SELECT om.organization_id
-   FROM (organization_memberships om
-     JOIN roles r ON ((om.role_id = r.id)))
-  WHERE ((om.user_id = auth.uid()) AND (r.name = ANY (ARRAY['admin'::text, 'owner'::text]))))));
+-- Note: Audit log policies are already created in earlier migrations
+-- These policy creations have been removed to avoid duplicates
 
 
-create policy "Allow system audit logging"
-on "public"."organization_access_log"
-as permissive
-for insert
-to authenticated
-with check (((user_id = auth.uid()) AND ((organization_id IS NULL) OR (organization_id IN ( SELECT uop.organization_id
-   FROM user_organization_permissions uop
-  WHERE ((uop.user_id = auth.uid()) AND (uop.revoked_at IS NULL)))))));
+-- Note: User organization context and permissions policies are already created in earlier migrations
+-- These policy creations have been removed to avoid duplicates
 
 
-create policy "Users can insert their own audit logs"
-on "public"."organization_access_log"
-as permissive
-for insert
-to authenticated
-with check ((user_id = auth.uid()));
-
-
-create policy "Users can view their own audit logs"
-on "public"."organization_access_log"
-as permissive
-for select
-to authenticated
-using ((user_id = auth.uid()));
-
-
-create policy "Users can manage their own organization context"
-on "public"."user_organization_context"
-as permissive
-for all
-to authenticated
-using ((user_id = auth.uid()))
-with check ((user_id = auth.uid()));
-
-
-create policy "Users can view their own permissions"
-on "public"."user_organization_permissions"
-as permissive
-for select
-to authenticated
-using ((user_id = auth.uid()));
-
-
-CREATE TRIGGER update_user_organization_context_updated_at BEFORE UPDATE ON public.user_organization_context FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Note: Trigger update_user_organization_context_updated_at is already created in earlier migration
+-- This trigger creation has been removed to avoid duplicates
 
 

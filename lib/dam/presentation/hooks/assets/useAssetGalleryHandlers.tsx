@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
-import { DeleteAssetUseCase } from '../../../application/use-cases/assets/DeleteAssetUseCase';
 import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
 import { RenameAssetUseCase } from '../../../application/use-cases/assets/RenameAssetUseCase';
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@/lib/supabase/client';
 import { Asset as DomainAsset } from '../../../domain/entities/Asset';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
@@ -14,6 +12,7 @@ import { useFolderNavigation } from '../navigation/useFolderNavigation';
 import { useGalleryDialogs } from '../navigation/useGalleryDialogs';
 import { useAssetItemDialogs } from './useAssetItemDialogs';
 import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+import { useAssetDelete, useAssetUpdate } from '@/lib/dam/hooks/useAssets';
 
 interface UseAssetGalleryHandlersProps {
   activeFolderId: string | null;
@@ -50,6 +49,10 @@ export const useAssetGalleryHandlers = ({
   
   // Use organization context to avoid duplicate RPC calls
   const { activeOrganizationId } = useOrganization();
+  
+  // React Query mutations
+  const deleteAssetMutation = useAssetDelete();
+  const updateAssetMutation = useAssetUpdate();
 
   // Simplified auth function - no more RPC calls
   const getAuthContext = useCallback(async () => {
@@ -82,19 +85,7 @@ export const useAssetGalleryHandlers = ({
     return { success: true };
   }, [getAuthContext]);
 
-  const deleteAssetUseCase = useCallback(async (assetId: string) => {
-    const { supabase, activeOrgId } = await getAuthContext();
-    const assetRepository = new SupabaseAssetRepository(supabase);
-    const storageService = new SupabaseStorageService(supabase);
-    const deleteUseCase = new DeleteAssetUseCase(assetRepository, storageService);
-    
-    await deleteUseCase.execute({
-      assetId,
-      organizationId: activeOrgId,
-    });
-    
-    return { success: true };
-  }, [getAuthContext]);
+  // Removed deleteAssetUseCase - now using React Query mutation
 
   const renameAssetUseCase = useCallback(async (assetId: string, newName: string) => {
     const { supabase, activeOrgId } = await getAuthContext();
@@ -201,24 +192,16 @@ export const useAssetGalleryHandlers = ({
     try {
       addOptimisticallyHiddenItem(assetToDelete.id);
       
-      // Use the API route instead of direct use case to ensure proper cache invalidation
-      const response = await fetch(`/api/dam/asset/${assetToDelete.id}`, { 
-        method: 'DELETE' 
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Failed to delete asset (${response.status})`);
-      }
+      // Use React Query mutation for proper cache invalidation
+      await deleteAssetMutation.mutateAsync(assetToDelete.id);
       
       sonnerToast.success(`Asset "${assetToDelete.name}" deleted successfully`);
       dialogManager.closeDeleteAsset();
-      await refreshGalleryData(true);
     } catch (error) {
       sonnerToast.error((error as Error).message || 'Failed to delete asset');
-      // Note: We don't need to manually clear the hidden item since refreshGalleryData will reset the state
+      // Note: React Query will handle error states and cache management
     }
-  }, [dialogManager.deleteAssetDialog.asset, refreshGalleryData, dialogManager.closeDeleteAsset, addOptimisticallyHiddenItem]);
+  }, [dialogManager.deleteAssetDialog.asset, dialogManager.closeDeleteAsset, addOptimisticallyHiddenItem, deleteAssetMutation]);
 
   // Asset action creators
   const createAssetActions = useCallback((asset: GalleryItemDto & { type: 'asset' }) => ({

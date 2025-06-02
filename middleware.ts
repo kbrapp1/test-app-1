@@ -3,6 +3,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function middleware(request: NextRequest) {
+
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,

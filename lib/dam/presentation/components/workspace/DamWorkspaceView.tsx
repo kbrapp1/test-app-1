@@ -77,6 +77,7 @@ export function DamWorkspaceView({
 
       setBreadcrumbLoading(true);
       try {
+    
         const { breadcrumbs } = await getFolderNavigation(workspaceState.currentFolderId);
         setBreadcrumbPath(breadcrumbs);
       } catch (error) {
@@ -112,6 +113,7 @@ export function DamWorkspaceView({
         if (isInBreadcrumbPath || isCurrentFolder) {
           setBreadcrumbLoading(true);
           try {
+      
             const { breadcrumbs } = await getFolderNavigation(workspaceState.currentFolderId);
             setBreadcrumbPath(breadcrumbs);
           } catch (error) {

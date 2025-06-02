@@ -3,11 +3,9 @@ import type { PlainTag } from '../../../application/dto/DamApiRequestDto';
 import { AssetDetailsDto } from '../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { AssetTagService } from '../../../application/services/AssetTagService';
 import { AssetOperationsService } from '../../../application/services/AssetOperationsService';
+import { useAssetDetails, useAssetDelete } from '../../../hooks/useAssets';
 
 interface AssetModalState {
-  asset: AssetDetailsDto | null;
-  loading: boolean;
-  error: string | null;
   editMode: boolean;
   editName: string;
   deleteConfirmOpen: boolean;
@@ -27,6 +25,8 @@ interface UseAssetDetailsModalParams {
 /**
  * Domain-driven hook for asset details modal management
  * 
+ * Migrated to React Query for proper cache management and state coordination
+ * 
  * Follows DDD principles:
  * - Clear domain modeling with state objects
  * - Separation of data fetching, business logic, and UI state
@@ -41,10 +41,16 @@ export const useAssetDetailsModal = ({
   onOpenChange,
 }: UseAssetDetailsModalParams) => {
 
+  // Use React Query hooks for asset details and deletion
+  const { 
+    data: asset, 
+    isLoading: loading, 
+    error: queryError 
+  } = useAssetDetails(assetId || '', open && !!assetId);
+  
+  const deleteAssetMutation = useAssetDelete();
+
   const [state, setState] = useState<AssetModalState>({
-    asset: null,
-    loading: false,
-    error: null,
     editMode: false,
     editName: '',
     deleteConfirmOpen: false,
@@ -53,125 +59,95 @@ export const useAssetDetailsModal = ({
     copiedUrl: false,
   });
 
-  const loadAssetDetails = useCallback(async () => {
-    if (!assetId) return;
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
-    try {
-      const assetData = await AssetOperationsService.loadAssetDetails(assetId);
-      setState(prev => ({ ...prev, asset: assetData, editName: assetData.name, loading: false }));
-    } catch (err) {
-      setState(prev => ({ 
-        ...prev, 
-        error: err instanceof Error ? err.message : 'Unknown error occurred',
-        loading: false 
-      }));
+  // Update edit name when asset data changes
+  useEffect(() => {
+    if (asset?.name) {
+      setState(prev => ({ ...prev, editName: asset.name }));
     }
-  }, [assetId]);
+  }, [asset?.name]);
+
+  const error = queryError ? 
+    (queryError instanceof Error ? queryError.message : 'Unknown error occurred') : 
+    null;
 
   const handleTagAdded = useCallback((newTag: PlainTag) => {
-    setState(prev => {
-      if (!prev.asset || prev.asset.tags.some(tag => tag.id === newTag.id)) return prev;
-      return {
-        ...prev,
-        asset: { ...prev.asset, tags: [...prev.asset.tags, newTag] },
-      };
-    });
     AssetTagService.showTagAddedSuccess(newTag.name);
     onAssetUpdated?.();
   }, [onAssetUpdated]);
 
   const handleTagRemoved = useCallback(async (tagToRemove: PlainTag) => {
-    if (!state.asset?.id) return;
+    if (!asset?.id) return;
     setState(prev => ({ ...prev, isUpdatingTag: true }));
 
     try {
-      await AssetTagService.removeTagFromAsset(state.asset.id, tagToRemove);
-      setState(prev => {
-        if (!prev.asset) return { ...prev, isUpdatingTag: false };
-        return {
-          ...prev,
-          asset: { ...prev.asset, tags: prev.asset.tags.filter(tag => tag.id !== tagToRemove.id) },
-          isUpdatingTag: false,
-        };
-      });
+      await AssetTagService.removeTagFromAsset(asset.id, tagToRemove);
+      setState(prev => ({ ...prev, isUpdatingTag: false }));
       AssetTagService.showTagRemovedSuccess(tagToRemove.name);
       onAssetUpdated?.();
     } catch (error) {
       setState(prev => ({ ...prev, isUpdatingTag: false }));
       AssetTagService.showTagRemoveError(error as Error);
     }
-  }, [state.asset?.id, onAssetUpdated]);
+  }, [asset?.id, onAssetUpdated]);
 
   const handleSaveEdit = useCallback(async () => {
-    if (!state.asset || !state.editName.trim()) return;
+    if (!asset || !state.editName.trim()) return;
     setState(prev => ({ ...prev, updating: true }));
     
     try {
-      await AssetOperationsService.updateAssetName(state.asset.id, state.editName);
-      await loadAssetDetails();
+      await AssetOperationsService.updateAssetName(asset.id, state.editName);
       setState(prev => ({ ...prev, editMode: false, updating: false }));
       onAssetUpdated?.();
       AssetOperationsService.showRenameSuccess(state.editName.trim());
     } catch (err) {
-      setState(prev => ({ 
-        ...prev, 
-        error: err instanceof Error ? err.message : 'Failed to update asset',
-        updating: false 
-      }));
+      setState(prev => ({ ...prev, updating: false }));
       AssetOperationsService.showError('rename asset');
     }
-  }, [state.asset, state.editName, loadAssetDetails, onAssetUpdated]);
+  }, [asset, state.editName, onAssetUpdated]);
 
   const handleDelete = useCallback(async () => {
-    if (!state.asset) return;
+    if (!asset) return;
 
     try {
-      await AssetOperationsService.deleteAsset(state.asset.id);
-      onAssetDeleted?.(state.asset.id);
+      await deleteAssetMutation.mutateAsync(asset.id);
+      onAssetDeleted?.(asset.id);
       onOpenChange(false);
       AssetOperationsService.showDeleteSuccess();
     } catch (err) {
-      setState(prev => ({ 
-        ...prev, 
-        error: err instanceof Error ? err.message : 'Failed to delete asset' 
-      }));
       AssetOperationsService.showError('delete asset');
     }
-  }, [state.asset, onAssetDeleted, onOpenChange]);
+  }, [asset, deleteAssetMutation, onAssetDeleted, onOpenChange]);
 
   const handleDownload = useCallback(async () => {
-    if (!state.asset?.downloadUrl) return;
+    if (!asset?.downloadUrl) return;
 
     try {
-      AssetOperationsService.downloadAsset(state.asset.downloadUrl, state.asset.name);
-      AssetOperationsService.showDownloadSuccess(state.asset.name);
+      AssetOperationsService.downloadAsset(asset.downloadUrl, asset.name);
+      AssetOperationsService.showDownloadSuccess(asset.name);
     } catch (err) {
-      setState(prev => ({ ...prev, error: 'Failed to download asset' }));
       AssetOperationsService.showError('download');
     }
-  }, [state.asset]);
+  }, [asset]);
 
   const handleCopyUrl = useCallback(async () => {
-    if (!state.asset?.publicUrl) return;
+    if (!asset?.publicUrl) return;
 
     try {
-      await AssetOperationsService.copyAssetUrl(state.asset.publicUrl);
+      await AssetOperationsService.copyAssetUrl(asset.publicUrl);
       setState(prev => ({ ...prev, copiedUrl: true }));
       setTimeout(() => setState(prev => ({ ...prev, copiedUrl: false })), 2000);
       AssetOperationsService.showCopyUrlSuccess();
     } catch (err) {
       AssetOperationsService.showError('copy URL');
     }
-  }, [state.asset]);
+  }, [asset]);
 
+  // Reset edit mode when modal closes
   useEffect(() => {
-    if (open && assetId) {
-      loadAssetDetails();
-    } else {
-      setState(prev => ({ ...prev, asset: null, editMode: false, error: null }));
+    if (!open) {
+      setState(prev => ({ ...prev, editMode: false }));
     }
-  }, [open, assetId, loadAssetDetails]);
+  }, [open]);
 
   const setEditMode = useCallback((editMode: boolean) => {
     setState(prev => ({ ...prev, editMode }));
@@ -186,7 +162,13 @@ export const useAssetDetailsModal = ({
   }, []);
 
   return {
+    // React Query managed state
+    asset,
+    loading,
+    error,
+    // Local component state
     ...state,
+    // Actions
     setEditMode,
     setEditName,
     setDeleteConfirmOpen,

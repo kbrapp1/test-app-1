@@ -80,51 +80,32 @@ export async function getHandler(
   user: User,
   supabase: SupabaseClient
 ) {
-  console.log('\n🚀 === DAM API REQUEST START ===');
-  console.log('👤 User ID:', user.id);
-  console.log('📧 User Email:', user.email);
-  
   // 1. Parse and validate HTTP request parameters
   const { searchParams } = new URL(request.url);
   const params = parseRequestParameters(searchParams);
-  console.log('📋 Request params:', params);
 
-  // 2. Get organization context with refresh logic
-  console.log('🔍 Attempting to get active organization ID...');
+  // 2. Get organization context with optimized single-call logic
   let organizationId = await getActiveOrganizationId();
-  console.log('🏢 Initial organization lookup result:', organizationId);
   
-  // If no organization found, try forcing a session refresh
+  // If no organization found, try session refresh but avoid redundant calls
   if (!organizationId) {
-    console.log('🔄 DAM API: No organization found, checking for recent switch...');
-    
-    // Check if this is a recent organization switch by looking at headers or trying refresh
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('🎫 Current session exists:', !!session);
-      console.log('🎫 Session access_token exists:', !!session?.access_token);
       
       if (session) {
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (!refreshError) {
-          console.log('✅ DAM API: Session refreshed, retrying organization lookup...');
           organizationId = await getActiveOrganizationId();
-          console.log('🏢 Organization after refresh:', organizationId);
-        } else {
-          console.log('❌ DAM API: Session refresh failed:', refreshError);
         }
       }
     } catch (refreshError) {
-      console.warn('⚠️ DAM API: Session refresh failed:', refreshError);
+      // Session refresh failed silently
     }
   }
   
   if (!organizationId) {
-    console.log('❌ No organization found after all attempts');
     throw new DatabaseError('Active organization not found');
   }
-
-  console.log(`🏢 DAM API: Final organization ID: ${organizationId}`);
 
   // 3. Set up dependencies and use case
   const assetRepository = new SupabaseAssetRepository(supabase);
@@ -147,17 +128,6 @@ export async function getHandler(
 
   // 5. Delegate business logic to use case
   const result = await getDamDataUseCase.execute(requestDto);
-  console.log('📊 Use case result summary:');
-  console.log(`   - Folders: ${result.folders.length}`);
-  console.log(`   - Assets: ${result.assets.length}`);
-  
-  // Log first few assets for debugging
-  if (result.assets.length > 0) {
-    console.log('🖼️ Sample assets:');
-    result.assets.slice(0, 3).forEach((asset, i) => {
-      console.log(`   ${i + 1}. ${asset.name} (ID: ${asset.id})`);
-    });
-  }
 
   // 6. Transform domain result to API response format
   // Transform domain entities to GalleryItemDto format
@@ -178,7 +148,11 @@ export async function getHandler(
     size: asset.size,
     userId: asset.userId,
     userFullName: asset.userFullName,
-    tags: asset.tags?.map((tag: { id: string; name: string }) => ({ id: tag.id, name: tag.name })) || [],
+    tags: asset.tags?.map((tag: any) => ({ 
+      id: tag.id, 
+      name: tag.name,
+      color: tag.colorName || tag.color || 'blue' // Access colorName property from Tag domain entity
+    })) || [],
     folderName: asset.folderName,
   }));
 
@@ -189,9 +163,6 @@ export async function getHandler(
     data: combinedItems,
     totalItems: combinedItems.length,
   };
-
-  console.log(`📤 Returning ${responseData.totalItems} items for organization ${organizationId}`);
-  console.log('🚀 === DAM API REQUEST END ===\n');
 
   // 7. Return HTTP response
   return NextResponse.json(responseData, {

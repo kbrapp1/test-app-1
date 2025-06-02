@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useActionState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,21 +14,13 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { createFolderActionForm } from '@/lib/dam';
 import { toast } from 'sonner';
-import { FolderPlus } from 'lucide-react';
+import { FolderPlus, Loader2 } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { Folder } from '@/lib/dam/domain/entities/Folder';
 import { useRouter } from 'next/navigation';
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-
-// Simplified state for the action
-interface ActionState {
-  success: boolean;
-  error?: string;
-  folder?: Folder;
-  folderId?: string;
-}
+import { useFolderCreate } from '@/lib/dam/hooks/useAssets';
 
 // Props for the NewFolderDialog component
 interface NewFolderDialogOwnProps {
@@ -41,16 +33,12 @@ interface NewFolderDialogOwnProps {
 type NewFolderDialogProps = NewFolderDialogOwnProps & 
   Omit<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>, 'asChild'>;
 
-const initialState: ActionState = {
-  success: false,
-};
-
 /**
  * Domain NewFolderDialog Component
  * 
  * Follows DDD principles:
  * - Uses domain entities (Folder)
- * - Delegates to domain actions (createFolderActionForm)
+ * - Delegates to React Query mutations for proper cache management
  * - Clean separation of UI and business logic
  * - Proper error handling and optimistic updates
  */
@@ -61,58 +49,47 @@ export function NewFolderDialog({
   ...forwardedProps
 }: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { addFolder } = useFolderStore();
-  const [state, formAction, isPending] = useActionState(createFolderActionForm, initialState);
+  const [folderName, setFolderName] = useState('');
+  const { addFolder, refetchFolderData } = useFolderStore();
+  const folderCreateMutation = useFolderCreate();
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    if (state.success) {
-      // Close dialog immediately to prevent brief reappearance
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!folderName.trim()) {
+      return;
+    }
+
+    try {
+      await folderCreateMutation.mutateAsync({
+        name: folderName.trim(),
+        parentFolderId: currentFolderId
+      });
+
+      // Close dialog and reset form
       setIsOpen(false);
-      formRef.current?.reset();
+      setFolderName('');
       
       toast.success('Folder created successfully!');
       
-      if (state.folder) {
-        // Convert PlainFolder to DomainFolder for the store
-        const domainFolder = new Folder({
-          id: state.folder.id,
-          name: state.folder.name,
-          userId: state.folder.userId,
-          createdAt: state.folder.createdAt,
-          updatedAt: state.folder.updatedAt,
-          parentFolderId: state.folder.parentFolderId,
-          organizationId: state.folder.organizationId,
-          has_children: state.folder.has_children,
-        });
-        
-        addFolder(domainFolder);
-        
-        // Small delay to ensure dialog closes before navigation
-        setTimeout(() => {
-        router.push(`/dam?folderId=${state.folder.id}`);
-          
-          // Dispatch gallery refresh event after navigation to ensure fresh data
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('damDataRefresh'));
-          }, 200);
-          
-          // Call optional callback after navigation
-          if (onFolderCreated) {
-            onFolderCreated();
+      // Refetch the folder tree data from server to show the new folder immediately
+      try {
+        await refetchFolderData();
+      } catch (error) {
+        // Silently handle folder tree refresh failure
       }
-        }, 100);
-      } else {
-        // Call callback immediately if no folder to navigate to
+      
+      // Call callback if provided
       if (onFolderCreated) {
         onFolderCreated();
-        }
       }
-    } else if (state.error) {
-      toast.error(`Error: ${state.error}`);
+      
+    } catch (error) {
+      toast.error(`Error: ${(error as Error).message || 'Failed to create folder'}`);
     }
-  }, [state, addFolder, router, onFolderCreated]);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -134,11 +111,7 @@ export function NewFolderDialog({
             Enter a name for your new folder.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} ref={formRef} className="space-y-4">
-          {/* Hidden input for parentFolderId */}
-          {currentFolderId && (
-            <input type="hidden" name="parentFolderId" value={currentFolderId} />
-          )}
+        <form onSubmit={handleSubmit} ref={formRef} className="space-y-4">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -146,20 +119,34 @@ export function NewFolderDialog({
               </Label>
               <Input 
                 id="name"
-                name="name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
                 placeholder="e.g., Marketing Assets"
                 className="col-span-3" 
                 required 
                 autoComplete="off"
+                disabled={folderCreateMutation.isPending}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setIsOpen(false);
+                setFolderName('');
+              }} 
+              disabled={folderCreateMutation.isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? 'Creating...' : 'Create Folder'}
+            <Button 
+              type="submit" 
+              disabled={folderCreateMutation.isPending || !folderName.trim()}
+            >
+              {folderCreateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {folderCreateMutation.isPending ? 'Creating...' : 'Create Folder'}
             </Button>
           </DialogFooter>
         </form>

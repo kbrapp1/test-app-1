@@ -3,13 +3,206 @@ description:
 globs: 
 alwaysApply: true
 ---
-1. high-priority: Always use DDD design best-practices, coding, achitecture, compliance etc.
+# Golden Rule DDD Guidelines
+
+## Core Principles
+
+1. high-priority: Always use DDD design best-practices, coding, architecture, compliance etc.
 2. dont build or use pnpm/npm run build
 3. dont run dev or use pnpm run dev, etc (next js hotloads after each change)
-4. when doing markdown files (md), only ues test. e.g. no emojis, etc
+4. when doing markdown files (md), only use text. e.g. no emojis, etc
 
 When writing code or refactoring follow this DDD principle
 1. Single Responsibility Principle
 -> Each service has one clear purpose
--> Hook focuses only on state coordination
 -> keep to 200-250 lines if possible
+
+## DDD Layer Architecture
+
+### Domain Layer (Core Business Logic)
+The innermost layer containing pure business logic, isolated from external concerns.
+
+**Components:**
+- **Entities**: Core business objects with identity
+  - Location: `lib/{domain}/domain/entities/`
+  - Example: `lib/image-generator/domain/entities/Generation.ts`
+  - Keep business logic pure, no external dependencies
+
+- **Value Objects**: Immutable objects that describe domain characteristics
+  - Location: `lib/{domain}/domain/value-objects/`
+  - Example: `lib/image-generator/domain/value-objects/Prompt.ts`
+  - Ensure immutability and validation
+
+- **Domain Services**: Business logic that doesn't belong to a single entity
+  - Location: `lib/{domain}/domain/services/`
+  - Focus on domain rules and calculations
+  - No infrastructure concerns
+
+- **Repository Interfaces**: Contracts for data access (interfaces only)
+  - Location: `lib/{domain}/domain/repositories/`
+  - Define data access contracts, no implementations
+
+- **Domain Events**: Events that occur within the domain
+  - Location: `lib/{domain}/domain/events/`
+  - Represent significant business occurrences
+
+- **Specifications**: Business rule patterns for complex queries
+  - Location: `lib/{domain}/domain/specifications/`
+  - Encapsulate business rules for reusability
+
+### Application Layer (Use Cases & Orchestration)
+Coordinates domain objects to fulfill use cases, contains no business logic.
+
+**Components:**
+- **Use Cases**: Application-specific business rules
+  - Location: `lib/{domain}/application/use-cases/`
+  - Orchestrate domain objects for specific scenarios
+  - Keep focused on single use case
+
+- **Application Services**: Coordinate use cases and domain services
+  - Location: `lib/{domain}/application/services/`
+  - Handle application workflow
+  - No business logic, only coordination
+
+- **DTOs**: Data Transfer Objects for layer boundaries
+  - Location: `lib/{domain}/application/dto/`
+  - Define data contracts between layers
+  - Immutable data structures
+
+- **Command/Query Handlers**: CQRS pattern implementation
+  - Location: `lib/{domain}/application/commands/handlers/`
+  - Location: `lib/{domain}/application/queries/`
+  - Separate read and write operations
+
+- **Actions**: Server actions for Next.js integration
+  - Location: `lib/{domain}/application/actions/`
+  - Only export async functions (server action rule)
+  - Handle presentation layer requests
+
+- **Mappers**: Transform between DTOs and domain entities
+  - Location: `lib/{domain}/application/mappers/`
+  - Handle data transformation between layers
+
+### Infrastructure Layer (External Concerns)
+Implements interfaces defined in inner layers, handles persistence, external APIs, etc.
+
+**Components:**
+- **Repository Implementations**: Concrete data access implementations
+  - Location: `lib/{domain}/infrastructure/persistence/supabase/`
+  - Implement domain repository interfaces
+  - Handle database-specific logic
+
+- **External API Clients**: Third-party service integrations
+  - Location: `lib/{domain}/infrastructure/providers/`
+  - Example: `lib/image-generator/infrastructure/providers/replicate/`
+  - Abstract external service complexity
+
+- **Database Access**: Database-specific implementations
+  - Location: `lib/{domain}/infrastructure/persistence/supabase/services/`
+  - Handle database operations and transactions
+
+- **File Storage**: File system and cloud storage
+  - Location: `lib/{domain}/infrastructure/storage/`
+  - Manage file operations and cloud storage
+
+- **Persistence Mappers**: Convert between domain objects and database models
+  - Location: `lib/{domain}/infrastructure/persistence/supabase/mappers/`
+  - Transform between domain and persistence models
+
+### Presentation Layer (User Interface)
+Handles user interaction, displays information, captures user input.
+
+**Components:**
+- **UI Components**: React components with single responsibilities
+  - Location: `lib/{domain}/presentation/components/`
+  - Follow single responsibility principle
+  - Keep components under 200-250 lines
+  - Use theme-aware styling with CSS custom properties
+
+- **React Hooks**: Stateful logic for components
+  - Location: `lib/{domain}/presentation/hooks/`
+  - Focus only on state coordination
+  - Separate concerns (queries, mutations, state)
+
+- **Controllers/Pages**: Next.js pages and API routes
+  - Location: `app/(protected)/{feature}/`
+  - Location: `app/api/{domain}/`
+  - Handle routing and initial data loading
+
+- **View Models**: Presentation-specific data structures
+  - Location: `lib/{domain}/presentation/types/`
+  - Define UI-specific data contracts
+
+## Implementation Guidelines
+
+### Component Design
+- **Single Responsibility**: Each component handles one concern
+- **Size Limit**: Keep files under 200-250 lines
+- **Focused Logic**: Components should have clear, single purposes
+- **DRY Principle**: Check for existing similar functionality before creating new
+
+### Layer Dependencies
+- **Dependency Rule**: Inner layers never depend on outer layers
+- **Domain Independence**: Domain layer has no external dependencies
+- **Application Coordination**: Application layer only depends on Domain
+- **Infrastructure Implementation**: Infrastructure implements Domain/Application interfaces
+
+### Bounded Contexts
+- **Module Separation**: Each domain lives in separate module
+- **Context Boundaries**: Clear separation between different business areas
+- **Integration**: Use DTOs for cross-context communication
+
+### Code Organization
+- **Clean Architecture**: Maintain clear separation of concerns
+- **Testability**: Each layer testable in isolation
+- **Maintainability**: Changes in one layer don't affect others
+- **Flexibility**: Easy to swap implementations
+
+### Best Practices
+- **No Console Logs**: Remove console.log statements from final code
+- **Test Thoroughly**: Write comprehensive tests for major functionality
+- **Theme Awareness**: Use CSS custom properties for theme support
+- **Error Handling**: Implement proper error boundaries and handling
+- **Performance**: Consider React Query for data operations in frontend
+
+## Naming Conventions
+
+### Files and Directories
+- Use kebab-case for directories: `use-cases`, `value-objects`
+- Use PascalCase for component files: `StyleSection.tsx`
+- Use camelCase for service files: `assetService.ts`
+
+### Components
+- Descriptive names indicating single responsibility
+- Example: `StyleSection`, `ImageDimensionsSection`, `SettingsSection`
+- Avoid generic names like `Helper`, `Utils`, `Manager`
+
+### Layers Structure
+```
+lib/{domain}/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── repositories/
+│   ├── services/
+│   ├── events/
+│   └── specifications/
+├── application/
+│   ├── use-cases/
+│   ├── services/
+│   ├── dto/
+│   ├── actions/
+│   ├── commands/
+│   ├── queries/
+│   └── mappers/
+├── infrastructure/
+│   ├── persistence/
+│   ├── providers/
+│   └── storage/
+└── presentation/
+    ├── components/
+    ├── hooks/
+    └── types/
+```
+
+This structure ensures maintainable, testable, and scalable code following DDD principles.

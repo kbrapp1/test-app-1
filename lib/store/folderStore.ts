@@ -162,13 +162,28 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
   refetchFolderData: async () => {
     try {
       const freshFolders = await FolderDataService.fetchRootFolders();
-      get().setInitialFolders(freshFolders);
+      
+      // Only update if we have valid data to prevent "[No Name]" flash
+      if (freshFolders && freshFolders.length >= 0) {
+        get().setInitialFolders(freshFolders);
+      } else {
+        // If no data, just increment version to trigger re-render
+        set((state) => ({
+          changeVersion: FolderStateService.incrementChangeVersion(state.changeVersion),
+        }));
+      }
+      
+      // Signal completion for drag drop coordination
+      window.dispatchEvent(new CustomEvent('folderTreeRefreshComplete'));
     } catch (error) {
       console.error('Error refetching folder data:', error);
-      // Trigger re-render even if fetch failed
+      // Trigger re-render even if fetch failed, but preserve existing data
       set((state) => ({
         changeVersion: FolderStateService.incrementChangeVersion(state.changeVersion),
       }));
+      
+      // Still dispatch completion event even on error to prevent hanging
+      window.dispatchEvent(new CustomEvent('folderTreeRefreshComplete'));
     }
   },
 })); 

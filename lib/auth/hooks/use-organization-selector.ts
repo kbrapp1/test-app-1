@@ -56,7 +56,6 @@ export function useOrganizationSelector(
       try {
         setIsLoading(true);
         const orgs = await organizationService.getUserOrganizations(profile);
-        console.log('🏢 Hook: Loaded organizations:', orgs);
         setOrganizations(orgs);
       } catch (error) {
         console.error('Error loading organizations:', error);
@@ -76,28 +75,20 @@ export function useOrganizationSelector(
 
   // Handle organization switching
   const switchToOrganization = async (organizationId: string | null) => {
-    console.log('🎯 Hook: switchToOrganization called with:', organizationId);
-    console.log('🎯 Hook: Current isSwitching state:', isSwitching);
-    
     if (isSwitching || !organizationId) {
-      console.log('🛑 Hook: Aborting - isSwitching:', isSwitching, 'organizationId:', organizationId);
       return;
     }
     
     try {
-      console.log('🎯 Hook: Setting isSwitching to true');
       setIsSwitching(true);
       setIsAllOrgsMode(false);
       
       // Call organization service - it handles progress notifications and page refresh
-      console.log('🎯 Hook: Calling organizationService.switchToOrganization...');
       await organizationService.switchToOrganization(organizationId);
       
       // The organization service handles the page refresh, so we shouldn't reach here
-      console.log('🎯 Hook: Organization switch completed without refresh - this should not happen');
-      
     } catch (error) {
-      console.error('❌ Hook: Error switching organization:', error);
+      console.error('Error switching organization:', error);
       
       // Clean up any existing progress notifications
       if (typeof window !== 'undefined') {
@@ -111,7 +102,6 @@ export function useOrganizationSelector(
         description: 'Failed to switch organization. Please try again.'
       });
     } finally {
-      console.log('🎯 Hook: Setting isSwitching to false');
       setIsSwitching(false);
     }
   };

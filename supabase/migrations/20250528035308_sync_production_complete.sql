@@ -1,8 +1,5 @@
 create extension if not exists "pgjwt" with schema "extensions";
-
-
 set check_function_bodies = off;
-
 CREATE OR REPLACE FUNCTION public.check_email_domain()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -13,9 +10,7 @@ BEGIN
   -- For now, just allow all domains
   RETURN NEW;
 END;
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.grant_super_admin(target_user_id uuid, notes text DEFAULT NULL::text)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -42,9 +37,7 @@ BEGIN
 
   RETURN true;
 END;
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -55,9 +48,7 @@ BEGIN
   VALUES (NEW.id, NEW.email);
   RETURN NEW;
 END;
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.handle_user_email_update()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -67,9 +58,7 @@ BEGIN
   UPDATE public.profiles SET email = NEW.email WHERE id = NEW.id;
   RETURN NEW;
 END;
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.handle_user_last_sign_in_update()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -81,9 +70,7 @@ BEGIN
   WHERE id = NEW.id;
   RETURN NEW;
 END;
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.is_super_admin()
  RETURNS boolean
  LANGUAGE sql
@@ -95,9 +82,7 @@ AS $function$
      WHERE id = auth.uid()),
     false
   );
-$function$
-;
-
+$function$;
 CREATE OR REPLACE FUNCTION public.revoke_super_admin(target_user_id uuid, notes text DEFAULT NULL::text)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -124,7 +109,4 @@ BEGIN
 
   RETURN true;
 END;
-$function$
-;
-
-
+$function$;

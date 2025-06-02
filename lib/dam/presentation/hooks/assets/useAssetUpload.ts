@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAssetUpload as useAssetUploadMutation } from '@/lib/dam/hooks/useAssets';
 
 export interface UploadFile {
   file: File;
@@ -23,6 +24,9 @@ export interface UseAssetUploadOptions {
 export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
   const { folderId, onUploadComplete, maxFileSize = 50 * 1024 * 1024 } = options; // 50MB default
   const { toast } = useToast();
+
+  // Use React Query mutation for upload
+  const uploadMutation = useAssetUploadMutation();
 
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
@@ -107,20 +111,8 @@ export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
           formData.append('folderId', folderId);
         }
 
-        // Upload with progress simulation
-        const response = await fetch('/api/dam/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
-          // Handle both string and object error formats
-          const errorMessage = typeof errorData.error === 'string' 
-            ? errorData.error 
-            : errorData.error?.message || `Upload failed: ${response.statusText}`;
-          throw new Error(errorMessage);
-        }
+        // Use React Query mutation instead of manual fetch
+        await uploadMutation.mutateAsync(formData);
 
         // Simulate progress for visual feedback
         for (let progress = 10; progress <= 100; progress += 10) {
@@ -169,6 +161,7 @@ export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
         title: 'Upload Complete',
         description: `Successfully uploaded ${successCount} of ${validFiles.length} file(s).`,
       });
+      // React Query will automatically invalidate cache, but still call callback for any additional logic
       onUploadComplete?.();
     }
   };

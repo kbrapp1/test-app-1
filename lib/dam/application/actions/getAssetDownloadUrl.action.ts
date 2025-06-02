@@ -20,6 +20,7 @@ export async function getAssetDownloadUrl(
   assetId: string,
   forceDownload: boolean = true
 ): Promise<{ success: boolean; downloadUrl?: string; error?: string }> {
+
   try {
     // 1. Get organization context
     const organizationId = await getActiveOrganizationId();

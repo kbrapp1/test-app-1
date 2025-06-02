@@ -8,7 +8,7 @@ export * from './UrlParameterService';
 export * from './FilterActionsService';
 
 // Gallery data services and types
-export { GalleryDataService } from './GalleryDataService';
+// GalleryDataService removed - migrated to React Query
 export * from './GalleryDataTypes';
 
 // Tag editor services

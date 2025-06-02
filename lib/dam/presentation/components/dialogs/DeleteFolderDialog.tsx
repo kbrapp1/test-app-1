@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useActionState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,10 +11,11 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { deleteFolderActionForm } from '@/lib/dam';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useFolderStore } from '@/lib/store/folderStore';
+import { useFolderDelete } from '@/lib/dam/hooks/useAssets';
+import { Loader2 } from 'lucide-react';
 
 interface DeleteFolderDialogProps {
   isOpen: boolean;
@@ -25,21 +26,12 @@ interface DeleteFolderDialogProps {
   onDeleted?: () => void;
 }
 
-interface ActionState {
-  success: boolean;
-  error?: string;
-  folderId?: string; // ID of the deleted folder (returned by deleteFolder)
-  parentFolderId?: string | null; // Parent ID for navigation
-}
-
-const initialState: ActionState = { success: false };
-
 /**
  * Domain DeleteFolderDialog Component
  * 
  * Follows DDD principles:
- * - Uses domain entities through actions
- * - Delegates to domain actions (deleteFolderAction)
+ * - Uses domain entities through React Query mutations
+ * - Delegates to React Query mutations for proper cache management
  * - Clean separation of UI and business logic
  * - Proper error handling and navigation
  */
@@ -53,47 +45,37 @@ export function DeleteFolderDialog({
   if (!isOpen) return null;
   
   const router = useRouter();
-  const { removeFolder } = useFolderStore();
-  const [state, formAction, isPending] = useActionState(deleteFolderActionForm, initialState);
+  const { removeFolder, refetchFolderData } = useFolderStore();
+  const folderDeleteMutation = useFolderDelete();
 
-  // Show toast and close dialog on success or show error
-  useEffect(() => {
-    if (state.success) {
+  const handleConfirmDelete = async () => {
+    try {
+      await folderDeleteMutation.mutateAsync(folderId);
+      
       toast.success(`Folder "${folderName}" deleted successfully.`);
-      // Remove folder from store immediately
-      if (state.folderId) {
-        removeFolder(state.folderId);
+      
+      // Remove folder from store immediately for optimistic update
+      removeFolder(folderId);
+      
+      // Refetch folder tree data to ensure consistency
+      try {
+        await refetchFolderData();
+      } catch (error) {
+        // Silently handle folder tree refresh failure
       }
       
-      // Dispatch global event for gallery refresh
-      window.dispatchEvent(new CustomEvent('folderUpdated', { 
-        detail: { 
-          type: 'delete', 
-          folderId: state.folderId, 
-          folderName: folderName 
-        } 
-      }));
-      
-      // Navigate to parent folder or root after delete
-      const parentPath = state.parentFolderId ? `/dam?folderId=${state.parentFolderId}` : '/dam';
-      
-      // Close dialog first, then navigate to prevent race conditions
-      onClose(); 
-      
-      // Small delay to ensure dialog closes and state updates
-      setTimeout(() => {
-        router.push(parentPath);
-        router.refresh();
+      // Close dialog
+      onClose();
       
       // Call optional callback
       if (onDeleted) {
         onDeleted();
       }
-      }, 100);
-    } else if (state.error) {
-      toast.error(`Error: ${state.error}`);
+      
+    } catch (error) {
+      toast.error(`Error: ${(error as Error).message || 'Failed to delete folder'}`);
     }
-  }, [state, folderName, onClose, removeFolder, router, onDeleted]);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -104,17 +86,25 @@ export function DeleteFolderDialog({
             Are you sure you want to delete the folder "{folderName}"? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="space-y-4">
-          <input type="hidden" name="folderId" value={folderId} />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="destructive" disabled={isPending}>
-              {isPending ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose} 
+            disabled={folderDeleteMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="button" 
+            variant="destructive" 
+            onClick={handleConfirmDelete}
+            disabled={folderDeleteMutation.isPending}
+          >
+            {folderDeleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {folderDeleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

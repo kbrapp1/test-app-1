@@ -9,10 +9,7 @@ export {
   deleteFolderAction, 
   createFolderAction,
   renameFolderClientAction,
-  deleteFolderClientAction,
-  updateFolderAction,
-  createFolderActionForm,
-  deleteFolderActionForm
+  deleteFolderClientAction
 } from './folder.actions';
 
 // Navigation actions (DDD compliant)

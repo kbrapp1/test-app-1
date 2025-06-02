@@ -54,9 +54,10 @@ export class FolderQueryBuilder {
    * Apply search filter
    */
   applySearchFilter(query: any, searchTerm?: string) {
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim() !== '') {
       return query.ilike('name', `%${searchTerm}%`);
     }
+    
     return query;
   }
 

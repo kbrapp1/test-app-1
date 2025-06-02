@@ -62,3 +62,6 @@ If you want to delete make changes in both dbs
 3. npx supabase functions deploy [edge-function] e.g. invite-member
 
 note: for set-active-org-claim edge function, make sure the Enforce JWT Verification= OFF
+
+## Finding file lengths
+Get-ChildItem -Path "lib/image-generator" -Recurse -Include "*.ts","*.tsx" | ForEach-Object { $lineCount = (Get-Content $_.FullName | Measure-Object -Line).Lines; [PSCustomObject]@{File=$_.Name; Lines=$lineCount; Path=$_.FullName} } | Sort-Object Lines -Descending | Select-Object -First 15

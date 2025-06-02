@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useApiMutation, useCacheInvalidation } from '@/lib/infrastructure/query';
 import { SavedSearch, SavedSearchProps } from '../../../domain/entities/SavedSearch';
-import { listSavedSearches, saveDamSearch, executeSavedSearch } from '@/lib/dam';
+import { listSavedSearches, saveDamSearch, executeSavedSearch } from '../../../application/actions/savedSearches.actions';
 import { useToast } from '@/components/ui/use-toast';
 
+// Legacy interface types for compatibility with existing components
 export interface SavedSearchFormData {
   name: string;
   description?: string;
@@ -44,45 +47,90 @@ export interface UseSavedSearchesReturn {
   canSaveCurrentSearch: (currentCriteria: CurrentSearchCriteria) => boolean;
 }
 
-export function useSavedSearches(): UseSavedSearchesReturn {
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
-  const [popularSearches, setPopularSearches] = useState<SavedSearch[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+/**
+ * Domain presentation hook for managing saved searches
+ * 
+ * MIGRATED TO REACT QUERY:
+ * - Replaced global singleton state with React Query
+ * - Automatic caching, deduplication, and refetching
+ * - Proper error handling and loading states
+ * - No more manual state synchronization across components
+ */
 
-  const refreshSavedSearches = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
+export function useSavedSearches(): UseSavedSearchesReturn {
+  const { toast } = useToast();
+  const { invalidateByPattern } = useCacheInvalidation();
+
+  // Fetch saved searches using React Query with custom fetcher
+  const {
+    data: searchData,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['saved-searches'],
+    queryFn: async () => {
       const result = await listSavedSearches({ includePopular: true });
-      
-      if (result.success && result.data) {
-        setSavedSearches(result.data.userSavedSearches.map((s: SavedSearchProps) => new SavedSearch(s)));
-        setPopularSearches(result.data.popularSavedSearches?.map((s: SavedSearchProps) => new SavedSearch(s)) || []);
-      } else {
-        setError(result.error || 'Failed to load saved searches');
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Transform to SavedSearch instances
+  const savedSearches = (searchData?.userSavedSearches || []).map((s: SavedSearchProps) => new SavedSearch(s));
+  const popularSearches = (searchData?.popularSavedSearches || []).map((s: SavedSearchProps) => new SavedSearch(s));
+
+  // Save search mutation
+  const saveSearchMutation = useApiMutation<any, SavedSearchProps>(
+    async (searchProps) => {
+      const result = await saveDamSearch(searchProps);
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    {
+      onSuccess: () => {
+        invalidateByPattern('saved-searches');
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to load saved searches',
+          title: 'Search saved successfully',
+          description: 'Your search has been added to saved searches.',
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Failed to save search',
+          description: error instanceof Error ? error.message : 'Unknown error occurred',
           variant: 'destructive',
         });
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      },
     }
-  }, [toast]);
+  );
 
+  // Execute saved search mutation
+  const executeSearchMutation = useApiMutation<any, string>(
+    async (searchId) => {
+      const result = await executeSavedSearch({ 
+        savedSearchId: searchId,
+        currentFolderIdForContext: undefined 
+      });
+      if (!result.success) throw new Error(result.error);
+      return result.data;
+    },
+    {
+      onSuccess: () => {
+        invalidateByPattern('saved-searches'); // Refresh to update usage counts
+      },
+      onError: (error) => {
+        toast({
+          title: 'Failed to execute search',
+          description: error instanceof Error ? error.message : 'Unknown error occurred',
+          variant: 'destructive',
+        });
+      },
+    }
+  );
+
+  // Legacy compatibility functions
   const canSaveCurrentSearch = useCallback((currentCriteria: CurrentSearchCriteria): boolean => {
     // Check if there are any meaningful search criteria
     return !!(
@@ -106,111 +154,51 @@ export function useSavedSearches(): UseSavedSearchesReturn {
       return null;
     }
 
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const result = await saveDamSearch({
+      const result = await saveSearchMutation.mutateAsync({
         name: formData.name,
         description: formData.description,
         searchCriteria: currentCriteria,
         isGlobal: formData.isGlobal ?? true,
-      });
-
-      if (result.success && result.data) {
-        const newSavedSearch = new SavedSearch(result.data);
-        setSavedSearches(prev => [newSavedSearch, ...prev]);
-        
-        toast({
-          title: 'Search Saved',
-          description: `"${formData.name}" has been saved successfully`,
-        });
-        
-        return newSavedSearch;
-      } else {
-        setError(result.error || 'Failed to save search');
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to save search',
-          variant: 'destructive',
-        });
-        return null;
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      } as SavedSearchProps);
+      
+      return new SavedSearch(result);
+    } catch (error) {
+      // Error is already handled by mutation's onError
       return null;
-    } finally {
-      setIsLoading(false);
     }
-  }, [canSaveCurrentSearch, toast]);
+  }, [canSaveCurrentSearch, toast, saveSearchMutation]);
 
   const executeSearch = useCallback(async (
     savedSearchId: string, 
     currentFolderId?: string | null
   ) => {
-    setIsExecuting(true);
-    setError(null);
-
     try {
-      const result = await executeSavedSearch({
-        savedSearchId,
-        currentFolderIdForContext: currentFolderId,
-      });
-
-      if (result.success) {
-        // Update the saved search usage in our local state
-        setSavedSearches(prev => 
-          prev.map(search => 
-            search.id === savedSearchId 
-              ? search.withUpdatedUsage()
-              : search
-          )
-        );
-        
-        return result.data;
-      } else {
-        setError(result.error || 'Failed to execute search');
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to execute search',
-          variant: 'destructive',
-        });
-        return null;
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      return await executeSearchMutation.mutateAsync(savedSearchId);
+    } catch (error) {
+      // Error is already handled by mutation's onError
       return null;
-    } finally {
-      setIsExecuting(false);
     }
-  }, [toast]);
+  }, [executeSearchMutation]);
 
-  // Load saved searches on mount
-  useEffect(() => {
-    refreshSavedSearches();
-  }, [refreshSavedSearches]);
+  const refreshSavedSearches = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return {
     savedSearches,
     popularSearches,
     isLoading,
-    isExecuting,
-    error,
+    isExecuting: executeSearchMutation.isPending,
+    error: error instanceof Error ? error.message : null,
     refreshSavedSearches,
     saveCurrentSearch,
     executeSearch,
     canSaveCurrentSearch,
   };
-} 
+}
+
+// Legacy reset function for testing (now no-op since we use React Query)
+export const resetGlobalSavedSearchState = () => {
+  // No-op - React Query handles state cleanup automatically
+}; 

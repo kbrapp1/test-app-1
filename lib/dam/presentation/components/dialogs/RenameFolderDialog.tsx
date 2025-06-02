@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,12 +13,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { updateFolderAction } from '@/lib/dam';
 import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
-import type { PlainFolder } from '@/lib/dam/types/dam.types';
 import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
-import { useRouter } from 'next/navigation';
+import { useFolderRename } from '@/lib/dam/hooks/useAssets';
+import { Loader2 } from 'lucide-react';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;
@@ -28,35 +26,14 @@ interface RenameFolderDialogProps {
   currentName: string;
 }
 
-const initialState: {
-  success: boolean;
-  error?: string;
-  folderId?: string;
-  parentFolderId?: string | null;
-  folder?: PlainFolder;
-} = {
-  success: false,
-  error: undefined,
-  folderId: undefined,
-  parentFolderId: null,
-  folder: undefined,
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? 'Renaming...' : 'Rename'}
-    </Button>
-  );
-}
+// Removed initialState and SubmitButton - using React Query mutation instead
 
 /**
  * Domain RenameFolderDialog Component
  * 
  * Follows DDD principles:
  * - Uses domain entities (Folder)
- * - Delegates to domain actions (updateFolderAction)
+ * - Uses React Query mutations for proper cache management
  * - Clean separation of UI and business logic
  * - Proper error handling and state management
  */
@@ -66,51 +43,45 @@ export function RenameFolderDialog({
   folderId,
   currentName,
 }: RenameFolderDialogProps) {
-  const [state, formAction, isPending] = useActionState(updateFolderAction, initialState);
-  const { updateFolderNodeInStore, forceRefresh } = useFolderStore();
+  const folderRenameMutation = useFolderRename();
+  const { updateFolderNodeInStore, forceRefresh, refetchFolderData } = useFolderStore();
   const [newName, setNewName] = useState(currentName || '');
-  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
       setNewName(currentName);
     }
   }, [isOpen, currentName]);
-  
-  useEffect(() => {
-    if (state.success && state.folder) {
-      toast.success(`Folder renamed to "${state.folder.name}" successfully.`);
-      
-      // Convert PlainFolder to DomainFolder for the store
-      const domainFolder = new DomainFolder({
-        id: state.folder.id,
-        name: state.folder.name,
-        userId: state.folder.userId,
-        createdAt: state.folder.createdAt,
-        updatedAt: state.folder.updatedAt,
-        parentFolderId: state.folder.parentFolderId,
-        organizationId: state.folder.organizationId,
-        has_children: state.folder.has_children,
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newName.trim() || newName.trim() === currentName) {
+      return;
+    }
+
+    try {
+      await folderRenameMutation.mutateAsync({
+        folderId,
+        newName: newName.trim()
       });
+
+      toast.success(`Folder renamed to "${newName.trim()}" successfully.`);
       
-      // Update folder in store and refresh tree
-      updateFolderNodeInStore(domainFolder);
-      forceRefresh();
-      
-      // Dispatch global event for gallery refresh
-      window.dispatchEvent(new CustomEvent('folderUpdated', { 
-        detail: { 
-          type: 'rename', 
-          folderId: state.folder.id, 
-          newName: state.folder.name 
-        } 
-      }));
+      // Refetch the folder tree data from server to get the updated folder name
+      // This ensures the tree view shows the renamed folder immediately
+      try {
+        await refetchFolderData();
+      } catch (error) {
+        // Silently handle folder tree refresh failure
+        forceRefresh();
+      }
       
       onClose();
-    } else if (state.error) {
-      toast.error(`Error: ${state.error}`);
+    } catch (error) {
+      toast.error(`Error: ${(error as Error).message || 'Failed to rename folder'}`);
     }
-  }, [state, currentName, onClose, updateFolderNodeInStore, forceRefresh]);
+  };
 
   if (!isOpen) {
     return null;
@@ -131,8 +102,7 @@ export function RenameFolderDialog({
             Enter the new name for the folder below. The current name is "{currentName}".
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction}>
-          <input type="hidden" name="folderId" value={folderId} />
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="folderName" className="text-right">
@@ -140,19 +110,27 @@ export function RenameFolderDialog({
               </Label>
               <Input
                 id="folderName"
-                name="newNameInput"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="col-span-3"
                 required
+                disabled={folderRenameMutation.isPending}
               />
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" disabled={folderRenameMutation.isPending}>
+                Cancel
+              </Button>
             </DialogClose>
-            <SubmitButton />
+            <Button 
+              type="submit" 
+              disabled={folderRenameMutation.isPending || !newName.trim() || newName.trim() === currentName}
+            >
+              {folderRenameMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {folderRenameMutation.isPending ? 'Renaming...' : 'Rename'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

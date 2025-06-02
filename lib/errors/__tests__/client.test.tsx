@@ -105,8 +105,11 @@ describe('Client Error Handling', () => {
       
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
       expect(toast.error).toHaveBeenCalledWith(
-        'An unexpected error occurred',
-        expect.any(Object)
+        'Application Error',
+        expect.objectContaining({
+          description: 'Something went wrong. Please try again.',
+          duration: 5000,
+        })
       );
       
       consoleSpy.mockRestore();

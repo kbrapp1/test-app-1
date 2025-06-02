@@ -1,116 +1,101 @@
-import { render, screen, waitFor, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { User, Session } from "@supabase/supabase-js"
-import { NavUser } from './nav-user'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { NavUser } from './nav-user';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
-// --- Mocks ---
+// Mock only what we need - the user profile hook
+vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({
+  useUserProfile: vi.fn(),
+}));
 
-// Mock next/navigation
-const mockPush = vi.fn()
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush, refresh: vi.fn() }),
-}))
-
-// Store the listener callback and the session to simulate
-let authChangeListener: ((event: string, session: Session | null) => void) | null = null;
-let simulatedSession: Session | null | undefined = undefined; // Use undefined to track if set
-
-// Mock Supabase client
-// const mockGetUser = vi.fn() // No longer needed
-const mockSignOut = vi.fn()
-const mockUnsubscribe = vi.fn()
-const mockOnAuthStateChange = vi.fn((callback) => {
-  // Capture the listener callback
-  authChangeListener = callback;
-  // DO NOT call immediately here. Let the test control the call via act.
-  return {
-    data: {
-      subscription: {
-        unsubscribe: mockUnsubscribe,
-      },
-    },
-  }
-})
-
+// Mock Supabase client 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
-     // getUser: mockGetUser, // No longer needed
-      signOut: mockSignOut,
-      onAuthStateChange: mockOnAuthStateChange,
+      signOut: vi.fn(),
     },
   }),
-}))
+}));
 
-// Mock useSidebar hook
-const mockUseSidebar = vi.fn()
+// Mock router
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
+// Mock sidebar hook
 vi.mock('@/components/ui/sidebar', async (importOriginal) => {
-  const mod = await importOriginal<Record<string, unknown>>() 
-  const localMockUseSidebar = vi.fn(() => mockUseSidebar());
-  localMockUseSidebar.mockImplementation(() => mockUseSidebar());
+  const mod = await importOriginal<Record<string, unknown>>();
   return {
-    ...mod, 
-    useSidebar: localMockUseSidebar, 
-  }
-})
+    ...mod,
+    useSidebar: () => ({ isMobile: false }),
+  };
+});
 
-// Helper function to TRIGGER the captured listener callback
-const triggerAuthStateChange = (session: Session | null) => {
-  if (authChangeListener) {
-    // Directly call the captured listener
-    authChangeListener('SIGNED_IN', session); 
-  } else {
-    // This might happen if component unmounts before listener is set
-    console.warn('Auth change listener not captured or component unmounted early.');
-  }
-};
-
-// --- Test Suite ---
+import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 
 describe('NavUser', () => {
-  const renderWithProvider = (component: React.ReactElement) => {
-    return render(<SidebarProvider>{component}</SidebarProvider>)
-  }
-
-  // Define mock user data centrally
-  const mockUser: User = {
-    id: '123',
-    aud: 'authenticated',
-    role: 'authenticated',
-    email: 'test@example.com',
-    created_at: new Date().toISOString(),
-    app_metadata: { provider: 'email', providers: ['email'] }, // Add required fields
-    user_metadata: { name: 'Test User', avatar_url: 'http://example.com/avatar.png'},
-    identities: [], // Add required fields
-    factors: [], // Add required fields
-    email_confirmed_at: new Date().toISOString(), // Add required fields
-    phone: '', // Add required fields
-    last_sign_in_at: new Date().toISOString(), // Add required fields
-  };
-  
-  const mockSession: Session = {
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    token_type: 'bearer',
-    user: mockUser,
-    expires_at: Date.now() + 3600 * 1000, // Add required fields
+  const renderNavUser = () => {
+    return render(
+      <SidebarProvider>
+        <NavUser />
+      </SidebarProvider>
+    );
   };
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    authChangeListener = null; // Reset listener capture
-    // simulatedSession = undefined; // Reset session simulation state if needed
-    mockSignOut.mockResolvedValue({ error: null })
-    mockUseSidebar.mockReturnValue({ isMobile: false }) 
-  })
+  it('renders nothing when no user is present', () => {
+    // Mock: No user logged in
+    vi.mocked(useUserProfile).mockReturnValue({
+      user: null,
+      profile: null,
+      isLoading: false,
+      refreshProfile: vi.fn(),
+    });
 
-  it('should render skeleton initially', () => {
-    renderWithProvider(<NavUser />)
-    // Initially, before listener fires, skeleton should be present
-    expect(screen.getByRole('button', { name: '' })).toBeInTheDocument() 
-    expect(screen.queryByText('Test User')).not.toBeInTheDocument();
-  })
-}) 
+    renderNavUser();
+
+    // Should render nothing (null return)
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders loading skeleton when loading', () => {
+    // Mock: Loading state
+    vi.mocked(useUserProfile).mockReturnValue({
+      user: null,
+      profile: null,
+      isLoading: true,
+      refreshProfile: vi.fn(),
+    });
+
+    renderNavUser();
+
+    // Should show skeleton loading button
+    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toHaveAttribute('data-sidebar', 'menu-button');
+  });
+
+  it('renders user menu when user is authenticated', () => {
+    // Mock: Authenticated user
+    const mockUser = {
+      id: 'user-123',
+      email: 'test@example.com',
+      user_metadata: { name: 'Test User' },
+    };
+
+    vi.mocked(useUserProfile).mockReturnValue({
+      user: mockUser as any,
+      profile: null,
+      isLoading: false,
+      refreshProfile: vi.fn(),
+    });
+
+    renderNavUser();
+
+    // Should show user menu button with user info
+    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+  });
+}); 

@@ -57,6 +57,28 @@ if (typeof HTMLFormElement !== 'undefined' && typeof HTMLFormElement.prototype.r
 import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
 import React from 'react'; // Import React for createElement
+import { expect, afterEach, beforeAll, afterAll } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { server } from './lib/test/mocks/server';
+
+// extends Vitest's expect method with methods from react-testing-library
+expect.extend(matchers);
+
+// Extend expect with jest-dom matchers
+declare module 'vitest' {
+  interface Assertion<T = any> extends jest.Matchers<void, T> {}
+}
+
+// runs a cleanup after each test case (e.g. clearing jsdom)
+afterEach(() => {
+  cleanup();
+});
+
+// MSW setup
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 // --- Mock next/image to unoptimize it for tests ---
 vi.mock('next/image', () => ({
@@ -70,9 +92,10 @@ vi.mock('next/image', () => ({
 }));
 // --------------------------------------------------
 
-// Suppress console.log messages during tests
-// vi.spyOn(console, 'log').mockImplementation(() => {}); // Keep this commented out for now
-// Optionally, suppress other console methods too:
+// Suppress console messages during tests to reduce noise
+vi.spyOn(console, 'log').mockImplementation(() => {}); 
+vi.spyOn(console, 'info').mockImplementation(() => {});
+// Keep error and warn for important test feedback, but can be suppressed if needed:
 // vi.spyOn(console, 'error').mockImplementation(() => {});
 // vi.spyOn(console, 'warn').mockImplementation(() => {});
 

@@ -2,11 +2,12 @@
  * Application Service: Bulk Move Operations
  * 
  * Single Responsibility: Handles bulk move operations for multiple selected items
- * Orchestrates bulk move logic with proper error handling and notifications
+ * Uses React Query mutations for proper cache invalidation
  */
 
 import type { BulkMoveSelection, DragOperation, DragEndResult } from '../types';
 import { useFolderStore } from '@/lib/store/folderStore';
+import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 
 export interface BulkMoveCallbacks {
   onToast: (toast: { title: string; description?: string; variant?: 'default' | 'destructive' }) => void;

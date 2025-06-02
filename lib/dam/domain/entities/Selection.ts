@@ -182,8 +182,8 @@ export class Selection {
     const newCurrentSet = new Set(currentSet);
     newCurrentSet.add(itemId);
 
-    // Don't clear the other set - allow mixed selection of assets and folders
-    const newOtherSet = otherSet;
+    // In single mode, clear other selections when adding new item
+    const newOtherSet = this.selectionMode === 'single' ? new Set<string>() : otherSet;
     const newMode = this.determineSelectionMode(newCurrentSet.size + newOtherSet.size);
 
     return new Selection(

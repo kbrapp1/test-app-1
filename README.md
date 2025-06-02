@@ -195,3 +195,137 @@ For a detailed overview of the project structure, including key files and their 
 *   Uses `cmdk` and `shadcn/ui` Dialog.
 *   Provides quick access to navigation and theme switching.
 *   State managed by `
+
+# Test App 1
+
+## AI Image Generator Enhancement
+
+We've successfully upgraded the image generator from FLUX Pro to **FLUX Kontext Max**, adding comprehensive image editing capabilities alongside text-to-image generation with premium performance and improved typography.
+
+### 🎨 New Features
+
+#### 1. **Dual Generation Modes**
+- **Text-to-Image**: Create entirely new images from text prompts
+- **Image Editing**: Transform existing images with text prompts using FLUX Kontext Max
+
+#### 2. **Image Upload & DAM Integration**
+- Upload images directly to use as base for editing
+- Select images from Digital Asset Management (DAM) library
+- Support for various image formats with preview
+
+#### 3. **Advanced Editing Types**
+- **General Editing**: Modify any aspect of an image ("put a sunrise behind the mountain")
+- **Style Transfer**: Change artistic style ("make it look like a watercolor painting")
+- **Background Swap**: Replace backgrounds ("place this in a magical forest")
+
+#### 4. **Enhanced UI/UX**
+- Tabbed interface for generation vs editing modes
+- Visual base image preview with editing context
+- Edit buttons on completed generations for easy iteration
+- Generation type badges to distinguish creation methods
+
+#### 5. **Premium Typography Generation** 
+- FLUX Kontext Max delivers superior text rendering in images
+- Enhanced prompt adherence for better results
+- Maximum performance without speed compromise
+
+### 🔧 Technical Implementation
+
+#### Model Upgrade
+```typescript
+// Before: FLUX 1.1 Pro (text-to-image only)
+'black-forest-labs/flux-1.1-pro'
+
+// After: FLUX Kontext Max (text-to-image + editing + premium features)
+'black-forest-labs/flux-kontext-max'
+```
+
+#### Enhanced Domain Model
+- Extended `Generation` entity with image editing properties:
+  - `baseImageUrl`: Source image for editing
+  - `editType`: Type of generation/editing operation
+  - `aspectRatio`: Flexible aspect ratio support
+  - `damAssetId`: Reference to DAM assets
+  - `sourceDamAssetId`: Tracks source assets for editing
+
+#### DDD Architecture Compliance
+- **Domain Layer**: Enhanced entities and value objects for editing
+- **Application Layer**: Updated DTOs and use cases for both generation and editing
+- **Infrastructure Layer**: FLUX Kontext Max provider with premium image editing support
+- **Presentation Layer**: Enhanced UI components with editing workflows
+
+### 📊 API Capabilities
+
+Based on [Replicate FLUX Kontext Max documentation](https://replicate.com/black-forest-labs/flux-kontext-max):
+
+- **Premium Performance**: Maximum performance with improved prompt adherence
+- **Superior Typography**: Enhanced text generation and rendering in images
+- **Text-to-Image Generation**: Create 1024x1024 images with flexible aspect ratios
+- **Advanced Image Editing**: Transform images with natural language prompts
+- **Aspect Ratio Support**: From 3:7 (portrait) to 7:3 (landscape)
+- **Premium Pricing**: ~$0.08 per generation (premium tier)
+- **Fast Processing**: ~25 seconds average with enhanced quality
+
+### 🚀 Usage Examples
+
+#### Text-to-Image Generation
+```typescript
+// Generate new image with premium quality
+const result = await generateImage({
+  prompt: "A magical forest with glowing mushrooms, cinematic lighting",
+  generationType: "text-to-image",
+  aspectRatio: "16:9"
+});
+```
+
+#### Image Editing with Premium Features
+```typescript
+// Edit existing image with superior typography and detail
+const result = await generateImage({
+  prompt: "Add elegant golden text saying 'ADVENTURE AWAITS' above the mountain",
+  generationType: "image-editing", 
+  baseImageUrl: "data:image/jpeg;base64,/9j/4AAQ...",
+  aspectRatio: "1:1"
+});
+```
+
+### 📁 Updated File Structure
+
+Key files modified/created:
+
+```
+lib/image-generator/
+├── infrastructure/providers/replicate/
+│   ├── FluxModelService.ts          # Updated to use flux-kontext-max
+│   └── ReplicateFluxProvider.ts     # Added image editing support
+├── domain/entities/
+│   ├── Generation.ts                # Enhanced with editing properties  
+│   └── services/GenerationSerializer.ts # Updated interfaces
+├── application/
+│   ├── dto/GenerationDto.ts         # Added editing types
+│   └── use-cases/GenerateImageUseCase.ts # Updated for editing
+└── presentation/components/
+    ├── GeneratorForm.tsx            # Enhanced UI with upload/editing
+    ├── GenerationActions.tsx        # Added edit image button
+    └── ImageGeneratorMain.tsx       # Integrated editing workflow
+```
+
+### 🔄 Migration Notes
+
+- **Backward Compatible**: Existing text-to-image functionality unchanged
+- **Enhanced Capabilities**: All existing features work with new premium editing features
+- **Database Schema**: Requires migration to add new columns for editing support
+- **Premium Pricing**: Updated to $0.08 per generation for premium quality
+- **Typography Excellence**: Superior text rendering for images with text content
+
+### 🧪 Testing
+
+The system now supports:
+1. Creating new images from text with premium quality (existing functionality enhanced)
+2. Uploading images for premium editing  
+3. Selecting images from DAM for premium editing
+4. Using completed generations as base for further premium editing
+5. Different editing types with enhanced typography (general, style transfer, background swap)
+6. Superior text generation and rendering in images
+
+All features maintain DDD principles with proper separation of concerns and domain-driven design patterns.

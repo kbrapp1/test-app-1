@@ -6,6 +6,7 @@ import { createClient as createSupabaseServerClient } from '@/lib/supabase/serve
 import { UpdateFolderUseCase, DeleteFolderUseCase, CreateFolderUseCase } from '../use-cases/folders';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { AppError } from '@/lib/errors/base';
+import { apiDeduplicationService } from '../services/ApiDeduplicationService';
 
 /**
  * Server Actions: Folder Management
@@ -40,14 +41,19 @@ export async function renameFolderAction(
   folderId: string,
   newName: string
 ): Promise<FolderActionResult> {
-  if (!folderId) {
-    return { success: false, error: 'Folder ID is required.' };
-  }
-  if (!newName || newName.trim() === '') {
-    return { success: false, error: 'New folder name cannot be empty.' };
-  }
+  // 🔄 Apply deduplication to prevent rapid rename actions
+  return await apiDeduplicationService.deduplicateServerAction(
+    'renameFolderAction',
+    [folderId, newName],
+    async () => {
+      if (!folderId) {
+        return { success: false, error: 'Folder ID is required.' };
+      }
+      if (!newName || newName.trim() === '') {
+        return { success: false, error: 'New folder name cannot be empty.' };
+      }
 
-  try {
+      try {
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -88,16 +94,24 @@ export async function renameFolderAction(
     }
     return { success: false, error: err.message || 'Failed to rename folder.' };
   }
+    },
+    2000 // 2 second window for rename actions
+  );
 }
 
 export async function deleteFolderAction(
   folderId: string
 ): Promise<FolderActionResult> {
-  if (!folderId) {
-    return { success: false, error: 'Folder ID is required for deletion.' };
-  }
+  // 🔄 Apply deduplication to prevent accidental double-deletions
+  return await apiDeduplicationService.deduplicateServerAction(
+    'deleteFolderAction',
+    [folderId],
+    async () => {
+      if (!folderId) {
+        return { success: false, error: 'Folder ID is required for deletion.' };
+      }
 
-  try {
+      try {
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -141,17 +155,25 @@ export async function deleteFolderAction(
     }
     return { success: false, error: err.message || 'Failed to delete folder.' };
   }
+    },
+    3000 // 3 second window for delete actions (safety)
+  );
 }
 
 export async function createFolderAction(
   name: string,
   parentFolderId?: string | null
 ): Promise<FolderActionResult> {
-  if (!name || name.trim() === '') {
-    return { success: false, error: 'Folder name cannot be empty.' };
-  }
+  // 🔄 Apply deduplication to prevent rapid folder creation
+  return await apiDeduplicationService.deduplicateServerAction(
+    'createFolderAction',
+    [name, parentFolderId],
+    async () => {
+      if (!name || name.trim() === '') {
+        return { success: false, error: 'Folder name cannot be empty.' };
+      }
 
-  try {
+      try {
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -191,39 +213,12 @@ export async function createFolderAction(
     }
     return { success: false, error: err.message || 'Failed to create folder.' };
   }
+    },
+    2000 // 2 second window for folder creation
+  );
 }
 
-// FormData-compatible action for form integration (useActionState)
-export async function updateFolderAction(
-  prevState: FolderActionResult | null,
-  formData: FormData
-): Promise<FolderActionResult> {
-  const folderId = formData.get('folderId') as string;
-  const newName = formData.get('newNameInput') as string;
 
-  return renameFolderAction(folderId, newName);
-}
-
-// FormData-compatible action for form integration
-export async function createFolderActionForm(
-  prevState: FolderActionResult | null,
-  formData: FormData
-): Promise<FolderActionResult> {
-  const name = formData.get('name') as string;
-  const parentFolderId = formData.get('parentFolderId') as string | null;
-
-  return createFolderAction(name, parentFolderId);
-}
-
-// FormData-compatible action for form integration
-export async function deleteFolderActionForm(
-  prevState: FolderActionResult | null,
-  formData: FormData
-): Promise<FolderActionResult> {
-  const folderId = formData.get('folderId') as string;
-
-  return deleteFolderAction(folderId);
-}
 
 // Legacy action compatibility aliases
 export const renameFolderClientAction = renameFolderAction;

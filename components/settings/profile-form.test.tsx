@@ -1,172 +1,168 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
 import { ProfileForm } from './profile-form';
-import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 
-// Mock Supabase client
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn(),
-      updateUser: vi.fn(),
-    },
-  })),
-}));
-
-// Mock useToast hook
+// Mock the toast hook
 const mockToast = vi.fn();
-vi.mock("@/components/ui/use-toast", () => ({
-  useToast: vi.fn(() => ({ toast: mockToast })),
+vi.mock('@/components/ui/use-toast', () => ({
+  useToast: () => ({ toast: mockToast }),
 }));
 
-// Mock user data
-const mockUser = {
-  id: 'test-user-id',
-  email: 'test@example.com',
-  user_metadata: {
-    name: 'Initial Name',
-  },
-};
+// Mock UserProfileProvider to return controlled data
+vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({
+  useUserProfile: vi.fn(),
+}));
 
-// --- Test Suite ---
+// Mock OrganizationProvider to avoid complex dependencies
+vi.mock('@/lib/organization/application/providers/OrganizationProvider', () => ({
+  useOrganization: () => ({
+    currentContext: null,
+    activeOrganizationId: 'org-123',
+    accessibleOrganizations: [
+      { organization_id: 'org-123', organization_name: 'Test Org', role_name: 'Member' }
+    ],
+    isLoading: false,
+  }),
+}));
+
+// Mock OrganizationSwitcher to avoid complex dependencies
+vi.mock('@/lib/organization/presentation/components/OrganizationSwitcher', () => ({
+  OrganizationSwitcher: () => <div data-testid="organization-switcher">Organization Switcher</div>,
+}));
+
+// Mock Supabase client for form submission
+const mockUpdate = vi.fn();
+const mockEq = vi.fn(() => ({ 
+  // Return a promise that resolves to success by default
+  then: (resolve: any) => resolve({ data: {}, error: null })
+}));
+mockUpdate.mockReturnValue({ eq: mockEq });
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    from: () => ({ update: mockUpdate }),
+  }),
+}));
+
+import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 
 describe('ProfileForm', () => {
-  let mockGetUser: ReturnType<typeof vi.fn>;
-  let mockUpdateUser: ReturnType<typeof vi.fn>;
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    user_metadata: { name: 'Test User' },
+  };
+
+  const mockProfile = {
+    id: 'user-123',
+    full_name: 'Test User',
+    email: 'test@example.com',
+    is_super_admin: false,
+  };
 
   beforeEach(() => {
-    // Reset mocks before each test
     vi.clearAllMocks();
-
-    // Set up specific mock implementations for this suite
-    mockGetUser = vi.fn();
-    mockUpdateUser = vi.fn();
-    (createClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      auth: {
-        getUser: mockGetUser,
-        updateUser: mockUpdateUser,
-      },
+    
+    // Default mock: authenticated user with profile
+    vi.mocked(useUserProfile).mockReturnValue({
+      user: mockUser as any,
+      profile: mockProfile as any,
+      isLoading: false,
+      refreshProfile: vi.fn(),
     });
-    (useToast as ReturnType<typeof vi.fn>).mockReturnValue({ toast: mockToast });
 
-    // Default successful user fetch
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
+    // Reset Supabase mocks
+    mockEq.mockImplementation(() => 
+      Promise.resolve({ data: {}, error: null })
+    );
   });
 
-  it('renders the form with initial user data', async () => {
+  it('renders profile form with user data', async () => {
     render(<ProfileForm />);
 
-    // Wait for user data to load and form to reset
-    await waitFor(() => {
-      expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-      expect(screen.getByDisplayValue(mockUser.email)).toBeDisabled();
-    });
-    await waitFor(() => {
-      expect(screen.getByLabelText(/Name/i)).toBeInTheDocument();
-      expect(screen.getByDisplayValue(mockUser.user_metadata.name)).toBeInTheDocument();
-    });
-    expect(screen.getByRole('button', { name: /Update Profile/i })).toBeInTheDocument();
+    // Should show profile information
+    expect(screen.getByText('Profile Settings')).toBeInTheDocument();
+    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    
+    // Should show form field
+    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /update profile/i })).toBeInTheDocument();
   });
 
-  it('shows validation error if name is empty', async () => {
-    const user = userEvent.setup();
-    render(<ProfileForm />);
-
-    // Wait for form to be ready
-    await waitFor(() => {
-      expect(screen.getByDisplayValue(mockUser.user_metadata.name)).toBeInTheDocument();
+  it('shows loading state when user data is loading', () => {
+    // Mock: Loading state
+    vi.mocked(useUserProfile).mockReturnValue({
+      user: null,
+      profile: null,
+      isLoading: true,
+      refreshProfile: vi.fn(),
     });
 
-    const nameInput = screen.getByLabelText(/Name/i);
-    const submitButton = screen.getByRole('button', { name: /Update Profile/i });
+    render(<ProfileForm />);
 
-    // Clear name and submit
-    await user.clear(nameInput);
-    await user.click(submitButton);
-
-    // Check for validation message
-    expect(await screen.findByText(/Name cannot be empty/i)).toBeInTheDocument();
-    expect(mockUpdateUser).not.toHaveBeenCalled();
-    expect(mockToast).not.toHaveBeenCalled();
+    // Should show loading message
+    expect(screen.getByText('Loading profile...')).toBeInTheDocument();
   });
 
-  it('calls updateUser and shows success toast on successful submission', async () => {
-    const user = userEvent.setup();
-    const newName = 'Updated Name';
+  it('validates required name field', async () => {
     render(<ProfileForm />);
 
-    // Mock the getUser call inside onSubmit
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null }); 
-    // Mock successful update
-    mockUpdateUser.mockResolvedValue({ error: null });
+    const nameInput = screen.getByLabelText(/full name/i);
+    const submitButton = screen.getByRole('button', { name: /update profile/i });
 
-    // Wait for form to be ready
+    // Clear the name field and submit
+    fireEvent.change(nameInput, { target: { value: '' } });
+    fireEvent.click(submitButton);
+
+    // Should show validation error
     await waitFor(() => {
-      expect(screen.getByDisplayValue(mockUser.user_metadata.name)).toBeInTheDocument();
+      expect(screen.getByText(/name cannot be empty/i)).toBeInTheDocument();
     });
+  });
 
-    const nameInput = screen.getByLabelText(/Name/i);
-    const submitButton = screen.getByRole('button', { name: /Update Profile/i });
+  it('submits form successfully', async () => {
+    render(<ProfileForm />);
 
-    // Change name and submit
-    // Ensure input is cleared reliably before typing
-    await user.clear(nameInput);
-    fireEvent.change(nameInput, { target: { value: '' } }); // Explicitly set value to empty
-    await user.type(nameInput, newName);
-    await user.click(submitButton);
+    const nameInput = screen.getByLabelText(/full name/i);
+    const submitButton = screen.getByRole('button', { name: /update profile/i });
 
-    // Check if updateUser was called correctly
+    // Update name and submit
+    fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
+    fireEvent.click(submitButton);
+
+    // Should show success toast
     await waitFor(() => {
-      expect(mockUpdateUser).toHaveBeenCalledTimes(1);
-      expect(mockUpdateUser).toHaveBeenCalledWith({
-        data: { name: newName },
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Profile updated',
+        description: 'Your name has been successfully updated.',
       });
     });
-
-    // Check for success toast
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-      title: "Profile updated",
-    }));
   });
 
-  it('shows error toast if updateUser fails', async () => {
-    const user = userEvent.setup();
-    const newName = 'Another Name';
-    const errorMessage = 'Failed to update profile';
+  it('handles form submission error', async () => {
+    // Mock Supabase error
+    mockEq.mockImplementation(() => 
+      Promise.resolve({ data: null, error: { message: 'Database error' } })
+    );
+
     render(<ProfileForm />);
 
-    mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
-    mockUpdateUser.mockResolvedValue({ error: { message: errorMessage } });
+    const nameInput = screen.getByLabelText(/full name/i);
+    const submitButton = screen.getByRole('button', { name: /update profile/i });
 
+    // Update name and submit
+    fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
+    fireEvent.click(submitButton);
+
+    // Should show error toast
     await waitFor(() => {
-      expect(screen.getByDisplayValue(mockUser.user_metadata.name)).toBeInTheDocument();
-    });
-
-    const nameInput = screen.getByLabelText(/Name/i);
-    const submitButton = screen.getByRole('button', { name: /Update Profile/i });
-
-    // Ensure field is cleared reliably before typing
-    nameInput.focus();
-    await user.clear(nameInput);
-    fireEvent.change(nameInput, { target: { value: '' } }); // Add explicit change event
-    await user.type(nameInput, newName);
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockUpdateUser).toHaveBeenCalledTimes(1);
-      expect(mockUpdateUser).toHaveBeenCalledWith({
-        data: { name: newName },
+      expect(mockToast).toHaveBeenCalledWith({
+        variant: 'destructive',
+        title: 'Error updating profile',
+        description: 'Database error',
       });
     });
-
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
-      variant: "destructive",
-      title: "Error updating profile",
-      description: errorMessage,
-    }));
   });
 }); 

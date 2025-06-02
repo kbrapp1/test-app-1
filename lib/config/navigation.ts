@@ -144,6 +144,7 @@ export const navMainItems: NavItem[] = [
         icon: BotIcon,
         collapsible: true,
         items: [
+            { title: "Image Generator", url: "/ai-playground/image-generator", icon: CameraIcon },
             { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon },
             { title: "Chatbot", url: "/ai-playground/chatbot", icon: MessageCircleIcon },
         ],

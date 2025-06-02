@@ -52,6 +52,7 @@ export interface ExecuteSavedSearchOptions {
 }
 
 export async function saveDamSearch(request: SaveDamSearchRequest) {
+
   try {
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();
@@ -106,6 +107,7 @@ export async function saveDamSearch(request: SaveDamSearchRequest) {
 }
 
 export async function listSavedSearches(options: ListSavedSearchesOptions = {}) {
+
   try {
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();
@@ -172,6 +174,7 @@ export async function listSavedSearches(options: ListSavedSearchesOptions = {}) 
 }
 
 export async function executeSavedSearch(options: ExecuteSavedSearchOptions) {
+
   try {
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();

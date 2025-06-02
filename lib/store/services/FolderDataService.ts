@@ -3,16 +3,21 @@ import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
 /**
  * Domain Service: Folder Data Operations
  * 
- * Single Responsibility: Data fetching and API communication
- * Handles external data operations following DDD principles
+ * MIGRATED TO REACT QUERY:
+ * - Removed custom deduplication service dependency
+ * - Simplified to pure data transformation functions
+ * - React Query handles caching and deduplication automatically
+ * - Maintained domain entity conversion logic
  */
 export class FolderDataService {
   /**
    * Fetches fresh folder data from the server
+   * Note: React Query handles deduplication automatically
    */
   static async fetchRootFolders(): Promise<DomainFolder[]> {
     try {
       const { getRootFolders } = await import('@/lib/dam/application/actions/navigation.actions');
+      
       const freshFolders = await getRootFolders();
       
       return this.convertTodomainFolders(freshFolders);
@@ -24,12 +29,14 @@ export class FolderDataService {
 
   /**
    * Fetches children for a specific folder
+   * Note: React Query handles deduplication automatically
    */
   static async fetchFolderChildren(folderId: string): Promise<DomainFolder[]> {
     try {
       // Import the fetcher function that's passed to the store
       // This maintains the existing pattern but separates the concern
       const { FolderTreeFetcher } = await import('@/lib/dam/presentation/components/navigation/services/FolderTreeFetcher');
+      
       return await FolderTreeFetcher.fetchChildFolders(folderId);
     } catch (error) {
       console.error(`Error fetching children for folder ${folderId}:`, error);

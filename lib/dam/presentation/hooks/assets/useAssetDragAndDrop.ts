@@ -6,10 +6,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { useCallback } from 'react';
-import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';
-import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { createClient } from '@/lib/supabase/client';
+import { useAssetMove } from '@/lib/dam/hooks/useAssets';
 import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import type { useToast } from '@/components/ui/use-toast'; // Import type
 
@@ -39,39 +36,8 @@ export function useAssetDragAndDrop({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  // DDD helper function for authentication
-  const getAuthContext = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    // Use database-first organization context (single source of truth)
-    const { data: activeOrgId, error } = await supabase.rpc('get_active_organization_id');
-    
-    if (error || !activeOrgId) {
-      throw new Error('No active organization found');
-    }
-
-    return { supabase, user, activeOrgId };
-  }, []);
-
-  const moveAssetUseCase = useCallback(async (assetId: string, targetFolderId: string | null) => {
-    const { supabase, activeOrgId } = await getAuthContext();
-    const assetRepository = new SupabaseAssetRepository(supabase);
-    const folderRepository = new SupabaseFolderRepository(supabase);
-    const moveUseCase = new MoveAssetUseCase(assetRepository, folderRepository);
-    
-    await moveUseCase.execute({
-      assetId,
-      targetFolderId,
-      organizationId: activeOrgId,
-    });
-    
-    return { success: true };
-  }, [getAuthContext]);
+  // Use React Query mutation for move operation
+  const moveAssetMutation = useAssetMove();
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -93,12 +59,10 @@ export function useAssetDragAndDrop({
       setOptimisticallyHiddenItemId(assetId);
 
       try {
-        await moveAssetUseCase(assetId, targetFolderId);
+        await moveAssetMutation.mutateAsync({ assetId, targetFolderId });
         toast({ title: 'Asset moved successfully!' });
-        // Optimistic update: remove from current list. The main data fetch will handle the rest.
+        // Optimistic update: remove from current list. React Query will handle cache invalidation.
         setAllItems(prevItems => prevItems.filter(item => item.id !== assetId));
-        // Potentially trigger folder tree refresh if needed
-        // triggerFolderTreeRefresh(); 
       } catch (error) {
         console.error("Move asset error:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';

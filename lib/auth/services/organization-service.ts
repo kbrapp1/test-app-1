@@ -70,18 +70,12 @@ export class OrganizationService {
    * Switch to a specific organization by updating user's metadata and refreshing session
    */
   async switchToOrganization(organizationId: string): Promise<void> {
-    console.log('🔄 Starting organization switch to:', organizationId);
-    
     const { data: { user }, error: getUserError } = await this.supabase.auth.getUser();
     
     if (getUserError || !user) {
-      console.error('❌ User authentication failed:', getUserError);
+      console.error('User authentication failed:', getUserError);
       throw new Error('User not authenticated');
     }
-
-    console.log('✅ User authenticated:', user.id);
-    console.log('📝 Current user_metadata:', user.user_metadata);
-    console.log('📝 Current app_metadata:', user.app_metadata);
 
     // Show initial progress notification
     if (typeof window !== 'undefined') {
@@ -129,12 +123,6 @@ export class OrganizationService {
     }
 
     try {
-      console.log('🔄 Calling switch-organization Edge Function...');
-      
-      // Log Supabase configuration for debugging
-      console.log('🌐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log('🔑 Supabase Anon Key present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-      
       // Call the Edge Function to properly handle organization switching
       const { data, error } = await this.supabase.functions.invoke('switch-organization', {
         body: {
@@ -142,20 +130,16 @@ export class OrganizationService {
         }
       });
 
-      console.log('📤 Function invocation complete. Data:', data, 'Error:', error);
-
       if (error) {
-        console.error('❌ Edge Function failed:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        console.error('Edge Function failed:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw new Error(`Failed to switch organization: ${error.message}`);
       }
 
       if (!data?.success) {
-        console.error('❌ Edge Function returned error:', data?.message);
+        console.error('Edge Function returned error:', data?.message);
         throw new Error(`Failed to switch organization: ${data?.message || 'Unknown error'}`);
       }
-
-      console.log('✅ Organization switched successfully via Edge Function:', data);
 
       // Update progress notification
       if (typeof window !== 'undefined') {
@@ -202,7 +186,6 @@ export class OrganizationService {
       // Also store in localStorage for immediate UI feedback
       if (typeof window !== 'undefined') {
         localStorage.setItem('active_organization_id', organizationId);
-        console.log('✅ Stored organization in localStorage for immediate UI update');
         
         // Store success info to show toast after refresh
         const targetOrgName = await this.getOrganizationById(organizationId);
@@ -216,10 +199,10 @@ export class OrganizationService {
       }
 
     } catch (error: any) {
-      console.error('❌ Error calling Edge Function:', error);
-      console.error('❌ Error name:', error.name);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
+      console.error('Error calling Edge Function:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       
       // Update progress notification to show error
       if (typeof window !== 'undefined') {
@@ -270,11 +253,8 @@ export class OrganizationService {
       }
       
       // Fallback to localStorage and direct metadata update
-      console.log('🔄 Using fallback approach...');
-      
       if (typeof window !== 'undefined') {
         localStorage.setItem('active_organization_id', organizationId);
-        console.log('✅ Stored organization in localStorage as fallback');
       }
 
       // Try direct user metadata update as last resort
@@ -286,12 +266,10 @@ export class OrganizationService {
         });
 
         if (directUpdateError) {
-          console.error('❌ Direct update also failed:', directUpdateError);
-        } else {
-          console.log('✅ Direct user metadata update succeeded');
+          console.error('Direct update also failed:', directUpdateError);
         }
       } catch (directError) {
-        console.error('❌ Direct update error:', directError);
+        console.error('Direct update error:', directError);
       }
       
       throw error; // Re-throw to let caller handle
@@ -300,8 +278,6 @@ export class OrganizationService {
     // Since Edge Function succeeded, force session refresh to get fresh JWT with updated claims
     // Page refresh alone doesn't refresh the session - we need to force it
     if (typeof window !== 'undefined') {
-      console.log('🔄 Edge Function succeeded - forcing session refresh to get new JWT...');
-      
       // Store success info to show toast after refresh
       const targetOrgName = await this.getOrganizationById(organizationId);
       if (targetOrgName) {
@@ -353,8 +329,6 @@ export class OrganizationService {
       }
       
       try {
-        console.log('🔄 Forcing Supabase session refresh...');
-        
         // Create a timeout promise to prevent hanging
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Session refresh timeout')), 5000); // 5 second timeout
@@ -370,8 +344,8 @@ export class OrganizationService {
             timeoutPromise
           ]);
         } catch (timeoutError: any) {
-          console.log('⏰ Session refresh timed out after 5 seconds - this is a known Supabase issue');
-          console.log('🔄 Session refresh timed out, but Edge Function succeeded - refreshing page instead...');
+          console.log('Session refresh timed out after 5 seconds - this is a known Supabase issue');
+          console.log('Session refresh timed out, but Edge Function succeeded - refreshing page instead...');
           
           // Update progress to show success and page refresh
           const progressToast = document.getElementById('org-switch-progress');
@@ -419,8 +393,6 @@ export class OrganizationService {
             timestamp: Date.now()
           }));
           
-          console.log('🔄 Refreshing page to get updated session...');
-          
           // Just refresh the page - the auth hook will provide the updated JWT
           setTimeout(() => {
             window.location.reload();
@@ -431,9 +403,9 @@ export class OrganizationService {
         const { data, error } = refreshResult as any;
         
         if (error) {
-          console.error('❌ Session refresh failed:', error);
+          console.error('Session refresh failed:', error);
           // Fallback to complete session reset - this guarantees a fresh session
-          console.log('🔄 Session refresh failed, forcing complete session reset...');
+          console.log('Session refresh failed, forcing complete session reset...');
           
           // Update progress to show we're resetting session
           if (progressToast) {
@@ -488,9 +460,6 @@ export class OrganizationService {
           return;
         }
         
-        console.log('✅ Session refreshed successfully, new session:', !!data.session);
-        console.log('✅ New JWT token obtained, refreshing page...');
-        
         // Update progress message
         if (progressToast) {
           progressToast.innerHTML = `
@@ -538,15 +507,13 @@ export class OrganizationService {
         return;
         
       } catch (error: any) {
-        console.error('❌ Unexpected error in session refresh logic:', error);
+        console.error('Unexpected error in session refresh logic:', error);
         // If anything else goes wrong, fall back to logout
         await this.supabase.auth.signOut();
         window.location.href = '/login';
         return;
       }
     }
-
-    console.log('🎉 Organization switch completed');
   }
 
   /**

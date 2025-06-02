@@ -78,7 +78,7 @@ export function OrganizationProvider({ children, fallback }: OrganizationProvide
 
   // If there's a hook error, show an error state
   if (hookError) {
-    console.warn('Organization provider hook error (likely during logout):', hookError);
+          // Silently handle organization provider errors (likely during logout)
     
     // Auto-refresh page for React hook errors
     if (hookError.message.includes('Invalid hook call')) {

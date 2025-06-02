@@ -85,20 +85,58 @@ export function useDropHandlers({
     
     // Handle the result - only clear optimistic hiding if operation was successful
     if (result?.success) {
-      // Successful operation - keep items hidden and clear after delay
-      setTimeout(() => {
-        completeDragSuccess();
+      // Successful operation - complete the drag success immediately for UI feedback
+      completeDragSuccess();
+      
+      // For folder moves, coordinate with the folder tree refresh and React Query cache
+      if (activeItemType === 'folder') {
+        // Listen for tree refresh completion to avoid the flash
+        const clearOptimisticState = () => {
+          if (activeItemId && activeItemType) {
+            DragDropOperations.processDragClear(
+              activeItemId,
+              activeItemType,
+              selectedAssets,
+              selectedFolders
+            );
+          }
+        };
+
+        // Set up a race between tree refresh signal and fallback timer
+        let cleared = false;
         
-        // Clear the global optimistic state for all items
-        if (activeItemId && activeItemType) {
-          DragDropOperations.processDragClear(
-            activeItemId,
-            activeItemType,
-            selectedAssets,
-            selectedFolders
-          );
-        }
-      }, 400); // Slightly longer delay for folders
+        const treeRefreshHandler = () => {
+          if (!cleared) {
+            cleared = true;
+            clearOptimisticState();
+            window.removeEventListener('folderTreeRefreshComplete', treeRefreshHandler);
+          }
+        };
+
+        // Listen for tree refresh completion
+        window.addEventListener('folderTreeRefreshComplete', treeRefreshHandler);
+        
+        // Fallback timer in case the event doesn't fire
+        setTimeout(() => {
+          if (!cleared) {
+            cleared = true;
+            clearOptimisticState();
+            window.removeEventListener('folderTreeRefreshComplete', treeRefreshHandler);
+          }
+        }, 1000);
+      } else {
+        // For assets, shorter delay is sufficient
+        setTimeout(() => {
+          if (activeItemId && activeItemType) {
+            DragDropOperations.processDragClear(
+              activeItemId,
+              activeItemType,
+              selectedAssets,
+              selectedFolders
+            );
+          }
+        }, 300);
+      }
     } else {
       // Failed or cancelled operation - restore items immediately
       cancelDrag();

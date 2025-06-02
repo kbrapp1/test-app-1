@@ -1,18 +1,29 @@
 import { toast } from 'sonner';
-import { AssetDetailsDto } from '../use-cases/assets/GetAssetDetailsUseCase';
 
 /**
  * Application service for asset operations
  * Handles business logic for asset CRUD operations
+ * 
+ * MIGRATION NOTE: This service now provides React Query hook-based utilities
+ * instead of direct fetch operations. Use the hooks from @/lib/dam/hooks/useAssets
+ * for data operations with proper cache management.
  */
 export class AssetOperationsService {
-  static async loadAssetDetails(assetId: string): Promise<AssetDetailsDto> {
+  /**
+   * @deprecated Use useAssetDetails() hook instead for proper React Query integration
+   */
+  static async loadAssetDetails(assetId: string): Promise<any> {
+    console.warn('AssetOperationsService.loadAssetDetails is deprecated. Use useAssetDetails() hook instead.');
     const response = await fetch(`/api/dam/asset/${assetId}?details=true`);
     if (!response.ok) throw new Error('Failed to load asset details');
     return response.json();
   }
 
+  /**
+   * @deprecated Use useAssetUpdate() mutation instead for proper React Query integration
+   */
   static async updateAssetName(assetId: string, newName: string): Promise<void> {
+    console.warn('AssetOperationsService.updateAssetName is deprecated. Use useAssetUpdate() mutation instead.');
     const response = await fetch(`/api/dam/asset/${assetId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -22,7 +33,11 @@ export class AssetOperationsService {
     if (!response.ok) throw new Error('Failed to update asset');
   }
 
+  /**
+   * @deprecated Use useAssetDelete() mutation instead for proper React Query integration
+   */
   static async deleteAsset(assetId: string): Promise<void> {
+    console.warn('AssetOperationsService.deleteAsset is deprecated. Use useAssetDelete() mutation instead.');
     const response = await fetch(`/api/dam/asset/${assetId}`, { method: 'DELETE' });
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);

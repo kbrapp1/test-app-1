@@ -10,6 +10,7 @@
 
 import { SelectionUpdateHandler } from './handlers/SelectionUpdateHandler';
 import { BulkOperationHandler } from './handlers/BulkOperationHandler';
+import { apiDeduplicationService } from '../../services/ApiDeduplicationService';
 import type { 
   SelectionActionResult,
   ActionResult,
@@ -22,7 +23,13 @@ import type {
  * @returns Promise resolving to selection action result
  */
 export async function updateSelection(formData: FormData): Promise<SelectionActionResult> {
-  return await SelectionUpdateHandler.handle(formData);
+  // 🔄 Apply deduplication to prevent rapid selection updates
+  return await apiDeduplicationService.deduplicateServerAction(
+    'updateSelection',
+    [Array.from(formData.entries())],
+    () => SelectionUpdateHandler.handle(formData),
+    500 // 500ms window for selection updates
+  );
 }
 
 /**
@@ -31,7 +38,13 @@ export async function updateSelection(formData: FormData): Promise<SelectionActi
  * @returns Promise resolving to action result
  */
 export async function bulkMoveItems(formData: FormData): Promise<ActionResult> {
-  return await BulkOperationHandler.handleBulkMove(formData);
+  // 🔄 Apply deduplication to prevent accidental bulk operations
+  return await apiDeduplicationService.deduplicateServerAction(
+    'bulkMoveItems',
+    [Array.from(formData.entries())],
+    () => BulkOperationHandler.handleBulkMove(formData),
+    2000 // 2 second window for bulk operations
+  );
 }
 
 /**
@@ -40,7 +53,13 @@ export async function bulkMoveItems(formData: FormData): Promise<ActionResult> {
  * @returns Promise resolving to action result
  */
 export async function bulkDeleteItems(formData: FormData): Promise<ActionResult> {
-  return await BulkOperationHandler.handleBulkDelete(formData);
+  // 🔄 Apply deduplication to prevent accidental bulk deletions
+  return await apiDeduplicationService.deduplicateServerAction(
+    'bulkDeleteItems',
+    [Array.from(formData.entries())],
+    () => BulkOperationHandler.handleBulkDelete(formData),
+    3000 // 3 second window for delete operations (safety)
+  );
 }
 
 /**
@@ -49,7 +68,13 @@ export async function bulkDeleteItems(formData: FormData): Promise<ActionResult>
  * @returns Promise resolving to action result
  */
 export async function bulkTagItems(formData: FormData): Promise<ActionResult> {
-  return await BulkOperationHandler.handleBulkTag(formData);
+  // 🔄 Apply deduplication to prevent rapid tag operations
+  return await apiDeduplicationService.deduplicateServerAction(
+    'bulkTagItems',
+    [Array.from(formData.entries())],
+    () => BulkOperationHandler.handleBulkTag(formData),
+    1000 // 1 second window for tag operations
+  );
 }
 
 /**
@@ -58,5 +83,11 @@ export async function bulkTagItems(formData: FormData): Promise<ActionResult> {
  * @returns Promise resolving to download action result
  */
 export async function bulkDownloadItems(formData: FormData): Promise<DownloadActionResult> {
-  return await BulkOperationHandler.handleBulkDownload(formData);
+  // 🔄 Apply deduplication to prevent rapid download requests
+  return await apiDeduplicationService.deduplicateServerAction(
+    'bulkDownloadItems',
+    [Array.from(formData.entries())],
+    () => BulkOperationHandler.handleBulkDownload(formData),
+    2000 // 2 second window for download operations
+  );
 } 

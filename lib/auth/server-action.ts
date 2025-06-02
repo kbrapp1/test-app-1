@@ -8,6 +8,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { apiDeduplicationService } from '@/lib/dam/application/services/ApiDeduplicationService';
 
 /**
  * Utility to get the current user in a server action
@@ -15,6 +16,18 @@ import { createClient } from '@/lib/supabase/server';
  * @returns The current user or null if not authenticated
  */
 export async function getSessionUser() {
+  
+  return apiDeduplicationService.deduplicateServerAction(
+    'getSessionUser',
+    [],
+    async () => {
+      return await executeGetSessionUser();
+    },
+    1500 // 1.5 second deduplication window
+  );
+}
+
+async function executeGetSessionUser() {
   const supabase = createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
   
@@ -33,6 +46,18 @@ export async function getSessionUser() {
  * @returns The active organization ID (UUID string) or null if not found or user is not authenticated.
  */
 export async function getActiveOrganizationId(): Promise<string | null> {
+  
+  return apiDeduplicationService.deduplicateServerAction(
+    'getActiveOrganizationId',
+    [],
+    async () => {
+      return await executeGetActiveOrganizationId();
+    },
+    1500 // 1.5 second deduplication window
+  );
+}
+
+async function executeGetActiveOrganizationId(): Promise<string | null> {
   const supabase = createClient();
 
   try {

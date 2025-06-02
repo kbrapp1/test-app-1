@@ -7,3 +7,4 @@ onlyBuiltDependencies:
 
 ignoredBuiltDependencies:
   - '@sentry/cli'
+  - msw
