@@ -44,9 +44,9 @@ export function useGenerateImage() {
       queryKey: createStatsQueryKey()
     });
 
-    // Show initial toast only - completion toast will be handled by polling hook
-    toast.info('Generation Queued', {
-      description: 'Your image generation has been queued. Processing will begin shortly...',
+    // Show initial generation queued toast
+    toast.success('Generation Started!', {
+      description: `Your image "${generation.prompt.slice(0, 50)}..." is being processed.`,
       duration: 3000,
     });
   }, [queryClient]);

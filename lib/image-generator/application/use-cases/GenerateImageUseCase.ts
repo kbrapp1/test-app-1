@@ -10,6 +10,7 @@ export interface GenerateImageRequest {
   prompt: string;
   width?: number;
   height?: number;
+  aspectRatio?: string;
   organizationId: string;
   userId: string;
   safetyTolerance?: number;
@@ -61,6 +62,7 @@ export class GenerateImageUseCase {
         providerName: providerId,
         imageWidth: request.width || 1024,
         imageHeight: request.height || 1024,
+        aspectRatio: request.aspectRatio,
         baseImageUrl: request.baseImageUrl,
       };
 

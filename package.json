@@ -2,6 +2,12 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "./lib/monitoring/**",
+    "./app/globals.css"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -104,6 +110,7 @@
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "@types/react-window": "^1.8.8",
+    "@types/react-window-infinite-loader": "^1.0.9",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
     "@vitejs/plugin-react": "^4.4.1",

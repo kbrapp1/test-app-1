@@ -19,13 +19,15 @@ export function useOptimizedGenerate() {
     height?: number,
     safetyTolerance?: number,
     providerId?: string,
-    modelId?: string
+    modelId?: string,
+    aspectRatio?: string
   ) => {
     try {
       const result = await generateImage.mutateAsync({
         prompt,
         width,
         height,
+        aspectRatio,
         safetyTolerance,
         providerId,
         modelId,

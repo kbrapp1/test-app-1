@@ -21,6 +21,7 @@ export const useLatestGeneration = ({
   onImageComplete 
 }: UseLatestGenerationProps): UseLatestGenerationReturn => {
   const previousCompletedImageRef = useRef<string | null>(null);
+  const stableDataRef = useRef<GenerationDto | null>(null);
 
   // Get the most recent generation
   const latestGeneration = generations[0] || null;
@@ -36,18 +37,39 @@ export const useLatestGeneration = ({
     !!shouldPoll
   );
 
-  // Use polled data if available and has more recent data, otherwise use cached data
-  const currentGeneration = polledGeneration || latestGeneration;
+  // STABLE DATA LOGIC: Prevent UI flicker by ensuring consistent data
+  // Priority: polled data > new completed data > stable ref > cached data
+  let currentGeneration: GenerationDto | null = null;
+  
+  if (polledGeneration) {
+    // Use fresh polled data
+    currentGeneration = polledGeneration;
+    stableDataRef.current = polledGeneration;
+  } else if (latestGeneration?.status === 'completed' && latestGeneration.imageUrl) {
+    // CRITICAL: Always use new completed data to ensure onImageComplete fires
+    currentGeneration = latestGeneration;
+    stableDataRef.current = latestGeneration;
+  } else if (stableDataRef.current && stableDataRef.current.id === latestGenerationId) {
+    // Use stable cached data for same generation to prevent flicker
+    currentGeneration = stableDataRef.current;
+  } else {
+    // Fallback to list data and update stable ref
+    currentGeneration = latestGeneration;
+    if (latestGeneration) {
+      stableDataRef.current = latestGeneration;
+    }
+  }
   
   const isLatestGenerating = currentGeneration && 
     ['pending', 'processing'].includes(currentGeneration.status);
 
-  // Reset ref when a new generation starts to prevent stale state
+  // Reset refs when generation changes
   useEffect(() => {
-    if (currentGeneration && ['pending', 'processing'].includes(currentGeneration.status)) {
+    if (latestGenerationId && (!stableDataRef.current || stableDataRef.current.id !== latestGenerationId)) {
+      stableDataRef.current = latestGeneration;
       previousCompletedImageRef.current = null;
     }
-  }, [currentGeneration?.id]);
+  }, [latestGenerationId, latestGeneration]);
 
   // Handle completion callback
   useEffect(() => {

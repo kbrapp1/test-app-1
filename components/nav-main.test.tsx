@@ -9,6 +9,15 @@ import { MailIcon, PlusCircleIcon, LayoutDashboardIcon, FolderIcon, FileTextIcon
 import { TooltipProvider } from '@/components/ui/tooltip'
 import React from 'react'
 
+// Mock the super admin hook
+vi.mock('@/lib/auth/super-admin', () => ({
+  useAuthWithSuperAdmin: () => ({
+    isSuperAdmin: false,
+    loading: false,
+    profile: null,
+  })
+}))
+
 // Mock next/link to inspect its props
 vi.mock('next/link', () => ({
   __esModule: true,
@@ -250,5 +259,34 @@ describe('NavMain', () => {
       // Check the data-href attribute directly on the link
       expect(dashboardLink).toHaveAttribute('data-href', '/dashboard');
     });
+  });
+
+  // Test super admin filtering
+  describe('Super Admin Filtering', () => {
+    const mockItemsWithSuperAdmin = [
+      {
+        title: 'Dashboard',
+        url: '/dashboard',
+        icon: LayoutDashboardIcon,
+      },
+      {
+        title: 'Testing Tools',
+        url: '/testing-tools',
+        icon: FileCodeIcon,
+        superAdminOnly: true,
+      },
+    ];
+
+         it('should hide super admin items when user is not super admin', () => {
+       renderWithProvider(<NavMain items={mockItemsWithSuperAdmin} />);
+       
+       // Should show Dashboard
+       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
+       
+       // Should not show Testing Tools
+       expect(screen.queryByRole('link', { name: /testing tools/i })).not.toBeInTheDocument();
+     });
+
+
   });
 }); 

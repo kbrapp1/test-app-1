@@ -11,6 +11,7 @@ export interface GenerateImageCommand extends Command {
   prompt: string;
   imageWidth?: number;
   imageHeight?: number;
+  aspectRatio?: string;
   modelName?: string;
   providerId?: string;
   modelId?: string;

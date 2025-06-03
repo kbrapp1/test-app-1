@@ -34,6 +34,7 @@ import {
     DollarSignIcon,
     UsersRoundIcon,
     MessageCircleIcon,
+    TestTube,
 } from "lucide-react";
 
 // Define the types for navigation items
@@ -44,6 +45,7 @@ export interface NavItem {
     label?: string; // Optional label (e.g., for beta features)
     items?: NavSubItem[]; // Sub-items for collapsible sections
     collapsible?: boolean; // Flag to indicate this item should be collapsible
+    superAdminOnly?: boolean; // Flag to restrict access to super admins only
 }
 
 export interface NavSubItem {
@@ -148,6 +150,13 @@ export const navMainItems: NavItem[] = [
             { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon },
             { title: "Chatbot", url: "/ai-playground/chatbot", icon: MessageCircleIcon },
         ],
+    },
+    {
+        title: "Testing Tools",
+        url: "/testing-tools",
+        icon: TestTube,
+        label: "Super Admin",
+        superAdminOnly: true,
     },
 ];
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import { ImagePromptForm } from '../ImagePromptForm';
+import { ImagePromptForm } from '../forms/prompt/ImagePromptForm';
 
 describe('ImagePromptForm', () => {
   const defaultProps = {

@@ -43,6 +43,7 @@ export async function generateImage(request: GenerateImageRequest): Promise<Gene
       prompt: request.prompt,
       imageWidth: request.width,
       imageHeight: request.height,
+      aspectRatio: request.aspectRatio,
       safetyTolerance: request.safetyTolerance,
       providerId: request.providerId,
       modelId: request.modelId

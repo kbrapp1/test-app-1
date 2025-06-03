@@ -6,8 +6,8 @@ import { createListQueryKey } from '../shared/queryKeys';
 import { GetGenerationsFilters } from '../shared/types';
 
 /**
- * Hook to get a list of generations
- * Single responsibility: Querying multiple generations with filters
+ * Hook to get a list of generations with enhanced caching and performance optimization
+ * Single responsibility: Querying multiple generations with filters and intelligent caching
  */
 export function useGenerations(filters: GetGenerationsFilters = {}) {
   // Memoize query key to prevent unnecessary cache invalidations
@@ -27,7 +27,31 @@ export function useGenerations(filters: GetGenerationsFilters = {}) {
   return useQuery({
     queryKey,
     queryFn,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - data stays fresh
+    gcTime: 5 * 60 * 1000, // 5 minutes - cache retention
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches on focus
+    refetchOnMount: 'always', // Ensure data freshness on mount
+    refetchOnReconnect: true, // Refetch when network reconnects
+    networkMode: 'online', // Only fetch when online
+    select: (data) => {
+      // Limit data size in memory for performance
+      // Show max 50 generations at once to prevent memory bloat
+      const limited = data.slice(0, 50);
+      
+      // Sort by creation date (newest first) for better UX
+      return limited.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    },
+    retry: (failureCount, error) => {
+      // Stop retrying after 2 failures for list queries
+      if (failureCount >= 2) return false;
+      
+      // Don't retry on authentication errors
+      if (error?.message?.includes('401') || error?.message?.includes('403')) return false;
+      
+      return true;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff, max 10s
   });
 } 

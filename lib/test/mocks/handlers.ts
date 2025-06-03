@@ -1,6 +1,9 @@
 import { http, HttpResponse } from 'msw';
+import { performanceHandlers } from './performance-handlers';
 
 export const handlers = [
+  // Performance test handlers
+  ...performanceHandlers,
   // DAM API handlers
   http.delete('/api/dam/asset/:assetId', () => {
     return HttpResponse.json({ success: true, message: 'Asset deleted successfully' });

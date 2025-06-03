@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { useAuthWithSuperAdmin } from "@/lib/auth/super-admin"
 
 export function NavMain({
   items,
@@ -27,6 +28,12 @@ export function NavMain({
   items: NavItem[]
 }) {
   const { setOpenMobile } = useSidebar()
+  const { isSuperAdmin } = useAuthWithSuperAdmin()
+  
+  // Filter items based on super admin status
+  const filteredItems = items.filter(item => 
+    !item.superAdminOnly || isSuperAdmin
+  )
 
   return (
     <SidebarGroup>
@@ -49,7 +56,7 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           <Accordion type="multiple" className="w-full">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               item.collapsible && item.items ? (
                 <AccordionItem key={item.title} value={item.title} className="border-none">
                   <AccordionTrigger

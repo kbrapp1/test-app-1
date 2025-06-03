@@ -29,4 +29,5 @@ export { useLatestGeneration } from './useLatestGeneration';
 export { useImageGeneratorState } from './useImageGeneratorState';
 export { usePromptEnhancement } from './usePromptEnhancement';
 export { useActionHandlers } from './useActionHandlers';
-export { useGenerationOrchestration } from './useGenerationOrchestration'; 
+export { useGenerationOrchestration } from './useGenerationOrchestration';
+export { useProviderSelection } from './useProviderSelection'; 

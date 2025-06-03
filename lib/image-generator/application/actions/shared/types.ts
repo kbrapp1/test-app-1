@@ -7,6 +7,7 @@ export interface GenerateImageRequest {
   prompt: string;
   width?: number;
   height?: number;
+  aspectRatio?: string;
   safetyTolerance?: number;
   providerId?: string;
   modelId?: string;

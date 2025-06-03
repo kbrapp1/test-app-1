@@ -1,42 +1,77 @@
-// Main Components
-export { ImageGeneratorMain } from './ImageGeneratorMain';
-export { GenerationCard } from './GenerationCard';
-export { GenerationList } from './GenerationList';
-export { GenerationStats } from './GenerationStats';
-export { EmptyState } from './EmptyState';
+// Main Components Export Index - DDD Bounded Context Organization
+// This file provides centralized exports for all image generator components
+// Following DDD principles with bounded context separation
 
-// Refactored GenerationCard Components
-export { GenerationImage } from './GenerationImage';
-export { GenerationInfo } from './GenerationInfo';
-export { GenerationActions } from './GenerationActions';
+import { createLazyComponent } from '../utils/lazyLoader';
 
-// Form Components
-export { GeneratorForm } from './GeneratorForm';
-export { PresetPrompts } from './PresetPrompts';
-export { ImageSizeSelector } from './ImageSizeSelector';
+// ========================================
+// DDD BOUNDED CONTEXTS - Clean Architecture
+// ========================================
 
-// Layout Components
-export { GenerationHistory } from './GenerationHistory';
-export { GeneratorSidebar } from './GeneratorSidebar';
+// Generation Context - All generation display components
+export * from './generation';
 
-// Performance components
-export { PerformanceMonitor } from './PerformanceMonitor';
+// Forms Context - All input and configuration components  
+export * from './forms';
 
-// New components
-export { ImagePromptForm } from './ImagePromptForm';
-export { ImageDisplayArea } from './ImageDisplayArea';
-export { HistoryPanel } from './HistoryPanel';
-export { ModelSelector } from './ModelSelector';
-export { ActionButtonsToolbar } from './ActionButtonsToolbar';
+// Providers Context - Provider/model selection components
+export * from './providers';
 
-// DDD-focused Form Section Components
-export { StyleSection } from './StyleSection';
-export { ImageDimensionsSection } from './ImageDimensionsSection';
-export { SettingsSection } from './SettingsSection';
-export { ImageUploadSection } from './ImageUploadSection';
+// Layout Context - Core app structure (always loaded for critical path)
+export * from './layout';
 
-// Refactored GenerationHistory components
-export { GenerationSearchBar } from './GenerationSearchBar';
-export { GenerationListItem } from './GenerationListItem';
-export { GenerationActionButtons } from './GenerationActionButtons';
-export { GenerationEmptyState } from './GenerationEmptyState'; 
+// Shared Context - Reusable UI components
+export * from './shared';
+
+// UI Components (existing ui directory structure maintained)
+
+// ========================================
+// BACKWARD COMPATIBILITY - Lazy Loading Support
+// These maintain existing lazy loading patterns while using new structure
+// Will be gradually phased out as code is updated to use direct imports
+// ========================================
+
+// Performance monitoring (8.7KB) - only for power users
+export const PerformanceMonitorLazy = createLazyComponent(
+  () => import('./generation/stats/PerformanceMonitor').then(m => ({ default: m.PerformanceMonitor })),
+  { retries: 2, retryDelay: 500 }
+);
+
+// Advanced generation features (7.4KB+) - used less frequently
+export const StyleSectionLazy = createLazyComponent(
+  () => import('./forms/settings/StyleSection').then(m => ({ default: m.StyleSection }))
+);
+
+export const ProviderSelectorLazy = createLazyComponent(
+  () => import('./providers/ProviderSelector').then(m => ({ default: m.ProviderSelector }))
+);
+
+export const GenerationActionsLazy = createLazyComponent(
+  () => import('./generation/card/GenerationActions').then(m => ({ default: m.GenerationActions }))
+);
+
+export const ActionButtonsToolbarLazy = createLazyComponent(
+  () => import('./layout/ActionButtonsToolbar').then(m => ({ default: m.ActionButtonsToolbar }))
+);
+
+// Large list optimization (6.9KB) - only for power users with many generations
+export const VirtualizedGenerationListLazy = createLazyComponent(
+  () => import('./generation/list/VirtualizedGenerationList').then(m => ({ default: m.VirtualizedGenerationList }))
+);
+
+// Statistics and analytics (5KB+) - dashboard features
+export const GenerationStatsLazy = createLazyComponent(
+  () => import('./generation/stats/GenerationStats').then(m => ({ default: m.GenerationStats }))
+);
+
+// ========================================
+// LEGACY SUPPORT - Maintain original component names
+// These will be removed in future versions
+// ========================================
+
+// Keep original lazy loading exports for existing code
+export const PerformanceMonitor = PerformanceMonitorLazy;
+export const StyleSection = StyleSectionLazy;
+export const ProviderSelector = ProviderSelectorLazy;
+export const VirtualizedGenerationList = VirtualizedGenerationListLazy;
+export const GenerationStats = GenerationStatsLazy; 

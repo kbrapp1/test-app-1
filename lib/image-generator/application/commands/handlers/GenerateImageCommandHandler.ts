@@ -10,6 +10,7 @@ export class GenerateImageCommandHandler {
         prompt: command.prompt,
         width: command.imageWidth || 1024,
         height: command.imageHeight || 1024,
+        aspectRatio: command.aspectRatio,
         organizationId: command.organizationId,
         userId: command.userId,
         safetyTolerance: command.safetyTolerance,

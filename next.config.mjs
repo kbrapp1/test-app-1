@@ -25,6 +25,12 @@ const nextConfig = {
     // Keep unoptimized if it was needed before, otherwise remove/comment out
     // unoptimized: true, 
   },
+  
+  // Note: Bundle optimization for Phase 5 is handled by:
+  // 1. Turbopack in development (faster builds)
+  // 2. Next.js default webpack config in production (automatic code splitting)
+  // 3. package.json sideEffects: false (tree shaking)
+  // 4. React lazy() API (component-level code splitting)
 };
 
 export default nextConfig;

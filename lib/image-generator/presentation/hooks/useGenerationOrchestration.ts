@@ -14,7 +14,7 @@ export const useGenerationOrchestration = () => {
     selectedProviderId: string,
     selectedModelId: string,
     enhancePromptWithStyles: (prompt: string) => string,
-    generate: (prompt: string, width?: number, height?: number, safetyTolerance?: number, providerId?: string, modelId?: string) => Promise<any>,
+    generate: (prompt: string, width?: number, height?: number, safetyTolerance?: number, providerId?: string, modelId?: string, aspectRatio?: string) => Promise<any>,
     setCurrentGeneratedImage: (image: string | null) => void
   ) => {
     if (!prompt.trim()) return;
@@ -28,13 +28,17 @@ export const useGenerationOrchestration = () => {
       // Enhance prompt with style values
       const enhancedPrompt = enhancePromptWithStyles(prompt.trim());
       
-      // Convert aspect ratio to dimensions
-      const [widthRatio, heightRatio] = aspectRatio.split(':').map(Number);
-      const baseSize = 1024;
-      const width = Math.round(baseSize * Math.sqrt(widthRatio / heightRatio));
-      const height = Math.round(baseSize * Math.sqrt(heightRatio / widthRatio));
-
-      await generate(enhancedPrompt, width, height, safetyTolerance, providerId, modelId);
+      // Pass aspect ratio directly instead of converting to dimensions
+      // This prevents the database constraint violation from calculated aspect ratios
+      await generate(
+        enhancedPrompt, 
+        undefined, // width - let the system calculate from aspect ratio
+        undefined, // height - let the system calculate from aspect ratio
+        safetyTolerance, 
+        providerId, 
+        modelId,
+        aspectRatio // Pass aspect ratio directly
+      );
     } catch (error) {
       // Error handling managed by provider system
     }
