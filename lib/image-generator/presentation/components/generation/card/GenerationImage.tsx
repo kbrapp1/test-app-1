@@ -11,8 +11,8 @@ import {
   X,
   Image as ImageIcon
 } from 'lucide-react';
-import { GenerationDto } from '../../application/dto';
-import { useOptimizedImage, generateImageSrcSet } from '../utils/imageOptimization';
+import { GenerationDto } from '../../../../application/dto';
+import { useOptimizedImage, generateImageSrcSet } from '../../../utils/imageOptimization';
 
 interface GenerationImageProps {
   generation: GenerationDto;

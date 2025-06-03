@@ -51,9 +51,9 @@ export const ImageDisplayArea: React.FC<ImageDisplayAreaProps> = ({
   const loadingMessage = getLoadingMessage();
 
   return (
-    <div className="flex-1 bg-muted/30 flex flex-col relative">
-      {/* Generated Image Display - Top aligned */}
-      <div className="flex-1 flex items-start justify-center p-4 pt-2">
+    <div className="flex-1 flex flex-col relative">
+      {/* Generated Image Display - Top aligned and left justified */}
+      <div className="flex-1 flex items-start justify-start p-4 pt-2">
         {shouldShowLoading ? (
           <div className="text-center max-w-md">
             <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />

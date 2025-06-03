@@ -3,8 +3,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
-import { GenerationDto } from '../../application/dto';
-import { GenerationCard } from './GenerationCard';
+import { GenerationDto } from '../../../../application/dto';
+import { GenerationCard } from '../card/GenerationCard';
 
 interface VirtualizedGenerationListProps {
   generations: GenerationDto[];

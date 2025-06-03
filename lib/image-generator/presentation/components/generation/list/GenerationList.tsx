@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { GenerationDto } from '../../application/dto';
-import { GenerationCard } from './GenerationCard';
-import { EmptyState } from './EmptyState';
+import { GenerationDto } from '../../../../application/dto';
+import { GenerationCard } from '../card/GenerationCard';
+import { EmptyState } from '../../shared/EmptyState';
 import { VirtualizedGenerationList, useVirtualizedList } from './VirtualizedGenerationList';
 
 interface GenerationListProps {
