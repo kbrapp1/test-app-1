@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 interface SettingsSectionProps {
   safetyTolerance: number;
   onSafetyToleranceChange: (value: number) => void;
-  outputFormat: 'jpeg' | 'png';
-  onOutputFormatChange: (value: 'jpeg' | 'png') => void;
+  outputFormat: 'jpg' | 'png';
+  onOutputFormatChange: (value: 'jpg' | 'png') => void;
   hasInputImage?: boolean; // For dynamic safety tolerance limit
   maxSafetyTolerance?: number;
   minSafetyTolerance?: number;
@@ -52,7 +52,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
             <SelectItem value="png" className="text-foreground">PNG</SelectItem>
-            <SelectItem value="jpeg" className="text-foreground">JPEG</SelectItem>
+            <SelectItem value="jpg" className="text-foreground">JPEG</SelectItem>
           </SelectContent>
         </Select>
       </div>

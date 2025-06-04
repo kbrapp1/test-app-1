@@ -11,6 +11,7 @@ export interface GenerateImageRequest {
   safetyTolerance?: number;
   providerId?: string;
   modelId?: string;
+  baseImageUrl?: string;
 }
 
 export interface GenerateImageWithProviderRequest {
@@ -65,5 +66,11 @@ export interface CancelGenerationResponse {
 export interface SaveGenerationToDAMResponse {
   success: boolean;
   data?: GenerationDto;
+  error?: string;
+}
+
+export interface DeleteGenerationResponse {
+  success: boolean;
+  data?: boolean;
   error?: string;
 } 

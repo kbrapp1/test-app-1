@@ -7,6 +7,7 @@ export {
   generateImage, 
   cancelGeneration, 
   saveGenerationToDAM,
+  deleteGeneration,
   checkGenerationStatus
 } from './commands/command-actions';
 
@@ -26,5 +27,6 @@ export type {
   GetGenerationStatsResponse,
   CancelGenerationResponse,
   SaveGenerationToDAMResponse,
+  DeleteGenerationResponse,
   BatchGenerationResponse
 } from './shared/types'; 

@@ -10,6 +10,7 @@ interface HistoryPanelProps {
   onRefresh: () => void;
   onEditImage: (baseImageUrl: string, originalPrompt: string) => void;
   onImageSelect: (imageUrl: string) => void;
+  onMakeBaseImage?: (imageUrl: string) => void;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   onRefresh,
   onEditImage,
   onImageSelect,
+  onMakeBaseImage,
   onClose,
 }) => {
   if (!panelVisible) return null;
@@ -44,6 +46,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           onRefresh={onRefresh}
           onEditImage={onEditImage}
           onImageSelect={onImageSelect}
+          onMakeBaseImage={onMakeBaseImage}
           compact={true}
           onClose={onClose}
         />

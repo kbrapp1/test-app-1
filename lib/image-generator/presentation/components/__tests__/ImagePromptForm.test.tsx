@@ -28,7 +28,7 @@ describe('ImagePromptForm', () => {
     maxSafetyTolerance: 6,
     minSafetyTolerance: 0,
     supportedAspectRatios: ['1:1', '16:9', '2:3'],
-    supportedOutputFormats: ['png', 'jpeg'],
+    supportedOutputFormats: ['png', 'jpg'],
   };
 
   beforeEach(() => {

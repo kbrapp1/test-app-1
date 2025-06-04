@@ -48,7 +48,7 @@ export class FluxModelService {
       ],
       defaultSettings: {
         aspect_ratio: '1:1',
-        output_format: 'jpeg',
+        output_format: 'jpg',
         safety_tolerance: 2,
         prompt_upsampling: false,
       },

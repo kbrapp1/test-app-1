@@ -17,7 +17,7 @@ export const REPLICATE_MODELS: ProviderModel[] = [
       supportedAspectRatios: ['1:1', '3:4', '4:3', '16:9', '9:16', '21:9', '9:21', '3:7', '7:3'],
       defaultSettings: {
         aspectRatio: '1:1',
-        outputFormat: 'jpeg',
+        outputFormat: 'jpg',
         safetyTolerance: 2,
       },
       costPerGeneration: 8, // 8 cents
@@ -26,7 +26,7 @@ export const REPLICATE_MODELS: ProviderModel[] = [
       supportsTextToImage: true,         // 🎯 Basic text-to-image capability
       supportsCustomDimensions: true,    // 🎯 Allows custom aspect ratios
       supportsStyleControls: true,       // 🎯 Shows style preset section
-      supportedOutputFormats: ['jpeg', 'png'],
+      supportedOutputFormats: ['jpg', 'png'],
       maxSafetyTolerance: 6,            // 🎯 Safety slider max value
       minSafetyTolerance: 1,            // 🎯 Safety slider min value
     },
@@ -74,7 +74,7 @@ export const REPLICATE_MODELS: ProviderModel[] = [
       supportsTextToImage: true,
       supportsCustomDimensions: true,
       supportsStyleControls: true,       // 🎯 SHOWS style controls section!
-      supportedOutputFormats: ['png', 'jpeg', 'webp'],
+      supportedOutputFormats: ['png', 'jpg', 'webp'],
       maxSafetyTolerance: 5,
       minSafetyTolerance: 1,
     },

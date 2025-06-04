@@ -5,6 +5,8 @@ import { ProviderService } from '../services/ProviderService';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
 import { Result, success, error } from '../../infrastructure/common/Result';
 import { AutoSaveGenerationUseCase } from './AutoSaveGenerationUseCase';
+import { GenerationStatusManager } from '../../domain/entities/services/GenerationStatusManager';
+import { GenerationFailureHandler } from '../../domain/services/GenerationFailureHandler';
 
 export interface GenerateImageRequest {
   prompt: string;
@@ -122,12 +124,24 @@ export class GenerateImageUseCase {
     } catch (err) {
       console.error('Generation process failed:', err);
       
-      // Only update status if not already failed to avoid double-transition
-      const currentStatus = generation.getStatus().value;
-      if (currentStatus !== 'failed') {
-        generation.updateStatus(generation.getStatus().transitionTo('failed'));
-        generation.markAsFailed(err instanceof Error ? err.message : 'Unknown error');
-        await this.repository.update(generation);
+      // Reload generation from repository to get latest state before marking as failed
+      // This prevents concurrent modification issues with polling/status services
+      try {
+        const reloadResult = await this.repository.findById(generation.getId());
+        if (reloadResult.isSuccess()) {
+          const freshGeneration = reloadResult.getValue();
+          if (freshGeneration) {
+            const errorMessage = GenerationFailureHandler.getDisplayErrorMessage(err instanceof Error ? err : 'Unknown error');
+            const wasHandled = GenerationFailureHandler.handleFailure(freshGeneration, errorMessage);
+            
+            if (wasHandled) {
+              await this.repository.update(freshGeneration);
+            }
+          }
+        }
+      } catch (updateError) {
+        console.error('Failed to update generation after error:', updateError);
+        // Don't re-throw - the original generation attempt already failed
       }
     }
   }

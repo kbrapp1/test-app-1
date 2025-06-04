@@ -14,6 +14,7 @@ interface GenerationHistoryProps {
   onRefresh: () => void;
   onEditImage?: (baseImageUrl: string, originalPrompt: string) => void;
   onImageSelect?: (imageUrl: string) => void;
+  onMakeBaseImage?: (imageUrl: string) => void;
   onClose?: () => void;
   compact?: boolean;
   className?: string;
@@ -24,6 +25,7 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
   onRefresh,
   onEditImage,
   onImageSelect,
+  onMakeBaseImage,
   onClose,
   compact = false,
   className = ''
@@ -34,29 +36,26 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
 
   if (compact) {
     return (
-      <div className={`flex flex-col h-full bg-white ${className}`}>
+      <div className={`flex flex-col h-full bg-white border-l border-gray-200/60 ${className}`}>
         {/* Header */}
-        {onClose && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-200/60">
-            <h3 className="font-medium text-gray-900">Recent Generations</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-gray-600 hover:text-gray-800"
-            >
+        <div className="flex items-center justify-between p-4 border-b border-gray-200/60">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Generations</h2>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
               <X className="w-4 h-4" />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Search Bar */}
-        <GenerationSearchBar
-          searchQuery={search.searchQuery}
-          onSearchChange={search.setSearchQuery}
-        />
+        {/* Search */}
+        <div className="p-4 border-b border-gray-200/60">
+          <GenerationSearchBar
+            searchQuery={search.searchQuery}
+            onSearchChange={search.setSearchQuery}
+          />
+        </div>
 
-        {/* History List */}
+        {/* Results */}
         <div className="flex-1 overflow-y-auto">
           {search.filteredGenerations.length === 0 ? (
             <GenerationEmptyState
@@ -73,6 +72,7 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
                   onEditClick={() => actions.handleEditClick(generation)}
                   onCopyUrl={() => generation.imageUrl && actions.copyImageUrl(generation.imageUrl)}
                   onDownloadImage={() => generation.imageUrl && actions.downloadImage(generation.imageUrl, generation.prompt)}
+                  onMakeBaseImage={() => generation.imageUrl && onMakeBaseImage?.(generation.imageUrl)}
                 />
               ))}
             </div>

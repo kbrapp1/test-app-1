@@ -6,6 +6,7 @@ export { IMAGE_GENERATION_QUERY_KEYS } from './shared/queryKeys';
 export { useGenerateImage } from './mutations/useGenerateImage';
 export { useCancelGeneration } from './mutations/useCancelGeneration';
 export { useSaveGenerationToDAM } from './mutations/useSaveGenerationToDAM';
+export { useDeleteGeneration } from './mutations/useDeleteGeneration';
 
 // Query hooks (read operations)  
 export { useGenerations } from './queries/useGenerations';
@@ -25,9 +26,10 @@ export { useGenerationSearch } from './useGenerationSearch';
 export { useGenerationActions } from './useGenerationActions';
 export { useLatestGeneration } from './useLatestGeneration';
 
+// Main coordinator hook (with bug fix)
+export { useImageGeneratorCoordinator } from './useImageGeneratorCoordinator';
+
 // DDD-compliant extracted hooks
 export { useImageGeneratorState } from './useImageGeneratorState';
 export { usePromptEnhancement } from './usePromptEnhancement';
-export { useActionHandlers } from './useActionHandlers';
-export { useGenerationOrchestration } from './useGenerationOrchestration';
 export { useProviderSelection } from './useProviderSelection'; 

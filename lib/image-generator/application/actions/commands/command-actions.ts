@@ -8,13 +8,15 @@ import { commandBus } from '../../commands/CommandBus';
 import { 
   GenerateImageCommand, 
   CancelGenerationCommand, 
-  SaveGenerationToDAMCommand
+  SaveGenerationToDAMCommand,
+  DeleteGenerationCommand
 } from '../../commands/GenerationCommands';
 import { 
   GenerateImageRequest, 
   GenerateImageResponse, 
   CancelGenerationResponse, 
   SaveGenerationToDAMResponse,
+  DeleteGenerationResponse,
   GetGenerationResponse,
   BatchGenerationResponse
 } from '../shared/types';
@@ -46,7 +48,8 @@ export async function generateImage(request: GenerateImageRequest): Promise<Gene
       aspectRatio: request.aspectRatio,
       safetyTolerance: request.safetyTolerance,
       providerId: request.providerId,
-      modelId: request.modelId
+      modelId: request.modelId,
+      baseImageUrl: request.baseImageUrl,
     };
 
     return await commandBus.execute(command);
@@ -116,6 +119,37 @@ export async function saveGenerationToDAM(id: string): Promise<SaveGenerationToD
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Save to DAM failed'
+    };
+  }
+}
+
+/**
+ * Delete Generation Command Action
+ * Handles generation deletion through command bus
+ */
+export async function deleteGeneration(id: string): Promise<DeleteGenerationResponse> {
+  try {
+    const authResult = await getAuthContext();
+    if (!authResult.success || !authResult.context) {
+      return { success: false, error: authResult.error };
+    }
+
+    const { userId, organizationId } = authResult.context;
+
+    const command: DeleteGenerationCommand = {
+      commandId: crypto.randomUUID(),
+      type: 'DeleteGeneration',
+      userId,
+      organizationId,
+      timestamp: new Date(),
+      generationId: id
+    };
+
+    return await commandBus.execute(command);
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Generation deletion failed'
     };
   }
 }

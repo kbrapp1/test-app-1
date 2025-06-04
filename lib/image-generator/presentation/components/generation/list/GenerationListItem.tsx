@@ -12,6 +12,7 @@ interface GenerationListItemProps {
   onEditClick: () => void;
   onCopyUrl: () => void;
   onDownloadImage: () => void;
+  onMakeBaseImage?: () => void;
 }
 
 export const GenerationListItem: React.FC<GenerationListItemProps> = ({
@@ -20,6 +21,7 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = ({
   onEditClick,
   onCopyUrl,
   onDownloadImage,
+  onMakeBaseImage,
 }) => {
   return (
     <div className="bg-white border border-gray-200/60 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -42,8 +44,8 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = ({
             onClick={onImageClick}
           >
             {generation.imageUrl ? (
-              <img 
-                src={generation.imageUrl} 
+              <img
+                src={generation.imageUrl}
                 alt={generation.prompt}
                 className="w-full h-full object-cover"
               />
@@ -76,6 +78,7 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = ({
           onEdit={onEditClick}
           onCopy={onCopyUrl}
           onDownload={onDownloadImage}
+          onMakeBaseImage={onMakeBaseImage}
         />
 
         {/* Status Messages */}

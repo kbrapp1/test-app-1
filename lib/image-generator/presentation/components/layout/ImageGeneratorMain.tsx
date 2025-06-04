@@ -1,10 +1,6 @@
 'use client';
 
-// Image Generator Main - DDD Presentation Layer
-// Single Responsibility: Orchestrate image generation UI components and state
-// Following DDD principles with focused, single-purpose components
-
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import { ImagePromptForm } from '../forms/prompt/ImagePromptForm';
 import { ImageDisplayArea } from './ImageDisplayArea';
 import { HistoryPanel } from '../generation/history/HistoryPanel';
@@ -17,33 +13,89 @@ import {
   useLatestGeneration,
   useImageGeneratorState,
   usePromptEnhancement,
-  useActionHandlers,
-  useGenerationOrchestration,
-  useProviderSelection
+  useProviderSelection,
+  useImageGeneratorCoordinator
 } from '../../hooks';
+import { useImageGeneratorOperations } from '../../hooks/useImageGeneratorOperations';
+import { useImageGeneratorEffects } from '../../hooks/useImageGeneratorEffects';
 
 interface ImageGeneratorMainProps {
   className?: string;
 }
 
-/**
- * Image Generator Main Component
- * Orchestrates the main image generation interface with proper DDD layer separation
- * Single Responsibility: UI component orchestration and event coordination
- */
+
 export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ className }) => {
-  // Custom hooks for single responsibilities (DDD pattern)
   const formState = useImageGeneratorState();
   const promptEnhancement = usePromptEnhancement();
-  const actionHandlers = useActionHandlers();
-  const orchestration = useGenerationOrchestration();
+  // Simple inline action handlers (replacing deleted useActionHandlers)
+  const actionHandlers = {
+    handleEditAction: () => {
+      // TODO: Implement image editing functionality
+    },
+    handleDownloadAction: () => {
+      // TODO: Implement download functionality  
+    },
+    handleSaveToDAMAction: () => {
+      // TODO: Implement save to DAM functionality
+    },
+    handleShareAction: () => {
+      // TODO: Implement share functionality
+    },
+    handleDeleteAction: () => {
+      // TODO: Implement delete generation functionality
+    },
+  };
+  // Inline orchestration handlers (replacing deleted useGenerationOrchestration)
+  const orchestration = {
+    handleGenerate: async (
+      prompt: string,
+      aspectRatio: string,
+      safetyTolerance: number,
+      selectedProviderId: string,
+      selectedModelId: string,
+      enhancePromptWithStyles: (prompt: string) => string,
+      generate: any,
+      setCurrentGeneratedImage: (image: string | null) => void,
+      baseImageUrl?: string
+    ) => {
+      if (!prompt.trim()) return;
+      try {
+        setCurrentGeneratedImage(null);
+        const providerId = selectedProviderId || 'replicate';
+        const modelId = selectedModelId || 'flux-schnell';
+        const enhancedPrompt = enhancePromptWithStyles(prompt.trim());
+        await generate(enhancedPrompt, undefined, undefined, safetyTolerance, providerId, modelId, aspectRatio, baseImageUrl);
+      } catch (error) {
+        // Error handling managed by provider system
+      }
+    },
+    handleEditImage: (
+      baseImageUrl: string,
+      originalPrompt: string,
+      stripStyleQualifiers: (prompt: string) => string,
+      setBaseImageUrl: (url: string) => void,
+      setPrompt: (prompt: string) => void,
+      setCurrentGeneratedImage: (image: string | null) => void,
+      closeHistory: () => void
+    ) => {
+      setBaseImageUrl(baseImageUrl);
+      setPrompt(stripStyleQualifiers(originalPrompt));
+      setCurrentGeneratedImage(null);
+      closeHistory();
+    },
+    handleImageSelect: (
+      imageUrl: string,
+      setCurrentGeneratedImage: (image: string | null) => void,
+      closeHistory: () => void
+    ) => {
+      setCurrentGeneratedImage(imageUrl);
+      closeHistory();
+    }
+  };
+  
   const fileUpload = useFileUpload();
   const historyPanel = useHistoryPanel();
-  
-  // IMMEDIATE FEEDBACK: Track when generation is clicked to show instant loading
-  const [isGenerationClicked, setIsGenerationClicked] = useState(false);
 
-  // Provider selection with capabilities
   const {
     selectedProviderId,
     selectedModelId,
@@ -54,7 +106,6 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
 
   const capabilities = getSelectedCapabilities();
   
-  // Optimized generation management
   const {
     generations,
     isGenerating,
@@ -62,70 +113,41 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
     refetch: refetchGenerations,
   } = useImageGenerationOptimized({ limit: 20 });
 
-  // Monitor latest generation for auto-completion
-  const { latestGeneration, isLatestGenerating } = useLatestGeneration({
+  const { latestGeneration } = useLatestGeneration({
     generations,
     onImageComplete: (imageUrl) => {
       formState.setCurrentGeneratedImage(imageUrl);
-      // Clear immediate feedback when generation completes
-      setIsGenerationClicked(false);
+      coreGeneration.setIsGenerationClicked(false);
     },
   });
 
-  const latestGenerationError = latestGeneration?.status === 'failed' ? latestGeneration.errorMessage : null;
-
-  // ENHANCED LOADING STATE: Include immediate click feedback to eliminate delay
-  // Priority: Immediate click feedback > Active generation status > mutation status > no loading
-  const formIsGenerating = isGenerationClicked || Boolean(
-    latestGeneration && ['pending', 'processing'].includes(latestGeneration.status)
-  ) || (isGenerating && !latestGeneration);
-
-  // Clear immediate feedback when generation starts properly
-  useEffect(() => {
-    if (latestGeneration && ['pending', 'processing'].includes(latestGeneration.status)) {
-      setIsGenerationClicked(false);
-    }
-  }, [latestGeneration?.status]);
-
-  // Enhanced prompt function with current style values
-  const enhancePromptWithCurrentStyles = useCallback((prompt: string) => {
-    return promptEnhancement.enhancePromptWithStyles(prompt, formState.styleValues);
-  }, [promptEnhancement.enhancePromptWithStyles, formState.styleValues]);
-
-  // Generation handler with immediate feedback
-  const handleGenerate = useCallback(async () => {
-    // IMMEDIATE FEEDBACK: Set loading state instantly on click
-    setIsGenerationClicked(true);
-    
-    try {
-      await orchestration.handleGenerate(
-        formState.prompt,
-        formState.aspectRatio,
-        formState.safetyTolerance,
-        selectedProviderId,
-        selectedModelId,
-        enhancePromptWithCurrentStyles,
-        generate,
-        formState.setCurrentGeneratedImage
-      );
-    } catch (error) {
-      // Clear immediate feedback on error
-      setIsGenerationClicked(false);
-      throw error;
-    }
-  }, [
-    orchestration.handleGenerate,
-    formState.prompt,
-    formState.aspectRatio,
-    formState.safetyTolerance,
+  const coreGeneration = useImageGeneratorCoordinator({
+    prompt: formState.prompt,
+    aspectRatio: formState.aspectRatio,
+    safetyTolerance: formState.safetyTolerance,
     selectedProviderId,
     selectedModelId,
-    enhancePromptWithCurrentStyles,
+    styleValues: formState.styleValues,
+    fileUpload,
+    enhancePromptWithStyles: promptEnhancement.enhancePromptWithStyles,
+    orchestrationHandleGenerate: orchestration.handleGenerate,
     generate,
-    formState.setCurrentGeneratedImage
-  ]);
+    setCurrentGeneratedImage: formState.setCurrentGeneratedImage,
+    latestGeneration,
+  });
 
-  // Image editing handler with dependency injection
+  const imageOperations = useImageGeneratorOperations({
+    fileUpload,
+    setCurrentGeneratedImage: formState.setCurrentGeneratedImage,
+    setPrompt: formState.setPrompt,
+    closeHistory: historyPanel.closeHistory,
+  });
+
+  useImageGeneratorEffects({
+    toggleHistory: historyPanel.toggleHistory,
+  });
+
+
   const handleEditImage = useCallback((baseImageUrl: string, originalPrompt: string) => {
     orchestration.handleEditImage(
       baseImageUrl,
@@ -145,7 +167,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
     historyPanel.closeHistory
   ]);
 
-  // Image selection handler with dependency injection
+
   const handleImageSelect = useCallback((imageUrl: string) => {
     orchestration.handleImageSelect(
       imageUrl,
@@ -154,33 +176,13 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
     );
   }, [orchestration.handleImageSelect, formState.setCurrentGeneratedImage, historyPanel.closeHistory]);
 
-  // Clear action with dependency injection
+
   const handleClearAction = useCallback(() => {
-    actionHandlers.handleClearAction(formState.setCurrentGeneratedImage);
-  }, [actionHandlers.handleClearAction, formState.setCurrentGeneratedImage]);
+    formState.setCurrentGeneratedImage(null);
+  }, [formState.setCurrentGeneratedImage]);
 
-  // History panel integration effect
-  useEffect(() => {
-    const handleToggleHistory = () => {
-      historyPanel.toggleHistory();
-    };
 
-    window.addEventListener('toggleImageGeneratorHistory', handleToggleHistory);
-    return () => {
-      window.removeEventListener('toggleImageGeneratorHistory', handleToggleHistory);
-    };
-  }, [historyPanel]);
 
-  // Header portal cleanup effect
-  useEffect(() => {
-    const headerContainer = document.getElementById('image-generator-model-selector');
-    
-    if (!headerContainer) return;
-
-    return () => {
-      headerContainer.innerHTML = '';
-    };
-  }, []);
 
   return (
     <>
@@ -189,7 +191,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
         selectedModelId={selectedModelId}
         availableProviders={availableProviders}
         onProviderChange={onProviderChange}
-        disabled={formIsGenerating}
+        disabled={coreGeneration.formIsGenerating}
       />
       
       <div className="h-full bg-background flex">
@@ -207,11 +209,14 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
           onMoodChange={formState.setMood}
           safetyTolerance={formState.safetyTolerance}
           onSafetyToleranceChange={formState.setSafetyTolerance}
-          isGenerating={formIsGenerating}
-          onGenerate={handleGenerate}
+          isGenerating={coreGeneration.formIsGenerating}
+          onGenerate={coreGeneration.handleGenerate}
+          isStorageUrl={fileUpload.isStorageUrl}
+          isUploading={fileUpload.isUploading}
           onStylesChange={formState.handleStylesChange}
-          generationError={latestGenerationError}
-          onClearError={formState.handleClearError}
+          styleValues={formState.styleValues}
+          generationError={coreGeneration.latestGenerationError}
+          onClearError={() => {}}
           capabilities={capabilities}
         />
 
@@ -232,6 +237,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
               currentGeneratedImage={formState.currentGeneratedImage}
               currentPrompt={formState.prompt}
               latestGeneration={latestGeneration}
+              onMakeBaseImage={() => imageOperations.handleMakeBaseImageFromCurrent(formState.currentGeneratedImage)}
             />
           </div>
         </div>
@@ -243,6 +249,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
           onRefresh={refetchGenerations}
           onEditImage={handleEditImage}
           onImageSelect={handleImageSelect}
+          onMakeBaseImage={imageOperations.handleMakeBaseImageFromHistory}
           onClose={historyPanel.closeHistory}
         />
       </div>

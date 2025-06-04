@@ -7,7 +7,6 @@ import { SettingsSection } from '../settings/SettingsSection';
 import { ImageUploadSection } from '../settings/ImageUploadSection';
 import { PromptSection } from './PromptSection';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { useStyleState } from '../../../hooks/useStyleState';
 import { useCollapsibleSections } from '../../../hooks/useCollapsibleSections';
 
 interface ImagePromptFormProps {
@@ -26,12 +25,20 @@ interface ImagePromptFormProps {
   onSafetyToleranceChange: (value: number) => void;
   isGenerating: boolean;
   onGenerate: () => void;
+  isStorageUrl?: boolean;
+  isUploading?: boolean;
   onStylesChange?: (styles: {
     vibe: string;
     lighting: string;
     shotType: string;
     colorTheme: string;
   }) => void;
+  styleValues?: {
+    vibe: string;
+    lighting: string;
+    shotType: string;
+    colorTheme: string;
+  };
   generationError?: string | null;
   onClearError?: () => void;
   capabilities?: {
@@ -67,28 +74,42 @@ export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
   onSafetyToleranceChange,
   isGenerating,
   onGenerate,
+  isStorageUrl = true,
+  isUploading = false,
   onStylesChange,
+  styleValues,
   generationError,
   onClearError,
   capabilities,
 }) => {
   // Custom hooks for state management
-  const styleState = useStyleState({
-    initialStyle: style,
-    onStylesChange
-  });
-
   const sectionState = useCollapsibleSections();
 
   const handleStyleClear = () => {
     onStyleChange('none');
-    styleState.clearAllStyles();
+    onStylesChange?.({
+      vibe: 'none',
+      lighting: 'none',
+      shotType: 'none',
+      colorTheme: 'none'
+    });
   };
 
   const handleStyleRandomize = () => {
     const vibeOptions = ['photography', 'digital-art', 'painting', 'sketch', 'cinematic'];
-    onStyleChange(vibeOptions[Math.floor(Math.random() * vibeOptions.length)]);
-    styleState.randomizeAllStyles();
+    const lightingOptions = ['natural', 'dramatic', 'soft', 'neon', 'golden-hour'];
+    const shotTypeOptions = ['close-up', 'medium-shot', 'wide-shot', 'aerial', 'macro'];
+    const colorThemeOptions = ['warm', 'cool', 'monochrome', 'vibrant', 'pastel'];
+    
+    const randomVibe = vibeOptions[Math.floor(Math.random() * vibeOptions.length)];
+    onStyleChange(randomVibe);
+    
+    onStylesChange?.({
+      vibe: randomVibe,
+      lighting: lightingOptions[Math.floor(Math.random() * lightingOptions.length)],
+      shotType: shotTypeOptions[Math.floor(Math.random() * shotTypeOptions.length)],
+      colorTheme: colorThemeOptions[Math.floor(Math.random() * colorThemeOptions.length)]
+    });
   };
 
   return (
@@ -108,8 +129,11 @@ export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
         {capabilities?.supportsImageEditing && (
           <ImageUploadSection
             baseImageUrl={baseImageUrl}
+            aspectRatio={aspectRatio}
             onFileUpload={onFileUpload}
             onClearBaseImage={onClearBaseImage}
+            isStorageUrl={isStorageUrl}
+            isUploading={isUploading}
           />
         )}
 
@@ -132,12 +156,27 @@ export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
             <StyleSection
               vibe={style}
               onVibeChange={onStyleChange}
-              lighting={styleState.lighting}
-              onLightingChange={styleState.setLighting}
-              shotType={styleState.shotType}
-              onShotTypeChange={styleState.setShotType}
-              colorTheme={styleState.colorTheme}
-              onColorThemeChange={styleState.setColorTheme}
+              lighting={styleValues?.lighting || 'none'}
+              onLightingChange={(value) => onStylesChange?.({ 
+                vibe: styleValues?.vibe || style,
+                lighting: value,
+                shotType: styleValues?.shotType || 'none',
+                colorTheme: styleValues?.colorTheme || 'none'
+              })}
+              shotType={styleValues?.shotType || 'none'}
+              onShotTypeChange={(value) => onStylesChange?.({ 
+                vibe: styleValues?.vibe || style,
+                lighting: styleValues?.lighting || 'none',
+                shotType: value,
+                colorTheme: styleValues?.colorTheme || 'none'
+              })}
+              colorTheme={styleValues?.colorTheme || 'none'}
+              onColorThemeChange={(value) => onStylesChange?.({ 
+                vibe: styleValues?.vibe || style,
+                lighting: styleValues?.lighting || 'none',
+                shotType: styleValues?.shotType || 'none',
+                colorTheme: value
+              })}
             />
           </CollapsibleSection>
         )}
@@ -152,8 +191,8 @@ export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
             <SettingsSection
               safetyTolerance={safetyTolerance}
               onSafetyToleranceChange={onSafetyToleranceChange}
-              outputFormat={styleState.outputFormat}
-              onOutputFormatChange={styleState.setOutputFormat}
+              outputFormat="png"
+              onOutputFormatChange={() => {}}
               hasInputImage={!!baseImageUrl}
               maxSafetyTolerance={capabilities?.maxSafetyTolerance}
               minSafetyTolerance={capabilities?.minSafetyTolerance}

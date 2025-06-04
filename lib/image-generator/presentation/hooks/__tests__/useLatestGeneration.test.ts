@@ -107,4 +107,19 @@ describe('useLatestGeneration', () => {
     expect(result.current.latestGeneration).toBe(null);
     expect(result.current.isLatestGenerating).toBe(false);
   });
+
+  it('should NOT call onImageComplete when mounting with already completed generation', () => {
+    const onImageComplete = vi.fn();
+    
+    // Mount with an already completed generation (like loading the page with history)
+    renderHook(() =>
+      useLatestGeneration({
+        generations: [mockGenerations[0]], // Already completed with imageUrl
+        onImageComplete,
+      })
+    );
+
+    // Should NOT call onImageComplete since this is an existing completed generation
+    expect(onImageComplete).not.toHaveBeenCalled();
+  });
 }); 

@@ -22,6 +22,7 @@ export const useLatestGeneration = ({
 }: UseLatestGenerationProps): UseLatestGenerationReturn => {
   const previousCompletedImageRef = useRef<string | null>(null);
   const stableDataRef = useRef<GenerationDto | null>(null);
+  const previousStatusRef = useRef<string | null>(null);
 
   // Get the most recent generation
   const latestGeneration = generations[0] || null;
@@ -68,22 +69,31 @@ export const useLatestGeneration = ({
     if (latestGenerationId && (!stableDataRef.current || stableDataRef.current.id !== latestGenerationId)) {
       stableDataRef.current = latestGeneration;
       previousCompletedImageRef.current = null;
+      previousStatusRef.current = null;
     }
   }, [latestGenerationId, latestGeneration]);
 
-  // Handle completion callback
+  // Handle completion callback - only for NEW completions, not existing ones on mount
   useEffect(() => {
     if (!currentGeneration || !onImageComplete) return;
 
     const { status, imageUrl } = currentGeneration;
     
-    // If generation just completed and we have a new image
+    // Only trigger onImageComplete if:
+    // 1. Generation is completed with an image URL
+    // 2. We haven't seen this image URL before
+    // 3. There was a status transition from non-completed to completed
     if (status === 'completed' && imageUrl && 
-        imageUrl !== previousCompletedImageRef.current) {
+        imageUrl !== previousCompletedImageRef.current &&
+        previousStatusRef.current && 
+        previousStatusRef.current !== 'completed') {
       
       previousCompletedImageRef.current = imageUrl;
       onImageComplete(imageUrl);
     }
+    
+    // Update the previous status for next comparison
+    previousStatusRef.current = status;
   }, [currentGeneration, onImageComplete]);
 
   return {

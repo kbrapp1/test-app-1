@@ -72,7 +72,7 @@ export class ReplicateProvider implements ImageGenerationProvider {
           supportedAspectRatios: ['1:1', '3:4', '4:3', '16:9', '9:16', '21:9', '9:21', '3:7', '7:3'],
           defaultSettings: {
             aspectRatio: '1:1',
-            outputFormat: 'jpeg',
+            outputFormat: 'jpg',
             safetyTolerance: 2,
           },
           costPerGeneration: 8, // 8 cents
@@ -81,7 +81,7 @@ export class ReplicateProvider implements ImageGenerationProvider {
           supportsTextToImage: true,
           supportsCustomDimensions: true,
           supportsStyleControls: true,
-          supportedOutputFormats: ['jpeg', 'png'],
+          supportedOutputFormats: ['jpg', 'png'],
           maxSafetyTolerance: 6,
           minSafetyTolerance: 1,
         },
@@ -146,11 +146,18 @@ export class ReplicateProvider implements ImageGenerationProvider {
       }
     }
 
-    if (request.modelId === 'flux-kontext-max' && request.safetyTolerance !== undefined) {
-      const min = model.capabilities.minSafetyTolerance || 1;
-      const max = model.capabilities.maxSafetyTolerance || 6;
-      if (request.safetyTolerance < min || request.safetyTolerance > max) {
-        errors.push(`Safety tolerance must be between ${min} and ${max}`);
+    if (request.modelId === 'flux-kontext-max') {
+      // Validate base image URL format for Kontext
+      if (request.baseImageUrl && !request.baseImageUrl.startsWith('http')) {
+        errors.push('Base image must be uploaded to storage before generation. Please wait for upload to complete.');
+      }
+      
+      if (request.safetyTolerance !== undefined) {
+        const min = model.capabilities.minSafetyTolerance || 1;
+        const max = model.capabilities.maxSafetyTolerance || 6;
+        if (request.safetyTolerance < min || request.safetyTolerance > max) {
+          errors.push(`Safety tolerance must be between ${min} and ${max}`);
+        }
       }
     }
 
@@ -202,7 +209,8 @@ export class ReplicateProvider implements ImageGenerationProvider {
     // Model-specific input parameters
     if (request.modelId === 'flux-kontext-max') {
       input.safety_tolerance = request.safetyTolerance || defaults?.safetyTolerance;
-      if (request.baseImageUrl) {
+      if (request.baseImageUrl && request.baseImageUrl.startsWith('http')) {
+        // Only use properly uploaded URLs - validation above ensures this
         input.input_image = request.baseImageUrl;
       }
     } else if (request.modelId === 'flux-schnell') {
@@ -213,6 +221,11 @@ export class ReplicateProvider implements ImageGenerationProvider {
       input.aspect_ratio = request.aspectRatio;
     } else {
       input.aspect_ratio = defaults?.aspectRatio;
+    }
+
+    // For Kontext with input image, use "match_input_image" aspect ratio
+    if (request.modelId === 'flux-kontext-max' && request.baseImageUrl) {
+      input.aspect_ratio = 'match_input_image';
     }
 
     if (request.seed !== undefined && request.seed !== null) {

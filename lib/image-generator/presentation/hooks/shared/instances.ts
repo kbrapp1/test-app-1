@@ -3,7 +3,8 @@ import {
   GetGenerationStatsUseCase,
   CancelGenerationUseCase,
   SaveGenerationToDAMUseCase,
-  GenerateImageUseCase
+  GenerateImageUseCase,
+  DeleteGenerationUseCase
 } from '../../../application/use-cases';
 import { SupabaseGenerationRepository } from '../../../infrastructure/persistence/supabase/SupabaseGenerationRepository';
 import { ReplicateFluxProvider } from '../../../infrastructure/providers/replicate/ReplicateFluxProvider';
@@ -16,6 +17,7 @@ let _getGenerationStatsUseCase: GetGenerationStatsUseCase | null = null;
 let _cancelGenerationUseCase: CancelGenerationUseCase | null = null;
 let _saveGenerationToDAMUseCase: SaveGenerationToDAMUseCase | null = null;
 let _generateImageUseCase: GenerateImageUseCase | null = null;
+let _deleteGenerationUseCase: DeleteGenerationUseCase | null = null;
 
 function getRepository(): SupabaseGenerationRepository {
   if (!_repository) {
@@ -64,6 +66,13 @@ export function getSaveGenerationToDAMUseCase(): SaveGenerationToDAMUseCase {
     _saveGenerationToDAMUseCase = new SaveGenerationToDAMUseCase(getRepository());
   }
   return _saveGenerationToDAMUseCase;
+}
+
+export function getDeleteGenerationUseCase(): DeleteGenerationUseCase {
+  if (!_deleteGenerationUseCase) {
+    _deleteGenerationUseCase = new DeleteGenerationUseCase(getRepository());
+  }
+  return _deleteGenerationUseCase;
 }
 
  

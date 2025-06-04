@@ -16,6 +16,7 @@ export interface GenerateImageCommand extends Command {
   providerId?: string;
   modelId?: string;
   safetyTolerance?: number;
+  baseImageUrl?: string;
   metadata?: Record<string, any>;
 }
 
@@ -40,12 +41,19 @@ export interface UpdateGenerationCommand extends Command {
   generationTimeSeconds?: number;
 }
 
+export interface DeleteGenerationCommand extends Command {
+  type: 'DeleteGeneration';
+  generationId: string;
+  reason?: string;
+}
+
 // Command Type Union
 export type GenerationCommand = 
   | GenerateImageCommand
   | CancelGenerationCommand
   | SaveGenerationToDAMCommand
-  | UpdateGenerationCommand;
+  | UpdateGenerationCommand
+  | DeleteGenerationCommand;
 
 // Command Result
 export interface CommandResult<T = any> {

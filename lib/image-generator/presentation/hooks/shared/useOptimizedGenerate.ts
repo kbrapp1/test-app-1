@@ -20,7 +20,8 @@ export function useOptimizedGenerate() {
     safetyTolerance?: number,
     providerId?: string,
     modelId?: string,
-    aspectRatio?: string
+    aspectRatio?: string,
+    baseImageUrl?: string
   ) => {
     try {
       const result = await generateImage.mutateAsync({
@@ -31,6 +32,7 @@ export function useOptimizedGenerate() {
         safetyTolerance,
         providerId,
         modelId,
+        baseImageUrl,
       });
 
       // Pre-load the generation details in cache

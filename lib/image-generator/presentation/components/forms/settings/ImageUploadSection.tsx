@@ -2,11 +2,15 @@
 
 import React from 'react';
 import { Upload } from 'lucide-react';
+import { getAspectRatioClasses } from '../../../utils/aspectRatioUtils';
 
 interface ImageUploadSectionProps {
   baseImageUrl: string | null;
+  aspectRatio: string;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onClearBaseImage: () => void;
+  isStorageUrl?: boolean;
+  isUploading?: boolean;
 }
 
 /**
@@ -15,18 +19,22 @@ interface ImageUploadSectionProps {
  */
 export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   baseImageUrl,
+  aspectRatio,
   onFileUpload,
   onClearBaseImage,
+  isStorageUrl = true,
+  isUploading = false,
 }) => {
+  const containerClasses = getAspectRatioClasses(aspectRatio);
   return (
     <div>
       {baseImageUrl ? (
         <div className="relative">
-          <div className="w-full h-32 bg-muted rounded-lg overflow-hidden">
+          <div className={`w-full ${containerClasses} bg-muted rounded-lg overflow-hidden`}>
             <img 
               src={baseImageUrl} 
               alt="Base image" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
             <button
               onClick={onClearBaseImage}
@@ -34,6 +42,18 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
             >
               ✕
             </button>
+          </div>
+          <div className="flex gap-2 mt-2">
+            {isUploading && (
+              <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                Uploading...
+              </span>
+            )}
+            {!isStorageUrl && !isUploading && baseImageUrl && (
+              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                Preview Only - needs upload for generation
+              </span>
+            )}
           </div>
         </div>
       ) : (

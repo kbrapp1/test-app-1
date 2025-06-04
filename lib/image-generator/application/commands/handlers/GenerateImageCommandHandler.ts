@@ -15,7 +15,8 @@ export class GenerateImageCommandHandler {
         userId: command.userId,
         safetyTolerance: command.safetyTolerance,
         providerId: command.providerId,
-        modelId: command.modelId
+        modelId: command.modelId,
+        baseImageUrl: command.baseImageUrl,
       });
 
       if (!result.isSuccess()) {
