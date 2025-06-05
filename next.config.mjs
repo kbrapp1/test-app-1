@@ -1,3 +1,9 @@
+import bundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -33,4 +39,7 @@ const nextConfig = {
   // 4. React lazy() API (component-level code splitting)
 };
 
-export default nextConfig;
+// Only apply bundle analyzer in production builds (webpack) to avoid Turbopack conflicts
+export default process.env.ANALYZE === 'true' 
+  ? withBundleAnalyzer(nextConfig)
+  : nextConfig;

@@ -12,6 +12,10 @@ interface HistoryPanelProps {
   onImageSelect: (imageUrl: string) => void;
   onMakeBaseImage?: (imageUrl: string) => void;
   onClose: () => void;
+  // Infinite scroll props
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => any;
 }
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -23,6 +27,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   onImageSelect,
   onMakeBaseImage,
   onClose,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }) => {
   if (!panelVisible) return null;
 
@@ -49,6 +56,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
           onMakeBaseImage={onMakeBaseImage}
           compact={true}
           onClose={onClose}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={onLoadMore}
         />
       </div>
     </>

@@ -5,8 +5,8 @@ import { getGenerationStats } from '../../../application/actions/generation.acti
 import { createStatsQueryKey } from '../shared/queryKeys';
 
 /**
- * Hook to get generation statistics
- * Single responsibility: Querying generation statistics
+ * Hook to get generation statistics with optimized caching
+ * Single responsibility: Querying generation statistics with minimal API calls
  */
 export function useGenerationStats() {
   const queryKey = useMemo(() => createStatsQueryKey(), []);
@@ -24,7 +24,10 @@ export function useGenerationStats() {
   return useQuery({
     queryKey,
     queryFn,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000, // 1 minute - stats don't change frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Prevent unnecessary refetches on mount
+    refetchOnReconnect: true,
   });
 } 

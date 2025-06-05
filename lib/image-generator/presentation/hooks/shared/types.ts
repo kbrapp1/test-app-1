@@ -13,6 +13,7 @@ export interface GetGenerationsFilters {
   offset?: number;
   startDate?: Date;
   endDate?: Date;
+  searchTerm?: string;
 }
 
 // Re-export DTO type for external use

@@ -65,3 +65,8 @@ note: for set-active-org-claim edge function, make sure the Enforce JWT Verifica
 
 ## Finding file lengths
 Get-ChildItem -Path "lib/image-generator" -Recurse -Include "*.ts","*.tsx" | ForEach-Object { $lineCount = (Get-Content $_.FullName | Measure-Object -Line).Lines; [PSCustomObject]@{File=$_.Name; Lines=$lineCount; Path=$_.FullName} } | Sort-Object Lines -Descending | Select-Object -First 15
+
+## Run bundle analyzer and lighthouse
+pnpm run analyze     # Bundle analysis only
+pnpm run lighthouse  # Lighthouse audit only
+pnpm run perf        # Run both

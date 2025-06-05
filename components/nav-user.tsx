@@ -7,6 +7,7 @@ import {
   LogOutIcon,
   MoreVerticalIcon,
   UserCircleIcon,
+  Activity,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -29,6 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider"
+import { usePerformanceMonitor } from "@/lib/monitoring/context/PerformanceMonitorContext"
 
 /**
  * Navigation User Component
@@ -42,6 +44,7 @@ export function NavUser() {
   const router = useRouter()
   const supabase = createClient()
   const { user: currentUser, profile, isLoading } = useUserProfile()
+  const { isEnabled: perfMonitorEnabled, toggle: togglePerfMonitor } = usePerformanceMonitor()
 
   const handleLogout = async () => {
     try {
@@ -146,6 +149,14 @@ export function NavUser() {
                 <CreditCardIcon className="mr-2 h-4 w-4" />
                 Billing
               </DropdownMenuItem>
+              
+              {/* Super Admin Only - Performance Monitor */}
+              {profile?.is_super_admin && process.env.NODE_ENV === 'development' && (
+                <DropdownMenuItem onClick={togglePerfMonitor}>
+                  <Activity className="mr-2 h-4 w-4" />
+                  Performance Monitor {perfMonitorEnabled ? '(On)' : '(Off)'}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

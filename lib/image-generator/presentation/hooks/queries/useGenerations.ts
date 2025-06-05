@@ -30,16 +30,16 @@ export function useGenerations(filters: GetGenerationsFilters = {}) {
     staleTime: 30 * 1000, // 30 seconds - data stays fresh
     gcTime: 5 * 60 * 1000, // 5 minutes - cache retention
     refetchOnWindowFocus: false, // Prevent unnecessary refetches on focus
-    refetchOnMount: 'always', // Ensure data freshness on mount
+    refetchOnMount: false, // Prevent POST requests on every page refresh - only fetch if no cached data
     refetchOnReconnect: true, // Refetch when network reconnects
     networkMode: 'online', // Only fetch when online
-    select: (data) => {
+    select: (data: GenerationDto[]) => {
       // Limit data size in memory for performance
       // Show max 50 generations at once to prevent memory bloat
       const limited = data.slice(0, 50);
       
       // Sort by creation date (newest first) for better UX
-      return limited.sort((a, b) => 
+      return limited.sort((a: GenerationDto, b: GenerationDto) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     },

@@ -32,25 +32,36 @@ export function UserProfileProvider({ children }: UserProfileProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
   const previousUserIdRef = useRef<string | null>(null);
+  const activeRequestRef = useRef<Promise<Profile | null> | null>(null);
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
-    try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single<Profile>();
+    if (activeRequestRef.current && previousUserIdRef.current === userId) {
+      return activeRequestRef.current;
+    }
 
-      if (error) {
+    activeRequestRef.current = (async () => {
+      try {
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single<Profile>();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return null;
+        }
+
+        return profileData;
+      } catch (error) {
         console.error('Error fetching profile:', error);
         return null;
+      } finally {
+        activeRequestRef.current = null;
       }
+    })();
 
-      return profileData;
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      return null;
-    }
+    return activeRequestRef.current;
   };
 
   const refreshProfile = async (): Promise<void> => {

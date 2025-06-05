@@ -2,7 +2,6 @@
 // Following DDD principles and Single Responsibility Principle
 
 export { useGenerationCacheManager } from './useGenerationCacheManager';
-export { useOptimizedStatusCheck } from './useOptimizedStatusCheck';
 export { useGenerationListRefresh } from './useGenerationListRefresh';
 export { useGenerationStateComputed } from './useGenerationStateComputed';
 export { useOptimizedGenerate } from './useOptimizedGenerate';

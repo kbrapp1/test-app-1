@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import type { OrgMember, RoleOption } from '@/types/settings'; // Import from new types file
 
 const REQUEST_TIMEOUT = 8000; // 8 seconds timeout - normal ops complete in 1-5s, this is just a safety net
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 1; // Reduced retries - fail fast and redirect to login
 
 export function useOrgMembers(organizationId: string | null, debouncedSearchTerm: string) {
     const supabase = createClient();
@@ -53,7 +53,13 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                             status: (refreshError as any).status,
                             code: (refreshError as any).code
                         });
-                        throw error; // Throw original error if refresh fails
+                        
+                        // Session refresh failed - redirect to login immediately
+                        console.log('Session refresh failed - redirecting to login');
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 500);
+                        throw new Error('Session expired - redirecting to login');
                     }
                     
                     console.log('Session refreshed successfully:', {
@@ -66,9 +72,26 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                     return await withSessionRefresh(operation, retryCount + 1);
                 } catch (refreshError) {
                     console.warn('Session refresh failed:', refreshError);
-                    throw error; // Throw original error if refresh fails
+                    // Redirect to login on refresh failure
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 500);
+                    throw new Error('Session expired - redirecting to login');
                 }
             }
+            
+            // If it's a session error but we've exceeded retries, redirect to login
+            if (error.message?.includes('JWT') || 
+                error.message?.includes('session') ||
+                error.message?.includes('unauthorized') ||
+                error.message?.includes('invalid claim')) {
+                console.log('Session error detected - redirecting to login');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 500);
+                throw new Error('Session expired - redirecting to login');
+            }
+            
             throw error;
         }
     }, [supabase.auth]);
@@ -119,72 +142,58 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                     let profileRows: any[] = [];
                     let authUserRows: any[] = [];
 
-                    // Fetch Profiles (filtered by search term if provided)
                     if (userIds.length > 0) {
+                        // Fetch User Profiles with timeout
                         const profileOperation = async () => {
-                            let profilesQuery = supabase
+                            const { data: profiles, error: profileError } = await supabase
                                 .from('profiles')
-                                .select('id, email, full_name, last_sign_in_at')
+                                .select('id, first_name, last_name, avatar_url')
                                 .in('id', userIds);
 
-                            if (debouncedSearchTerm) {
-                                profilesQuery = profilesQuery.or(`full_name.ilike.%${debouncedSearchTerm}%,email.ilike.%${debouncedSearchTerm}%`);
-                            }
-
-                            const { data: profilesData, error: profilesError } = await profilesQuery;
-                            if (profilesError) throw new Error(`Error loading user profiles: ${profilesError.message}`);
-                            return profilesData || [];
+                            if (profileError) throw new Error(`Error loading profiles: ${profileError.message}`);
+                            return profiles || [];
                         };
 
                         profileRows = await withTimeout(profileOperation(), REQUEST_TIMEOUT);
                         if (!isMounted) return;
 
-                        // Fetch invitation details scoped to this organization
-                        const invitationOperation = async () => {
-                            const { data: authUsersData, error: authUsersError } = await supabase
-                                .rpc('get_users_invitation_details', {
-                                    user_ids_to_check: userIds,
-                                    p_organization_id: organizationId,
-                                });
-
-                            if (authUsersError) {
-                                // Non-critical error, log it but continue
-                                console.warn("Error loading user invitation status:", authUsersError.message);
-                            }
-                            return authUsersData || [];
+                        // Fetch Auth Users with timeout
+                        const authOperation = async () => {
+                            const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
+                            if (authError) throw new Error(`Error loading auth users: ${authError.message}`);
+                            
+                            return (authResponse.users || []).filter(u => userIds.includes(u.id));
                         };
 
-                        try {
-                            authUserRows = await withTimeout(invitationOperation(), REQUEST_TIMEOUT);
-                        } catch (invitationError) {
-                            console.warn("Invitation details fetch failed, continuing without:", invitationError);
-                            authUserRows = [];
-                        }
+                        authUserRows = await withTimeout(authOperation(), REQUEST_TIMEOUT);
                         if (!isMounted) return;
                     }
 
-                    // Filter memberships based on search results from profiles
-                    const finalMembershipRows = debouncedSearchTerm && profileRows.length > 0
-                        ? (membershipRows || []).filter((memRow: any) => profileRows.some(p => p.id === memRow.user_id))
-                        : (debouncedSearchTerm && profileRows.length === 0)
-                        ? [] // No profiles match search, so no members match
-                        : (membershipRows || []);
+                    // Map to combined members
+                    const mappedMembers: OrgMember[] = (membershipRows || []).map((membership: any) => {
+                        const profile = profileRows.find(p => p.id === membership.user_id);
+                        const authUser = authUserRows.find(u => u.id === membership.user_id);
 
+                        const displayName = profile?.first_name && profile?.last_name
+                            ? `${profile.first_name} ${profile.last_name}`
+                            : authUser?.email?.split('@')[0] || 'Unknown User';
 
-                    const mappedMembers: OrgMember[] = finalMembershipRows.map((row: any) => {
-                        const profile = profileRows.find(p => p.id === row.user_id) || { email: '', full_name: '', last_sign_in_at: null };
-                        const authUser = authUserRows.find(au => au.id === row.user_id) || { invited_at: null };
+                        // Filter based on search term if provided
+                        if (debouncedSearchTerm && !displayName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) && 
+                            !(authUser?.email || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
+                            return null;
+                        }
+
                         return {
-                            id: row.user_id,
-                            email: profile.email,
-                            name: profile.full_name,
-                            role_id: row.role_id,
-                            role_name: row.roles?.name || '', // Get role name from join
-                            organization_id: organizationId as string, // Assert organizationId is a string here
-                            last_sign_in_at: profile.last_sign_in_at,
-                            invited_at: authUser.invited_at, // Include invited_at
+                            id: membership.user_id,
+                            email: authUser?.email || '',
+                            name: displayName,
+                            role_id: membership.role_id,
+                            role_name: membership.roles?.name || 'Unknown Role',
+                            organization_id: organizationId,
                         };
-                    });
+                    }).filter((member): member is OrgMember => member !== null);
+
                     if (isMounted) setMembers(mappedMembers);
 
                     // Fetch Roles (excluding super-admin)
@@ -209,18 +218,26 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                     
                     if (err.message === 'Request timeout') {
                         errorMessage = 'The request is taking longer than expected. This might be due to session refresh after being idle. Please try again.';
+                    } else if (err.message?.includes('Session expired - redirecting to login')) {
+                        // Don't show toast for session errors - user will be redirected
+                        return;
                     } else if (err.message?.includes('JWT') || err.message?.includes('session') || err.message?.includes('unauthorized')) {
-                        errorMessage = 'Authentication issue detected. Please try refreshing the page or logging out and back in.';
+                        errorMessage = 'Authentication issue detected. Redirecting to login...';
                     } else {
                         errorMessage = err.message;
                     }
                     
                     setError(errorMessage);
-                    toast({ 
-                        variant: 'destructive', 
-                        title: 'Error Loading Organization Data', 
-                        description: errorMessage
-                    });
+                    
+                    // Only show toast for non-session errors
+                    if (!err.message?.includes('Session expired - redirecting to login')) {
+                        toast({ 
+                            variant: 'destructive', 
+                            title: 'Error Loading Organization Data', 
+                            description: errorMessage
+                        });
+                    }
+                    
                     setMembers([]); // Clear data on error
                     setRoles([]);
                 }
@@ -231,14 +248,10 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
 
         fetchData();
 
-        return () => { 
+        return () => {
             isMounted = false;
         };
-    }, [organizationId, debouncedSearchTerm]); // Removed supabase, toast, and callback dependencies
+    }, [organizationId, debouncedSearchTerm, withSessionRefresh, withTimeout, supabase, toast]);
 
     return { members, roles, loading, error };
-}
-
-// Add type definition export to avoid duplication later
-// We might need to move these types to a central location like `types/settings.ts` eventually
-export type { OrgMember, RoleOption }; 
+} 

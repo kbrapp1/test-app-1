@@ -11,6 +11,7 @@ export interface GenerationFilters {
   startDate?: Date;
   endDate?: Date;
   savedToDAM?: boolean;
+  searchTerm?: string;
 }
 
 export interface GenerationRepository {

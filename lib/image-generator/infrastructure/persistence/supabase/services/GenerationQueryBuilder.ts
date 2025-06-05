@@ -33,6 +33,11 @@ export class GenerationQueryBuilder {
       filteredQuery = filteredQuery.lte('created_at', filters.endDate.toISOString());
     }
 
+    // Apply search term filter
+    if (filters.searchTerm) {
+      filteredQuery = filteredQuery.ilike('prompt', `%${filters.searchTerm}%`);
+    }
+
     return filteredQuery;
   }
 

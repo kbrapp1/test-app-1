@@ -8,14 +8,17 @@ import { ActionButtonsToolbar } from './ActionButtonsToolbar';
 import { HeaderModelSelector } from '../providers/HeaderModelSelector';
 import { 
   useImageGenerationOptimized, 
+  useInfiniteGenerations,
   useFileUpload, 
   useHistoryPanel, 
   useLatestGeneration,
   useImageGeneratorState,
   usePromptEnhancement,
   useProviderSelection,
-  useImageGeneratorCoordinator
+  useImageGeneratorCoordinator,
+  useSharedGenerations
 } from '../../hooks';
+import { useOptimizedGenerate } from '../../hooks/shared/useOptimizedGenerate';
 import { useImageGeneratorOperations } from '../../hooks/useImageGeneratorOperations';
 import { useImageGeneratorEffects } from '../../hooks/useImageGeneratorEffects';
 
@@ -106,12 +109,33 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
 
   const capabilities = getSelectedCapabilities();
   
+  // Option 1: Optimized shared data approach (reduces API calls from 2 to 1)
   const {
-    generations,
-    isGenerating,
-    generate,
+    recentGenerations: generations,
+    statistics,
     refetch: refetchGenerations,
-  } = useImageGenerationOptimized({ limit: 20 });
+    isLoading,
+  } = useSharedGenerations({ limit: 20 });
+  
+  // Get the generate function separately since shared hook doesn't provide it
+  const { generate, isGenerating, error } = useOptimizedGenerate();
+  
+  // Option 2: Current separate hooks approach (now commented out)
+  // const {
+  //   generations,
+  //   isGenerating,
+  //   generate,
+  //   refetch: refetchGenerations,
+  // } = useImageGenerationOptimized({ limit: 20 });
+
+  // Lazy load infinite scroll data only when history panel is opened
+  const {
+    generations: historyGenerations,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch: refetchHistory,
+  } = useInfiniteGenerations({}, { enabled: historyPanel.panelVisible });
 
   const { latestGeneration } = useLatestGeneration({
     generations,
@@ -183,7 +207,6 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
 
 
 
-
   return (
     <>
       <HeaderModelSelector
@@ -245,14 +268,19 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
         <HistoryPanel
           panelVisible={historyPanel.panelVisible}
           showHistory={historyPanel.showHistory}
-          generations={generations}
-          onRefresh={refetchGenerations}
+          generations={historyGenerations}
+          onRefresh={refetchHistory}
           onEditImage={handleEditImage}
           onImageSelect={handleImageSelect}
           onMakeBaseImage={imageOperations.handleMakeBaseImageFromHistory}
           onClose={historyPanel.closeHistory}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={fetchNextPage}
         />
       </div>
+
+
     </>
   );
 }; 

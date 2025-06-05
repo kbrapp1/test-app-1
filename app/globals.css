@@ -234,8 +234,29 @@
   * {
     @apply border-border;
   }
-  }
+}
 
 @utility text-balance {
   text-wrap: balance;
+}
+
+/* React Query Dev Tools Positioning */
+@layer utilities {
+  /* Target React Query Dev Tools toggle button */
+  [data-react-query-devtools] {
+    bottom: auto !important;
+    top: 20px !important;
+  }
+  
+  /* Target the main devtools panel when open */
+  [data-react-query-devtools-panel] {
+    bottom: auto !important;
+    top: 80px !important;
+  }
+  
+  /* Alternative selectors for React Query dev tools */
+  div[style*="position: fixed"][style*="bottom"][style*="top"]:has(button) {
+    bottom: auto !important;
+    top: 40px !important;
+  }
 }

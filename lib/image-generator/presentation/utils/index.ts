@@ -16,7 +16,7 @@ export const analyzeBundleSize = () => {
     console.group('📦 Bundle Analysis');
     console.info('Image Generator Lazy Components:', [
       'PerformanceMonitor', 'StyleSection', 'ProviderSelector', 
-      'GenerationActions', 'VirtualizedGenerationList', 'GenerationStats'
+      'GenerationActions', 'GenerationStats'
     ]);
     console.info('Use React DevTools Profiler to measure lazy loading impact');
     console.groupEnd();

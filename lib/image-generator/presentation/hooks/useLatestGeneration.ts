@@ -32,6 +32,8 @@ export const useLatestGeneration = ({
   const shouldPoll = latestGeneration && 
     ['pending', 'processing'].includes(latestGeneration.status);
 
+
+
   // Poll the latest generation for updates
   const { data: polledGeneration } = useGenerationPolling(
     latestGenerationId || '',

@@ -75,6 +75,7 @@ export function useGenerationPolling(generationId: string, enabled: boolean = tr
   const query = useQuery({
     queryKey: IMAGE_GENERATION_QUERY_KEYS.detail(generationId),
     queryFn: async (): Promise<GenerationDto> => {
+
       const result = await checkGenerationStatus(generationId);
       
       if (!result.success || !result.data) {
