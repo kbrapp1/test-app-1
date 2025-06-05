@@ -34,6 +34,16 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
   };
 });
 
+// Mock performance monitor hook
+vi.mock('@/lib/monitoring/context/PerformanceMonitorContext', () => ({
+  usePerformanceMonitor: () => ({
+    isEnabled: false,
+    toggle: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+  }),
+}));
+
 import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 
 describe('NavUser', () => {

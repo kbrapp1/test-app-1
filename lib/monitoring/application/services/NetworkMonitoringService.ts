@@ -77,13 +77,10 @@ export class NetworkMonitoringService {
   getNetworkStats(): NetworkStats {
     const allCalls = this.callTracker.getAllCalls();
     
-    // Calculate statistics based on current calls
-    const totalCalls = allCalls.length;
-    const currentPatterns = this.redundancyDetector.detectRedundancy(allCalls);
-    const currentRedundantCount = currentPatterns.reduce(
-      (count, pattern) => count + pattern.duplicateCalls.length, 
-      0
-    );
+    // Use consistent SESSION data for all statistics
+    const totalCalls = this.sessionTotalCalls; // Use session total, not current
+    const sessionRedundantCount = this.sessionRedundantCalls;
+    const sessionRedundancyRate = this.calculateSessionRedundancyRate();
     
     const callsByType = allCalls.reduce((acc, call) => {
       acc[call.type] = (acc[call.type] || 0) + 1;
@@ -96,12 +93,12 @@ export class NetworkMonitoringService {
 
     return {
       totalCalls,
-      redundantCalls: currentRedundantCount, // Current active redundant calls for "Active Issues" count
-      redundancyRate: this.calculateSessionRedundancyRate(), // Use SESSION rate for efficiency bars
-      sessionRedundancyRate: this.calculateSessionRedundancyRate(),
+      redundantCalls: sessionRedundantCount, // Use session redundant calls for consistency
+      redundancyRate: sessionRedundancyRate, // Use session rate
+      sessionRedundancyRate: sessionRedundancyRate,
       persistentRedundantCount: this.getTotalDetectedRedundancies(),
       recentCalls: allCalls.slice(0, 10),
-      redundantPatterns: [...this.detectedRedundancies], // Use PERSISTENT patterns, not current!
+      redundantPatterns: [...this.detectedRedundancies], // Use persistent patterns
       callsByType,
       // Add persistent issues to the stats
       persistentIssues: [...this.persistentIssues]

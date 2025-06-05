@@ -23,7 +23,6 @@ export class BundleAnalysisService {
       // Fallback to performance API analysis
       return this.analyzeFromPerformanceAPI();
     } catch (error) {
-      console.warn('Bundle analysis failed:', error);
       return this.getEmptyAnalysis();
     }
   }

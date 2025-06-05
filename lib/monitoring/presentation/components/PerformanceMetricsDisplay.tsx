@@ -7,6 +7,20 @@ import { PerformanceTrackingState } from '../hooks/usePerformanceTracking';
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { OptimizationStatusDisplay } from './OptimizationStatusDisplay';
 
+// Initialize automatic detection systems
+if (typeof window !== 'undefined') {
+  // Network detection
+  import('../../infrastructure/network/NetworkInterceptor').then(({ NetworkInterceptor }) => {
+    NetworkInterceptor.initialize();
+    (window as any).__NETWORK_INTERCEPTOR__ = NetworkInterceptor;
+  });
+  
+  // React Query detection
+  import('../../infrastructure/cache/ReactQueryDetector').then(({ ReactQueryDetector }) => {
+    (window as any).__REACT_QUERY_DETECTOR__ = ReactQueryDetector;
+  });
+}
+
 interface PerformanceMetricsDisplayProps {
   metrics: PerformanceMetrics;
   trackingState: PerformanceTrackingState;
@@ -88,40 +102,72 @@ function formatFrontendReport(
 
       // Component and file analysis
       reportLines.push(``, `#### 🔍 Root Cause Analysis:`);
-      const fileAnalysis = analyzePageContext(trackingState.pageContext, issue.type);
-      if (fileAnalysis.likelyComponents.length > 0) {
-        reportLines.push(`- **Likely Components**: ${fileAnalysis.likelyComponents.map(c => `\`${c}\``).join(', ')}`);
-        fileAnalysis.likelyComponents.forEach(component => {
-          const filePath = guessComponentFilePath(component, trackingState.pageContext);
-          if (filePath) {
-            reportLines.push(`  - \`${component}\` → \`${filePath}\``);
-          }
-        });
+      const specificAnalysis = analyzeSpecificCause(issue, trackingState, metrics, index);
+      
+      if (specificAnalysis.primaryComponent) {
+        reportLines.push(`- **Primary Culprit**: \`${specificAnalysis.primaryComponent}\``);
+        reportLines.push(`  - **File**: \`${specificAnalysis.primaryComponentPath}\``);
+        reportLines.push(`  - **Issue**: ${specificAnalysis.componentIssue}`);
       }
-
-      if (fileAnalysis.likelyHooks.length > 0) {
-        reportLines.push(`- **Likely Hooks**: ${fileAnalysis.likelyHooks.map(h => `\`${h}\``).join(', ')}`);
-        fileAnalysis.likelyHooks.forEach(hook => {
-          const filePath = guessHookFilePath(hook, trackingState.pageContext);
-          if (filePath) {
-            reportLines.push(`  - \`${hook}\` → \`${filePath}\``);
-          }
-        });
+      
+      if (specificAnalysis.primaryHook) {
+        reportLines.push(`- **Problem Hook**: \`${specificAnalysis.primaryHook}\``);
+        reportLines.push(`  - **File**: \`${specificAnalysis.primaryHookPath}\``);
+        reportLines.push(`  - **Issue**: ${specificAnalysis.hookIssue}`);
+      }
+      
+      if (specificAnalysis.problemQuery) {
+        reportLines.push(`- **Problematic Query**: \`${specificAnalysis.problemQuery}\``);
+        reportLines.push(`  - **Missing Cache**: ${specificAnalysis.cacheIssue}`);
+        reportLines.push(`  - **Called From**: \`${specificAnalysis.querySource}\``);
+      }
+      
+      // Fallback to domain analysis if specific analysis fails
+      if (!specificAnalysis.primaryComponent) {
+        const fileAnalysis = analyzePageContext(trackingState.pageContext, issue.type);
+        if (fileAnalysis.likelyComponents.length > 0) {
+          reportLines.push(`- **Domain Components** (manual inspection needed):`);
+          fileAnalysis.likelyComponents.slice(0, 3).forEach(component => {
+            const filePath = guessComponentFilePath(component, trackingState.pageContext);
+            if (filePath) {
+              reportLines.push(`  - \`${component}\` → \`${filePath}\``);
+            }
+          });
+        }
       }
 
       // React Query Analysis
       if (issue.type === 'caching') {
         reportLines.push(``, `#### ⚡ React Query Analysis:`);
-        const reactQueryAnalysis = analyzeReactQueryOpportunity(trackingState.pageContext, metrics);
-        reportLines.push(`- **Missing Cache Keys**: ${reactQueryAnalysis.suggestedKeys.map(k => `\`${k}\``).join(', ')}`);
-        reportLines.push(`- **Cache Strategy**: ${reactQueryAnalysis.strategy}`);
-        reportLines.push(`- **Performance Gain**: ${reactQueryAnalysis.performanceGain}`);
+        const reactQueryStatus = getReactQueryStatus();
+        reportLines.push(`- **React Query Status**: ${reactQueryStatus.report}`);
         
-        if (reactQueryAnalysis.endpoints.length > 0) {
-          reportLines.push(`- **API Endpoints to Cache**:`);
-          reactQueryAnalysis.endpoints.forEach(endpoint => {
-            reportLines.push(`  - \`${endpoint.url}\` → Query Key: \`${endpoint.queryKey}\``);
-          });
+        if (!reactQueryStatus.isInstalled) {
+          reportLines.push(`- **Action Required**: Install React Query: \`npm install @tanstack/react-query\``);
+          reportLines.push(`- **Setup Guide**: Add QueryClient to your app root`);
+        } else if (!reactQueryStatus.isConfigured) {
+          reportLines.push(`- **Action Required**: Configure QueryClient in your app`);
+          reportLines.push(`- **Missing**: QueryClientProvider wrapper in your layout/page`);
+        } else {
+          // React Query is configured, analyze missing cache keys
+          const reactQueryAnalysis = analyzeReactQueryOpportunity(trackingState.pageContext, metrics);
+          
+          if (reactQueryStatus.missingCacheKeys.length > 0) {
+            reportLines.push(`- **Missing Cache Keys**: ${reactQueryStatus.missingCacheKeys.map((k: string) => `\`${k}\``).join(', ')}`);
+          } else {
+            reportLines.push(`- **Suggested Cache Keys**: ${reactQueryAnalysis.suggestedKeys.map((k: string) => `\`${k}\``).join(', ')}`);
+          }
+          
+          reportLines.push(`- **Current Cached Queries**: ${reactQueryStatus.cachedQueries.length} (${reactQueryStatus.cachedQueries.slice(0, 3).join(', ')})`);
+          reportLines.push(`- **Cache Strategy**: ${reactQueryAnalysis.strategy}`);
+          reportLines.push(`- **Performance Gain**: ${reactQueryAnalysis.performanceGain}`);
+          
+          if (reactQueryAnalysis.endpoints.length > 0) {
+            reportLines.push(`- **Target API Endpoints**:`);
+            reactQueryAnalysis.endpoints.forEach(endpoint => {
+              reportLines.push(`  - \`${endpoint.url}\` → Query Key: \`${endpoint.queryKey}\``);
+            });
+          }
         }
       }
 
@@ -388,34 +434,221 @@ function Page() {
   };
 }
 
+interface SpecificCauseAnalysis {
+  primaryComponent?: string;
+  primaryComponentPath?: string;
+  componentIssue?: string;
+  primaryHook?: string;
+  primaryHookPath?: string;
+  hookIssue?: string;
+  problemQuery?: string;
+  cacheIssue?: string;
+  querySource?: string;
+}
+
+function analyzeSpecificCause(
+  issue: OptimizationGap, 
+  trackingState: PerformanceTrackingState, 
+  metrics: PerformanceMetrics,
+  index: number
+): SpecificCauseAnalysis {
+  const analysis: SpecificCauseAnalysis = {};
+  
+  // Try to get actual runtime data first
+  const actualCulprit = getActualCulpritFromRuntime(issue, trackingState);
+  if (actualCulprit) {
+    return actualCulprit;
+  }
+  
+  // Use discovered components for intelligent pattern-based analysis
+  const discoveredAnalysis = getPatternBasedAnalysisFromDiscovery(issue, trackingState);
+  if (discoveredAnalysis.primaryComponent) {
+    return discoveredAnalysis;
+  }
+  
+  return analysis;
+}
+
+function getActualCulpritFromRuntime(
+  issue: OptimizationGap, 
+  trackingState: PerformanceTrackingState
+): SpecificCauseAnalysis | null {
+  try {
+    // Try network-level detection first (automatic, no setup required)
+    const networkCulprit = getNetworkCulprit(issue);
+    if (networkCulprit) return networkCulprit;
+    
+    // Fallback to manual component tracking if available
+    if (typeof window !== 'undefined' && window.__COMPONENT_PERFORMANCE__) {
+      const componentData = Array.from(window.__COMPONENT_PERFORMANCE__.values());
+      
+      if (issue.type === 'memoization') {
+        const worstRenderer = componentData
+          .filter(c => c.renderCount > 10)
+          .sort((a, b) => b.renderCount - a.renderCount)[0];
+          
+        if (worstRenderer) {
+          return {
+            primaryComponent: worstRenderer.name,
+            primaryComponentPath: `Search codebase for: ${worstRenderer.name}`,
+            componentIssue: `DETECTED: Rendered ${worstRenderer.renderCount} times in current session`,
+            hookIssue: `RUNTIME DATA: Component actually re-rendering excessively`
+          };
+        }
+      }
+    }
+  } catch (error) {
+    // Graceful fallback
+  }
+  
+  return null;
+}
+
+function getNetworkCulprit(issue: OptimizationGap): SpecificCauseAnalysis | null {
+  if (issue.type !== 'caching') return null;
+  
+  try {
+    // Dynamic import to avoid bundling issues
+    const NetworkInterceptor = (window as any).__NETWORK_INTERCEPTOR__;
+    if (!NetworkInterceptor) return null;
+    
+    const worstApiUsers = NetworkInterceptor.getWorstApiUsers();
+    const topCulprit = worstApiUsers[0];
+    const stats = NetworkInterceptor.getDetectionStats();
+    
+    if (topCulprit && topCulprit.callCount > 2) {
+      const firstCall = topCulprit.calls[0];
+      const confidence = stats.detectionRate > 70 ? 'HIGH' : stats.detectionRate > 30 ? 'MEDIUM' : 'LOW';
+      
+      return {
+        primaryComponent: topCulprit.component,
+        primaryComponentPath: `Search codebase for: ${topCulprit.component}`,
+        componentIssue: `DETECTED (${confidence} confidence): Made ${topCulprit.callCount} API calls without caching`,
+        problemQuery: firstCall.url,
+        cacheIssue: `RUNTIME DATA: API called ${topCulprit.callCount} times - ${firstCall.duration?.toFixed(0)}ms average (${stats.detectionRate.toFixed(1)}% detection rate)`,
+        querySource: `DETECTED: ${topCulprit.component} component via network interception`
+      };
+    }
+    
+    // If detection rate is very low, explain why
+    if (stats.detectionRate < 30 && stats.totalCalls > 5) {
+      return {
+        primaryComponent: 'Detection Failed',
+        primaryComponentPath: 'Level 1 network detection insufficient',
+        componentIssue: `LOW CONFIDENCE: Only ${stats.detectionRate.toFixed(1)}% of API calls detected (${stats.detectedCalls}/${stats.totalCalls})`,
+        cacheIssue: `Likely causes: React Query/SWR abstraction, minified build, or SSR calls`,
+        querySource: `Undetected URLs: ${stats.undetectedUrls.slice(0, 3).join(', ')}`
+      };
+    }
+    
+  } catch (error) {
+    // Network detection failed, continue to fallback
+  }
+  
+  return null;
+}
+
+function getReactQueryStatus(): { 
+  isInstalled: boolean; 
+  isConfigured: boolean; 
+  cachedQueries: string[]; 
+  missingCacheKeys: string[]; 
+  report: string 
+} {
+  try {
+    // Dynamic import to avoid bundling issues
+    const detector = (window as any).__REACT_QUERY_DETECTOR__;
+    if (detector) {
+      const status = detector.detect();
+      return {
+        isInstalled: status.isInstalled,
+        isConfigured: status.isConfigured,
+        cachedQueries: status.cachedQueries || [],
+        missingCacheKeys: status.missingCacheKeys || [],
+        report: detector.generateReport(status)
+      };
+    }
+  } catch (error) {
+    // Detection failed
+  }
+  
+  // Fallback: Simple check for React Query in package.json or imports
+  const hasReactQuery = typeof window !== 'undefined' && (
+    (window as any).queryClient ||
+    document.querySelector('script[src*="@tanstack/react-query"]')
+  );
+  
+  return {
+    isInstalled: hasReactQuery,
+    isConfigured: hasReactQuery,
+    cachedQueries: [],
+    missingCacheKeys: [],
+    report: hasReactQuery 
+      ? "⚠️ **React Query DETECTED** - but unable to analyze (limited detection)"
+      : "❌ **React Query NOT DETECTED** - package not found"
+  };
+}
+
+function getPatternBasedAnalysisFromDiscovery(
+  issue: OptimizationGap,
+  trackingState: PerformanceTrackingState
+): SpecificCauseAnalysis {
+  const analysis: SpecificCauseAnalysis = {};
+  const pageContext = trackingState.pageContext;
+  
+  // Get discovered components for this domain
+  const domainAnalysis = analyzePageContext(pageContext, issue.type);
+  if (domainAnalysis.likelyComponents.length === 0) {
+    return analysis; // No components discovered
+  }
+  
+  // Provide the discovered components without making assumptions
+  const primaryComponent = domainAnalysis.likelyComponents[0];
+  if (primaryComponent) {
+    analysis.primaryComponent = `${primaryComponent} (domain-detected)`;
+    analysis.primaryComponentPath = `Search codebase for: ${primaryComponent}`;
+    analysis.componentIssue = `AUTO-DISCOVERED: Component found in ${pageContext} domain`;
+  }
+  
+  const primaryHook = domainAnalysis.likelyHooks[0];
+  if (primaryHook) {
+    analysis.primaryHook = `${primaryHook} (domain-detected)`;
+    analysis.primaryHookPath = `Search codebase for: ${primaryHook}`;
+    analysis.hookIssue = `AUTO-DISCOVERED: Hook found in ${pageContext} domain`;
+  }
+  
+  // Only provide factual information without assumptions
+  if (issue.type === 'caching') {
+    analysis.problemQuery = `API calls in ${pageContext} domain`;
+    analysis.cacheIssue = `Domain ${pageContext} may benefit from React Query implementation`;
+    analysis.querySource = `${pageContext} domain components`;
+  }
+  
+  return analysis;
+}
+
 function analyzePageContext(pageContext: string, issueType: string): {
   likelyComponents: string[];
   likelyHooks: string[];
 } {
-  const contexts = {
-    'dam': {
-      likelyComponents: ['DamGallery', 'AssetCard', 'FolderTree', 'AssetDetails', 'UploadDialog'],
-      likelyHooks: ['useAssets', 'useFolders', 'useAssetDetails', 'useUpload', 'useDamSearch']
-    },
-    'image-generator': {
-      likelyComponents: ['ImageGeneration', 'ProviderSelector', 'GenerationHistory', 'PromptInput'],
-      likelyHooks: ['useGeneration', 'useProviders', 'useGenerationHistory', 'useImageGenerate']
-    },
-    'dashboard': {
-      likelyComponents: ['DashboardStats', 'RecentActivity', 'QuickActions'],
-      likelyHooks: ['useDashboardData', 'useUserStats', 'useRecentActivity']
-    },
-    'team': {
-      likelyComponents: ['TeamMembersList', 'MemberCard', 'InviteDialog', 'RoleSelector'],
-      likelyHooks: ['useTeamMembers', 'useInvitations', 'useRoles', 'useUserProfile']
-    },
-    'settings': {
-      likelyComponents: ['SettingsForm', 'ProfileSettings', 'SecuritySettings'],
-      likelyHooks: ['useSettings', 'useProfile', 'useSecuritySettings']
+  // Use auto-discovered contexts from generated file
+  try {
+    // Import discovered contexts dynamically to avoid bundling in client
+    const { DISCOVERED_CONTEXTS } = require('../../infrastructure/generated/DiscoveredContexts');
+    const context = DISCOVERED_CONTEXTS.find((ctx: any) => ctx.domain === pageContext);
+    
+    if (context) {
+      return {
+        likelyComponents: context.components || [],
+        likelyHooks: context.queryKeys || [] // Query keys often match hook names
+      };
     }
-  };
-
-  return contexts[pageContext as keyof typeof contexts] || { likelyComponents: [], likelyHooks: [] };
+    
+    return { likelyComponents: [], likelyHooks: [] };
+  } catch (error) {
+    // Graceful fallback if generation hasn't run yet
+    return { likelyComponents: [], likelyHooks: [] };
+  }
 }
 
 function guessComponentFilePath(component: string, pageContext: string): string | null {
@@ -552,7 +785,7 @@ export const PerformanceMetricsDisplay: React.FC<PerformanceMetricsDisplayProps>
       setCopyButtonState('success');
       setTimeout(() => setCopyButtonState('default'), 2000);
     } catch (error) {
-      console.error('Failed to copy frontend report:', error);
+      // Silent fail for copy operation
     }
   };
 

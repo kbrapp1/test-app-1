@@ -37,8 +37,7 @@ export class SourceTracker {
       const stack = error.stack;
       
       if (stack) {
-        // DEBUG: Log raw stack for troubleshooting
-        console.log('📋 Raw Stack Trace:', stack.split('\n').slice(0, 8));
+
         
         source.stack = this.cleanStack(stack);
         source.component = this.extractReactComponent(stack);
@@ -52,18 +51,10 @@ export class SourceTracker {
 
         source.trigger = this.inferTriggerType(stack);
         
-        // DEBUG: Log extracted source info
-        console.log('🎯 Extracted Source:', {
-          component: source.component,
-          hook: source.hook,
-          file: source.file,
-          trigger: source.trigger,
-          cleanStackLines: source.stack?.split('\n').length || 0
-        });
+
       }
     } catch (error) {
       // Silent fail - don't break the app for monitoring
-      console.log('❌ Source capture failed:', error);
     }
 
     return source;
@@ -99,12 +90,7 @@ export class SourceTracker {
       return !isNoise && hasLocation;
     });
 
-    console.log('🧹 Stack filtering:', {
-      originalLines: lines.length,
-      filteredLines: relevantLines.length,
-      kept: relevantLines.slice(0, 5),
-      sample: relevantLines[0]
-    });
+
 
     return relevantLines.slice(0, 15).join('\n'); // Keep top 15 relevant lines
   }
@@ -113,8 +99,6 @@ export class SourceTracker {
    * Extract React component name from stack trace
    */
   private static extractReactComponent(stack: string): string | undefined {
-    console.log('🔍 Looking for components in stack:', stack.substring(0, 300));
-    
     // Look for component patterns in the raw stack - handle bundled code
     const patterns = [
       // Direct component references (bundled code)
@@ -132,7 +116,6 @@ export class SourceTracker {
     
     for (const pattern of patterns) {
       const matches = [...stack.matchAll(pattern)];
-      console.log(`🎯 Pattern ${pattern} found ${matches.length} matches:`, matches.map(m => m[1]));
       
       for (const match of matches) {
         const componentName = match[1];
@@ -145,13 +128,11 @@ export class SourceTracker {
         ].includes(componentName);
         
         if (!isMonitoringRelated) {
-          console.log('✅ Found component:', componentName, 'from pattern:', pattern);
           return componentName;
         }
       }
     }
     
-    console.log('❌ No component found in stack');
     return undefined;
   }
 

@@ -1,4 +1,4 @@
-# Performance Monitor - Real-Time Application Performance Monitoring
+# Performance Monitor - Pattern-Based Performance Analysis Tool
 
 **Document Type:** Feature Documentation  
 **Last Updated:** Current  
@@ -9,41 +9,81 @@
 
 ## 📊 **Executive Summary**
 
-The Performance Monitor is a comprehensive, real-time performance monitoring system built into the application. It provides developers and power users with instant visibility into frontend rendering efficiency, network call optimization, and cross-domain performance correlations. The system operates as a floating dashboard that can be toggled on/off and provides actionable insights for performance optimization.
+The Performance Monitor is a **pattern-based analysis tool** that detects common performance anti-patterns and architectural issues in real-time. It operates as a "performance linting system" that identifies code patterns that *often* correlate with performance problems, rather than measuring actual user-experienced performance issues. The system provides developers with instant visibility into frontend patterns, network call patterns, and potential optimization opportunities.
 
 ### **Key Capabilities:**
-- ✅ **Real-Time Monitoring** - Live performance metrics without external tools
-- ✅ **Network Redundancy Detection** - Identifies duplicate and inefficient API calls
-- ✅ **Frontend Performance Tracking** - Monitors React renders, cache hits, and Web Vitals
-- ✅ **Cross-Domain Insights** - Correlates frontend and network performance issues
-- ✅ **Reset & Clean Slate** - Advanced reset capabilities for testing scenarios
+- ✅ **Pattern Detection** - Identifies common anti-patterns that may lead to performance issues
+- ✅ **Network Call Analysis** - Detects duplicate and redundant API patterns
+- ✅ **Frontend Code Quality** - Monitors React patterns, cache usage, and architectural concerns
+- ✅ **Educational Insights** - Provides best-practice recommendations and implementation guidance
+- ✅ **Reset & Testing** - Advanced reset capabilities for pattern testing scenarios
 - ✅ **DDD Architecture** - Clean separation of concerns following domain-driven design
+
+### **Important Limitations:**
+- ❌ **Does NOT measure actual page load times, user wait times, or business impact**
+- ❌ **Does NOT detect real performance problems - only pattern-based assumptions**
+- ❌ **May flag "issues" that have zero real-world performance impact**
+- ❌ **Uses static thresholds that don't account for application context**
 
 ---
 
 ## 🎯 **Feature Overview**
 
-### **What It Monitors**
+### **What It Analyzes**
 
-**Frontend Performance:**
-- React component render count and rapid re-renders
-- React Query cache hit rates and efficiency
-- Web Vitals (LCP, CLS, FCP, INP, TTFB)
-- Active mutations and cache size
-- Page-specific optimization recommendations
+**Frontend Patterns:**
+- React component render count and rapid re-renders (threshold-based)
+- React Query cache usage patterns (architectural detection)
+- Web Vitals collection (measurement, but no impact correlation)
+- Active mutations and cache size (pattern detection)
+- Page-specific architectural recommendations
 
-**Network Performance:**
-- Total API calls and redundancy detection
-- Real-time network call interception
-- Duplicate call pattern analysis (identical, similar, rapid-fire)
-- Network efficiency scoring (0-100%)
-- Recent call history with detailed metadata
+**Network Patterns:**
+- API call duplication and redundancy patterns
+- Network call interception and pattern analysis
+- Duplicate call pattern classification (rapid-fire, burst, repeated)
+- Network efficiency scoring based on redundancy assumptions
+- Recent call history with metadata
 
-**Cross-Domain Intelligence:**
-- Performance correlation analysis
-- Cascade effect detection (network issues causing frontend problems)
-- Optimization opportunity identification
-- Architectural vs behavioral issue classification
+**Cross-Pattern Analysis:**
+- Pattern correlation between frontend and network anti-patterns
+- Architectural vs behavioral pattern classification
+- Best-practice recommendations based on common patterns
+- Educational guidance for optimization approaches
+
+### **Pattern Detection Logic**
+
+**Frontend "Issues" Detected:**
+```typescript
+// Static threshold assumptions - NOT performance measurement
+if (metrics.cacheSize === 0 && pageContext !== 'dashboard') {
+  // ASSUMES this is bad, regardless of actual performance
+  gaps.push(OptimizationGap.createCachingGap());
+}
+
+if (renderMetrics.count > 15 || renderMetrics.rapidCount > 5) {
+  // ASSUMES high renders = bad, regardless of render cost
+  gaps.push(OptimizationGap.createMemoizationGap(renderCount));
+}
+```
+
+**Network "Issues" Detected:**
+```typescript
+// Pattern-based assumptions - NOT actual performance impact
+if (stats.redundantCalls > 0) {
+  // ASSUMES any duplication = bad, regardless of context
+  issues.push(NetworkIssue.createRedundancyIssue(stats.redundantCalls));
+}
+```
+
+**Cross-Pattern "Insights":**
+```typescript
+// Correlation assumptions - NOT causal analysis
+if (hasCachingIssue && hasRedundancy) {
+  // ASSUMES these patterns are related performance problems
+  insights.push({ title: 'Missing Cache Strategy', ... });
+}
+```
 
 ### **Visual Interface**
 
@@ -91,43 +131,43 @@ The Performance Monitor appears as a floating card in the bottom-right corner wi
 ### **Basic Operation**
 
 **1. Activation**
-- Performance Monitor starts automatically on page load (if previously enabled)
+- Pattern analyzer starts automatically on page load (if previously enabled)
 - Toggle visibility using the icon in the top-right corner
 - State persists across page refreshes
 
-**2. Quick Stats Overview**
-- **Renders**: Current component render count
-- **Cache Hit**: React Query cache efficiency percentage
-- **API Calls**: Total network requests made
-- **Efficiency Bars**: Visual representation of frontend/network performance
+**2. Quick Pattern Overview**
+- **Renders**: Current component render count (threshold-based analysis)
+- **Cache Hit**: React Query cache usage percentage (architectural pattern)
+- **API Calls**: Total network requests made (duplication analysis)
+- **Efficiency Bars**: Visual representation of pattern-based scoring
 
-**3. Detailed Sections**
-- **Frontend Details**: Expandable section showing React Query metrics, render performance, and Web Vitals
-- **Network Details**: Expandable section showing redundant call analysis, recent API calls, and efficiency metrics
+**3. Detailed Pattern Sections**
+- **Frontend Details**: Expandable section showing React Query patterns, render thresholds, and Web Vitals
+- **Network Details**: Expandable section showing duplication analysis, recent API calls, and pattern efficiency
 
 ### **Advanced Features**
 
 **Reset Functionality:**
-- **Reset**: Clears frontend performance counters only
+- **Reset**: Clears frontend pattern counters only
 - **Reset All**: Complete reset with 3-second monitoring pause
-  - Shows "Monitoring paused after reset" indicator
-  - Provides clean slate for testing scenarios
-  - Auto-resumes monitoring after pause period
+  - Shows "Pattern analysis paused after reset" indicator
+  - Provides clean slate for testing pattern scenarios
+  - Auto-resumes pattern detection after pause period
 
-**Enhanced Issue Detection:**
-- Automatically identifies performance problems with source tracking
-- Color-coded severity levels (high/medium/low)
-- Actionable recommendations for optimization
-- Distinguishes between architectural and behavioral issues
-- **Root Cause Analysis**: Shows which React component/hook triggered redundant calls
+**Pattern-Based Issue Detection:**
+- Automatically identifies common anti-patterns with source tracking
+- Color-coded severity levels based on pattern assumptions (high/medium/low)
+- Best-practice recommendations for common patterns
+- Distinguishes between architectural and behavioral patterns
+- **Source Pattern Analysis**: Shows which React component/hook triggered patterns
 
-**Advanced Network Redundancy Analysis:**
-- **Rapid-Fire**: < 100ms apart (likely programming error)
-- **Burst**: < 1s apart (possible race condition)
-- **Repeated**: Multiple calls over longer periods (potential architectural issue)
+**Network Pattern Analysis:**
+- **Rapid-Fire**: < 100ms apart (likely programming error pattern)
+- **Burst**: < 1s apart (possible race condition pattern)
+- **Repeated**: Multiple calls over longer periods (potential architectural pattern)
 - **Source Tracking**: Identifies exact React component, hook, file, and line number
 - **Trigger Classification**: Categorizes calls by trigger type (mount, state-change, user-action, navigation)
-- **Call Stack Analysis**: Provides clean, filtered call stacks for debugging
+- **Call Stack Analysis**: Provides clean, filtered call stacks for pattern debugging
 
 **Compact View Mode:**
 - **Minimizable Interface**: Collapses to show overall score and issue counts
@@ -152,24 +192,24 @@ The Performance Monitor follows **Domain-Driven Design (DDD)** principles with c
 
 ```
 lib/monitoring/
-├── domain/                          # Core business logic
-│   ├── entities/                    # Performance metrics entities
-│   │   ├── PerformanceMetrics.ts    # Frontend performance data
+├── domain/                          # Core pattern detection logic
+│   ├── entities/                    # Pattern metrics entities
+│   │   ├── PerformanceMetrics.ts    # Frontend pattern data
 │   │   └── DetailedPerformanceMetrics.ts
-│   ├── services/                    # Domain calculation services
-│   ├── value-objects/              # Optimization gaps and network issues
-│   ├── cross-domain/               # Cross-domain analysis services
-│   └── network-efficiency/         # Network-specific domain logic
+│   ├── services/                    # Domain pattern calculation services
+│   ├── value-objects/              # Optimization patterns and network patterns
+│   ├── cross-domain/               # Cross-pattern analysis services
+│   └── network-efficiency/         # Network-specific pattern logic
 │       ├── entities/NetworkCall.ts  # Network call entity with source tracking
-│       ├── services/RedundancyDetector.ts # Pure redundancy detection logic
-│       └── value-objects/          # Network efficiency scores
-├── application/                     # Use cases and orchestration
+│       ├── services/RedundancyDetector.ts # Pure pattern detection logic
+│       └── value-objects/          # Network efficiency assumptions
+├── application/                     # Pattern analysis orchestration
 │   └── services/
-│       ├── NetworkMonitoringService.ts # Coordinates network monitoring
+│       ├── NetworkMonitoringService.ts # Coordinates network pattern detection
 │       ├── GlobalNetworkMonitor.ts     # Singleton for compatibility
 │       ├── DetailedPerformanceService.ts
-│       └── NetworkReportService.ts     # Generates network reports
-├── infrastructure/                  # External concerns
+│       └── NetworkReportService.ts     # Generates pattern reports
+├── infrastructure/                  # External pattern data collection
 │   ├── query/                      # React Query integration
 │   └── services/
 │       ├── NetworkCallTracker.ts   # Data persistence for network calls
@@ -200,7 +240,7 @@ lib/monitoring/
 
 **1. Performance Tracking (`usePerformanceTracking`)**
 ```typescript
-// Tracks frontend performance metrics
+// Tracks frontend pattern metrics
 const { state: trackingState, resetCounters, fullReset } = usePerformanceTracking(metrics);
 
 // State includes:
@@ -213,7 +253,7 @@ const { state: trackingState, resetCounters, fullReset } = usePerformanceTrackin
 
 **2. Network Monitoring (`useNetworkMonitoring`)**
 ```typescript
-// Tracks network performance with enhanced source tracking
+// Tracks network pattern analysis with enhanced source tracking
 const { networkStats, clearNetworkData, justReset, isPaused } = useNetworkMonitoring();
 
 // Features:
@@ -302,143 +342,178 @@ class RedundancyDetector {
 }
 ```
 
-### **Performance Calculation**
+### **Pattern Scoring Algorithm**
 
-**Scoring Algorithm:**
+**Important Note: Scores are based on pattern assumptions, NOT actual performance measurement**
+
 ```typescript
-// Frontend Score (0-100)
+// Frontend Pattern Score (0-100) - ASSUMPTION-BASED
 let score = 100;
-score -= Math.min(30, (renderCount - 10) * 2);        // Render penalty
-score -= Math.min(20, (cacheSize - 50) * 0.5);        // Cache size penalty  
-score -= (activeMutations - 3) * 5;                   // Mutation penalty
+score -= Math.min(30, (renderCount - 10) * 2);        // ASSUMES renders > 10 = bad
+score -= Math.min(20, (cacheSize - 50) * 0.5);        // ASSUMES small cache = bad  
+score -= (activeMutations - 3) * 5;                   // ASSUMES mutations > 3 = bad
 score -= webVitalsDeductions;                         // Web Vitals penalty
 
-// Network Score (0-100)  
+// Network Pattern Score (0-100) - REDUNDANCY ASSUMPTION
 const efficiency = ((totalCalls - redundantCalls) / totalCalls) * 100;
+// ASSUMES any redundancy = inefficiency, regardless of context
 
-// Overall Score
+// Overall Score - COMBINES ASSUMPTIONS
 const overallScore = (frontendScore + networkScore) / 2;
+// NOTE: This score does NOT correlate with actual user-experienced performance
 ```
 
 ---
 
 ## 🔧 **Integration Points**
 
-### **React Query Integration**
+### **React Query Pattern Detection**
 
-The Performance Monitor seamlessly integrates with React Query to track cache performance:
+The Performance Monitor analyzes React Query usage patterns (not actual cache performance):
 
 ```typescript
-// Automatic cache hit rate tracking
+// Assumption-based cache pattern tracking
 useEffect(() => {
   if (current.cacheSize > prev.cacheSize) {
     setCacheHitRate(prev => Math.min(100, prev + 5));
   }
+  // NOTE: This assumes cache size growth = good performance
+  // Reality: Cache size has no direct correlation to user-experienced performance
 }, [metrics]);
 ```
 
-### **Web Vitals Integration**
+### **Web Vitals Collection**
 
-Automatically collects Core Web Vitals using the `web-vitals` library:
+Collects Core Web Vitals using the `web-vitals` library, but does NOT correlate them with detected patterns:
 
 ```typescript
-// Real-time Web Vitals collection
+// Real Web Vitals measurement (this IS actual performance data)
 onCLS(handleWebVital);
 onLCP(handleWebVital);
 onFCP(handleWebVital); 
 onINP(handleWebVital);
 onTTFB(handleWebVital);
+
+// However, the system does NOT connect these metrics to the "issues" it detects
+// Web Vitals are displayed separately from pattern-based "problems"
 ```
 
-### **Page Context Awareness**
+### **Page Context Pattern Awareness**
 
-Provides contextual analysis based on page type:
+Provides different pattern assumptions based on page type:
 
 ```typescript
-// Different performance expectations per page
+// Static pattern expectations per page - NOT based on actual performance needs
 const pageContext = {
-  'dashboard': { expectedCalls: 1-2, renderTolerance: 'high' },
-  'dam': { expectedCalls: 3-5, renderTolerance: 'medium' },
-  'image-generator': { expectedCalls: 1-2, renderTolerance: 'low' },
-  'settings': { expectedCalls: 1, renderTolerance: 'high' }
+  'dashboard': { expectedCalls: 1-2, renderTolerance: 'high' },     // ASSUMPTION
+  'dam': { expectedCalls: 3-5, renderTolerance: 'medium' },         // ASSUMPTION
+  'image-generator': { expectedCalls: 1-2, renderTolerance: 'low' }, // ASSUMPTION
+  'settings': { expectedCalls: 1, renderTolerance: 'high' }         // ASSUMPTION
 };
+// NOTE: These thresholds are arbitrary and may not reflect actual performance requirements
 ```
 
 ---
 
-## 📈 **Performance Impact**
+## 📈 **System Overhead**
 
-### **Monitoring Overhead**
+### **Pattern Detection Overhead**
 
 **Network Interception:**
-- **Impact**: < 1ms overhead per request
+- **Impact**: < 1ms overhead per request for pattern analysis
 - **Memory**: ~50KB for 1000 tracked calls
-- **CPU**: Minimal background processing
+- **CPU**: Minimal background pattern processing
 
 **React Integration:**
-- **Render Impact**: < 0.1ms per component render
-- **Memory**: ~10KB for metrics storage
+- **Render Impact**: < 0.1ms per component render for counting
+- **Memory**: ~10KB for pattern metrics storage
 - **Bundle Size**: ~15KB gzipped
 
 **Web Vitals:**
 - **Impact**: Zero performance impact (observer-based)
 - **Collection**: Passive measurement only
 
-### **Development vs Production**
+---
 
-**Development Mode:**
-- Full debugging capabilities enabled
-- Extended call history (1000 calls)
-- Detailed redundancy analysis
-- Real-time issue detection
+## 🎯 **Pattern Analysis Guidelines**
 
-**Production Mode:**
-- Reduced call history (500 calls)
-- Essential metrics only
-- Opt-in detailed analysis
-- Privacy-conscious data collection
+### **Understanding Pattern Thresholds**
+
+**IMPORTANT: These are arbitrary thresholds, NOT performance standards**
+
+```typescript
+// Frontend Pattern Assumptions
+✅ ≤ 10 renders: ASSUMED to be excellent
+⚠️ 11-20 renders: ASSUMED to be good  
+❌ > 20 renders: ASSUMED to need optimization
+// REALITY: Some components legitimately re-render frequently with no performance impact
+
+// Cache Pattern Assumptions  
+✅ > 90% hit rate: ASSUMED to be excellent
+⚠️ 70-90% hit rate: ASSUMED to be good
+❌ < 70% hit rate: ASSUMED to be poor
+// REALITY: Cache hit rate depends on use case; some apps don't need extensive caching
+
+// Web Vitals (ACTUAL performance metrics)
+✅ LCP ≤ 2.5s, CLS ≤ 0.1, FCP ≤ 1.8s: Actual good performance
+⚠️ LCP ≤ 4s, CLS ≤ 0.25, FCP ≤ 3s: Actual needs improvement  
+❌ Above thresholds: Actual poor performance
+```
+
+### **Network Pattern Assumptions**
+
+```typescript
+// API Call Volume Assumptions (per page load)
+✅ 1-2 calls: ASSUMED to be normal
+⚠️ 3-4 calls: ASSUMED to need monitoring
+❌ 5+ calls: ASSUMED to need optimization
+// REALITY: Some pages legitimately need many API calls
+
+// Redundancy Pattern Assumptions
+✅ < 10%: ASSUMED to be excellent
+⚠️ 10-20%: ASSUMED to need attention
+❌ > 20%: ASSUMED to be critical
+// REALITY: Some "redundant" calls may be intentional (retries, different data needs)
+
+// Time Window Pattern Assumptions
+❌ Same endpoint < 1s: ASSUMED to be definite issue
+⚠️ Same endpoint < 5s: ASSUMED to be probable issue  
+✅ Same endpoint > 30s: ASSUMED to be legitimate
+// REALITY: Context matters - rapid calls may be legitimate in some scenarios
+```
 
 ---
 
-## 🎯 **Performance Optimization Guidelines**
+## ⚠️ **Important Disclaimers**
 
-### **Frontend Optimization Thresholds**
+### **What This System IS:**
+- ✅ A pattern detection and code quality tool
+- ✅ An educational resource for performance best practices
+- ✅ A "performance linting" system for common anti-patterns
+- ✅ A development tool for identifying potential optimization areas
+- ✅ A source of actionable recommendations for code improvements
 
-```typescript
-// Render Performance
-✅ ≤ 10 renders: Excellent
-⚠️ 11-20 renders: Good  
-❌ > 20 renders: Needs optimization
+### **What This System IS NOT:**
+- ❌ A real performance monitoring tool
+- ❌ A measurement of actual user-experienced slowness
+- ❌ A detector of actual performance problems
+- ❌ A business impact measurement system
+- ❌ A substitute for real performance testing
+- ❌ A correlation system between patterns and actual performance
 
-// Cache Performance  
-✅ > 90% hit rate: Excellent
-⚠️ 70-90% hit rate: Good
-❌ < 70% hit rate: Poor
+### **When to Use This Tool:**
+- ✅ During development to catch common anti-patterns
+- ✅ For code review guidance on performance patterns
+- ✅ For learning about React Query, memoization, and other best practices
+- ✅ For identifying potential areas for optimization
+- ✅ For maintaining consistent performance patterns across a team
 
-// Web Vitals
-✅ LCP ≤ 2.5s, CLS ≤ 0.1, FCP ≤ 1.8s: Good
-⚠️ LCP ≤ 4s, CLS ≤ 0.25, FCP ≤ 3s: Needs improvement  
-❌ Above thresholds: Poor
-```
-
-### **Network Optimization Thresholds**
-
-```typescript
-// API Call Volume (per page load)
-✅ 1-2 calls: Normal
-⚠️ 3-4 calls: Monitor
-❌ 5+ calls: Optimize
-
-// Redundancy Rate
-✅ < 10%: Excellent
-⚠️ 10-20%: Attention needed
-❌ > 20%: Critical
-
-// Time Window Redundancy
-❌ Same endpoint < 1s: Definite issue
-⚠️ Same endpoint < 5s: Probable issue  
-✅ Same endpoint > 30s: Likely legitimate
-```
+### **When NOT to Rely on This Tool:**
+- ❌ When diagnosing actual user-reported slowness
+- ❌ When prioritizing performance work by business impact
+- ❌ When measuring real application performance
+- ❌ When determining if performance changes actually helped users
+- ❌ When making performance-related business decisions
 
 ---
 
@@ -446,146 +521,129 @@ const pageContext = {
 
 ### **Planned Features**
 
-**Enhanced Source Intelligence:**
-- **Call Origin Mapping**: More precise tracking of Redux actions, context changes, and effect chains
-- **Performance Impact Scoring**: Quantify the performance cost of each redundant call
-- **Automatic Fix Suggestions**: AI-powered recommendations for specific code improvements
-- **Performance Diff Analysis**: Show before/after impact of code changes
+**Enhanced Pattern Intelligence:**
+- **Pattern Confidence Scoring**: Indicate confidence level of pattern-based assumptions
+- **Context-Aware Analysis**: Adjust pattern thresholds based on actual application needs
+- **Performance Correlation**: Connect pattern detection with actual performance measurement
+- **False Positive Reduction**: Learn from user feedback to improve pattern accuracy
 
-**Advanced Analytics:**
-- Performance trend analysis over time
-- Regression detection and alerting
-- Team performance dashboards
-- A/B testing performance impact measurement
-- **Source Pattern Analysis**: Identify common anti-patterns across components
+**Real Performance Integration:**
+- **Actual Performance Measurement**: Integrate with real performance monitoring tools
+- **User Experience Correlation**: Connect patterns to actual user experience metrics
+- **A/B Testing Integration**: Measure actual impact of pattern-based optimizations
+- **Business Impact Measurement**: Correlate patterns with real business metrics
 
-**Enhanced Network Intelligence:**
-- GraphQL query optimization analysis
-- Request/response size optimization  
-- CDN and caching strategy recommendations
-- Bandwidth usage optimization
-- **API Usage Heatmaps**: Visual representation of endpoint usage patterns
+**Advanced Pattern Analysis:**
+- **Pattern Trend Analysis**: Track pattern changes over time
+- **Team Pattern Insights**: Identify common anti-patterns across team members
+- **Automated Pattern Learning**: Improve pattern detection based on actual outcomes
+- **Smart Pattern Recommendations**: AI-powered suggestions based on successful pattern optimizations
 
-**Integration Expansions:**
-- Integration with external APM tools (DataDog, New Relic)
-- Performance CI/CD pipeline integration
-- Automated performance regression testing
-- Real User Monitoring (RUM) capabilities
-- **Source Control Integration**: Link performance issues to specific commits and PRs
+### **Accuracy Improvements**
 
-**Mobile Optimization:**
-- Mobile-specific performance metrics
-- Battery usage impact analysis
-- Touch interaction performance
-- Progressive Web App (PWA) specific monitoring
+**Pattern Validation:**
+- **Real Performance Correlation**: Validate that detected patterns actually correlate with performance issues
+- **Context-Specific Thresholds**: Adjust pattern assumptions based on application type and requirements
+- **User Feedback Integration**: Allow developers to mark false positives to improve accuracy
+- **Performance Impact Measurement**: Quantify the actual performance impact of detected patterns
 
-### **Architectural Improvements**
-
-**Performance:**
-- Web Worker background processing for heavy calculations
-- IndexedDB for persistent metric storage
-- Advanced memory optimization for large datasets
-- Real-time streaming analytics
-
-**DDD Architecture Enhancements:**
-- **Use Case Layer**: Implement specific monitoring use cases (performance alerting, trend analysis)
-- **Event Sourcing**: Track performance events over time for better historical analysis
-- **Domain Events**: Publish performance threshold breaches for reactive monitoring
-- **Repository Pattern**: Abstract performance data persistence for multiple storage backends
-
-**Scalability:**
-- Multi-tenant performance isolation
-- Organization-level performance dashboards  
-- Role-based performance monitoring access
-- Enterprise-grade performance SLAs
+**Enhanced Intelligence:**
+- **Machine Learning Integration**: Use ML to improve pattern detection accuracy over time
+- **Industry Benchmarking**: Compare patterns against industry standards for similar applications
+- **Custom Pattern Rules**: Allow teams to define their own pattern detection rules
+- **Performance Regression Detection**: Identify when pattern changes correlate with actual performance regressions
 
 ---
 
-## 🔗 **Related Documentation**
-
-- [Performance Optimization Heuristics](./performance-optimization-heuristics.md)
-- [DAM Performance Assessment](./dam-performance-assessment.md)
-- [Image Generator Performance Plan](../image-gen/completed/image-generator-performance-optimization-plan.md)
-- [Generic Module Audit Template](./generic-module-audit-prompt-template.md)
-
----
-
-## 📝 **API Reference**
+## 📝 **Honest API Reference**
 
 ### **Core Hooks**
 
 ```typescript
-// Main dashboard hook (compact view managed internally by PerformanceMonitor component)
+// Main pattern analysis dashboard hook
 const dashboard = usePerformanceDashboard(metrics: PerformanceMetrics);
-// Returns: { expandedSections, trackingState, networkStats, frontendScore, networkScore, 
-//          overallScore, scoreColor, frontendOptimizations, networkIssues, crossDomainInsights,
-//          handleFullResetClick, toggleSection, resetCounters }
+// Returns: Pattern analysis results, NOT actual performance measurements
+// { expandedSections, trackingState, networkStats, frontendScore, networkScore, 
+//   overallScore, scoreColor, frontendOptimizations, networkIssues, crossDomainInsights,
+//   handleFullResetClick, toggleSection, resetCounters }
 
-// Individual monitoring hooks
+// Individual pattern monitoring hooks
 const tracking = usePerformanceTracking(metrics: PerformanceMetrics);
+// Returns: Pattern tracking data, NOT performance measurements
+
 const network = useNetworkMonitoring();
-// Returns: { networkStats, clearNetworkData, justReset, isPaused }
+// Returns: Network pattern analysis, NOT network performance measurements
+// { networkStats, clearNetworkData, justReset, isPaused }
 
 const networkState = useNetworkMonitorState(isOpen: boolean, autoRefresh?: boolean);
-// Returns: { stats, isRefreshing, handleClear, handleToggleInterceptors, handleManualRefresh }
-
-// Utility hooks  
-const cacheManager = useGenerationCacheManager(); // Image Generator specific
-const networkDetails = useNetworkMonitor(); // DAM specific
+// Returns: Pattern analysis state, NOT performance state
+// { stats, isRefreshing, handleClear, handleToggleInterceptors, handleManualRefresh }
 ```
 
 ### **Service APIs**
 
-**Application Layer Services (DDD-Compliant):**
+**Application Layer Services (Pattern Analysis):**
 
 ```typescript
-// Network monitoring coordination (Application Layer)
+// Network pattern monitoring coordination (Application Layer)
 const networkMonitor = new NetworkMonitoringService();
-networkMonitor.trackCall({ url, method, type });
-const stats = networkMonitor.getNetworkStats();
+networkMonitor.trackCall({ url, method, type }); // Tracks for pattern analysis
+const stats = networkMonitor.getNetworkStats();  // Returns pattern statistics
 
 // Global singleton for compatibility
 import { globalNetworkMonitor } from '@/lib/monitoring/application/services/GlobalNetworkMonitor';
-const stats = globalNetworkMonitor.getNetworkStats();
+const stats = globalNetworkMonitor.getNetworkStats(); // Pattern-based stats
 
-// Domain services (Pure business logic)
+// Domain services (Pure pattern detection logic)
 const redundancyDetector = new RedundancyDetector(timeWindowMs);
-const patterns = redundancyDetector.detectRedundancy(calls);
+const patterns = redundancyDetector.detectRedundancy(calls); // Detects call patterns
 
 // Infrastructure services
 const callTracker = new NetworkCallTracker();
-const callId = callTracker.trackCall(networkCall);
+const callId = callTracker.trackCall(networkCall); // Stores call for pattern analysis
 
-const sourceInfo = SourceTracker.captureSource(); // Static method for browser APIs
+const sourceInfo = SourceTracker.captureSource(); // Captures source for pattern attribution
 ```
 
-**Legacy API (Maintained for Backward Compatibility):**
+**Pattern Detection APIs:**
 
 ```typescript
-// Performance calculation
+// Pattern-based scoring (NOT performance measurement)
 PerformanceCalculationService.calculateScore(metrics, renderMetrics, avgResponseTime, webVitals);
+// Returns: Pattern-based score assumptions
 
-// Optimization detection  
+// Pattern gap detection  
 OptimizationDetectionService.detectMissingOptimizations(metrics, renderMetrics, cacheHitRate, webVitals, pageContext);
+// Returns: Assumed optimization gaps based on patterns
 
-// Network issue detection  
+// Network pattern issue detection  
 NetworkIssueDetectionService.detectIssues(networkStats);
+// Returns: Pattern-based "issues" (may not be actual problems)
 
-// Cross-domain correlation
+// Cross-pattern correlation assumptions
 PerformanceCorrelationService.generateInsights(frontendOptimizations, networkIssues, renderMetrics, networkStats);
+// Returns: Assumed correlations between patterns (may not represent actual causal relationships)
 ```
 
 ---
 
 **Last Updated:** Current  
 **Maintained By:** Development Team  
-**Version:** 2.0.0 (DDD Architecture Refactor)
+**Version:** 2.1.0 (Accuracy and Transparency Update)
 
 ---
 
 ## 📋 **Version History**
 
-**v2.0.0 (Current) - DDD Architecture Refactor**
+**v2.1.0 (Current) - Accuracy and Transparency Update**
+- ✅ Updated documentation to accurately reflect pattern detection vs. performance measurement
+- ✅ Added clear disclaimers about system limitations and assumptions
+- ✅ Clarified that scores are pattern-based, not performance-based
+- ✅ Distinguished between Web Vitals (actual performance) and pattern analysis
+- ✅ Added guidance on when to use vs. when not to rely on the tool
+- ✅ Updated API documentation to reflect actual capabilities
+
+**v2.0.0 - DDD Architecture Refactor**
 - ✅ Migrated to Domain-Driven Design architecture with proper layer separation
 - ✅ Enhanced source tracking with React component/hook identification via `SourceTracker`
 - ✅ Improved redundancy detection with pattern classification (rapid-fire, burst, repeated)
@@ -595,7 +653,7 @@ PerformanceCorrelationService.generateInsights(frontendOptimizations, networkIss
 - ✅ Added 17+ specialized UI components for modular interface
 
 **v1.0.0 - Initial Implementation**
-- Basic performance monitoring dashboard
-- Network call interception and redundancy detection
-- Frontend performance tracking
+- Basic pattern detection dashboard
+- Network call interception and redundancy pattern detection
+- Frontend pattern tracking
 - React Query integration 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthWithSuperAdmin } from '@/lib/auth/super-admin';
-import { GenericNetworkMonitorUI } from '@/lib/monitoring/components/GenericNetworkMonitorUI';
+import { NetworkMonitorContainer } from '@/lib/monitoring/presentation/components/NetworkMonitorContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Shield } from 'lucide-react';
@@ -104,7 +104,7 @@ export default function NetworkMonitorPage() {
 
       {/* Monitor - Full page embedded */}
       <div className="relative">
-        <GenericNetworkMonitorUI isFullPage={true} />
+                      <NetworkMonitorContainer isFullPage={true} />
       </div>
     </div>
   );

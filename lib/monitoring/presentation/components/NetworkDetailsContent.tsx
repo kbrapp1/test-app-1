@@ -30,7 +30,7 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
       setCopyButtonState('success');
       setTimeout(() => setCopyButtonState('default'), 2000);
     } catch (error) {
-      console.error('Failed to copy redundancy report:', error);
+      // Silent fail for copy operation
     }
   };
 

@@ -23,7 +23,7 @@ export function ClientOnlyPerformanceMonitor({ isEnabled }: ClientOnlyPerformanc
           setPerformanceMonitor(() => module.PerformanceMonitor);
         })
         .catch(error => {
-          console.error('Failed to load PerformanceMonitor:', error);
+          // Silent fail for development tool
         });
     }
   }, [isEnabled]);

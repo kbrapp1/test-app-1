@@ -9,7 +9,7 @@
     "./app/globals.css"
   ],
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "npm run generate:contexts && next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -19,7 +19,10 @@
     "build-storybook": "storybook build",
     "analyze": "ANALYZE=true NODE_ENV=production npm run build",
     "lighthouse": "npx lighthouse http://localhost:3000 --output=html --output-path=lighthouse-report.html --no-enable-error-reporting && start lighthouse-report.html",
-    "perf": "powershell -ExecutionPolicy Bypass -File scripts/performance-analysis.ps1"
+    "perf": "powershell -ExecutionPolicy Bypass -File scripts/performance-analysis.ps1",
+    "generate:contexts": "npx ts-node --project scripts/tsconfig.json scripts/generate-discovered-contexts.ts",
+    "generate:contexts:watch": "nodemon --watch lib --ext ts,tsx --exec \"npm run generate:contexts\"",
+    "prebuild": "npm run generate:contexts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

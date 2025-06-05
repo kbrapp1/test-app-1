@@ -82,20 +82,10 @@ export class NetworkInterceptors {
         const { SourceTracker } = await import('../infrastructure/services/SourceTracker');
         capturedSource = SourceTracker.captureSource();
         
-        // DEBUG: Log what we're capturing
-        console.log('🔍 Network Intercept Debug:', {
-          url,
-          method,
-          isServerAction,
-          nextAction,
-          type: self.classifyRequestType(url, isServerAction),
-          capturedSource,
-          stack: capturedSource?.stack?.split('\n').slice(0, 3)
-        });
+
       } catch (error) {
         // Fallback if SourceTracker is not available
         capturedSource = undefined;
-        console.log('❌ SourceTracker failed:', error);
       }
       
       // Capture payload data for server actions and important requests  
@@ -222,8 +212,7 @@ export class NetworkInterceptors {
    * Classify request type based on URL
    */
   private classifyRequestType(url: string, isServerAction: boolean): 'server-action' | 'api-route' | 'fetch' | 'xhr' | 'unknown' {
-    // Add debug logging
-    console.log('🏷️ Classifying URL:', url, 'isServerAction:', isServerAction);
+
     
     // Check server action flag FIRST - server actions can have empty URLs
     if (isServerAction) return 'server-action';

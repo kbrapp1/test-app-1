@@ -28,9 +28,9 @@ export function ReactScanIntegration() {
           dangerouslyForceRunInProduction: false, // Safety check
         });
 
-      } catch (error) {
-        console.warn('React Scan failed to load:', error);
-      }
+          } catch (error) {
+      // Silent fail for development tool
+    }
     };
 
     loadReactScan();

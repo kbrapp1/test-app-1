@@ -51,7 +51,7 @@ export class NetworkReportService {
       reportLines.push(`- **Endpoint**: \`${urlDisplay}\``);
       reportLines.push(`- **HTTP Method**: ${pattern.originalCall.method}`);
       reportLines.push(`- **Call Type**: ${pattern.originalCall.type || 'unknown'}`);
-      reportLines.push(`- **Duplicate Count**: ${pattern.duplicateCalls.length} redundant calls`);
+      reportLines.push(`- **Duplicate Count**: ${pattern.duplicateCalls.length} redundant call${pattern.duplicateCalls.length === 1 ? '' : 's'}`);
       reportLines.push(`- **Time Window**: ${pattern.timeWindow}ms burst`);
       
       // Production-Ready Root Cause Analysis
@@ -158,9 +158,13 @@ export class NetworkReportService {
     const highIssues = stats.redundantPatterns.filter((_, i) => 
       this.analyzeIssueForProduction(stats.redundantPatterns[i], i).priority === 'high'
     );
+    
+    const mediumIssues = stats.redundantPatterns.filter((_, i) => 
+      this.analyzeIssueForProduction(stats.redundantPatterns[i], i).priority === 'medium'
+    );
 
     if (criticalIssues.length > 0) {
-      reportLines.push(`- **CRITICAL**: Fix ${criticalIssues.length} critical issues immediately`);
+      reportLines.push(`- **CRITICAL**: Fix ${criticalIssues.length} critical issue${criticalIssues.length === 1 ? '' : 's'} immediately`);
       criticalIssues.forEach((pattern, index) => {
         const analysis = this.analyzeIssueForProduction(pattern, index);
         reportLines.push(`  - ${analysis.issue} (${analysis.timeToFix})`);
@@ -168,11 +172,23 @@ export class NetworkReportService {
     }
 
     if (highIssues.length > 0) {
-      reportLines.push(`- **HIGH**: Address ${highIssues.length} high-priority issues this sprint`);
+      reportLines.push(`- **HIGH**: Address ${highIssues.length} high-priority issue${highIssues.length === 1 ? '' : 's'} this sprint`);
       highIssues.forEach((pattern, index) => {
         const analysis = this.analyzeIssueForProduction(pattern, index);
         reportLines.push(`  - ${analysis.issue} (${analysis.timeToFix})`);
       });
+    }
+    
+    if (mediumIssues.length > 0) {
+      reportLines.push(`- **MEDIUM**: Optimize ${mediumIssues.length} medium-priority issue${mediumIssues.length === 1 ? '' : 's'}`);
+      mediumIssues.forEach((pattern, index) => {
+        const analysis = this.analyzeIssueForProduction(pattern, index);
+        reportLines.push(`  - ${analysis.issue} (${analysis.timeToFix})`);
+      });
+    }
+    
+    if (stats.redundantPatterns.length === 0) {
+      reportLines.push(`- ✅ **No immediate issues detected** - monitor for new patterns`);
     }
 
     // React Query Implementation Guide
@@ -262,10 +278,21 @@ export class NetworkReportService {
       businessImpact = 'Increased server load';
     }
 
-    // Generate specific issue description
-    let issue = `${pattern.pattern.toUpperCase()} pattern detected`;
-    let suggestedFix = 'Implement request deduplication';
-    let codeExample = '';
+    // Generate specific issue description  
+    let issue = `${pattern.pattern.toUpperCase()} pattern: ${duplicateCount} call${duplicateCount === 1 ? '' : 's'} over ${pattern.timeWindow}ms`;
+    let suggestedFix = 'Implement request deduplication or caching';
+    let codeExample = `// Add request deduplication
+const { data, isLoading } = useQuery({
+  queryKey: ['${this.generateQueryKey(pattern.originalCall)}'],
+  queryFn: () => fetchData(),
+  staleTime: 2 * 60 * 1000, // 2 minutes for repeated calls
+});
+
+// Or debounce for user interactions
+const debouncedAction = useMemo(
+  () => debounce(action, 500),
+  [dependency]
+);`;
 
     if (pattern.pattern === 'rapid-fire') {
       issue = `Rapid-fire calls: ${duplicateCount} duplicates in ${pattern.timeWindow}ms`;
@@ -290,7 +317,7 @@ const { data, isLoading } = useQuery({
   staleTime: 5 * 60 * 1000, // 5 minutes
 });`;
     } else if (pattern.pattern === 'burst') {
-      issue = `Burst pattern: ${duplicateCount} calls in quick succession`;
+      issue = `Burst pattern: ${duplicateCount} call${duplicateCount === 1 ? '' : 's'} in quick succession`;
       suggestedFix = 'Review component lifecycle and mounting';
       codeExample = `// Check for multiple component instances
 // or useEffect dependency issues

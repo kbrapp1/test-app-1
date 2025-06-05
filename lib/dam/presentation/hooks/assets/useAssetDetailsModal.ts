@@ -3,7 +3,7 @@ import type { PlainTag } from '../../../application/dto/DamApiRequestDto';
 import { AssetDetailsDto } from '../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { AssetTagService } from '../../../application/services/AssetTagService';
 import { AssetOperationsService } from '../../../application/services/AssetOperationsService';
-import { useAssetDetails, useAssetDelete } from '../../../hooks/useAssets';
+import { useAssetDetails, useAssetDelete, useAssetUpdate } from '../../../hooks/useAssets';
 
 interface AssetModalState {
   editMode: boolean;
@@ -49,6 +49,7 @@ export const useAssetDetailsModal = ({
   } = useAssetDetails(assetId || '', open && !!assetId);
   
   const deleteAssetMutation = useAssetDelete();
+  const updateAssetMutation = useAssetUpdate();
 
   const [state, setState] = useState<AssetModalState>({
     editMode: false,
@@ -95,7 +96,10 @@ export const useAssetDetailsModal = ({
     setState(prev => ({ ...prev, updating: true }));
     
     try {
-      await AssetOperationsService.updateAssetName(asset.id, state.editName);
+      await updateAssetMutation.mutateAsync({
+        assetId: asset.id,
+        updates: { name: state.editName.trim() }
+      });
       setState(prev => ({ ...prev, editMode: false, updating: false }));
       onAssetUpdated?.();
       AssetOperationsService.showRenameSuccess(state.editName.trim());
@@ -103,7 +107,7 @@ export const useAssetDetailsModal = ({
       setState(prev => ({ ...prev, updating: false }));
       AssetOperationsService.showError('rename asset');
     }
-  }, [asset, state.editName, onAssetUpdated]);
+  }, [asset, state.editName, updateAssetMutation, onAssetUpdated]);
 
   const handleDelete = useCallback(async () => {
     if (!asset) return;
