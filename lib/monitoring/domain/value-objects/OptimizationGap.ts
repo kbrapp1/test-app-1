@@ -1,4 +1,4 @@
-export type OptimizationType = 'caching' | 'memoization' | 'debouncing' | 'lazy-loading' | 'batching';
+export type OptimizationType = 'caching' | 'memoization' | 'debouncing' | 'lazy-loading' | 'batching' | 'polling' | 'redundancy';
 export type OptimizationSeverity = 'high' | 'medium' | 'low';
 
 export class OptimizationGap {
@@ -57,6 +57,26 @@ export class OptimizationGap {
       'Multiple simultaneous mutations. Consider batching operations.',
       'medium',
       true
+    );
+  }
+
+  static createPollingGap(): OptimizationGap {
+    return new OptimizationGap(
+      'polling',
+      'Polling Interval Conflicts',
+      'Multiple hooks polling same data with conflicting intervals.',
+      'medium',
+      true
+    );
+  }
+
+  static createRedundancyGap(): OptimizationGap {
+    return new OptimizationGap(
+      'redundancy',
+      'Redundant Server Actions',
+      'Multiple calls to same server action within short time window.',
+      'medium',
+      false
     );
   }
 } 

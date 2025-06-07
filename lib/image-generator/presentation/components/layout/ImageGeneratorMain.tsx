@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ImagePromptForm } from '../forms/prompt/ImagePromptForm';
 import { ImageDisplayArea } from './ImageDisplayArea';
 import { HistoryPanel } from '../generation/history/HistoryPanel';
 import { ActionButtonsToolbar } from './ActionButtonsToolbar';
 import { HeaderModelSelector } from '../providers/HeaderModelSelector';
 import { 
-  useImageGenerationOptimized, 
   useInfiniteGenerations,
   useFileUpload, 
   useHistoryPanel, 
@@ -15,12 +14,12 @@ import {
   useImageGeneratorState,
   usePromptEnhancement,
   useProviderSelection,
-  useImageGeneratorCoordinator,
-  useSharedGenerations
+  useImageGeneratorCoordinator
 } from '../../hooks';
-import { useOptimizedGenerate } from '../../hooks/shared/useOptimizedGenerate';
+import { useGenerateImage } from '../../hooks/mutations/useGenerateImage';
 import { useImageGeneratorOperations } from '../../hooks/useImageGeneratorOperations';
 import { useImageGeneratorEffects } from '../../hooks/useImageGeneratorEffects';
+import { useCacheCleanup } from '@/lib/infrastructure/query/useCacheInvalidation';
 
 interface ImageGeneratorMainProps {
   className?: string;
@@ -97,7 +96,6 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
   };
   
   const fileUpload = useFileUpload();
-  const historyPanel = useHistoryPanel();
 
   const {
     selectedProviderId,
@@ -109,33 +107,54 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
 
   const capabilities = getSelectedCapabilities();
   
-  // Option 1: Optimized shared data approach (reduces API calls from 2 to 1)
+  // SIMPLIFIED: Use infinite generations hook for everything - eliminates redundancy
   const {
-    recentGenerations: generations,
-    statistics,
-    refetch: refetchGenerations,
-    isLoading,
-  } = useSharedGenerations({ limit: 20 });
-  
-  // Get the generate function separately since shared hook doesn't provide it
-  const { generate, isGenerating, error } = useOptimizedGenerate();
-  
-  // Option 2: Current separate hooks approach (now commented out)
-  // const {
-  //   generations,
-  //   isGenerating,
-  //   generate,
-  //   refetch: refetchGenerations,
-  // } = useImageGenerationOptimized({ limit: 20 });
-
-  // Lazy load infinite scroll data only when history panel is opened
-  const {
-    generations: historyGenerations,
+    generations: allGenerations,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-    refetch: refetchHistory,
-  } = useInfiniteGenerations({}, { enabled: historyPanel.panelVisible });
+    refetch: refetchGenerations,
+    isLoading,
+  } = useInfiniteGenerations({}, { 
+    enabled: true  // Always enabled
+  });
+  
+  // Derive data for different views from single source - MEMOIZED to prevent unnecessary re-renders
+  const generations = useMemo(() => {
+    // Create stable reference to prevent unnecessary re-renders
+    const recent = allGenerations.slice(0, 20);
+    return recent;
+  }, [allGenerations]); // Recent for main display
+  const historyGenerations = allGenerations; // All for history panel
+  
+  // Initialize history panel (after refetchGenerations is defined)
+  const historyPanel = useHistoryPanel();
+  
+  // Get the generate function separately
+  const generateImageMutation = useGenerateImage();
+  
+  // Create generate function that matches expected API
+  const generate = useCallback(async (
+    prompt: string,
+    width?: number,
+    height?: number,
+    safetyTolerance?: number,
+    providerId?: string,
+    modelId?: string,
+    aspectRatio?: string,
+    baseImageUrl?: string
+  ) => {
+    return await generateImageMutation.mutateAsync({
+      prompt,
+      width,
+      height,
+      aspectRatio,
+      safetyTolerance,
+      providerId,
+      modelId,
+      baseImageUrl,
+    });
+  }, [generateImageMutation]);
 
   const { latestGeneration } = useLatestGeneration({
     generations,
@@ -170,6 +189,9 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
   useImageGeneratorEffects({
     toggleHistory: historyPanel.toggleHistory,
   });
+
+  // Auto-cleanup cache to prevent memory bloat
+  useCacheCleanup();
 
 
   const handleEditImage = useCallback((baseImageUrl: string, originalPrompt: string) => {
@@ -256,7 +278,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
 
           <div className="flex-1">
             <ImageDisplayArea
-              isGenerating={isGenerating}
+              isGenerating={generateImageMutation.isPending}
               currentGeneratedImage={formState.currentGeneratedImage}
               currentPrompt={formState.prompt}
               latestGeneration={latestGeneration}
@@ -269,7 +291,7 @@ export const ImageGeneratorMain: React.FC<ImageGeneratorMainProps> = ({ classNam
           panelVisible={historyPanel.panelVisible}
           showHistory={historyPanel.showHistory}
           generations={historyGenerations}
-          onRefresh={refetchHistory}
+          onRefresh={refetchGenerations}
           onEditImage={handleEditImage}
           onImageSelect={handleImageSelect}
           onMakeBaseImage={imageOperations.handleMakeBaseImageFromHistory}

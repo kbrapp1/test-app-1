@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 
 // Import image generator components for testing
-import { VirtualizedGenerationList } from '@/lib/image-generator/presentation/components/generation/list/VirtualizedGenerationList';
-import { GenerationCard } from '@/lib/image-generator/presentation/components/generation/card/GenerationCard';
+import { GenerationListItem } from '@/lib/image-generator/presentation/components/generation/list/GenerationListItem';
+import { GenerationImage } from '@/lib/image-generator/presentation/components/generation/card/GenerationImage';
 import { ImageGeneratorMain } from '@/lib/image-generator/presentation/components/layout/ImageGeneratorMain';
 
 interface PerformanceMetrics {
@@ -163,17 +163,32 @@ export default function PerformanceTestPage() {
       // Test if React Query is available
       const { useQueryClient } = await import('@tanstack/react-query');
       
-      // Simulate cache operations
-      const cacheMetrics = {
+      // Get cache metrics (if we can access queryClient)
+      let cacheMetrics = {
         totalQueries: 0,
         cachedQueries: 0,
         hitRate: 0,
-        staleTime: '30s configured',
+        staleTime: '2min configured',
         gcTime: '5min configured'
       };
       
-      // In a real app, you'd get actual metrics from queryClient
-      console.log('Cache configuration validated:', cacheMetrics);
+      // Try to get actual metrics from React Query
+      if (typeof window !== 'undefined' && (window as any).__REACT_QUERY_CLIENT__) {
+        const queryClient = (window as any).__REACT_QUERY_CLIENT__;
+        if (queryClient?.getQueryCache) {
+          const allQueries = queryClient.getQueryCache().getAll();
+          cacheMetrics = {
+            totalQueries: allQueries.length,
+            cachedQueries: allQueries.filter((q: any) => q.state.data).length,
+            hitRate: allQueries.length > 0 ? Math.round((allQueries.filter((q: any) => q.state.data).length / allQueries.length) * 100) : 0,
+            staleTime: '2min configured',
+            gcTime: '5min configured'
+          };
+        }
+      }
+      
+      console.log('📊 Cache Metrics:', cacheMetrics);
+      console.log('🧹 Cache cleanup active: Auto-cleanup every 10 minutes, max 100 queries');
       console.log('✅ React Query optimization patterns active');
       
       return new Promise(resolve => setTimeout(resolve, 500));
@@ -278,8 +293,6 @@ export default function PerformanceTestPage() {
       </CardContent>
     </Card>
   );
-
-
 
   const TestResults = () => (
     <Card>

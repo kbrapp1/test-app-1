@@ -9,7 +9,7 @@ interface IssueCardProps {
   index: number;
 }
 
-export const IssueCard: React.FC<IssueCardProps> = ({ issue, index }) => {
+const IssueCardComponent: React.FC<IssueCardProps> = ({ issue, index }) => {
   const getSeverityStyles = (severity: string) => {
     switch (severity) {
       case 'high': 
@@ -63,4 +63,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, index }) => {
       </div>
     </div>
   );
-}; 
+};
+
+// Wrap component in React.memo for performance
+export const IssueCard = React.memo(IssueCardComponent);
+IssueCard.displayName = 'IssueCard';
+
+// No further exports 

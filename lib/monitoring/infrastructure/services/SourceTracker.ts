@@ -115,7 +115,13 @@ export class SourceTracker {
     ];
     
     for (const pattern of patterns) {
-      const matches = [...stack.matchAll(pattern)];
+      let match;
+      const matches = [];
+      pattern.lastIndex = 0; // Reset regex
+      while ((match = pattern.exec(stack)) !== null) {
+        matches.push(match);
+        if (!pattern.global) break;
+      }
       
       for (const match of matches) {
         const componentName = match[1];

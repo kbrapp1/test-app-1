@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,7 +12,7 @@ import {
   Wifi,
   WifiOff
 } from 'lucide-react';
-import { networkInterceptors } from '../../services/NetworkInterceptors';
+import { networkInterceptors } from '../../infrastructure/services/NetworkInterceptors';
 
 interface NetworkMonitorHeaderProps {
   isFullPage: boolean;
@@ -24,7 +24,7 @@ interface NetworkMonitorHeaderProps {
   onClose?: () => void;
 }
 
-export function NetworkMonitorHeader({
+export const NetworkMonitorHeader = React.memo<NetworkMonitorHeaderProps>(({
   isFullPage,
   autoRefresh,
   isRefreshing,
@@ -32,7 +32,23 @@ export function NetworkMonitorHeader({
   onToggleInterceptors,
   onManualRefresh,
   onClose
-}: NetworkMonitorHeaderProps) {
+}) => {
+  const handleToggleAutoRefresh = useCallback(() => {
+    onToggleAutoRefresh();
+  }, [onToggleAutoRefresh]);
+
+  const handleToggleInterceptors = useCallback(() => {
+    onToggleInterceptors();
+  }, [onToggleInterceptors]);
+
+  const handleManualRefresh = useCallback(() => {
+    onManualRefresh();
+  }, [onManualRefresh]);
+
+  const handleClose = useCallback(() => {
+    onClose?.();
+  }, [onClose]);
+
   return (
     <CardHeader className={`${isFullPage ? "pb-6" : "pb-4"} border-b border-gray-100`}>
       <div className="flex items-center justify-between">
@@ -54,7 +70,7 @@ export function NetworkMonitorHeader({
 
         <div className="flex items-center space-x-3">
           <Button
-            onClick={onToggleAutoRefresh}
+            onClick={handleToggleAutoRefresh}
             variant={autoRefresh ? "default" : "outline"}
             size="sm"
             className="transition-all duration-200"
@@ -64,7 +80,7 @@ export function NetworkMonitorHeader({
           </Button>
           
           <Button
-            onClick={onToggleInterceptors}
+            onClick={handleToggleInterceptors}
             variant={networkInterceptors['isInstalled'] ? 'default' : 'outline'}
             size="sm"
             className={networkInterceptors['isInstalled'] 
@@ -77,7 +93,7 @@ export function NetworkMonitorHeader({
           </Button>
 
           <Button 
-            onClick={onManualRefresh} 
+            onClick={handleManualRefresh} 
             variant="ghost" 
             size="sm"
             disabled={isRefreshing}
@@ -88,7 +104,7 @@ export function NetworkMonitorHeader({
 
           {onClose && (
             <Button 
-              onClick={onClose} 
+              onClick={handleClose} 
               variant="ghost" 
               size="sm"
               className="hover:bg-red-50 hover:text-red-600"
@@ -100,4 +116,6 @@ export function NetworkMonitorHeader({
       </div>
     </CardHeader>
   );
-} 
+});
+
+NetworkMonitorHeader.displayName = 'NetworkMonitorHeader'; 

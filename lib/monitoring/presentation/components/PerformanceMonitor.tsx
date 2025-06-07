@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { withMonitoringErrorBoundary } from './error/MonitoringErrorBoundary';
 
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
 import { usePerformanceDashboard } from '../hooks/usePerformanceDashboard';
@@ -22,12 +23,12 @@ interface PerformanceMonitorProps {
   autoRefresh: boolean;
 }
 
-export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ 
+const PerformanceMonitorComponent = ({ 
   metrics, 
   className = '',
   isOpen,
   autoRefresh
-}) => {
+}: PerformanceMonitorProps) => {
   const dashboard = usePerformanceDashboard(metrics);
   const [isCompactMode, setIsCompactMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -36,6 +37,19 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
     }
     return true; // Default to compact mode
   });
+
+  // Memoize expensive calculations
+  const lastUpdateTime = useMemo(() => {
+    return new Date(metrics.lastUpdate).getTime();
+  }, [metrics.lastUpdate]);
+
+  const cardClassName = useMemo(() => {
+    return `fixed bottom-20 right-4 z-50 ${className}`;
+  }, [className]);
+
+  const cardContentMaxHeight = useMemo(() => {
+    return 'calc(85vh - 120px)';
+  }, []);
 
   // Initialize enhanced monitoring when component mounts
   useEffect(() => {
@@ -71,17 +85,23 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
     };
   }, [isOpen, autoRefresh, dashboard.isPaused]);
 
-  const handleExpandFromCompact = () => {
+  const handleExpandFromCompact = useCallback(() => {
     setIsCompactMode(false);
     localStorage.setItem('perfMonitorCompact', 'false');
-  };
+  }, []);
 
-  const handleCollapseToCompact = () => {
+  const handleCollapseToCompact = useCallback(() => {
     setIsCompactMode(true);
     localStorage.setItem('perfMonitorCompact', 'true');
-  };
+  }, []);
 
+  const handleToggleFrontendSection = useCallback(() => {
+    dashboard.toggleSection('frontend');
+  }, [dashboard]);
 
+  const handleToggleNetworkSection = useCallback(() => {
+    dashboard.toggleSection('network');
+  }, [dashboard]);
 
   // Show compact view when in compact mode
   if (isCompactMode) {
@@ -96,8 +116,8 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   }
 
   return (
-    <div className={`fixed bottom-20 right-4 z-50 ${className}`}>
-      <Card className="w-[460px] max-h-[85vh] shadow-xl backdrop-blur-sm bg-white/95 border border-gray-200">
+    <div className={cardClassName}>
+      <Card className="w-[460px] max-h-[85vh] shadow-xl backdrop-blur-sm bg-white/95 border border-gray-200 flex flex-col">
         <PerformanceDashboardHeader
           overallScore={dashboard.overallScore}
           scoreColor={dashboard.scoreColor}
@@ -106,7 +126,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
         
         {/* Page Context Display */}
         {dashboard.trackingState.pageContext && (
-          <div className="px-6 pb-2">
+          <div className="px-6 pb-2 flex-shrink-0">
             <div className="flex items-center justify-start">
               <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full border">
                 📍 {dashboard.trackingState.pageContext}
@@ -115,7 +135,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
           </div>
         )}
         
-        <CardContent className="space-y-4 text-xs overflow-y-auto max-h-[calc(85vh-120px)] pb-4">
+        <CardContent className="space-y-4 text-xs overflow-y-auto pb-4 flex-1 min-h-0">
           <PerformanceIssueSummary 
             frontendIssues={dashboard.frontendOptimizations}
             networkIssues={dashboard.networkIssues}
@@ -135,7 +155,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
             icon="⚡"
             score={dashboard.frontendScore.getValue()}
             isExpanded={dashboard.expandedSections.frontend}
-            onToggle={() => dashboard.toggleSection('frontend')}
+            onToggle={handleToggleFrontendSection}
           >
             <PerformanceMetricsDisplay 
               metrics={metrics} 
@@ -149,7 +169,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
             icon="🌐"
             score={dashboard.networkScore}
             isExpanded={dashboard.expandedSections.network}
-            onToggle={() => dashboard.toggleSection('network')}
+            onToggle={handleToggleNetworkSection}
           >
             <NetworkDetailsContent 
               networkStats={dashboard.networkStats}
@@ -162,10 +182,28 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
             onReset={dashboard.resetCounters}
             onFullReset={dashboard.handleFullResetClick}
             showFullResetConfirm={dashboard.showFullResetConfirm}
-            lastUpdateTime={new Date(metrics.lastUpdate).getTime()}
+            lastUpdateTime={lastUpdateTime}
           />
         </CardContent>
       </Card>
     </div>
   );
-}; 
+};
+
+// Set displayName for debugging
+PerformanceMonitorComponent.displayName = 'PerformanceMonitorComponent';
+
+// Wrap with error boundary for enhanced error handling
+export const PerformanceMonitor = withMonitoringErrorBoundary(
+  React.memo(PerformanceMonitorComponent),
+  {
+    componentName: 'PerformanceMonitor',
+    retryable: true,
+    onError: (error, errorInfo) => {
+      // Additional error handling for performance monitoring
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[PerformanceMonitor] Error in performance monitoring:', error.message);
+      }
+    }
+  }
+); 

@@ -5,13 +5,15 @@ import path from 'path';
 
 // Import the discovery service
 import { DomainDiscoveryService } from '../lib/monitoring/infrastructure/discovery/DomainDiscoveryService';
+import { PageContext } from '../lib/monitoring/domain/repositories/PageContextRepository';
 
 async function generateDiscoveredContexts() {
   console.log('🔍 Discovering domains for build-time generation...');
   
   try {
     // Run actual server-side discovery
-    const discoveredContexts = await DomainDiscoveryService.discoverDomains();
+    const discoveryService = new DomainDiscoveryService();
+    const discoveredContexts = await discoveryService.discoverDomains();
     
     // Generate TypeScript file with discovered data
     const fallbackData = {
@@ -23,7 +25,7 @@ async function generateDiscoveredContexts() {
 // Generated: ${fallbackData.generated}
 // Run 'npm run generate:contexts' to update
 
-import { PageContext } from '../domain/repositories/PageContextRepository';
+import { PageContext } from '../../domain/repositories/PageContextRepository';
 
 export const DISCOVERED_CONTEXTS: PageContext[] = ${JSON.stringify(discoveredContexts, null, 2)};
 `;
@@ -42,7 +44,7 @@ export const DISCOVERED_CONTEXTS: PageContext[] = ${JSON.stringify(discoveredCon
     console.log(`✅ Generated discovered contexts: ${outputPath}`);
     console.log(`📊 Discovered ${discoveredContexts.length} domains:`);
     
-    discoveredContexts.forEach(context => {
+    discoveredContexts.forEach((context: PageContext) => {
       console.log(`   • ${context.domain}: ${context.components.length} components, ${context.endpoints.length} endpoints`);
     });
     
@@ -51,6 +53,8 @@ export const DISCOVERED_CONTEXTS: PageContext[] = ${JSON.stringify(discoveredCon
     process.exit(1);
   }
 }
+
+
 
 // Run if called directly
 if (require.main === module) {

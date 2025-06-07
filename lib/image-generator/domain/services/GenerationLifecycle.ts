@@ -62,6 +62,10 @@ export class GenerationLifecycle {
       throw new Error('Storage URL cannot be empty');
     }
     (generation as any)._resultImageUrl = permanentUrl;
-    (generation as any)._updatedAt = new Date();
+    // Ensure updatedAt strictly increases even if clock resolution is low
+    const prevTime = (generation as any)._updatedAt?.getTime() || 0;
+    const nowTime = Date.now();
+    const newTime = nowTime > prevTime ? nowTime : prevTime + 1;
+    (generation as any)._updatedAt = new Date(newTime);
   }
 } 

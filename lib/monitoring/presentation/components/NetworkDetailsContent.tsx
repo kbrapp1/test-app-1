@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { NetworkReportService } from '../../application/services/NetworkReportService';
+import { NetworkReportFormattingService } from '../services/NetworkReportFormattingService';
 
 interface NetworkDetailsContentProps {
   networkStats: NetworkStats | null;
@@ -12,18 +12,34 @@ interface NetworkDetailsContentProps {
   isPaused?: boolean;
 }
 
-export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
+export const NetworkDetailsContent = React.memo<NetworkDetailsContentProps>(({
   networkStats,
   networkScore,
   isPaused = false
 }) => {
   const [copyButtonState, setCopyButtonState] = React.useState<'default' | 'success'>('default');
 
-  const copyRedundancyReport = async () => {
+  // Memoize expensive calculations
+  const statsCalculations = useMemo(() => {
+    if (!networkStats) return null;
+
+    const patternCallsCount = networkStats.redundantPatterns?.reduce(
+      (sum, p) => sum + p.duplicateCalls.length, 0
+    ) || 0;
+
+    return {
+      patternCallsCount,
+      patternsCount: networkStats.redundantPatterns?.length || 0,
+      recentCallsCount: networkStats.recentCalls?.length || 0,
+      sessionTotal: networkStats.persistentRedundantCount || 0
+    };
+  }, [networkStats]);
+
+  const copyRedundancyReport = useCallback(async () => {
     if (!networkStats?.redundantPatterns?.length) return;
 
-    // Use the enhanced NetworkReportService for comprehensive root cause analysis
-    const report = NetworkReportService.formatRedundancyReport(networkStats);
+    // Use the enhanced NetworkReportFormattingService for comprehensive root cause analysis
+    const report = NetworkReportFormattingService.formatForClipboard(networkStats);
     
     try {
       await navigator.clipboard.writeText(report);
@@ -32,7 +48,58 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
     } catch (error) {
       // Silent fail for copy operation
     }
-  };
+  }, [networkStats]);
+
+
+
+  // Memoize pattern display data
+  const patternDisplayData = useMemo(() => {
+    if (!networkStats?.redundantPatterns) return [];
+
+    return networkStats.redundantPatterns.map((pattern, index) => {
+      // Extract clean endpoint path
+      const cleanPath = pattern.originalCall.url.replace(window.location.origin, '').split('?')[0];
+      const displayPath = cleanPath.length > 40 ? `${cleanPath.substring(0, 40)}...` : cleanPath;
+      
+      // Show method and path like "GET /api/team/members" or "POST /api/team/members"
+      const methodAndPath = `${pattern.originalCall.method} ${displayPath}`;
+
+      return {
+        key: index,
+        pattern,
+        methodAndPath,
+        displayPath,
+        callCount: pattern.duplicateCalls.length + 1
+      };
+    });
+  }, [networkStats?.redundantPatterns]);
+
+  // Memoize recent calls display data
+  const recentCallsDisplayData = useMemo(() => {
+    if (!networkStats?.recentCalls) return [];
+
+    return networkStats.recentCalls.slice(0, 5).map((call, index) => {
+      // Extract clean endpoint path
+      const cleanPath = call.url.replace(window.location.origin, '').split('?')[0];
+      const displayPath = cleanPath.length > 35 ? `${cleanPath.substring(0, 35)}...` : cleanPath;
+      
+      // Show method and path like "GET /api/team/members" or "POST /api/team/members"
+      const methodAndPath = `${call.method} ${displayPath}`;
+
+      const statusColorClass = call.status
+        ? call.status >= 200 && call.status < 300 ? 'bg-green-500' : 
+          call.status >= 400 ? 'bg-red-500' : 'bg-yellow-500'
+        : '';
+
+      return {
+        key: call.id || index,
+        call,
+        methodAndPath,
+        displayPath,
+        statusColorClass
+      };
+    });
+  }, [networkStats?.recentCalls]);
 
   if (!networkStats) {
     return (
@@ -43,6 +110,8 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
       </div>
     );
   }
+
+  if (!statsCalculations) return null;
 
   return (
     <div className="space-y-3 mt-3">
@@ -69,7 +138,7 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Session Total:</span>
-          <span className="font-mono text-orange-600">{networkStats.persistentRedundantCount || 0}</span>
+          <span className="font-mono text-orange-600">{statsCalculations.sessionTotal}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Efficiency:</span>
@@ -85,19 +154,17 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
         <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2 rounded">
           <div className="flex justify-between">
             <span className="text-gray-600">Patterns Found:</span>
-            <span className="font-mono">{networkStats.redundantPatterns?.length || 0}</span>
+            <span className="font-mono">{statsCalculations.patternsCount}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Pattern Calls:</span>
-            <span className="font-mono">
-              {networkStats.redundantPatterns?.reduce((sum, p) => sum + p.duplicateCalls.length, 0) || 0}
-            </span>
+            <span className="font-mono">{statsCalculations.patternCallsCount}</span>
           </div>
         </div>
       </div>
 
       {/* Redundant Patterns Details */}
-      {networkStats.redundantPatterns && networkStats.redundantPatterns.length > 0 && (
+      {patternDisplayData.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between">
             <div className="text-xs font-medium text-gray-700 border-b border-gray-200 pb-1 flex-1">
@@ -122,18 +189,11 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
             </button>
           </div>
           <div className="space-y-2 max-h-32 overflow-y-auto">
-            {networkStats.redundantPatterns.map((pattern, index) => (
-              <div key={index} className="bg-red-50 border border-red-200 rounded-md p-2 text-xs">
+            {patternDisplayData.map(({ key, pattern, methodAndPath, callCount }) => (
+              <div key={key} className="bg-red-50 border border-red-200 rounded-md p-2 text-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-red-700 capitalize">{pattern.pattern}</span>
-                  <span className="text-red-600">{pattern.duplicateCalls.length + 1} calls</span>
-                </div>
-                <div className="text-gray-700 break-all" title={pattern.originalCall.url}>
-                  <span className="font-medium">{pattern.originalCall.method}</span> {
-                    pattern.originalCall.url.length > 40 
-                      ? `${pattern.originalCall.url.substring(0, 40)}...` 
-                      : pattern.originalCall.url
-                  }
+                  <span className="font-medium text-red-700">{methodAndPath}</span>
+                  <span className="text-red-600">{callCount} calls</span>
                 </div>
                 <div className="text-gray-600 mt-1">
                   Window: {pattern.timeWindow}ms
@@ -145,26 +205,20 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
       )}
 
       {/* Recent Calls Summary */}
-      {networkStats.recentCalls && networkStats.recentCalls.length > 0 && (
+      {recentCallsDisplayData.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className="text-xs font-medium text-gray-700 border-b border-gray-200 pb-1">
-            Recent API Calls ({Math.min(5, networkStats.recentCalls.length)} of {networkStats.recentCalls.length})
+            Recent API Calls ({Math.min(5, statsCalculations.recentCallsCount)} of {statsCalculations.recentCallsCount})
           </div>
           <div className="space-y-1 max-h-24 overflow-y-auto">
-            {networkStats.recentCalls.slice(0, 5).map((call, index) => (
-              <div key={call.id || index} className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1">
+            {recentCallsDisplayData.map(({ key, call, methodAndPath, statusColorClass }) => (
+              <div key={key} className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1">
                 <div className="flex items-center space-x-1 flex-1 min-w-0">
-                  <span className="font-medium text-blue-600 flex-shrink-0">{call.method}</span>
-                  <span className="truncate" title={call.url}>
-                    {call.url.length > 25 ? `${call.url.substring(0, 25)}...` : call.url}
-                  </span>
+                  <span className="font-medium text-blue-600 flex-shrink-0 truncate" title={call.url}>{methodAndPath}</span>
                 </div>
                 <div className="flex items-center space-x-1 flex-shrink-0">
                   {call.status && (
-                    <span className={`w-2 h-2 rounded-full ${
-                      call.status >= 200 && call.status < 300 ? 'bg-green-500' : 
-                      call.status >= 400 ? 'bg-red-500' : 'bg-yellow-500'
-                    }`} title={`Status: ${call.status}`} />
+                    <span className={`w-2 h-2 rounded-full ${statusColorClass}`} title={`Status: ${call.status}`} />
                   )}
                   {call.duration && (
                     <span className="text-gray-500">{call.duration}ms</span>
@@ -177,4 +231,6 @@ export const NetworkDetailsContent: React.FC<NetworkDetailsContentProps> = ({
       )}
     </div>
   );
-}; 
+});
+
+NetworkDetailsContent.displayName = 'NetworkDetailsContent'; 

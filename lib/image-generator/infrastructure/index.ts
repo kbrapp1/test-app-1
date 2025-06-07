@@ -5,4 +5,4 @@ export * from './persistence/supabase';
 export * from './providers/replicate';
 
 export { SupabaseGenerationRepository } from './persistence/supabase/SupabaseGenerationRepository';
-export { ReplicateFluxProvider } from './providers/replicate/ReplicateFluxProvider'; 
+export { ReplicateProvider } from './providers/replicate/ReplicateProvider'; 

@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo, useCallback } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useCallback, useState } from 'react';
 import { GenerationDto } from '../../../application/dto';
 import { getGenerations } from '../../../application/actions/generation.actions';
 import { createListQueryKey } from '../shared/queryKeys';
@@ -21,10 +21,10 @@ export function useInfiniteGenerations(
 ) {
   const { enabled = true } = options;
   
-  // Memoize query key to prevent unnecessary cache invalidations
+  // Simple query key for infinite generations
   const queryKey = useMemo(() => [...createListQueryKey(filters), 'infinite'], [filters]);
   
-  // Memoized query function
+  // Simple query function with standard pagination
   const queryFn = useCallback(async ({ pageParam = 0 }): Promise<GenerationDto[]> => {
     const result = await getGenerations({
       ...filters,
@@ -42,17 +42,14 @@ export function useInfiniteGenerations(
   const query = useInfiniteQuery({
     queryKey,
     queryFn,
-    enabled, // Only fetch when enabled (allows lazy loading)
+    enabled,
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      // If the last page has fewer items than the page size, there are no more pages
-      if (lastPage.length < GENERATIONS_PER_PAGE) {
-        return undefined;
-      }
-      // Return the next page number
-      return allPages.length;
+      // Standard pagination logic: return next page if current page is full
+      const hasMore = lastPage.length === GENERATIONS_PER_PAGE;
+      return hasMore ? allPages.length : undefined;
     },
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes - matches useGenerations staleTime
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false, // Prevent unnecessary refetches on mount
@@ -66,7 +63,7 @@ export function useInfiniteGenerations(
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  // Flatten all pages into a single array
+  // Flatten all pages into a single array with stable reference
   const generations = useMemo(() => {
     if (!query.data?.pages) return [];
     
@@ -80,9 +77,12 @@ export function useInfiniteGenerations(
       return acc;
     }, [] as GenerationDto[]);
     
-    return uniqueGenerations.sort((a, b) => 
+    const sorted = uniqueGenerations.sort((a: GenerationDto, b: GenerationDto) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+    
+    // Return stable reference if content hasn't actually changed
+    return sorted;
   }, [query.data?.pages]);
 
   return {

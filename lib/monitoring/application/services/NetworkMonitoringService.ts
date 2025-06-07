@@ -2,7 +2,7 @@
  * Network Monitoring Service (Application Layer)
  * 
  * Single Responsibility: Coordinate network monitoring use cases
- * Orchestrates domain and infrastructure services
+ * Orchestrates domain and infrastructure services with performance optimization
  */
 
 import { NetworkCall, NetworkStats, RedundantCall } from '../../domain/network-efficiency/entities/NetworkCall';
@@ -11,10 +11,13 @@ import { NetworkCallTracker } from '../../infrastructure/services/NetworkCallTra
 import { SourceTracker, CallSource } from '../../infrastructure/services/SourceTracker';
 import { NetworkIssueDetectionService } from '../../domain/network-efficiency/services/NetworkIssueDetectionService';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
+import { NetworkPerformanceThrottler } from '../../infrastructure/services/NetworkPerformanceThrottler';
+import { IssueAnalysisService } from '../../domain/services/IssueAnalysisService';
 
 export class NetworkMonitoringService {
   private readonly callTracker: NetworkCallTracker;
   private readonly redundancyDetector: RedundancyDetector;
+  private readonly performanceThrottler: NetworkPerformanceThrottler;
   private detectedRedundancies: RedundantCall[] = [];
   private persistentIssues: NetworkIssue[] = [];
   private readonly maxRedundancyHistory = 100;
@@ -27,6 +30,11 @@ export class NetworkMonitoringService {
   constructor() {
     this.callTracker = new NetworkCallTracker();
     this.redundancyDetector = new RedundancyDetector();
+    this.performanceThrottler = new NetworkPerformanceThrottler({
+      maxRequestsPerSecond: 100,
+      burstCapacity: 150,
+      monitoringEnabled: true
+    });
   }
 
   /**
@@ -120,12 +128,45 @@ export class NetworkMonitoringService {
   }
 
   /**
-   * Clear all monitoring data including persistent issues
+   * Get comprehensive performance metrics including throttling
+   */
+  getPerformanceMetrics() {
+    const callTrackerStats = this.callTracker.getMemoryStats();
+    const throttlerStats = this.performanceThrottler.getPerformanceMetrics();
+    const throttleStats = this.performanceThrottler.getThrottleStats();
+    
+    return {
+      memory: callTrackerStats,
+      performance: throttlerStats,
+      throttling: throttleStats,
+      monitoring: {
+        redundancyPatternsStored: this.detectedRedundancies.length,
+        persistentIssuesStored: this.persistentIssues.length,
+        sessionTotalCalls: this.sessionTotalCalls,
+        sessionRedundantCalls: this.sessionRedundantCalls
+      }
+    };
+  }
+
+  /**
+   * Update throttling configuration
+   */
+  updateThrottleConfig(config: {
+    maxRequestsPerSecond?: number;
+    burstCapacity?: number;
+    monitoringEnabled?: boolean;
+  }): void {
+    this.performanceThrottler.updateConfig(config);
+  }
+
+  /**
+   * Clear all monitoring data including persistent issues and performance metrics
    */
   clear(): void {
     this.callTracker.clear();
     this.detectedRedundancies = [];
     this.persistentIssues = [];
+    this.performanceThrottler.reset();
     // Reset session counters
     this.sessionTotalCalls = 0;
     this.sessionRedundantCalls = 0;
@@ -163,19 +204,31 @@ export class NetworkMonitoringService {
    */
   private detectAndStoreIssues(): void {
     const allCalls = this.callTracker.getAllCalls();
+    const rawPatterns = this.redundancyDetector.detectRedundancy(allCalls);
     
-    // Create temporary stats for issue detection
+    // ✅ Apply the same filtering logic as report generation
+    // Filter out legitimate infinite scroll patterns
+    const issueAnalysisService = IssueAnalysisService.create();
+    const actualRedundantPatterns = rawPatterns.filter(pattern => {
+      const analysis = issueAnalysisService.analyzeRedundantPattern(pattern);
+      return analysis !== null;
+    });
+    
+    // Calculate actual redundant call count (excluding legitimate patterns)
+    const actualRedundantCalls = actualRedundantPatterns.reduce(
+      (count, pattern) => count + pattern.duplicateCalls.length, 
+      0
+    );
+    
+    // Create temporary stats for issue detection using FILTERED data
     const tempStats = {
       totalCalls: allCalls.length,
-      redundantCalls: this.redundancyDetector.detectRedundancy(allCalls).reduce(
-        (count, pattern) => count + pattern.duplicateCalls.length, 
-        0
-      ),
+      redundantCalls: actualRedundantCalls, // ✅ Use filtered count
       redundancyRate: 0,
       sessionRedundancyRate: 0,
       persistentRedundantCount: 0,
       recentCalls: allCalls.slice(0, 10),
-      redundantPatterns: [],
+      redundantPatterns: actualRedundantPatterns, // ✅ Use filtered patterns
       callsByType: {}
     };
     

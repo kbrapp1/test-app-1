@@ -102,27 +102,35 @@ I need you to perform a comprehensive audit of the {MODULE_NAME} module against 
 - [ ] Inconsistent patterns across similar components
 - [ ] Architectural decision documentation
 
+### 6. Security & Privacy Review
+**Security & Privacy:**
+- [ ] Proper input validation and DTO schema enforcement
+- [ ] No hard-coded secrets; use environment variables for sensitive config
+- [ ] Encryption in transit (TLS) and at rest where applicable
+- [ ] Access control and authorization boundaries enforced
+- [ ] Compliance considerations (e.g., GDPR, HIPAA) and data protection measures
+
 **DELIVERABLES REQUESTED:**
 
 ### Audit Report Format:
-1. **Critical Violations** (🚨 Priority 1 - Breaks Architecture)
+1. **Critical Violations** (🚨 Priority 1 - Breaks Architecture; Must fix before next release (<24h))
    - List specific DDD layer violations with file paths
    - Identify cross-domain imports and tight coupling
    - Note any fundamental architectural breaks
 
-2. **High-Impact Performance Issues** (🔥 Priority 2 - Major Performance Impact)
+2. **High-Impact Performance Issues** (🔥 Priority 2 - Major Performance Impact; Address in next sprint)
    - React Query optimization opportunities
    - Component performance bottlenecks
    - Network and caching inefficiencies
    - Memory management issues
 
-3. **Code Quality Issues** (⚠️ Priority 3 - Code Quality & Maintainability)
+3. **Code Quality Issues** (⚠️ Priority 3 - Code Quality & Maintainability; Plan for next 1-2 sprints)
    - File size violations (>250 lines)
    - Single responsibility violations
    - Missing error handling
    - Code duplication patterns
 
-4. **Optimization Opportunities** (⚡ Priority 4 - Performance Enhancements)
+4. **Optimization Opportunities** (⚡ Priority 4 - Performance Enhancements; Backlog as future improvements)
    - Bundle size reduction opportunities
    - Advanced performance features
    - Developer experience improvements
@@ -156,6 +164,7 @@ I need you to perform a comprehensive audit of the {MODULE_NAME} module against 
 - Check hook organization and responsibilities
 - Ensure proper error boundaries
 - Validate responsive design patterns
+- Verify accessibility compliance (ARIA, keyboard navigation, color contrast, semantic HTML)
 
 **VALIDATION CRITERIA:**
 - Provide specific file paths for each violation

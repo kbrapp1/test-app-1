@@ -9,7 +9,7 @@ import { OrganizationProvider } from '@/lib/organization/application/providers/O
 import { UserProfileProvider } from "@/lib/auth/providers/UserProfileProvider";
 import { TeamMembersProvider } from "@/lib/auth/providers/TeamMembersProvider";
 import { IdleTimeoutProvider } from "@/lib/auth/providers/IdleTimeoutProvider";
-import ReactScanIntegration from '@/lib/monitoring/development/ReactScanIntegration';
+import ReactScanIntegration from '@/lib/monitoring/infrastructure/development/ReactScanIntegration';
 
 export default function ProtectedLayout({
   children,

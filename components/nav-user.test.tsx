@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { NavUser } from './nav-user';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { PerformanceMonitorProvider } from '@/lib/monitoring/presentation/providers/PerformanceMonitorProvider';
 
 // Mock only what we need - the user profile hook
 vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({
@@ -34,24 +35,25 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
   };
 });
 
-// Mock performance monitor hook
-vi.mock('@/lib/monitoring/context/PerformanceMonitorContext', () => ({
-  usePerformanceMonitor: () => ({
-    isEnabled: false,
-    toggle: vi.fn(),
-    enable: vi.fn(),
-    disable: vi.fn(),
-  }),
-}));
+// Mock localStorage for the PerformanceMonitorProvider
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  },
+});
 
 import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 
 describe('NavUser', () => {
   const renderNavUser = () => {
     return render(
-      <SidebarProvider>
-        <NavUser />
-      </SidebarProvider>
+      <PerformanceMonitorProvider>
+        <SidebarProvider>
+          <NavUser />
+        </SidebarProvider>
+      </PerformanceMonitorProvider>
     );
   };
 

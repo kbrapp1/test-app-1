@@ -167,7 +167,7 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
               {truncatePrompt(generation.prompt)}
             </p>
             <div className="text-xs text-gray-500">
-              Model: FLUX Kontext Max • Size: {generation.width}×{generation.height}
+              Model: {generation.modelName} • Size: {generation.width}×{generation.height}
             </div>
           </div>
         </div>

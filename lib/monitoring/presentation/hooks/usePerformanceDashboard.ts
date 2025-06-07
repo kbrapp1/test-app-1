@@ -1,133 +1,128 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
-import { PerformanceCalculationService } from '../../domain/services/PerformanceCalculationService';
-import { OptimizationDetectionService } from '../../domain/services/OptimizationDetectionService';
-import { PerformanceCorrelationService } from '../../domain/cross-domain/services/PerformanceCorrelationService';
 import { usePerformanceTracking } from './usePerformanceTracking';
 import { useNetworkMonitoring } from './useNetworkMonitoring';
+import { usePerformanceDashboardUI } from './usePerformanceDashboardUI';
+import { usePerformanceScores } from './usePerformanceScores';
+import { usePerformanceIssueDetection } from './usePerformanceIssueDetection';
+import { useCrossDomainInsights } from './useCrossDomainInsights';
 
-interface ExpandableSections {
-  frontend: boolean;
-  network: boolean;
-}
+/**
+ * Performance Dashboard Hook (Presentation Layer)
+ * 
+ * Responsibility: Orchestrate specialized performance monitoring hooks
+ * Bounded Context: Performance Monitoring Dashboard
+ * 
+ * Single Responsibility: Focus solely on coordinating specialized hooks
+ * Following DDD principles with clear separation of concerns
+ * 
+ * Key Features:
+ * - Orchestrates UI state management via usePerformanceDashboardUI
+ * - Delegates score calculations to usePerformanceScores
+ * - Handles issue detection through usePerformanceIssueDetection
+ * - Manages cross-domain insights via useCrossDomainInsights
+ * - Maintains backward compatibility with existing components
+ * 
+ * @param {PerformanceMetrics} performanceMetrics - Core performance metrics from domain layer
+ * @returns {object} Comprehensive dashboard state and operations
+ * 
+ * @example
+ * ```typescript
+ * function PerformanceMonitor({ metrics }: { metrics: PerformanceMetrics }) {
+ *   const dashboard = usePerformanceDashboard(metrics);
+ *   
+ *   return (
+ *     <div>
+ *       <h2>Overall Score: {dashboard.overallScore}</h2>
+ *       <button onClick={() => dashboard.toggleSection('frontend')}>
+ *         Toggle Frontend Details
+ *       </button>
+ *       {dashboard.frontendOptimizations.map(optimization => (
+ *         <div key={optimization.type}>{optimization.title}</div>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * @since 2.0.0 - Refactored following DDD principles
+ */
+export function usePerformanceDashboard(performanceMetrics: PerformanceMetrics) {
+  
+  // Core Performance Tracking Integration
+  const { 
+    state: performanceTrackingState, 
+    resetCounters: resetPerformanceCounters, 
+    fullReset: performFullReset 
+  } = usePerformanceTracking(performanceMetrics);
+  
+  const { 
+    networkStats: networkMonitoringStats, 
+    clearNetworkData: clearAllNetworkData, 
+    justReset: networkJustReset, 
+    isPaused: isMonitoringPaused 
+  } = useNetworkMonitoring();
 
-export function usePerformanceDashboard(metrics: PerformanceMetrics) {
-  // State management
+  // Specialized Hook Delegation
+  const uiState = usePerformanceDashboardUI();
+  
+  const scores = usePerformanceScores(
+    performanceMetrics,
+    performanceTrackingState,
+    networkMonitoringStats
+  );
+  
+  const issues = usePerformanceIssueDetection(
+    performanceMetrics,
+    performanceTrackingState,
+    networkMonitoringStats,
+    isMonitoringPaused
+  );
+  
+  const insights = useCrossDomainInsights(
+    issues.frontendOptimizations,
+    issues.networkIssues,
+    performanceTrackingState.renderMetrics,
+    scores.filteredNetworkStats,
+    isMonitoringPaused
+  );
 
-  const [expandedSections, setExpandedSections] = useState<ExpandableSections>({
-    frontend: false,
-    network: false
-  });
-
-  const [showFullResetConfirm, setShowFullResetConfirm] = useState(false);
-  const fullResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Performance tracking hooks
-  const { state: trackingState, resetCounters, fullReset } = usePerformanceTracking(metrics);
-  const { networkStats, clearNetworkData, justReset, isPaused } = useNetworkMonitoring();
-
-  // Memoized calculations
-  const frontendScore = useMemo(() => PerformanceCalculationService.calculateScore(
-    metrics,
-    trackingState.renderMetrics,
-    trackingState.avgResponseTime,
-    trackingState.webVitals
-  ), [metrics, trackingState.renderMetrics, trackingState.avgResponseTime, trackingState.webVitals]);
-
-  const networkScore = useMemo(() => {
-    if (!networkStats || networkStats.totalCalls === 0) return 100;
-    return Math.round(100 - networkStats.redundancyRate);
-  }, [networkStats]);
-
-  const overallScore = useMemo(() => Math.round((frontendScore.getValue() + networkScore) / 2), [frontendScore, networkScore]);
-  const scoreColor = useMemo((): 'green' | 'yellow' | 'red' => overallScore >= 90 ? 'green' : overallScore >= 70 ? 'yellow' : 'red', [overallScore]);
-
-  // Issue detection
-  const frontendOptimizations = useMemo(() => isPaused ? [] : OptimizationDetectionService.detectMissingOptimizations(
-    metrics,
-    trackingState.renderMetrics,
-    trackingState.cacheHitRate,
-    trackingState.webVitals,
-    trackingState.pageContext
-  ), [metrics, trackingState.renderMetrics, trackingState.cacheHitRate, trackingState.webVitals, trackingState.pageContext, isPaused]);
-
-  const networkIssues = useMemo(() => {
-    if (isPaused) return [];
-    return networkStats?.persistentIssues || [];
-  }, [networkStats?.persistentIssues, isPaused]);
-
-  const emptyNetworkStats = useMemo(() => ({
-    totalCalls: 0,
-    redundantCalls: 0,
-    redundancyRate: 0,
-    sessionRedundancyRate: 0,
-    persistentRedundantCount: 0,
-    recentCalls: [],
-    redundantPatterns: [],
-    callsByType: {},
-    persistentIssues: []
-  }), []);
-
-  const crossDomainInsights = useMemo(() => isPaused ? [] : PerformanceCorrelationService.generateInsights(
-    frontendOptimizations,
-    networkIssues,
-    trackingState.renderMetrics,
-    networkStats || emptyNetworkStats
-  ), [frontendOptimizations, networkIssues, trackingState.renderMetrics, networkStats, emptyNetworkStats, isPaused]);
-
-  // Event handlers
-
-  const handleFullResetClick = useCallback(() => {
-    if (showFullResetConfirm) {
-      fullReset();
-      clearNetworkData();
-      setShowFullResetConfirm(false);
-    } else {
-      setShowFullResetConfirm(true);
-      fullResetTimeoutRef.current = setTimeout(() => {
-        setShowFullResetConfirm(false);
-      }, 3000);
-    }
-  }, [showFullResetConfirm, fullReset, clearNetworkData]);
-
-  const toggleSection = useCallback((section: keyof ExpandableSections) => {
-    // Use React.startTransition to mark this as a low-priority update
-    // This helps differentiate UI interactions from performance-critical renders
-    React.startTransition(() => {
-      setExpandedSections(prev => ({
-        ...prev,
-        [section]: !prev[section]
-      }));
+  // Orchestrated Reset Handler
+  const handleFullDashboardReset = useCallback(() => {
+    uiState.handleResetConfirmation(() => {
+      performFullReset();
+      clearAllNetworkData();
     });
-  }, []);
+  }, [uiState.handleResetConfirmation, performFullReset, clearAllNetworkData]);
 
+  // Unified Dashboard Interface (Backward Compatibility)
   return {
-    // State
-    expandedSections,
-    showFullResetConfirm,
+    // UI State Management (from usePerformanceDashboardUI)
+    expandedSections: uiState.expandedSections,
+    showFullResetConfirm: uiState.showFullResetConfirm,
     
-    // Performance data
-    trackingState,
-    networkStats,
-    frontendScore,
-    networkScore,
-    overallScore,
-    scoreColor,
-    isPaused,
+    // Performance Tracking Data
+    trackingState: performanceTrackingState,
+    networkStats: scores.filteredNetworkStats,
+    frontendScore: scores.frontendScore,
+    networkScore: scores.networkScore,
+    overallScore: scores.overallScore,
+    scoreColor: scores.scoreColor,
+    isPaused: isMonitoringPaused,
     
-    // Issues
-    frontendOptimizations,
-    networkIssues,
-    crossDomainInsights,
+    // Detected Performance Issues (from usePerformanceIssueDetection)
+    frontendOptimizations: issues.frontendOptimizations,
+    networkIssues: issues.networkIssues,
+    crossDomainInsights: insights.insights,
     
-    // Actions
-    handleFullResetClick,
-    toggleSection,
-    resetCounters,
+    // User Actions
+    handleFullResetClick: handleFullDashboardReset,
+    toggleSection: uiState.toggleSection,
+    resetCounters: resetPerformanceCounters,
     
-    // Cleanup
-    fullResetTimeoutRef
+    // Cleanup References (backward compatibility)
+    fullResetTimeoutRef: uiState.fullResetTimeoutRef
   };
 } 

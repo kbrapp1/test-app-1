@@ -18,9 +18,11 @@ export class GenerationMapper {
       id: generation.getId(),
       prompt: generation.prompt.toString(),
       imageUrl: generation.resultImageUrl || undefined,
+      baseImageUrl: generation.baseImageUrl || undefined,
       status: this.mapStatusToDto(generation.getStatus()),
       width: generation.imageWidth,
       height: generation.imageHeight,
+      aspectRatio: generation.aspectRatio,
       costCents: generation.getCostCents(),
       createdAt: generation.createdAt.toISOString(),
       updatedAt: generation.updatedAt.toISOString(),
@@ -29,6 +31,8 @@ export class GenerationMapper {
       replicateId: generation.externalProviderId || undefined,
       errorMessage: generation.errorMessage || undefined,
       editType: generation.editType,
+      damAssetId: generation.damAssetId || undefined,
+      modelName: generation.modelName,
     };
   }
 

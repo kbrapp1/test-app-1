@@ -1,5 +1,5 @@
 import { PageContext, PageContextRepository } from '../repositories/PageContextRepository';
-import { DomainDiscoveryService } from '../../infrastructure/discovery/DomainDiscoveryService';
+import { IContextDiscoveryService } from './IContextDiscoveryService';
 
 export interface ContextUpdateResult {
   domain: string;
@@ -13,7 +13,10 @@ export interface ContextUpdateResult {
 }
 
 export class DynamicContextUpdateService {
-  constructor(private repository: PageContextRepository) {}
+  constructor(
+    private repository: PageContextRepository,
+    private contextDiscoveryService: IContextDiscoveryService
+  ) {}
 
   /**
    * Update contexts for all domains by rescanning their structure
@@ -22,7 +25,7 @@ export class DynamicContextUpdateService {
     const results: ContextUpdateResult[] = [];
     const domains = await this.repository.getAllContexts();
 
-    for (const [domainName, currentContext] of domains) {
+    for (const [domainName, currentContext] of Array.from(domains.entries())) {
       const result = await this.updateDomainContext(domainName, currentContext);
       if (result.updated) {
         results.push(result);
@@ -129,9 +132,8 @@ export class DynamicContextUpdateService {
   }
 
   private async discoverCurrentState(domain: string): Promise<PageContext | null> {
-    // Reuse discovery service to get current file system state
-    const discovered = await DomainDiscoveryService.discoverDomains();
-    return discovered.find(ctx => ctx.domain === domain) || null;
+    // Use injected discovery service to get current file system state
+    return await this.contextDiscoveryService.discoverDomainContext(domain);
   }
 
   private async discoverNewEndpoints(domain: string, currentEndpoints: string[]): Promise<string[]> {
@@ -194,6 +196,6 @@ export class DynamicContextUpdateService {
       targets.push('Bulk operations optimization');
     }
 
-    return [...new Set(targets)]; // Remove duplicates
+    return Array.from(new Set(targets)); // Remove duplicates
   }
 } 

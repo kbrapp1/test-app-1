@@ -2,7 +2,7 @@ import React from 'react';
 import { FolderSidebar } from '@/lib/dam/presentation/components/navigation';
 import { DamDragDropProvider } from '@/lib/dam/presentation/components/DamDragDropProvider';
 import { getRootFolders } from '@/lib/dam/application/actions/navigation.actions';
-import { NetworkMonitorDisplay } from '@/lib/dam/presentation/components/debug/NetworkMonitorDisplay';
+
 
 // Force dynamic rendering to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,6 @@ export default async function DamLayout({
         <FolderSidebar initialFolders={serverFolders} />
         {children}
       </div>
-      <NetworkMonitorDisplay />
     </DamDragDropProvider>
   );
 } 

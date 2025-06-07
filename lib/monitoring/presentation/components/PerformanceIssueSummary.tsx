@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
 import { CrossDomainInsight } from '../../domain/cross-domain/services/PerformanceCorrelationService';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../hooks/usePerformanceTracking';
+import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 import { CopyButtonStateDto } from '../../application/dto/UnifiedIssueDto';
 import { IssueMapper } from '../../application/mappers/IssueMapper';
 import { IssueCard } from './IssueCard';
@@ -20,7 +20,7 @@ interface PerformanceIssueSummaryProps {
   trackingState?: PerformanceTrackingState;
 }
 
-export const PerformanceIssueSummary: React.FC<PerformanceIssueSummaryProps> = ({
+export const PerformanceIssueSummary = React.memo<PerformanceIssueSummaryProps>(({
   frontendIssues,
   networkIssues,
   crossDomainInsights,
@@ -33,19 +33,31 @@ export const PerformanceIssueSummary: React.FC<PerformanceIssueSummaryProps> = (
     backend: 'default'
   });
 
-  // Transform domain entities to DTOs using mapper
-  const allIssues = IssueMapper.mapToUnifiedIssues(
-    frontendIssues,
-    networkIssues,
-    crossDomainInsights
-  );
+  // Transform domain entities to DTOs using mapper - memoized for performance
+  const allIssues = useMemo(() => {
+    return IssueMapper.mapToUnifiedIssues(
+      frontendIssues,
+      networkIssues,
+      crossDomainInsights
+    );
+  }, [frontendIssues, networkIssues, crossDomainInsights]);
 
-  const positiveInsights = IssueMapper.getPositiveInsights(crossDomainInsights);
-  const totalIssues = allIssues.length;
-  const highSeverityCount = allIssues.filter(issue => issue.severity === 'high').length;
+  const positiveInsights = useMemo(() => {
+    return IssueMapper.getPositiveInsights(crossDomainInsights);
+  }, [crossDomainInsights]);
+
+  const issueMetrics = useMemo(() => {
+    const totalIssues = allIssues.length;
+    const highSeverityCount = allIssues.filter(issue => issue.severity === 'high').length;
+    return { totalIssues, highSeverityCount };
+  }, [allIssues]);
+
+  const handleCopyStateChange = useCallback((state: CopyButtonStateDto) => {
+    setCopyButtonState(state);
+  }, []);
 
   // Show positive insight if no issues
-  if (totalIssues === 0) {
+  if (issueMetrics.totalIssues === 0) {
     const positiveInsight = positiveInsights[0];
     
     return (
@@ -74,10 +86,10 @@ export const PerformanceIssueSummary: React.FC<PerformanceIssueSummaryProps> = (
               Performance Issues Detected
             </h3>
             <p className="text-sm text-gray-600">
-              {totalIssues} total {totalIssues === 1 ? 'issue' : 'issues'}
-              {highSeverityCount > 0 && (
+              {issueMetrics.totalIssues} total {issueMetrics.totalIssues === 1 ? 'issue' : 'issues'}
+              {issueMetrics.highSeverityCount > 0 && (
                 <span className="text-red-600 font-medium">
-                  , {highSeverityCount} high severity
+                  , {issueMetrics.highSeverityCount} high severity
                 </span>
               )}
             </p>
@@ -91,7 +103,7 @@ export const PerformanceIssueSummary: React.FC<PerformanceIssueSummaryProps> = (
           metrics={metrics}
           trackingState={trackingState}
           copyButtonState={copyButtonState}
-          onCopyStateChange={setCopyButtonState}
+          onCopyStateChange={handleCopyStateChange}
         />
       </div>
 
@@ -107,4 +119,6 @@ export const PerformanceIssueSummary: React.FC<PerformanceIssueSummaryProps> = (
       </div>
     </div>
   );
-}; 
+});
+
+PerformanceIssueSummary.displayName = 'PerformanceIssueSummary'; 

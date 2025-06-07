@@ -43,6 +43,7 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
   
   // Ref for scroll-based infinite loading
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasUserScrolled = useRef(false);
 
   // Handle scroll-based infinite loading for regular list
   const handleScroll = useCallback(() => {
@@ -51,9 +52,15 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
     }
 
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
     
-    // Trigger load more when user is within 200px of bottom
-    if (scrollHeight - scrollTop - clientHeight < 200) {
+    // Mark that user has scrolled (prevents auto-trigger on initial load)
+    if (scrollTop > 0) {
+      hasUserScrolled.current = true;
+    }
+    
+    // Only trigger load more if user has actually scrolled and is near bottom
+    if (distanceFromBottom < 200 && hasUserScrolled.current) {
       onLoadMore();
     }
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);

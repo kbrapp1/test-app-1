@@ -1,8 +1,8 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-05T04:34:46.559Z
+// Generated: 2025-06-07T15:29:50.398Z
 // Run 'npm run generate:contexts' to update
 
-import { PageContext } from '../domain/repositories/PageContextRepository';
+import { PageContext } from '../../domain/repositories/PageContextRepository';
 
 export const DISCOVERED_CONTEXTS: PageContext[] = [
   {
@@ -19,12 +19,6 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "DragOverlay",
       "index",
       "DamDragDropProvider",
-      "ActionControlPanel",
-      "AnalysisResultsPanel",
-      "DeduplicationPanel",
-      "NetworkCallsList",
-      "ServerActionMonitor",
-      "NetworkMonitorDisplay",
       "AssetDetailsModal",
       "AssetSelectorModal",
       "BulkOperationManager",
@@ -127,42 +121,57 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/api/dam/upload/route.ts"
     ],
     "queryKeys": [
+      "damSelectionUpdate",
+      "damGetSelection",
+      "damClearSelection",
+      "damExitSelectionMode",
+      "list",
+      "targetFolderId",
       "dam-gallery",
       "dam-search",
+      "search",
+      "damViewMode",
+      "damViewModeChange",
+      "damDataRefresh",
       "dam-dropdown-search",
-      "saved-searches"
+      "quickSearch",
+      "saved-searches",
+      "useDamSearchDropdown"
     ],
     "endpoints": [
-      "/api/dam/asset/[assetId]/move",
+      "/api/dam",
       "/api/dam/asset/[assetId]",
+      "/api/dam/asset/[assetId]/move",
       "/api/dam/folders",
       "/api/dam/folders/tree",
+      "/api/dam/folders/[folderId]",
       "/api/dam/folders/[folderId]/children",
       "/api/dam/folders/[folderId]/path",
-      "/api/dam/folders/[folderId]",
-      "/api/dam",
       "/api/dam/upload"
     ],
     "optimizationTargets": [
       "Card component memoization",
+      "Table virtualization",
       "List rendering optimization",
       "Modal lazy loading",
       "Navigation tree optimization",
+      "Search debouncing optimization",
       "Form validation optimization",
       "Detail view caching",
       "Upload optimization",
       "Layout component optimization",
+      "Upload page optimization",
       "Dynamic route optimization"
     ],
     "cacheableEndpoints": [
-      "/api/dam/asset/[assetId]/move",
+      "/api/dam",
       "/api/dam/asset/[assetId]",
+      "/api/dam/asset/[assetId]/move",
       "/api/dam/folders",
       "/api/dam/folders/tree",
-      "/api/dam/folders/[folderId]/children",
-      "/api/dam/folders/[folderId]/path",
       "/api/dam/folders/[folderId]",
-      "/api/dam"
+      "/api/dam/folders/[folderId]/children",
+      "/api/dam/folders/[folderId]/path"
     ]
   },
   {
@@ -206,11 +215,18 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/(protected)/ai-playground/image-generator/page.tsx"
     ],
     "queryKeys": [
-      "image-generations"
+      "list",
+      "search",
+      "image-generator-file-upload",
+      "image-generator-model-selector",
+      "image-generator-state",
+      "prefetch",
+      "fetchPriority"
     ],
     "endpoints": [],
     "optimizationTargets": [
       "Form validation optimization",
+      "Search debouncing optimization",
       "List rendering optimization",
       "Card component memoization"
     ],
@@ -306,7 +322,9 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "components/notes/",
       "app/(protected)/documents/notes/page.tsx"
     ],
-    "queryKeys": [],
+    "queryKeys": [
+      "NoteListItem"
+    ],
     "endpoints": [],
     "optimizationTargets": [
       "Modal lazy loading",
@@ -355,18 +373,20 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/(protected)/settings/layout.tsx",
       "app/(protected)/settings/danger/page.tsx",
       "app/(protected)/settings/email/page.tsx",
-      "app/(protected)/settings/network-monitor/page.tsx",
       "app/(protected)/settings/org-roles/page.tsx",
       "app/(protected)/settings/password/page.tsx",
       "app/(protected)/settings/profile/page.tsx",
       "app/(protected)/settings/security/page.tsx"
     ],
-    "queryKeys": [],
+    "queryKeys": [
+      "search"
+    ],
     "endpoints": [],
     "optimizationTargets": [
       "Modal lazy loading",
       "Form validation optimization",
       "Card component memoization",
+      "Table virtualization",
       "Settings page optimization",
       "Layout component optimization"
     ],
@@ -386,13 +406,20 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/api/team/members/route.ts",
       "app/api/team/upload/route.ts"
     ],
-    "queryKeys": [],
+    "queryKeys": [
+      "AddTeamMemberDialog",
+      "AddTeamMemberForm",
+      "TeamMemberCard",
+      "team-member-card",
+      "TeamMemberList"
+    ],
     "endpoints": [],
     "optimizationTargets": [
       "Modal lazy loading",
       "Form validation optimization",
       "Card component memoization",
-      "List rendering optimization"
+      "List rendering optimization",
+      "Upload page optimization"
     ],
     "cacheableEndpoints": []
   },
@@ -416,12 +443,25 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "files": [
       "components/tts/"
     ],
-    "queryKeys": [],
+    "queryKeys": [
+      "TtsPrediction",
+      "TtsHistoryItem",
+      "tts-history-item-reload",
+      "tts-history-item-play",
+      "tts-history-item-save",
+      "tts-history-item-save-as",
+      "tts-history-item-delete",
+      "TtsHistoryPanel",
+      "TtsInputCard",
+      "TtsOutputCard",
+      "command-list"
+    ],
     "endpoints": [],
     "optimizationTargets": [
       "Modal lazy loading",
       "Card component memoization",
-      "List rendering optimization"
+      "List rendering optimization",
+      "Search debouncing optimization"
     ],
     "cacheableEndpoints": []
   },
@@ -435,7 +475,6 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "avatar",
       "badge",
       "breadcrumb",
-      "button.stories",
       "button",
       "calendar",
       "card",
@@ -485,13 +524,19 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "components/ui/",
       "app/(protected)/brand-guidelines/page.tsx"
     ],
-    "queryKeys": [],
+    "queryKeys": [
+      "BreadcrumbList",
+      "search",
+      "SidebarMenuItem",
+      "fetch"
+    ],
     "endpoints": [],
     "optimizationTargets": [
       "Modal lazy loading",
       "Card component memoization",
       "Form validation optimization",
-      "Navigation tree optimization"
+      "Navigation tree optimization",
+      "Table virtualization"
     ],
     "cacheableEndpoints": []
   }

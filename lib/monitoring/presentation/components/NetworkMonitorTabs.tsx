@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BarChart3,
@@ -16,7 +16,11 @@ interface NetworkMonitorTabsProps {
   onClear: () => void;
 }
 
-export function NetworkMonitorTabs({ stats, onClear }: NetworkMonitorTabsProps) {
+export const NetworkMonitorTabs = React.memo<NetworkMonitorTabsProps>(({ stats, onClear }) => {
+  const handleClear = useCallback(() => {
+    onClear();
+  }, [onClear]);
+
   return (
     <Tabs defaultValue="overview" className="w-full">
       <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
@@ -86,4 +90,6 @@ export function NetworkMonitorTabs({ stats, onClear }: NetworkMonitorTabsProps) 
       </div>
     </Tabs>
   );
-} 
+});
+
+NetworkMonitorTabs.displayName = 'NetworkMonitorTabs'; 

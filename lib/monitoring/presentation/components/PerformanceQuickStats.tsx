@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { PerformanceTrackingState } from '../hooks/usePerformanceTracking';
+import React, { useMemo } from 'react';
+import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
 
 interface PerformanceQuickStatsProps {
@@ -10,16 +10,37 @@ interface PerformanceQuickStatsProps {
   isPaused?: boolean;
 }
 
-export const PerformanceQuickStats: React.FC<PerformanceQuickStatsProps> = ({
+export const PerformanceQuickStats = React.memo<PerformanceQuickStatsProps>(({
   frontendState,
   networkStats,
   isPaused = false
 }) => {
-  const frontendEfficiency = frontendState.renderMetrics.count <= 10 ? 100 : 
-    Math.max(0, 100 - (frontendState.renderMetrics.count - 10) * 3);
-  
-  const networkEfficiency = isPaused ? 100 : // Show 100% when paused
-    networkStats ? Math.round(100 - networkStats.redundancyRate) : 100;
+  const efficiency = useMemo(() => {
+    const frontendEfficiency = frontendState.renderMetrics.count <= 10 ? 100 : 
+      Math.max(0, 100 - (frontendState.renderMetrics.count - 10) * 3);
+    
+    const networkEfficiency = isPaused ? 100 : // Show 100% when paused
+      networkStats ? Math.round(100 - networkStats.redundancyRate) : 100;
+
+    return { frontendEfficiency, networkEfficiency };
+  }, [frontendState.renderMetrics.count, networkStats, isPaused]);
+
+  const barColorClasses = useMemo(() => {
+    const getFrontendColorClass = (eff: number) => {
+      return eff >= 90 ? 'bg-green-500' : 
+             eff >= 70 ? 'bg-yellow-500' : 'bg-red-500';
+    };
+
+    const getNetworkColorClass = (eff: number) => {
+      return eff >= 90 ? 'bg-green-500' : 
+             eff >= 70 ? 'bg-yellow-500' : 'bg-red-500';
+    };
+
+    return {
+      frontend: getFrontendColorClass(efficiency.frontendEfficiency),
+      network: getNetworkColorClass(efficiency.networkEfficiency)
+    };
+  }, [efficiency.frontendEfficiency, efficiency.networkEfficiency]);
 
   return (
     <div className="space-y-3">
@@ -54,15 +75,12 @@ export const PerformanceQuickStats: React.FC<PerformanceQuickStatsProps> = ({
         <div>
           <div className="flex justify-between text-xs mb-1">
             <span className="text-gray-600">Frontend Efficiency</span>
-            <span className="font-medium">{frontendEfficiency}%</span>
+            <span className="font-medium">{efficiency.frontendEfficiency}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                frontendEfficiency >= 90 ? 'bg-green-500' : 
-                frontendEfficiency >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${frontendEfficiency}%` }}
+              className={`h-2 rounded-full transition-all duration-300 ${barColorClasses.frontend}`}
+              style={{ width: `${efficiency.frontendEfficiency}%` }}
             />
           </div>
         </div>
@@ -70,21 +88,18 @@ export const PerformanceQuickStats: React.FC<PerformanceQuickStatsProps> = ({
         <div>
           <div className="flex justify-between text-xs mb-1">
             <span className="text-gray-600">Network Efficiency</span>
-            <span className="font-medium">{networkEfficiency}%</span>
+            <span className="font-medium">{efficiency.networkEfficiency}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                networkEfficiency >= 90 ? 'bg-green-500' : 
-                networkEfficiency >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${networkEfficiency}%` }}
+              className={`h-2 rounded-full transition-all duration-300 ${barColorClasses.network}`}
+              style={{ width: `${efficiency.networkEfficiency}%` }}
             />
           </div>
         </div>
       </div>
-
-
     </div>
   );
-}; 
+});
+
+PerformanceQuickStats.displayName = 'PerformanceQuickStats'; 

@@ -7,11 +7,11 @@ import {
   DeleteGenerationUseCase
 } from '../../../application/use-cases';
 import { SupabaseGenerationRepository } from '../../../infrastructure/persistence/supabase/SupabaseGenerationRepository';
-import { ReplicateFluxProvider } from '../../../infrastructure/providers/replicate/ReplicateFluxProvider';
+import { ReplicateProvider } from '../../../infrastructure/providers/replicate/ReplicateProvider';
 
 // Repository and Use Case Instances (Lazy initialization for performance and to avoid client-side env access)
 let _repository: SupabaseGenerationRepository | null = null;
-let _provider: ReplicateFluxProvider | null = null;
+let _provider: ReplicateProvider | null = null;
 let _getGenerationsUseCase: GetGenerationsUseCase | null = null;
 let _getGenerationStatsUseCase: GetGenerationStatsUseCase | null = null;
 let _cancelGenerationUseCase: CancelGenerationUseCase | null = null;
@@ -26,9 +26,9 @@ function getRepository(): SupabaseGenerationRepository {
   return _repository;
 }
 
-function getProvider(): ReplicateFluxProvider {
+function getProvider(): ReplicateProvider {
   if (!_provider) {
-    _provider = new ReplicateFluxProvider();
+    _provider = new ReplicateProvider();
   }
   return _provider;
 }

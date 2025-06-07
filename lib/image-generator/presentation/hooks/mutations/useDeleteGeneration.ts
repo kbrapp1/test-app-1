@@ -42,7 +42,10 @@ export function useDeleteGeneration() {
 
       // Invalidate all list queries to ensure consistency
       queryClient.invalidateQueries({
-        queryKey: ['image-generations', 'list']
+        predicate: (query) => {
+          return query.queryKey[0] === 'image-generations' && 
+                 query.queryKey[1] === 'list'; // This covers both regular and infinite lists
+        },
       });
 
       // Show success toast

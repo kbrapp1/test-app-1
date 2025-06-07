@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { GenerationDto } from '../../application/dto';
-import { useGenerationPolling } from './specialized/useGenerationPolling';
+import { useBatchGenerationPolling } from './specialized/useBatchGenerationPolling';
 
 export interface UseLatestGenerationProps {
   generations: GenerationDto[];
@@ -32,13 +32,17 @@ export const useLatestGeneration = ({
   const shouldPoll = latestGeneration && 
     ['pending', 'processing'].includes(latestGeneration.status);
 
+  // Memoize polling parameters to prevent unnecessary re-polling
+  const pollingIds = useMemo(() => {
+    return shouldPoll && latestGenerationId ? [latestGenerationId] : [];
+  }, [shouldPoll, latestGenerationId]);
+  
+  const pollingEnabled = useMemo(() => !!shouldPoll, [shouldPoll]);
+  
+  const { activeGenerations } = useBatchGenerationPolling(pollingIds, pollingEnabled);
 
-
-  // Poll the latest generation for updates
-  const { data: polledGeneration } = useGenerationPolling(
-    latestGenerationId || '',
-    !!shouldPoll
-  );
+  // Get the polled generation from batch results
+  const polledGeneration = activeGenerations.find(g => g.id === latestGenerationId);
 
   // STABLE DATA LOGIC: Prevent UI flicker by ensuring consistent data
   // Priority: polled data > new completed data > stable ref > cached data

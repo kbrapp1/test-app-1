@@ -30,7 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider"
-import { usePerformanceMonitor } from "@/lib/monitoring/context/PerformanceMonitorContext"
+import { usePerformanceMonitor } from "@/lib/monitoring/presentation/providers/PerformanceMonitorProvider"
 
 /**
  * Navigation User Component

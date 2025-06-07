@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
@@ -11,12 +11,14 @@ interface PerformanceDashboardActionsProps {
   lastUpdateTime: number;
 }
 
-export const PerformanceDashboardActions: React.FC<PerformanceDashboardActionsProps> = ({
+const PerformanceDashboardActionsComponent: React.FC<PerformanceDashboardActionsProps> = ({
   onReset,
   onFullReset,
   showFullResetConfirm,
   lastUpdateTime
 }) => {
+  // Memoize formatted update time string
+  const updatedTimeString = useMemo(() => new Date(lastUpdateTime).toLocaleTimeString(), [lastUpdateTime]);
   return (
     <div className="flex justify-between pt-2 border-t border-gray-200">
       <div className="flex gap-1">
@@ -53,8 +55,12 @@ export const PerformanceDashboardActions: React.FC<PerformanceDashboardActionsPr
       </div>
       
       <div className="text-xs text-gray-500">
-        <div>Updated: {new Date(lastUpdateTime).toLocaleTimeString()}</div>
+        <div>Updated: {updatedTimeString}</div>
       </div>
     </div>
   );
-}; 
+};
+
+// Wrap component in React.memo for performance
+export const PerformanceDashboardActions = React.memo(PerformanceDashboardActionsComponent);
+PerformanceDashboardActions.displayName = 'PerformanceDashboardActions'; 

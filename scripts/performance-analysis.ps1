@@ -53,7 +53,7 @@ Write-Host "`n📊 Performance Analysis Complete!" -ForegroundColor Green
 Write-Host "Reports generated:" -ForegroundColor Yellow
 Write-Host "  • Bundle Analyzer: .next/analyze/" -ForegroundColor White
 Write-Host "  • Lighthouse Report: lighthouse-report.html" -ForegroundColor White
-Write-Host "  • Live Performance Monitor: Available in development at /settings/network-monitor" -ForegroundColor White
+Write-Host "  • Live Performance Monitor: Available via user menu toggle in development" -ForegroundColor White
 
 Write-Host "`n💡 Performance Optimization Tools Available:" -ForegroundColor Cyan
 Write-Host "  • Bundle analysis: pnpm run analyze" -ForegroundColor White

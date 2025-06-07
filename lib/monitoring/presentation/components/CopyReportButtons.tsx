@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
 import { CrossDomainInsight } from '../../domain/cross-domain/services/PerformanceCorrelationService';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../hooks/usePerformanceTracking';
+import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 import { CopyButtonStateDto } from '../../application/dto/UnifiedIssueDto';
 import { ReportGenerationService } from '../../application/services/ReportGenerationService';
+import { FrontendReportGenerationService } from '../../application/services/FrontendReportGenerationService';
+import { CrossDomainReportGenerationService } from '../../application/services/CrossDomainReportGenerationService';
 import { IssueMapper } from '../../application/mappers/IssueMapper';
 
 interface CopyReportButtonsProps {
@@ -21,7 +23,7 @@ interface CopyReportButtonsProps {
   onCopyStateChange: (state: CopyButtonStateDto) => void;
 }
 
-export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
+export const CopyReportButtons = React.memo<CopyReportButtonsProps>(({
   frontendIssues,
   networkIssues,
   crossDomainInsights,
@@ -30,17 +32,17 @@ export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
   copyButtonState,
   onCopyStateChange
 }) => {
-  const actualCrossDomainIssues = crossDomainInsights.filter(insight => {
+  const actualCrossDomainIssues = useMemo(() => {
     const positiveInsights = IssueMapper.getPositiveInsights(crossDomainInsights);
-    return !positiveInsights.includes(insight);
-  });
+    return crossDomainInsights.filter(insight => !positiveInsights.includes(insight));
+  }, [crossDomainInsights]);
 
-  const copyFrontendReport = async () => {
+  const copyFrontendReport = useCallback(async () => {
     try {
       let report: string;
       
       if (metrics && trackingState) {
-        report = ReportGenerationService.generateFrontendReport(metrics, trackingState, frontendIssues);
+        report = FrontendReportGenerationService.generateReport(metrics, trackingState, frontendIssues);
       } else {
         // Fallback to basic report if comprehensive data not available
         report = `# Frontend Performance Report\nGenerated: ${new Date().toISOString()}\n\nIssues: ${frontendIssues.length}`;
@@ -52,11 +54,11 @@ export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
     } catch (error) {
       // Error handling
     }
-  };
+  }, [metrics, trackingState, frontendIssues, copyButtonState, onCopyStateChange]);
 
-  const copyCrossDomainReport = async () => {
+  const copyCrossDomainReport = useCallback(async () => {
     try {
-      const report = await ReportGenerationService.generateCrossDomainReport(
+      const report = await CrossDomainReportGenerationService.generateReport(
         crossDomainInsights,
         trackingState?.pageContext || 'dam'
       );
@@ -66,11 +68,12 @@ export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
     } catch (error) {
       // Error handling
     }
-  };
+  }, [crossDomainInsights, trackingState, copyButtonState, onCopyStateChange]);
 
-  const copyBackendReport = async () => {
+  const copyBackendReport = useCallback(async () => {
     try {
-      const report = await ReportGenerationService.generateNetworkReport(
+      const reportGenerationService = ReportGenerationService.create();
+      const report = await reportGenerationService.generateFromNetworkIssues(
         networkIssues,
         trackingState?.pageContext || 'dam'
       );
@@ -80,7 +83,7 @@ export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
     } catch (error) {
       // Error handling
     }
-  };
+  }, [networkIssues, trackingState, copyButtonState, onCopyStateChange]);
 
   return (
     <div className="flex gap-1">
@@ -148,4 +151,6 @@ export const CopyReportButtons: React.FC<CopyReportButtonsProps> = ({
       )}
     </div>
   );
-}; 
+});
+
+CopyReportButtons.displayName = 'CopyReportButtons'; 

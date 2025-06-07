@@ -25,19 +25,40 @@ export function useGenerateImage() {
 
   // Memoized success handler
   const onSuccess = useCallback((generation: GenerationDto) => {
-    // Add to the list cache
-    queryClient.setQueryData(
-      createListQueryKey({}),
-      (old: GenerationDto[] | undefined) => {
-        return old ? [generation, ...old] : [generation];
-      }
-    );
-
     // Add to detail cache
     queryClient.setQueryData(
       createDetailQueryKey(generation.id),
       generation
     );
+
+    // Optimistically update the infinite generations cache instead of invalidating
+    const infiniteQueryKey = [...createListQueryKey({}), 'infinite'];
+    queryClient.setQueryData(infiniteQueryKey, (oldData: any) => {
+      if (!oldData?.pages) {
+        return {
+          pages: [[generation]],
+          pageParams: [0]
+        };
+      }
+      
+      const existingGeneration = oldData.pages.flat().find((g: any) => g.id === generation.id);
+      if (existingGeneration) {
+        return oldData;
+      }
+      
+      // Add the new generation to the first page
+      const newPages = [...oldData.pages];
+      if (newPages[0]) {
+        newPages[0] = [generation, ...newPages[0]];
+      } else {
+        newPages[0] = [generation];
+      }
+      
+      return {
+        ...oldData,
+        pages: newPages
+      };
+    });
 
     // Invalidate stats
     queryClient.invalidateQueries({

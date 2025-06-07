@@ -3,9 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { useLatestGeneration } from '../useLatestGeneration';
 import { GenerationDto } from '../../../application/dto';
 
-// Mock the useGenerationPolling hook
-vi.mock('../specialized/useGenerationPolling', () => ({
-  useGenerationPolling: vi.fn(() => ({ data: null })),
+// Mock the useBatchGenerationPolling hook
+vi.mock('../specialized/useBatchGenerationPolling', () => ({
+  useBatchGenerationPolling: vi.fn(() => ({ activeGenerations: [] })),
 }));
 
 describe('useLatestGeneration', () => {
@@ -20,6 +20,7 @@ describe('useLatestGeneration', () => {
       costCents: 100,
       savedToDAM: false,
       editType: 'text-to-image',
+      modelName: 'test-model',
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:01:00Z',
     },
@@ -33,6 +34,7 @@ describe('useLatestGeneration', () => {
       costCents: 100,
       savedToDAM: false,
       editType: 'text-to-image',
+      modelName: 'test-model',
       createdAt: '2023-12-31T00:00:00Z',
       updatedAt: '2023-12-31T00:01:00Z',
     },

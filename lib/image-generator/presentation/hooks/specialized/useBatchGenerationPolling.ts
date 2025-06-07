@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { GenerationDto } from '../../../application/dto';
 import { checkMultipleGenerationStatus } from '../../../application/actions/commands/command-actions';
 import { IMAGE_GENERATION_QUERY_KEYS } from '../shared/queryKeys';
@@ -7,18 +7,31 @@ import { IMAGE_GENERATION_QUERY_KEYS } from '../shared/queryKeys';
 /**
  * Hook for batch polling of multiple active generations
  * Single responsibility: Efficiently poll multiple generations with smart batching
+ * Updated to fix invalidationTimeoutRef error
  */
 export function useBatchGenerationPolling(generationIds: string[], enabled: boolean = true) {
   const queryClient = useQueryClient();
   const lastPolledRef = useRef<Set<string>>(new Set());
   const isPageVisibleRef = useRef(true);
+  const startTimeRef = useRef<number>(Date.now());
+  const skipFirstPollRef = useRef(true);
+  
+  // Memoize the sorted generation IDs to prevent unnecessary re-renders
+  const stableGenerationIds = useMemo(() => [...generationIds].sort(), [generationIds]);
+  
+  // Memoize query key to prevent React Query from treating it as a new query
+  const queryKey = useMemo(() => ['image-generations', 'batch', ...stableGenerationIds], [stableGenerationIds]);
 
-  // Filter to only active generations that need polling
-  const activeGenerationIds = generationIds.filter(id => {
+  // Check if any generations actually need polling - NOT MEMOIZED for fresh cache checks
+  const activeGenerationIds = stableGenerationIds.filter(id => {
     const cachedData = queryClient.getQueryData(IMAGE_GENERATION_QUERY_KEYS.detail(id)) as GenerationDto | undefined;
+    
     // Only poll if we don't have cached data or if the status indicates it's still in progress
     return !cachedData || ['pending', 'processing'].includes(cachedData.status);
   });
+
+  // Determine if polling should be enabled
+  const shouldEnablePolling = enabled && activeGenerationIds.length > 0;
 
   // Page visibility tracking for background optimization
   useEffect(() => {
@@ -26,37 +39,45 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
       isPageVisibleRef.current = !document.hidden;
       
       // If page becomes visible and we have active generations, immediately refetch
-      if (!document.hidden && activeGenerationIds.length > 0) {
-        queryClient.invalidateQueries({
-          queryKey: ['image-generations', 'batch', ...activeGenerationIds.sort()]
-        });
+      if (!document.hidden && shouldEnablePolling) {
+        queryClient.invalidateQueries({ queryKey });
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [queryClient, activeGenerationIds]);
+  }, [queryClient, queryKey, shouldEnablePolling]);
 
-  // Adaptive interval based on number of active generations and page visibility
+  // Adaptive interval based on number of active generations - memoized
   const getAdaptiveInterval = useCallback(() => {
-    if (activeGenerationIds.length === 0) return false;
+    if (activeGenerationIds.length === 0) {
+      return false; // No logging here to prevent spam
+    }
     
     // Background polling - much slower when tab not visible
     if (!isPageVisibleRef.current) {
       return 20000; // 20 seconds in background
     }
 
-    // Adjust interval based on batch size
-    if (activeGenerationIds.length === 1) return 2000;  // 2s for single generation
-    if (activeGenerationIds.length <= 3) return 3000;   // 3s for small batch
-    if (activeGenerationIds.length <= 5) return 4000;   // 4s for medium batch
-    return 5000; // 5s for large batch
+    // INCREASED INTERVALS: More reasonable polling to prevent spam
+    if (activeGenerationIds.length === 1) return 3000;  // 3s for single generation
+    if (activeGenerationIds.length <= 3) return 4000;   // 4s for small batch
+    if (activeGenerationIds.length <= 5) return 5000;   // 5s for medium batch
+    return 6000; // 6s for large batch
   }, [activeGenerationIds.length]);
 
   const batchQuery = useQuery({
-    queryKey: ['image-generations', 'batch', ...activeGenerationIds.sort()],
+    queryKey,
     queryFn: async (): Promise<GenerationDto[]> => {
-      if (activeGenerationIds.length === 0) return [];
+      // Skip the initial polling fetch
+      if (skipFirstPollRef.current) {
+        skipFirstPollRef.current = false;
+        return [];
+      }
+
+      if (activeGenerationIds.length === 0) {
+        return [];
+      }
       
       const result = await checkMultipleGenerationStatus(activeGenerationIds);
       
@@ -66,44 +87,58 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
 
       return result.data || [];
     },
-    enabled: enabled && activeGenerationIds.length > 0,
-    refetchInterval: getAdaptiveInterval,
-    staleTime: 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    enabled: shouldEnablePolling,
+    refetchInterval: shouldEnablePolling ? getAdaptiveInterval() : false,
+    staleTime: 2000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
   });
 
   // Update individual caches when batch data comes in
   useEffect(() => {
-    if (batchQuery.data) {
-      batchQuery.data.forEach(generation => {
-        // Update individual detail cache
-        queryClient.setQueryData(
-          IMAGE_GENERATION_QUERY_KEYS.detail(generation.id),
-          generation
-        );
-      });
-
-      // Check if any generations completed and invalidate list cache
-      const currentPolled = new Set(batchQuery.data.map(g => g.id));
-      const previousPolled = lastPolledRef.current;
-      
-      const statusChanged = batchQuery.data.some(generation => {
-        if (!previousPolled.has(generation.id)) return false;
+    if (batchQuery.data && batchQuery.data.length > 0) {
+      // Batch all updates to prevent multiple re-renders
+      const updatedGenerations = batchQuery.data.filter(generation => {
         const previousData = queryClient.getQueryData(
           IMAGE_GENERATION_QUERY_KEYS.detail(generation.id)
         ) as GenerationDto | undefined;
-        return previousData && previousData.status !== generation.status;
+
+        // Only include if the data actually changed
+        return !previousData || previousData.status !== generation.status || previousData.imageUrl !== generation.imageUrl;
       });
 
-      if (statusChanged) {
-        queryClient.invalidateQueries({
-          predicate: (query) => {
-            return query.queryKey[0] === 'image-generations' && query.queryKey[1] === 'list';
-          },
+      if (updatedGenerations.length > 0) {
+        // Update all detail caches
+        updatedGenerations.forEach(generation => {
+          queryClient.setQueryData(
+            IMAGE_GENERATION_QUERY_KEYS.detail(generation.id),
+            generation
+          );
+        });
+        
+        // Single update to the infinite cache for all changed generations
+        const infiniteQueryKey = ['image-generations', 'list', { filters: {} }, 'infinite'];
+        queryClient.setQueryData(infiniteQueryKey, (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          
+          // Update all generations in the cache pages in one operation
+          const newPages = oldData.pages.map((page: any[]) => 
+            page.map((g: any) => {
+              const updated = updatedGenerations.find(ug => ug.id === g.id);
+              return updated || g;
+            })
+          );
+          
+          return {
+            ...oldData,
+            pages: newPages
+          };
         });
       }
 
+      // Track polled generations for debugging (no cache invalidation)
+      const currentPolled = new Set(batchQuery.data.map(g => g.id));
       lastPolledRef.current = currentPolled;
     }
   }, [batchQuery.data, queryClient]);
@@ -112,6 +147,6 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
     activeGenerations: batchQuery.data || [],
     isLoading: batchQuery.isLoading,
     error: batchQuery.error,
-    activeCount: activeGenerationIds.length,
+    activeCount: batchQuery.data?.length || 0,
   };
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Activity, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
@@ -12,20 +12,32 @@ interface PerformanceCompactViewProps {
   onExpand: () => void;
 }
 
-export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
+export const PerformanceCompactView = React.memo<PerformanceCompactViewProps>(({
   overallScore,
   frontendIssues,
   networkIssues,
   onExpand
 }) => {
-  // Determine status indicators
-  const frontendStatus = frontendIssues.length === 0 ? 'good' : 
-                        frontendIssues.some(issue => issue.severity === 'high') ? 'error' : 'warning';
-  
-  const networkStatus = networkIssues.length === 0 ? 'good' :
-                       networkIssues.some(issue => issue.severity === 'high') ? 'error' : 'warning';
+  // Memoize status calculations
+  const statusData = useMemo(() => {
+    const frontendStatus: 'good' | 'warning' | 'error' = frontendIssues.length === 0 ? 'good' : 
+                          frontendIssues.some(issue => issue.severity === 'high') ? 'error' : 'warning';
+    
+    const networkStatus: 'good' | 'warning' | 'error' = networkIssues.length === 0 ? 'good' :
+                         networkIssues.some(issue => issue.severity === 'high') ? 'error' : 'warning';
 
-  const getStatusIcon = (status: 'good' | 'warning' | 'error') => {
+    const overallColor = overallScore >= 90 ? 'text-green-600' : 
+                        overallScore >= 70 ? 'text-yellow-600' : 'text-red-600';
+
+    return {
+      frontendStatus,
+      networkStatus,
+      overallColor
+    };
+  }, [frontendIssues, networkIssues, overallScore]);
+
+  // Memoize icon and color utilities
+  const getStatusIcon = useCallback((status: 'good' | 'warning' | 'error') => {
     switch (status) {
       case 'good':
         return <CheckCircle className="w-3 h-3 text-green-500" />;
@@ -34,9 +46,9 @@ export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
       case 'error':
         return <AlertTriangle className="w-3 h-3 text-red-500" />;
     }
-  };
+  }, []);
 
-  const getStatusColor = (status: 'good' | 'warning' | 'error') => {
+  const getStatusColor = useCallback((status: 'good' | 'warning' | 'error') => {
     switch (status) {
       case 'good':
         return 'text-green-600';
@@ -45,15 +57,16 @@ export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
       case 'error':
         return 'text-red-600';
     }
-  };
+  }, []);
 
-  const overallColor = overallScore >= 90 ? 'text-green-600' : 
-                      overallScore >= 70 ? 'text-yellow-600' : 'text-red-600';
+  const handleExpand = useCallback(() => {
+    onExpand();
+  }, [onExpand]);
 
   return (
     <div className="fixed bottom-20 right-4 z-50">
       <button
-        onClick={onExpand}
+        onClick={handleExpand}
         className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl p-3 hover:bg-white transition-colors"
       >
         <div className="flex items-center gap-3">
@@ -62,15 +75,15 @@ export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
           <div className="flex items-center gap-4 text-xs">
             {/* Overall Score */}
             <div className="text-center">
-              <div className={`font-bold ${overallColor}`}>{overallScore}</div>
+              <div className={`font-bold ${statusData.overallColor}`}>{overallScore}</div>
               <div className="text-gray-500 text-[10px]">Score</div>
             </div>
             
             {/* Frontend Status */}
             <div className="flex items-center gap-1">
-              {getStatusIcon(frontendStatus)}
+              {getStatusIcon(statusData.frontendStatus)}
               <div className="text-center">
-                <div className={`font-medium ${getStatusColor(frontendStatus)}`}>
+                <div className={`font-medium ${getStatusColor(statusData.frontendStatus)}`}>
                   {frontendIssues.length}
                 </div>
                 <div className="text-gray-500 text-[10px]">FE</div>
@@ -79,9 +92,9 @@ export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
             
             {/* Network Status */}
             <div className="flex items-center gap-1">
-              {getStatusIcon(networkStatus)}
+              {getStatusIcon(statusData.networkStatus)}
               <div className="text-center">
-                <div className={`font-medium ${getStatusColor(networkStatus)}`}>
+                <div className={`font-medium ${getStatusColor(statusData.networkStatus)}`}>
                   {networkIssues.length}
                 </div>
                 <div className="text-gray-500 text-[10px]">NET</div>
@@ -92,4 +105,6 @@ export const PerformanceCompactView: React.FC<PerformanceCompactViewProps> = ({
       </button>
     </div>
   );
-}; 
+});
+
+PerformanceCompactView.displayName = 'PerformanceCompactView'; 

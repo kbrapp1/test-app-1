@@ -16,7 +16,6 @@ const settingsNavItems: Array<{ title: string; href: string; superAdminOnly?: bo
   { title: 'Password', href: '/settings/password' },
   { title: 'Email', href: '/settings/email' },
   { title: 'Security', href: '/settings/security' },
-  { title: 'Network Monitor', href: '/settings/network-monitor', superAdminOnly: true },
   { title: 'Danger Zone', href: '/settings/danger' },
   // Add more items here later (e.g., Email, 2FA, Delete)
 ];

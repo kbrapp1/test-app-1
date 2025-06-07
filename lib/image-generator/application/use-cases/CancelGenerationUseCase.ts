@@ -1,6 +1,6 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
-import { ReplicateFluxProvider } from '../../infrastructure/providers/replicate/ReplicateFluxProvider';
+import { ImageGenerationProvider } from '../../domain/repositories/ImageGenerationProvider';
 import { Result, success, error } from '../../infrastructure/common/Result';
 import { SupabaseStorageService } from '../../../dam/infrastructure/storage/SupabaseStorageService';
 import { createClient } from '../../../supabase/client';
@@ -10,7 +10,7 @@ export class CancelGenerationUseCase {
 
   constructor(
     private readonly repository: GenerationRepository,
-    private readonly provider: ReplicateFluxProvider
+    private readonly provider: ImageGenerationProvider
   ) {
     const supabase = createClient();
     this.storageService = new SupabaseStorageService(supabase);
@@ -41,7 +41,7 @@ export class CancelGenerationUseCase {
       // 3. Cancel with provider if there's a prediction ID
       if (generation.externalProviderId) {
         try {
-          await this.provider.cancelPrediction(generation.externalProviderId);
+          await this.provider.cancelGeneration(generation.externalProviderId);
         } catch (providerError) {
           console.warn('Failed to cancel with provider:', providerError);
           // Continue with local cancellation even if provider fails

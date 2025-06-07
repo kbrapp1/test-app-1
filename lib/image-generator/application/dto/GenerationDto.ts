@@ -18,6 +18,7 @@ export interface GenerationDto {
   errorMessage?: string;
   editType: GenerationTypeDto;
   damAssetId?: string; // ID of the base image asset from DAM
+  modelName: string; // AI model used for generation
 }
 
 export type GenerationStatusDto = 

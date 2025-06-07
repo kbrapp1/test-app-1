@@ -64,7 +64,7 @@ If you want to delete make changes in both dbs
 note: for set-active-org-claim edge function, make sure the Enforce JWT Verification= OFF
 
 ## Finding file lengths
-Get-ChildItem -Path "lib/image-generator" -Recurse -Include "*.ts","*.tsx" | ForEach-Object { $lineCount = (Get-Content $_.FullName | Measure-Object -Line).Lines; [PSCustomObject]@{File=$_.Name; Lines=$lineCount; Path=$_.FullName} } | Sort-Object Lines -Descending | Select-Object -First 15
+Get-ChildItem -Path "lib/monitoring" -Recurse -Include "*.ts","*.tsx" | Where-Object { $_.Name -notmatch "test" } | ForEach-Object { $lc = (Get-Content $_.FullName | Measure-Object -Line).Lines; [PSCustomObject]@{File=$_.Name; Lines=$lc; Path=$_.FullName} } | Sort-Object Lines -Descending | Select-Object -First 15
 
 ## Run bundle analyzer and lighthouse
 pnpm run analyze     # Bundle analysis only

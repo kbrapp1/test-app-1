@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
-import { globalNetworkMonitor } from '../../application/services/GlobalNetworkMonitor';
-import { networkInterceptors } from '../../services/NetworkInterceptors';
+import type { NetworkMonitoringService } from '../../application/services/NetworkMonitoringService';
+// Note: network interceptors will be lazy-loaded when monitoring is enabled
 
 // No conversion needed - NetworkMonitoringService returns proper NetworkStats
 
@@ -12,61 +12,87 @@ export function useNetworkMonitoring() {
   const [isEnabled, setIsEnabled] = useState(true);
   const [justReset, setJustReset] = useState(false);
   const [pauseAfterReset, setPauseAfterReset] = useState(false);
+  const monitorRef = useRef<NetworkMonitoringService | null>(null);
 
+  useEffect(() => {
+    import('../../application/services/GlobalNetworkMonitor')
+      .then(module => { monitorRef.current = module.globalNetworkMonitor; });
+  }, []);
+
+  const updateStats = useCallback(() => {
+    setNetworkStats(prev => {
+      const monitor = monitorRef.current;
+      if (!monitor) return prev;
+      const newStats = monitor.getNetworkStats();
+      if (!prev || 
+          prev.totalCalls !== newStats.totalCalls || 
+          prev.redundantCalls !== newStats.redundantCalls || 
+          prev.persistentRedundantCount !== newStats.persistentRedundantCount) {
+        return newStats;
+      }
+      return prev;
+    });
+  }, []);
+
+  // Adaptive polling: use faster polling when visible, slower when hidden
+  const getInterval = useCallback(() => document.hidden ? 10000 : 2000, []);
   useEffect(() => {
     if (!isEnabled || pauseAfterReset) return;
 
-    // Initialize network interceptors if not already installed
-    if (!networkInterceptors['isInstalled']) {
-      networkInterceptors.install();
-    }
-
-    // Get real network stats from global monitor
-    const updateStats = () => {
-      setNetworkStats(prev => {
-        const newStats = globalNetworkMonitor.getNetworkStats();
-        // Only update if there are actual changes to prevent unnecessary re-renders
-        if (!prev || 
-            prev.totalCalls !== newStats.totalCalls || 
-            prev.redundantCalls !== newStats.redundantCalls || 
-            prev.persistentRedundantCount !== newStats.persistentRedundantCount) {
-          return newStats;
+    // Lazy-load network interceptors for request tracking
+    (async () => {
+      try {
+        const mod = await import('../../infrastructure/services/NetworkInterceptors');
+        const { networkInterceptors } = mod;
+        if (!networkInterceptors['isInstalled']) {
+          networkInterceptors.install();
         }
-        return prev;
-      });
-    };
+      } catch {
+        // Silent fail if interceptors module not available
+      }
+    })();
 
     updateStats();
-    const interval = setInterval(updateStats, 2000);
+    let intervalId = setInterval(updateStats, getInterval());
 
-    return () => clearInterval(interval);
-  }, [isEnabled, pauseAfterReset]);
+    // Handle visibility changes to adjust polling interval
+    const handleVisibilityChange = () => {
+      clearInterval(intervalId);
+      intervalId = setInterval(updateStats, getInterval());
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  const clearNetworkData = () => {
-    // Clear real network monitor data
-    globalNetworkMonitor.clear();
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isEnabled, pauseAfterReset, updateStats, getInterval]);
+
+  // Memoize empty stats object to prevent recreation
+  const emptyNetworkStats = useMemo((): NetworkStats => ({
+    totalCalls: 0,
+    redundantCalls: 0,
+    redundancyRate: 0,
+    sessionRedundancyRate: 0,
+    persistentRedundantCount: 0,
+    recentCalls: [],
+    redundantPatterns: [],
+    callsByType: {},
+    persistentIssues: []
+  }), []);
+
+  const clearNetworkData = useCallback(() => {
+    monitorRef.current?.clear();
     setJustReset(true);
     setPauseAfterReset(true);
     
-    // Set to empty stats immediately
-    setNetworkStats({
-      totalCalls: 0,
-      redundantCalls: 0,
-      redundancyRate: 0,
-      sessionRedundancyRate: 0,
-      persistentRedundantCount: 0,
-      recentCalls: [],
-      redundantPatterns: [],
-      callsByType: {},
-      persistentIssues: []
-    });
+    setNetworkStats(emptyNetworkStats);
 
-    // Pause monitoring for 3 seconds to show clean reset state
     setTimeout(() => {
       setPauseAfterReset(false);
       setJustReset(false);
-    }, 3000); // 3 second pause to show clean state
-  };
+    }, 3000);
+  }, [emptyNetworkStats]);
 
   return {
     networkStats,

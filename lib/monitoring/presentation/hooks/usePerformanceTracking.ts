@@ -1,25 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { onCLS, onLCP, onFCP, onINP, onTTFB, type Metric } from 'web-vitals';
-import { PerformanceMetrics, RenderMetrics, WebVitalsMetrics } from '../../domain/entities/PerformanceMetrics';
-import { PageContext } from '../../domain/services/OptimizationDetectionService';
+import type { InputPerformanceMetrics, WebVitalsMetrics, RenderMetrics, PageContext, PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 
-export interface PerformanceTrackingState {
-  renderMetrics: RenderMetrics;
-  cacheHitRate: number;
-  avgResponseTime: number;
-  webVitals: WebVitalsMetrics;
-  pageContext: PageContext;
-}
-
-export function usePerformanceTracking(metrics: PerformanceMetrics) {
+export function usePerformanceTracking(metrics: InputPerformanceMetrics) {
   const [cacheHitRate, setCacheHitRate] = useState(0);
   const [avgResponseTime, setAvgResponseTime] = useState(0);
   const [webVitals, setWebVitals] = useState<WebVitalsMetrics>({});
   const [currentPath, setCurrentPath] = useState('');
   
-  const prevMetricsRef = useRef<PerformanceMetrics | undefined>(undefined);
+  const prevMetricsRef = useRef<InputPerformanceMetrics | undefined>(undefined);
   const renderCountRef = useRef(0);
   const rapidRenderCountRef = useRef(0);
   const lastRenderTime = useRef(Date.now());
@@ -41,8 +32,8 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     lastMetricsUpdate.current = metrics.lastUpdate;
   }
 
-  // Detect page context
-  const pageContext: PageContext = (() => {
+  // Detect page context with memoization
+  const pageContext: PageContext = useMemo(() => {
     if (typeof window === 'undefined') return 'other';
     
     const path = window.location.pathname;
@@ -52,7 +43,7 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     if (path.includes('/team')) return 'team';
     if (path.includes('/settings')) return 'settings';
     return 'other';
-  })();
+  }, []);
 
   // Handle page change reset
   useEffect(() => {
@@ -74,23 +65,27 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     }
   }, [currentPath]);
 
+  // Throttle Web Vitals handler to prevent rapid updates
+  const lastVitalTimeRef = useRef<number>(0);
+  const handleWebVital = useCallback((metric: Metric) => {
+    const now = Date.now();
+    // Only update if at least 200ms have passed since last update
+    if (now - lastVitalTimeRef.current > 200) {
+      setWebVitals(prev => ({ ...prev, [metric.name]: metric.value }));
+      lastVitalTimeRef.current = now;
+    }
+  }, []);
+
   // Initialize Web Vitals monitoring
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    const handleWebVital = (metric: Metric) => {
-      setWebVitals(prev => ({
-        ...prev,
-        [metric.name]: metric.value
-      }));
-    };
 
     onCLS(handleWebVital);
     onLCP(handleWebVital);
     onFCP(handleWebVital);
     onINP(handleWebVital);
     onTTFB(handleWebVital);
-  }, []);
+  }, [handleWebVital]);
 
   // Track cache performance
   useEffect(() => {
@@ -111,7 +106,8 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     prevMetricsRef.current = metrics;
   }, [metrics]);
 
-  const resetCounters = () => {
+  // Memoize reset functions
+  const resetCounters = useCallback(() => {
     setCacheHitRate(0);
     setAvgResponseTime(0);
     setWebVitals({});
@@ -119,9 +115,9 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     rapidRenderCountRef.current = 0;
     lastRenderTime.current = Date.now();
     lastResetRef.current = Date.now();
-  };
+  }, []);
 
-  const fullReset = () => {
+  const fullReset = useCallback(() => {
     setCacheHitRate(0); // Start with 0% - no cache activity yet
     setAvgResponseTime(0);
     setWebVitals({}); // Start with empty web vitals - they'll be measured fresh
@@ -129,20 +125,23 @@ export function usePerformanceTracking(metrics: PerformanceMetrics) {
     rapidRenderCountRef.current = 0;
     lastRenderTime.current = Date.now();
     lastResetRef.current = Date.now();
-  };
+  }, []);
+
+  // Memoize the tracking state
+  const trackingState = useMemo((): PerformanceTrackingState => ({
+    renderMetrics: {
+      count: renderCountRef.current,
+      rapidCount: rapidRenderCountRef.current,
+      lastReset: lastResetRef.current
+    },
+    cacheHitRate,
+    avgResponseTime,
+    webVitals,
+    pageContext
+  }), [cacheHitRate, avgResponseTime, webVitals, pageContext]);
 
   return {
-    state: {
-      renderMetrics: {
-        count: renderCountRef.current,
-        rapidCount: rapidRenderCountRef.current,
-        lastReset: lastResetRef.current
-      },
-      cacheHitRate,
-      avgResponseTime,
-      webVitals,
-      pageContext
-    } as PerformanceTrackingState,
+    state: trackingState,
     resetCounters,
     fullReset
   };
