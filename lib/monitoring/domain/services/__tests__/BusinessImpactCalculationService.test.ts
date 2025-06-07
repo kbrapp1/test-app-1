@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BusinessImpactCalculationService } from '../BusinessImpactCalculationService';
+import { BusinessImpactCalculationService } from '../business-impact/BusinessImpactCalculationService';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
 import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 

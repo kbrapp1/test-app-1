@@ -1,4 +1,4 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
 
 /**
  * Domain Service: Optimization Fix Generator for Frontend Performance

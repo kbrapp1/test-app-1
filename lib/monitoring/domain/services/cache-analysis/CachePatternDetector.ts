@@ -1,4 +1,4 @@
-import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../value-objects/CacheAnalysisResult';
+import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../../value-objects/CacheAnalysisResult';
 
 /**
  * Domain Service: Cache Pattern Detection

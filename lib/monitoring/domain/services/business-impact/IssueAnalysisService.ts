@@ -1,6 +1,6 @@
-import { ReactQueryCacheAnalysisService } from './ReactQueryCacheAnalysisService';
-import { NetworkPatternAnalysisService } from './NetworkPatternAnalysisService';
-import { NetworkBusinessImpactService } from './NetworkBusinessImpactService';
+import { ReactQueryCacheAnalysisService } from '../cache-analysis/ReactQueryCacheAnalysisService';
+import { NetworkPatternAnalysisService } from '../network-analysis/NetworkPatternAnalysisService';
+import { NetworkBusinessImpactService } from '../network-analysis/NetworkBusinessImpactService';
 
 /**
  * Domain Service: Pure business logic for analyzing network redundancy issues

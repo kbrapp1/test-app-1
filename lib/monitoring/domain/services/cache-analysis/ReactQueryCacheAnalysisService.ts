@@ -1,10 +1,10 @@
 // React Query Cache Analysis Service
 // Single responsibility: Detect cache architecture issues in React Query patterns
 
-import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../value-objects/CacheAnalysisResult';
+import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../../value-objects/CacheAnalysisResult';
 import { CacheKeyMismatchDetector } from './CacheKeyMismatchDetector';
 import { CachePatternDetector } from './CachePatternDetector';
-import { ReactQueryCallAnalyzer } from '../../infrastructure/analysis/ReactQueryCallAnalyzer';
+import { ReactQueryCallAnalyzer } from '../../../infrastructure/analysis/ReactQueryCallAnalyzer';
 
 /**
  * Domain Service: React Query Cache Analysis Orchestrator

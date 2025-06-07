@@ -1,36 +1,23 @@
-// Domain Services - Business Logic Layer
+// Domain Services - DDD Organized by Bounded Context
 // Following DDD principles and Single Responsibility Principle
 
-export { ReactQueryCacheAnalysisService } from './ReactQueryCacheAnalysisService';
-export { CacheKeyMismatchDetector } from './CacheKeyMismatchDetector';
-export { CachePatternDetector } from './CachePatternDetector';
+// Cache Analysis Services
+export * from './cache-analysis';
 
-// Existing domain services
-export { NetworkAnalysisService } from './NetworkAnalysisService';
-export { NetworkBusinessImpactService } from './NetworkBusinessImpactService';
-export { NetworkPatternAnalysisService } from './NetworkPatternAnalysisService';
-export { ReactQueryOptimizationService } from './ReactQueryOptimizationService';
-export { BusinessImpactCalculationService } from './BusinessImpactCalculationService';
-export { IssueAnalysisService } from './IssueAnalysisService';
-export { FrontendOptimizationAnalysisService } from './FrontendOptimizationAnalysisService';
-export { CauseAnalysisService } from './CauseAnalysisService';
-export { WebVitalsAnalysisService } from './WebVitalsAnalysisService';
+// Network Analysis Services  
+export * from './network-analysis';
 
-// Specialized Frontend Optimization Services (DDD Refactored)
-export { OptimizationPriorityAssessmentService } from './OptimizationPriorityAssessmentService';
-export { BusinessImpactCalculatorService } from './BusinessImpactCalculatorService';
-export { OptimizationFixGeneratorService } from './OptimizationFixGeneratorService';
-export { WebVitalsImpactAssessorService } from './WebVitalsImpactAssessorService';
-export { SpecificCauseAnalyzerService } from './SpecificCauseAnalyzerService';
+// Performance Analysis Services
+export * from './performance-analysis';
 
-// Specialized Cache Analysis Services (DDD Refactored)
-export { ServerActionDuplicateDetector } from './ServerActionDuplicateDetector';
-export { ServerActionLegitimacyAnalyzer } from './ServerActionLegitimacyAnalyzer';
-export { PaginationPatternDetector } from './PaginationPatternDetector';
-export type { LegitimacyAnalysisResult } from './ServerActionLegitimacyAnalyzer';
-export type { PaginationDetectionResult } from './PaginationPatternDetector';
+// Optimization Services
+export * from './optimization';
 
-export type { IRuntimeDetectionService } from './IRuntimeDetectionService';
+// Business Impact Analysis Services
+export * from './business-impact';
 
-export * from './ReactQueryCacheAnalysisService';
-export * from './IssueAnalysisService'; 
+// Context Analysis Services
+export * from './context-analysis';
+
+// Service Interfaces
+export * from './interfaces'; 

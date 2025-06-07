@@ -1,12 +1,12 @@
-import { IContextDiscoveryService } from '../../domain/services/IContextDiscoveryService';
-import { IRuntimeDetectionService } from '../../domain/services/IRuntimeDetectionService';
+import { IContextDiscoveryService } from '../../domain/services/interfaces/IContextDiscoveryService';
+import { IRuntimeDetectionService } from '../../domain/services/interfaces/IRuntimeDetectionService';
 import { DomainDiscoveryService } from '../../infrastructure/discovery/DomainDiscoveryService';
 import { RuntimeDetectionService } from '../../infrastructure/services/RuntimeDetectionService';
 import { BrowserNetworkRepository } from '../../infrastructure/repositories/BrowserNetworkRepository';
 import { BrowserPerformanceRepository } from '../../infrastructure/repositories/BrowserPerformanceRepository';
 import { NetworkMonitoringRepository, PerformanceDataRepository } from '../../domain/repositories';
-import { DynamicContextUpdateService } from '../../domain/services/DynamicContextUpdateService';
-import { CauseAnalysisService } from '../../domain/services/CauseAnalysisService';
+import { DynamicContextUpdateService } from '../../domain/services/context-analysis/DynamicContextUpdateService';
+import { CauseAnalysisService } from '../../domain/services/business-impact/CauseAnalysisService';
 import { PageContextRepository } from '../../domain/repositories/PageContextRepository';
 
 /**

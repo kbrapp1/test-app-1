@@ -1,5 +1,5 @@
-import { PerformanceMetrics } from '../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
+import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 
 export class BusinessImpactCalculationService {
   static calculateFrontendBusinessImpact(

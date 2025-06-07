@@ -1,4 +1,4 @@
-import { NetworkPatternAnalysisService } from './NetworkPatternAnalysisService';
+import { NetworkPatternAnalysisService } from '../network-analysis/NetworkPatternAnalysisService';
 
 export interface ReactQueryOpportunity {
   suggestedKey: string;

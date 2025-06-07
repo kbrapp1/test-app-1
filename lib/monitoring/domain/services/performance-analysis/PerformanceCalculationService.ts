@@ -1,4 +1,4 @@
-import { PerformanceMetrics, RenderMetrics, WebVitalsMetrics, PerformanceScore } from '../entities/PerformanceMetrics';
+import { PerformanceMetrics, RenderMetrics, WebVitalsMetrics, PerformanceScore } from '../../entities/PerformanceMetrics';
 
 export class PerformanceCalculationService {
   static calculateScore(

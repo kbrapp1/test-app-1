@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CauseAnalysisService } from '../CauseAnalysisService';
+import { CauseAnalysisService } from '../business-impact/CauseAnalysisService';
 import { OptimizationGap } from '../../value-objects/OptimizationGap';
 import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
-import { IRuntimeDetectionService } from '../IRuntimeDetectionService';
+import { IRuntimeDetectionService } from '../interfaces/IRuntimeDetectionService';
 import { SpecificCauseAnalysis } from '../../value-objects/SpecificCauseAnalysis';
 
 /**
@@ -19,40 +19,41 @@ describe('CauseAnalysisService', () => {
   let mockRuntimeDetectionService: IRuntimeDetectionService;
 
   // Test data factories following DDD patterns
-  const createMockOptimizationGap = (overrides: Partial<OptimizationGap> = {}): OptimizationGap => ({
-    type: 'memoization',
-    title: 'Missing React.memo optimization',
-    description: 'Component re-renders unnecessarily',
-    severity: 'medium',
-    ...overrides
-  });
+  const createMockOptimizationGap = (overrides: Partial<OptimizationGap> = {}): OptimizationGap => {
+    const defaults = {
+      type: 'memoization' as const,
+      title: 'Missing React.memo optimization',
+      description: 'Component re-renders unnecessarily',
+      severity: 'medium' as const,
+      persistent: false,
+      ...overrides
+    };
+    return new OptimizationGap(defaults.type, defaults.title, defaults.description, defaults.severity, defaults.persistent);
+  };
 
   const createMockPerformanceMetrics = (overrides: Partial<PerformanceMetrics> = {}): PerformanceMetrics => ({
     cacheSize: 10,
     activeMutations: 2,
+    isOptimized: false,
+    lastUpdate: '2024-01-01T00:00:00Z',
     ...overrides
   });
 
   const createMockTrackingState = (overrides: Partial<PerformanceTrackingState> = {}): PerformanceTrackingState => ({
-    renderMetrics: { count: 5, totalTime: 100 },
+    renderMetrics: { count: 5, rapidCount: 0, lastReset: Date.now() },
     cacheHitRate: 80,
-    webVitals: { LCP: 1500, FID: 50, CLS: 0.1 },
+    webVitals: { LCP: 1500, CLS: 0.1 },
     avgResponseTime: 200,
     pageContext: 'dashboard',
     ...overrides
   });
 
   const createMockSpecificCauseAnalysis = (overrides: Partial<SpecificCauseAnalysis> = {}): SpecificCauseAnalysis => ({
-    cause: 'High component re-render frequency in dashboard context',
-    evidence: 'Detected 25 renders in current session - indicates missing React.memo',
-    recommendation: 'Add React.memo to frequently re-rendering components in dashboard',
-    estimatedImprovement: '40-60% reduction in render cycles',
-    implementationSteps: [
-      'Identify components with highest re-render frequency',
-      'Wrap components with React.memo for props comparison',
-      'Add useCallback for event handlers passed as props',
-      'Implement useMemo for expensive calculations'
-    ],
+    primaryComponent: 'DashboardChart',
+    componentIssue: 'High component re-render frequency in dashboard context',
+    primaryHook: 'useQuery',
+    hookIssue: 'Detected 25 renders in current session - indicates missing React.memo',
+    cacheIssue: 'Add React.memo to frequently re-rendering components in dashboard',
     ...overrides
   });
 
@@ -75,15 +76,15 @@ describe('CauseAnalysisService', () => {
         description: 'Component re-renders excessively'
       });
       const trackingState = createMockTrackingState({
-        renderMetrics: { count: 25, totalTime: 500 },
-        pageContext: 'user-profile'
+        renderMetrics: { count: 25, rapidCount: 5, lastReset: Date.now() },
+        pageContext: 'dashboard'
       });
       const performanceMetrics = createMockPerformanceMetrics();
       const analysisIndex = 1;
 
       const expectedAnalysis = createMockSpecificCauseAnalysis({
-        cause: 'Runtime detected: High re-render frequency',
-        evidence: 'Real-time analysis shows excessive component updates'
+        primaryComponent: 'Runtime detected component',
+        componentIssue: 'High re-render frequency'
       });
 
       // Mock runtime detection service to return analysis
@@ -144,8 +145,8 @@ describe('CauseAnalysisService', () => {
       const performanceMetrics = createMockPerformanceMetrics();
       const analysisIndex = 2;
 
-      // Mock runtime detection service to return undefined
-      vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(undefined);
+      // Mock runtime detection service to return null
+      vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(null);
 
       // Act
       const result = causeAnalysisService.analyzeSpecificCause(
@@ -173,7 +174,7 @@ describe('CauseAnalysisService', () => {
         severity: 'high'
       });
       const trackingState = createMockTrackingState({
-        pageContext: 'search-results',
+        pageContext: 'other',
         avgResponseTime: 350
       });
       const performanceMetrics = createMockPerformanceMetrics({
@@ -182,8 +183,8 @@ describe('CauseAnalysisService', () => {
       });
 
       const expectedAnalysis = createMockSpecificCauseAnalysis({
-        cause: 'Runtime detected: Excessive API calls from user input',
-        evidence: 'Real-time monitoring shows 50+ API calls per second'
+        primaryComponent: 'SearchInput',
+        componentIssue: 'Runtime detected: Excessive API calls from user input'
       });
 
       vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(expectedAnalysis);
@@ -228,8 +229,8 @@ describe('CauseAnalysisService', () => {
         });
 
         const expectedAnalysis = createMockSpecificCauseAnalysis({
-          cause: `Runtime detected: ${type} issue`,
-          evidence: `Real-time analysis shows ${type} problems`
+          primaryComponent: `Component-${type}`,
+          componentIssue: `Runtime detected: ${type} issue`
         });
 
         vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(expectedAnalysis);
@@ -252,12 +253,12 @@ describe('CauseAnalysisService', () => {
     });
 
     it('should handle different tracking state contexts', () => {
-      const contexts = [
+      const contexts: ('image-generator' | 'dam' | 'dashboard' | 'team' | 'settings' | 'other')[] = [
         'dashboard',
-        'user-profile',
-        'product-listing',
-        'search-results',
-        'checkout'
+        'dam',
+        'image-generator',
+        'team',
+        'settings'
       ];
 
       const optimizationGap = createMockOptimizationGap();
@@ -271,8 +272,8 @@ describe('CauseAnalysisService', () => {
         });
 
         const expectedAnalysis = createMockSpecificCauseAnalysis({
-          cause: `Runtime detected: Performance issue in ${context}`,
-          evidence: `Real-time analysis for ${context} context`
+          primaryComponent: `Component-${context}`,
+          componentIssue: `Runtime detected: Performance issue in ${context}`
         });
 
         vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(expectedAnalysis);
@@ -409,8 +410,8 @@ describe('CauseAnalysisService', () => {
 
       // Mock service to return specific analysis
       const analysis = createMockSpecificCauseAnalysis({
-        cause: 'Proper DDD layer separation maintained',
-        evidence: 'Service only depends on domain abstractions'
+        primaryComponent: 'DomainService',
+        componentIssue: 'Proper DDD layer separation maintained'
       });
       vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockReturnValue(analysis);
 

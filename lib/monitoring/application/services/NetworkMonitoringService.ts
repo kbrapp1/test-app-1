@@ -12,7 +12,7 @@ import { SourceTracker, CallSource } from '../../infrastructure/services/SourceT
 import { NetworkIssueDetectionService } from '../../domain/network-efficiency/services/NetworkIssueDetectionService';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
 import { NetworkPerformanceThrottler } from '../../infrastructure/services/NetworkPerformanceThrottler';
-import { IssueAnalysisService } from '../../domain/services/IssueAnalysisService';
+import { IssueAnalysisService } from '../../domain/services/business-impact/IssueAnalysisService';
 
 export class NetworkMonitoringService {
   private readonly callTracker: NetworkCallTracker;

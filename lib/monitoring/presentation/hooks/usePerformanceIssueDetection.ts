@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
-import { OptimizationDetectionService } from '../../domain/services/OptimizationDetectionService';
+import { OptimizationDetectionService } from '../../domain/services/optimization/OptimizationDetectionService';
 import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
 

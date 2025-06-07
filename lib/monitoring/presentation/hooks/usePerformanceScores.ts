@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
-import { PerformanceCalculationService } from '../../domain/services/PerformanceCalculationService';
+import { PerformanceCalculationService } from '../../domain/services/performance-analysis/PerformanceCalculationService';
 import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
-import { IssueAnalysisService } from '../../domain/services/IssueAnalysisService';
+import { IssueAnalysisService } from '../../domain/services/business-impact/IssueAnalysisService';
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
 
 /**

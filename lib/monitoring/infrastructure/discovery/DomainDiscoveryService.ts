@@ -1,5 +1,5 @@
 import { PageContext } from '../../domain/repositories/PageContextRepository';
-import { IContextDiscoveryService } from '../../domain/services/IContextDiscoveryService';
+import { IContextDiscoveryService } from '../../domain/services/interfaces/IContextDiscoveryService';
 import { DomainOrchestrationService } from '../../application/services/DomainOrchestrationService';
 
 export class DomainDiscoveryService implements IContextDiscoveryService {

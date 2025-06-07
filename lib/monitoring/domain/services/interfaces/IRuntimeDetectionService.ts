@@ -1,6 +1,6 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
-import { SpecificCauseAnalysis } from '../value-objects/SpecificCauseAnalysis';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { SpecificCauseAnalysis } from '../../value-objects/SpecificCauseAnalysis';
 
 /**
  * Domain interface for runtime detection operations

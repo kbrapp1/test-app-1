@@ -1,7 +1,7 @@
 import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
 import { ReportTemplateService } from '../../application/services/ReportTemplateService';
 import { ReportGenerationService } from '../../application/services/ReportGenerationService';
-import { IssueAnalysisService } from '../../domain/services/IssueAnalysisService';
+import { IssueAnalysisService } from '../../domain/services/business-impact/IssueAnalysisService';
 
 /**
  * Presentation Layer Service - Handles UI-specific report formatting

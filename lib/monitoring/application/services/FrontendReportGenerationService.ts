@@ -1,8 +1,8 @@
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { PerformanceMetrics } from '../../domain/entities/PerformanceMetrics';
 import { PerformanceTrackingState } from '../dto/PerformanceTrackingDTO';
-import { FrontendOptimizationAnalysisService } from '../../domain/services/FrontendOptimizationAnalysisService';
-import { WebVitalsAnalysisService } from '../../domain/services/WebVitalsAnalysisService';
+import { FrontendOptimizationAnalysisService } from '../../domain/services/optimization/FrontendOptimizationAnalysisService';
+import { WebVitalsAnalysisService } from '../../domain/services/performance-analysis/WebVitalsAnalysisService';
 
 export class FrontendReportGenerationService {
   static generateReport(

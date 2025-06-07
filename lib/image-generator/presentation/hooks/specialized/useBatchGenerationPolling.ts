@@ -22,6 +22,11 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
   // Memoize query key to prevent React Query from treating it as a new query
   const queryKey = useMemo(() => ['image-generations', 'batch', ...stableGenerationIds], [stableGenerationIds]);
 
+  // Reset skipFirstPoll when generationIds change to avoid immediate polling on new generations
+  useEffect(() => {
+    skipFirstPollRef.current = true;
+  }, [queryKey]);
+
   // Check if any generations actually need polling - NOT MEMOIZED for fresh cache checks
   const activeGenerationIds = stableGenerationIds.filter(id => {
     const cachedData = queryClient.getQueryData(IMAGE_GENERATION_QUERY_KEYS.detail(id)) as GenerationDto | undefined;

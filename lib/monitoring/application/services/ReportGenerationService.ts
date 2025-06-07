@@ -1,8 +1,8 @@
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
-import { IssueAnalysisService, IssueAnalysisResult, IssueClassification } from '../../domain/services/IssueAnalysisService';
+import { IssueAnalysisService, IssueAnalysisResult, IssueClassification } from '../../domain/services/business-impact/IssueAnalysisService';
 import { CacheFixRecommendationService } from './CacheFixRecommendationService';
 import { ReportTemplateService } from './ReportTemplateService';
-import { NetworkAnalysisService } from '../../domain/services/NetworkAnalysisService';
+import { NetworkAnalysisService } from '../../domain/services/network-analysis/NetworkAnalysisService';
 import { NetworkIssuesReportService } from './NetworkIssuesReportService';
 
 /**

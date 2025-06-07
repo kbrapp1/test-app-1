@@ -1,7 +1,7 @@
 import { OptimizationGap } from '../../domain/value-objects/OptimizationGap';
 import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
 import { SpecificCauseAnalysis } from '../../domain/value-objects/SpecificCauseAnalysis';
-import { IRuntimeDetectionService } from '../../domain/services/IRuntimeDetectionService';
+import { IRuntimeDetectionService } from '../../domain/services/interfaces/IRuntimeDetectionService';
 
 export class RuntimeDetectionService implements IRuntimeDetectionService {
   detectActualCulprit(

@@ -1,8 +1,8 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
-import { PerformanceMetrics } from '../entities/PerformanceMetrics';
-import { SpecificCauseAnalysis } from '../value-objects/SpecificCauseAnalysis';
-import { IRuntimeDetectionService } from './IRuntimeDetectionService';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
+import { SpecificCauseAnalysis } from '../../value-objects/SpecificCauseAnalysis';
+import { IRuntimeDetectionService } from '../interfaces/IRuntimeDetectionService';
 
 /**
  * Cause Analysis Service (Domain Service)

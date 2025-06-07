@@ -1,7 +1,7 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
-import { PerformanceMetrics } from '../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
-import { OptimizationPriority } from './OptimizationPriorityAssessmentService';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { OptimizationPriority } from '../optimization/OptimizationPriorityAssessmentService';
 
 /**
  * Domain Service: Business Impact Calculator for Frontend Optimizations

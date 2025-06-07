@@ -1,6 +1,6 @@
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
 import { ReportTemplateService } from './ReportTemplateService';
-import { NetworkAnalysisService } from '../../domain/services/NetworkAnalysisService';
+import { NetworkAnalysisService } from '../../domain/services/network-analysis/NetworkAnalysisService';
 
 /**
  * Service for generating network issues performance reports

@@ -1,4 +1,4 @@
-import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../value-objects/CacheAnalysisResult';
+import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../../value-objects/CacheAnalysisResult';
 import { ServerActionDuplicateDetector } from './ServerActionDuplicateDetector';
 import { ServerActionLegitimacyAnalyzer } from './ServerActionLegitimacyAnalyzer';
 import { PaginationPatternDetector } from './PaginationPatternDetector';

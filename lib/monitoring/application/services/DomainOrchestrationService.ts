@@ -4,7 +4,7 @@ import { PageDiscoveryService } from '../../infrastructure/discovery/PageDiscove
 import { ComponentDiscoveryService } from '../../infrastructure/discovery/ComponentDiscoveryService';
 import { EndpointDiscoveryService } from '../../infrastructure/discovery/EndpointDiscoveryService';
 import { QueryKeyDiscoveryService } from '../../infrastructure/discovery/QueryKeyDiscoveryService';
-import { OptimizationTargetGenerationService } from '../../domain/services/OptimizationTargetGenerationService';
+import { OptimizationTargetGenerationService } from '../../domain/services/optimization/OptimizationTargetGenerationService';
 
 export class DomainOrchestrationService {
   static async orchestrateLibDomainDiscovery(): Promise<PageContext[]> {

@@ -1,5 +1,5 @@
-import { PerformanceMetrics, RenderMetrics, WebVitalsMetrics } from '../entities/PerformanceMetrics';
-import { OptimizationGap } from '../value-objects/OptimizationGap';
+import { PerformanceMetrics, RenderMetrics, WebVitalsMetrics } from '../../entities/PerformanceMetrics';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
 
 export type PageContext = 'image-generator' | 'dam' | 'dashboard' | 'team' | 'settings' | 'other';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FrontendOptimizationAnalysisService, FrontendIssueAnalysis } from '../FrontendOptimizationAnalysisService';
+import { FrontendOptimizationAnalysisService, FrontendIssueAnalysis } from '../optimization/FrontendOptimizationAnalysisService';
 import { OptimizationGap } from '../../value-objects/OptimizationGap';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
 import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';

@@ -1,11 +1,11 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
-import { PerformanceMetrics } from '../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 import { OptimizationPriorityAssessmentService, OptimizationPriority } from './OptimizationPriorityAssessmentService';
-import { BusinessImpactCalculatorService } from './BusinessImpactCalculatorService';
+import { BusinessImpactCalculatorService } from '../business-impact/BusinessImpactCalculatorService';
 import { OptimizationFixGeneratorService } from './OptimizationFixGeneratorService';
-import { WebVitalsImpactAssessorService } from './WebVitalsImpactAssessorService';
-import { SpecificCauseAnalyzerService, SpecificCauseAnalysis } from './SpecificCauseAnalyzerService';
+import { WebVitalsImpactAssessorService } from '../performance-analysis/WebVitalsImpactAssessorService';
+import { SpecificCauseAnalyzerService, SpecificCauseAnalysis } from '../business-impact/SpecificCauseAnalyzerService';
 
 /**
  * Domain Service: Frontend Optimization Analysis Orchestrator
@@ -107,4 +107,4 @@ export interface FrontendIssueAnalysis {
 
 // Re-export types for backward compatibility
 export type { OptimizationPriority } from './OptimizationPriorityAssessmentService';
-export type { SpecificCauseAnalysis } from './SpecificCauseAnalyzerService'; 
+export type { SpecificCauseAnalysis } from '../business-impact/SpecificCauseAnalyzerService'; 

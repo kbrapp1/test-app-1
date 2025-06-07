@@ -1,5 +1,5 @@
-import { OptimizationGap } from '../value-objects/OptimizationGap';
-import { PerformanceTrackingState } from '../../application/dto/PerformanceTrackingDTO';
+import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 
 /**
  * Domain Service: Web Vitals Impact Assessor for Frontend Performance

@@ -1,4 +1,4 @@
-import { PageContextRepository, PageContext } from '../repositories/PageContextRepository';
+import { PageContextRepository, PageContext } from '../../repositories/PageContextRepository';
 
 export interface PageContextAnalysis {
   likelyComponents: string[];

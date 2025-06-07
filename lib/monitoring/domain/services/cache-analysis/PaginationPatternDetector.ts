@@ -1,4 +1,4 @@
-import { ReactQueryCallAnalysis } from '../value-objects/CacheAnalysisResult';
+import { ReactQueryCallAnalysis } from '../../value-objects/CacheAnalysisResult';
 
 /**
  * Pagination Detection Result

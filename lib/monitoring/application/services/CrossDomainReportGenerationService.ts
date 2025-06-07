@@ -1,6 +1,6 @@
 import { CrossDomainInsight } from '../../domain/cross-domain/services/PerformanceCorrelationService';
-import { CrossDomainAnalysisService } from '../../domain/services/CrossDomainAnalysisService';
-import { PageContextAnalysisService } from '../../domain/services/PageContextAnalysisService';
+import { CrossDomainAnalysisService } from '../../domain/services/context-analysis/CrossDomainAnalysisService';
+import { PageContextAnalysisService } from '../../domain/services/context-analysis/PageContextAnalysisService';
 import { PageContextRepository } from '../../domain/repositories/PageContextRepository';
 import { DomainRegistrationBootstrap } from '../../infrastructure/bootstrap/DomainRegistrationBootstrap';
 

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { Gauge } from 'lucide-react';
 import { WebVitalsMetrics } from '../../domain/entities/PerformanceMetrics';
-import { WebVitalsAnalysisService } from '../../domain/services/WebVitalsAnalysisService';
+import { WebVitalsAnalysisService } from '../../domain/services/performance-analysis/WebVitalsAnalysisService';
 
 interface WebVitalsSectionProps {
   webVitals: WebVitalsMetrics;

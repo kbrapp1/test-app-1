@@ -1,5 +1,5 @@
-import { PageContext, PageContextRepository } from '../repositories/PageContextRepository';
-import { IContextDiscoveryService } from './IContextDiscoveryService';
+import { PageContext, PageContextRepository } from '../../repositories/PageContextRepository';
+import { IContextDiscoveryService } from '../interfaces/IContextDiscoveryService';
 
 export interface ContextUpdateResult {
   domain: string;

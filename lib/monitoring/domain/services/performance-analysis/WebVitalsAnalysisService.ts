@@ -1,4 +1,4 @@
-import { WebVitalsMetrics } from '../entities/PerformanceMetrics';
+import { WebVitalsMetrics } from '../../entities/PerformanceMetrics';
 
 export type WebVitalRating = 'good' | 'needs-improvement' | 'poor' | 'unknown';
 

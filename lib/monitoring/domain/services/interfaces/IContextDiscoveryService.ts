@@ -1,4 +1,4 @@
-import { PageContext } from '../repositories/PageContextRepository';
+import { PageContext } from '../../repositories/PageContextRepository';
 
 /**
  * Domain interface for context discovery operations
