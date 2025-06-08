@@ -2,6 +2,7 @@ import { ImageGenerationProvider, GenerationRequest, GenerationResult } from '..
 import { ProviderId, ModelId, ProviderModel } from '../../../domain/value-objects/Provider';
 import { ReplicateClient } from './ReplicateClient';
 import { StatusMapper } from './StatusMapper';
+import { LazyProviderLoader } from '../LazyProviderLoader';
 
 export class ReplicateProvider implements ImageGenerationProvider {
   public readonly providerId: ProviderId = 'replicate';
@@ -20,18 +21,18 @@ export class ReplicateProvider implements ImageGenerationProvider {
   }
 
   async generateImage(request: GenerationRequest): Promise<GenerationResult> {
-    const validation = this.validateRequest(request);
+    const validation = await this.validateRequest(request);
     if (!validation.isValid) {
       throw new Error(`Invalid generation request: ${validation.errors.join(', ')}`);
     }
 
-    const model = this.getModel(request.modelId);
+    const model = await this.getModel(request.modelId);
     if (!model) {
       throw new Error(`Model ${request.modelId} not found`);
     }
 
     const modelMapping = this.getReplicateModelId(request.modelId);
-    const input = this.createInput(request);
+    const input = await this.createInput(request);
     
     const prediction = await this.getClient().createPrediction({
       model: modelMapping,
@@ -61,63 +62,18 @@ export class ReplicateProvider implements ImageGenerationProvider {
     await this.getClient().cancelPrediction(generationId);
   }
 
-  getSupportedModels(): ProviderModel[] {
-    return [
-      {
-        id: 'flux-kontext-max',
-        name: 'FLUX Kontext Max',
-        description: 'Advanced image editing and generation with enhanced typography capabilities',
-        capabilities: {
-          maxPromptLength: 2000,
-          supportedAspectRatios: ['1:1', '3:4', '4:3', '16:9', '9:16', '21:9', '9:21', '3:7', '7:3'],
-          defaultSettings: {
-            aspectRatio: '1:1',
-            outputFormat: 'jpg',
-            safetyTolerance: 2,
-          },
-          costPerGeneration: 8, // 8 cents
-          estimatedTimeSeconds: 25,
-          supportsImageEditing: true,
-          supportsTextToImage: true,
-          supportsCustomDimensions: true,
-          supportsStyleControls: true,
-          supportedOutputFormats: ['jpg', 'png'],
-          maxSafetyTolerance: 6,
-          minSafetyTolerance: 1,
-        },
-        isDefault: false,
-      },
-      {
-        id: 'flux-schnell',
-        name: 'FLUX Schnell',
-        description: 'Fastest image generation model for rapid prototyping and testing',
-        capabilities: {
-          maxPromptLength: 2000,
-          supportedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4'],
-          defaultSettings: {
-            aspectRatio: '1:1',
-            outputFormat: 'png',
-          },
-          costPerGeneration: 1, // 1 cent - much cheaper!
-          estimatedTimeSeconds: 10,
-          supportsImageEditing: false, // Schnell is text-to-image only
-          supportsTextToImage: true,
-          supportsCustomDimensions: false,
-          supportsStyleControls: false,
-          supportedOutputFormats: ['png', 'webp', 'jpg'],
-        },
-        isDefault: true,
-      },
-    ];
+  async getSupportedModels(): Promise<ProviderModel[]> {
+    return await LazyProviderLoader.loadReplicateModels();
   }
 
-  getModel(modelId: ModelId): ProviderModel | undefined {
-    return this.getSupportedModels().find(model => model.id === modelId);
+  async getModel(modelId: ModelId): Promise<ProviderModel | undefined> {
+    const models = await this.getSupportedModels();
+    return models.find(model => model.id === modelId);
   }
 
-  validateRequest(request: GenerationRequest): { isValid: boolean; errors: string[] } {
+  async validateRequest(request: GenerationRequest): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
-    const model = this.getModel(request.modelId);
+    const model = await this.getModel(request.modelId);
 
     if (!model) {
       errors.push(`Model ${request.modelId} not supported by ${this.providerId}`);
@@ -137,6 +93,15 @@ export class ReplicateProvider implements ImageGenerationProvider {
     }
 
     // Model-specific validations
+    if (request.modelId === 'imagen-4') {
+      if (request.baseImageUrl) {
+        errors.push('Image editing not supported by Imagen-4 model - use text prompts only');
+      }
+      if (request.safetyTolerance !== undefined) {
+        errors.push('Safety tolerance not configurable for Imagen-4 - Google handles safety internally');
+      }
+    }
+
     if (request.modelId === 'flux-schnell') {
       if (request.baseImageUrl) {
         errors.push('Image editing not supported by flux-schnell model');
@@ -164,17 +129,21 @@ export class ReplicateProvider implements ImageGenerationProvider {
     return { isValid: errors.length === 0, errors };
   }
 
-  estimateCost(request: GenerationRequest): number {
-    const model = this.getModel(request.modelId);
+  async estimateCost(request: GenerationRequest): Promise<number> {
+    const model = await this.getModel(request.modelId);
     return model?.capabilities.costPerGeneration || 0;
   }
 
   private getReplicateModelId(modelId: ModelId): string {
     switch (modelId) {
+      case 'imagen-4':
+        return 'google/imagen-4';
       case 'flux-kontext-max':
         return 'black-forest-labs/flux-kontext-max';
       case 'flux-schnell':
         return 'black-forest-labs/flux-schnell';
+      case 'flux-dev':
+        return 'black-forest-labs/flux-dev';
       default:
         throw new Error(`Unknown model ID: ${modelId}`);
     }
@@ -197,8 +166,8 @@ export class ReplicateProvider implements ImageGenerationProvider {
     }
   }
 
-  private createInput(request: GenerationRequest): Record<string, unknown> {
-    const model = this.getModel(request.modelId);
+  private async createInput(request: GenerationRequest): Promise<Record<string, unknown>> {
+    const model = await this.getModel(request.modelId);
     const defaults = model?.capabilities.defaultSettings;
 
     const input: Record<string, unknown> = {
@@ -207,7 +176,11 @@ export class ReplicateProvider implements ImageGenerationProvider {
     };
 
     // Model-specific input parameters
-    if (request.modelId === 'flux-kontext-max') {
+    if (request.modelId === 'imagen-4') {
+      // Imagen-4 specific parameters
+      // Google handles safety internally, no safety tolerance needed
+      // No image input support for this text-to-image model
+    } else if (request.modelId === 'flux-kontext-max') {
       input.safety_tolerance = request.safetyTolerance || defaults?.safetyTolerance;
       if (request.baseImageUrl && request.baseImageUrl.startsWith('http')) {
         // Only use properly uploaded URLs - validation above ensures this

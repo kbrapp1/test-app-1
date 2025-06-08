@@ -1,0 +1,1 @@
+export { useCrossDomainInsights } from './useCrossDomainInsights'; 

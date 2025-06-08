@@ -28,8 +28,8 @@ export interface ImageGenerationProvider {
   checkStatus(generationId: string): Promise<GenerationResult>;
   cancelGeneration(generationId: string): Promise<void>;
   
-  getSupportedModels(): ProviderModel[];
-  getModel(modelId: ModelId): ProviderModel | undefined;
-  validateRequest(request: GenerationRequest): { isValid: boolean; errors: string[] };
-  estimateCost(request: GenerationRequest): number;
+  getSupportedModels(): Promise<ProviderModel[]>;
+  getModel(modelId: ModelId): Promise<ProviderModel | undefined>;
+  validateRequest(request: GenerationRequest): Promise<{ isValid: boolean; errors: string[] }>;
+  estimateCost(request: GenerationRequest): Promise<number>;
 } 

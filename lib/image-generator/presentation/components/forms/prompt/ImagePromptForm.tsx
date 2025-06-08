@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSection } from '../settings/StyleSection';
 import { ImageDimensionsSection } from '../settings/ImageDimensionsSection';
 import { SettingsSection } from '../settings/SettingsSection';
@@ -58,7 +58,7 @@ interface ImagePromptFormProps {
  * Single Responsibility: Form orchestration and coordination of sub-components
  * Follows DDD principles by delegating specific concerns to focused components
  */
-export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
+const ImagePromptFormComponent: React.FC<ImagePromptFormProps> = ({
   prompt,
   onPromptChange,
   baseImageUrl,
@@ -203,4 +203,64 @@ export const ImagePromptForm: React.FC<ImagePromptFormProps> = ({
       </div>
     </div>
   );
-}; 
+};
+
+// Custom comparison function for React.memo
+const arePropsEqual = (
+  prevProps: ImagePromptFormProps,
+  nextProps: ImagePromptFormProps
+): boolean => {
+  // Compare primitive props
+  if (
+    prevProps.prompt !== nextProps.prompt ||
+    prevProps.baseImageUrl !== nextProps.baseImageUrl ||
+    prevProps.aspectRatio !== nextProps.aspectRatio ||
+    prevProps.style !== nextProps.style ||
+    prevProps.mood !== nextProps.mood ||
+    prevProps.safetyTolerance !== nextProps.safetyTolerance ||
+    prevProps.isGenerating !== nextProps.isGenerating ||
+    prevProps.isStorageUrl !== nextProps.isStorageUrl ||
+    prevProps.isUploading !== nextProps.isUploading ||
+    prevProps.generationError !== nextProps.generationError
+  ) {
+    return false;
+  }
+
+  // Compare styleValues object
+  const prevStyles = prevProps.styleValues;
+  const nextStyles = nextProps.styleValues;
+  if (prevStyles !== nextStyles) {
+    if (!prevStyles || !nextStyles) return false;
+    if (
+      prevStyles.vibe !== nextStyles.vibe ||
+      prevStyles.lighting !== nextStyles.lighting ||
+      prevStyles.shotType !== nextStyles.shotType ||
+      prevStyles.colorTheme !== nextStyles.colorTheme
+    ) {
+      return false;
+    }
+  }
+
+  // Compare capabilities object (deep comparison for key properties)
+  const prevCap = prevProps.capabilities;
+  const nextCap = nextProps.capabilities;
+  if (prevCap !== nextCap) {
+    if (!prevCap || !nextCap) return false;
+    if (
+      prevCap.supportsImageEditing !== nextCap.supportsImageEditing ||
+      prevCap.supportsStyleControls !== nextCap.supportsStyleControls ||
+      prevCap.maxSafetyTolerance !== nextCap.maxSafetyTolerance ||
+      prevCap.minSafetyTolerance !== nextCap.minSafetyTolerance ||
+      JSON.stringify(prevCap.supportedAspectRatios) !== JSON.stringify(nextCap.supportedAspectRatios) ||
+      JSON.stringify(prevCap.supportedOutputFormats) !== JSON.stringify(nextCap.supportedOutputFormats)
+    ) {
+      return false;
+    }
+  }
+
+  // Function props are assumed to be stable (created with useCallback)
+  return true;
+};
+
+// Export memoized component
+export const ImagePromptForm = memo(ImagePromptFormComponent, arePropsEqual);

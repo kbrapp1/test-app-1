@@ -27,13 +27,32 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
     skipFirstPollRef.current = true;
   }, [queryKey]);
 
-  // Check if any generations actually need polling - NOT MEMOIZED for fresh cache checks
-  const activeGenerationIds = stableGenerationIds.filter(id => {
-    const cachedData = queryClient.getQueryData(IMAGE_GENERATION_QUERY_KEYS.detail(id)) as GenerationDto | undefined;
+  // Optimized cache lookup with hit ratio monitoring
+  const { activeGenerationIds, cacheHitRatio } = useMemo(() => {
+    let cacheHits = 0;
+    let totalLookups = 0;
     
-    // Only poll if we don't have cached data or if the status indicates it's still in progress
-    return !cachedData || ['pending', 'processing'].includes(cachedData.status);
-  });
+    const activeIds = stableGenerationIds.filter(id => {
+      totalLookups++;
+      const cachedData = queryClient.getQueryData(IMAGE_GENERATION_QUERY_KEYS.detail(id)) as GenerationDto | undefined;
+      
+      if (cachedData) {
+        cacheHits++;
+        // Only poll if the status indicates it's still in progress
+        return ['pending', 'processing'].includes(cachedData.status);
+      }
+      
+      // Poll if we don't have cached data
+      return true;
+    });
+
+    const hitRatio = totalLookups > 0 ? (cacheHits / totalLookups) * 100 : 0;
+
+    return {
+      activeGenerationIds: activeIds,
+      cacheHitRatio: hitRatio
+    };
+  }, [stableGenerationIds, queryClient]);
 
   // Determine if polling should be enabled
   const shouldEnablePolling = enabled && activeGenerationIds.length > 0;
@@ -153,5 +172,6 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
     isLoading: batchQuery.isLoading,
     error: batchQuery.error,
     activeCount: batchQuery.data?.length || 0,
+    cacheHitRatio, // For performance monitoring
   };
 } 

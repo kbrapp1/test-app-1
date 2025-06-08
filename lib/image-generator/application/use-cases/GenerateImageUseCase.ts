@@ -25,7 +25,7 @@ export class GenerateImageUseCase {
   private providerService: ProviderService;
 
   constructor(private readonly repository: GenerationRepository) {
-    // Initialize provider service with registry
+    // Initialize provider service with registry - models load on-demand
     const registry = ProviderFactory.createProviderRegistry();
     this.providerService = new ProviderService(registry);
   }
@@ -43,14 +43,14 @@ export class GenerateImageUseCase {
       const modelId = request.modelId || defaultConfig.modelId;
 
       // Get provider from registry
-      const providers = this.providerService.getAvailableProviders();
+      const providers = await this.providerService.getAvailableProviders();
       const provider = providers.find(p => p.providerId === providerId);
       if (!provider) {
         return error(`Provider ${providerId} not found`);
       }
 
       // Get model
-      const model = provider.getModel(modelId as any);
+      const model = await provider.getModel(modelId as any);
       if (!model) {
         return error(`Model ${modelId} not found for provider ${providerId}`);
       }

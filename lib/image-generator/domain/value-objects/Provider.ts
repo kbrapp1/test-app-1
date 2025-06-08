@@ -10,6 +10,7 @@ export type ModelId =
   | 'dall-e-3' 
   | 'dall-e-2'
   // Google models
+  | 'imagen-4'
   | 'imagen-3' 
   | 'imagen-2'
   // Stability models

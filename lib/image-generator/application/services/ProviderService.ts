@@ -57,14 +57,17 @@ export class ProviderService {
     return this.providerRegistry.getAllProviders();
   }
 
-  getModelsForProvider(providerId: ProviderId): ModelId[] {
-    return this.providerRegistry.getAvailableModels(providerId);
+  async getModelsForProvider(providerId: ProviderId): Promise<ModelId[]> {
+    const provider = this.providerRegistry.getProvider(providerId);
+    if (!provider) return [];
+    const models = await provider.getSupportedModels();
+    return models.map(model => model.id);
   }
 
-  validateRequest(
+  async validateRequest(
     request: Omit<GenerationRequest, 'providerId' | 'modelId'>,
     config: ProviderConfiguration
-  ): { isValid: boolean; errors: string[] } {
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const provider = this.providerRegistry.getProvider(config.providerId);
     if (!provider) {
       return {
@@ -79,13 +82,13 @@ export class ProviderService {
       modelId: config.modelId,
     };
 
-    return provider.validateRequest(fullRequest);
+    return await provider.validateRequest(fullRequest);
   }
 
-  estimateCost(
+  async estimateCost(
     request: Omit<GenerationRequest, 'providerId' | 'modelId'>,
     config: ProviderConfiguration
-  ): number {
+  ): Promise<number> {
     const provider = this.providerRegistry.getProvider(config.providerId);
     if (!provider) {
       return 0;
@@ -97,14 +100,14 @@ export class ProviderService {
       modelId: config.modelId,
     };
 
-    return provider.estimateCost(fullRequest);
+    return await provider.estimateCost(fullRequest);
   }
 
-  getCheapestOption(): { providerId: ProviderId; modelId: ModelId } | null {
-    const provider = this.providerRegistry.findCheapestProvider();
+  async getCheapestOption(): Promise<{ providerId: ProviderId; modelId: ModelId } | null> {
+    const provider = await this.providerRegistry.findCheapestProvider();
     if (!provider) return null;
 
-    const models = provider.getSupportedModels();
+    const models = await provider.getSupportedModels();
     const cheapestModel = models.reduce((cheapest, current) =>
       current.capabilities.costPerGeneration < cheapest.capabilities.costPerGeneration
         ? current
@@ -117,11 +120,11 @@ export class ProviderService {
     };
   }
 
-  getFastestOption(): { providerId: ProviderId; modelId: ModelId } | null {
-    const provider = this.providerRegistry.findFastestProvider();
+  async getFastestOption(): Promise<{ providerId: ProviderId; modelId: ModelId } | null> {
+    const provider = await this.providerRegistry.findFastestProvider();
     if (!provider) return null;
 
-    const models = provider.getSupportedModels();
+    const models = await provider.getSupportedModels();
     const fastestModel = models.reduce((fastest, current) =>
       current.capabilities.estimatedTimeSeconds < fastest.capabilities.estimatedTimeSeconds
         ? current

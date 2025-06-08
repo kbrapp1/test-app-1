@@ -1,4 +1,5 @@
 import { Generation } from '../../../../domain/entities/Generation';
+import { GenerationSerializationService, GenerationSnapshot } from '../../../../domain/services/GenerationSerializationService';
 
 // Database row type
 export interface GenerationRow {
@@ -34,37 +35,39 @@ export class GenerationRowMapper {
     created_at?: string;
     updated_at?: string;
   } {
+    const snapshot = GenerationSerializationService.toSnapshot(generation);
+    
     return {
-      id: generation.getId(),
-      organization_id: generation.organizationId,
-      user_id: generation.userId,
-      prompt: generation.prompt.toString(),
-      model_name: generation.modelName,
-      provider_name: generation.providerName,
-      status: generation.getStatus().toString(),
-      result_image_url: generation.resultImageUrl,
-      cost_cents: generation.getCostCents(),
-      generation_time_seconds: generation.getGenerationTimeSeconds(),
-      image_width: generation.imageWidth,
-      image_height: generation.imageHeight,
-      saved_to_dam: generation.isSavedToDAM(),
-      dam_asset_id: generation.damAssetId,
-      error_message: generation.errorMessage,
-      metadata: generation.metadata,
-      created_at: generation.createdAt.toISOString(),
-      updated_at: generation.updatedAt.toISOString(),
+      id: snapshot.id,
+      organization_id: snapshot.organizationId,
+      user_id: snapshot.userId,
+      prompt: snapshot.prompt,
+      model_name: snapshot.modelName,
+      provider_name: snapshot.providerName,
+      status: snapshot.status,
+      result_image_url: snapshot.resultImageUrl,
+      cost_cents: snapshot.costCents,
+      generation_time_seconds: snapshot.generationTimeSeconds,
+      image_width: snapshot.imageWidth,
+      image_height: snapshot.imageHeight,
+      saved_to_dam: snapshot.savedToDAM,
+      dam_asset_id: snapshot.damAssetId,
+      error_message: snapshot.errorMessage,
+      metadata: snapshot.metadata,
+      created_at: snapshot.createdAt.toISOString(),
+      updated_at: snapshot.updatedAt.toISOString(),
       // Provider analytics fields
-      estimated_cost_cents: generation.calculateEstimatedCost(),
-      external_provider_id: generation.externalProviderId, // 🆕 Use generic provider ID
-      aspect_ratio: generation.aspectRatio,
-      base_image_url: generation.baseImageUrl,
-      edit_type: generation.editType,
-      source_dam_asset_id: generation.sourceDamAssetId,
+      estimated_cost_cents: generation.costCents,
+      external_provider_id: snapshot.externalProviderId, // 🆕 Use generic provider ID
+      aspect_ratio: snapshot.aspectRatio,
+      base_image_url: snapshot.baseImageUrl,
+      edit_type: snapshot.editType,
+      source_dam_asset_id: snapshot.sourceDamAssetId,
     };
   }
 
   static fromRow(row: GenerationRow): Generation {
-    const snapshot = {
+    const snapshot: GenerationSnapshot = {
       id: row.id,
       organizationId: row.organization_id,
       userId: row.user_id,
@@ -91,7 +94,7 @@ export class GenerationRowMapper {
       updatedAt: new Date(row.updated_at),
     };
 
-    return Generation.fromSnapshot(snapshot);
+    return GenerationSerializationService.fromSnapshot(snapshot);
   }
 
   static fromRows(rows: GenerationRow[]): Generation[] {

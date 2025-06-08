@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-07T16:18:36.067Z
+// Generated: 2025-06-08T02:28:30.365Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -193,15 +193,16 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "HistoryPanel",
       "GenerationEmptyState",
       "GenerationListItem",
-      "GenerationStats",
       "ActionButtonsToolbar",
       "ImageDisplayArea",
       "ImageGeneratorMain",
+      "LazyComponentLoader",
       "HeaderModelSelector",
       "ModelSelector",
       "ProviderSelector",
       "EmptyState",
       "ErrorDisplay",
+      "GenerationErrorBoundary",
       "LazyLoadWrapper",
       "PresetPrompts",
       "CollapsibleSection"

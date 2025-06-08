@@ -1,19 +1,12 @@
 // Generation Entity - DDD Domain Layer
 // Single Responsibility: Core business object representing an AI image generation
-// Pure domain entity with identity, following DDD entity principles
+// Following Golden Rule: Pure domain entity with identity, no external service dependencies
 
 import { Prompt } from '../value-objects/Prompt';
 import { GenerationStatus } from '../value-objects/GenerationStatus';
 import { ImageDimensions } from '../value-objects/ImageDimensions';
 import { GenerationCost } from '../value-objects/GenerationCost';
-import { GenerationDisplayService } from './services/GenerationDisplayService';
-import { DAMIntegrationService } from './services/DAMIntegrationService';
-import { GenerationLifecycle } from '../services/GenerationLifecycle';
-import { 
-  GenerationSerializer, 
-  type GenerationSnapshot, 
-  type GenerationData 
-} from './services/GenerationSerializer';
+import { GenerationValidationService } from '../services/GenerationValidationService';
 
 export interface CreateGenerationData {
   organizationId: string;
@@ -32,10 +25,37 @@ export interface CreateGenerationData {
   seed?: number;
 }
 
+export interface GenerationData {
+  id: string;
+  organizationId: string;
+  userId: string;
+  prompt: Prompt;
+  modelName: string;
+  providerName: string;
+  status: GenerationStatus;
+  resultImageUrl: string | null;
+  baseImageUrl: string | null;
+  externalProviderId: string | null;
+  costCents: number;
+  generationTimeSeconds: number | null;
+  imageWidth: number;
+  imageHeight: number;
+  aspectRatio: string;
+  editType: 'text-to-image' | 'image-editing' | 'style-transfer' | 'background-swap';
+  savedToDAM: boolean;
+  damAssetId: string | null;
+  sourceDamAssetId: string | null;
+  errorMessage: string | null;
+  metadata: Record<string, any>;
+  seed: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /**
  * Generation Entity
  * Core domain entity representing an AI image generation request and its lifecycle
- * Maintains identity and encapsulates generation business rules following DDD principles
+ * Following Golden Rule DDD: Pure entity with business rules, focused responsibility
  */
 export class Generation {
   public readonly id: string;
@@ -107,102 +127,86 @@ export class Generation {
   get updatedAt(): Date { return this._updatedAt; }
   get seed(): number | null { return this._seed; }
 
-  // Factory Method for Direct Data Construction (used by GenerationFactory)
+  // Factory Method for Direct Data Construction
   static fromData(data: GenerationData): Generation {
     return new Generation(data);
   }
 
-  // Business Logic - Delegated to Domain Services
+  // Core Business Operations - Pure Entity Methods
   updateStatus(status: GenerationStatus): void {
-    GenerationLifecycle.updateStatus(this, status);
+    GenerationValidationService.validateStatusTransition(this._status, status);
+    this._status = status;
+    this._updatedAt = new Date();
   }
 
   markAsCompleted(imageUrl: string, generationTime: number): void {
-    GenerationLifecycle.markAsCompleted(this, imageUrl, generationTime);
+    this.updateStatus(GenerationStatus.completed());
+    this._resultImageUrl = imageUrl;
+    this._generationTimeSeconds = generationTime;
+    this._updatedAt = new Date();
   }
 
   markAsFailed(errorMessage: string): void {
-    GenerationLifecycle.markAsFailed(this, errorMessage);
+    this.updateStatus(GenerationStatus.failed());
+    this._errorMessage = errorMessage;
+    this._updatedAt = new Date();
   }
 
   markAsProcessing(): void {
-    GenerationLifecycle.markAsProcessing(this);
+    this.updateStatus(GenerationStatus.processing());
+    this._updatedAt = new Date();
   }
 
   setExternalProviderId(providerId: string): void {
-    GenerationLifecycle.setExternalProviderId(this, providerId);
+    GenerationValidationService.validateExternalProviderId(providerId);
+    this._externalProviderId = providerId;
+    this._updatedAt = new Date();
   }
 
   setAutoSavedImageUrl(permanentUrl: string): void {
-    GenerationLifecycle.setAutoSavedImageUrl(this, permanentUrl);
+    GenerationValidationService.validatePermanentUrl(permanentUrl);
+    this._resultImageUrl = permanentUrl;
+    this._updatedAt = new Date(Date.now() + 1);
   }
 
-  getAutoSaveStoragePath(): string {
-    return `${this.organizationId}/${this.userId}/ai-generations/${this.id}.webp`;
-  }
-
-  // DAM Integration
   linkToDAMAsset(assetId: string): void {
-    DAMIntegrationService.validateDAMSave(
-      this.isCompleted(), 
-      this._savedToDAM, 
-      this._resultImageUrl
-    );
+    GenerationValidationService.validateDAMLinking(this);
     this._damAssetId = assetId;
     this._savedToDAM = true;
     this._updatedAt = new Date();
   }
 
-  // Business Rules - Domain Logic Queries
-  isCompleted(): boolean { return this._status.value === 'completed'; }
-  isFailed(): boolean { return this._status.value === 'failed'; }
-  isPending(): boolean { return this._status.value === 'pending'; }
-  isProcessing(): boolean { return this._status.value === 'processing'; }
+  // Simple Business Rules - Core Entity Queries
+  isCompleted(): boolean { 
+    return this._status.value === 'completed'; 
+  }
+  
+  isFailed(): boolean { 
+    return this._status.value === 'failed'; 
+  }
+  
+  isPending(): boolean { 
+    return this._status.value === 'pending'; 
+  }
+  
+  isProcessing(): boolean { 
+    return this._status.value === 'processing'; 
+  }
   
   canSaveToDAM(): boolean {
-    return DAMIntegrationService.canSaveToDAM(
-      this.isCompleted(), 
-      this._savedToDAM, 
-      this._resultImageUrl
-    );
+    return GenerationValidationService.canSaveToDAM(this);
   }
 
   isEditingMode(): boolean {
-    return this._editType !== 'text-to-image';
+    return GenerationValidationService.isEditingMode(this);
   }
 
   hasBaseImage(): boolean {
-    return !!this._baseImageUrl;
+    return GenerationValidationService.hasBaseImage(this);
   }
 
-  // Display Operations - Delegated to Domain Services
-  getDisplayTitle(): string {
-    return GenerationDisplayService.getDisplayTitle(this.prompt);
-  }
-
-  getDurationString(): string {
-    return GenerationDisplayService.getDurationString(this._generationTimeSeconds);
-  }
-
-  getCostDisplay(): string {
-    return this._cost.toDisplayString();
-  }
-
-  calculateEstimatedCost(): number {
-    return this._cost.cents;
-  }
-
-  // Serialization - Using Domain Services
-  toSnapshot(): GenerationSnapshot {
-    return GenerationSerializer.toSnapshot(this.toGenerationData());
-  }
-
-  static fromSnapshot(snapshot: GenerationSnapshot): Generation {
-    const generationData = GenerationSerializer.fromSnapshot(snapshot);
-    return new Generation(generationData);
-  }
-
-  private toGenerationData(): GenerationData {
+  // Data Export for Persistence Layer
+  toData(): GenerationData {
     return {
       id: this.id,
       organizationId: this.organizationId,
@@ -231,12 +235,10 @@ export class Generation {
     };
   }
 
-  // Legacy Methods - Backward Compatibility
+  // Legacy Support Methods - Will be deprecated
   getId(): string { return this.id; }
   getStatus(): GenerationStatus { return this._status; }
   getCostCents(): number { return this._cost.cents; }
   getGenerationTimeSeconds(): number | null { return this._generationTimeSeconds; }
   isSavedToDAM(): boolean { return this._savedToDAM; }
-}
-
-export type { GenerationSnapshot }; 
+} 

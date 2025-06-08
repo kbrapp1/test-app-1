@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { ProviderId, ModelId } from '../../domain/value-objects/Provider';
+import { useState, useEffect } from 'react';
+import { ProviderId, ModelId, ProviderModel } from '../../domain/value-objects/Provider';
 import { ProviderService } from '../../application/services/ProviderService';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
 import { ProviderOption } from '../components/ProviderSelector';
@@ -18,6 +18,7 @@ export interface UseProviderSelectionReturn {
     supportedAspectRatios: string[];
     supportedOutputFormats: string[];
   };
+  isLoading: boolean;
 }
 
 export function useProviderSelection(
@@ -27,37 +28,66 @@ export function useProviderSelection(
 ): UseProviderSelectionReturn {
   const [selectedProviderId, setSelectedProviderId] = useState<ProviderId>(defaultProviderId);
   const [selectedModelId, setSelectedModelId] = useState<ModelId>(defaultModelId);
+  const [providerService, setProviderService] = useState<ProviderService>(
+    new ProviderService(ProviderFactory.createProviderRegistry(apiToken))
+  );
+  const [availableProviders, setAvailableProviders] = useState<ProviderOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize provider registry and service
-  const providerService = useMemo(() => {
-    const registry = ProviderFactory.createProviderRegistry(apiToken);
-    return new ProviderService(registry);
+  // Initialize provider registry and service with lazy loading
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeProviders = async () => {
+      try {
+        // Create service
+        const registry = ProviderFactory.createProviderRegistry(apiToken);
+        const service = new ProviderService(registry);
+        if (isMounted) {
+          setProviderService(service);
+        }
+        // Load providers and models
+        const providers = service.getAvailableProviders();
+        const options: ProviderOption[] = [];
+        for (const prov of providers) {
+          const models = await prov.getSupportedModels();
+          models.forEach((model: ProviderModel) => {
+            options.push({
+              providerId: prov.providerId,
+              modelId: model.id,
+              name: model.name,
+              description: model.description,
+              costPerGeneration: model.capabilities.costPerGeneration,
+              estimatedTimeSeconds: model.capabilities.estimatedTimeSeconds,
+              isDefault: model.isDefault,
+              isBeta: model.isBeta,
+              supportsImageEditing: model.capabilities.supportsImageEditing,
+              supportsStyleControls: model.capabilities.supportsStyleControls,
+              maxSafetyTolerance: model.capabilities.maxSafetyTolerance,
+              minSafetyTolerance: model.capabilities.minSafetyTolerance,
+              supportedAspectRatios: model.capabilities.supportedAspectRatios,
+              supportedOutputFormats: model.capabilities.supportedOutputFormats,
+            });
+          });
+        }
+        if (isMounted) {
+          setAvailableProviders(options);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to initialize providers:', error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeProviders();
+
+    return () => {
+      isMounted = false;
+    };
   }, [apiToken]);
-
-  // Get available providers and convert to UI format
-  const availableProviders = useMemo((): ProviderOption[] => {
-    const providers = providerService.getAvailableProviders();
-    const options: ProviderOption[] = [];
-
-    providers.forEach(provider => {
-      provider.getSupportedModels().forEach(model => {
-        options.push({
-          providerId: provider.providerId,
-          modelId: model.id,
-          name: model.name,
-          description: model.description,
-          costPerGeneration: model.capabilities.costPerGeneration,
-          estimatedTimeSeconds: model.capabilities.estimatedTimeSeconds,
-          isDefault: model.isDefault,
-          isBeta: model.isBeta,
-          supportsImageEditing: model.capabilities.supportsImageEditing,
-          supportsStyleControls: model.capabilities.supportsStyleControls,
-        });
-      });
-    });
-
-    return options;
-  }, [providerService]);
 
   const onProviderChange = (providerId: ProviderId, modelId: ModelId) => {
     setSelectedProviderId(providerId);
@@ -65,29 +95,26 @@ export function useProviderSelection(
   };
 
   const getSelectedCapabilities = () => {
-    const selectedOption = availableProviders.find(
-      p => p.providerId === selectedProviderId && p.modelId === selectedModelId
+    // Find the option for selected provider and model
+    const option = availableProviders.find(
+      opt => opt.providerId === selectedProviderId && opt.modelId === selectedModelId
     );
-
-    if (!selectedOption) {
+    if (option) {
       return {
-        supportsImageEditing: false,
-        supportsStyleControls: false,
-        supportedAspectRatios: [],
-        supportedOutputFormats: [],
+        supportsImageEditing: option.supportsImageEditing,
+        supportsStyleControls: option.supportsStyleControls,
+        maxSafetyTolerance: option.maxSafetyTolerance,
+        minSafetyTolerance: option.minSafetyTolerance,
+        supportedAspectRatios: option.supportedAspectRatios,
+        supportedOutputFormats: option.supportedOutputFormats,
       };
     }
-
-    const provider = providerService.getAvailableProviders().find(p => p.providerId === selectedProviderId);
-    const model = provider?.getModel(selectedModelId);
-
+    // Default while no matching option
     return {
-      supportsImageEditing: selectedOption.supportsImageEditing,
-      supportsStyleControls: selectedOption.supportsStyleControls,
-      maxSafetyTolerance: model?.capabilities.maxSafetyTolerance,
-      minSafetyTolerance: model?.capabilities.minSafetyTolerance,
-      supportedAspectRatios: model?.capabilities.supportedAspectRatios || [],
-      supportedOutputFormats: model?.capabilities.supportedOutputFormats || [],
+      supportsImageEditing: false,
+      supportsStyleControls: false,
+      supportedAspectRatios: ['1:1'],
+      supportedOutputFormats: ['webp'],
     };
   };
 
@@ -98,5 +125,6 @@ export function useProviderSelection(
     providerService,
     onProviderChange,
     getSelectedCapabilities,
+    isLoading,
   };
 } 

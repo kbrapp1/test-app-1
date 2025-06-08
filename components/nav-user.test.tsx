@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { NavUser } from './nav-user';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { PerformanceMonitorProvider } from '@/lib/monitoring/presentation/providers/PerformanceMonitorProvider';
+import { PerformanceMonitorProvider } from '@/lib/monitoring/presentation/providers/performance-analysis/PerformanceMonitorProvider';
 
 // Mock only what we need - the user profile hook
 vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({

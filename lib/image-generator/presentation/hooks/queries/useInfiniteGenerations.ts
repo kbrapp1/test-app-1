@@ -1,9 +1,10 @@
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient, InfiniteData } from '@tanstack/react-query';
 import { useMemo, useCallback, useState } from 'react';
 import { GenerationDto } from '../../../application/dto';
 import { getGenerations } from '../../../application/actions/generation.actions';
 import { createListQueryKey } from '../shared/queryKeys';
 import { GetGenerationsFilters } from '../shared/types';
+import { withInfiniteQueryDefaults } from '../shared/queryConfig';
 
 const GENERATIONS_PER_PAGE = 20;
 
@@ -39,29 +40,18 @@ export function useInfiniteGenerations(
     return result.data;
   }, [filters]);
 
-  const query = useInfiniteQuery({
-    queryKey,
-    queryFn,
-    enabled,
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      // Standard pagination logic: return next page if current page is full
-      const hasMore = lastPage.length === GENERATIONS_PER_PAGE;
-      return hasMore ? allPages.length : undefined;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes - matches useGenerations staleTime
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false, // Prevent unnecessary refetches on mount
-    refetchOnReconnect: true,
-    networkMode: 'online',
-    retry: (failureCount, error) => {
-      if (failureCount >= 2) return false;
-      if (error?.message?.includes('401') || error?.message?.includes('403')) return false;
-      return true;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-  });
+  const query = useInfiniteQuery<GenerationDto[], unknown, InfiniteData<GenerationDto[]>, typeof queryKey, number>(
+    withInfiniteQueryDefaults({
+      queryKey,
+      queryFn,
+      enabled,
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        const hasMore = lastPage.length === GENERATIONS_PER_PAGE;
+        return hasMore ? allPages.length : undefined;
+      }
+    })
+  );
 
   // Flatten all pages into a single array with stable reference
   const generations = useMemo(() => {
@@ -70,12 +60,15 @@ export function useInfiniteGenerations(
     const allGenerations = query.data.pages.flat();
     
     // Sort by creation date (newest first) and remove duplicates
-    const uniqueGenerations = allGenerations.reduce((acc, generation) => {
-      if (!acc.find(g => g.id === generation.id)) {
-        acc.push(generation);
-      }
-      return acc;
-    }, [] as GenerationDto[]);
+    const uniqueGenerations = allGenerations.reduce(
+      (acc: GenerationDto[], generation: GenerationDto): GenerationDto[] => {
+        if (!acc.find((g: GenerationDto) => g.id === generation.id)) {
+          acc.push(generation);
+        }
+        return acc;
+      },
+      [] as GenerationDto[]
+    );
     
     const sorted = uniqueGenerations.sort((a: GenerationDto, b: GenerationDto) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

@@ -165,14 +165,24 @@ export class ApiDeduplicationService {
   cancelPendingRequests(pattern?: string): void {
     const requestsToCancel: string[] = [];
     
+    // Abort any pending fetch requests
     for (const [key, request] of this.pendingRequests.entries()) {
       if (!pattern || key.includes(pattern)) {
         request.abortController.abort();
         requestsToCancel.push(key);
       }
     }
-    
     requestsToCancel.forEach(key => this.pendingRequests.delete(key));
+
+    // Clear any scheduled debounce timers to prevent orphaned fetch calls
+    const debounceKeys: string[] = [];
+    for (const [key, timer] of this.debounceTimers.entries()) {
+      if (!pattern || key.includes(pattern)) {
+        clearTimeout(timer);
+        debounceKeys.push(key);
+      }
+    }
+    debounceKeys.forEach(key => this.debounceTimers.delete(key));
   }
 
   /**

@@ -15,6 +15,10 @@ export interface ProviderOption {
   isBeta?: boolean;
   supportsImageEditing: boolean;
   supportsStyleControls: boolean;
+  maxSafetyTolerance?: number;
+  minSafetyTolerance?: number;
+  supportedAspectRatios: string[];
+  supportedOutputFormats: string[];
 }
 
 /**

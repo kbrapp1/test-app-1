@@ -1,19 +1,18 @@
+// Save Generation to DAM Use Case - DDD Application Layer  
+// Single Responsibility: Orchestrate saving image generation results to DAM
+// Following Golden Rule: Use case coordinates domain objects and application services
+
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
 import { Result, success, error } from '../../infrastructure/common/Result';
-import { SupabaseStorageService } from '../../../dam/infrastructure/storage/SupabaseStorageService';
-import { SupabaseAssetRepository } from '../../../dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { createClient } from '../../../supabase/client';
+import { DAMIntegrationApplicationService } from '../services/DAMIntegrationService';
+import { GenerationDisplayService } from '../../domain/services/GenerationDisplayService';
 
 export class SaveGenerationToDAMUseCase {
-  private storageService: SupabaseStorageService;
-  private assetRepository: SupabaseAssetRepository;
-
-  constructor(private readonly repository: GenerationRepository) {
-    const supabase = createClient();
-    this.storageService = new SupabaseStorageService(supabase);
-    this.assetRepository = new SupabaseAssetRepository(supabase);
-  }
+  constructor(
+    private readonly repository: GenerationRepository,
+    private readonly damIntegrationService: DAMIntegrationApplicationService
+  ) {}
 
   async execute(generationId: string, folderId?: string): Promise<Result<Generation, string>> {
     try {
@@ -37,45 +36,24 @@ export class SaveGenerationToDAMUseCase {
         return error('Generation cannot be saved to DAM (not completed or already saved)');
       }
 
-      // 3. Download the generated image and save to DAM
-      try {
-        // Download the image from Replicate URL
-        const imageResponse = await fetch(generation.resultImageUrl!);
-        if (!imageResponse.ok) {
-          return error('Failed to download generated image');
-        }
-        
-        const imageBlob = await imageResponse.blob();
-        const imageFile = new File([imageBlob], `generated-${generation.getId()}.webp`, {
-          type: 'image/webp'
-        });
+      // 3. Save generated image to DAM using application service
+      const damResult = await this.damIntegrationService.saveGeneratedImageToDAM(
+        generation.resultImageUrl!,
+        generation.organizationId,
+        generation.userId,
+        GenerationDisplayService.getDisplayTitle(generation),
+        generation.id,
+        folderId
+      );
 
-        // Generate storage path: org/user/generated-images/filename
-        const storagePath = `${generation.organizationId}/${generation.userId}/generated-images/${imageFile.name}`;
-        
-        // Upload to assets bucket
-        const uploadResult = await this.storageService.uploadFile(imageFile, storagePath);
-        
-        // Create DAM asset record
-        const assetData = {
-          userId: generation.userId,
-          name: generation.getDisplayTitle(),
-          storagePath: uploadResult.storagePath,
-          mimeType: 'image/webp',
-          size: imageFile.size,
-          folderId: folderId || null,
-          organizationId: generation.organizationId,
-        };
+      if (!damResult.isSuccess()) {
+        return error(damResult.getError() || 'Failed to save to DAM');
+      }
 
-                 const savedAsset = await this.assetRepository.save(assetData);
-         const assetId = savedAsset.id;
-
-         // 4. Link generation to DAM asset
-         generation.linkToDAMAsset(assetId);
-         
-       } catch (err) {
-         return error(`Failed to save image to DAM: ${err instanceof Error ? err.message : 'Unknown error'}`);
-       }
+      const savedAsset = damResult.getValue();
+      
+      // 4. Link generation to DAM asset
+      generation.linkToDAMAsset(savedAsset.id);
       
       const updateResult = await this.repository.update(generation);
       if (!updateResult.isSuccess()) {

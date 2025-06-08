@@ -9,6 +9,29 @@ import { ProviderModel } from '../../../domain/value-objects/Provider';
 
 export const REPLICATE_MODELS: ProviderModel[] = [
   {
+    id: 'imagen-4',
+    name: 'Google Imagen 4',
+    description: 'Google\'s flagship image generation model with superior detail rendering, typography, and style versatility up to 2K resolution',
+    capabilities: {
+      maxPromptLength: 2000,
+      supportedAspectRatios: ['1:1', '3:4', '4:3', '16:9', '9:16'],
+      defaultSettings: {
+        aspectRatio: '1:1',
+        outputFormat: 'png',
+      },
+      costPerGeneration: 12, // Premium pricing for flagship model
+      estimatedTimeSeconds: 30,
+      supportsImageEditing: false,       // 🎯 Pure text-to-image model
+      supportsTextToImage: true,         // 🎯 Excellent text-to-image capability
+      supportsCustomDimensions: true,    // 🎯 Flexible aspect ratios
+      supportsStyleControls: true,       // 🎯 Excellent style versatility
+      supportedOutputFormats: ['png', 'jpg'],
+      // No safety tolerance controls - Google handles this internally
+    },
+    isDefault: false,
+    isBeta: true, // 🎯 Preview model, subject to change
+  },
+  {
     id: 'flux-kontext-max',
     name: 'FLUX Kontext Max',
     description: 'Advanced image editing and generation with enhanced typography capabilities',
@@ -87,6 +110,7 @@ export const REPLICATE_MODELS: ProviderModel[] = [
  * Model ID to Replicate API endpoint mapping
  */
 export const REPLICATE_MODEL_ENDPOINTS: Record<string, string> = {
+  'imagen-4': 'google/imagen-4',
   'flux-kontext-max': 'black-forest-labs/flux-kontext-max',
   'flux-schnell': 'black-forest-labs/flux-schnell',
   'flux-dev': 'black-forest-labs/flux-dev',

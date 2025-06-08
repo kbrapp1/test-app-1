@@ -9,8 +9,8 @@ import { PaletteProvider } from "@/context/palette-context";
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as RadixToaster } from "@/components/ui/toaster";
-import { PerformanceMonitorProvider, usePerformanceMonitor } from "@/lib/monitoring/presentation/providers/PerformanceMonitorProvider";
-import { ClientOnlyPerformanceMonitor } from "@/lib/monitoring/presentation/components/ClientOnlyPerformanceMonitor";
+import { PerformanceMonitorProvider, usePerformanceMonitor } from "@/lib/monitoring/presentation/providers/performance-analysis/PerformanceMonitorProvider";
+import { ClientOnlyPerformanceMonitor } from "@/lib/monitoring/presentation/components/performance-analysis/ClientOnlyPerformanceMonitor";
 
 // Separate component to use the hook
 function PerformanceMonitorWrapper() {

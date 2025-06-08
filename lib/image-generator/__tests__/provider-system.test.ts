@@ -3,11 +3,11 @@ import { ProviderFactory } from '../infrastructure/providers/ProviderFactory';
 import { ProviderService } from '../application/services/ProviderService';
 
 describe('Provider System Integration', () => {
-  it('should initialize providers correctly', () => {
+  it('should initialize providers correctly', async () => {
     const registry = ProviderFactory.createProviderRegistry();
     const providerService = new ProviderService(registry);
     
-    const availableProviders = providerService.getAvailableProviders();
+    const availableProviders = await providerService.getAvailableProviders();
     
     // Should have one Replicate provider
     expect(availableProviders).toHaveLength(1);
@@ -16,31 +16,41 @@ describe('Provider System Integration', () => {
     const replicateProvider = availableProviders.find(p => p.providerId === 'replicate');
     expect(replicateProvider).toBeTruthy();
     
-    const models = replicateProvider?.getSupportedModels();
-    expect(models).toHaveLength(2); // flux-kontext-max and flux-schnell
+    const models = await replicateProvider?.getSupportedModels();
+    expect(models).toHaveLength(4); // imagen-4, flux-kontext-max, flux-schnell, and flux-dev
   });
 
-  it('should provide correct model capabilities', () => {
+  it('should provide correct model capabilities', async () => {
     const registry = ProviderFactory.createProviderRegistry();
     const providerService = new ProviderService(registry);
     
-    const availableProviders = providerService.getAvailableProviders();
+    const availableProviders = await providerService.getAvailableProviders();
     const replicateProvider = availableProviders.find(p => p.providerId === 'replicate');
     expect(replicateProvider).toBeTruthy();
     
     // Check FLUX Kontext Max
-    const kontextModel = replicateProvider?.getModel('flux-kontext-max');
+    const kontextModel = await replicateProvider?.getModel('flux-kontext-max');
     expect(kontextModel).toBeTruthy();
     expect(kontextModel?.capabilities.supportsImageEditing).toBe(true);
     expect(kontextModel?.capabilities.costPerGeneration).toBe(8);
     expect(kontextModel?.capabilities.estimatedTimeSeconds).toBe(25);
 
     // Check FLUX Schnell
-    const schnellModel = replicateProvider?.getModel('flux-schnell');
+    const schnellModel = await replicateProvider?.getModel('flux-schnell');
     expect(schnellModel).toBeTruthy();
     expect(schnellModel?.capabilities.supportsImageEditing).toBe(false);
     expect(schnellModel?.capabilities.costPerGeneration).toBe(1);
     expect(schnellModel?.capabilities.estimatedTimeSeconds).toBe(10);
+
+    // Check Google Imagen-4
+    const imagenModel = await replicateProvider?.getModel('imagen-4');
+    expect(imagenModel).toBeTruthy();
+    expect(imagenModel?.capabilities.supportsImageEditing).toBe(false);
+    expect(imagenModel?.capabilities.supportsTextToImage).toBe(true);
+    expect(imagenModel?.capabilities.supportsStyleControls).toBe(true);
+    expect(imagenModel?.capabilities.costPerGeneration).toBe(12);
+    expect(imagenModel?.capabilities.estimatedTimeSeconds).toBe(30);
+    expect(imagenModel?.isBeta).toBe(true);
   });
 
   it('should find cheapest and default providers', () => {
@@ -53,12 +63,12 @@ describe('Provider System Integration', () => {
     expect(cheapestConfig.modelId).toBe('flux-schnell');
   });
 
-  it('should validate generation requests', () => {
+  it('should validate generation requests', async () => {
     const registry = ProviderFactory.createProviderRegistry();
     const providerService = new ProviderService(registry);
 
     // Valid request
-    const validResult = providerService.validateRequest(
+    const validResult = await providerService.validateRequest(
       { prompt: 'A beautiful sunset' },
       { providerId: 'replicate', modelId: 'flux-schnell' }
     );
@@ -66,7 +76,7 @@ describe('Provider System Integration', () => {
     expect(validResult.errors).toHaveLength(0);
 
     // Invalid request - empty prompt
-    const invalidResult = providerService.validateRequest(
+    const invalidResult = await providerService.validateRequest(
       { prompt: '' },
       { providerId: 'replicate', modelId: 'flux-schnell' }
     );
@@ -74,17 +84,17 @@ describe('Provider System Integration', () => {
     expect(invalidResult.errors.length).toBeGreaterThan(0);
   });
 
-  it('should estimate costs correctly', () => {
+  it('should estimate costs correctly', async () => {
     const registry = ProviderFactory.createProviderRegistry();
     const providerService = new ProviderService(registry);
 
-    const kontextCost = providerService.estimateCost(
+    const kontextCost = await providerService.estimateCost(
       { prompt: 'A beautiful sunset' },
       { providerId: 'replicate', modelId: 'flux-kontext-max' }
     );
     expect(kontextCost).toBe(8);
 
-    const schnellCost = providerService.estimateCost(
+    const schnellCost = await providerService.estimateCost(
       { prompt: 'A beautiful sunset' },
       { providerId: 'replicate', modelId: 'flux-schnell' }
     );

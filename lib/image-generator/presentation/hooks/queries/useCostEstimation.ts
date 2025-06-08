@@ -33,7 +33,7 @@ export function useCostEstimation(params: UseCostEstimationParams): UseCostEstim
   // Initialize cost service (lazy)
   const getCostService = () => {
     if (!costServiceRef.current) {
-      const registry = ProviderFactory.createProviderRegistry();
+              const registry = ProviderFactory.createProviderRegistry();
       const providerService = new ProviderService(registry);
       costServiceRef.current = new CostEstimationService(providerService);
     }

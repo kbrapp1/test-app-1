@@ -8,7 +8,7 @@ import { Prompt } from '../value-objects/Prompt';
 import { GenerationStatus } from '../value-objects/GenerationStatus';
 import { ImageDimensions } from '../value-objects/ImageDimensions';
 import { GenerationCost } from '../value-objects/GenerationCost';
-import type { GenerationData } from '../entities/services/GenerationSerializer';
+import type { GenerationData } from '../entities/Generation';
 
 export class GenerationFactory {
   /**

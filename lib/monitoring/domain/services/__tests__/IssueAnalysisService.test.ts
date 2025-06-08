@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { IssueAnalysisService, IssueAnalysisResult } from '../IssueAnalysisService';
-import { ReactQueryCacheAnalysisService } from '../ReactQueryCacheAnalysisService';
+import { IssueAnalysisService, IssueAnalysisResult } from '../business-impact/IssueAnalysisService';
+import { ReactQueryCacheAnalysisService } from '../cache-analysis/ReactQueryCacheAnalysisService';
 
 /**
  * Unit Tests for IssueAnalysisService (Domain Service)

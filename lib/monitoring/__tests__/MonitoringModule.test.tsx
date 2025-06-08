@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorHandlingService } from '../infrastructure/services/ErrorHandlingService';
 import { MonitoringErrorBoundary, withMonitoringErrorBoundary } from '../presentation/components/error/MonitoringErrorBoundary';
-import { usePerformanceTracking } from '../presentation/hooks/usePerformanceTracking';
-import { useNetworkMonitoring } from '../presentation/hooks/useNetworkMonitoring';
-import { useComponentTracker } from '../presentation/hooks/useComponentTracker';
+import { usePerformanceTracking } from '../presentation/hooks/performance-analysis/usePerformanceTracking';
+import { useNetworkMonitoring } from '../presentation/hooks/network-analysis/useNetworkMonitoring';
+import { useComponentTracker } from '../presentation/hooks/performance-analysis/useComponentTracker';
 import { PerformanceMetrics } from '../domain/entities/PerformanceMetrics';
 
 // Mock performance APIs

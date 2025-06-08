@@ -5,9 +5,9 @@ import { GenerationRowMapper, GenerationRow } from './mappers/GenerationRowMappe
 import { success, error, Result } from '../../common/Result';
 
 /**
- * Supabase Status Checking Repository Implementation
- * Single Responsibility: Implement generation status data access using Supabase
- * Infrastructure Layer - Concrete implementation of domain repository interface
+ * Infrastructure Layer - Concrete implementation of StatusCheckingRepository using Supabase
+ * Single Responsibility: Data access for generation status operations
+ * Golden Rule DDD: Infrastructure implements domain repository contracts without embedding domain logic
  */
 export class StatusCheckingSupabaseRepository implements StatusCheckingRepository {
   
@@ -46,7 +46,9 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
   `;
 
   /**
-   * Find active generations that require status polling
+   * Infrastructure Layer - implements findActiveGenerationsForPolling
+   * Single Responsibility: Retrieve active generations requiring status polling
+   * Implements StatusCheckingRepository.findActiveGenerationsForPolling
    */
   async findActiveGenerationsForPolling(
     userId: string, 
@@ -75,7 +77,9 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
   }
 
   /**
-   * Find specific generation by ID for status checking
+   * Infrastructure Layer - implements findGenerationForStatusCheck
+   * Single Responsibility: Retrieve a specific generation by ID for status checking
+   * Implements StatusCheckingRepository.findGenerationForStatusCheck
    */
   async findGenerationForStatusCheck(
     generationId: string,

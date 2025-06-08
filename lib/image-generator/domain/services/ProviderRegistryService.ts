@@ -5,10 +5,10 @@ export interface ProviderRegistryService {
   registerProvider(provider: ImageGenerationProvider): void;
   getProvider(providerId: ProviderId): ImageGenerationProvider | undefined;
   getAllProviders(): ImageGenerationProvider[];
-  getAvailableModels(providerId: ProviderId): ModelId[];
-  findCheapestProvider(): ImageGenerationProvider | undefined;
-  findFastestProvider(): ImageGenerationProvider | undefined;
-  findProviderByModel(modelId: ModelId): ImageGenerationProvider | undefined;
+  getAvailableModels(providerId: ProviderId): Promise<ModelId[]>;
+  findCheapestProvider(): Promise<ImageGenerationProvider | undefined>;
+  findFastestProvider(): Promise<ImageGenerationProvider | undefined>;
+  findProviderByModel(modelId: ModelId): Promise<ImageGenerationProvider | undefined>;
 }
 
 export class ProviderRegistry implements ProviderRegistryService {
@@ -26,42 +26,59 @@ export class ProviderRegistry implements ProviderRegistryService {
     return Array.from(this.providers.values());
   }
 
-  getAvailableModels(providerId: ProviderId): ModelId[] {
+  async getAvailableModels(providerId: ProviderId): Promise<ModelId[]> {
     const provider = this.getProvider(providerId);
-    return provider?.getSupportedModels().map(model => model.id) || [];
+    if (!provider) return [];
+    const models = await provider.getSupportedModels();
+    return models.map(model => model.id);
   }
 
-  findCheapestProvider(): ImageGenerationProvider | undefined {
+  async findCheapestProvider(): Promise<ImageGenerationProvider | undefined> {
     const providers = this.getAllProviders();
     if (providers.length === 0) return undefined;
 
-    return providers.reduce((cheapest, current) => {
-      const cheapestModel = cheapest.getSupportedModels()[0];
-      const currentModel = current.getSupportedModels()[0];
-      
-      return currentModel?.capabilities.costPerGeneration < cheapestModel?.capabilities.costPerGeneration
-        ? current
-        : cheapest;
-    });
+    let cheapestProvider = providers[0];
+    let cheapestCost = Infinity;
+
+    for (const provider of providers) {
+      const models = await provider.getSupportedModels();
+      if (models.length > 0) {
+        const minCost = Math.min(...models.map(m => m.capabilities.costPerGeneration));
+        if (minCost < cheapestCost) {
+          cheapestCost = minCost;
+          cheapestProvider = provider;
+        }
+      }
+    }
+
+    return cheapestProvider;
   }
 
-  findFastestProvider(): ImageGenerationProvider | undefined {
+  async findFastestProvider(): Promise<ImageGenerationProvider | undefined> {
     const providers = this.getAllProviders();
     if (providers.length === 0) return undefined;
 
-    return providers.reduce((fastest, current) => {
-      const fastestModel = fastest.getSupportedModels()[0];
-      const currentModel = current.getSupportedModels()[0];
-      
-      return currentModel?.capabilities.estimatedTimeSeconds < fastestModel?.capabilities.estimatedTimeSeconds
-        ? current
-        : fastest;
-    });
+    let fastestProvider = providers[0];
+    let fastestTime = Infinity;
+
+    for (const provider of providers) {
+      const models = await provider.getSupportedModels();
+      if (models.length > 0) {
+        const minTime = Math.min(...models.map(m => m.capabilities.estimatedTimeSeconds));
+        if (minTime < fastestTime) {
+          fastestTime = minTime;
+          fastestProvider = provider;
+        }
+      }
+    }
+
+    return fastestProvider;
   }
 
-  findProviderByModel(modelId: ModelId): ImageGenerationProvider | undefined {
+  async findProviderByModel(modelId: ModelId): Promise<ImageGenerationProvider | undefined> {
     for (const provider of this.getAllProviders()) {
-      if (provider.getModel(modelId)) {
+      const model = await provider.getModel(modelId);
+      if (model) {
         return provider;
       }
     }

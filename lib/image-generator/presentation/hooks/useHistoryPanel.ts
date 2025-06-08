@@ -8,33 +8,45 @@ export interface UseHistoryPanelReturn {
 }
 
 export const useHistoryPanel = (): UseHistoryPanelReturn => {
-  const [showHistory, setShowHistory] = useState(false);
-  const [panelVisible, setPanelVisible] = useState(false);
+  // isOpen controls whether the panel should be open
+  const [isOpen, setIsOpen] = useState(false);
+  // isMounted controls DOM mounting
+  const [isMounted, setIsMounted] = useState(false);
+  // isPanelVisible controls the slide-in/out animation
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
 
-  // Handle unmount after slide-out animation
+  // Manage mount, animation, and unmount like TTS panel
   useEffect(() => {
-    if (!showHistory && panelVisible) {
-      const id = setTimeout(() => setPanelVisible(false), 200);
-      return () => clearTimeout(id);
+    if (isOpen) {
+      // On open: mount then animate in
+      setIsMounted(true);
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          setIsPanelVisible(true);
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (isMounted) {
+      // On close: animate out then unmount
+      setIsPanelVisible(false);
+      const timer = setTimeout(() => {
+        setIsMounted(false);
+      }, 200); // match CSS transition duration
+      return () => clearTimeout(timer);
     }
-  }, [showHistory, panelVisible]);
+  }, [isOpen, isMounted]);
 
   const toggleHistory = useCallback(() => {
-    if (!panelVisible) {
-      setPanelVisible(true);
-      setTimeout(() => setShowHistory(true), 10);
-    } else {
-      setShowHistory(false);
-    }
-  }, [panelVisible]);
+    setIsOpen(prev => !prev);
+  }, []);
 
   const closeHistory = useCallback(() => {
-    setShowHistory(false);
+    setIsOpen(false);
   }, []);
 
   return {
-    showHistory,
-    panelVisible,
+    showHistory: isPanelVisible,
+    panelVisible: isMounted,
     toggleHistory,
     closeHistory,
   };

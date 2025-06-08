@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { usePerformanceTracking } from '../usePerformanceTracking';
-import { useNetworkMonitoring } from '../useNetworkMonitoring';
-import { useComponentTracker } from '../useComponentTracker';
-import { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';
+import { usePerformanceTracking } from '../performance-analysis/usePerformanceTracking';
+import { useNetworkMonitoring } from '../network-analysis/useNetworkMonitoring';
+import { useComponentTracker } from '../performance-analysis/useComponentTracker';
+import { InputPerformanceMetrics } from '../../../application/dto/PerformanceTrackingDTO';
 
 // Mock web-vitals
 vi.mock('web-vitals', () => ({
@@ -51,12 +51,10 @@ describe('Monitoring Hooks Performance', () => {
   });
 
   describe('usePerformanceTracking', () => {
-    const mockMetrics: PerformanceMetrics = {
+    const mockMetrics: InputPerformanceMetrics = {
       cacheSize: 10,
       activeMutations: 2,
-      isOptimized: true,
-      lastUpdate: new Date().toISOString(),
-      webVitals: {}
+      lastUpdate: new Date().toISOString()
     };
 
     it('should memoize tracking state properly', () => {
@@ -175,9 +173,7 @@ describe('Monitoring Hooks Performance', () => {
         const performance = usePerformanceTracking({
           cacheSize: 10,
           activeMutations: 2,
-          isOptimized: true,
-          lastUpdate: new Date().toISOString(),
-          webVitals: {}
+          lastUpdate: new Date().toISOString()
         });
         const network = useNetworkMonitoring();
         const tracker = useComponentTracker('TestComponent');
@@ -207,9 +203,7 @@ describe('Monitoring Hooks Performance', () => {
       const { result } = renderHook(() => usePerformanceTracking({
         cacheSize: 10,
         activeMutations: 2,
-        isOptimized: true,
-        lastUpdate: new Date().toISOString(),
-        webVitals: {}
+        lastUpdate: new Date().toISOString()
       }));
 
       // Verify all returned functions are properly memoized

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { GenerationDto } from '../../../application/dto';
 import { generateImage, GenerateImageRequest } from '../../../application/actions/generation.actions';
 import { createListQueryKey, createDetailQueryKey, createStatsQueryKey } from '../shared/queryKeys';
+import { prependGenerationToPages, InfiniteData } from './utils/prependGenerationToPages';
 
 /**
  * Hook to generate a new image
@@ -31,33 +32,11 @@ export function useGenerateImage() {
       generation
     );
 
-    // Optimistically update the infinite generations cache instead of invalidating
+    // Optimistically update the infinite generations cache
     const infiniteQueryKey = [...createListQueryKey({}), 'infinite'];
-    queryClient.setQueryData(infiniteQueryKey, (oldData: any) => {
-      if (!oldData?.pages) {
-        return {
-          pages: [[generation]],
-          pageParams: [0]
-        };
-      }
-      
-      const existingGeneration = oldData.pages.flat().find((g: any) => g.id === generation.id);
-      if (existingGeneration) {
-        return oldData;
-      }
-      
-      // Add the new generation to the first page
-      const newPages = [...oldData.pages];
-      if (newPages[0]) {
-        newPages[0] = [generation, ...newPages[0]];
-      } else {
-        newPages[0] = [generation];
-      }
-      
-      return {
-        ...oldData,
-        pages: newPages
-      };
+    queryClient.setQueryData<InfiniteData>(infiniteQueryKey, (oldData) => {
+      const PAGE_SIZE = 20;
+      return prependGenerationToPages(oldData, generation, PAGE_SIZE);
     });
 
     // Invalidate stats

@@ -3,6 +3,7 @@ import { Generation, CreateGenerationData } from '../Generation';
 import { GenerationFactory } from '../../services/GenerationFactory';
 import { Prompt } from '../../value-objects/Prompt';
 import { GenerationStatus } from '../../value-objects/GenerationStatus';
+import { GenerationDisplayService } from '../../services/GenerationDisplayService';
 
 describe('Generation', () => {
   let validGenerationData: CreateGenerationData;
@@ -114,7 +115,7 @@ describe('Generation', () => {
       
       expect(() => {
         generation.updateStatus(completedStatus);
-      }).toThrow('Invalid status transition');
+      }).toThrow('Cannot transition from pending to completed');
     });
 
     it('should prevent transitions from terminal states', () => {
@@ -123,7 +124,7 @@ describe('Generation', () => {
 
       expect(() => {
         generation.updateStatus(GenerationStatus.create('failed'));
-      }).toThrow('Invalid status transition');
+      }).toThrow('Cannot transition from completed to failed');
     });
   });
 
@@ -202,7 +203,7 @@ describe('Generation', () => {
     });
 
     it('should return correct display title', () => {
-      expect(generation.getDisplayTitle()).toBe('A beautiful sunset over mountains');
+      expect(GenerationDisplayService.getDisplayTitle(generation)).toBe('A beautiful sunset over mountains');
     });
 
     it('should truncate long display titles', () => {
@@ -212,35 +213,35 @@ describe('Generation', () => {
       };
       const longGeneration = GenerationFactory.create(longPromptData);
 
-      const title = longGeneration.getDisplayTitle();
+      const title = GenerationDisplayService.getDisplayTitle(longGeneration);
       expect(title.length).toBeLessThanOrEqual(50);
       expect(title.endsWith('...')).toBe(true);
     });
 
-    it('should return N/A duration when not completed', () => {
-      expect(generation.getDurationString()).toBe('N/A');
+    it('should return Unknown duration when not completed', () => {
+      expect(GenerationDisplayService.getDurationString(generation)).toBe('Unknown');
     });
 
     it('should format duration in seconds', () => {
       generation.updateStatus(GenerationStatus.create('processing'));
       generation.markAsCompleted('https://example.com/image.webp', 45);
 
-      expect(generation.getDurationString()).toBe('45s');
+      expect(GenerationDisplayService.getDurationString(generation)).toBe('45s');
     });
 
     it('should format duration in minutes and seconds', () => {
       generation.updateStatus(GenerationStatus.create('processing'));
       generation.markAsCompleted('https://example.com/image.webp', 90);
 
-      expect(generation.getDurationString()).toBe('1m 30s');
+      expect(GenerationDisplayService.getDurationString(generation)).toBe('1m 30s');
     });
 
     it('should return formatted cost display', () => {
-      expect(generation.getCostDisplay()).toBe('8¢');
+      expect(GenerationDisplayService.getCostDisplay(generation)).toBe('8¢');
     });
 
     it('should calculate estimated cost', () => {
-      expect(generation.calculateEstimatedCost()).toBe(8);
+      expect(generation.costCents).toBe(8);
     });
   });
 
@@ -249,7 +250,7 @@ describe('Generation', () => {
       const generation = GenerationFactory.create(validGenerationData);
       const expectedPath = `${validGenerationData.organizationId}/${validGenerationData.userId}/ai-generations/${generation.id}.webp`;
       
-      expect(generation.getAutoSaveStoragePath()).toBe(expectedPath);
+      expect(GenerationDisplayService.getAutoSaveStoragePath(generation)).toBe(expectedPath);
     });
 
     it('should set auto-saved image URL and update timestamp', async () => {
@@ -275,12 +276,12 @@ describe('Generation', () => {
         providerName: 'replicate',
       });
       
-      const path = generation.getAutoSaveStoragePath();
+      const path = GenerationDisplayService.getAutoSaveStoragePath(generation);
       expect(path).toContain('org-abc123');
       expect(path).toContain('user-xyz789');
       expect(path).toContain('ai-generations');
       expect(path).toContain(generation.id);
-             expect(path.endsWith('.webp')).toBe(true);
+      expect(path.endsWith('.webp')).toBe(true);
     });
   });
 
