@@ -69,7 +69,8 @@ export function useImageGeneratorMain() {
       providerId?: string,
       modelId?: string,
       aspectRatio?: string,
-      baseImageUrl?: string
+      baseImageUrl?: string,
+      secondImageUrl?: string // NEW: Second image parameter
     ): Promise<any> => {
       return await generateImageMutation.mutateAsync({
         prompt,
@@ -79,7 +80,8 @@ export function useImageGeneratorMain() {
         safetyTolerance,
         providerId,
         modelId,
-        baseImageUrl
+        baseImageUrl,
+        secondImageUrl // NEW: Pass second image to mutation
       });
     },
     [generateImageMutation]
@@ -103,13 +105,14 @@ export function useImageGeneratorMain() {
       enhancePrompt: (prompt: string) => string,
       generateFn: any,
       setCurrentImage: (image: string | null) => void,
-      baseImageUrl?: string
+      baseImageUrl?: string,
+      secondImageUrl?: string // NEW: Second image parameter
     ): Promise<void> => {
       if (!prompt.trim()) return;
       try {
         setCurrentImage(null);
         const enhanced = enhancePrompt(prompt.trim());
-        await generateFn(enhanced, undefined, undefined, safetyTolerance, providerId, modelId, aspectRatio, baseImageUrl);
+        await generateFn(enhanced, undefined, undefined, safetyTolerance, providerId, modelId, aspectRatio, baseImageUrl, secondImageUrl);
       } catch {
         // errors handled upstream
       }
@@ -130,7 +133,8 @@ export function useImageGeneratorMain() {
     enhancePromptWithStyles: promptEnhancement.enhancePromptWithStyles,
     orchestrationHandleGenerate,
     generate,
-    setCurrentGeneratedImage: formState.setCurrentGeneratedImage
+    setCurrentGeneratedImage: formState.setCurrentGeneratedImage,
+    capabilities
   });
 
   const imageOperations = useImageGeneratorOperations({

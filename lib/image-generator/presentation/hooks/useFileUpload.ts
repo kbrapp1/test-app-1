@@ -60,6 +60,14 @@ export interface UseFileUploadReturn {
   setBaseImageUrl: (url: string) => void;
   isUploading: boolean;
   isStorageUrl: boolean; // Track if the URL is from storage (not base64)
+  // NEW: Second image support
+  secondImage: File | null;
+  secondImageUrl: string | null;
+  handleSecondFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  clearSecondImage: () => void;
+  setSecondImageUrl: (url: string) => void;
+  isSecondImageUploading: boolean;
+  isSecondImageStorageUrl: boolean;
 }
 
 export const useFileUpload = (): UseFileUploadReturn => {
@@ -74,6 +82,11 @@ export const useFileUpload = (): UseFileUploadReturn => {
   const [isStorageUrl, setIsStorageUrlInternal] = useState(
     persistedState?.isStorageUrl || false
   );
+  // NEW: Second image state
+  const [secondImage, setSecondImage] = useState<File | null>(null);
+  const [secondImageUrl, setSecondImageUrlInternal] = useState<string | null>(null);
+  const [isSecondImageUploading, setIsSecondImageUploading] = useState(false);
+  const [isSecondImageStorageUrl, setIsSecondImageStorageUrlInternal] = useState(false);
   const supabase = createClient();
   const { activeOrganizationId } = useOrganization();
 
@@ -205,6 +218,112 @@ export const useFileUpload = (): UseFileUploadReturn => {
     }
   }, [setBaseImageUrl, setIsStorageUrl]);
 
+  // NEW: Second image wrapper functions and handlers
+  const setSecondImageUrl = useCallback((url: string | null) => {
+    setSecondImageUrlInternal(url);
+  }, []);
+
+  const setIsSecondImageStorageUrl = useCallback((value: boolean) => {
+    setIsSecondImageStorageUrlInternal(value);
+  }, []);
+
+  const handleSecondFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    setIsSecondImageUploading(true);
+    setSecondImage(file);
+
+    try {
+      // Create base64 preview for immediate feedback
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      
+      setSecondImageUrl(dataUrl);
+      setIsSecondImageStorageUrl(false); // This is just a preview, not from storage
+
+      // Attempt storage upload if organization context is available
+      if (activeOrganizationId) {
+        try {
+          // Generate unique filename for the temporary upload
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          // Include organization ID in path as required by storage policies
+          const filePath = `${activeOrganizationId}/temp-uploads/second-${fileName}`;
+
+          // Upload to Supabase Storage in existing assets bucket
+          const { data, error } = await supabase.storage
+            .from('assets')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (!error && data) {
+            // Get public URL for the uploaded image and replace base64
+            const { data: { publicUrl } } = supabase.storage
+              .from('assets')
+              .getPublicUrl(data.path);
+
+            setSecondImageUrl(publicUrl);
+            setIsSecondImageStorageUrl(true); // This is now a proper storage URL
+          }
+        } catch (error) {
+          // Silently fall back to base64 - no need to log error
+        }
+      }
+    } catch (error) {
+      // Handle any errors in the process
+    } finally {
+      // Always reset uploading state, regardless of success/failure
+      setIsSecondImageUploading(false);
+    }
+  }, [supabase, activeOrganizationId, setSecondImageUrl, setIsSecondImageStorageUrl]);
+
+  const clearSecondImage = useCallback(() => {
+    setSecondImage(null);
+    setSecondImageUrl(null);
+    setIsSecondImageUploading(false);
+    setIsSecondImageStorageUrl(false);
+    
+    // Reset file input to allow re-uploading the same file
+    const fileInput = document.getElementById('second-file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }, [setSecondImageUrl, setIsSecondImageStorageUrl]);
+
+  const setSecondImageUrlDirect = useCallback((url: string) => {
+    // Validate URL format before setting
+    if (!url) {
+      console.warn('Empty URL provided to setSecondImageUrlDirect');
+      return;
+    }
+
+    // Ensure we have a proper URL
+    const isValidHttpUrl = url.startsWith('http://') || url.startsWith('https://');
+    const isDataUrl = url.startsWith('data:');
+    
+    if (!isValidHttpUrl && !isDataUrl) {
+      console.warn('Invalid URL format provided to setSecondImageUrlDirect:', url);
+      return;
+    }
+
+    setSecondImageUrl(url);
+    setSecondImage(null); // Clear file object when setting URL directly
+    setIsSecondImageUploading(false); // Always reset uploading state when setting URL directly
+    setIsSecondImageStorageUrl(isValidHttpUrl); // Only HTTP/HTTPS URLs are considered storage URLs
+    
+    // Reset file input when setting URL directly
+    const fileInput = document.getElementById('second-file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }, [setSecondImageUrl, setIsSecondImageStorageUrl]);
+
   return {
     baseImage,
     baseImageUrl,
@@ -213,5 +332,13 @@ export const useFileUpload = (): UseFileUploadReturn => {
     setBaseImageUrl: setBaseImageUrlDirect,
     isUploading,
     isStorageUrl,
+    // NEW: Second image properties
+    secondImage,
+    secondImageUrl,
+    handleSecondFileUpload,
+    clearSecondImage,
+    setSecondImageUrl: setSecondImageUrlDirect,
+    isSecondImageUploading,
+    isSecondImageStorageUrl,
   };
 }; 

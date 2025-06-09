@@ -2,15 +2,22 @@ import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
 import { Result, success, error } from '../../infrastructure/common/Result';
 import { SupabaseStorageService } from '../../../dam/infrastructure/storage/SupabaseStorageService';
-import { createClient } from '../../../supabase/server';
+import { createClient } from '@supabase/supabase-js';
+import { GenerationDisplayService } from '../../domain/services/GenerationDisplayService';
+import { SupabaseGenerationRepository } from '../../infrastructure/persistence/supabase/SupabaseGenerationRepository';
 
 export class AutoSaveGenerationUseCase {
   private storageService: SupabaseStorageService;
+  private serviceRoleRepository: GenerationRepository;
 
-  constructor(private readonly repository: GenerationRepository) {
-    // Use server client for auto-save operations - same as DAM operations
-    const supabase = createClient();
+  constructor() {
+    // Use service role client for auto-save operations to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     this.storageService = new SupabaseStorageService(supabase);
+    this.serviceRoleRepository = new SupabaseGenerationRepository(true);
   }
 
   async execute(generationId: string): Promise<Result<Generation, string>> {
@@ -20,7 +27,7 @@ export class AutoSaveGenerationUseCase {
       }
 
       // 1. Get generation from repository
-      const getResult = await this.repository.findById(generationId);
+      const getResult = await this.serviceRoleRepository.findById(generationId);
       if (!getResult.isSuccess()) {
         return error(getResult.getError() || 'Failed to fetch generation');
       }
@@ -49,7 +56,7 @@ export class AutoSaveGenerationUseCase {
         });
 
         // Get the auto-save storage path
-        const storagePath = generation.getAutoSaveStoragePath();
+        const storagePath = GenerationDisplayService.getAutoSaveStoragePath(generation);
         
         // Upload to assets bucket
         const uploadResult = await this.storageService.uploadFile(imageFile, storagePath);
@@ -58,7 +65,7 @@ export class AutoSaveGenerationUseCase {
         generation.setAutoSavedImageUrl(uploadResult.publicUrl || '');
         
         // Save updated generation
-        const updateResult = await this.repository.update(generation);
+        const updateResult = await this.serviceRoleRepository.update(generation);
         if (!updateResult.isSuccess()) {
           return error(updateResult.getError() || 'Failed to update generation');
         }

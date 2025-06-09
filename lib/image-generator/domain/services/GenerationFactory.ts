@@ -31,6 +31,7 @@ export class GenerationFactory {
       status: GenerationStatus.pending(),
       resultImageUrl: null,
       baseImageUrl: data.baseImageUrl || null,
+      secondImageUrl: data.secondImageUrl || null,
       externalProviderId: null,
       costCents: cost.cents,
       generationTimeSeconds: null,

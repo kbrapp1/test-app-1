@@ -10,13 +10,8 @@ export interface GenerationRequest {
   providerId: string;
   modelId: string;
   baseImageUrl?: string;
+  secondImageUrl?: string; // NEW: For multi-image models
 }
-
-// Helper function to check if a model supports image editing
-const modelSupportsImageEditing = (modelId: string): boolean => {
-  // flux-schnell only supports text-to-image
-  return modelId !== 'flux-schnell';
-};
 
 /**
  * Coordinator hook that demonstrates proper usage of the refactored core hooks
@@ -41,10 +36,21 @@ interface UseImageGeneratorCoordinatorProps {
     enhancePrompt: (prompt: string) => string,
     generate: any,
     setCurrentImage: (image: string | null) => void,
-    baseImageUrl?: string
+    baseImageUrl?: string,
+    secondImageUrl?: string // NEW: Second image parameter
   ) => Promise<void>;
   generate: any;
   setCurrentGeneratedImage: (image: string | null) => void;
+  capabilities: {
+    supportsImageEditing: boolean;
+    supportsStyleControls: boolean;
+    supportsMultipleImages?: boolean;
+    requiredImages?: number;
+    maxSafetyTolerance?: number;
+    minSafetyTolerance?: number;
+    supportedAspectRatios: string[];
+    supportedOutputFormats: string[];
+  };
 }
 
 export const useImageGeneratorCoordinator = ({
@@ -60,6 +66,7 @@ export const useImageGeneratorCoordinator = ({
   orchestrationHandleGenerate,
   generate,
   setCurrentGeneratedImage,
+  capabilities,
 }: UseImageGeneratorCoordinatorProps) => {
   
   // Inline generation state management (from deleted useImageGeneratorCore)
@@ -84,9 +91,10 @@ export const useImageGeneratorCoordinator = ({
 
     setIsGenerationClicked(true);
 
-    // Only include baseImageUrl if the model supports image editing and we have a valid URL
-    const supportsImageEditing = modelSupportsImageEditing(selectedModelId);
+    // Use actual model capabilities instead of hard-coded function
+    const supportsImageEditing = capabilities.supportsImageEditing;
     const hasValidBaseImage = fileUpload.baseImageUrl && fileUpload.baseImageUrl.trim();
+    const hasValidSecondImage = fileUpload.secondImageUrl && fileUpload.secondImageUrl.trim();
     
     const request: GenerationRequest = {
       prompt: prompt.trim(),
@@ -97,14 +105,20 @@ export const useImageGeneratorCoordinator = ({
       baseImageUrl: supportsImageEditing && hasValidBaseImage 
         ? fileUpload.baseImageUrl! 
         : undefined,
+      secondImageUrl: supportsImageEditing && hasValidSecondImage 
+        ? fileUpload.secondImageUrl! 
+        : undefined,
     };
     
     // Debug log to verify the request is correct
     console.debug('Generation request:', {
       modelId: selectedModelId,
       supportsImageEditing,
+      supportsMultipleImages: capabilities.supportsMultipleImages,
       hasValidBaseImage,
-      finalBaseImageUrl: request.baseImageUrl
+      hasValidSecondImage,
+      finalBaseImageUrl: request.baseImageUrl,
+      finalSecondImageUrl: request.secondImageUrl
     });
 
     try {
@@ -121,7 +135,8 @@ export const useImageGeneratorCoordinator = ({
         enhancePromptFn,
         generate,
         setCurrentGeneratedImage,
-        request.baseImageUrl
+        request.baseImageUrl,
+        request.secondImageUrl // NEW: Pass second image
       );
     } catch (error) {
       setIsGenerationClicked(false);
@@ -141,7 +156,10 @@ export const useImageGeneratorCoordinator = ({
     safetyTolerance,
     selectedProviderId,
     selectedModelId,
+    capabilities.supportsImageEditing,
+    capabilities.supportsMultipleImages,
     fileUpload.baseImageUrl,
+    fileUpload.secondImageUrl,
     fileUpload.setBaseImageUrl,
     enhancePromptWithStyles,
     styleValues,

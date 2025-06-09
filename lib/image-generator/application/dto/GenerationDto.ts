@@ -5,6 +5,7 @@ export interface GenerationDto {
   prompt: string;
   imageUrl?: string;
   baseImageUrl?: string; // For image editing mode
+  secondImageUrl?: string; // For multi-image generation models
   status: GenerationStatusDto;
   width: number;
   height: number;

@@ -12,6 +12,7 @@ export interface GenerateImageRequest {
   providerId?: string;
   modelId?: string;
   baseImageUrl?: string;
+  secondImageUrl?: string; // NEW: For multi-image models
 }
 
 export interface GenerateImageWithProviderRequest {

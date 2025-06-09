@@ -57,6 +57,33 @@ export const REPLICATE_MODELS: ProviderModel[] = [
     isBeta: false,
   },
   {
+    id: 'flux-kontext-pro-multi',
+    name: 'FLUX Kontext Pro Multi-Image',
+    description: 'Experimental model that can combine two input images with FLUX Kontext Pro technology',
+    capabilities: {
+      maxPromptLength: 2000,
+      supportedAspectRatios: ['match_input_image', '1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '4:5', '5:4', '21:9', '9:21', '2:1', '1:2'],
+      defaultSettings: {
+        aspectRatio: 'match_input_image',
+        outputFormat: 'png',
+        safetyTolerance: 2,
+      },
+      costPerGeneration: 12, // Premium pricing for dual-image capability
+      estimatedTimeSeconds: 35,
+      supportsImageEditing: true,        // 🎯 Requires image uploads
+      supportsMultipleImages: true,      // 🎯 NEW: Enables dual upload UI
+      supportsTextToImage: false,        // 🎯 Requires images, not pure text-to-image
+      supportsCustomDimensions: true,    // 🎯 Flexible aspect ratios
+      supportsStyleControls: true,       // 🎯 Shows style controls
+      supportedOutputFormats: ['jpg', 'png'],
+      maxSafetyTolerance: 2,            // 🎯 Max safety tolerance is 2
+      minSafetyTolerance: 0,            // 🎯 Min safety tolerance is 0
+      requiredImages: 2,                // 🎯 NEW: Exactly 2 images required
+    },
+    isDefault: false,
+    isBeta: true, // 🎯 Experimental model
+  },
+  {
     id: 'flux-schnell',
     name: 'FLUX Schnell',
     description: 'Fastest image generation model for rapid prototyping and testing',
@@ -112,6 +139,7 @@ export const REPLICATE_MODELS: ProviderModel[] = [
 export const REPLICATE_MODEL_ENDPOINTS: Record<string, string> = {
   'imagen-4': 'google/imagen-4',
   'flux-kontext-max': 'black-forest-labs/flux-kontext-max',
+  'flux-kontext-pro-multi': 'flux-kontext-apps/multi-image-kontext-pro',
   'flux-schnell': 'black-forest-labs/flux-schnell',
   'flux-dev': 'black-forest-labs/flux-dev',
 };

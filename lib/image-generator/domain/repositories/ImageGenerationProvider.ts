@@ -5,6 +5,7 @@ export interface GenerationRequest {
   providerId: ProviderId;
   modelId: ModelId;
   baseImageUrl?: string;
+  secondImageUrl?: string; // NEW: For dual-image models
   aspectRatio?: string;
   outputFormat?: string;
   outputQuality?: number;

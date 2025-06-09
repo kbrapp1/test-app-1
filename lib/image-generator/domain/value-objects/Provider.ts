@@ -3,6 +3,7 @@ export type ProviderId = 'replicate' | 'openai' | 'google' | 'anthropic' | 'stab
 export type ModelId = 
   // Replicate models
   | 'flux-kontext-max' 
+  | 'flux-kontext-pro-multi'
   | 'flux-schnell' 
   | 'flux-dev' 
   | 'flux-pro'
@@ -34,6 +35,8 @@ export interface ModelCapabilities {
   supportedOutputFormats: string[];
   maxSafetyTolerance?: number;
   minSafetyTolerance?: number;
+  supportsMultipleImages?: boolean; // NEW: For dual-image models
+  requiredImages?: number; // NEW: Number of required images
 }
 
 export interface ProviderModel {

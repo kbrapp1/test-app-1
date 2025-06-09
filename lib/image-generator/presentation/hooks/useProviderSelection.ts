@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ProviderId, ModelId, ProviderModel } from '../../domain/value-objects/Provider';
 import { ProviderService } from '../../application/services/ProviderService';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
-import { ProviderOption } from '../components/ProviderSelector';
+import { ProviderOption } from '../components/providers/ProviderSelector';
 
 export interface UseProviderSelectionReturn {
   selectedProviderId: ProviderId;
@@ -13,6 +13,8 @@ export interface UseProviderSelectionReturn {
   getSelectedCapabilities: () => {
     supportsImageEditing: boolean;
     supportsStyleControls: boolean;
+    supportsMultipleImages?: boolean; // NEW
+    requiredImages?: number; // NEW
     maxSafetyTolerance?: number;
     minSafetyTolerance?: number;
     supportedAspectRatios: string[];
@@ -63,6 +65,8 @@ export function useProviderSelection(
               isBeta: model.isBeta,
               supportsImageEditing: model.capabilities.supportsImageEditing,
               supportsStyleControls: model.capabilities.supportsStyleControls,
+              supportsMultipleImages: model.capabilities.supportsMultipleImages, // NEW
+              requiredImages: model.capabilities.requiredImages, // NEW
               maxSafetyTolerance: model.capabilities.maxSafetyTolerance,
               minSafetyTolerance: model.capabilities.minSafetyTolerance,
               supportedAspectRatios: model.capabilities.supportedAspectRatios,
@@ -103,6 +107,8 @@ export function useProviderSelection(
       return {
         supportsImageEditing: option.supportsImageEditing,
         supportsStyleControls: option.supportsStyleControls,
+        supportsMultipleImages: option.supportsMultipleImages, // NEW
+        requiredImages: option.requiredImages, // NEW
         maxSafetyTolerance: option.maxSafetyTolerance,
         minSafetyTolerance: option.minSafetyTolerance,
         supportedAspectRatios: option.supportedAspectRatios,

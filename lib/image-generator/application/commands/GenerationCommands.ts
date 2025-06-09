@@ -17,6 +17,7 @@ export interface GenerateImageCommand extends Command {
   modelId?: string;
   safetyTolerance?: number;
   baseImageUrl?: string;
+  secondImageUrl?: string;
   metadata?: Record<string, any>;
 }
 

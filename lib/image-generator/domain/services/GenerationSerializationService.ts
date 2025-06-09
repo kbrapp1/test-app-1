@@ -16,6 +16,7 @@ export interface GenerationSnapshot {
   status: string;
   resultImageUrl: string | null;
   baseImageUrl: string | null;
+  secondImageUrl: string | null;
   externalProviderId: string | null;
   costCents: number;
   generationTimeSeconds: number | null;
@@ -56,6 +57,7 @@ export class GenerationSerializationService {
       status: data.status.value,
       resultImageUrl: data.resultImageUrl,
       baseImageUrl: data.baseImageUrl,
+      secondImageUrl: data.secondImageUrl,
       externalProviderId: data.externalProviderId,
       costCents: data.costCents,
       generationTimeSeconds: data.generationTimeSeconds,
@@ -93,6 +95,7 @@ export class GenerationSerializationService {
       status: GenerationStatus.create(snapshot.status),
       resultImageUrl: snapshot.resultImageUrl,
       baseImageUrl: snapshot.baseImageUrl,
+      secondImageUrl: snapshot.secondImageUrl,
       externalProviderId: snapshot.externalProviderId,
       costCents: snapshot.costCents,
       generationTimeSeconds: snapshot.generationTimeSeconds,

@@ -5,7 +5,7 @@ npm test
 ### Run All Tests in Terminal (Verbose Output)
 
 # Option 1: running the test and auto run when needed
-npm run test:watch
+pnpm run test:watch
 
 * Shows the hierarchy of `describe` and `it` blocks along with pass/fail status.
 * Note the extra `--` needed to pass flags through npm to the Vitest command.
@@ -73,3 +73,30 @@ pnpm run perf        # Run both
 
 ## Run run storyboard
 Storybook - pnpm run storybook → http://localhost:6006
+
+## Playright Testing
+# Watch the test run in real browser
+pnpm test:e2e:headed
+
+# Step through failures
+pnpm test:e2e:debug
+
+# Visual test management
+pnpm test:e2e:ui
+
+npx playwright test --list
+npx playwright test image-generation.spec.ts --list
+npx playwright test visual-regression.spec.ts --list
+npx playwright test dam-integration.spec.ts --list
+
+# Run only Chromium/Chrome tests
+npx playwright test --project=chromium
+
+# Or run specific Chrome test
+npx playwright test image-generation.spec.ts --project=chromium --headed
+
+# Or run the critical test in Chrome only
+npx playwright test --grep "CRITICAL" --project=chromium
+
+# To run with a full video and trace
+npx playwright test image-generation.spec.ts --project=chromium --trace on --videon on

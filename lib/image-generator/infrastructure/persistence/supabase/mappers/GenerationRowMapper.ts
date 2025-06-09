@@ -26,6 +26,7 @@ export interface GenerationRow {
   external_provider_id: string | null;
   aspect_ratio: string;
   base_image_url: string | null;
+  second_image_url: string | null;
   edit_type: string;
   source_dam_asset_id: string | null;
 }
@@ -61,6 +62,7 @@ export class GenerationRowMapper {
       external_provider_id: snapshot.externalProviderId, // 🆕 Use generic provider ID
       aspect_ratio: snapshot.aspectRatio,
       base_image_url: snapshot.baseImageUrl,
+      second_image_url: snapshot.secondImageUrl,
       edit_type: snapshot.editType,
       source_dam_asset_id: snapshot.sourceDamAssetId,
     };
@@ -77,6 +79,7 @@ export class GenerationRowMapper {
       status: row.status,
       resultImageUrl: row.result_image_url,
       baseImageUrl: row.base_image_url,
+      secondImageUrl: row.second_image_url,
       externalProviderId: row.external_provider_id, // 🆕 Use generic provider ID from DB
       costCents: row.cost_cents,
       generationTimeSeconds: row.generation_time_seconds,

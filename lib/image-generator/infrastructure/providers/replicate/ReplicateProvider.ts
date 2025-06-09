@@ -102,6 +102,33 @@ export class ReplicateProvider implements ImageGenerationProvider {
       }
     }
 
+    if (request.modelId === 'flux-kontext-pro-multi') {
+      // Dual-image model requires both images
+      if (!request.baseImageUrl) {
+        errors.push('First input image is required for multi-image Kontext Pro model');
+      }
+      if (!request.secondImageUrl) {
+        errors.push('Second input image is required for multi-image Kontext Pro model');
+      }
+      
+      // Validate image URL formats
+      if (request.baseImageUrl && !request.baseImageUrl.startsWith('http')) {
+        errors.push('First image must be uploaded to storage before generation. Please wait for upload to complete.');
+      }
+      if (request.secondImageUrl && !request.secondImageUrl.startsWith('http')) {
+        errors.push('Second image must be uploaded to storage before generation. Please wait for upload to complete.');
+      }
+      
+      // Validate safety tolerance range
+      if (request.safetyTolerance !== undefined) {
+        const min = model.capabilities.minSafetyTolerance || 0;
+        const max = model.capabilities.maxSafetyTolerance || 2;
+        if (request.safetyTolerance < min || request.safetyTolerance > max) {
+          errors.push(`Safety tolerance must be between ${min} and ${max}`);
+        }
+      }
+    }
+
     if (request.modelId === 'flux-schnell') {
       if (request.baseImageUrl) {
         errors.push('Image editing not supported by flux-schnell model');
@@ -140,6 +167,8 @@ export class ReplicateProvider implements ImageGenerationProvider {
         return 'google/imagen-4';
       case 'flux-kontext-max':
         return 'black-forest-labs/flux-kontext-max';
+      case 'flux-kontext-pro-multi':
+        return 'flux-kontext-apps/multi-image-kontext-pro';
       case 'flux-schnell':
         return 'black-forest-labs/flux-schnell';
       case 'flux-dev':
@@ -180,6 +209,15 @@ export class ReplicateProvider implements ImageGenerationProvider {
       // Imagen-4 specific parameters
       // Google handles safety internally, no safety tolerance needed
       // No image input support for this text-to-image model
+    } else if (request.modelId === 'flux-kontext-pro-multi') {
+      // Multi-image Kontext Pro requires both images
+      input.safety_tolerance = request.safetyTolerance || defaults?.safetyTolerance;
+      if (request.baseImageUrl && request.baseImageUrl.startsWith('http')) {
+        input.input_image_1 = request.baseImageUrl;
+      }
+      if (request.secondImageUrl && request.secondImageUrl.startsWith('http')) {
+        input.input_image_2 = request.secondImageUrl;
+      }
     } else if (request.modelId === 'flux-kontext-max') {
       input.safety_tolerance = request.safetyTolerance || defaults?.safetyTolerance;
       if (request.baseImageUrl && request.baseImageUrl.startsWith('http')) {
@@ -198,6 +236,11 @@ export class ReplicateProvider implements ImageGenerationProvider {
 
     // For Kontext with input image, use "match_input_image" aspect ratio
     if (request.modelId === 'flux-kontext-max' && request.baseImageUrl) {
+      input.aspect_ratio = 'match_input_image';
+    }
+    
+    // For multi-image Kontext Pro, default to match_input_image if not specified
+    if (request.modelId === 'flux-kontext-pro-multi' && !request.aspectRatio) {
       input.aspect_ratio = 'match_input_image';
     }
 

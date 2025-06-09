@@ -17,6 +17,7 @@ export class GenerateImageCommandHandler {
         providerId: command.providerId,
         modelId: command.modelId,
         baseImageUrl: command.baseImageUrl,
+        secondImageUrl: command.secondImageUrl,
       });
 
       if (!result.isSuccess()) {

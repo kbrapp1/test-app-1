@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Generation } from '../../../domain/entities/Generation';
 import { GenerationRepository, GenerationFilters } from '../../../domain/repositories/GenerationRepository';
 import { Result, success, error } from '../../common/Result';
@@ -8,8 +9,19 @@ import { GenerationStatsCalculator, GenerationStats } from './services/Generatio
 
 export class SupabaseGenerationRepository implements GenerationRepository {
   private tableName = 'image_generations';
+  private useServiceRole: boolean;
+
+  constructor(useServiceRole: boolean = false) {
+    this.useServiceRole = useServiceRole;
+  }
 
   private getClient() {
+    if (this.useServiceRole) {
+      return createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+    }
     return createClient();
   }
 

@@ -60,9 +60,10 @@ const GenerationImageComponent: React.FC<GenerationImageProps> = ({
         setPlaceholder(undefined);
       };
       
-      img.src = optimizedImageUrl;
+      // Use original URL for placeholder generation to avoid race condition with optimized URL
+      img.src = generation.imageUrl;
     }
-      }, [optimizedImageUrl, generation.status]);
+  }, [generation.imageUrl, generation.status]);
 
   const getStatusIcon = () => {
     switch (generation.status) {

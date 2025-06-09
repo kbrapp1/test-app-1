@@ -17,6 +17,7 @@ export interface GenerateImageRequest {
   userId: string;
   safetyTolerance?: number;
   baseImageUrl?: string;
+  secondImageUrl?: string;
   providerId?: string;
   modelId?: string;
 }
@@ -66,6 +67,7 @@ export class GenerateImageUseCase {
         imageHeight: request.height || 1024,
         aspectRatio: request.aspectRatio,
         baseImageUrl: request.baseImageUrl,
+        secondImageUrl: request.secondImageUrl,
       };
 
       const generation = GenerationFactory.create(generationData);
@@ -104,6 +106,7 @@ export class GenerateImageUseCase {
         modelId: model.id,
         aspectRatio: generation.aspectRatio,
         baseImageUrl: generation.baseImageUrl,
+        secondImageUrl: generation.secondImageUrl,
       };
 
       // Only add safetyTolerance if the model supports it
@@ -147,22 +150,15 @@ export class GenerateImageUseCase {
   }
 
   private async autoSaveImage(generation: Generation): Promise<void> {
-    // TODO: Re-enable after fixing RLS policies for assets table
-    return;
-    
-    /*
+    // Auto-save the generated image to the storage bucket
     try {
-      const autoSaveUseCase = new AutoSaveGenerationUseCase(this.repository);
+      const autoSaveUseCase = new AutoSaveGenerationUseCase();
       const result = await autoSaveUseCase.execute(generation.getId());
-      
       if (!result.isSuccess()) {
         console.error('Failed to auto-save generation:', result.getError());
-        // Don't fail the main generation process if auto-save fails
       }
     } catch (err) {
       console.error('Auto-save error:', err);
-      // Don't fail the main generation process if auto-save fails
     }
-    */
   }
 } 

@@ -28,9 +28,7 @@ export class GenerationOrchestrationService {
    */
   static getAutoSaveUseCase(): AutoSaveGenerationUseCase {
     if (!this.autoSaveUseCase) {
-      this.autoSaveUseCase = new AutoSaveGenerationUseCase(
-        this.getGenerationRepository()
-      );
+      this.autoSaveUseCase = new AutoSaveGenerationUseCase();
     }
     return this.autoSaveUseCase;
   }

@@ -40,9 +40,19 @@ export const getOptimizedImageUrl = (
   size?: 'thumbnail' | 'medium' | 'full',
   customOptions?: ImageOptimizationOptions
 ): string => {
-  // If no optimization service available, return original URL
+  // Skip optimization for empty or server-side
   if (!originalUrl || typeof window === 'undefined') {
     return originalUrl;
+  }
+
+  // Bypass optimization for Replicate-hosted images (they don't support query parameters)
+  try {
+    const parsed = new URL(originalUrl);
+    if (parsed.hostname.endsWith('replicate.delivery')) {
+      return originalUrl;
+    }
+  } catch {
+    // If URL parsing fails, continue with standard logic
   }
 
   const supportsWebP = getWebPSupport();

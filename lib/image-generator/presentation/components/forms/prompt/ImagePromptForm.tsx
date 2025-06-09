@@ -15,6 +15,9 @@ interface ImagePromptFormProps {
   baseImageUrl: string | null;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onClearBaseImage: () => void;
+  secondImageUrl?: string | null; // NEW: Second image for multi-image models
+  onSecondFileUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void; // NEW
+  onClearSecondImage?: () => void; // NEW
   aspectRatio: string;
   onAspectRatioChange: (value: string) => void;
   style: string;
@@ -27,6 +30,8 @@ interface ImagePromptFormProps {
   onGenerate: () => void;
   isStorageUrl?: boolean;
   isUploading?: boolean;
+  isSecondImageStorageUrl?: boolean; // NEW
+  isSecondImageUploading?: boolean; // NEW
   onStylesChange?: (styles: {
     vibe: string;
     lighting: string;
@@ -44,6 +49,8 @@ interface ImagePromptFormProps {
   capabilities?: {
     supportsImageEditing: boolean;
     supportsStyleControls: boolean;
+    supportsMultipleImages?: boolean; // NEW
+    requiredImages?: number; // NEW
     maxSafetyTolerance?: number;
     minSafetyTolerance?: number;
     supportedAspectRatios: string[];
@@ -64,6 +71,9 @@ const ImagePromptFormComponent: React.FC<ImagePromptFormProps> = ({
   baseImageUrl,
   onFileUpload,
   onClearBaseImage,
+  secondImageUrl,
+  onSecondFileUpload,
+  onClearSecondImage,
   aspectRatio,
   onAspectRatioChange,
   style,
@@ -76,6 +86,8 @@ const ImagePromptFormComponent: React.FC<ImagePromptFormProps> = ({
   onGenerate,
   isStorageUrl = true,
   isUploading = false,
+  isSecondImageStorageUrl = true,
+  isSecondImageUploading = false,
   onStylesChange,
   styleValues,
   generationError,
@@ -127,14 +139,40 @@ const ImagePromptFormComponent: React.FC<ImagePromptFormProps> = ({
 
         {/* Image Upload Section - only show if provider supports image editing */}
         {capabilities?.supportsImageEditing && (
-          <ImageUploadSection
-            baseImageUrl={baseImageUrl}
-            aspectRatio={aspectRatio}
-            onFileUpload={onFileUpload}
-            onClearBaseImage={onClearBaseImage}
-            isStorageUrl={isStorageUrl}
-            isUploading={isUploading}
-          />
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium mb-2">
+                {capabilities?.supportsMultipleImages 
+                  ? 'First Input Image' 
+                  : 'Input Image'}
+              </h3>
+              <ImageUploadSection
+                baseImageUrl={baseImageUrl}
+                aspectRatio={aspectRatio}
+                onFileUpload={onFileUpload}
+                onClearBaseImage={onClearBaseImage}
+                isStorageUrl={isStorageUrl}
+                isUploading={isUploading}
+                inputId="file-upload"
+              />
+            </div>
+            
+            {/* Second Image Upload - only show for multi-image models */}
+            {capabilities?.supportsMultipleImages && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Second Input Image</h3>
+                                 <ImageUploadSection
+                   baseImageUrl={secondImageUrl || null}
+                   aspectRatio={aspectRatio}
+                   onFileUpload={onSecondFileUpload || (() => {})}
+                   onClearBaseImage={onClearSecondImage || (() => {})}
+                   isStorageUrl={isSecondImageStorageUrl}
+                   isUploading={isSecondImageUploading}
+                   inputId="second-file-upload"
+                 />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Image Dimensions Section */}
@@ -221,7 +259,10 @@ const arePropsEqual = (
     prevProps.isGenerating !== nextProps.isGenerating ||
     prevProps.isStorageUrl !== nextProps.isStorageUrl ||
     prevProps.isUploading !== nextProps.isUploading ||
-    prevProps.generationError !== nextProps.generationError
+    prevProps.generationError !== nextProps.generationError ||
+    prevProps.secondImageUrl !== nextProps.secondImageUrl ||
+    prevProps.isSecondImageStorageUrl !== nextProps.isSecondImageStorageUrl ||
+    prevProps.isSecondImageUploading !== nextProps.isSecondImageUploading
   ) {
     return false;
   }
@@ -249,6 +290,8 @@ const arePropsEqual = (
     if (
       prevCap.supportsImageEditing !== nextCap.supportsImageEditing ||
       prevCap.supportsStyleControls !== nextCap.supportsStyleControls ||
+      prevCap.supportsMultipleImages !== nextCap.supportsMultipleImages ||
+      prevCap.requiredImages !== nextCap.requiredImages ||
       prevCap.maxSafetyTolerance !== nextCap.maxSafetyTolerance ||
       prevCap.minSafetyTolerance !== nextCap.minSafetyTolerance ||
       JSON.stringify(prevCap.supportedAspectRatios) !== JSON.stringify(nextCap.supportedAspectRatios) ||

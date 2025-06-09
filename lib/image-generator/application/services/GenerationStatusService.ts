@@ -170,8 +170,15 @@ export class GenerationStatusService {
    */
   private async triggerAutoSave(generation: Generation): Promise<void> {
     try {
-      await this.autoSaveUseCase.execute(generation.getId());
+      console.log('Triggering auto-save for generation:', generation.getId());
+      const result = await this.autoSaveUseCase.execute(generation.getId());
+      if (result.isSuccess()) {
+        console.log('Auto-save successful for generation:', generation.getId());
+      } else {
+        console.error('Auto-save failed for generation:', generation.getId(), 'Error:', result.getError());
+      }
     } catch (error) {
+      console.error('Auto-save exception for generation:', generation.getId(), 'Error:', error);
       // Auto-save failure should not affect the main generation flow
       // Error is logged internally by the use case
     }

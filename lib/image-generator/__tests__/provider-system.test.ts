@@ -17,7 +17,7 @@ describe('Provider System Integration', () => {
     expect(replicateProvider).toBeTruthy();
     
     const models = await replicateProvider?.getSupportedModels();
-    expect(models).toHaveLength(4); // imagen-4, flux-kontext-max, flux-schnell, and flux-dev
+    expect(models).toHaveLength(5); // imagen-4, flux-kontext-max, flux-kontext-pro-multi, flux-schnell, and flux-dev
   });
 
   it('should provide correct model capabilities', async () => {
@@ -51,6 +51,17 @@ describe('Provider System Integration', () => {
     expect(imagenModel?.capabilities.costPerGeneration).toBe(12);
     expect(imagenModel?.capabilities.estimatedTimeSeconds).toBe(30);
     expect(imagenModel?.isBeta).toBe(true);
+
+    // Check FLUX Kontext Pro Multi-Image
+    const multiImageModel = await replicateProvider?.getModel('flux-kontext-pro-multi');
+    expect(multiImageModel).toBeTruthy();
+    expect(multiImageModel?.capabilities.supportsImageEditing).toBe(true);
+    expect(multiImageModel?.capabilities.supportsMultipleImages).toBe(true);
+    expect(multiImageModel?.capabilities.requiredImages).toBe(2);
+    expect(multiImageModel?.capabilities.supportsTextToImage).toBe(false);
+    expect(multiImageModel?.capabilities.costPerGeneration).toBe(12);
+    expect(multiImageModel?.capabilities.estimatedTimeSeconds).toBe(35);
+    expect(multiImageModel?.isBeta).toBe(true);
   });
 
   it('should find cheapest and default providers', () => {

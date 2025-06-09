@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { RefreshCw, X } from 'lucide-react';
 import { GenerationDto } from '../../../../application/dto';
 import { GenerationActionButtons } from '../../forms/controls/GenerationActionButtons';
@@ -24,49 +24,73 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
   onDownloadImage,
   onMakeBaseImage,
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [blurPlaceholder, setBlurPlaceholder] = useState<string>();
-
   // Get optimized thumbnail URL for the 64x64 display
   const optimizedImageUrl = useOptimizedImage(generation.imageUrl || '', 'thumbnail');
 
+  // Check if image is likely cached
+  const isImageCached = useMemo(() => {
+    if (!generation.imageUrl || typeof window === 'undefined') return false;
+    
+    const img = new Image();
+    img.src = optimizedImageUrl;
+    return img.complete && img.naturalWidth > 0;
+  }, [optimizedImageUrl]);
+
+  // Set initial state based on cache status
+  const [imageLoaded, setImageLoaded] = useState(isImageCached);
+  const [imageError, setImageError] = useState(false);
+  const [blurPlaceholder, setBlurPlaceholder] = useState<string>();
+
   // Reset states when generation changes
   useEffect(() => {
-    setImageLoaded(false);
+    const isCached = !generation.imageUrl ? false : (() => {
+      const img = new Image();
+      img.src = optimizedImageUrl;
+      return img.complete && img.naturalWidth > 0;
+    })();
+    
+    setImageLoaded(isCached);
     setImageError(false);
     setBlurPlaceholder(undefined);
-  }, [generation.id]);
+  }, [generation.id, optimizedImageUrl]);
 
-  // Generate blur placeholder for progressive loading
+  // Generate blur placeholder only for uncached images
   useEffect(() => {
-    if (generation.imageUrl && generation.status === 'completed' && !imageError) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        // Create tiny 10x10 version for blur effect
-        canvas.width = 10;
-        canvas.height = 10;
-        ctx?.drawImage(img, 0, 0, 10, 10);
-        try {
-          setBlurPlaceholder(canvas.toDataURL());
-        } catch (error) {
-          // Fallback if CORS issues
-          setBlurPlaceholder(undefined);
-        }
-      };
-      
-      img.onerror = () => {
-        setBlurPlaceholder(undefined);
-      };
-      
-      // Use optimized URL for placeholder generation too
-      img.src = optimizedImageUrl;
+    let mounted = true;
+    
+    // Skip blur generation if image is already cached
+    if (isImageCached || !generation.imageUrl || generation.status !== 'completed' || imageError) {
+      return;
     }
-  }, [optimizedImageUrl, generation.status, imageError]);
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      if (!mounted) return;
+      
+      canvas.width = 10;
+      canvas.height = 10;
+      ctx?.drawImage(img, 0, 0, 10, 10);
+      try {
+        setBlurPlaceholder(canvas.toDataURL());
+      } catch (error) {
+        if (mounted) setBlurPlaceholder(undefined);
+      }
+    };
+    
+    img.onerror = () => {
+      if (mounted) setBlurPlaceholder(undefined);
+    };
+    
+    img.src = generation.imageUrl;
+    
+    return () => {
+      mounted = false;
+    };
+  }, [generation.imageUrl, generation.status, imageError, generation.id, isImageCached]);
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -75,13 +99,14 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
   const handleImageError = () => {
     setImageError(true);
     setImageLoaded(false);
+    setBlurPlaceholder(undefined);
   };
 
   const renderThumbnail = () => {
     if (generation.imageUrl && generation.status === 'completed' && !imageError) {
       return (
         <div className="relative w-full h-full overflow-hidden">
-          {/* Blur placeholder - shows first for smooth loading */}
+          {/* Blur placeholder - only shows for uncached images while loading */}
           {blurPlaceholder && !imageLoaded && (
             <img
               src={blurPlaceholder}
@@ -94,7 +119,7 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
           <img
             src={optimizedImageUrl}
             alt={generation.prompt}
-            className={`w-full h-full object-cover transition-all duration-500 hover:scale-105 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 hover:scale-105 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={handleImageLoad}
@@ -102,8 +127,8 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
             loading="lazy"
           />
           
-          {/* Loading spinner - only shows if no placeholder */}
-          {!imageLoaded && !blurPlaceholder && (
+          {/* Loading spinner - only shows if no blur and not cached */}
+          {!imageLoaded && !blurPlaceholder && !isImageCached && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
               <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>

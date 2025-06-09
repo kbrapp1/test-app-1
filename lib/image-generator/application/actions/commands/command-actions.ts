@@ -50,6 +50,7 @@ export async function generateImage(request: GenerateImageRequest): Promise<Gene
       providerId: request.providerId,
       modelId: request.modelId,
       baseImageUrl: request.baseImageUrl,
+      secondImageUrl: request.secondImageUrl,
     };
 
     return await commandBus.execute(command);

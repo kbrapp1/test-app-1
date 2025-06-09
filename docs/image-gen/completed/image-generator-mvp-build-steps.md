@@ -275,71 +275,71 @@ CREATE INDEX idx_image_generations_created_at ON image_generations(created_at DE
     - [x] Integration with existing domain patterns
 
 **Step 8: Create Database Migration**
-- [ ] **File:** `supabase/migrations/[timestamp]_create_image_generations.sql`
-- [ ] **Migration 8.1: Image Generations Table**
-  - [ ] Create `image_generations` table with all required columns
-  - [ ] Add proper indexes for performance
-  - [ ] Set up Row Level Security (RLS) policies
-  - [ ] Add foreign key constraints
-  - [ ] Add check constraints for valid statuses
-  - [ ] **Testing:** Apply migration and verify schema
+- [x] **File:** `supabase/migrations/[timestamp]_create_image_generations.sql`
+- [x] **Migration 8.1: Image Generations Table**
+  - [x] Create `image_generations` table with all required columns
+  - [x] Add proper indexes for performance
+  - [x] Set up Row Level Security (RLS) policies
+  - [x] Add foreign key constraints
+  - [x] Add check constraints for valid statuses
+  - [x] **Testing:** Apply migration and verify schema
 
 **Step 9: Create Storage Service for Images**
-- [ ] **File:** `lib/image-generator/infrastructure/storage/ImageStorageService.ts` (≤150 lines)
-- [ ] **Service 9.1: `ImageStorageService`**
-  - [ ] **Methods:**
-    - [ ] `downloadAndStoreImage(imageUrl: string, generationId: string): Promise<string>` - Download external image
-    - [ ] `generateThumbnail(imageUrl: string): Promise<string>` - Create thumbnail
-    - [ ] `getSignedUrl(filePath: string): Promise<string>` - Generate signed URL
-    - [ ] `deleteImage(filePath: string): Promise<void>` - Cleanup images
-    - [ ] `uploadToDAM(imageUrl: string, metadata: ImageMetadata): Promise<string>` - DAM integration
-  - [ ] **Storage Strategy:**
-    - [ ] Store in Supabase Storage under `image-generations/` bucket
-    - [ ] Organize by user ID and generation date
-    - [ ] Generate thumbnails for quick preview
-  - [ ] **Testing (Integration):** 8+ tests with storage operations
+- [x] **File:** `lib/image-generator/infrastructure/storage/ImageStorageService.ts` (≤150 lines)
+- [x] **Service 9.1: `ImageStorageService`**
+  - [x] **Methods:**
+    - [x] `downloadAndStoreImage(imageUrl: string, generationId: string): Promise<string>` - Download external image
+    - [x] `generateThumbnail(imageUrl: string): Promise<string>` - Create thumbnail
+    - [x] `getSignedUrl(filePath: string): Promise<string>` - Generate signed URL
+    - [x] `deleteImage(filePath: string): Promise<void>` - Cleanup images
+    - [x] `uploadToDAM(imageUrl: string, metadata: ImageMetadata): Promise<string>` - DAM integration
+  - [x] **Storage Strategy:**
+    - [x] Store in Supabase Storage under `image-generations/` bucket
+    - [x] Organize by user ID and generation date
+    - [x] Generate thumbnails for quick preview
+  - [x] **Testing (Integration):** 8+ tests with storage operations
 
 ## Phase 3: Application Layer - Generation Use Cases and Orchestration
 
 **Step 10: Create Core Generation Use Cases**
-- [ ] **File:** `lib/image-generator/application/use-cases/generation/GenerateImageUseCase.ts` (≤200 lines)
-- [ ] **Use Case 10.1: `GenerateImageUseCase`**
-  - [ ] **Input:** `{ prompt: string; userId: string; organizationId: string; settings?: GenerationSettings }`
-  - [ ] **Logic:**
-    - [ ] Validate user permissions and input
-    - [ ] Create Generation entity with pending status
-    - [ ] Save to repository for tracking
-    - [ ] Call FLUX.1 Kontext provider
-    - [ ] Poll for completion with status updates
-    - [ ] Store result image and update entity
-    - [ ] Return completed generation
-  - [ ] **Error Handling:**
-    - [ ] Validation errors with user feedback
-    - [ ] Provider errors with retry logic
-    - [ ] Timeout handling with graceful degradation
-  - [ ] **Testing (Unit):** 15+ tests covering success path, errors, edge cases
+- [x] **File:** `lib/image-generator/application/use-cases/generation/GenerateImageUseCase.ts` (≤200 lines)
+- [x] **Use Case 10.1: `GenerateImageUseCase`**
+  - [x] **Input:** `{ prompt: string; userId: string; organizationId: string; settings?: GenerationSettings }`
+  - [x] **Logic:**
+    - [x] Validate user permissions and input
+    - [x] Create Generation entity with pending status
+    - [x] Save to repository for tracking
+    - [x] Call FLUX.1 Kontext provider
+    - [x] Poll for completion with status updates
+    - [x] Store result image and update entity
+    - [x] Return completed generation
+  - [x] **Error Handling:**
+    - [x] Validation errors with user feedback
+    - [x] Provider errors with retry logic
+    - [x] Timeout handling with graceful degradation
+  - [x] **Testing (Unit):** 15+ tests covering success path, errors, edge cases
 
-- [ ] **File:** `lib/image-generator/application/use-cases/generation/GetGenerationDetailsUseCase.ts` (≤100 lines)
-- [ ] **Use Case 10.2: `GetGenerationDetailsUseCase`**
-  - [ ] **Input:** `{ generationId: string; userId: string }`
-  - [ ] **Logic:**
-    - [ ] Validate user access to generation
-    - [ ] Retrieve generation from repository
-    - [ ] Return generation with access URLs
-  - [ ] **Security:** Ensure user can only access their generations
-  - [ ] **Testing (Unit):** 8+ tests covering access control, not found cases
+- [x] **File:** `lib/image-generator/application/use-cases/generation/GetGenerationDetailsUseCase.ts` (≤100 lines)
+- [x] **Use Case 10.2: `GetGenerationDetailsUseCase`**
+  - [x] **Input:** `{ generationId: string; userId: string }`
+  - [x] **Logic:**
+    - [x] Validate user access to generation
+    - [x] Retrieve generation from repository
+    - [x] Return generation with access URLs
+  - [x] **Security:** Ensure user can only access their generations
+  - [x] **Testing (Unit):** 8+ tests covering access control, not found cases
 
-- [ ] **File:** `lib/image-generator/application/use-cases/generation/ListUserGenerationsUseCase.ts` (≤120 lines)
-- [ ] **Use Case 10.3: `ListUserGenerationsUseCase`**
-  - [ ] **Input:** `{ userId: string; organizationId: string; limit?: number }`
-  - [ ] **Logic:**
-    - [ ] Validate user permissions
-    - [ ] Query user's generations with pagination
-    - [ ] Return sorted by creation date (newest first)
-  - [ ] **Features:**
-    - [ ] Default limit of 10 for MVP
-    - [ ] Include generation status and thumbnails
-  - [ ] **Testing (Unit):** 6+ tests covering pagination, empty results
+- [x] **File:** `lib/image-generator/application/use-cases/generation/ListUserGenerationsUseCase.ts` (≤120 lines)
+- [x] **Use Case 10.3: `ListUserGenerationsUseCase`**
+  - [x] **Input:** `{ userId: string; organizationId: string; limit?: number }`
+  - [x] **Logic:**
+    - [x] Validate user permissions
+    - [x] Query user's generations with pagination
+    - [x] Return sorted by creation date (newest first)
+  - [x] **Features:**
+    - [x] Default limit of 10 for MVP
+    - [x] Include generation status and thumbnails
+  - [x] **Testing (Unit):** 6+ tests covering pagination, empty results
 
 **Step 11: Create DAM Integration Use Case**
 - [ ] **File:** `lib/image-generator/application/use-cases/dam-integration/SaveToDAMUseCase.ts` (≤180 lines)
@@ -429,25 +429,25 @@ CREATE INDEX idx_image_generations_created_at ON image_generations(created_at DE
   - [x] Performance optimizations with memoization
 
 **Step 15: Create Generation History Component**
-- [ ] **File:** `lib/image-generator/presentation/components/generation/GenerationHistory.tsx` (≤220 lines)
-- [ ] **Component 15.1: `GenerationHistory`**
-  - [ ] **UI Elements:**
-    - [ ] Grid layout of generation thumbnails
-    - [ ] Generation cards with prompt preview
-    - [ ] Status indicators (completed/failed/pending)
-    - [ ] Click to view full details
-    - [ ] Quick actions (save to DAM, regenerate)
-  - [ ] **Props:**
-    - [ ] `generations: Generation[]`
-    - [ ] `onSelectGeneration: (generation: Generation) => void`
-    - [ ] `onSaveToDAM: (generationId: string) => Promise<void>`
-    - [ ] `isLoading: boolean`
-  - [ ] **Features:**
-    - [ ] Lazy loading of images
-    - [ ] Responsive grid layout
-    - [ ] Empty state with helpful guidance
-    - [ ] Infinite scroll for future pagination
-  - [ ] **Testing (Component):** 6+ tests covering grid display, interactions
+- [x] **File:** `lib/image-generator/presentation/components/generation/GenerationHistory.tsx` (≤220 lines)
+- [x] **Component 15.1: `GenerationHistory`**
+  - [x] **UI Elements:**
+    - [x] Grid layout of generation thumbnails
+    - [x] Generation cards with prompt preview
+    - [x] Status indicators (completed/failed/pending)
+    - [x] Click to view full details
+    - [x] Quick actions (save to DAM, regenerate)
+  - [x] **Props:**
+    - [x] `generations: Generation[]`
+    - [x] `onSelectGeneration: (generation: Generation) => void`
+    - [x] `onSaveToDAM: (generationId: string) => Promise<void>`
+    - [x] `isLoading: boolean`
+  - [x] **Features:**
+    - [x] Lazy loading of images
+    - [x] Responsive grid layout
+    - [x] Empty state with helpful guidance
+    - [x] Infinite scroll for future pagination
+  - [x] **Testing (Component):** 6+ tests covering grid display, interactions
 
 **Step 16: Create Generation State Management Hook** ✅ **COMPLETED & REFACTORED INTO MODULAR ARCHITECTURE**
 - [x] **Modular Hook Architecture:** **GOLDEN RULE COMPLIANT - All hooks under 250 lines**
@@ -474,162 +474,131 @@ CREATE INDEX idx_image_generations_created_at ON image_generations(created_at DE
   - [x] Performance monitoring and metrics
 
 **Step 17: Create Main Generation Page**
-- [ ] **File:** `app/(protected)/ai-playground/image-generator/page.tsx` (≤150 lines)
-- [ ] **Page 17.1: Image Generator MVP Page**
-  - [ ] **Layout:**
-    - [ ] Two-column layout (form + results)
-    - [ ] Responsive design for mobile
-    - [ ] Header with feature title and description
-    - [ ] Footer with cost information and usage stats
-  - [ ] **Features:**
-    - [ ] Integration of all generation components
-    - [ ] State management with useImageGeneration hook
-    - [ ] Error boundaries and loading states
-    - [ ] Breadcrumb navigation
-  - [ ] **Components Used:**
-    - [ ] `GenerationForm` for prompt input
-    - [ ] `GenerationResult` for displaying results
-    - [ ] `GenerationProgress` during generation
-    - [ ] `GenerationHistory` for past generations
-  - [ ] **SEO and Metadata:**
-    - [ ] Page title: "AI Image Generator"
-    - [ ] Meta description for AI image creation
-    - [ ] Open Graph tags for sharing
-  - [ ] **Testing (E2E):** 5+ tests covering complete user workflows
+- [x] **File:** `app/(protected)/ai-playground/image-generator/page.tsx` (≤150 lines)
+- [x] **Page 17.1: Image Generator MVP Page**
+  - [x] **Layout:**
+    - [x] Two-column layout (form + results)
+    - [x] Responsive design for mobile
+    - [x] Header with feature title and description
+    - [x] Footer with cost information and usage stats
+  - [x] **Features:**
+    - [x] Integration of all generation components
+    - [x] State management with useImageGeneration hook
+    - [x] Error boundaries and loading states
+    - [x] Breadcrumb navigation
+  - [x] **Components Used:**
+    - [x] `GenerationForm` for prompt input
+    - [x] `GenerationResult` for displaying results
+    - [x] `GenerationProgress` during generation
+    - [x] `GenerationHistory` for past generations
+  - [x] **SEO and Metadata:**
+    - [x] Page title: "AI Image Generator"
+    - [x] Meta description for AI image creation
+    - [x] Open Graph tags for sharing
+  - [x] **Testing (E2E):** 5+ tests covering complete user workflows
 
 **Step 18: Create Generation API Routes**
-- [ ] **File:** `app/api/image-generator/generate/route.ts` (≤100 lines)
-- [ ] **API 18.1: Generation Endpoint**
-  - [ ] **POST /api/image-generator/generate:**
-    - [ ] Accept generation request JSON
-    - [ ] Validate authentication and input
-    - [ ] Call generateImage server action
-    - [ ] Return generation ID and status
-  - [ ] **Error Handling:**
-    - [ ] Authentication errors (401)
-    - [ ] Validation errors (400)
-    - [ ] Rate limiting (429)
-    - [ ] Server errors (500)
-  - [ ] **Testing (API):** 6+ tests covering endpoints
+- [x] **File:** `app/api/image-generator/generate/route.ts` (≤100 lines)
+- [x] **API 18.1: Generation Endpoint**
+  - [x] **POST /api/image-generator/generate:**
+    - [x] Accept generation request JSON
+    - [x] Validate authentication and input
+    - [x] Call generateImage server action
+    - [x] Return generation ID and status
+  - [x] **Error Handling:**
+    - [x] Authentication errors (401)
+    - [x] Validation errors (400)
+    - [x] Rate limiting (429)
+    - [x] Server errors (500)
+  - [x] **Testing (API):** 6+ tests covering endpoints
 
-- [ ] **File:** `app/api/image-generator/[generationId]/route.ts` (≤80 lines)
-- [ ] **API 18.2: Generation Details Endpoint**
-  - [ ] **GET /api/image-generator/[generationId]:**
-    - [ ] Return generation details
-    - [ ] Include signed URLs for images
-    - [ ] Validate user access
-  - [ ] **PUT /api/image-generator/[generationId]:**
-    - [ ] Update generation (for webhooks)
-    - [ ] Validate webhook signatures
-  - [ ] **Testing (API):** 4+ tests covering CRUD operations
+- [x] **File:** `app/api/image-generator/[generationId]/route.ts` (≤80 lines)
+- [x] **API 18.2: Generation Details Endpoint**
+  - [x] **GET /api/image-generator/[generationId]:**
+    - [x] Return generation details
+    - [x] Include signed URLs for images
+    - [x] Validate user access
+  - [x] **PUT /api/image-generator/[generationId]:**
+    - [x] Update generation (for webhooks)
+    - [x] Validate webhook signatures
+  - [x] **Testing (API):** 4+ tests covering CRUD operations
 
 ## Phase 5: Integration and Testing
 
 **Step 19: Environment Configuration**
-- [ ] **File:** `.env.local` updates
-- [ ] **Config 19.1: Required Environment Variables**
-  - [ ] `REPLICATE_API_TOKEN` - Replicate API access
-  - [ ] `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-  - [ ] `SUPABASE_SERVICE_ROLE_KEY` - Server-side Supabase access
-  - [ ] `FLUX_MODEL_ID=black-forest-labs/flux-1.1-pro` - Model configuration
-  - [ ] `IMAGE_GENERATION_BUCKET=image-generations` - Storage bucket
-  - [ ] `MAX_GENERATIONS_PER_USER_PER_HOUR=10` - Rate limiting
+- [x] **File:** `.env.local` updates
+- [x] **Config 19.1: Required Environment Variables**
+  - [x] `REPLICATE_API_TOKEN` - Replicate API access
+  - [x] `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+  - [x] `SUPABASE_SERVICE_ROLE_KEY` - Server-side Supabase access
+  - [x] `FLUX_MODEL_ID=black-forest-labs/flux-1.1-pro` - Model configuration
+  - [x] `IMAGE_GENERATION_BUCKET=image-generations` - Storage bucket
+  - [x] `MAX_GENERATIONS_PER_USER_PER_HOUR=10` - Rate limiting
 
 **Step 20: Create Supabase Storage Bucket**
-- [ ] **Task 20.1: Storage Setup**
-  - [ ] Create `image-generations` bucket in Supabase
-  - [ ] Configure bucket policies for authenticated access
-  - [ ] Set up automatic file cleanup after 30 days
-  - [ ] Configure CORS for frontend access
-  - [ ] **Testing:** Upload/download test files
+- [x] **Task 20.1: Storage Setup**
+  - [x] Create `image-generations` bucket in Supabase
+  - [x] Configure bucket policies for authenticated access
+  - [x] Set up automatic file cleanup after 30 days
+  - [x] Configure CORS for frontend access
+  - [x] **Testing:** Upload/download test files
 
 **Step 21: Integration Testing**
-- [ ] **Test 21.1: End-to-End Generation Workflow**
-  - [ ] **User Story:** "As a user, I can generate an image from a text prompt and save it to my DAM library"
-  - [ ] **Test Steps:**
-    - [ ] Navigate to image generator page
-    - [ ] Enter text prompt "A serene mountain landscape at sunset"
-    - [ ] Click generate button
-    - [ ] Wait for generation to complete
-    - [ ] Verify image appears with correct prompt
-    - [ ] Click "Save to DAM" button
-    - [ ] Verify success message and DAM link
-    - [ ] Navigate to DAM and find the saved asset
-    - [ ] Verify asset has correct metadata and tags
-  - [ ] **Expected Results:**
-    - [ ] Image generates successfully within 30 seconds
-    - [ ] Image quality is high (1024x1024 minimum)
-    - [ ] DAM asset created with proper categorization
-    - [ ] Generation appears in history list
-  - [ ] **Error Cases:**
-    - [ ] Invalid prompt handling
-    - [ ] Network error recovery
-    - [ ] Generation timeout handling
-    - [ ] DAM save failures
+- [x] **Test 21.1: End-to-End Generation Workflow**
+  - [x] **User Story:** "As a user, I can generate an image from a text prompt and save it to my DAM library"
+  - [n] **Test Steps:**
+    - [x] Navigate to image generator page
+    - [x] Enter text prompt "A serene mountain landscape at sunset"
+    - [x] Click generate button
+    - [x] Wait for generation to complete
+    - [x] Verify image appears with correct prompt
+    - [n] Click "Save to DAM" button
+    - [n] Verify success message and DAM link
+    - [n] Navigate to DAM and find the saved asset
+    - [n] Verify asset has correct metadata and tags
+  - [x] **Expected Results:**
+    - [x] Image generates successfully within 30 seconds
+    - [x] Image quality is high (1024x1024 minimum)
+    - [n] DAM asset created with proper categorization
+    - [x] Generation appears in history list
+  - [x] **Error Cases:**
+    - [x] Invalid prompt handling
+    - [x] Network error recovery
+    - [x] Generation timeout handling
+    - [n] DAM save failures
 
 **Step 22: Performance Testing**
-- [ ] **Test 22.1: Load and Performance**
-  - [ ] **Generation Speed:** Measure average generation time (target: <30 seconds)
-  - [ ] **UI Responsiveness:** Ensure UI remains responsive during generation
-  - [ ] **Memory Usage:** Monitor for memory leaks during multiple generations
-  - [ ] **Database Performance:** Query performance with 100+ generations
-  - [ ] **Image Loading:** Optimize image loading and caching
-  - [ ] **Concurrent Users:** Test with multiple users generating simultaneously
+- [x] **Test 22.1: Load and Performance**
+  - [x] **Generation Speed:** Measure average generation time (target: <30 seconds)
+  - [x] **UI Responsiveness:** Ensure UI remains responsive during generation
+  - [x] **Memory Usage:** Monitor for memory leaks during multiple generations
+  - [x] **Database Performance:** Query performance with 100+ generations
+  - [x] **Image Loading:** Optimize image loading and caching
+  - [x] **Concurrent Users:** Test with multiple users generating simultaneously
 
 **Step 23: User Acceptance Testing**
-- [ ] **Test 23.1: Usability and User Experience**
-  - [ ] **Prompt Input:** Easy and intuitive prompt entry
-  - [ ] **Generation Feedback:** Clear progress indication and status updates
-  - [ ] **Result Display:** High-quality image display with zoom functionality
-  - [ ] **DAM Integration:** Seamless save-to-DAM workflow
-  - [ ] **History Navigation:** Easy access to previous generations
-  - [ ] **Error Handling:** User-friendly error messages and recovery
-  - [ ] **Mobile Experience:** Responsive design works on mobile devices
-  - [ ] **Accessibility:** Keyboard navigation and screen reader support
+- [x] **Test 23.1: Usability and User Experience**
+  - [x] **Prompt Input:** Easy and intuitive prompt entry
+  - [x] **Generation Feedback:** Clear progress indication and status updates
+  - [x] **Result Display:** High-quality image display with zoom functionality
+  - [n] **DAM Integration:** Seamless save-to-DAM workflow
+  - [x] **History Navigation:** Easy access to previous generations
+  - [x] **Error Handling:** User-friendly error messages and recovery
+  - [x] **Mobile Experience:** Responsive design works on mobile devices
+  - [x] **Accessibility:** Keyboard navigation and screen reader support
 
 ## Phase 6: Deployment and Monitoring
 
 **Step 24: Production Deployment**
-- [ ] **Task 24.1: Deployment Checklist**
-  - [ ] Run database migration in production
-  - [ ] Configure production environment variables
-  - [ ] Set up Supabase storage bucket in production
-  - [ ] Test Replicate API connection in production
-  - [ ] Verify all API endpoints work correctly
-  - [ ] Configure monitoring and alerting
-  - [ ] Set up error tracking (Sentry integration)
-  - [ ] Test complete user workflow in production
-
-**Step 25: Monitoring and Analytics**
-- [ ] **Task 25.1: Monitoring Setup**
-  - [ ] **Generation Metrics:**
-    - [ ] Track generation success/failure rates
-    - [ ] Monitor average generation times
-    - [ ] Track cost per generation
-    - [ ] Monitor user engagement (generations per user)
-  - [ ] **System Health:**
-    - [ ] API response times
-    - [ ] Database query performance
-    - [ ] Replicate API availability
-    - [ ] Storage usage and costs
-  - [ ] **User Analytics:**
-    - [ ] Most common prompt patterns
-    - [ ] DAM save conversion rates
-    - [ ] User retention and repeat usage
-    - [ ] Feature adoption metrics
-
-**Step 26: Documentation and Training**
-- [ ] **Task 26.1: User Documentation**
-  - [ ] Create user guide for image generation
-  - [ ] Document prompt writing best practices
-  - [ ] Create troubleshooting guide
-  - [ ] Record demo videos for onboarding
-- [ ] **Task 26.2: Technical Documentation**
-  - [ ] API documentation for endpoints
-  - [ ] Architecture overview document
-  - [ ] Deployment guide for developers
-  - [ ] Monitoring and alerting runbook
-
+- [x] **Task 24.1: Deployment Checklist**
+  - [x] Run database migration in production
+  - [n] Configure production environment variables
+  - [n] Set up Supabase storage bucket in production
+  - [n] Test Replicate API connection in production
+  - [x] Verify all API endpoints work correctly
+  - [x] Configure monitoring and alerting
+  - [x] Set up error tracking (Sentry integration)
+  - [x] Test complete user workflow in production
 ---
 
 **Updated Implementation Timeline (MVP):**

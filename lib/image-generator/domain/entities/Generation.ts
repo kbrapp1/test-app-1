@@ -18,6 +18,7 @@ export interface CreateGenerationData {
   imageHeight?: number;
   aspectRatio?: string;
   baseImageUrl?: string | null;
+  secondImageUrl?: string | null;
   externalProviderId?: string | null;
   editType?: 'text-to-image' | 'image-editing' | 'style-transfer' | 'background-swap';
   damAssetId?: string;
@@ -35,6 +36,7 @@ export interface GenerationData {
   status: GenerationStatus;
   resultImageUrl: string | null;
   baseImageUrl: string | null;
+  secondImageUrl: string | null;
   externalProviderId: string | null;
   costCents: number;
   generationTimeSeconds: number | null;
@@ -69,6 +71,7 @@ export class Generation {
   private _status: GenerationStatus;
   private _resultImageUrl: string | null;
   private _baseImageUrl: string | null;
+  private _secondImageUrl: string | null;
   private _externalProviderId: string | null;
   private _cost: GenerationCost;
   private _generationTimeSeconds: number | null;
@@ -94,6 +97,7 @@ export class Generation {
     this._status = data.status;
     this._resultImageUrl = data.resultImageUrl;
     this._baseImageUrl = data.baseImageUrl;
+    this._secondImageUrl = data.secondImageUrl;
     this._externalProviderId = data.externalProviderId || null;
     this._cost = GenerationCost.fromCents(data.costCents, data.modelName);
     this._generationTimeSeconds = data.generationTimeSeconds;
@@ -112,6 +116,7 @@ export class Generation {
   get status(): GenerationStatus { return this._status; }
   get resultImageUrl(): string | null { return this._resultImageUrl; }
   get baseImageUrl(): string | null { return this._baseImageUrl; }
+  get secondImageUrl(): string | null { return this._secondImageUrl; }
   get externalProviderId(): string | null { return this._externalProviderId; }
   get costCents(): number { return this._cost.cents; }
   get generationTimeSeconds(): number | null { return this._generationTimeSeconds; }
@@ -217,6 +222,7 @@ export class Generation {
       status: this._status,
       resultImageUrl: this._resultImageUrl,
       baseImageUrl: this._baseImageUrl,
+      secondImageUrl: this._secondImageUrl,
       externalProviderId: this._externalProviderId,
       costCents: this._cost.cents,
       generationTimeSeconds: this._generationTimeSeconds,

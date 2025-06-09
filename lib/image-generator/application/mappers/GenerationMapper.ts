@@ -19,6 +19,7 @@ export class GenerationMapper {
       prompt: generation.prompt.toString(),
       imageUrl: generation.resultImageUrl || undefined,
       baseImageUrl: generation.baseImageUrl || undefined,
+      secondImageUrl: generation.secondImageUrl || undefined,
       status: this.mapStatusToDto(generation.getStatus()),
       width: generation.imageWidth,
       height: generation.imageHeight,

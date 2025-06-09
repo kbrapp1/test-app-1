@@ -11,6 +11,7 @@ interface ImageUploadSectionProps {
   onClearBaseImage: () => void;
   isStorageUrl?: boolean;
   isUploading?: boolean;
+  inputId?: string; // NEW: Custom input ID for multiple upload areas
 }
 
 /**
@@ -24,6 +25,7 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   onClearBaseImage,
   isStorageUrl = true,
   isUploading = false,
+  inputId = 'file-upload',
 }) => {
   const containerClasses = getAspectRatioClasses(aspectRatio);
   return (
@@ -59,7 +61,7 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
       ) : (
         <div 
           className="w-full h-24 bg-muted border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-border/60 transition-colors"
-          onClick={() => document.getElementById('file-upload')?.click()}
+          onClick={() => document.getElementById(inputId)?.click()}
         >
           <div className="text-center">
             <Upload className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
@@ -68,7 +70,7 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
             </p>
           </div>
           <input
-            id="file-upload"
+            id={inputId}
             type="file"
             accept="image/*"
             onChange={onFileUpload}

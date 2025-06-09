@@ -18,6 +18,12 @@ export interface ProviderOption {
   isBeta?: boolean;
   supportsImageEditing: boolean;
   supportsStyleControls: boolean;
+  supportsMultipleImages?: boolean; // NEW: For dual-image models
+  requiredImages?: number; // NEW: Number of required images
+  maxSafetyTolerance?: number;
+  minSafetyTolerance?: number;
+  supportedAspectRatios: string[];
+  supportedOutputFormats: string[];
 }
 
 interface ProviderSelectorProps {
