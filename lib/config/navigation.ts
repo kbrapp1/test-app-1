@@ -46,6 +46,7 @@ export interface NavItem {
     items?: NavSubItem[]; // Sub-items for collapsible sections
     collapsible?: boolean; // Flag to indicate this item should be collapsible
     superAdminOnly?: boolean; // Flag to restrict access to super admins only
+    featureFlag?: string; // Flag to control visibility based on organization entitlements
 }
 
 export interface NavSubItem {
@@ -53,6 +54,7 @@ export interface NavSubItem {
     url: string;
     label?: string;
     icon?: LucideIcon; // Optional icon for sub-items
+    featureFlag?: string; // Flag to control visibility based on organization entitlements
 }
 
 // Export the navigation data arrays
@@ -68,6 +70,7 @@ export const navMainItems: NavItem[] = [
         url: "#",
         icon: FolderIcon,
         collapsible: true,
+        featureFlag: 'dam',
         items: [
             { title: "Notes", url: "/documents/notes", icon: FileTextIcon },
             { title: "Asset Library", url: "/dam", icon: UploadCloudIcon },
@@ -147,7 +150,7 @@ export const navMainItems: NavItem[] = [
         collapsible: true,
         items: [
             { title: "Image Generator", url: "/ai-playground/image-generator", icon: CameraIcon },
-            { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon },
+            { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon, featureFlag: 'tts' },
             { title: "Chatbot", url: "/ai-playground/chatbot", icon: MessageCircleIcon },
         ],
     },

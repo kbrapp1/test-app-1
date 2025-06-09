@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-09T00:54:00.815Z
+// Generated: 2025-06-09T14:23:06.845Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -239,7 +239,9 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "OrganizationSwitcher"
     ],
     "files": [
-      "lib/organization/presentation/components/"
+      "lib/organization/presentation/components/",
+      "lib/organization/presentation/hooks/",
+      "lib/organization/application/services/"
     ],
     "queryKeys": [],
     "endpoints": [],

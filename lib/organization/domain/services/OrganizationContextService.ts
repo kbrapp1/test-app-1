@@ -12,6 +12,7 @@ export interface OrganizationContext {
   created_at?: string;
   updated_at: string;
   organization_name: string;
+  feature_flags: Record<string, boolean>;
 }
 
 export interface OrganizationContextError extends Error {
@@ -49,7 +50,10 @@ export class OrganizationContextService {
           last_accessed_at,
           created_at,
           updated_at,
-          organizations!inner(name)
+          organizations!inner(
+            name,
+            feature_flags
+          )
         `)
         .eq('user_id', user.id)
         .single();
@@ -69,7 +73,8 @@ export class OrganizationContextService {
         last_accessed_at: data.last_accessed_at,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        organization_name: (data.organizations as any)?.name || 'Unknown'
+        organization_name: (data.organizations as any)?.name || 'Unknown',
+        feature_flags: (data.organizations as any)?.feature_flags || {}
       };
     } catch (error: any) {
       throw error;

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { useAuthWithSuperAdmin } from "@/lib/auth/super-admin"
+import { useFeatureFlag } from "@/lib/organization/presentation/hooks/useFeatureFlag"
 
 export function NavMain({
   items,
@@ -30,11 +31,6 @@ export function NavMain({
   const { setOpenMobile } = useSidebar()
   const { isSuperAdmin } = useAuthWithSuperAdmin()
   
-  // Filter items based on super admin status
-  const filteredItems = items.filter(item => 
-    !item.superAdminOnly || isSuperAdmin
-  )
-
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -56,7 +52,11 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           <Accordion type="multiple" className="w-full">
-            {filteredItems.map((item) => (
+            {items.filter(item => {
+                const isVisibleByFlag = !item.featureFlag || useFeatureFlag(item.featureFlag);
+                const isVisibleByAdmin = !item.superAdminOnly || isSuperAdmin;
+                return isVisibleByFlag && isVisibleByAdmin;
+            }).map((item) => (
               item.collapsible && item.items ? (
                 <AccordionItem key={item.title} value={item.title} className="border-none">
                   <AccordionTrigger
@@ -68,7 +68,7 @@ export function NavMain({
                     <span className="flex-1 truncate">{item.title}</span>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1 pl-5">
-                    {item.items.map((subItem) => (
+                    {item.items.filter(subItem => !subItem.featureFlag || useFeatureFlag(subItem.featureFlag)).map((subItem) => (
                       <SidebarMenuItem key={subItem.title} className="my-0.5">
                         <Link href={subItem.url}>
                           <SidebarMenuButton

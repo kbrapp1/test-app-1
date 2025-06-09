@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useCallback } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Ban } from 'lucide-react';
 import { TtsHistoryPanel } from '@/components/tts/TtsHistoryPanel';
 import { TtsInterface, type TtsFormInitializationData } from '@/components/tts/tts-interface';
 import type { Database } from '@/types/supabase';
@@ -10,6 +10,7 @@ import { saveTtsAudioToDam } from '@/lib/actions/tts';
 import { toast } from 'sonner';
 import { SaveAsDialog } from '@/components/tts/SaveAsDialog';
 import { useTtsSaveAsDialog } from '@/hooks/useTtsSaveAsDialog';
+import { useFeatureFlag } from '@/lib/organization/presentation/hooks/useFeatureFlag';
 
 type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
 
@@ -18,6 +19,8 @@ type TtsPredictionRow = Database['public']['Tables']['TtsPrediction']['Row'];
 // UX: docs/text-to-speech/tts-ux-design.md
 
 export default function TextToSpeechPage() {
+  const isTtsEnabled = useFeatureFlag('tts');
+
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [formInitialValues, setFormInitialValues] = useState<TtsFormInitializationData | undefined>(undefined);
   const [shouldRefreshHistory, setShouldRefreshHistory] = useState<boolean>(false);
@@ -108,6 +111,7 @@ export default function TextToSpeechPage() {
     const toastId = toast.loading("Saving to DAM...");
     try {
       const result = await saveTtsAudioToDam(audioUrl, assetName, predictionId, true);
+      
       if (result.success && result.assetId) {
         toast.success(`Saved to DAM with ID: ${result.assetId}`, { id: toastId });
         setShouldRefreshHistory(true);
@@ -126,6 +130,21 @@ export default function TextToSpeechPage() {
     openSaveAsDialog(item);
     return !!item.outputUrl;
   }, [openSaveAsDialog]);
+
+  if (!isTtsEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-200px)] text-center">
+        <Ban className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Feature Not Enabled</h1>
+        <p className="text-muted-foreground">
+          The Text-to-Speech feature is not enabled for your organization.
+        </p>
+        <p className="text-muted-foreground mt-1">
+          Please contact your administrator for more information.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">

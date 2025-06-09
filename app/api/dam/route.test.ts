@@ -13,7 +13,50 @@ vi.mock('@/lib/supabase/auth-middleware', () => ({
 }));
 
 vi.mock('@/lib/middleware/error', () => ({
-  withErrorHandling: (handler: any) => handler,
+  withErrorHandling: (handler: any) => {
+    return async (...args: any[]) => {
+      try {
+        return await handler(...args);
+      } catch (error: any) {
+        const { NextResponse } = await import('next/server');
+        
+        // Handle ValidationError (400)
+        if (error.name === 'ValidationError' || error.constructor.name === 'ValidationError') {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 400 }
+          );
+        }
+        
+        // Handle DatabaseError (500)
+        if (error.name === 'DatabaseError' || error.constructor.name === 'DatabaseError') {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+          );
+        }
+        
+        // Handle other AppErrors
+        if (error.statusCode) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: error.statusCode }
+          );
+        }
+        
+        // Handle unknown errors
+        return NextResponse.json(
+          { error: 'Internal server error' },
+          { status: 500 }
+        );
+      }
+    };
+  },
+}));
+
+// Mock DAM feature flag service
+vi.mock('@/lib/dam/application/services/DamFeatureFlagService', () => ({
+  isDamFeatureEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock the use case with tag color data
@@ -99,17 +142,25 @@ describe('DAM API Route', () => {
     });
   });
 
-  it('throws a ValidationError for negative limit', async () => {
-    const req = { url: 'http://localhost/api/dam?limit=-1' } as any;
-    await expect(getHandler(req, {} as any, {} as any)).rejects.toThrow('Invalid limit parameter. Limit must be a non-negative number.');
+  it('returns 400 error for negative limit', async () => {
+    const request = new NextRequest('http://localhost:3000/api/dam?limit=-1');
+    const response = await GET(request, mockUser as any, mockSupabase as any);
+    
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Invalid limit parameter');
   });
 
-  it('throws a DatabaseError when no active organization is found', async () => {
+  it('returns 500 error when no active organization is found', async () => {
     // Simulate missing organization
     (getActiveOrganizationId as Mock).mockResolvedValue(null);
 
-    const req = { url: 'http://localhost/api/dam' } as any;
-    await expect(getHandler(req, {} as any, {} as any)).rejects.toThrow();
+    const request = new NextRequest('http://localhost:3000/api/dam');
+    const response = await GET(request, mockUser as any, mockSupabase as any);
+    
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data.error).toContain('Active organization not found');
   });
 
   // TODO: Add tests for searchTerm, global filters, and folder contents by mocking fetchSearchResults, fetchFolderContents, transformAndEnrichData, and applyQuickSearchLimits.

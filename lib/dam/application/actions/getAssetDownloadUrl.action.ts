@@ -5,6 +5,7 @@ import { createClient as createSupabaseServerClient } from '@/lib/supabase/serve
 import { GetAssetDownloadUrlUseCase } from '../use-cases/assets';
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseStorageService';
+import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
  * Server Action: Get Asset Download URL
@@ -16,12 +17,15 @@ import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseSto
  * @param forceDownload - Whether to force download (vs inline display)
  * @returns Promise with success status and download URL or error message
  */
+
 export async function getAssetDownloadUrl(
   assetId: string,
   forceDownload: boolean = true
 ): Promise<{ success: boolean; downloadUrl?: string; error?: string }> {
 
   try {
+    await checkDamFeatureFlag();
+    
     // 1. Get organization context
     const organizationId = await getActiveOrganizationId();
     if (!organizationId) {

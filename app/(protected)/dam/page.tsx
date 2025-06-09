@@ -9,7 +9,10 @@
 import { DamWorkspaceView } from '@/lib/dam/presentation/components/workspace';
 import type { BreadcrumbItemData } from '@/lib/dam/presentation/components/navigation';
 import { getFolderNavigation } from '@/lib/dam/application/actions/navigation.actions';
+import { getActiveOrganizationWithFlags } from '@/lib/organization/application/services/getActiveOrganizationWithFlags';
+import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { Ban } from 'lucide-react';
 
 export const dynamic = 'force-dynamic'; // REINSTATED
 
@@ -18,6 +21,30 @@ export default async function DamGalleryPage({
 }: {
   searchParams: any; // Forcing type to any for diagnostic purposes
 }) {
+  // Feature flag check - server-side
+  const supabase = createSupabaseServerClient();
+  const organization = await getActiveOrganizationWithFlags(supabase);
+  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+  const isDamEnabled = flags?.dam ?? false;
+
+  // If DAM feature is not enabled, show feature not enabled message
+  if (!isDamEnabled) {
+    return (
+      <main className="flex-1 px-4 pt-2 pb-4 overflow-auto">
+        <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-200px)] text-center">
+          <Ban className="w-16 h-16 text-red-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Feature Not Enabled</h1>
+          <p className="text-muted-foreground">
+            The Digital Asset Management feature is not enabled for your organization.
+          </p>
+          <p className="text-muted-foreground mt-1">
+            Please contact your administrator for more information.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   // Await searchParams to safely use dynamic API
   const resolvedSearchParams = await searchParams;
   // Access searchParams with optional chaining after casting to any

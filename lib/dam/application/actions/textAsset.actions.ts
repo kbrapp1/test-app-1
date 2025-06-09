@@ -9,6 +9,7 @@ import { SupabaseAssetRepository } from '../../infrastructure/persistence/supaba
 import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseStorageService';
 import { AppError } from '@/lib/errors/base';
 import { apiDeduplicationService } from '../services/ApiDeduplicationService';
+import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
  * Server Actions: Text Asset Management
@@ -31,6 +32,8 @@ export async function listTextAssets(): Promise<{ success: boolean; data?: TextA
 
 async function executeListTextAssets(): Promise<{ success: boolean; data?: TextAssetSummaryDto[]; error?: string }> {
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -66,6 +69,8 @@ export async function getAssetContent(assetId: string): Promise<{ success: boole
   }
 
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -107,6 +112,8 @@ export async function updateAssetText(
   }
   
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) { 
@@ -148,6 +155,8 @@ export async function saveAsNewTextAsset(
   folderId?: string | null
 ): Promise<{ success: boolean; error?: string; data?: { newAssetId: string } }> {
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

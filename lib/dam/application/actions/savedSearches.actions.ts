@@ -9,6 +9,7 @@ import type { ExecuteSavedSearchRequest } from '../use-cases/search/ExecuteSaved
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
  * Server Actions: Saved Search Management
@@ -54,6 +55,8 @@ export interface ExecuteSavedSearchOptions {
 export async function saveDamSearch(request: SaveDamSearchRequest) {
 
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();
     
@@ -109,6 +112,8 @@ export async function saveDamSearch(request: SaveDamSearchRequest) {
 export async function listSavedSearches(options: ListSavedSearchesOptions = {}) {
 
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();
     
@@ -176,6 +181,8 @@ export async function listSavedSearches(options: ListSavedSearchesOptions = {}) 
 export async function executeSavedSearch(options: ExecuteSavedSearchOptions) {
 
   try {
+    await checkDamFeatureFlag();
+    
     const supabase = createClient();
     const activeOrgId = await getActiveOrganizationId();
     

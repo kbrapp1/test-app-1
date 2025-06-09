@@ -14,6 +14,7 @@ import type {
   DamSortParameters, 
   LimitOptions 
 } from '@/lib/dam/application/dto/SearchCriteriaDTO';
+import { isDamFeatureEnabled } from '@/lib/dam/application/services/DamFeatureFlagService';
 
 /**
  * DAM API Route - Thin Wrapper Following DDD Principles
@@ -80,11 +81,20 @@ export async function getHandler(
   user: User,
   supabase: SupabaseClient
 ) {
-  // 1. Parse and validate HTTP request parameters
+  // 1. Check DAM feature flag
+  const isDamEnabled = await isDamFeatureEnabled();
+  if (!isDamEnabled) {
+    return NextResponse.json(
+      { error: 'DAM feature is not enabled for this organization' },
+      { status: 403 }
+    );
+  }
+
+  // 2. Parse and validate HTTP request parameters
   const { searchParams } = new URL(request.url);
   const params = parseRequestParameters(searchParams);
 
-  // 2. Get organization context with optimized single-call logic
+  // 3. Get organization context with optimized single-call logic
   let organizationId = await getActiveOrganizationId();
   
   // If no organization found, try session refresh but avoid redundant calls
@@ -107,12 +117,12 @@ export async function getHandler(
     throw new DatabaseError('Active organization not found');
   }
 
-  // 3. Set up dependencies and use case
+  // 4. Set up dependencies and use case
   const assetRepository = new SupabaseAssetRepository(supabase);
   const folderRepository = new SupabaseFolderRepository(supabase);
   const getDamDataUseCase = new GetDamDataUseCase(assetRepository, folderRepository);
 
-  // 4. Build proper DamApiRequestDto
+  // 5. Build proper DamApiRequestDto
   const requestDto = {
     organizationId,
     userId: user.id,
@@ -126,10 +136,10 @@ export async function getHandler(
     limitOptions: params.limitOptions,
   };
 
-  // 5. Delegate business logic to use case
+  // 6. Delegate business logic to use case
   const result = await getDamDataUseCase.execute(requestDto);
 
-  // 6. Transform domain result to API response format
+  // 7. Transform domain result to API response format
   // Transform domain entities to GalleryItemDto format
   const transformedFolders = result.folders.map(folder => ({
     type: 'folder' as const,
@@ -164,7 +174,7 @@ export async function getHandler(
     totalItems: combinedItems.length,
   };
 
-  // 7. Return HTTP response
+  // 8. Return HTTP response
   return NextResponse.json(responseData, {
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',

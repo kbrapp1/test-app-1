@@ -10,6 +10,7 @@ import { saveTtsHistory as saveTtsHistoryUsecase } from '@/lib/usecases/tts/save
 import { getTtsHistory as getTtsHistoryUsecase } from '@/lib/usecases/tts/getTtsHistoryUsecase';
 // import { TtsPredictionInsert, TtsPredictionUpdate } from '@/types/supabase-custom'; // Removed as it seems unused for this action and causing errors
 import { Database } from '@/types/supabase'; // THIS LINE SHOULD BE THE ONLY IMPORT OF Database
+import { checkTtsFeatureFlag } from './services/TtsFeatureFlagService';
 
 // Import the types from the usecase file if they are exported, or redefine if necessary
 // Assuming TtsPredictionRow is part of the return type or an exported type from the usecase, or Database types can be used.
@@ -31,11 +32,23 @@ export async function getTtsVoices(provider?: string, modelId?: string) {
 }
 
 export async function startSpeechGeneration(inputText: string, voiceId: string, provider: string) {
-  return startSpeechGenerationUsecase(inputText, voiceId, provider);
+  try {
+    await checkTtsFeatureFlag();
+    return await startSpeechGenerationUsecase(inputText, voiceId, provider);
+  } catch (error: any) {
+    console.error('TTS feature flag check failed:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function getSpeechGenerationResult(ttsPredictionDbId: string) {
-  return getSpeechGenerationResultUsecase(ttsPredictionDbId);
+  try {
+    await checkTtsFeatureFlag();
+    return await getSpeechGenerationResultUsecase(ttsPredictionDbId);
+  } catch (error: any) {
+    console.error('TTS feature flag check failed:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function saveTtsAudioToDam(
@@ -44,36 +57,54 @@ export async function saveTtsAudioToDam(
   ttsPredictionId: string,
   linkToPrediction: boolean = true
 ) {
-  const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId);
+  try {
+    await checkTtsFeatureFlag();
+    const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId);
 
-  if (result.success && result.assetId && linkToPrediction) {
-    const supabase = createSupabaseServerClient();
-    const { error: linkError } = await supabase
-      .from('TtsPrediction')
-      .update({ outputAssetId: result.assetId })
-      .eq('id', ttsPredictionId);
+    if (result.success && result.assetId && linkToPrediction) {
+      const supabase = createSupabaseServerClient();
+      const { error: linkError } = await supabase
+        .from('TtsPrediction')
+        .update({ outputAssetId: result.assetId })
+        .eq('id', ttsPredictionId);
 
-    if (linkError) {
-      console.error('TTS Action (saveTtsAudioToDam): Error linking asset to prediction:', linkError);
-      return { success: false, error: 'Failed to link asset to prediction.' };
+      if (linkError) {
+        console.error('TTS Action (saveTtsAudioToDam): Error linking asset to prediction:', linkError);
+        return { success: false, error: 'Failed to link asset to prediction.', assetId: undefined };
+      }
+
+      return { success: true, assetId: result.assetId, error: undefined };
     }
 
-    return { success: true, assetId: result.assetId };
+    return result;
+  } catch (error: any) {
+    console.error('TTS feature flag check failed:', error.message);
+    return { success: false, error: error.message, assetId: undefined };
   }
-
-  return result;
 }
 
 export async function saveTtsHistory(
   // Define input type properly based on usecase implementation
   input: any 
 ) {
-  return saveTtsHistoryUsecase(input);
+  try {
+    await checkTtsFeatureFlag();
+    return await saveTtsHistoryUsecase(input);
+  } catch (error: any) {
+    console.error('TTS feature flag check failed:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function getTtsHistory(params?: GetTtsHistoryActionParams) {
   // Pass the received params directly to the usecase function, including searchQuery
-  return getTtsHistoryUsecase(params);
+  try {
+    await checkTtsFeatureFlag();
+    return await getTtsHistoryUsecase(params);
+  } catch (error: any) {
+    console.error('TTS feature flag check failed:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 // New Server Action to mark a TTS URL as problematic
@@ -82,6 +113,7 @@ export async function markTtsUrlProblematic(
   errorMessage?: string | null // Optional error message
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await checkTtsFeatureFlag();
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

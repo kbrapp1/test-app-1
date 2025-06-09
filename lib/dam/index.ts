@@ -64,6 +64,12 @@ export {
   apiDeduplicationService 
 } from './application/services/ApiDeduplicationService';
 
+// Export feature flag services
+export { 
+  checkDamFeatureFlag,
+  isDamFeatureEnabled 
+} from './application/services/DamFeatureFlagService';
+
 // Export repository interfaces (types only)
 export type { IAssetRepository } from './domain/repositories/IAssetRepository';
 export type { IFolderRepository } from './domain/repositories/IFolderRepository';

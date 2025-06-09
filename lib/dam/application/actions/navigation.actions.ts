@@ -19,6 +19,7 @@ import { SupabaseFolderRepository } from '../../infrastructure/persistence/supab
 import { NotFoundError } from '@/lib/errors/base';
 import type { PlainFolder } from '../../types/dam.types';
 import { apiDeduplicationService } from '../services/ApiDeduplicationService';
+import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
  * Server action to get root folders for sidebar
@@ -32,6 +33,8 @@ export async function getRootFolders(): Promise<PlainFolder[]> {
     async () => {
       
       try {
+        await checkDamFeatureFlag();
+        
         const supabase = createServerClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -90,6 +93,8 @@ export async function getFolderNavigation(folderId: string | null): Promise<{
     async () => {
       
       try {
+        await checkDamFeatureFlag();
+        
         const supabase = createServerClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
