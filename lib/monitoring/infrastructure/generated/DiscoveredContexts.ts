@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-09T14:23:06.845Z
+// Generated: 2025-06-10T02:41:22.623Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -253,6 +253,43 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "cacheableEndpoints": []
   },
   {
+    "domain": "tts",
+    "components": [
+      "SaveAsDialog",
+      "tts-interface",
+      "TtsHistoryItem",
+      "TtsHistoryItemActions",
+      "TtsHistoryItemErrorDisplay",
+      "TtsHistoryItemInfo",
+      "TtsHistoryList",
+      "TtsHistoryPanel",
+      "TtsHistoryPanelHeader",
+      "TtsHistoryPanelSearch",
+      "TtsInputCard",
+      "TtsOutputCard",
+      "TtsPageClient",
+      "VoiceSelector"
+    ],
+    "files": [
+      "lib/tts/presentation/components/",
+      "lib/tts/presentation/hooks/",
+      "lib/tts/application/actions/",
+      "lib/tts/application/services/",
+      "lib/tts/domain/entities/"
+    ],
+    "queryKeys": [
+      "ttsPredictionDbId"
+    ],
+    "endpoints": [],
+    "optimizationTargets": [
+      "Modal lazy loading",
+      "Card component memoization",
+      "List rendering optimization",
+      "Search debouncing optimization"
+    ],
+    "cacheableEndpoints": []
+  },
+  {
     "domain": "auth",
     "components": [
       "login-form",
@@ -421,48 +458,6 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "Card component memoization",
       "List rendering optimization",
       "Upload page optimization"
-    ],
-    "cacheableEndpoints": []
-  },
-  {
-    "domain": "tts",
-    "components": [
-      "SaveAsDialog",
-      "tts-interface",
-      "TtsHistoryItem",
-      "TtsHistoryItemActions",
-      "TtsHistoryItemErrorDisplay",
-      "TtsHistoryItemInfo",
-      "TtsHistoryList",
-      "TtsHistoryPanel",
-      "TtsHistoryPanelHeader",
-      "TtsHistoryPanelSearch",
-      "TtsInputCard",
-      "TtsOutputCard",
-      "VoiceSelector"
-    ],
-    "files": [
-      "components/tts/"
-    ],
-    "queryKeys": [
-      "TtsPrediction",
-      "TtsHistoryItem",
-      "tts-history-item-reload",
-      "tts-history-item-play",
-      "tts-history-item-save",
-      "tts-history-item-save-as",
-      "tts-history-item-delete",
-      "TtsHistoryPanel",
-      "TtsInputCard",
-      "TtsOutputCard",
-      "command-list"
-    ],
-    "endpoints": [],
-    "optimizationTargets": [
-      "Modal lazy loading",
-      "Card component memoization",
-      "List rendering optimization",
-      "Search debouncing optimization"
     ],
     "cacheableEndpoints": []
   },

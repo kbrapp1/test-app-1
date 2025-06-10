@@ -1,14 +1,6 @@
 // TTS-specific TypeScript types
-
-/**
- * Represents an available TTS voice.
- */
-export interface TtsVoice {
-  id: string;
-  name: string;
-  gender: 'Female' | 'Male' | 'Other';
-  accent: 'American' | 'British' | 'Other';
-}
+// Re-export from domain for backward compatibility
+export type { TtsVoice, VoiceGender, VoiceAccent } from '@/lib/tts/domain';
 
 /**
  * Represents a TTS history entry for display.
