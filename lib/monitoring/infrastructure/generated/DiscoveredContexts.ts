@@ -1,10 +1,38 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-10T02:41:22.623Z
+// Generated: 2025-06-11T03:06:30.126Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
 
 export const DISCOVERED_CONTEXTS: PageContext[] = [
+  {
+    "domain": "chatbot-widget",
+    "components": [
+      "BotConfigurationSection",
+      "ChatSimulator",
+      "KnowledgeBaseSection",
+      "LeadSettingsSection",
+      "TestScenarios"
+    ],
+    "files": [
+      "lib/chatbot-widget/presentation/components/",
+      "lib/chatbot-widget/application/services/",
+      "lib/chatbot-widget/domain/entities/",
+      "app/(protected)/ai-playground/chatbot-widget/analytics/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/config/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/knowledge/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/layout.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/leads/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/testing/page.tsx"
+    ],
+    "queryKeys": [],
+    "endpoints": [],
+    "optimizationTargets": [
+      "Layout component optimization"
+    ],
+    "cacheableEndpoints": []
+  },
   {
     "domain": "dam",
     "components": [

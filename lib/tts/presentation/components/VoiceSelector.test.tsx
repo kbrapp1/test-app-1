@@ -3,12 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, Mock, MockedFunction } from 'vitest';
 import { VoiceSelector } from './VoiceSelector';
 import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
-import { getTtsVoices } from '../../application/actions/tts';
+import { getTtsVoices } from '../actions/tts';
 import { type TtsVoice } from '../../domain';
 import { useForm, FormProvider } from 'react-hook-form';
 
 // Mock the getTtsVoices server action
-vi.mock('../../application/actions/tts', () => ({
+vi.mock('../actions/tts', () => ({
   getTtsVoices: vi.fn(),
 }));
 

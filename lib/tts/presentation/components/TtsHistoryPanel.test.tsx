@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { TtsHistoryPanel, TtsHistoryPanelProps } from './TtsHistoryPanel';
 import { createMockTtsPredictionDisplayDto, createMockTtsPredictionDisplayDtos } from './__tests__/dtoTestUtils';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
-import * as ttsActions from '../../application/actions/tts';
+import * as ttsActions from '../actions/tts';
 
-vi.mock('../../application/actions/tts', () => ({
+vi.mock('../actions/tts', () => ({
   getTtsHistory: vi.fn(),
   markTtsUrlProblematic: vi.fn(),
 }));

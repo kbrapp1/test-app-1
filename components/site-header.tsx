@@ -46,6 +46,7 @@ export function SiteHeader() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const isDamPage = pathname.startsWith('/dam');
   const isImageGeneratorPage = pathname === '/ai-playground/image-generator';
+  const isChatbotWidgetPage = pathname.startsWith('/ai-playground/chatbot-widget');
 
   useEffect(() => {
     if (isDamPage) {
@@ -81,6 +82,13 @@ export function SiteHeader() {
           </>
         )}
 
+        {isChatbotWidgetPage && (
+          <>
+            <h1 className="text-lg font-semibold text-gray-900">Chatbot Widget</h1>
+            <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+          </>
+        )}
+
         {isDamPage && (
           <div className="max-w-2xl flex-grow">
             <DamSearchBar 
@@ -93,7 +101,7 @@ export function SiteHeader() {
           </div>
         )}
 
-        <div className={`ml-auto flex items-center gap-2 ${!isDamPage && !isImageGeneratorPage ? 'flex-grow justify-end' : ''}`}>
+        <div className={`ml-auto flex items-center gap-2 ${!isDamPage && !isImageGeneratorPage && !isChatbotWidgetPage ? 'flex-grow justify-end' : ''}`}>
           {isDamPage && (
             <>
               <ToggleGroup 

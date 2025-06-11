@@ -1,7 +1,22 @@
 import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { startSpeechGeneration, getSpeechGenerationResult } from '../../application/actions/tts';
-import { PredictionStatus } from '../../domain';
+import { startSpeechGeneration, getSpeechGenerationResult } from '../actions/tts';
+
+// String-based status utility functions (replacing domain object usage)
+const isStatusFinal = (status: string): boolean => {
+  return status === 'completed' || 
+         status === 'succeeded' || 
+         status === 'failed' || 
+         status === 'canceled';
+};
+
+const isStatusSuccessful = (status: string): boolean => {
+  return status === 'completed' || status === 'succeeded';
+};
+
+const isStatusFailure = (status: string): boolean => {
+  return status === 'failed' || status === 'canceled';
+};
 
 interface UseTtsGenerationOptions {
   onGenerationComplete?: () => void;
@@ -36,16 +51,9 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     if (!ttsPredictionDbId) {
       return;
     }
-    // Use PredictionStatus domain logic for final state check
-    if (predictionStatus) {
-      try {
-        const statusVO = new PredictionStatus(predictionStatus);
-        if (statusVO.isFinal) {
-          return;
-        }
-      } catch {
-        // Invalid status, continue with polling
-      }
+    // Use string-based status check for final state
+    if (predictionStatus && isStatusFinal(predictionStatus)) {
+      return;
     }
 
     setIsPollingLoading(true);
@@ -61,57 +69,37 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
       try {
         const result = await getSpeechGenerationResult(ttsPredictionDbId); 
 
-        // Use PredictionStatus domain logic for failure detection
+        // Use string-based status checks for failure detection
+        const resultStatus = 'status' in result ? result.status || 'failed' : 'failed';
         const isFailure = (!result.success && result.error) || 
-          ('status' in result && result.status && (() => {
-            try {
-              const statusVO = new PredictionStatus(result.status);
-              return !statusVO.isSuccessful && statusVO.isFinal;
-            } catch {
-              return result.status === 'failed' || result.status === 'canceled';
-            }
-          })());
+          ('status' in result && result.status && (
+            !isStatusSuccessful(resultStatus) && isStatusFinal(resultStatus)
+          ));
           
         if (isFailure) {
-          setTtsErrorMessage(result.error || `Prediction status: ${'status' in result ? result.status || 'failed' : 'failed'}`);
+          setTtsErrorMessage(result.error || `Prediction status: ${resultStatus}`);
           setCurrentPredictionId(null); 
           setIsPollingLoading(false);
-          setPredictionStatus('status' in result ? result.status || 'failed' : 'failed'); // Ensure status reflects the failure
+          setPredictionStatus(resultStatus); // Ensure status reflects the failure
           clearInterval(intervalId); 
           return;
         }
 
-        const currentStatus = 'status' in result ? result.status || 'failed' : 'failed';
+        const currentStatus = resultStatus;
         setPredictionStatus(currentStatus);
 
-        // Use PredictionStatus domain logic for success check
-        try {
-          const statusVO = new PredictionStatus(currentStatus);
-          if (statusVO.isSuccessful) {
-            setAudioUrl('audioUrl' in result ? result.audioUrl ?? null : null);
-            setCurrentPredictionId(null); 
-            setIsPollingLoading(false);
-            toast({ title: 'Speech generated successfully!' });
-            if (onGenerationComplete) {
-              onGenerationComplete();
-            }
-            clearInterval(intervalId); 
-          } else {
-            // For any other status (like 'processing', 'starting') that isn't a hard error, just log and continue.
+        // Use string-based status check for success
+        if (isStatusSuccessful(currentStatus)) {
+          setAudioUrl('audioUrl' in result ? result.audioUrl ?? null : null);
+          setCurrentPredictionId(null); 
+          setIsPollingLoading(false);
+          toast({ title: 'Speech generated successfully!' });
+          if (onGenerationComplete) {
+            onGenerationComplete();
           }
-        } catch {
-          // Fallback for invalid status
-          if (currentStatus === 'succeeded') {
-            setAudioUrl('audioUrl' in result ? result.audioUrl ?? null : null);
-            setCurrentPredictionId(null); 
-            setIsPollingLoading(false);
-            toast({ title: 'Speech generated successfully!' });
-            if (onGenerationComplete) {
-              onGenerationComplete();
-            }
-            clearInterval(intervalId); 
-          }
+          clearInterval(intervalId); 
         }
+        // For any other status (like 'processing', 'starting') that isn't a hard error, just continue polling.
       } catch (error: any) {
         setTtsErrorMessage(error.message || 'An error occurred during polling.');
         setCurrentPredictionId(null); 

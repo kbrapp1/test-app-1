@@ -151,7 +151,7 @@ export const navMainItems: NavItem[] = [
         items: [
             { title: "Image Generator", url: "/ai-playground/image-generator", icon: CameraIcon },
             { title: "Text to Speech", url: "/ai-playground/text-to-speech", icon: Volume2Icon, featureFlag: 'tts' },
-            { title: "Chatbot", url: "/ai-playground/chatbot", icon: MessageCircleIcon },
+            { title: "Chatbot Widget", url: "/ai-playground/chatbot-widget", icon: MessageCircleIcon },
         ],
     },
     {

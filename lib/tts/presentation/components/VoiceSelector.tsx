@@ -13,7 +13,7 @@ import {
 import { FormControl } from '@/components/ui/form'; // Import FormControl
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { getTtsVoices } from '../../application/actions/tts';
+import { getTtsVoices } from '../actions/tts';
 import { z } from 'zod';
 import { REPLICATE_MODELS } from '../../infrastructure/providers/ttsProviderConfig'; // <-- Import REPLICATE_MODELS
 import { Input } from "@/components/ui/input"; // Import Input for the search field

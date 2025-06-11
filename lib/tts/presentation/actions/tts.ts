@@ -1,7 +1,7 @@
 'use server';
 
-import { TtsApplicationService } from '../services/TtsApplicationService';
-import { GetTtsHistoryResponseDto } from '../dto/TtsPredictionDto';
+import { TtsCompositionRoot } from '../../infrastructure/composition/TtsCompositionRoot';
+import { GetTtsHistoryResponseDto } from '../../application/dto/TtsPredictionDto';
 
 // Valid sort fields for TTS predictions
 type TtsPredictionSortField = 'createdAt' | 'updatedAt' | 'inputText' | 'status' | 'voiceId';
@@ -14,19 +14,18 @@ interface GetTtsHistoryActionParams {
   searchQuery?: string;
 }
 
-// Initialize application service
-const ttsAppService = new TtsApplicationService();
-
-// Clean server actions that delegate to application service
 export async function getTtsVoices(provider?: string, modelId?: string) {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.getVoices(provider, modelId);
 }
 
 export async function startSpeechGeneration(inputText: string, voiceId: string, provider: string) {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.startSpeechGeneration(inputText, voiceId, provider);
 }
 
 export async function getSpeechGenerationResult(ttsPredictionDbId: string) {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.getSpeechGenerationResult(ttsPredictionDbId);
 }
 
@@ -36,14 +35,17 @@ export async function saveTtsAudioToDam(
   ttsPredictionId: string,
   linkToPrediction: boolean = true
 ) {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.saveTtsAudioToDam(audioUrl, desiredAssetName, ttsPredictionId, linkToPrediction);
 }
 
 export async function saveTtsHistory(input: any) {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.saveTtsHistory(input);
 }
 
 export async function getTtsHistory(params?: GetTtsHistoryActionParams): Promise<GetTtsHistoryResponseDto> {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.getTtsHistory(params);
 }
 
@@ -51,5 +53,6 @@ export async function markTtsUrlProblematic(
   ttsPredictionId: string, 
   errorMessage?: string | null
 ): Promise<{ success: boolean; error?: string }> {
+  const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
   return ttsAppService.markTtsUrlProblematic(ttsPredictionId, errorMessage);
-}
+} 

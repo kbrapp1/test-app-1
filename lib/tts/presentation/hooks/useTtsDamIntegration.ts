@@ -4,17 +4,16 @@ import {
   AssetManagementContract,
   AssetReference 
 } from '../../application/contracts/AssetManagementContract';
-import { DamAssetManagementAdapter } from '../../infrastructure/adapters/DamAssetManagementAdapter';
 
 interface UseTtsDamIntegrationProps {
   onTextLoaded?: (text: string, assetId: string) => void; // Callback after text is loaded
-  assetManagement?: AssetManagementContract; // Allow dependency injection for testing
+  assetManagement: AssetManagementContract; // Required dependency injection
 }
 
 export function useTtsDamIntegration({ 
   onTextLoaded, 
-  assetManagement = new DamAssetManagementAdapter() 
-}: UseTtsDamIntegrationProps = {}) {
+  assetManagement
+}: UseTtsDamIntegrationProps) {
   const { toast } = useToast();
   const [isDamModalOpen, setIsDamModalOpen] = useState(false);
   const [isLoadingText, setIsLoadingText] = useState(false);
@@ -122,15 +121,15 @@ export function useTtsDamIntegration({
     const assetName = `Generated Speech - ${new Date().toISOString().split('T')[0]}.mp3`; // Example name
 
     try {
-      const result = await assetManagement.saveAudioAsset({
-        audioUrl: audioFileUrl,
-        desiredName: assetName,
-        contentType: 'audio/mpeg',
-        metadata: {
-          sourceType: 'tts_generation',
-          ttsPredictionId: ttsPredictId,
-        }
-      });
+      // Call TTS server action directly - proper DDD approach
+      const { saveTtsAudioToDam } = await import('../actions/tts');
+      
+      const result = await saveTtsAudioToDam(
+        audioFileUrl,
+        assetName,
+        ttsPredictId,
+        true // linkToPrediction
+      );
       
       if (result.success && result.assetId) {
         setOutputAssetId(result.assetId);
@@ -147,7 +146,7 @@ export function useTtsDamIntegration({
     } finally {
       setIsSavingToDam(false);
     }
-  }, [outputAssetId, toast, assetManagement]);
+  }, [outputAssetId, toast]);
 
   // --- Download URL --- 
   const getDownloadUrl = useCallback(async (fallbackUrl: string | null): Promise<{ url: string | null, filename: string }> => {

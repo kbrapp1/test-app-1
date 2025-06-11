@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getTtsHistory, markTtsUrlProblematic } from '../../application/actions/tts';
+import { getTtsHistory, markTtsUrlProblematic } from '../actions/tts';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
 
 const ITEMS_PER_PAGE = 10;

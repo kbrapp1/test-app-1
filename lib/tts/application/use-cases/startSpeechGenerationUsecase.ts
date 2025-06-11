@@ -1,8 +1,6 @@
 import { StartSpeechSchema, type StartSpeechInput } from '../schemas/ttsSchemas';
-import { createReplicatePrediction, createElevenLabsSpeech, uploadAudioBuffer } from '../../infrastructure/providers/ttsService';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { ttsProvidersConfig } from '../../infrastructure/providers/ttsProviderConfig';
 import { TextInput } from '../../domain/value-objects/TextInput';
 import { VoiceId } from '../../domain/value-objects/VoiceId';
 import { PredictionStatus } from '../../domain/value-objects/PredictionStatus';
@@ -10,15 +8,17 @@ import { TtsPrediction } from '../../domain/entities/TtsPrediction';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsValidationService } from '../../domain/services/TtsValidationService';
 import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
+import { TtsGenerationService } from '../services/TtsGenerationService';
 
 /**
  * Usecase: Validates input, initiates speech generation via the specified provider, and saves initial prediction to DB.
- * Now using DDD patterns with repository and domain services.
+ * Now using DDD patterns with repository and domain services, plus dependency injection for TTS generation.
  */
 export async function startSpeechGeneration(
   inputText: string, 
   voiceId: string, 
-  provider: string
+  provider: string,
+  ttsGenerationService: TtsGenerationService
 ): Promise<{ success: boolean; predictionId?: string; ttsPredictionDbId?: string; error?: string; }> {
   
   try {
@@ -48,7 +48,7 @@ export async function startSpeechGeneration(
       return { success: false, error: validationResult.errors.join(', ') };
     }
 
-    const providerConfig = ttsProvidersConfig[provider];
+    const providerConfig = ttsGenerationService.getProviderConfig(provider);
     if (!providerConfig) {
       return { success: false, error: `Provider '${provider}' is not supported or configured.` };
     }
@@ -58,36 +58,17 @@ export async function startSpeechGeneration(
     const voiceIdVO = new VoiceId(voiceId);
     const ttsInput: StartSpeechInput = { inputText: textInputVO.forTts, voiceId: voiceIdVO.value };
 
-    // Determine which service to use and create prediction
-    let predictionId: string;
-    let outputUrl: string | null = null;
-    let outputStoragePath: string | null = null;
-    let outputContentType: string | null = null;
-    let outputFileSize: number | null = null;
-
-    // Invoke the appropriate TTS service
-    if (provider === 'replicate') {
-      const replicateModelId = providerConfig.defaultModel!;
-      const prediction = await createReplicatePrediction(ttsInput, replicateModelId);
-      predictionId = prediction.predictionId;
-      outputUrl = null;
-    } else if (provider === 'elevenlabs') {
-      // ElevenLabs returns raw audio buffer synchronously
-      const result = await createElevenLabsSpeech(ttsInput);
-      // Upload buffer to DAM and get public URL
-      const uploadResult = await uploadAudioBuffer(result.audioBuffer, organizationId, user.id);
-      outputUrl = uploadResult.publicUrl;
-      outputStoragePath = uploadResult.storagePath;
-      outputContentType = uploadResult.contentType;
-      outputFileSize = uploadResult.blobSize;
-      predictionId = crypto.randomUUID();
-    } else {
-      return { success: false, error: `Provider '${provider}' is not currently supported for speech generation.` };
-    }
+    // Generate speech using the injected service
+    const generationResult = await ttsGenerationService.generateSpeech(
+      ttsInput,
+      provider,
+      organizationId,
+      user.id
+    );
 
     // Create domain entity using domain service
     const savedPrediction = await predictionService.createPrediction({
-      externalProviderId: predictionId,
+      externalProviderId: generationResult.predictionId,
       textInput: textInputVO,
       voiceId: voiceIdVO,
       userId: user.id,
@@ -95,18 +76,18 @@ export async function startSpeechGeneration(
       provider: provider,
     });
 
-    // For ElevenLabs, update with additional output info
-    if (provider === 'elevenlabs' && outputUrl) {
-      const completedPrediction = await predictionService.completePrediction(savedPrediction.id, outputUrl, {
-        outputStoragePath: outputStoragePath || undefined,
-        outputContentType: outputContentType || undefined,
-        outputFileSize: outputFileSize || undefined
+    // For providers that return immediate results (like ElevenLabs), update with output info
+    if (generationResult.outputUrl) {
+      const completedPrediction = await predictionService.completePrediction(savedPrediction.id, generationResult.outputUrl, {
+        outputStoragePath: generationResult.outputStoragePath,
+        outputContentType: generationResult.outputContentType,
+        outputFileSize: generationResult.outputFileSize
       });
     }
 
     return { 
       success: true, 
-      predictionId: predictionId, 
+      predictionId: generationResult.predictionId, 
       ttsPredictionDbId: savedPrediction.id 
     };
   } catch (error: any) {

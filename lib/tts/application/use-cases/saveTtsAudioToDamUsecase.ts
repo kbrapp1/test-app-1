@@ -1,8 +1,8 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
-import { downloadAndUploadAudio } from '../../infrastructure/providers/ttsService';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
+import { TtsGenerationService } from '../services/TtsGenerationService';
 // import { cleanupStorageFile } from '@/lib/services/ttsService'; // For TODO
 
 /**
@@ -10,12 +10,13 @@ import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistenc
  * This involves downloading from the audio URL (for external providers) or using existing
  * storage details (for providers like ElevenLabs), uploading to Supabase Storage if necessary,
  * and creating an asset record in the database.
- * Now using repository pattern for proper DDD compliance.
+ * Now using repository pattern and dependency injection for proper DDD compliance.
  */
 export async function saveTtsAudioToDam(
   audioUrl: string, // For Replicate, this is external. For ElevenLabs, this is the publicUrl from our storage.
   desiredAssetName: string,
-  ttsPredictionId: string
+  ttsPredictionId: string,
+  ttsGenerationService: TtsGenerationService
 ): Promise<{ success: boolean; assetId?: string; error?: string }> {
   try {
     const supabase = createSupabaseServerClient();
@@ -50,7 +51,7 @@ export async function saveTtsAudioToDam(
       contentTypeValue = ttsPrediction.outputContentType;
       blobSizeValue = ttsPrediction.outputFileSize;
     } else {
-      const uploadResult = await downloadAndUploadAudio(audioUrl, organizationId, userId);
+      const uploadResult = await ttsGenerationService.downloadAndUploadAudio(audioUrl, organizationId, userId);
       storagePathValue = uploadResult.storagePath;
       contentTypeValue = uploadResult.contentType;
       blobSizeValue = uploadResult.blobSize;

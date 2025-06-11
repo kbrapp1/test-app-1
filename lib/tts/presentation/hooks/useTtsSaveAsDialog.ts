@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { TtsHistoryItem } from '../types/TtsPresentation';
-import { saveTtsAudioToDam } from '../../application/actions/tts';
+import { saveTtsAudioToDam } from '../actions/tts';
 
 interface UseTtsSaveAsDialogProps {
   onSaveComplete: () => void; // Callback to trigger refresh or other actions

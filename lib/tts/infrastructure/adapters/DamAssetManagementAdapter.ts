@@ -19,6 +19,10 @@ import { getAssetDownloadUrl } from '@/lib/dam';
 
 /**
  * DAM implementation of asset management contract
+ * 
+ * Note: Audio saving is intentionally NOT implemented here to avoid
+ * DDD violations. Audio saving should be handled by application layer
+ * server actions that coordinate between TTS and DAM domains.
  */
 export class DamAssetManagementAdapter implements AssetManagementContract {
 
@@ -102,39 +106,18 @@ export class DamAssetManagementAdapter implements AssetManagementContract {
   }
 
   /**
-   * Save audio file as a new DAM asset
+   * Audio saving is intentionally not implemented in this adapter.
    * 
-   * Note: This delegates to the existing TTS save audio use case
-   * to maintain consistency with current implementation
+   * Rationale: This would violate DDD by creating circular dependencies
+   * between infrastructure and application layers. Audio saving involves
+   * coordination between TTS and DAM domains, which belongs in the
+   * application layer through server actions.
    */
   async saveAudioAsset(request: AudioAssetSaveRequest): Promise<AssetSaveResult> {
-    try {
-      // Import the use case here to avoid circular dependencies
-      const { saveTtsAudioToDam } = await import('../../application/use-cases/saveTtsAudioToDamUsecase');
-      
-      const result = await saveTtsAudioToDam(
-        request.audioUrl,
-        request.desiredName,
-        request.metadata?.ttsPredictionId || ''
-      );
-      
-      if (result.success && result.assetId) {
-        return {
-          success: true,
-          assetId: result.assetId
-        };
-      }
-      
-      return {
-        success: false,
-        error: result.error || 'Failed to save audio asset'
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error saving audio'
-      };
-    }
+    return {
+      success: false,
+      error: 'Audio saving not implemented in DAM adapter. Use TTS server actions instead.'
+    };
   }
 
   /**

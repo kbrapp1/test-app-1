@@ -16,6 +16,7 @@ const settingsNavItems: Array<{ title: string; href: string; superAdminOnly?: bo
   { title: 'Password', href: '/settings/password' },
   { title: 'Email', href: '/settings/email' },
   { title: 'Security', href: '/settings/security' },
+  { title: 'Chatbot Widget', href: '/settings/chatbot-widget' },
   { title: 'Danger Zone', href: '/settings/danger' },
   // Add more items here later (e.g., Email, 2FA, Delete)
 ];

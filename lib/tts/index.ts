@@ -5,7 +5,7 @@
 export * from './domain';
 
 // Re-export server actions
-export * from './application/actions/tts';
+export * from './presentation/actions/tts';
 
 // Re-export components for external use
 export { TtsInterface, type TtsFormInitializationData } from './presentation/components/tts-interface';

@@ -5,17 +5,19 @@
  * and manages DTO transformations. This follows DDD patterns by keeping
  * business logic orchestration separate from server actions.
  */
-import { checkTtsFeatureFlag } from '@/lib/actions/services/TtsFeatureFlagService';
 import { getTtsVoices as getTtsVoicesUsecase } from '../use-cases/getTtsVoicesUsecase';
 import { startSpeechGeneration as startSpeechGenerationUsecase } from '../use-cases/startSpeechGenerationUsecase';
 import { getSpeechGenerationResult as getSpeechGenerationResultUsecase } from '../use-cases/getSpeechGenerationResultUsecase';
 import { saveTtsAudioToDam as saveTtsAudioToDamUsecase } from '../use-cases/saveTtsAudioToDamUsecase';
 import { saveTtsHistory as saveTtsHistoryUsecase } from '../use-cases/saveTtsHistoryUsecase';
 import { getTtsHistory as getTtsHistoryUsecase } from '../use-cases/getTtsHistoryUsecase';
-import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
 import { TtsPredictionToDisplayDtoMapper } from '../mappers/TtsPredictionToDisplayDtoMapper';
 import { GetTtsHistoryResponseDto, TtsPredictionDisplayDto } from '../dto/TtsPredictionDto';
+import { TtsGenerationService } from './TtsGenerationService';
+import { ITtsFeatureFlagService } from '../../domain/services/ITtsFeatureFlagService';
+// Domain interfaces only - no concrete infrastructure imports
+import { TtsPredictionRepository } from '../../domain/repositories/TtsPredictionRepository';
 
 // Types
 type TtsPredictionSortField = 'createdAt' | 'updatedAt' | 'inputText' | 'status' | 'voiceId';
@@ -57,15 +59,19 @@ interface MarkProblematicResult {
 /**
  * Application service for TTS operations
  * Handles orchestration, feature flag checking, and DTO mapping
+ * 
+ * Uses dependency injection to maintain DDD compliance
  */
 export class TtsApplicationService {
-  private readonly repository: TtsPredictionSupabaseRepository;
-  private readonly predictionService: TtsPredictionService;
   private readonly dtoMapper: TtsPredictionToDisplayDtoMapper;
 
-  constructor() {
-    this.repository = new TtsPredictionSupabaseRepository();
-    this.predictionService = new TtsPredictionService(this.repository);
+  constructor(
+    private readonly repository: TtsPredictionRepository,
+    private readonly ttsGenerationService: TtsGenerationService,
+    private readonly predictionService: TtsPredictionService,
+    private readonly featureFlagService: ITtsFeatureFlagService
+  ) {
+    // ✅ DDD COMPLIANT - All dependencies injected via constructor
     this.dtoMapper = new TtsPredictionToDisplayDtoMapper();
   }
 
@@ -74,7 +80,7 @@ export class TtsApplicationService {
    */
   async getVoices(provider?: string, modelId?: string): Promise<any> {
     try {
-      await this.checkFeatureFlag();
+      await this.featureFlagService.checkTtsFeatureFlag();
       return getTtsVoicesUsecase(provider, modelId);
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -90,8 +96,8 @@ export class TtsApplicationService {
     provider: string
   ): Promise<StartSpeechGenerationResult> {
     try {
-      await this.checkFeatureFlag();
-      return await startSpeechGenerationUsecase(inputText, voiceId, provider);
+      await this.featureFlagService.checkTtsFeatureFlag();
+      return await startSpeechGenerationUsecase(inputText, voiceId, provider, this.ttsGenerationService);
     } catch (error: any) {
       return { success: false, error: error.message };
     }
@@ -102,7 +108,7 @@ export class TtsApplicationService {
    */
   async getSpeechGenerationResult(ttsPredictionDbId: string): Promise<SpeechGenerationResult> {
     try {
-      await this.checkFeatureFlag();
+      await this.featureFlagService.checkTtsFeatureFlag();
       return await getSpeechGenerationResultUsecase(ttsPredictionDbId);
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -119,8 +125,8 @@ export class TtsApplicationService {
     linkToPrediction: boolean = true
   ): Promise<SaveToDamResult> {
     try {
-      await this.checkFeatureFlag();
-      const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId);
+      await this.featureFlagService.checkTtsFeatureFlag();
+      const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId, this.ttsGenerationService);
 
       if (result.success && result.assetId && linkToPrediction) {
         try {
@@ -146,7 +152,7 @@ export class TtsApplicationService {
    */
   async saveTtsHistory(input: any): Promise<any> {
     try {
-      await this.checkFeatureFlag();
+      await this.featureFlagService.checkTtsFeatureFlag();
       return await saveTtsHistoryUsecase(input);
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -158,7 +164,7 @@ export class TtsApplicationService {
    */
   async getTtsHistory(params?: GetTtsHistoryParams): Promise<GetTtsHistoryResponseDto> {
     try {
-      await this.checkFeatureFlag();
+      await this.featureFlagService.checkTtsFeatureFlag();
       const result = await getTtsHistoryUsecase(params);
       
       if (!result.success) {
@@ -188,7 +194,7 @@ export class TtsApplicationService {
     errorMessage?: string | null
   ): Promise<MarkProblematicResult> {
     try {
-      await this.checkFeatureFlag();
+      await this.featureFlagService.checkTtsFeatureFlag();
       await this.predictionService.markUrlProblematic(
         ttsPredictionId, 
         errorMessage || 'URL marked as problematic'
@@ -197,12 +203,5 @@ export class TtsApplicationService {
     } catch (error: any) {
       return { success: false, error: error.message };
     }
-  }
-
-  /**
-   * Private helper for feature flag checking
-   */
-  private async checkFeatureFlag(): Promise<void> {
-    await checkTtsFeatureFlag();
   }
 } 

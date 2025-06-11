@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import { AssetSelectorModal } from '@/lib/dam/presentation/components/dialogs';
-import { Asset } from '@/lib/dam/domain/entities/Asset';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTtsGeneration } from '../hooks/useTtsGeneration';
 import { useTtsDamIntegration } from '../hooks/useTtsDamIntegration';
+import { DamAssetManagementAdapter } from '../../infrastructure/adapters/DamAssetManagementAdapter';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';
 import { Loader2 } from "lucide-react";
@@ -100,7 +100,8 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
       onTextLoaded: (text, assetId) => {
         form.setValue('inputText', text, { shouldValidate: true });
         resetTtsState();
-      }
+      },
+      assetManagement: new DamAssetManagementAdapter()
   });
 
   const activeAudioUrl = generatedAudioUrl || null;
@@ -212,21 +213,15 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
           open={isDamModalOpen}
           onOpenChange={setIsDamModalOpen}
           onAssetSelect={(assetSummary) => {
-            // Convert TextAssetSummaryDto to domain Asset for loadTextFromAsset
-            const domainAsset = new Asset({
+            // Convert to AssetReference for loadTextFromAsset
+            const assetReference = {
               id: assetSummary.id,
               name: assetSummary.name,
-              userId: assetSummary.userId,
-              storagePath: assetSummary.storagePath,
-              mimeType: assetSummary.mimeType,
+              contentType: assetSummary.mimeType,
               size: assetSummary.size,
-              createdAt: assetSummary.createdAt,
-              updatedAt: assetSummary.updatedAt,
-              folderId: assetSummary.folderId,
-              organizationId: assetSummary.organizationId,
-              publicUrl: assetSummary.publicUrl,
-            });
-            loadTextFromAsset(domainAsset);
+              url: assetSummary.publicUrl
+            };
+            loadTextFromAsset(assetReference);
           }}
         />
       </div>
