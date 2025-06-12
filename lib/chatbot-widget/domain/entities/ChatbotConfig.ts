@@ -8,6 +8,7 @@ export interface ChatbotConfigProps {
   knowledgeBase: KnowledgeBase;
   operatingHours: OperatingHours;
   leadQualificationQuestions: LeadQualificationQuestion[];
+  aiConfiguration: AIConfiguration;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,27 @@ export interface PersonalitySettings {
   communicationStyle: 'direct' | 'conversational' | 'helpful' | 'sales-focused';
   responseLength: 'brief' | 'detailed' | 'adaptive';
   escalationTriggers: string[];
+  responseBehavior: ResponseBehavior;
+  conversationFlow: ConversationFlow;
+  customInstructions: string;
+}
+
+export interface ResponseBehavior {
+  useEmojis: boolean;
+  askFollowUpQuestions: boolean;
+  proactiveOffering: boolean;
+  personalizeResponses: boolean;
+  acknowledgePreviousInteractions: boolean;
+}
+
+export interface ConversationFlow {
+  greetingMessage: string;
+  fallbackMessage: string;
+  escalationMessage: string;
+  endConversationMessage: string;
+  leadCapturePrompt: string;
+  maxConversationTurns: number;
+  inactivityTimeout: number;
 }
 
 export interface KnowledgeBase {
@@ -66,15 +88,58 @@ export interface LeadQualificationQuestion {
   scoringWeight: number;
 }
 
+export interface AIConfiguration {
+  // OpenAI Configuration
+  openaiModel: 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
+  openaiTemperature: number;
+  openaiMaxTokens: number;
+  
+  // Context Window Configuration
+  contextMaxTokens: number;
+  contextSystemPromptTokens: number;
+  contextResponseReservedTokens: number;
+  contextSummaryTokens: number;
+  
+  // Intent Classification
+  intentConfidenceThreshold: number;
+  intentAmbiguityThreshold: number;
+  enableMultiIntentDetection: boolean;
+  enablePersonaInference: boolean;
+  
+  // Entity Extraction
+  enableAdvancedEntities: boolean;
+  entityExtractionMode: 'basic' | 'comprehensive' | 'custom';
+  customEntityTypes: string[];
+  
+  // Conversation Flow
+  maxConversationTurns: number;
+  inactivityTimeoutSeconds: number;
+  enableJourneyRegression: boolean;
+  enableContextSwitchDetection: boolean;
+  
+  // Lead Scoring
+  enableAdvancedScoring: boolean;
+  entityCompletenessWeight: number;
+  personaConfidenceWeight: number;
+  journeyProgressionWeight: number;
+  
+  // Performance & Monitoring
+  enablePerformanceLogging: boolean;
+  enableIntentAnalytics: boolean;
+  enablePersonaAnalytics: boolean;
+  responseTimeThresholdMs: number;
+}
+
 export class ChatbotConfig {
   private constructor(private readonly props: ChatbotConfigProps) {
     this.validateProps(props);
   }
 
-  static create(props: Omit<ChatbotConfigProps, 'id' | 'createdAt' | 'updatedAt'>): ChatbotConfig {
+  static create(props: Omit<ChatbotConfigProps, 'id' | 'createdAt' | 'updatedAt' | 'aiConfiguration'> & { aiConfiguration?: AIConfiguration }): ChatbotConfig {
     const now = new Date();
     return new ChatbotConfig({
       ...props,
+      aiConfiguration: props.aiConfiguration || this.getDefaultAIConfiguration(),
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
@@ -82,7 +147,12 @@ export class ChatbotConfig {
   }
 
   static fromPersistence(props: ChatbotConfigProps): ChatbotConfig {
-    return new ChatbotConfig(props);
+    // Ensure AI configuration exists for backward compatibility
+    const propsWithAI = {
+      ...props,
+      aiConfiguration: props.aiConfiguration || this.getDefaultAIConfiguration(),
+    };
+    return new ChatbotConfig(propsWithAI);
   }
 
   private validateProps(props: ChatbotConfigProps): void {
@@ -95,9 +165,8 @@ export class ChatbotConfig {
     if (props.name.length > 100) {
       throw new Error('Chatbot name must be 100 characters or less');
     }
-    if (props.leadQualificationQuestions.length === 0) {
-      throw new Error('At least one lead qualification question is required');
-    }
+    // Note: Lead qualification questions are optional during initial config creation
+    // They can be added later through the admin interface
     
     // Validate operating hours
     if (!props.operatingHours.timezone) {
@@ -115,6 +184,7 @@ export class ChatbotConfig {
   get knowledgeBase(): KnowledgeBase { return this.props.knowledgeBase; }
   get operatingHours(): OperatingHours { return this.props.operatingHours; }
   get leadQualificationQuestions(): LeadQualificationQuestion[] { return this.props.leadQualificationQuestions; }
+  get aiConfiguration(): AIConfiguration { return this.props.aiConfiguration; }
   get isActive(): boolean { return this.props.isActive; }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date { return this.props.updatedAt; }
@@ -158,15 +228,64 @@ export class ChatbotConfig {
   removeLeadQualificationQuestion(questionId: string): ChatbotConfig {
     const filteredQuestions = this.props.leadQualificationQuestions.filter(q => q.id !== questionId);
     
-    if (filteredQuestions.length === 0) {
-      throw new Error('Cannot remove all lead qualification questions');
-    }
-    
     return new ChatbotConfig({
       ...this.props,
       leadQualificationQuestions: filteredQuestions,
       updatedAt: new Date(),
     });
+  }
+
+  updateAIConfiguration(aiConfiguration: AIConfiguration): ChatbotConfig {
+    return new ChatbotConfig({
+      ...this.props,
+      aiConfiguration,
+      updatedAt: new Date(),
+    });
+  }
+
+  // Static method to get default AI configuration
+  static getDefaultAIConfiguration(): AIConfiguration {
+    return {
+      // OpenAI Configuration
+      openaiModel: 'gpt-4o-mini', // Default to mini per user preference
+      openaiTemperature: 0.3,
+      openaiMaxTokens: 1000,
+      
+      // Context Window Configuration
+      contextMaxTokens: 12000,
+      contextSystemPromptTokens: 500,
+      contextResponseReservedTokens: 3000,
+      contextSummaryTokens: 200,
+      
+      // Intent Classification
+      intentConfidenceThreshold: 0.7,
+      intentAmbiguityThreshold: 0.2,
+      enableMultiIntentDetection: true,
+      enablePersonaInference: true,
+      
+      // Entity Extraction
+      enableAdvancedEntities: true,
+      entityExtractionMode: 'comprehensive',
+      customEntityTypes: [],
+      
+      // Conversation Flow
+      maxConversationTurns: 20,
+      inactivityTimeoutSeconds: 300,
+      enableJourneyRegression: true,
+      enableContextSwitchDetection: true,
+      
+      // Lead Scoring
+      enableAdvancedScoring: true,
+      entityCompletenessWeight: 0.3,
+      personaConfidenceWeight: 0.2,
+      journeyProgressionWeight: 0.25,
+      
+      // Performance & Monitoring
+      enablePerformanceLogging: true,
+      enableIntentAnalytics: true,
+      enablePersonaAnalytics: true,
+      responseTimeThresholdMs: 2000,
+    };
   }
 
   activate(): ChatbotConfig {

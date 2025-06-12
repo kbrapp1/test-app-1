@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ChatbotConfig, PersonalitySettings, KnowledgeBase, OperatingHours, LeadQualificationQuestion } from '../ChatbotConfig';
+import { ChatbotConfig, PersonalitySettings, KnowledgeBase, OperatingHours, LeadQualificationQuestion, ResponseBehavior, ConversationFlow } from '../ChatbotConfig';
 
 describe('ChatbotConfig', () => {
   let defaultPersonality: PersonalitySettings;
@@ -13,6 +13,23 @@ describe('ChatbotConfig', () => {
       communicationStyle: 'helpful',
       responseLength: 'adaptive',
       escalationTriggers: ['angry', 'frustrated'],
+      responseBehavior: {
+        useEmojis: false,
+        askFollowUpQuestions: true,
+        proactiveOffering: true,
+        personalizeResponses: true,
+        acknowledgePreviousInteractions: true,
+      },
+      conversationFlow: {
+        greetingMessage: 'Hello! How can I help you today?',
+        fallbackMessage: 'I\'m not sure about that. Could you rephrase your question?',
+        escalationMessage: 'Let me connect you with a team member.',
+        endConversationMessage: 'Thank you for chatting with us!',
+        leadCapturePrompt: 'Can I get your contact information to follow up?',
+        maxConversationTurns: 20,
+        inactivityTimeout: 300,
+      },
+      customInstructions: '',
     };
 
     defaultKnowledgeBase = {
@@ -77,6 +94,21 @@ describe('ChatbotConfig', () => {
       expect(config.updatedAt).toBeInstanceOf(Date);
     });
 
+    it('should create a new ChatbotConfig with empty lead questions (optional)', () => {
+      const config = ChatbotConfig.create({
+        organizationId: 'org-123',
+        name: 'Test Bot',
+        personalitySettings: defaultPersonality,
+        knowledgeBase: defaultKnowledgeBase,
+        operatingHours: defaultOperatingHours,
+        leadQualificationQuestions: [], // Now allowed
+        isActive: true,
+      });
+
+      expect(config.leadQualificationQuestions).toHaveLength(0);
+      expect(config.organizationId).toBe('org-123');
+    });
+
     it('should throw error for missing organization ID', () => {
       expect(() => {
         ChatbotConfig.create({
@@ -118,20 +150,6 @@ describe('ChatbotConfig', () => {
         });
       }).toThrow('Chatbot name must be 100 characters or less');
     });
-
-    it('should throw error for empty lead qualification questions', () => {
-      expect(() => {
-        ChatbotConfig.create({
-          organizationId: 'org-123',
-          name: 'Test Bot',
-          personalitySettings: defaultPersonality,
-          knowledgeBase: defaultKnowledgeBase,
-          operatingHours: defaultOperatingHours,
-          leadQualificationQuestions: [],
-          isActive: true,
-        });
-      }).toThrow('At least one lead qualification question is required');
-    });
   });
 
   describe('business methods', () => {
@@ -155,6 +173,23 @@ describe('ChatbotConfig', () => {
         communicationStyle: 'conversational',
         responseLength: 'brief',
         escalationTriggers: ['help'],
+        responseBehavior: {
+          useEmojis: true,
+          askFollowUpQuestions: false,
+          proactiveOffering: false,
+          personalizeResponses: false,
+          acknowledgePreviousInteractions: false,
+        },
+        conversationFlow: {
+          greetingMessage: 'Hi there!',
+          fallbackMessage: 'Sorry, I don\'t understand.',
+          escalationMessage: 'Let me get help.',
+          endConversationMessage: 'Goodbye!',
+          leadCapturePrompt: 'Your email please?',
+          maxConversationTurns: 10,
+          inactivityTimeout: 600,
+        },
+        customInstructions: 'Be very casual',
       };
 
       // Add a small delay to ensure timestamp difference
@@ -207,10 +242,10 @@ describe('ChatbotConfig', () => {
       expect(configWithOneQuestion.leadQualificationQuestions[0].id).toBe('email');
     });
 
-    it('should throw error when removing last lead qualification question', () => {
-      expect(() => {
-        config.removeLeadQualificationQuestion('email');
-      }).toThrow('Cannot remove all lead qualification questions');
+    it('should allow removing all lead qualification questions', () => {
+      const configWithNoQuestions = config.removeLeadQualificationQuestion('email');
+      
+      expect(configWithNoQuestions.leadQualificationQuestions).toHaveLength(0);
     });
   });
 
@@ -284,6 +319,23 @@ describe('ChatbotConfig', () => {
           communicationStyle: 'helpful',
           responseLength: 'adaptive',
           escalationTriggers: [],
+          responseBehavior: {
+            useEmojis: false,
+            askFollowUpQuestions: true,
+            proactiveOffering: true,
+            personalizeResponses: true,
+            acknowledgePreviousInteractions: true,
+          },
+          conversationFlow: {
+            greetingMessage: 'Hello! How can I help you today?',
+            fallbackMessage: 'I\'m not sure about that. Could you rephrase your question?',
+            escalationMessage: 'Let me connect you with a team member.',
+            endConversationMessage: 'Thank you for chatting with us!',
+            leadCapturePrompt: 'Can I get your contact information to follow up?',
+            maxConversationTurns: 20,
+            inactivityTimeout: 300,
+          },
+          customInstructions: '',
         },
         knowledgeBase: {
           companyInfo: 'We sell widgets.',

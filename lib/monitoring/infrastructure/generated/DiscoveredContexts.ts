@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-11T03:06:30.126Z
+// Generated: 2025-06-12T04:24:51.562Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -8,14 +8,18 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
   {
     "domain": "chatbot-widget",
     "components": [
+      "AdvancedParametersSection",
       "BotConfigurationSection",
       "ChatSimulator",
+      "EmbedCodeGenerator",
       "KnowledgeBaseSection",
       "LeadSettingsSection",
-      "TestScenarios"
+      "TestScenarios",
+      "WidgetPreview"
     ],
     "files": [
       "lib/chatbot-widget/presentation/components/",
+      "lib/chatbot-widget/presentation/hooks/",
       "lib/chatbot-widget/application/services/",
       "lib/chatbot-widget/domain/entities/",
       "app/(protected)/ai-playground/chatbot-widget/analytics/page.tsx",
@@ -24,14 +28,31 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/(protected)/ai-playground/chatbot-widget/layout.tsx",
       "app/(protected)/ai-playground/chatbot-widget/leads/page.tsx",
       "app/(protected)/ai-playground/chatbot-widget/page.tsx",
-      "app/(protected)/ai-playground/chatbot-widget/testing/page.tsx"
+      "app/(protected)/ai-playground/chatbot-widget/parameters/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/testing/page.tsx",
+      "app/api/chatbot-widget/chat/route.ts",
+      "app/api/chatbot-widget/config/[configId]/route.ts",
+      "app/api/chatbot-widget/session/route.ts"
     ],
-    "queryKeys": [],
-    "endpoints": [],
+    "queryKeys": [
+      "chatbot-configs",
+      "chatbot-config"
+    ],
+    "endpoints": [
+      "/api/chatbot-widget/chat",
+      "/api/chatbot-widget/config/[configId]",
+      "/api/chatbot-widget/session"
+    ],
     "optimizationTargets": [
-      "Layout component optimization"
+      "Detail view caching",
+      "Layout component optimization",
+      "Dynamic route optimization"
     ],
-    "cacheableEndpoints": []
+    "cacheableEndpoints": [
+      "/api/chatbot-widget/chat",
+      "/api/chatbot-widget/config/[configId]",
+      "/api/chatbot-widget/session"
+    ]
   },
   {
     "domain": "dam",

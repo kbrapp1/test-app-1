@@ -15,6 +15,7 @@ export interface ConversationContext {
   session: ChatSession;
   messageHistory: ChatMessage[];
   systemPrompt: string;
+  conversationSummary?: string;
 }
 
 export interface AIResponse {

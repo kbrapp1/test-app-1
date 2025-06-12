@@ -1,5 +1,12 @@
 import { ChatSession, SessionContext } from '../entities/ChatSession';
 import { ChatMessage } from '../entities/ChatMessage';
+import { ConversationContextWindow } from '../value-objects/ConversationContextWindow';
+import { ITokenCountingService } from './ITokenCountingService';
+import { IIntentClassificationService, IntentClassificationContext } from './IIntentClassificationService';
+import { IKnowledgeRetrievalService, KnowledgeRetrievalContext } from './IKnowledgeRetrievalService';
+import { IntentResult } from '../value-objects/IntentResult';
+import { UserJourneyState, JourneyStage } from '../value-objects/UserJourneyState';
+import { ChatbotConfig } from '../entities/ChatbotConfig';
 
 export interface ContextAnalysis {
   topics: string[];
@@ -9,6 +16,13 @@ export interface ContextAnalysis {
   userIntent: string;
   urgency: 'low' | 'medium' | 'high';
   conversationStage: 'greeting' | 'discovery' | 'qualification' | 'closing' | 'support';
+  intentResult?: IntentResult;
+  journeyState?: UserJourneyState;
+  relevantKnowledge?: Array<{
+    title: string;
+    content: string;
+    relevanceScore: number;
+  }>;
 }
 
 export interface ConversationSummary {
@@ -20,9 +34,132 @@ export interface ConversationSummary {
   qualificationStatus: string;
 }
 
+export interface ContextWindowResult {
+  messages: ChatMessage[];
+  summary?: string;
+  tokenUsage: {
+    messagesTokens: number;
+    summaryTokens: number;
+    totalTokens: number;
+  };
+  wasCompressed: boolean;
+}
+
 export class ConversationContextService {
+  constructor(
+    private tokenCountingService: ITokenCountingService,
+    private intentClassificationService?: IIntentClassificationService,
+    private knowledgeRetrievalService?: IKnowledgeRetrievalService
+  ) {}
+
   /**
-   * Analyze conversation context from messages
+   * Get messages that fit within context window with token management
+   */
+  async getMessagesForContextWindow(
+    messages: ChatMessage[],
+    contextWindow: ConversationContextWindow,
+    existingSummary?: string
+  ): Promise<ContextWindowResult> {
+    if (messages.length === 0) {
+      return {
+        messages: [],
+        tokenUsage: { messagesTokens: 0, summaryTokens: 0, totalTokens: 0 },
+        wasCompressed: false
+      };
+    }
+
+    // Always include the last 2 messages for immediate context
+    const criticalMessages = messages.slice(-2);
+    const remainingMessages = messages.slice(0, -2);
+
+    // Count tokens for critical messages
+    const criticalTokens = await this.tokenCountingService.countMessagesTokens(criticalMessages);
+    
+    // Count existing summary tokens
+    const summaryTokens = existingSummary 
+      ? await this.tokenCountingService.countTextTokens(existingSummary)
+      : 0;
+
+    // Calculate available tokens for additional messages
+    const availableTokens = contextWindow.getAvailableTokensForMessages() - criticalTokens - summaryTokens;
+
+    if (availableTokens <= 0) {
+      // Only critical messages fit
+      return {
+        messages: criticalMessages,
+        summary: existingSummary,
+        tokenUsage: {
+          messagesTokens: criticalTokens,
+          summaryTokens,
+          totalTokens: criticalTokens + summaryTokens
+        },
+        wasCompressed: remainingMessages.length > 0
+      };
+    }
+
+    // Add messages from most recent backwards until we hit token limit
+    const selectedMessages: ChatMessage[] = [...criticalMessages];
+    let currentTokens = criticalTokens;
+
+    for (let i = remainingMessages.length - 1; i >= 0; i--) {
+      const message = remainingMessages[i];
+      const messageTokens = await this.tokenCountingService.countMessageTokens(message);
+      
+      if (currentTokens + messageTokens <= availableTokens) {
+        selectedMessages.unshift(message);
+        currentTokens += messageTokens;
+      } else {
+        break;
+      }
+    }
+
+    const wasCompressed = selectedMessages.length < messages.length;
+
+    return {
+      messages: selectedMessages,
+      summary: existingSummary,
+      tokenUsage: {
+        messagesTokens: currentTokens,
+        summaryTokens,
+        totalTokens: currentTokens + summaryTokens
+      },
+      wasCompressed
+    };
+  }
+
+  /**
+   * Create AI-generated summary of older messages
+   */
+  async createAISummary(
+    messages: ChatMessage[],
+    maxTokens: number = 200
+  ): Promise<string> {
+    if (messages.length === 0) return '';
+
+    const userMessages = messages.filter(m => m.isFromUser());
+    const botMessages = messages.filter(m => !m.isFromUser());
+
+    // Create a structured summary prompt
+    const summaryPrompt = `Summarize this conversation in ${maxTokens} tokens or less. Focus on:
+- Key topics discussed
+- User's main needs/interests
+- Important context for future responses
+
+User messages: ${userMessages.map(m => m.content).join(' | ')}
+Bot responses: ${botMessages.map(m => m.content).join(' | ')}
+
+Summary:`;
+
+    // This would typically call an AI service to generate the summary
+    // For now, return a basic summary
+    const topics = this.extractTopics(userMessages);
+    const interests = this.extractInterests(userMessages);
+    
+    return `Conversation covered: ${topics.join(', ')}. User interested in: ${interests.join(', ')}. ${userMessages.length} user messages exchanged.`;
+  }
+
+  /**
+   * Analyze conversation context from messages (synchronous version)
    */
   analyzeContext(messages: ChatMessage[]): ContextAnalysis {
     const userMessages = messages.filter(m => m.isFromUser());
@@ -48,6 +185,131 @@ export class ConversationContextService {
       userIntent,
       urgency,
       conversationStage,
+    };
+  }
+
+  /**
+   * Analyze conversation context with enhanced intent and knowledge (async version)
+   */
+  async analyzeContextEnhanced(
+    messages: ChatMessage[],
+    chatbotConfig?: ChatbotConfig,
+    session?: ChatSession
+  ): Promise<ContextAnalysis> {
+    const userMessages = messages.filter(m => m.isFromUser());
+    const totalMessages = messages.length;
+    
+    if (userMessages.length === 0) {
+      return this.getDefaultContext();
+    }
+
+    const topics = this.extractTopics(userMessages);
+    const interests = this.extractInterests(userMessages);
+    const sentiment = this.analyzeSentiment(userMessages);
+    const engagementLevel = this.calculateEngagementLevel(userMessages, totalMessages);
+    const userIntent = this.detectUserIntent(userMessages);
+    const urgency = this.assessUrgency(userMessages);
+    const conversationStage = this.determineConversationStage(messages);
+
+    // Enhanced analysis with intent classification
+    let intentResult: IntentResult | undefined;
+    let journeyState: UserJourneyState | undefined;
+    let relevantKnowledge: Array<{ title: string; content: string; relevanceScore: number; }> | undefined;
+
+    if (userMessages.length > 0) {
+      const lastUserMessage = userMessages[userMessages.length - 1];
+      
+      // Classify intent if service is available
+      if (this.intentClassificationService && chatbotConfig && session) {
+        try {
+          const context: IntentClassificationContext = {
+            chatbotConfig,
+            session,
+            messageHistory: messages.slice(-5), // Last 5 messages for context
+            currentMessage: lastUserMessage.content
+          };
+          
+          intentResult = await this.intentClassificationService.classifyIntent(
+            lastUserMessage.content,
+            context
+          );
+        } catch (error) {
+          console.error('Intent classification failed:', error);
+        }
+      }
+
+      // Update journey state if we have intent result
+      if (intentResult && session) {
+        const currentJourneyState = session.contextData.journeyState 
+          ? UserJourneyState.create(
+              session.contextData.journeyState.stage as JourneyStage,
+              session.contextData.journeyState.confidence,
+              session.contextData.journeyState.metadata
+            )
+          : UserJourneyState.create();
+
+        const transitionResult = currentJourneyState.shouldTransitionBasedOnIntent(intentResult);
+        
+        if (transitionResult.shouldTransition && transitionResult.newStage) {
+          journeyState = currentJourneyState.transitionTo(
+            transitionResult.newStage,
+            {
+              type: 'intent',
+              value: intentResult.intent,
+              confidence: transitionResult.confidence
+            }
+          );
+        } else {
+          // Update engagement score
+          const newEngagementScore = this.calculateEngagementScore({
+            topics,
+            interests,
+            sentiment,
+            engagementLevel,
+            userIntent,
+            urgency,
+            conversationStage
+          });
+          
+          journeyState = currentJourneyState.updateEngagement(newEngagementScore);
+        }
+      }
+
+      // Retrieve relevant knowledge if service is available
+      if (this.knowledgeRetrievalService && intentResult) {
+        try {
+          const knowledgeContext: KnowledgeRetrievalContext = {
+            userQuery: lastUserMessage.content,
+            intentResult,
+            conversationHistory: userMessages.slice(-3).map(m => m.content),
+            maxResults: 3,
+            minRelevanceScore: 0.4
+          };
+
+          const knowledgeResult = await this.knowledgeRetrievalService.searchKnowledge(knowledgeContext);
+          
+          relevantKnowledge = knowledgeResult.items.map(item => ({
+            title: item.title,
+            content: item.content,
+            relevanceScore: item.relevanceScore
+          }));
+        } catch (error) {
+          console.error('Knowledge retrieval failed:', error);
+        }
+      }
+    }
+
+    return {
+      topics,
+      interests,
+      sentiment,
+      engagementLevel,
+      userIntent,
+      urgency,
+      conversationStage,
+      intentResult,
+      journeyState,
+      relevantKnowledge,
     };
   }
 
@@ -424,7 +686,7 @@ export class ConversationContextService {
    */
   private identifyKeyTopics(userMessages: ChatMessage[], contextTopics: string[]): string[] {
     const messageTopics = this.extractTopics(userMessages);
-    const allTopics = [...new Set([...contextTopics, ...messageTopics])];
+    const allTopics = Array.from(new Set([...contextTopics, ...messageTopics]));
     return allTopics.slice(0, 5); // Top 5 topics
   }
 

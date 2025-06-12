@@ -15,6 +15,12 @@ import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRe
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
 import { IAIConversationService, ConversationContext, AIResponse } from '../../domain/services/IAIConversationService';
 import { ConversationContextService } from '../../domain/services/ConversationContextService';
+import { ConversationContextWindow } from '../../domain/value-objects/ConversationContextWindow';
+import { ITokenCountingService } from '../../domain/services/ITokenCountingService';
+import { IIntentClassificationService } from '../../domain/services/IIntentClassificationService';
+import { IKnowledgeRetrievalService } from '../../domain/services/IKnowledgeRetrievalService';
+import { IntentResult } from '../../domain/value-objects/IntentResult';
+import { UserJourneyState } from '../../domain/value-objects/UserJourneyState';
 
 export interface ProcessMessageRequest {
   sessionId: string;
@@ -38,16 +44,46 @@ export interface ProcessMessageResult {
     engagementScore: number; // 0-100
     leadQualificationProgress: number; // 0-100
   };
+  intentAnalysis?: {
+    intent: string;
+    confidence: number;
+    entities: Record<string, any>;
+    category: string;
+  };
+  journeyState?: {
+    stage: string;
+    confidence: number;
+    isSalesReady: boolean;
+    recommendedActions: string[];
+  };
+  relevantKnowledge?: Array<{
+    title: string;
+    content: string;
+    relevanceScore: number;
+  }>;
 }
 
 export class ProcessChatMessageUseCase {
+  private readonly contextWindow: ConversationContextWindow;
+
   constructor(
     private readonly sessionRepository: IChatSessionRepository,
     private readonly messageRepository: IChatMessageRepository,
     private readonly chatbotConfigRepository: IChatbotConfigRepository,
     private readonly aiConversationService: IAIConversationService,
-    private readonly conversationContextService: ConversationContextService
-  ) {}
+    private readonly conversationContextService: ConversationContextService,
+    private readonly tokenCountingService: ITokenCountingService,
+    private readonly intentClassificationService?: IIntentClassificationService,
+    private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService
+  ) {
+    // Initialize context window with sensible defaults
+    this.contextWindow = ConversationContextWindow.create({
+      maxTokens: 12000, // Safe for most models
+      systemPromptTokens: 500,
+      responseReservedTokens: 3000,
+      summaryTokens: 200
+    });
+  }
 
   /**
    * Execute the complete message processing workflow
@@ -76,44 +112,62 @@ export class ProcessChatMessageUseCase {
     // 5. Update session activity
     let updatedSession = session.updateActivity();
 
-    // 6. Get recent messages for context
-    const recentMessages = await this.getRecentMessages(session.id);
+    // 6. Get token-aware messages for context
+    const contextResult = await this.getTokenAwareContext(session.id, userMessage);
 
-    // 7. Build conversation context
+    // 7. Enhanced context analysis with intent classification and knowledge retrieval
+    const enhancedContext = await this.conversationContextService.analyzeContextEnhanced(
+      [...contextResult.messages, userMessage],
+      config,
+      updatedSession
+    );
+
+    // 8. Update session with journey state if available
+    if (enhancedContext.journeyState) {
+      updatedSession = this.updateSessionWithJourneyState(updatedSession, enhancedContext.journeyState);
+    }
+
+    // 9. Build conversation context with optimized message history and enhanced context
     const conversationContext: ConversationContext = {
       chatbotConfig: config,
       session: updatedSession,
-      messageHistory: [...recentMessages, userMessage],
-      systemPrompt: this.aiConversationService.buildSystemPrompt(config, updatedSession, recentMessages)
+      messageHistory: [...contextResult.messages, userMessage],
+      systemPrompt: this.buildEnhancedSystemPrompt(
+        config, 
+        updatedSession, 
+        contextResult.messages, 
+        enhancedContext
+      ),
+      conversationSummary: contextResult.summary
     };
 
-    // 8. Generate AI response
+    // 10. Generate AI response
     const aiResponse = await this.aiConversationService.generateResponse(
       request.userMessage,
       conversationContext
     );
 
-    // 9. Create and save bot response message
+    // 11. Create and save bot response message
     const botMessage = await this.createAndSaveBotMessage(session, aiResponse);
 
-    // 10. Update session with conversation context
-    const allMessages = [...recentMessages, userMessage, botMessage];
+    // 12. Update session with conversation context
+    const allMessages = [...contextResult.messages, userMessage, botMessage];
     updatedSession = this.conversationContextService.updateSessionContext(
       updatedSession,
       botMessage,
       allMessages
     );
 
-    // 11. Save updated session
+    // 13. Save updated session
     const finalSession = await this.sessionRepository.update(updatedSession);
 
-    // 12. Determine if lead capture should be triggered
+    // 14. Determine if lead capture should be triggered
     const shouldCaptureLeadInfo = this.shouldTriggerLeadCapture(finalSession, config);
 
-    // 13. Calculate conversation metrics
+    // 15. Calculate conversation metrics
     const conversationMetrics = await this.calculateConversationMetrics(finalSession, allMessages);
 
-    // 14. Generate suggested next actions
+    // 16. Generate suggested next actions
     const suggestedNextActions = this.generateSuggestedActions(
       finalSession,
       config,
@@ -126,7 +180,20 @@ export class ProcessChatMessageUseCase {
       botResponse: botMessage,
       shouldCaptureLeadInfo,
       suggestedNextActions,
-      conversationMetrics
+      conversationMetrics,
+      intentAnalysis: enhancedContext.intentResult ? {
+        intent: enhancedContext.intentResult.intent,
+        confidence: enhancedContext.intentResult.confidence,
+        entities: enhancedContext.intentResult.entities,
+        category: enhancedContext.intentResult.getCategory()
+      } : undefined,
+      journeyState: enhancedContext.journeyState ? {
+        stage: enhancedContext.journeyState.stage,
+        confidence: enhancedContext.journeyState.confidence,
+        isSalesReady: enhancedContext.journeyState.isSalesReady(),
+        recommendedActions: enhancedContext.journeyState.getRecommendedActions()
+      } : undefined,
+      relevantKnowledge: enhancedContext.relevantKnowledge
     };
   }
 
@@ -170,7 +237,75 @@ export class ProcessChatMessageUseCase {
   }
 
   /**
-   * Get recent messages for context
+   * Get token-aware context for conversation
+   */
+  private async getTokenAwareContext(
+    sessionId: string, 
+    newUserMessage: ChatMessage
+  ): Promise<{
+    messages: ChatMessage[];
+    summary?: string;
+    tokenUsage: { messagesTokens: number; summaryTokens: number; totalTokens: number };
+    wasCompressed: boolean;
+  }> {
+    // Get all messages for this session
+    const allMessages = await this.messageRepository.findBySessionId(sessionId);
+    
+    if (allMessages.length === 0) {
+      return {
+        messages: [],
+        tokenUsage: { messagesTokens: 0, summaryTokens: 0, totalTokens: 0 },
+        wasCompressed: false
+      };
+    }
+
+    // Get existing conversation summary from session if available
+    const session = await this.sessionRepository.findById(sessionId);
+    const existingSummary = session?.contextData.conversationSummary;
+
+    // Use conversation context service to get optimized message window
+    const contextResult = await this.conversationContextService.getMessagesForContextWindow(
+      allMessages,
+      this.contextWindow,
+      existingSummary
+    );
+
+    // If we need to compress and don't have a summary, create one
+    if (contextResult.wasCompressed && !existingSummary && allMessages.length > 5) {
+      const messagesToSummarize = allMessages.slice(0, -2); // Don't summarize the most recent messages
+      const summary = await this.conversationContextService.createAISummary(
+        messagesToSummarize,
+        this.contextWindow.summaryTokens
+      );
+
+      // Update session with new summary
+      if (session) {
+        const updatedSession = session.updateConversationSummary(summary);
+        await this.sessionRepository.update(updatedSession);
+      }
+
+      return {
+        messages: contextResult.messages,
+        summary,
+        tokenUsage: {
+          messagesTokens: contextResult.tokenUsage.messagesTokens,
+          summaryTokens: await this.tokenCountingService.countTextTokens(summary),
+          totalTokens: contextResult.tokenUsage.totalTokens
+        },
+        wasCompressed: true
+      };
+    }
+
+    return {
+      messages: contextResult.messages,
+      summary: existingSummary,
+      tokenUsage: contextResult.tokenUsage,
+      wasCompressed: contextResult.wasCompressed
+    };
+  }
+
+  /**
+   * Get recent messages for context (legacy method - kept for compatibility)
    */
   private async getRecentMessages(sessionId: string): Promise<ChatMessage[]> {
     // Get last 10 messages for context - using correct method signature
@@ -318,5 +453,86 @@ export class ProcessChatMessageUseCase {
     }
 
     return actions;
+  }
+
+  /**
+   * Update session with journey state information
+   */
+  private updateSessionWithJourneyState(
+    session: ChatSession,
+    journeyState: UserJourneyState
+  ): ChatSession {
+    const updatedContextData = {
+      ...session.contextData,
+      journeyState: {
+        stage: journeyState.stage,
+        confidence: journeyState.confidence,
+        metadata: journeyState.metadata
+      }
+    };
+
+    return ChatSession.fromPersistence({
+      ...session.toPlainObject(),
+      contextData: updatedContextData,
+      lastActivityAt: new Date()
+    });
+  }
+
+  /**
+   * Build enhanced system prompt with intent and knowledge context
+   */
+  private buildEnhancedSystemPrompt(
+    config: ChatbotConfig,
+    session: ChatSession,
+    messageHistory: ChatMessage[],
+    enhancedContext: any
+  ): string {
+    // Start with base system prompt
+    let systemPrompt = this.aiConversationService.buildSystemPrompt(config, session, messageHistory);
+
+    // Add intent context if available
+    if (enhancedContext.intentResult) {
+      const intent = enhancedContext.intentResult;
+      systemPrompt += `\n\nCURRENT USER INTENT: ${intent.intent} (confidence: ${intent.confidence.toFixed(2)})`;
+      
+      if (intent.entities && Object.keys(intent.entities).length > 0) {
+        systemPrompt += `\nEXTRACTED ENTITIES: ${JSON.stringify(intent.entities)}`;
+      }
+
+      systemPrompt += `\nINTENT CATEGORY: ${intent.getCategory()}`;
+      
+      if (intent.isSalesIntent()) {
+        systemPrompt += `\nNOTE: User is showing sales interest. Focus on qualification and next steps.`;
+      } else if (intent.isSupportIntent()) {
+        systemPrompt += `\nNOTE: User needs support. Provide helpful information and solutions.`;
+      }
+    }
+
+    // Add journey state context if available
+    if (enhancedContext.journeyState) {
+      const journey = enhancedContext.journeyState;
+      systemPrompt += `\n\nUSER JOURNEY STAGE: ${journey.stage} (confidence: ${journey.confidence.toFixed(2)})`;
+      
+      if (journey.isSalesReady()) {
+        systemPrompt += `\nNOTE: User is sales-ready. Focus on closing and next steps.`;
+      }
+
+      const recommendedActions = journey.getRecommendedActions();
+      if (recommendedActions.length > 0) {
+        systemPrompt += `\nRECOMMENDED ACTIONS: ${recommendedActions.join(', ')}`;
+      }
+    }
+
+    // Add relevant knowledge context if available
+    if (enhancedContext.relevantKnowledge && enhancedContext.relevantKnowledge.length > 0) {
+      systemPrompt += `\n\nRELEVANT KNOWLEDGE:`;
+      enhancedContext.relevantKnowledge.forEach((knowledge: any, index: number) => {
+        systemPrompt += `\n${index + 1}. ${knowledge.title} (relevance: ${knowledge.relevanceScore.toFixed(2)})`;
+        systemPrompt += `\n   ${knowledge.content.substring(0, 200)}${knowledge.content.length > 200 ? '...' : ''}`;
+      });
+      systemPrompt += `\n\nUse this knowledge to provide accurate, helpful responses. Reference specific information when relevant.`;
+    }
+
+    return systemPrompt;
   }
 } 

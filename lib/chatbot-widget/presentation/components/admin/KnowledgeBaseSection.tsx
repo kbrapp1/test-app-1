@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,13 +30,32 @@ export function KnowledgeBaseSection() {
   const existingConfig = configResult?.success ? configResult.data : null;
 
   // Form state
-  const [formData, setFormData] = useState({
-    companyInfo: existingConfig?.knowledgeBase?.companyInfo || '',
-    productCatalog: existingConfig?.knowledgeBase?.productCatalog || '',
-    supportDocs: existingConfig?.knowledgeBase?.supportDocs || '',
-    complianceGuidelines: existingConfig?.knowledgeBase?.complianceGuidelines || '',
-    faqs: existingConfig?.knowledgeBase?.faqs || [],
+  const [formData, setFormData] = useState<{
+    companyInfo: string;
+    productCatalog: string;
+    supportDocs: string;
+    complianceGuidelines: string;
+    faqs: FaqDto[];
+  }>({
+    companyInfo: '',
+    productCatalog: '',
+    supportDocs: '',
+    complianceGuidelines: '',
+    faqs: [],
   });
+
+  // Update form state when existingConfig changes
+  useEffect(() => {
+    if (existingConfig?.knowledgeBase) {
+      setFormData({
+        companyInfo: existingConfig.knowledgeBase.companyInfo || '',
+        productCatalog: existingConfig.knowledgeBase.productCatalog || '',
+        supportDocs: existingConfig.knowledgeBase.supportDocs || '',
+        complianceGuidelines: existingConfig.knowledgeBase.complianceGuidelines || '',
+        faqs: existingConfig.knowledgeBase.faqs || [],
+      });
+    }
+  }, [existingConfig]);
 
   const [newFaq, setNewFaq] = useState({
     question: '',

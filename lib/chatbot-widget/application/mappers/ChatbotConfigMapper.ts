@@ -17,6 +17,7 @@ import {
   KnowledgeBaseDto,
   OperatingHoursDto,
   LeadQualificationQuestionDto,
+  AIConfigurationDto,
 } from '../dto/ChatbotConfigDto';
 
 export class ChatbotConfigMapper {
@@ -44,6 +45,7 @@ export class ChatbotConfigMapper {
         order: q.order,
         scoringWeight: q.scoringWeight,
       })),
+      aiConfiguration: this.aiConfigurationToDto(props.aiConfiguration),
       isActive: props.isActive,
       createdAt: props.createdAt.toISOString(),
       updatedAt: props.updatedAt.toISOString(),
@@ -72,6 +74,7 @@ export class ChatbotConfigMapper {
         order: q.order,
         scoringWeight: q.scoringWeight ?? 1, // Default scoring weight from DTO
       })),
+      aiConfiguration: this.aiConfigurationFromDto(dto.aiConfiguration),
       isActive: dto.isActive,
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt),
@@ -99,6 +102,7 @@ export class ChatbotConfigMapper {
         order: q.order,
         scoringWeight: q.scoringWeight ?? 1, // Default scoring weight from DTO
       })),
+      aiConfiguration: dto.aiConfiguration ? this.aiConfigurationFromDto(dto.aiConfiguration) : undefined,
       isActive: true,
     });
   }
@@ -192,6 +196,68 @@ export class ChatbotConfigMapper {
       businessHours: dto.businessHours,
       holidaySchedule: dto.holidaySchedule,
       outsideHoursMessage: dto.outsideHoursMessage,
+    };
+  }
+
+  private static aiConfigurationToDto(aiConfig: any): AIConfigurationDto {
+    return {
+      openaiModel: aiConfig.openaiModel,
+      openaiTemperature: aiConfig.openaiTemperature,
+      openaiMaxTokens: aiConfig.openaiMaxTokens,
+      contextMaxTokens: aiConfig.contextMaxTokens,
+      contextSystemPromptTokens: aiConfig.contextSystemPromptTokens,
+      contextResponseReservedTokens: aiConfig.contextResponseReservedTokens,
+      contextSummaryTokens: aiConfig.contextSummaryTokens,
+      intentConfidenceThreshold: aiConfig.intentConfidenceThreshold,
+      intentAmbiguityThreshold: aiConfig.intentAmbiguityThreshold,
+      enableMultiIntentDetection: aiConfig.enableMultiIntentDetection,
+      enablePersonaInference: aiConfig.enablePersonaInference,
+      enableAdvancedEntities: aiConfig.enableAdvancedEntities,
+      entityExtractionMode: aiConfig.entityExtractionMode,
+      customEntityTypes: aiConfig.customEntityTypes,
+      maxConversationTurns: aiConfig.maxConversationTurns,
+      inactivityTimeoutSeconds: aiConfig.inactivityTimeoutSeconds,
+      enableJourneyRegression: aiConfig.enableJourneyRegression,
+      enableContextSwitchDetection: aiConfig.enableContextSwitchDetection,
+      enableAdvancedScoring: aiConfig.enableAdvancedScoring,
+      entityCompletenessWeight: aiConfig.entityCompletenessWeight,
+      personaConfidenceWeight: aiConfig.personaConfidenceWeight,
+      journeyProgressionWeight: aiConfig.journeyProgressionWeight,
+      enablePerformanceLogging: aiConfig.enablePerformanceLogging,
+      enableIntentAnalytics: aiConfig.enableIntentAnalytics,
+      enablePersonaAnalytics: aiConfig.enablePersonaAnalytics,
+      responseTimeThresholdMs: aiConfig.responseTimeThresholdMs,
+    };
+  }
+
+  private static aiConfigurationFromDto(dto: AIConfigurationDto): any {
+    return {
+      openaiModel: dto.openaiModel as 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo',
+      openaiTemperature: dto.openaiTemperature,
+      openaiMaxTokens: dto.openaiMaxTokens,
+      contextMaxTokens: dto.contextMaxTokens,
+      contextSystemPromptTokens: dto.contextSystemPromptTokens,
+      contextResponseReservedTokens: dto.contextResponseReservedTokens,
+      contextSummaryTokens: dto.contextSummaryTokens,
+      intentConfidenceThreshold: dto.intentConfidenceThreshold,
+      intentAmbiguityThreshold: dto.intentAmbiguityThreshold,
+      enableMultiIntentDetection: dto.enableMultiIntentDetection,
+      enablePersonaInference: dto.enablePersonaInference,
+      enableAdvancedEntities: dto.enableAdvancedEntities,
+      entityExtractionMode: dto.entityExtractionMode as 'basic' | 'comprehensive' | 'custom',
+      customEntityTypes: dto.customEntityTypes,
+      maxConversationTurns: dto.maxConversationTurns,
+      inactivityTimeoutSeconds: dto.inactivityTimeoutSeconds,
+      enableJourneyRegression: dto.enableJourneyRegression,
+      enableContextSwitchDetection: dto.enableContextSwitchDetection,
+      enableAdvancedScoring: dto.enableAdvancedScoring,
+      entityCompletenessWeight: dto.entityCompletenessWeight,
+      personaConfidenceWeight: dto.personaConfidenceWeight,
+      journeyProgressionWeight: dto.journeyProgressionWeight,
+      enablePerformanceLogging: dto.enablePerformanceLogging,
+      enableIntentAnalytics: dto.enableIntentAnalytics,
+      enablePersonaAnalytics: dto.enablePersonaAnalytics,
+      responseTimeThresholdMs: dto.responseTimeThresholdMs,
     };
   }
 } 

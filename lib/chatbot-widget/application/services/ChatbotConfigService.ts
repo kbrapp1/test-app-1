@@ -25,23 +25,28 @@ export class ChatbotConfigService {
    * Create a new chatbot configuration
    */
   async createChatbotConfig(createDto: CreateChatbotConfigDto): Promise<ChatbotConfigDto> {
-    // Check if organization already has a chatbot config
-    const existingConfig = await this.chatbotConfigRepository.findByOrganizationId(
-      createDto.organizationId
-    );
-    
-    if (existingConfig) {
-      throw new Error('Organization already has a chatbot configuration');
-    }
+    try {
+      // Check if organization already has a chatbot config
+      const existingConfig = await this.chatbotConfigRepository.findByOrganizationId(
+        createDto.organizationId
+      );
+      
+      if (existingConfig) {
+        throw new Error('Organization already has a chatbot configuration');
+      }
 
-    // Convert DTO to domain entity
-    const chatbotConfig = ChatbotConfigMapper.createDtoToDomain(createDto);
-    
-    // Save via repository
-    const savedConfig = await this.chatbotConfigRepository.save(chatbotConfig);
-    
-    // Convert back to DTO for response
-    return ChatbotConfigMapper.toDto(savedConfig);
+      // Convert DTO to domain entity
+      const chatbotConfig = ChatbotConfigMapper.createDtoToDomain(createDto);
+      
+      // Save via repository
+      const savedConfig = await this.chatbotConfigRepository.save(chatbotConfig);
+      
+      // Convert back to DTO for response
+      return ChatbotConfigMapper.toDto(savedConfig);
+    } catch (error) {
+      console.error('Error creating chatbot config:', error);
+      throw error;
+    }
   }
 
   /**
@@ -52,62 +57,72 @@ export class ChatbotConfigService {
     updateDto: UpdateChatbotConfigDto,
     organizationId: string
   ): Promise<ChatbotConfigDto> {
-    // Find existing configuration
-    const existingConfig = await this.chatbotConfigRepository.findById(id);
-    
-    if (!existingConfig) {
-      throw new Error('Chatbot configuration not found');
-    }
+    try {
+      // Find existing configuration
+      const existingConfig = await this.chatbotConfigRepository.findById(id);
+      
+      if (!existingConfig) {
+        throw new Error('Chatbot configuration not found');
+      }
 
-    // Verify ownership
-    if (existingConfig.organizationId !== organizationId) {
-      throw new Error('Unauthorized to update this chatbot configuration');
-    }
+      // Verify ownership
+      if (existingConfig.organizationId !== organizationId) {
+        throw new Error('Unauthorized to update this chatbot configuration');
+      }
 
-    // Apply updates (domain entity handles validation)
-    let updatedConfig = existingConfig;
-    
-    if (updateDto.name) {
-      updatedConfig = ChatbotConfigMapper.toDomain({
-        ...ChatbotConfigMapper.toDto(updatedConfig),
-        name: updateDto.name,
-        updatedAt: new Date().toISOString(),
-      });
-    }
+      // Apply updates (domain entity handles validation)
+      let updatedConfig = existingConfig;
+      
+      if (updateDto.name) {
+        updatedConfig = ChatbotConfigMapper.toDomain({
+          ...ChatbotConfigMapper.toDto(updatedConfig),
+          name: updateDto.name,
+          updatedAt: new Date().toISOString(),
+        });
+      }
 
-    if (updateDto.personalitySettings) {
-      updatedConfig = updatedConfig.updatePersonality(updateDto.personalitySettings as any);
-    }
+      if (updateDto.personalitySettings) {
+        updatedConfig = updatedConfig.updatePersonality(updateDto.personalitySettings as any);
+      }
 
-    if (updateDto.knowledgeBase) {
-      updatedConfig = updatedConfig.updateKnowledgeBase(updateDto.knowledgeBase as any);
-    }
+      if (updateDto.knowledgeBase) {
+        updatedConfig = updatedConfig.updateKnowledgeBase(updateDto.knowledgeBase as any);
+      }
 
-    if (updateDto.operatingHours) {
-      updatedConfig = updatedConfig.updateOperatingHours(updateDto.operatingHours as any);
-    }
+      if (updateDto.operatingHours) {
+        updatedConfig = updatedConfig.updateOperatingHours(updateDto.operatingHours as any);
+      }
 
-    if (updateDto.isActive !== undefined) {
-      updatedConfig = updateDto.isActive ? updatedConfig.activate() : updatedConfig.deactivate();
-    }
+      if (updateDto.isActive !== undefined) {
+        updatedConfig = updateDto.isActive ? updatedConfig.activate() : updatedConfig.deactivate();
+      }
 
-    // Save updated configuration
-    const savedConfig = await this.chatbotConfigRepository.update(updatedConfig);
-    
-    return ChatbotConfigMapper.toDto(savedConfig);
+      // Save updated configuration
+      const savedConfig = await this.chatbotConfigRepository.update(updatedConfig);
+      
+      return ChatbotConfigMapper.toDto(savedConfig);
+    } catch (error) {
+      console.error('Error updating chatbot config:', error);
+      throw error;
+    }
   }
 
   /**
    * Get chatbot configuration by organization ID
    */
   async getChatbotConfigByOrganization(organizationId: string): Promise<ChatbotConfigDto | null> {
-    const config = await this.chatbotConfigRepository.findByOrganizationId(organizationId);
-    
-    if (!config) {
-      return null;
+    try {
+      const config = await this.chatbotConfigRepository.findByOrganizationId(organizationId);
+      
+      if (!config) {
+        return null;
+      }
+      
+      return ChatbotConfigMapper.toDto(config);
+    } catch (error) {
+      console.error('Error in getChatbotConfigByOrganization:', error);
+      throw error;
     }
-    
-    return ChatbotConfigMapper.toDto(config);
   }
 
   /**

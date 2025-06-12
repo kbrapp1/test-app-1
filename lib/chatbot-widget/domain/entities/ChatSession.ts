@@ -26,6 +26,11 @@ export interface SessionContext {
   topics: string[];
   interests: string[];
   engagementScore: number;
+  journeyState?: {
+    stage: string;
+    confidence: number;
+    metadata: any;
+  };
 }
 
 export interface PageView {

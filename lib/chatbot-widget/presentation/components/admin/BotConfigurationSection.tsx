@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,12 +32,28 @@ export function BotConfigurationSection() {
 
   // Form state
   const [formData, setFormData] = useState({
-    name: existingConfig?.name || 'My Assistant',
-    description: existingConfig?.description || 'An AI assistant to help with questions and capture leads',
-    personality: existingConfig?.personalitySettings?.tone || 'helpful',
-    operatingHours: { enabled: false, timezone: existingConfig?.operatingHours?.timezone || 'UTC' },
-    isActive: existingConfig?.isActive ?? true,
+    name: 'My Assistant',
+    description: 'An AI assistant to help with questions and capture leads',
+    personality: 'helpful',
+    operatingHours: { enabled: false, timezone: 'UTC' },
+    isActive: true,
   });
+
+  // Update form data when existingConfig changes
+  useEffect(() => {
+    if (existingConfig) {
+      setFormData({
+        name: existingConfig.name || 'My Assistant',
+        description: existingConfig.description || 'An AI assistant to help with questions and capture leads',
+        personality: existingConfig.personalitySettings?.tone || 'helpful',
+        operatingHours: { 
+          enabled: false, 
+          timezone: existingConfig.operatingHours?.timezone || 'UTC' 
+        },
+        isActive: existingConfig.isActive ?? true,
+      });
+    }
+  }, [existingConfig]);
 
   // Mutations
   const createMutation = useMutation({

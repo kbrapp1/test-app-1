@@ -140,14 +140,13 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
 
                     const userIds = (membershipRows || []).map((row: any) => row.user_id);
                     let profileRows: any[] = [];
-                    let authUserRows: any[] = [];
 
                     if (userIds.length > 0) {
-                        // Fetch User Profiles with timeout
+                        // Fetch User Profiles with timeout (includes email)
                         const profileOperation = async () => {
                             const { data: profiles, error: profileError } = await supabase
                                 .from('profiles')
-                                .select('id, first_name, last_name, avatar_url')
+                                .select('id, full_name, email, avatar_url')
                                 .in('id', userIds);
 
                             if (profileError) throw new Error(`Error loading profiles: ${profileError.message}`);
@@ -156,37 +155,25 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
 
                         profileRows = await withTimeout(profileOperation(), REQUEST_TIMEOUT);
                         if (!isMounted) return;
-
-                        // Fetch Auth Users with timeout
-                        const authOperation = async () => {
-                            const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
-                            if (authError) throw new Error(`Error loading auth users: ${authError.message}`);
-                            
-                            return (authResponse.users || []).filter(u => userIds.includes(u.id));
-                        };
-
-                        authUserRows = await withTimeout(authOperation(), REQUEST_TIMEOUT);
-                        if (!isMounted) return;
                     }
 
                     // Map to combined members
                     const mappedMembers: OrgMember[] = (membershipRows || []).map((membership: any) => {
                         const profile = profileRows.find(p => p.id === membership.user_id);
-                        const authUser = authUserRows.find(u => u.id === membership.user_id);
 
-                        const displayName = profile?.first_name && profile?.last_name
-                            ? `${profile.first_name} ${profile.last_name}`
-                            : authUser?.email?.split('@')[0] || 'Unknown User';
+                        const displayName = profile?.full_name
+                            ? profile.full_name
+                            : profile?.email?.split('@')[0] || 'Unknown User';
 
                         // Filter based on search term if provided
                         if (debouncedSearchTerm && !displayName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) && 
-                            !(authUser?.email || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
+                            !(profile?.email || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
                             return null;
                         }
 
                         return {
                             id: membership.user_id,
-                            email: authUser?.email || '',
+                            email: profile?.email || '',
                             name: displayName,
                             role_id: membership.role_id,
                             role_name: membership.roles?.name || 'Unknown Role',

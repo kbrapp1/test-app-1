@@ -120,6 +120,23 @@ export class ChatbotConfigMapper {
       communicationStyle: data?.communicationStyle || 'helpful',
       responseLength: data?.responseLength || 'adaptive',
       escalationTriggers: data?.escalationTriggers || [],
+      responseBehavior: {
+        useEmojis: data?.responseBehavior?.useEmojis || false,
+        askFollowUpQuestions: data?.responseBehavior?.askFollowUpQuestions || true,
+        proactiveOffering: data?.responseBehavior?.proactiveOffering || true,
+        personalizeResponses: data?.responseBehavior?.personalizeResponses || true,
+        acknowledgePreviousInteractions: data?.responseBehavior?.acknowledgePreviousInteractions || true,
+      },
+      conversationFlow: {
+        greetingMessage: data?.conversationFlow?.greetingMessage || 'Hello! How can I help you today?',
+        fallbackMessage: data?.conversationFlow?.fallbackMessage || 'I\'m not sure about that. Could you rephrase your question?',
+        escalationMessage: data?.conversationFlow?.escalationMessage || 'Let me connect you with a team member.',
+        endConversationMessage: data?.conversationFlow?.endConversationMessage || 'Thank you for chatting with us!',
+        leadCapturePrompt: data?.conversationFlow?.leadCapturePrompt || 'Can I get your contact information to follow up?',
+        maxConversationTurns: data?.conversationFlow?.maxConversationTurns || 20,
+        inactivityTimeout: data?.conversationFlow?.inactivityTimeout || 300,
+      },
+      customInstructions: data?.customInstructions || '',
     };
   }
 

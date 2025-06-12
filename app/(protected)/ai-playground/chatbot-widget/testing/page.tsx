@@ -6,14 +6,49 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TestTube, MessageSquare, CheckCircle, Lightbulb } from 'lucide-react';
 import { ChatSimulator } from '@/lib/chatbot-widget/presentation/components/admin/ChatSimulator';
 import { TestScenarios } from '@/lib/chatbot-widget/presentation/components/admin/TestScenarios';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+import { useQuery } from '@tanstack/react-query';
+import { getChatbotConfigByOrganization } from '@/lib/chatbot-widget/presentation/actions/configActions';
 
 export default function TestingPage() {
-  // Mock chatbot config ID - in real implementation, this would come from the organization's chatbot config
-  const mockChatbotConfigId = 'default-config';
+  const { activeOrganizationId } = useOrganization();
+  
+  // Query for existing chatbot config
+  const { data: configResult, isLoading, error } = useQuery({
+    queryKey: ['chatbot-config', activeOrganizationId],
+    queryFn: () => activeOrganizationId ? getChatbotConfigByOrganization(activeOrganizationId) : null,
+    enabled: !!activeOrganizationId,
+  });
+
+  const existingConfig = configResult?.success ? configResult.data : null;
 
   const handleSimulationComplete = (results: any) => {
     console.log('Simulation completed:', results);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <AlertDescription>
+            Loading chatbot configuration...
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (error || !existingConfig) {
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <AlertDescription>
+            No chatbot configuration found. Please create a configuration first in the Config tab.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -23,7 +58,7 @@ export default function TestingPage() {
           <CardContent className="pt-6">
             <Suspense fallback={<div>Loading simulator...</div>}>
               <ChatSimulator 
-                chatbotConfigId={mockChatbotConfigId}
+                chatbotConfigId={existingConfig.id}
                 onComplete={handleSimulationComplete}
               />
             </Suspense>
@@ -91,7 +126,7 @@ export default function TestingPage() {
           <CardContent className="pt-6">
             <Suspense fallback={<div>Loading test scenarios...</div>}>
               <TestScenarios 
-                chatbotConfigId={mockChatbotConfigId}
+                chatbotConfigId={existingConfig.id}
                 onRunScenario={(scenario) => {
                   console.log('Running scenario:', scenario.name);
                 }}

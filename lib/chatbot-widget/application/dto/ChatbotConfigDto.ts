@@ -16,6 +16,7 @@ export interface ChatbotConfigDto {
   readonly knowledgeBase: KnowledgeBaseDto;
   readonly operatingHours: OperatingHoursDto;
   readonly leadQualificationQuestions: LeadQualificationQuestionDto[];
+  readonly aiConfiguration: AIConfigurationDto;
   readonly isActive: boolean;
   readonly createdAt: string; // ISO string for serialization
   readonly updatedAt: string; // ISO string for serialization
@@ -108,6 +109,7 @@ export interface CreateChatbotConfigDto {
   readonly knowledgeBase: KnowledgeBaseDto;
   readonly operatingHours: OperatingHoursDto;
   readonly leadQualificationQuestions: LeadQualificationQuestionDto[];
+  readonly aiConfiguration?: AIConfigurationDto;
 }
 
 /**
@@ -121,5 +123,48 @@ export interface UpdateChatbotConfigDto {
   readonly knowledgeBase?: Partial<KnowledgeBaseDto>;
   readonly operatingHours?: Partial<OperatingHoursDto>;
   readonly leadQualificationQuestions?: LeadQualificationQuestionDto[];
+  readonly aiConfiguration?: Partial<AIConfigurationDto>;
   readonly isActive?: boolean;
+}
+
+export interface AIConfigurationDto {
+  // OpenAI Configuration
+  readonly openaiModel: string;
+  readonly openaiTemperature: number;
+  readonly openaiMaxTokens: number;
+  
+  // Context Window Configuration
+  readonly contextMaxTokens: number;
+  readonly contextSystemPromptTokens: number;
+  readonly contextResponseReservedTokens: number;
+  readonly contextSummaryTokens: number;
+  
+  // Intent Classification
+  readonly intentConfidenceThreshold: number;
+  readonly intentAmbiguityThreshold: number;
+  readonly enableMultiIntentDetection: boolean;
+  readonly enablePersonaInference: boolean;
+  
+  // Entity Extraction
+  readonly enableAdvancedEntities: boolean;
+  readonly entityExtractionMode: string;
+  readonly customEntityTypes: string[];
+  
+  // Conversation Flow
+  readonly maxConversationTurns: number;
+  readonly inactivityTimeoutSeconds: number;
+  readonly enableJourneyRegression: boolean;
+  readonly enableContextSwitchDetection: boolean;
+  
+  // Lead Scoring
+  readonly enableAdvancedScoring: boolean;
+  readonly entityCompletenessWeight: number;
+  readonly personaConfidenceWeight: number;
+  readonly journeyProgressionWeight: number;
+  
+  // Performance & Monitoring
+  readonly enablePerformanceLogging: boolean;
+  readonly enableIntentAnalytics: boolean;
+  readonly enablePersonaAnalytics: boolean;
+  readonly responseTimeThresholdMs: number;
 } 

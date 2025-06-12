@@ -16,9 +16,21 @@ import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 // Domain services
 import { LeadScoringService } from '../../domain/services/LeadScoringService';
 import { ConversationContextService } from '../../domain/services/ConversationContextService';
+import { DynamicPromptService } from '../../domain/services/DynamicPromptService';
+import { IAIConversationService } from '../../domain/services/IAIConversationService';
+import { ITokenCountingService } from '../../domain/services/ITokenCountingService';
+import { IIntentClassificationService } from '../../domain/services/IIntentClassificationService';
+import { IKnowledgeRetrievalService } from '../../domain/services/IKnowledgeRetrievalService';
+
+// Infrastructure services
+import { OpenAIProvider, OpenAIConfig } from '../providers/openai/OpenAIProvider';
+import { OpenAITokenCountingService } from '../providers/openai/OpenAITokenCountingService';
+import { OpenAIIntentClassificationService } from '../providers/openai/OpenAIIntentClassificationService';
+import { SimpleKnowledgeRetrievalService } from '../providers/SimpleKnowledgeRetrievalService';
 
 // Application services
 import { LeadManagementService } from '../../application/services/LeadManagementService';
+import { AiConversationService } from '../../application/services/AiConversationService';
 
 // Application mappers
 import { LeadMapper } from '../../application/mappers/LeadMapper';
@@ -42,9 +54,17 @@ export class ChatbotWidgetCompositionRoot {
   private static chatMessageRepository: IChatMessageRepository | null = null;
   private static leadRepository: ILeadRepository | null = null;
 
+  // Infrastructure singletons
+  private static openAIProvider: OpenAIProvider | null = null;
+
   // Service singletons
   private static leadScoringService: LeadScoringService | null = null;
   private static conversationContextService: ConversationContextService | null = null;
+  private static dynamicPromptService: DynamicPromptService | null = null;
+  private static aiConversationService: AiConversationService | null = null;
+  private static tokenCountingService: ITokenCountingService | null = null;
+  private static intentClassificationService: IIntentClassificationService | null = null;
+  private static knowledgeRetrievalService: IKnowledgeRetrievalService | null = null;
 
   // Application service singletons
   private static leadManagementService: LeadManagementService | null = null;
@@ -113,6 +133,35 @@ export class ChatbotWidgetCompositionRoot {
   }
 
   /**
+   * Get OpenAI Provider
+   */
+  static async getOpenAIProvider(): Promise<OpenAIProvider> {
+    if (!this.openAIProvider) {
+      const config: OpenAIConfig = {
+        apiKey: process.env.OPENAI_API_KEY || '',
+        model: 'gpt-4o',
+        temperature: 0.7,
+        maxTokens: 1000,
+      };
+
+      if (!config.apiKey) {
+        throw new Error('OPENAI_API_KEY environment variable is required for chatbot functionality');
+      }
+
+      this.openAIProvider = new OpenAIProvider(config);
+      await this.openAIProvider.connect();
+      
+      // Verify connection
+      const isHealthy = await this.openAIProvider.healthCheck();
+      if (!isHealthy) {
+        console.warn('Chatbot: OpenAI provider health check failed, but continuing...');
+      }
+    }
+
+    return this.openAIProvider;
+  }
+
+  /**
    * Get Lead Scoring Service
    */
   static getLeadScoringService(): LeadScoringService {
@@ -123,13 +172,88 @@ export class ChatbotWidgetCompositionRoot {
   }
 
   /**
+   * Get Token Counting Service
+   */
+  static getTokenCountingService(): ITokenCountingService {
+    if (!this.tokenCountingService) {
+      this.tokenCountingService = new OpenAITokenCountingService();
+    }
+    return this.tokenCountingService;
+  }
+
+  /**
+   * Get Intent Classification Service with dynamic configuration
+   */
+  static async getIntentClassificationService(chatbotConfig?: any): Promise<IIntentClassificationService> {
+    // For now, create a new instance each time to use the latest config
+    // In production, you might want to cache based on config hash
+    const aiConfig = chatbotConfig?.aiConfiguration;
+    
+    const config = {
+      apiKey: process.env.OPENAI_API_KEY || '',
+      model: aiConfig?.openaiModel || 'gpt-4o-mini',
+      temperature: aiConfig?.openaiTemperature || 0.3,
+      maxTokens: 500 // Use fixed value for intent classification
+    };
+
+    if (!config.apiKey) {
+      console.warn('OPENAI_API_KEY not found, intent classification will be limited');
+    }
+
+    return new OpenAIIntentClassificationService(config);
+  }
+
+  /**
+   * Get Knowledge Retrieval Service
+   */
+  static getKnowledgeRetrievalService(chatbotConfig: any): IKnowledgeRetrievalService {
+    // Create a new instance for each chatbot config to ensure proper knowledge base
+    return new SimpleKnowledgeRetrievalService(chatbotConfig);
+  }
+
+  /**
    * Get Conversation Context Service
    */
-  static getConversationContextService(): ConversationContextService {
+  static async getConversationContextService(): Promise<ConversationContextService> {
     if (!this.conversationContextService) {
-      this.conversationContextService = new ConversationContextService();
+      const tokenCountingService = this.getTokenCountingService();
+      const intentClassificationService = await this.getIntentClassificationService();
+      
+      this.conversationContextService = new ConversationContextService(
+        tokenCountingService,
+        intentClassificationService
+        // Note: knowledgeRetrievalService is passed per-request since it depends on chatbot config
+      );
     }
     return this.conversationContextService;
+  }
+
+  /**
+   * Get Dynamic Prompt Service
+   */
+  static getDynamicPromptService(): DynamicPromptService {
+    if (!this.dynamicPromptService) {
+      this.dynamicPromptService = new DynamicPromptService();
+    }
+    return this.dynamicPromptService;
+  }
+
+  /**
+   * Get AI Conversation Service
+   */
+  static async getAiConversationService(): Promise<AiConversationService> {
+    if (!this.aiConversationService) {
+      const openAIProvider = await this.getOpenAIProvider();
+      const dynamicPromptService = this.getDynamicPromptService();
+      const conversationContextService = await this.getConversationContextService();
+
+      this.aiConversationService = new AiConversationService(
+        openAIProvider,
+        dynamicPromptService,
+        conversationContextService
+      );
+    }
+    return this.aiConversationService as AiConversationService;
   }
 
   /**
@@ -179,12 +303,28 @@ export class ChatbotWidgetCompositionRoot {
 
   /**
    * Get Process Chat Message Use Case
-   * Note: AI Conversation Service not yet implemented in composition root
+   * Now properly wired with AI Conversation Service and Token Counting
    */
-  static getProcessChatMessageUseCase(): ProcessChatMessageUseCase {
+  static async getProcessChatMessageUseCase(): Promise<ProcessChatMessageUseCase> {
     if (!this.processChatMessageUseCase) {
-      // TODO: Implement AI Conversation Service in composition root
-      throw new Error('ProcessChatMessageUseCase requires AI Conversation Service - not yet implemented');
+      const chatSessionRepository = this.getChatSessionRepository();
+      const chatMessageRepository = this.getChatMessageRepository();
+      const chatbotConfigRepository = this.getChatbotConfigRepository();
+      const aiConversationService = await this.getAiConversationService();
+      const conversationContextService = await this.getConversationContextService();
+      const tokenCountingService = this.getTokenCountingService();
+      const intentClassificationService = await this.getIntentClassificationService();
+
+      this.processChatMessageUseCase = new ProcessChatMessageUseCase(
+        chatSessionRepository,
+        chatMessageRepository,
+        chatbotConfigRepository,
+        aiConversationService as IAIConversationService,
+        conversationContextService,
+        tokenCountingService,
+        intentClassificationService
+        // knowledgeRetrievalService is passed per-request in the use case
+      );
     }
     return this.processChatMessageUseCase;
   }
