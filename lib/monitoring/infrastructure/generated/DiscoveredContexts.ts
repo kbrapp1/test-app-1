@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-12T04:24:51.562Z
+// Generated: 2025-06-13T05:41:05.635Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -10,10 +10,34 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "components": [
       "AdvancedParametersSection",
       "BotConfigurationSection",
+      "ChatApiDebugPanel",
+      "ChatConfigurationPanel",
+      "ChatInterface",
       "ChatSimulator",
+      "BusinessRulesSection",
+      "IntentAnalysisSection",
+      "JourneyProgressionSection",
+      "LeadScoringSection",
+      "PerformanceMetricsSection",
+      "ResponseGenerationSection",
+      "UserInputSection",
+      "ContextEnhancementStep",
+      "FirstApiCallStep",
+      "LeadScoringProgressionStep",
+      "RequestPreprocessingStep",
       "EmbedCodeGenerator",
       "KnowledgeBaseSection",
       "LeadSettingsSection",
+      "ComponentTimingBreakdown",
+      "MemoryUsageDetails",
+      "NetworkMetrics",
+      "PerformanceSummary",
+      "SystemHealthStatus",
+      "SystemResourceUsage",
+      "ApiRequestDetails",
+      "ApiResponseDetails",
+      "CostAnalysis",
+      "PerformanceTiming",
       "TestScenarios",
       "WidgetPreview"
     ],
@@ -44,6 +68,7 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "/api/chatbot-widget/session"
     ],
     "optimizationTargets": [
+      "Form validation optimization",
       "Detail view caching",
       "Layout component optimization",
       "Dynamic route optimization"

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { BaseProvider, ProviderType, ProviderConfig } from '../../../../infrastructure/providers/registry/types';
+import { IDebugInformationService } from '../../../domain/services/IDebugInformationService';
 
 export interface OpenAIConfig extends ProviderConfig {
   apiKey: string;
@@ -17,12 +18,13 @@ export class OpenAIProvider implements BaseProvider {
   readonly type = ProviderType.OPENAI;
   private config: OpenAIConfig;
   private client: OpenAI | null = null;
+  private debugService: IDebugInformationService | null = null;
   
   get isConnected(): boolean {
     return this.client !== null;
   }
 
-  constructor(config: OpenAIConfig) {
+  constructor(config: OpenAIConfig, debugService?: IDebugInformationService) {
     this.config = {
       apiUrl: 'https://api.openai.com/v1',
       model: 'gpt-4o',
@@ -30,6 +32,7 @@ export class OpenAIProvider implements BaseProvider {
       maxTokens: 1000,
       ...config
     };
+    this.debugService = debugService || null;
   }
 
   async connect(): Promise<void> {
@@ -62,12 +65,35 @@ export class OpenAIProvider implements BaseProvider {
   }
 
   /**
+   * Capture API call for debugging (if debug service available)
+   */
+  private captureApiCall(
+    sessionId: string | null,
+    callType: 'first' | 'second',
+    requestData: any,
+    responseData: any,
+    processingTime: number
+  ): void {
+    if (this.debugService && sessionId) {
+      const apiCallInfo = this.debugService.captureApiCall(
+        callType,
+        requestData,
+        responseData,
+        processingTime
+      );
+      this.debugService.addApiCallToSession(sessionId, callType, apiCallInfo);
+    }
+  }
+
+  /**
    * Generate chat completion with optional function calling
    */
   async createChatCompletion(
     messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
     functions?: OpenAI.Chat.Completions.ChatCompletionCreateParams.Function[],
-    functionCall?: 'auto' | 'none' | { name: string }
+    functionCall?: 'auto' | 'none' | { name: string },
+    sessionId?: string,
+    callType?: 'first' | 'second'
   ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
     if (!this.isConnected || !this.client) {
       throw new Error('OpenAI provider not connected. Call connect() first.');
@@ -86,24 +112,44 @@ export class OpenAIProvider implements BaseProvider {
     }
 
     try {
-      console.log('🤖 OpenAI API Request:', {
-        model: params.model,
-        messagesCount: params.messages.length,
-        temperature: params.temperature,
-        max_tokens: params.max_tokens,
-        timestamp: new Date().toISOString()
-      });
+      const startTime = Date.now();
+      
+      // Prepare request data for debug capture
+      const requestData = {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        timestamp: new Date().toISOString(),
+        payload: params,
+        payloadSize: `${JSON.stringify(params).length} characters`,
+        messageCount: params.messages.length,
+        conversationHistoryLength: params.messages.length - 1, // Exclude current user message
+        userMessage: params.messages[params.messages.length - 1]?.content || ''
+      };
 
       const response = await this.client.chat.completions.create(params);
       
-      console.log('✅ OpenAI API Response:', {
-        id: response.id,
-        model: response.model,
-        usage: response.usage,
-        responseLength: response.choices[0]?.message?.content?.length || 0,
-        functionCall: response.choices[0]?.message?.function_call?.name,
-        timestamp: new Date().toISOString()
-      });
+      const processingTime = Date.now() - startTime;
+      
+      // Prepare response data for debug capture
+      const responseData = {
+        timestamp: new Date().toISOString(),
+        processingTime: `${processingTime}ms`,
+        response: response,
+        responseSize: `${JSON.stringify(response).length} characters`
+      };
+
+      // Console log the API call request
+      console.log(`🤖 OPENAI PROVIDER - ${callType?.toUpperCase()} API CALL - REQUEST:`);
+      console.log(JSON.stringify(requestData, null, 2));
+
+      // Console log the API call response
+      console.log(`🤖 OPENAI PROVIDER - ${callType?.toUpperCase()} API CALL - RESPONSE:`);
+      console.log(JSON.stringify(responseData, null, 2));
+
+      // Capture API call for debugging
+      if (sessionId && callType) {
+        this.captureApiCall(sessionId, callType, requestData, responseData, processingTime);
+      }
 
       // Calculate and log actual costs
       if (response.usage) {
@@ -112,12 +158,23 @@ export class OpenAIProvider implements BaseProvider {
           response.usage.completion_tokens
         );
         
-        console.log('💰 OpenAI API Costs:', {
-          inputTokens: response.usage.prompt_tokens,
-          outputTokens: response.usage.completion_tokens,
-          totalTokens: response.usage.total_tokens,
-          estimatedCost: `$${costEstimate.toFixed(4)}`,
-          model: response.model
+        console.log('💰 OPENAI PROVIDER - COST ANALYSIS:', {
+          timestamp: new Date().toISOString(),
+          model: response.model,
+          tokenUsage: {
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            totalTokens: response.usage.total_tokens
+          },
+          costBreakdown: {
+            inputCost: `$${((response.usage.prompt_tokens / 1000) * 0.005).toFixed(6)}`,
+            outputCost: `$${((response.usage.completion_tokens / 1000) * 0.020).toFixed(6)}`,
+            totalEstimatedCost: `$${costEstimate.toFixed(6)}`
+          },
+          efficiency: {
+            tokensPerDollar: Math.round(response.usage.total_tokens / costEstimate),
+            costPerMessage: `$${(costEstimate / params.messages.length).toFixed(6)}`
+          }
         });
       }
 

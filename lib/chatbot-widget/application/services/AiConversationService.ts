@@ -91,12 +91,51 @@ export class AiConversationService implements IAIConversationService {
         }
       };
 
-      // 5. Generate response with function calling capability
+      // 5. Configure OpenAI provider with chatbot-specific settings
+      const aiConfig = context.chatbotConfig.aiConfiguration;
+      
+      // Update provider configuration for this request
+      await this.configureProviderForRequest(aiConfig);
+
+      // Console log the second API call request
+      console.log('🚀 SECOND API CALL (Response Generation) - REQUEST:');
+      console.log(JSON.stringify({
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        timestamp: new Date().toISOString(),
+        payload: {
+          model: aiConfig?.openaiModel || 'gpt-4o-mini',
+          messages: messages,
+          functions: [leadCaptureFunction],
+          function_call: 'auto',
+          temperature: aiConfig?.openaiTemperature || 0.7,
+          max_tokens: aiConfig?.openaiMaxTokens || 1000
+        },
+        payloadSize: JSON.stringify({
+          messages: messages,
+          functions: [leadCaptureFunction]
+        }).length + ' characters',
+        messageCount: messages.length,
+        conversationHistoryLength: messageHistory.length,
+        userMessage: userMessage
+      }, null, 2));
+
+      // 6. Generate response with function calling capability
       const response = await this.openAIProvider.createChatCompletion(
         messages,
         [leadCaptureFunction],
-        'auto'
+        'auto',
+        context.session.id, // Pass session ID for debug capture
+        'second' // This is the second API call
       );
+
+      // Console log the second API call response
+      console.log('🚀 SECOND API CALL (Response Generation) - RESPONSE:');
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        response: response,
+        responseSize: JSON.stringify(response).length + ' characters'
+      }, null, 2));
 
       const choice = response.choices[0];
       const usage = response.usage;
@@ -110,7 +149,7 @@ export class AiConversationService implements IAIConversationService {
           confidence: 0.9,
           processingTimeMs: 0, // Will be calculated by caller
           metadata: {
-            model: 'gpt-4',
+            model: response.model || aiConfig?.openaiModel || 'gpt-4o-mini',
             promptTokens: usage?.prompt_tokens || 0,
             completionTokens: usage?.completion_tokens || 0,
             totalTokens: usage?.total_tokens || 0,
@@ -128,7 +167,7 @@ export class AiConversationService implements IAIConversationService {
         confidence: 0.8,
         processingTimeMs: 0, // Will be calculated by caller
         metadata: {
-          model: 'gpt-4',
+          model: response.model || aiConfig?.openaiModel || 'gpt-4o-mini',
           promptTokens: usage?.prompt_tokens || 0,
           completionTokens: usage?.completion_tokens || 0,
           totalTokens: usage?.total_tokens || 0,
@@ -317,6 +356,23 @@ export class AiConversationService implements IAIConversationService {
       usage.prompt_tokens,
       usage.completion_tokens
     );
+  }
+
+  /**
+   * Configure OpenAI provider for this specific request using chatbot config
+   */
+  private async configureProviderForRequest(aiConfig: any): Promise<void> {
+    // Update the provider's configuration for this request
+    // Note: This follows DDD by using domain configuration to drive infrastructure
+    if (this.openAIProvider && aiConfig) {
+      // Update the provider's internal config
+      (this.openAIProvider as any).config = {
+        ...(this.openAIProvider as any).config,
+        model: aiConfig.openaiModel || 'gpt-4o-mini',
+        temperature: aiConfig.temperature || 0.7,
+        maxTokens: aiConfig.maxTokens || 1000
+      };
+    }
   }
 
   /**

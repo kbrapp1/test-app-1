@@ -72,7 +72,7 @@ export class ChatSimulationContext {
       simulationType: 'preview',
       chatbotConfigId,
       simulatedUserProfile: userProfile,
-      responseMode: 'mock',
+      responseMode: 'live',
       testingGoals: [],
       simulationConstraints: {
         maxMessages: 10,

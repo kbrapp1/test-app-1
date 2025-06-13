@@ -19,6 +19,7 @@ import { ConversationContextWindow } from '../../domain/value-objects/Conversati
 import { ITokenCountingService } from '../../domain/services/ITokenCountingService';
 import { IIntentClassificationService } from '../../domain/services/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../domain/services/IKnowledgeRetrievalService';
+import { IDebugInformationService } from '../../domain/services/IDebugInformationService';
 import { IntentResult } from '../../domain/value-objects/IntentResult';
 import { UserJourneyState } from '../../domain/value-objects/UserJourneyState';
 
@@ -74,7 +75,8 @@ export class ProcessChatMessageUseCase {
     private readonly conversationContextService: ConversationContextService,
     private readonly tokenCountingService: ITokenCountingService,
     private readonly intentClassificationService?: IIntentClassificationService,
-    private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService
+    private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService,
+    private readonly debugInformationService?: IDebugInformationService
   ) {
     // Initialize context window with sensible defaults
     this.contextWindow = ConversationContextWindow.create({
@@ -89,6 +91,16 @@ export class ProcessChatMessageUseCase {
    * Execute the complete message processing workflow
    */
   async execute(request: ProcessMessageRequest): Promise<ProcessMessageResult> {
+    const startTime = Date.now();
+    
+    // 🎯 PIPELINE START
+    console.log('🎯 ===== CHATBOT PIPELINE START =====');
+    console.log('📝 Request:', JSON.stringify({
+      sessionId: request.sessionId,
+      userMessage: request.userMessage,
+      timestamp: new Date().toISOString()
+    }, null, 2));
+
     // 1. Load and validate session
     const session = await this.sessionRepository.findById(request.sessionId);
     if (!session) {
@@ -108,6 +120,12 @@ export class ProcessChatMessageUseCase {
 
     // 4. Create and save user message
     const userMessage = await this.createAndSaveUserMessage(session, request);
+
+    // 5. Initialize debug session (will be populated by OpenAI services)
+    if (this.debugInformationService) {
+      // We'll set botMessageId after creating the bot response
+      this.debugInformationService.initializeSession(session.id, userMessage.id, 'temp');
+    }
 
     // 5. Update session activity
     let updatedSession = session.updateActivity();
@@ -150,6 +168,11 @@ export class ProcessChatMessageUseCase {
     // 11. Create and save bot response message
     const botMessage = await this.createAndSaveBotMessage(session, aiResponse);
 
+    // 12. Update debug session with correct bot message ID
+    if (this.debugInformationService) {
+      this.debugInformationService.initializeSession(session.id, userMessage.id, botMessage.id);
+    }
+
     // 12. Update session with conversation context
     const allMessages = [...contextResult.messages, userMessage, botMessage];
     updatedSession = this.conversationContextService.updateSessionContext(
@@ -174,7 +197,14 @@ export class ProcessChatMessageUseCase {
       shouldCaptureLeadInfo
     );
 
-    return {
+    const totalProcessingTime = Date.now() - startTime;
+
+    // Update debug session with total processing time
+    if (this.debugInformationService) {
+      this.debugInformationService.updateProcessingTime(session.id, totalProcessingTime);
+    }
+
+    const result = {
       chatSession: finalSession,
       userMessage,
       botResponse: botMessage,
@@ -195,6 +225,21 @@ export class ProcessChatMessageUseCase {
       } : undefined,
       relevantKnowledge: enhancedContext.relevantKnowledge
     };
+
+    // 🎯 PIPELINE END
+    console.log('🎯 ===== CHATBOT PIPELINE COMPLETE =====');
+    console.log('📊 Summary:', JSON.stringify({
+      totalProcessingTime: `${totalProcessingTime}ms`,
+      userMessageId: userMessage.id,
+      botMessageId: botMessage.id,
+      intentDetected: result.intentAnalysis?.intent,
+      intentConfidence: result.intentAnalysis?.confidence,
+      shouldCaptureLeadInfo,
+      conversationMetrics: result.conversationMetrics,
+      timestamp: new Date().toISOString()
+    }, null, 2));
+
+    return result;
   }
 
   /**

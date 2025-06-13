@@ -9,7 +9,6 @@ export interface IChatSimulationService {
   sendMessage(simulationId: string, message: string): Promise<{ simulation: ChatSimulation; response: string }>;
   completeSimulation(simulationId: string, results?: Partial<SimulationResults>): Promise<ChatSimulation>;
   cancelSimulation(simulationId: string, reason?: string): Promise<ChatSimulation>;
-  generateMockResponse(message: string, context: ChatSimulationContext): Promise<string>;
 }
 
 export class ChatSimulationService implements IChatSimulationService {
@@ -32,21 +31,6 @@ export class ChatSimulationService implements IChatSimulationService {
     });
 
     this.activeSimulations.set(simulation.id, simulation);
-
-    // Send initial greeting if using mock responses
-    if (context.shouldUseMockResponses()) {
-      const greeting = this.generateGreeting(chatbotConfig, context.simulatedUserProfile);
-      const greetingMessage = ChatMessage.createBotMessage(
-        simulation.id,
-        greeting,
-        { model: 'mock', processingTime: 500 }
-      );
-      
-      const simulationWithGreeting = simulation.addMessage(greetingMessage);
-      this.activeSimulations.set(simulation.id, simulationWithGreeting);
-      return simulationWithGreeting;
-    }
-
     return simulation;
   }
 
@@ -64,13 +48,8 @@ export class ChatSimulationService implements IChatSimulationService {
     const userMessage = ChatMessage.createUserMessage(simulation.id, message);
     simulation = simulation.addMessage(userMessage);
 
-    // Generate response based on context
-    let response: string;
-    if (simulation.context.shouldUseMockResponses()) {
-      response = await this.generateMockResponse(message, simulation.context);
-    } else {
-      response = await this.generateLiveResponse(message, simulation);
-    }
+    // Generate live AI response
+    const response = await this.generateLiveResponse(message, simulation);
 
     // Add bot response
     const botMessage = ChatMessage.createBotMessage(
@@ -138,56 +117,7 @@ export class ChatSimulationService implements IChatSimulationService {
     return cancelledSimulation;
   }
 
-  async generateMockResponse(message: string, context: ChatSimulationContext): Promise<string> {
-    const chatbotConfig = await this.chatbotConfigRepository.findById(context.chatbotConfigId);
-    if (!chatbotConfig) {
-      return "I'm sorry, I'm having trouble accessing my configuration right now.";
-    }
 
-    const lowerMessage = message.toLowerCase();
-    
-    // FAQ matching
-    for (const faq of chatbotConfig.knowledgeBase.faqs) {
-      if (faq.isActive && lowerMessage.includes(faq.question.toLowerCase().substring(0, 10))) {
-        return faq.answer;
-      }
-    }
-
-    // Product information
-    if (lowerMessage.includes('product') || lowerMessage.includes('service')) {
-      return chatbotConfig.knowledgeBase.productCatalog || "We offer a range of products and services. What specifically interests you?";
-    }
-
-    // Company information
-    if (lowerMessage.includes('company') || lowerMessage.includes('about')) {
-      return chatbotConfig.knowledgeBase.companyInfo || "We're a company focused on providing excellent service to our customers.";
-    }
-
-    // Pricing inquiries
-    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('how much')) {
-      return "I'd be happy to help you with pricing information. Can you tell me more about what you're looking for?";
-    }
-
-    // Lead qualification trigger
-    if (lowerMessage.includes('interested') || lowerMessage.includes('demo') || lowerMessage.includes('contact')) {
-      return "That's great! I'd love to help you get more information. Could you share your email address so someone from our team can follow up?";
-    }
-
-    // Contact information
-    if (lowerMessage.includes('contact') || lowerMessage.includes('phone') || lowerMessage.includes('email')) {
-      return "You can reach us through our website contact form, or I can help connect you with the right person. What would work best for you?";
-    }
-
-    // Default response based on personality
-    const personality = chatbotConfig.personalitySettings;
-    if (personality.tone === 'friendly') {
-      return "I understand what you're asking about. Let me help you with that. Could you provide a bit more detail?";
-    } else if (personality.tone === 'professional') {
-      return "Thank you for your inquiry. I'll need some additional information to provide you with the most accurate response.";
-    } else {
-      return "I'd be happy to help you with that. Can you tell me more about what you're looking for?";
-    }
-  }
 
   private async generateLiveResponse(message: string, simulation: ChatSimulation): Promise<string> {
     // This would integrate with the actual AI conversation service
@@ -195,15 +125,7 @@ export class ChatSimulationService implements IChatSimulationService {
     return `[Live AI Response] I understand you're asking about "${message.substring(0, 50)}...". This would be generated by our AI service in production.`;
   }
 
-  private generateGreeting(config: ChatbotConfig, userProfile: SimulatedUserProfile): string {
-    const greetings = {
-      friendly: `Hi there! I'm ${config.name}, and I'm here to help. What can I assist you with today?`,
-      professional: `Hello, I'm ${config.name}, your virtual assistant. How may I help you today?`,
-      casual: `Hey! I'm ${config.name}. What's up?`,
-    };
 
-    return greetings[config.personalitySettings.tone as keyof typeof greetings] || greetings.friendly;
-  }
 
   private async autoCompleteSimulation(simulation: ChatSimulation): Promise<ChatSimulation> {
     return simulation.complete({

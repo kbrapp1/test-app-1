@@ -1,6 +1,7 @@
 import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/IIntentClassificationService';
 import { IntentResult, IntentType, ExtractedEntities } from '../../../domain/value-objects/IntentResult';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { IDebugInformationService } from '../../../domain/services/IDebugInformationService';
 import OpenAI from 'openai';
 
 export interface OpenAIIntentConfig {
@@ -13,12 +14,34 @@ export interface OpenAIIntentConfig {
 export class OpenAIIntentClassificationService implements IIntentClassificationService {
   private readonly config: OpenAIIntentConfig;
   private readonly client: OpenAI;
+  private readonly debugService: IDebugInformationService | null = null;
 
-  constructor(config: OpenAIIntentConfig) {
+  constructor(config: OpenAIIntentConfig, debugService?: IDebugInformationService) {
     this.config = config;
     this.client = new OpenAI({
       apiKey: config.apiKey,
     });
+    this.debugService = debugService || null;
+  }
+
+  /**
+   * Capture API call for debugging (if debug service available)
+   */
+  private captureApiCall(
+    sessionId: string | null,
+    requestData: any,
+    responseData: any,
+    processingTime: number
+  ): void {
+    if (this.debugService && sessionId) {
+      const apiCallInfo = this.debugService.captureApiCall(
+        'first',
+        requestData,
+        responseData,
+        processingTime
+      );
+      this.debugService.addApiCallToSession(sessionId, 'first', apiCallInfo);
+    }
   }
 
   /**
@@ -28,12 +51,13 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
     message: string,
     context: IntentClassificationContext
   ): Promise<IntentResult> {
-    return this.classifyIntentEnhanced(message, context.messageHistory);
+    return this.classifyIntentEnhanced(message, context.messageHistory, context.session?.id);
   }
 
   async classifyIntentEnhanced(
     message: string,
-    messageHistory: ChatMessage[]
+    messageHistory: ChatMessage[],
+    sessionId?: string
   ): Promise<IntentResult> {
     try {
       const startTime = Date.now();
@@ -233,16 +257,52 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
         { role: "user", content: message }
       ];
 
-      const response = await this.client.chat.completions.create({
+      const requestPayload = {
         model: this.config.model,
         messages: openAIMessages,
         functions: functions,
         function_call: { name: "classify_intent_and_persona" },
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens
-      });
+      };
+
+      // Prepare request data for debug capture
+      const requestData = {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        timestamp: new Date().toISOString(),
+        payload: requestPayload,
+        payloadSize: `${JSON.stringify(requestPayload).length} characters`,
+        messageCount: openAIMessages.length,
+        conversationHistoryLength: messageHistory.length,
+        userMessage: message
+      };
+
+      // Console log the first API call request
+      console.log('🔥 FIRST API CALL (Intent Classification) - REQUEST:');
+      console.log(JSON.stringify(requestData, null, 2));
+
+      const response = await this.client.chat.completions.create(requestPayload);
 
       const processingTime = Date.now() - startTime;
+      
+      // Prepare response data for debug capture
+      const responseData = {
+        timestamp: new Date().toISOString(),
+        processingTime: `${processingTime}ms`,
+        response: response,
+        responseSize: `${JSON.stringify(response).length} characters`
+      };
+
+      // Console log the first API call response
+      console.log('🔥 FIRST API CALL (Intent Classification) - RESPONSE:');
+      console.log(JSON.stringify(responseData, null, 2));
+
+      // Capture API call for debugging
+      if (sessionId) {
+        this.captureApiCall(sessionId, requestData, responseData, processingTime);
+      }
+
       const functionCall = response.choices[0]?.message?.function_call;
 
       if (!functionCall || !functionCall.arguments) {
@@ -306,17 +366,69 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
     const startTime = Date.now();
 
     try {
-      const response = await this.client.chat.completions.create({
+      const quickMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        { 
+          role: "system", 
+          content: "You are an intent classifier. Classify the user's message into one of these intents: greeting, faq_general, faq_pricing, faq_features, sales_inquiry, booking_request, demo_request, support_request, objection_handling, qualification, closing, unknown. Respond with just the intent name."
+        },
+        { role: "user", content: message }
+      ];
+
+      const quickRequestPayload = {
         model: this.config.model,
-        messages: [
-          { 
-            role: "system", 
-            content: "You are an intent classifier. Classify the user's message into one of these intents: greeting, faq_general, faq_pricing, faq_features, sales_inquiry, booking_request, demo_request, support_request, objection_handling, qualification, closing, unknown. Respond with just the intent name."
-          },
-          { role: "user", content: message }
-        ],
+        messages: quickMessages,
         temperature: 0.1,
         max_tokens: 50
+      };
+
+      // Console log the quick intent classification request
+      console.log('⚡ QUICK INTENT CLASSIFICATION - REQUEST:', {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        timestamp: new Date().toISOString(),
+        payload: {
+          model: quickRequestPayload.model,
+          messages: quickMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          temperature: quickRequestPayload.temperature,
+          max_tokens: quickRequestPayload.max_tokens
+        },
+        payloadSize: JSON.stringify(quickRequestPayload).length + ' characters',
+        userMessage: message
+      });
+
+      const response = await this.client.chat.completions.create(quickRequestPayload);
+
+      // Console log the quick intent classification response
+      console.log('⚡ QUICK INTENT CLASSIFICATION - RESPONSE:', {
+        timestamp: new Date().toISOString(),
+        processingTime: (Date.now() - startTime) + 'ms',
+        response: {
+          id: response.id,
+          model: response.model,
+          usage: {
+            prompt_tokens: response.usage?.prompt_tokens,
+            completion_tokens: response.usage?.completion_tokens,
+            total_tokens: response.usage?.total_tokens,
+            prompt_tokens_details: response.usage?.prompt_tokens_details,
+            completion_tokens_details: response.usage?.completion_tokens_details
+          },
+          choices: response.choices.map(choice => ({
+            index: choice.index,
+            message: {
+              role: choice.message?.role,
+              content: choice.message?.content,
+              function_call: choice.message?.function_call ? {
+                name: choice.message.function_call.name,
+                arguments: choice.message.function_call.arguments
+              } : null
+            },
+            finish_reason: choice.finish_reason
+          })),
+          responseSize: JSON.stringify(response).length + ' characters'
+        }
       });
 
       const intentText = response.choices[0]?.message?.content?.trim().toLowerCase() || 'unknown';
@@ -391,15 +503,63 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.client.chat.completions.create({
+      const healthCheckPayload = {
         model: this.config.model,
-        messages: [{ role: "user", content: "Hello" }],
+        messages: [{ role: "user", content: "Hello" }] as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
         max_tokens: 5,
         temperature: 0
+      };
+
+      // Console log the health check request
+      console.log('🏥 HEALTH CHECK - REQUEST:', {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        method: 'POST',
+        timestamp: new Date().toISOString(),
+        payload: {
+          model: healthCheckPayload.model,
+          messages: healthCheckPayload.messages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          max_tokens: healthCheckPayload.max_tokens,
+          temperature: healthCheckPayload.temperature
+        }
       });
+
+      const response = await this.client.chat.completions.create(healthCheckPayload);
+
+      // Console log the health check response
+      console.log('🏥 HEALTH CHECK - RESPONSE:', {
+        timestamp: new Date().toISOString(),
+        success: !!response.choices[0]?.message?.content,
+        response: {
+          id: response.id,
+          model: response.model,
+          usage: {
+            prompt_tokens: response.usage?.prompt_tokens,
+            completion_tokens: response.usage?.completion_tokens,
+            total_tokens: response.usage?.total_tokens,
+            prompt_tokens_details: response.usage?.prompt_tokens_details,
+            completion_tokens_details: response.usage?.completion_tokens_details
+          },
+          choices: response.choices.map(choice => ({
+            index: choice.index,
+            message: {
+              role: choice.message?.role,
+              content: choice.message?.content,
+              function_call: choice.message?.function_call ? {
+                name: choice.message.function_call.name,
+                arguments: choice.message.function_call.arguments
+              } : null
+            },
+            finish_reason: choice.finish_reason
+          }))
+        }
+      });
+
       return !!response.choices[0]?.message?.content;
     } catch (error) {
-      console.error('OpenAI health check failed:', error);
+      console.error('🏥 HEALTH CHECK - ERROR:', error);
       return false;
     }
   }

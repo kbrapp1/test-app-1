@@ -27,6 +27,8 @@ import { OpenAIProvider, OpenAIConfig } from '../providers/openai/OpenAIProvider
 import { OpenAITokenCountingService } from '../providers/openai/OpenAITokenCountingService';
 import { OpenAIIntentClassificationService } from '../providers/openai/OpenAIIntentClassificationService';
 import { SimpleKnowledgeRetrievalService } from '../providers/SimpleKnowledgeRetrievalService';
+import { DebugInformationService } from '../services/DebugInformationService';
+import { IDebugInformationService } from '../../domain/services/IDebugInformationService';
 
 // Application services
 import { LeadManagementService } from '../../application/services/LeadManagementService';
@@ -65,6 +67,7 @@ export class ChatbotWidgetCompositionRoot {
   private static tokenCountingService: ITokenCountingService | null = null;
   private static intentClassificationService: IIntentClassificationService | null = null;
   private static knowledgeRetrievalService: IKnowledgeRetrievalService | null = null;
+  private static debugInformationService: IDebugInformationService | null = null;
 
   // Application service singletons
   private static leadManagementService: LeadManagementService | null = null;
@@ -148,7 +151,7 @@ export class ChatbotWidgetCompositionRoot {
         throw new Error('OPENAI_API_KEY environment variable is required for chatbot functionality');
       }
 
-      this.openAIProvider = new OpenAIProvider(config);
+      this.openAIProvider = new OpenAIProvider(config, this.getDebugInformationService());
       await this.openAIProvider.connect();
       
       // Verify connection
@@ -200,7 +203,7 @@ export class ChatbotWidgetCompositionRoot {
       console.warn('OPENAI_API_KEY not found, intent classification will be limited');
     }
 
-    return new OpenAIIntentClassificationService(config);
+    return new OpenAIIntentClassificationService(config, this.getDebugInformationService());
   }
 
   /**
@@ -273,6 +276,16 @@ export class ChatbotWidgetCompositionRoot {
   }
 
   /**
+   * Get Debug Information Service
+   */
+  static getDebugInformationService(): IDebugInformationService {
+    if (!this.debugInformationService) {
+      this.debugInformationService = new DebugInformationService();
+    }
+    return this.debugInformationService;
+  }
+
+  /**
    * Reset all singletons (useful for testing)
    */
   static reset(): void {
@@ -283,6 +296,7 @@ export class ChatbotWidgetCompositionRoot {
     this.leadRepository = null;
     this.leadScoringService = null;
     this.conversationContextService = null;
+    this.debugInformationService = null;
     this.leadManagementService = null;
     this.configureChatbotUseCase = null;
     this.processChatMessageUseCase = null;
@@ -322,8 +336,9 @@ export class ChatbotWidgetCompositionRoot {
         aiConversationService as IAIConversationService,
         conversationContextService,
         tokenCountingService,
-        intentClassificationService
-        // knowledgeRetrievalService is passed per-request in the use case
+        intentClassificationService,
+        undefined, // knowledgeRetrievalService is passed per-request in the use case
+        this.getDebugInformationService()
       );
     }
     return this.processChatMessageUseCase;
