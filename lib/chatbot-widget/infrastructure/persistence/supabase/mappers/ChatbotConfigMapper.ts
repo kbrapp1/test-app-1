@@ -1,4 +1,8 @@
-import { ChatbotConfig, ChatbotConfigProps, PersonalitySettings, KnowledgeBase, FAQ, OperatingHours, BusinessHours, Holiday, LeadQualificationQuestion } from '../../../../domain/entities/ChatbotConfig';
+import { ChatbotConfig, ChatbotConfigProps, LeadQualificationQuestion } from '../../../../domain/entities/ChatbotConfig';
+import { PersonalitySettings } from '../../../../domain/value-objects/PersonalitySettings';
+import { KnowledgeBase } from '../../../../domain/value-objects/KnowledgeBase';
+import { OperatingHours } from '../../../../domain/value-objects/OperatingHours';
+import { AIConfiguration } from '../../../../domain/value-objects/AIConfiguration';
 
 /**
  * Raw database record structure from Supabase
@@ -13,6 +17,7 @@ export interface RawChatbotConfigDbRecord {
   knowledge_base: any; // JSONB
   operating_hours: any; // JSONB
   lead_qualification_questions: any; // JSONB array
+  ai_configuration: any; // JSONB
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -31,6 +36,7 @@ export interface InsertChatbotConfigData {
   knowledge_base: any;
   operating_hours: any;
   lead_qualification_questions: any;
+  ai_configuration: any;
   is_active: boolean;
 }
 
@@ -45,6 +51,7 @@ export interface UpdateChatbotConfigData {
   knowledge_base?: any;
   operating_hours?: any;
   lead_qualification_questions?: any;
+  ai_configuration?: any;
   is_active?: boolean;
   updated_at?: string;
 }
@@ -68,6 +75,7 @@ export class ChatbotConfigMapper {
       knowledgeBase: this.mapKnowledgeBase(record.knowledge_base),
       operatingHours: this.mapOperatingHours(record.operating_hours),
       leadQualificationQuestions: this.mapLeadQuestions(record.lead_qualification_questions),
+      aiConfiguration: this.mapAIConfiguration(record.ai_configuration),
       isActive: record.is_active,
       createdAt: new Date(record.created_at),
       updatedAt: new Date(record.updated_at),
@@ -86,10 +94,11 @@ export class ChatbotConfigMapper {
       name: config.name,
       avatar_url: config.avatarUrl,
       description: config.description,
-      personality_settings: config.personalitySettings,
-      knowledge_base: config.knowledgeBase,
-      operating_hours: config.operatingHours,
+      personality_settings: config.personalitySettings.toPlainObject(),
+      knowledge_base: config.knowledgeBase.toPlainObject(),
+      operating_hours: config.operatingHours.toPlainObject(),
       lead_qualification_questions: config.leadQualificationQuestions,
+      ai_configuration: config.aiConfiguration.toPlainObject(),
       is_active: config.isActive,
     };
   }
@@ -102,20 +111,21 @@ export class ChatbotConfigMapper {
       name: config.name,
       avatar_url: config.avatarUrl,
       description: config.description,
-      personality_settings: config.personalitySettings,
-      knowledge_base: config.knowledgeBase,
-      operating_hours: config.operatingHours,
+      personality_settings: config.personalitySettings.toPlainObject(),
+      knowledge_base: config.knowledgeBase.toPlainObject(),
+      operating_hours: config.operatingHours.toPlainObject(),
       lead_qualification_questions: config.leadQualificationQuestions,
+      ai_configuration: config.aiConfiguration.toPlainObject(),
       is_active: config.isActive,
       updated_at: new Date().toISOString(),
     };
   }
 
   /**
-   * Map JSONB personality settings to domain object
+   * Map JSONB personality settings to domain value object
    */
   private static mapPersonalitySettings(data: any): PersonalitySettings {
-    return {
+    return PersonalitySettings.create({
       tone: data?.tone || 'professional',
       communicationStyle: data?.communicationStyle || 'helpful',
       responseLength: data?.responseLength || 'adaptive',
@@ -137,68 +147,98 @@ export class ChatbotConfigMapper {
         inactivityTimeout: data?.conversationFlow?.inactivityTimeout || 300,
       },
       customInstructions: data?.customInstructions || '',
-    };
+    });
   }
 
   /**
-   * Map JSONB knowledge base to domain object
+   * Map JSONB knowledge base to domain value object
    */
   private static mapKnowledgeBase(data: any): KnowledgeBase {
-    return {
+    return KnowledgeBase.create({
       companyInfo: data?.companyInfo || '',
       productCatalog: data?.productCatalog || '',
-      faqs: (data?.faqs || []).map((faq: any) => this.mapFAQ(faq)),
+      faqs: (data?.faqs || []).map((faq: any) => ({
+        id: faq?.id || crypto.randomUUID(),
+        question: faq?.question || '',
+        answer: faq?.answer || '',
+        category: faq?.category || 'general',
+        isActive: faq?.isActive !== undefined ? faq.isActive : true,
+      })),
       supportDocs: data?.supportDocs || '',
       complianceGuidelines: data?.complianceGuidelines || '',
-    };
+    });
   }
 
   /**
-   * Map FAQ object
-   */
-  private static mapFAQ(faq: any): FAQ {
-    return {
-      id: faq?.id || crypto.randomUUID(),
-      question: faq?.question || '',
-      answer: faq?.answer || '',
-      category: faq?.category || 'general',
-      isActive: faq?.isActive !== undefined ? faq.isActive : true,
-    };
-  }
-
-  /**
-   * Map JSONB operating hours to domain object
+   * Map JSONB operating hours to domain value object
    */
   private static mapOperatingHours(data: any): OperatingHours {
-    return {
+    return OperatingHours.create({
       timezone: data?.timezone || 'UTC',
-      businessHours: (data?.businessHours || []).map((hours: any) => this.mapBusinessHours(hours)),
-      holidaySchedule: (data?.holidaySchedule || []).map((holiday: any) => this.mapHoliday(holiday)),
+      businessHours: (data?.businessHours || []).map((hours: any) => ({
+        dayOfWeek: hours?.dayOfWeek || 0,
+        startTime: hours?.startTime || '09:00',
+        endTime: hours?.endTime || '17:00',
+        isActive: hours?.isActive !== undefined ? hours.isActive : true,
+      })),
+      holidaySchedule: (data?.holidaySchedule || []).map((holiday: any) => ({
+        date: holiday?.date || '',
+        name: holiday?.name || '',
+        isRecurring: holiday?.isRecurring !== undefined ? holiday.isRecurring : false,
+      })),
       outsideHoursMessage: data?.outsideHoursMessage || 'We are currently closed. Please leave a message and we will get back to you.',
-    };
+    });
   }
 
   /**
-   * Map business hours object
+   * Map JSONB AI configuration to domain value object
    */
-  private static mapBusinessHours(hours: any): BusinessHours {
-    return {
-      dayOfWeek: hours?.dayOfWeek || 0,
-      startTime: hours?.startTime || '09:00',
-      endTime: hours?.endTime || '17:00',
-      isActive: hours?.isActive !== undefined ? hours.isActive : true,
-    };
-  }
-
-  /**
-   * Map holiday object
-   */
-  private static mapHoliday(holiday: any): Holiday {
-    return {
-      date: holiday?.date || '',
-      name: holiday?.name || '',
-      isRecurring: holiday?.isRecurring !== undefined ? holiday.isRecurring : false,
-    };
+  private static mapAIConfiguration(data: any): AIConfiguration {
+    if (!data) {
+      return AIConfiguration.createDefault();
+    }
+    
+    return AIConfiguration.create({
+      // OpenAI Configuration
+      openaiModel: data?.openaiModel || 'gpt-4o-mini',
+      openaiTemperature: data?.openaiTemperature || 0.3,
+      openaiMaxTokens: data?.openaiMaxTokens || 1000,
+      
+      // Context Window Configuration
+      contextMaxTokens: data?.contextMaxTokens || 12000,
+      contextSystemPromptTokens: data?.contextSystemPromptTokens || 500,
+      contextResponseReservedTokens: data?.contextResponseReservedTokens || 3000,
+      contextSummaryTokens: data?.contextSummaryTokens || 200,
+      
+      // Intent Classification
+      intentConfidenceThreshold: data?.intentConfidenceThreshold || 0.7,
+      intentAmbiguityThreshold: data?.intentAmbiguityThreshold || 0.2,
+      enableMultiIntentDetection: data?.enableMultiIntentDetection !== undefined ? data.enableMultiIntentDetection : true,
+      enablePersonaInference: data?.enablePersonaInference !== undefined ? data.enablePersonaInference : true,
+      
+      // Entity Extraction
+      enableAdvancedEntities: data?.enableAdvancedEntities !== undefined ? data.enableAdvancedEntities : true,
+      entityExtractionMode: data?.entityExtractionMode || 'comprehensive',
+      customEntityTypes: data?.customEntityTypes || [],
+      
+      // Conversation Flow
+      maxConversationTurns: data?.maxConversationTurns || 20,
+      inactivityTimeoutSeconds: data?.inactivityTimeoutSeconds || 300,
+      enableJourneyRegression: data?.enableJourneyRegression !== undefined ? data.enableJourneyRegression : true,
+      enableContextSwitchDetection: data?.enableContextSwitchDetection !== undefined ? data.enableContextSwitchDetection : true,
+      
+      // Lead Scoring
+      enableAdvancedScoring: data?.enableAdvancedScoring !== undefined ? data.enableAdvancedScoring : true,
+      entityCompletenessWeight: data?.entityCompletenessWeight || 0.3,
+      personaConfidenceWeight: data?.personaConfidenceWeight || 0.2,
+      journeyProgressionWeight: data?.journeyProgressionWeight || 0.25,
+      
+      // Performance & Monitoring
+      enablePerformanceLogging: data?.enablePerformanceLogging !== undefined ? data.enablePerformanceLogging : true,
+      enableIntentAnalytics: data?.enableIntentAnalytics !== undefined ? data.enableIntentAnalytics : true,
+      enablePersonaAnalytics: data?.enablePersonaAnalytics !== undefined ? data.enablePersonaAnalytics : true,
+      responseTimeThresholdMs: data?.responseTimeThresholdMs || 2000,
+    });
   }
 
   /**

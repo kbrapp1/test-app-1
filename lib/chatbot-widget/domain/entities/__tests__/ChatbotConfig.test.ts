@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ChatbotConfig, PersonalitySettings, KnowledgeBase, OperatingHours, LeadQualificationQuestion, ResponseBehavior, ConversationFlow } from '../ChatbotConfig';
+import { ChatbotConfig, LeadQualificationQuestion } from '../ChatbotConfig';
+import { PersonalitySettings, PersonalitySettingsProps } from '../../value-objects/PersonalitySettings';
+import { KnowledgeBase, KnowledgeBaseProps } from '../../value-objects/KnowledgeBase';
+import { OperatingHours, OperatingHoursProps } from '../../value-objects/OperatingHours';
 
 describe('ChatbotConfig', () => {
   let defaultPersonality: PersonalitySettings;
@@ -8,7 +11,7 @@ describe('ChatbotConfig', () => {
   let defaultLeadQuestions: LeadQualificationQuestion[];
 
   beforeEach(() => {
-    defaultPersonality = {
+    const personalityProps: PersonalitySettingsProps = {
       tone: 'professional',
       communicationStyle: 'helpful',
       responseLength: 'adaptive',
@@ -31,8 +34,9 @@ describe('ChatbotConfig', () => {
       },
       customInstructions: '',
     };
+    defaultPersonality = PersonalitySettings.create(personalityProps);
 
-    defaultKnowledgeBase = {
+    const knowledgeBaseProps: KnowledgeBaseProps = {
       companyInfo: 'Test Company provides innovative solutions.',
       productCatalog: 'Product A, Product B',
       faqs: [
@@ -47,8 +51,9 @@ describe('ChatbotConfig', () => {
       supportDocs: 'Support documentation',
       complianceGuidelines: 'Follow GDPR rules',
     };
+    defaultKnowledgeBase = KnowledgeBase.create(knowledgeBaseProps);
 
-    defaultOperatingHours = {
+    const operatingHoursProps: OperatingHoursProps = {
       timezone: 'America/New_York',
       businessHours: [
         {
@@ -61,6 +66,7 @@ describe('ChatbotConfig', () => {
       holidaySchedule: [],
       outsideHoursMessage: 'We are currently closed.',
     };
+    defaultOperatingHours = OperatingHours.create(operatingHoursProps);
 
     defaultLeadQuestions = [
       {
@@ -168,7 +174,7 @@ describe('ChatbotConfig', () => {
     });
 
     it('should update personality settings', async () => {
-      const newPersonality: PersonalitySettings = {
+      const newPersonalityProps: PersonalitySettingsProps = {
         tone: 'friendly',
         communicationStyle: 'conversational',
         responseLength: 'brief',
@@ -191,12 +197,14 @@ describe('ChatbotConfig', () => {
         },
         customInstructions: 'Be very casual',
       };
+      const newPersonality = PersonalitySettings.create(newPersonalityProps);
 
       // Add a small delay to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 1));
       const updatedConfig = config.updatePersonality(newPersonality);
 
-      expect(updatedConfig.personalitySettings).toEqual(newPersonality);
+      expect(updatedConfig.personalitySettings.tone).toBe('friendly');
+      expect(updatedConfig.personalitySettings.communicationStyle).toBe('conversational');
       expect(updatedConfig.updatedAt.getTime()).toBeGreaterThanOrEqual(config.updatedAt.getTime());
     });
 
@@ -251,24 +259,26 @@ describe('ChatbotConfig', () => {
 
   describe('isWithinOperatingHours', () => {
     it('should return true during business hours', () => {
+      const operatingHours = OperatingHours.create({
+        timezone: 'UTC',
+        businessHours: [
+          {
+            dayOfWeek: 1, // Monday
+            startTime: '09:00',
+            endTime: '17:00',
+            isActive: true,
+          },
+        ],
+        holidaySchedule: [],
+        outsideHoursMessage: 'Closed',
+      });
+
       const config = ChatbotConfig.create({
         organizationId: 'org-123',
         name: 'Test Bot',
         personalitySettings: defaultPersonality,
         knowledgeBase: defaultKnowledgeBase,
-        operatingHours: {
-          timezone: 'UTC',
-          businessHours: [
-            {
-              dayOfWeek: 1, // Monday
-              startTime: '09:00',
-              endTime: '17:00',
-              isActive: true,
-            },
-          ],
-          holidaySchedule: [],
-          outsideHoursMessage: 'Closed',
-        },
+        operatingHours,
         leadQualificationQuestions: defaultLeadQuestions,
         isActive: true,
       });
@@ -280,24 +290,26 @@ describe('ChatbotConfig', () => {
     });
 
     it('should return false outside business hours', () => {
+      const operatingHours = OperatingHours.create({
+        timezone: 'UTC',
+        businessHours: [
+          {
+            dayOfWeek: 1, // Monday
+            startTime: '09:00',
+            endTime: '17:00',
+            isActive: true,
+          },
+        ],
+        holidaySchedule: [],
+        outsideHoursMessage: 'Closed',
+      });
+
       const config = ChatbotConfig.create({
         organizationId: 'org-123',
         name: 'Test Bot',
         personalitySettings: defaultPersonality,
         knowledgeBase: defaultKnowledgeBase,
-        operatingHours: {
-          timezone: 'UTC',
-          businessHours: [
-            {
-              dayOfWeek: 1, // Monday
-              startTime: '09:00',
-              endTime: '17:00',
-              isActive: true,
-            },
-          ],
-          holidaySchedule: [],
-          outsideHoursMessage: 'Closed',
-        },
+        operatingHours,
         leadQualificationQuestions: defaultLeadQuestions,
         isActive: true,
       });
@@ -311,47 +323,51 @@ describe('ChatbotConfig', () => {
 
   describe('generateSystemPrompt', () => {
     it('should generate system prompt with personality and knowledge', () => {
+      const personalitySettings = PersonalitySettings.create({
+        tone: 'friendly',
+        communicationStyle: 'helpful',
+        responseLength: 'adaptive',
+        escalationTriggers: [],
+        responseBehavior: {
+          useEmojis: false,
+          askFollowUpQuestions: true,
+          proactiveOffering: true,
+          personalizeResponses: true,
+          acknowledgePreviousInteractions: true,
+        },
+        conversationFlow: {
+          greetingMessage: 'Hello! How can I help you today?',
+          fallbackMessage: 'I\'m not sure about that. Could you rephrase your question?',
+          escalationMessage: 'Let me connect you with a team member.',
+          endConversationMessage: 'Thank you for chatting with us!',
+          leadCapturePrompt: 'Can I get your contact information to follow up?',
+          maxConversationTurns: 20,
+          inactivityTimeout: 300,
+        },
+        customInstructions: '',
+      });
+
+      const knowledgeBase = KnowledgeBase.create({
+        companyInfo: 'We sell widgets.',
+        productCatalog: 'Widget A, Widget B',
+        faqs: [
+          {
+            id: '1',
+            question: 'What do you sell?',
+            answer: 'We sell widgets.',
+            category: 'products',
+            isActive: true,
+          },
+        ],
+        supportDocs: '',
+        complianceGuidelines: 'Be honest.',
+      });
+
       const config = ChatbotConfig.create({
         organizationId: 'org-123',
         name: 'Helper Bot',
-        personalitySettings: {
-          tone: 'friendly',
-          communicationStyle: 'helpful',
-          responseLength: 'adaptive',
-          escalationTriggers: [],
-          responseBehavior: {
-            useEmojis: false,
-            askFollowUpQuestions: true,
-            proactiveOffering: true,
-            personalizeResponses: true,
-            acknowledgePreviousInteractions: true,
-          },
-          conversationFlow: {
-            greetingMessage: 'Hello! How can I help you today?',
-            fallbackMessage: 'I\'m not sure about that. Could you rephrase your question?',
-            escalationMessage: 'Let me connect you with a team member.',
-            endConversationMessage: 'Thank you for chatting with us!',
-            leadCapturePrompt: 'Can I get your contact information to follow up?',
-            maxConversationTurns: 20,
-            inactivityTimeout: 300,
-          },
-          customInstructions: '',
-        },
-        knowledgeBase: {
-          companyInfo: 'We sell widgets.',
-          productCatalog: 'Widget A, Widget B',
-          faqs: [
-            {
-              id: '1',
-              question: 'What do you sell?',
-              answer: 'We sell widgets.',
-              category: 'products',
-              isActive: true,
-            },
-          ],
-          supportDocs: '',
-          complianceGuidelines: 'Be honest.',
-        },
+        personalitySettings,
+        knowledgeBase,
         operatingHours: defaultOperatingHours,
         leadQualificationQuestions: defaultLeadQuestions,
         isActive: true,

@@ -1,4 +1,7 @@
-import { ChatSimulationContext, SimulatedUserProfile, TestingGoal } from '../value-objects/ChatSimulationContext';
+import { ChatSimulationContext } from '../value-objects/ChatSimulationContext';
+import { SimulationResults } from '../value-objects/SimulationResults';
+import { SimulationMetadata, SimulationMetadataProps } from '../value-objects/SimulationMetadata';
+import { SimulationMetrics } from '../value-objects/SimulationMetrics';
 import { ChatMessage } from './ChatMessage';
 
 export interface ChatSimulationProps {
@@ -12,36 +15,6 @@ export interface ChatSimulationProps {
   readonly metadata: SimulationMetadata;
 }
 
-export interface SimulationResults {
-  readonly completedSuccessfully: boolean;
-  readonly totalMessages: number;
-  readonly leadCaptured: boolean;
-  readonly goalsAchieved: Array<{ goalId: string; achieved: boolean; notes?: string }>;
-  readonly performanceMetrics: PerformanceMetrics;
-  readonly qualityAssessment: QualityAssessment;
-}
-
-export interface PerformanceMetrics {
-  readonly averageResponseTime: number;
-  readonly totalDuration: number;
-  readonly messagesPerMinute: number;
-  readonly errorCount: number;
-}
-
-export interface QualityAssessment {
-  readonly relevanceScore: number; // 0-100
-  readonly accuracyScore: number; // 0-100
-  readonly userSatisfactionScore: number; // 0-100
-  readonly knowledgeBaseUtilization: number; // 0-100
-}
-
-export interface SimulationMetadata {
-  readonly testerId?: string;
-  readonly notes?: string;
-  readonly tags: string[];
-  readonly relatedSimulations: string[];
-}
-
 export class ChatSimulation {
   private constructor(private readonly props: ChatSimulationProps) {
     this.validateProps(props);
@@ -49,7 +22,7 @@ export class ChatSimulation {
 
   static create(
     context: ChatSimulationContext,
-    metadata: Partial<SimulationMetadata> = {}
+    metadata: Partial<SimulationMetadataProps> = {}
   ): ChatSimulation {
     return new ChatSimulation({
       id: crypto.randomUUID(),
@@ -57,11 +30,7 @@ export class ChatSimulation {
       messages: [],
       status: 'active',
       startedAt: new Date(),
-      metadata: {
-        tags: [],
-        relatedSimulations: [],
-        ...metadata,
-      },
+      metadata: SimulationMetadata.create(metadata),
     });
   }
 
@@ -108,14 +77,11 @@ export class ChatSimulation {
     }
 
     if (!this.context.isWithinTimeLimit(this.props.startedAt)) {
-      return this.complete({
-        completedSuccessfully: false,
-        totalMessages: this.props.messages.length,
-        leadCaptured: false,
-        goalsAchieved: [],
-        performanceMetrics: this.calculatePerformanceMetrics(),
-        qualityAssessment: this.calculateQualityAssessment(),
-      });
+      return this.complete(SimulationResults.createFailure(
+        this.props.messages.length,
+        SimulationMetrics.calculatePerformanceMetrics(this.props.messages, this.props.startedAt),
+        SimulationMetrics.calculateQualityAssessment(this.props.messages)
+      ));
     }
 
     return new ChatSimulation({
@@ -142,26 +108,26 @@ export class ChatSimulation {
       throw new Error('Can only cancel active simulations');
     }
 
+    const updatedMetadata = reason 
+      ? this.props.metadata.appendNotes(`Cancelled: ${reason}`)
+      : this.props.metadata;
+
     return new ChatSimulation({
       ...this.props,
       status: 'cancelled',
       endedAt: new Date(),
-      metadata: {
-        ...this.props.metadata,
-        notes: reason ? `${this.props.metadata.notes || ''}\nCancelled: ${reason}`.trim() : this.props.metadata.notes,
-      },
+      metadata: updatedMetadata,
     });
   }
 
   fail(error: string): ChatSimulation {
+    const updatedMetadata = this.props.metadata.appendNotes(`Failed: ${error}`);
+
     return new ChatSimulation({
       ...this.props,
       status: 'failed',
       endedAt: new Date(),
-      metadata: {
-        ...this.props.metadata,
-        notes: `${this.props.metadata.notes || ''}\nFailed: ${error}`.trim(),
-      },
+      metadata: updatedMetadata,
     });
   }
 
@@ -203,106 +169,16 @@ export class ChatSimulation {
     return Math.floor(this.getDuration() / 1000);
   }
 
-  private calculatePerformanceMetrics(): PerformanceMetrics {
-    const duration = this.getDurationInSeconds();
-    const botMessages = this.getBotMessages();
-    
-    const averageResponseTime = botMessages.reduce((sum, msg) => {
-      return sum + (msg.processingTime || 1000); // Default 1s if not recorded
-    }, 0) / Math.max(botMessages.length, 1);
+  withUpdatedMetadata(metadata: Partial<SimulationMetadataProps>): ChatSimulation {
+    const currentMetadata = this.props.metadata.toPlainObject();
+    const newMetadata = SimulationMetadata.fromPersistence({
+      ...currentMetadata,
+      ...metadata,
+    });
 
-    return {
-      averageResponseTime,
-      totalDuration: duration,
-      messagesPerMinute: duration > 0 ? (this.props.messages.length / duration) * 60 : 0,
-      errorCount: botMessages.filter(msg => msg.metadata.errorType).length,
-    };
-  }
-
-  private calculateQualityAssessment(): QualityAssessment {
-    // Simplified quality assessment - could be enhanced with AI analysis
-    const userMessages = this.getUserMessages();
-    const botMessages = this.getBotMessages();
-    
-    // Basic heuristics for quality scoring
-    const relevanceScore = botMessages.length > 0 ? 75 : 0; // Default reasonable score
-    const accuracyScore = this.calculateAccuracyScore();
-    const userSatisfactionScore = this.calculateSatisfactionScore();
-    const knowledgeBaseUtilization = this.calculateKnowledgeUtilization();
-
-    return {
-      relevanceScore,
-      accuracyScore,
-      userSatisfactionScore,
-      knowledgeBaseUtilization,
-    };
-  }
-
-  private calculateAccuracyScore(): number {
-    // Count messages without errors as accurate
-    const botMessages = this.getBotMessages();
-    if (botMessages.length === 0) return 0;
-    
-    const accurateMessages = botMessages.filter(msg => !msg.metadata.errorType).length;
-    return (accurateMessages / botMessages.length) * 100;
-  }
-
-  private calculateSatisfactionScore(): number {
-    // Heuristic based on conversation flow
-    const userMessages = this.getUserMessages();
-    const botMessages = this.getBotMessages();
-    
-    if (userMessages.length === 0 || botMessages.length === 0) return 0;
-    
-    // Base score on response ratio and conversation length
-    const responseRatio = botMessages.length / userMessages.length;
-    const conversationLength = this.props.messages.length;
-    
-    let score = 50; // Base score
-    
-    // Good response ratio (1:1 or close)
-    if (responseRatio >= 0.8 && responseRatio <= 1.2) score += 20;
-    
-    // Reasonable conversation length
-    if (conversationLength >= 4 && conversationLength <= 20) score += 20;
-    
-    // Bonus for lead qualification questions being answered
-    if (this.context.shouldRequireLeadCapture() && this.hasLeadInformation()) score += 10;
-    
-    return Math.min(score, 100);
-  }
-
-  private calculateKnowledgeUtilization(): number {
-    // Simplified calculation - could be enhanced with semantic analysis
-    const botMessages = this.getBotMessages();
-    const messagesWithKnowledge = botMessages.filter(msg => 
-      msg.content.length > 50 && // Substantial responses
-      !msg.content.toLowerCase().includes('i don\'t know') &&
-      !msg.content.toLowerCase().includes('i\'m not sure')
-    );
-    
-    if (botMessages.length === 0) return 0;
-    return (messagesWithKnowledge.length / botMessages.length) * 100;
-  }
-
-  private hasLeadInformation(): boolean {
-    // Check if any user messages contain email or phone patterns
-    const userMessages = this.getUserMessages();
-    const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
-    const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/;
-    
-    return userMessages.some(msg => 
-      emailPattern.test(msg.content) || phonePattern.test(msg.content)
-    );
-  }
-
-  withUpdatedMetadata(metadata: Partial<SimulationMetadata>): ChatSimulation {
     return new ChatSimulation({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        ...metadata,
-      },
+      metadata: newMetadata,
     });
   }
 
@@ -325,7 +201,6 @@ export class ChatSimulation {
   getResultsSummary(): string {
     if (!this.props.results) return 'No results available';
     
-    const r = this.props.results;
-    return `Success: ${r.completedSuccessfully}, Messages: ${r.totalMessages}, Lead: ${r.leadCaptured ? 'Yes' : 'No'}, Quality: ${r.qualityAssessment.relevanceScore}%`;
+    return this.props.results.getSummary();
   }
 } 

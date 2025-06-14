@@ -39,7 +39,7 @@ export class SimpleKnowledgeRetrievalService implements IKnowledgeRetrievalServi
         usedFallback: false
       };
     } catch (error) {
-      console.error('Knowledge search failed:', error);
+      // Knowledge search failed - returning empty results
       
       // Fallback to basic FAQ search
       const fallbackItems = await this.getFrequentlyAskedQuestions(maxResults);

@@ -1,246 +1,344 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { LeadScoringService } from '../LeadScoringService';
-import { QualificationData, QualificationAnswer } from '../../entities/Lead';
-import { SessionContext } from '../../entities/ChatSession';
+/**
+ * Lead Scoring Service Tests
+ * 
+ * Tests for the refactored LeadScoringService following DDD patterns
+ * Updated to work with static methods and QualificationData value object
+ */
+
+import { describe, it, expect } from 'vitest';
+import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../LeadScoringService';
+import { QualificationData, QualificationAnswer } from '../../value-objects/QualificationData';
 
 describe('LeadScoringService', () => {
-  let scoringService: LeadScoringService;
-  let mockQualificationData: QualificationData;
-  let mockSessionContext: SessionContext;
+  const createMockQualificationData = (overrides: Partial<any> = {}): QualificationData => {
+    const defaultAnswers: QualificationAnswer[] = [
+      {
+        questionId: 'email',
+        question: 'What is your email address?',
+        answer: 'john@company.com',
+        answeredAt: new Date('2024-01-01T10:00:00Z'),
+        scoringWeight: 10,
+        scoreContribution: 8
+      },
+      {
+        questionId: 'company',
+        question: 'What company do you work for?',
+        answer: 'Acme Corporation',
+        answeredAt: new Date('2024-01-01T10:02:00Z'),
+        scoringWeight: 12,
+        scoreContribution: 10
+      },
+      {
+        questionId: 'budget',
+        question: 'What is your budget range?',
+        answer: '25k_50k',
+        answeredAt: new Date('2024-01-01T10:04:00Z'),
+        scoringWeight: 15,
+        scoreContribution: 15
+      }
+    ];
 
-  beforeEach(() => {
-    scoringService = new LeadScoringService();
-
-    // Mock qualification data
-    mockQualificationData = {
+    return QualificationData.create({
       painPoints: ['cost', 'efficiency'],
       interests: ['automation', 'reporting'],
-      answeredQuestions: [
-        {
-          questionId: 'email',
-          question: 'What is your email address?',
-          answer: 'john@company.com',
-          answeredAt: new Date('2024-01-01T10:00:00Z'),
-          scoringWeight: 10,
-          scoreContribution: 8
-        },
-        {
-          questionId: 'company',
-          question: 'What company do you work for?',
-          answer: 'Acme Corporation',
-          answeredAt: new Date('2024-01-01T10:02:00Z'),
-          scoringWeight: 12,
-          scoreContribution: 10
-        },
-        {
-          questionId: 'budget',
-          question: 'What is your budget range?',
-          answer: '25k_50k',
-          answeredAt: new Date('2024-01-01T10:04:00Z'),
-          scoringWeight: 15,
-          scoreContribution: 15
-        }
-      ],
+      answeredQuestions: defaultAnswers,
       engagementLevel: 'high',
       budget: '25k_50k',
-             timeline: 'within_quarter',
+      timeline: 'within_quarter',
       decisionMaker: true,
       industry: 'technology',
-      companySize: 'medium'
-    };
+      companySize: 'medium',
+      ...overrides
+    });
+  };
 
-    // Mock session context
-    mockSessionContext = {
-      visitorName: 'John Doe',
-      email: 'john@company.com',
-      company: 'Acme Corporation',
-      previousVisits: 2,
-      pageViews: [
-        {
-          url: '/pricing',
-          title: 'Pricing',
-          timestamp: new Date('2024-01-01T09:50:00Z'),
-          timeOnPage: 120
-        },
-        {
-          url: '/features',
-          title: 'Features',
-          timestamp: new Date('2024-01-01T09:55:00Z'),
-          timeOnPage: 180
-        },
-        {
-          url: '/contact',
-          title: 'Contact Us',
-          timestamp: new Date('2024-01-01T10:00:00Z'),
-          timeOnPage: 300
-        }
-      ],
-      conversationSummary: 'User is interested in our enterprise solution for their mid-size technology company. They have a defined budget and timeline.',
-      topics: ['pricing', 'features', 'enterprise', 'integration'],
-      interests: ['api-access', 'custom-integrations', 'support'],
-      engagementScore: 85
-    };
-  });
-
-  describe('calculateLeadScore', () => {
+  describe('calculateScore', () => {
     it('should calculate comprehensive lead score for high-quality lead', () => {
-      const result = scoringService.calculateLeadScore(mockQualificationData, mockSessionContext);
+      const qualificationData = createMockQualificationData();
+      const result = LeadScoringService.calculateScore(qualificationData);
 
-      expect(result.totalScore).toBeGreaterThan(50);
-      expect(result.totalScore).toBeLessThanOrEqual(100);
-      expect(result.breakdown).toBeDefined();
-      expect(result.breakdown.questionScore).toBeGreaterThan(0);
-      expect(result.breakdown.engagementScore).toBeGreaterThan(0);
-      expect(result.breakdown.budgetScore).toBeGreaterThan(0);
-      expect(result.qualificationReasons).toBeDefined();
-      expect(result.disqualificationReasons).toBeDefined();
+      expect(result.score).toBeGreaterThan(50);
+      expect(result.score).toBeLessThanOrEqual(100);
+      expect(result.qualificationStatus).toBe('highly_qualified');
+      expect(result.scoreBreakdown).toBeDefined();
+      expect(result.scoreBreakdown.baseScore).toBeGreaterThan(0);
+      expect(result.scoreBreakdown.engagementBonus).toBe(20); // high engagement
+      expect(result.scoreBreakdown.budgetBonus).toBe(15);
+      expect(result.scoreBreakdown.timelineBonus).toBe(10);
+      expect(result.scoreBreakdown.decisionMakerBonus).toBe(20);
     });
 
     it('should give higher scores for complete qualification data', () => {
-      const result = scoringService.calculateLeadScore(mockQualificationData, mockSessionContext);
-      
-      // Remove some qualification data for comparison
-      const incompleteData = {
-        ...mockQualificationData,
-        answeredQuestions: mockQualificationData.answeredQuestions.slice(0, 1), // Only email
+      const completeData = createMockQualificationData();
+      const incompleteData = createMockQualificationData({
+        answeredQuestions: [
+          {
+            questionId: 'email',
+            question: 'What is your email?',
+            answer: 'test@example.com',
+            answeredAt: new Date(),
+            scoringWeight: 5,
+            scoreContribution: 3
+          }
+        ],
+        budget: undefined,
+        timeline: undefined,
+        decisionMaker: undefined
+      });
+
+      const completeResult = LeadScoringService.calculateScore(completeData);
+      const incompleteResult = LeadScoringService.calculateScore(incompleteData);
+
+      expect(completeResult.score).toBeGreaterThan(incompleteResult.score);
+      expect(completeResult.scoreBreakdown.budgetBonus).toBeGreaterThan(incompleteResult.scoreBreakdown.budgetBonus);
+      expect(completeResult.scoreBreakdown.timelineBonus).toBeGreaterThan(incompleteResult.scoreBreakdown.timelineBonus);
+      expect(completeResult.scoreBreakdown.decisionMakerBonus).toBeGreaterThan(incompleteResult.scoreBreakdown.decisionMakerBonus);
+    });
+
+    it('should handle minimal qualification data', () => {
+      const minimalData = QualificationData.create({
+        painPoints: [],
+        interests: [],
+        answeredQuestions: [],
+        engagementLevel: 'low'
+      });
+
+      const result = LeadScoringService.calculateScore(minimalData);
+
+      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(result.score).toBeLessThan(30);
+      expect(result.scoreBreakdown.baseScore).toBe(0);
+      expect(result.scoreBreakdown.engagementBonus).toBe(0); // low engagement
+      expect(result.qualificationStatus).toBe('not_qualified');
+    });
+
+    it('should apply engagement level bonuses correctly', () => {
+      // Use minimal data to avoid hitting score cap
+      const baseData = {
+        answeredQuestions: [
+          {
+            questionId: 'email',
+            question: 'What is your email?',
+            answer: 'test@example.com',
+            answeredAt: new Date(),
+            scoringWeight: 10,
+            scoreContribution: 5
+          }
+        ],
         budget: undefined,
         timeline: undefined,
         decisionMaker: undefined
       };
 
-      const incompleteResult = scoringService.calculateLeadScore(incompleteData, mockSessionContext);
+      const lowEngagement = createMockQualificationData({ ...baseData, engagementLevel: 'low' });
+      const mediumEngagement = createMockQualificationData({ ...baseData, engagementLevel: 'medium' });
+      const highEngagement = createMockQualificationData({ ...baseData, engagementLevel: 'high' });
 
-      expect(result.totalScore).toBeGreaterThan(incompleteResult.totalScore);
-      expect(result.breakdown.budgetScore).toBeGreaterThan(incompleteResult.breakdown.budgetScore);
-      expect(result.breakdown.timelineScore).toBeGreaterThan(incompleteResult.breakdown.timelineScore);
+      const lowResult = LeadScoringService.calculateScore(lowEngagement);
+      const mediumResult = LeadScoringService.calculateScore(mediumEngagement);
+      const highResult = LeadScoringService.calculateScore(highEngagement);
+
+      expect(lowResult.scoreBreakdown.engagementBonus).toBe(0);
+      expect(mediumResult.scoreBreakdown.engagementBonus).toBe(10);
+      expect(highResult.scoreBreakdown.engagementBonus).toBe(20);
+
+      expect(highResult.score).toBeGreaterThan(mediumResult.score);
+      expect(mediumResult.score).toBeGreaterThan(lowResult.score);
     });
 
-         it('should handle minimal qualification data', () => {
-       const minimalData: QualificationData = {
-         painPoints: [],
-         interests: [],
-         answeredQuestions: [],
-         engagementLevel: 'low'
-       };
-
-      const result = scoringService.calculateLeadScore(minimalData);
-
-      expect(result.totalScore).toBeGreaterThanOrEqual(0);
-      expect(result.totalScore).toBeLessThan(30);
-      expect(result.breakdown.questionScore).toBe(0);
-      expect(result.breakdown.engagementScore).toBeGreaterThanOrEqual(0);
-    });
-
-         it('should apply industry and company size bonuses', () => {
-       // Use minimal baseline data to avoid hitting max score
-       const baselineData: QualificationData = {
-         painPoints: [],
-         interests: [],
-         answeredQuestions: [
-           {
-             questionId: 'email',
-             question: 'What is your email?',
-             answer: 'test@example.com',
-             answeredAt: new Date(),
-             scoringWeight: 5,
-             scoreContribution: 4
-           }
-         ],
-         engagementLevel: 'medium'
-       };
-
-       const techLargeData = {
-         ...baselineData,
-         industry: 'technology',
-         companySize: 'large'
-       };
-
-       const nonProfitSmallData = {
-         ...baselineData,
-         industry: 'nonprofit',
-         companySize: 'small'
-       };
-
-       const techResult = scoringService.calculateLeadScore(techLargeData);
-       const nonProfitResult = scoringService.calculateLeadScore(nonProfitSmallData);
-
-       expect(techResult.totalScore).toBeGreaterThan(nonProfitResult.totalScore);
-       expect(techResult.breakdown.industryScore).toBeGreaterThan(nonProfitResult.breakdown.industryScore);
-       expect(techResult.breakdown.companySizeScore).toBeGreaterThan(nonProfitResult.breakdown.companySizeScore);
-     });
-
-    it('should penalize no budget scenarios', () => {
-      const noBudgetData = {
-        ...mockQualificationData,
+    it('should disqualify leads with no budget', () => {
+      const noBudgetData = createMockQualificationData({
         budget: 'no_budget'
-      };
+      });
 
-      const result = scoringService.calculateLeadScore(noBudgetData, mockSessionContext);
+      const result = LeadScoringService.calculateScore(noBudgetData);
 
-      expect(result.breakdown.budgetScore).toBeLessThan(0);
-             expect(result.disqualificationReasons).toContain('No budget available');
+      expect(result.score).toBe(0);
+      expect(result.qualificationStatus).toBe('disqualified');
+    });
+
+    it('should disqualify leads with no timeline', () => {
+      const noTimelineData = createMockQualificationData({
+        timeline: 'no_timeline'
+      });
+
+      const result = LeadScoringService.calculateScore(noTimelineData);
+
+      expect(result.score).toBe(0);
+      expect(result.qualificationStatus).toBe('disqualified');
+    });
+
+    it('should disqualify leads who are not decision makers', () => {
+      const notDecisionMakerData = createMockQualificationData({
+        decisionMaker: false
+      });
+
+      const result = LeadScoringService.calculateScore(notDecisionMakerData);
+
+      expect(result.score).toBe(0);
+      expect(result.qualificationStatus).toBe('disqualified');
+    });
+
+    it('should calculate correct qualification status based on score', () => {
+      // Create data that will result in different score ranges
+      const highScoreData = createMockQualificationData(); // Should be highly_qualified (80+)
+      
+      const mediumScoreData = createMockQualificationData({
+        answeredQuestions: [
+          {
+            questionId: 'email',
+            question: 'What is your email?',
+            answer: 'test@example.com',
+            answeredAt: new Date(),
+            scoringWeight: 20,
+            scoreContribution: 16 // Higher contribution to reach qualified range
+          }
+        ],
+        engagementLevel: 'medium', // +10 bonus
+        budget: '5k_10k', // +15 bonus
+        timeline: undefined,
+        decisionMaker: undefined
+      }); // Should be qualified (60-79)
+
+      const lowScoreData = createMockQualificationData({
+        answeredQuestions: [],
+        engagementLevel: 'low',
+        budget: undefined,
+        timeline: undefined,
+        decisionMaker: undefined
+      }); // Should be not_qualified (<60)
+
+      const highResult = LeadScoringService.calculateScore(highScoreData);
+      const mediumResult = LeadScoringService.calculateScore(mediumScoreData);
+      const lowResult = LeadScoringService.calculateScore(lowScoreData);
+
+      expect(highResult.qualificationStatus).toBe('highly_qualified');
+      expect(mediumResult.qualificationStatus).toBe('qualified');
+      expect(lowResult.qualificationStatus).toBe('not_qualified');
     });
   });
 
-  describe('qualification thresholds', () => {
-    it('should provide correct qualification thresholds', () => {
-      const thresholds = scoringService.getQualificationThresholds();
-
-      expect(thresholds.disqualified).toBeLessThan(thresholds.notQualified);
-      expect(thresholds.notQualified).toBeLessThan(thresholds.qualified);
-      expect(thresholds.qualified).toBeLessThan(thresholds.highlyQualified);
-      expect(thresholds.highlyQualified).toBeLessThanOrEqual(100);
+  describe('utility methods', () => {
+    it('should return correct score grades', () => {
+      expect(LeadScoringService.getScoreGrade(95)).toBe('A');
+      expect(LeadScoringService.getScoreGrade(85)).toBe('B');
+      expect(LeadScoringService.getScoreGrade(75)).toBe('C');
+      expect(LeadScoringService.getScoreGrade(65)).toBe('D');
+      expect(LeadScoringService.getScoreGrade(45)).toBe('F');
     });
-  });
 
-  describe('scoring criteria updates', () => {
-    it('should allow updating scoring criteria', () => {
-      const customCriteria = {
-        budgetBonus: 25,
-        timelineBonus: 15
-      };
+    it('should correctly identify qualified scores', () => {
+      expect(LeadScoringService.isQualifiedScore(80)).toBe(true);
+      expect(LeadScoringService.isQualifiedScore(60)).toBe(true);
+      expect(LeadScoringService.isQualifiedScore(59)).toBe(false);
+      expect(LeadScoringService.isQualifiedScore(0)).toBe(false);
+    });
 
-      const updatedService = scoringService.updateCriteria(customCriteria);
-      expect(updatedService).toBeInstanceOf(LeadScoringService);
-      expect(updatedService).not.toBe(scoringService); // Should be a new instance
+    it('should correctly identify highly qualified scores', () => {
+      expect(LeadScoringService.isHighlyQualifiedScore(90)).toBe(true);
+      expect(LeadScoringService.isHighlyQualifiedScore(80)).toBe(true);
+      expect(LeadScoringService.isHighlyQualifiedScore(79)).toBe(false);
+      expect(LeadScoringService.isHighlyQualifiedScore(60)).toBe(false);
+    });
+
+    it('should provide qualification descriptions', () => {
+      expect(LeadScoringService.getQualificationDescription('not_qualified')).toContain('does not meet');
+      expect(LeadScoringService.getQualificationDescription('qualified')).toContain('meets the basic');
+      expect(LeadScoringService.getQualificationDescription('highly_qualified')).toContain('excellent prospect');
+      expect(LeadScoringService.getQualificationDescription('disqualified')).toContain('disqualified');
+    });
+
+    it('should provide score recommendations', () => {
+      const highQualityData = createMockQualificationData();
+      const lowQualityData = createMockQualificationData({
+        answeredQuestions: [],
+        engagementLevel: 'low',
+        budget: undefined,
+        timeline: undefined,
+        decisionMaker: undefined
+      });
+
+      const highResult = LeadScoringService.calculateScore(highQualityData);
+      const lowResult = LeadScoringService.calculateScore(lowQualityData);
+
+      const highRecommendations = LeadScoringService.getScoreRecommendations(highResult);
+      const lowRecommendations = LeadScoringService.getScoreRecommendations(lowResult);
+
+      expect(highRecommendations).toContain('High-priority lead - contact immediately');
+      expect(lowRecommendations).toContain('Consider nurturing this lead with educational content');
+      expect(lowRecommendations.length).toBeGreaterThan(highRecommendations.length);
     });
   });
 
   describe('edge cases', () => {
-         it('should handle empty qualification data', () => {
-       const emptyData: QualificationData = {
-         painPoints: [],
-         interests: [],
-         answeredQuestions: [],
-         engagementLevel: 'low'
-       };
+    it('should handle empty qualification data', () => {
+      const emptyData = QualificationData.createEmpty();
+      const result = LeadScoringService.calculateScore(emptyData);
 
-      const result = scoringService.calculateLeadScore(emptyData);
-
-      expect(result.totalScore).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.questionScore).toBe(0);
-      expect(typeof result.totalScore).toBe('number');
+      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(result.scoreBreakdown.baseScore).toBe(0);
+      expect(typeof result.score).toBe('number');
+      expect(result.qualificationStatus).toBe('not_qualified');
     });
 
-    it('should handle qualification data without session context', () => {
-      const result = scoringService.calculateLeadScore(mockQualificationData);
+    it('should handle qualification data with no answered questions', () => {
+      const noQuestionsData = createMockQualificationData({
+        answeredQuestions: []
+      });
 
-      expect(result.totalScore).toBeGreaterThan(0);
-      expect(result.breakdown).toBeDefined();
+      const result = LeadScoringService.calculateScore(noQuestionsData);
+
+      expect(result.score).toBeGreaterThan(0); // Should still have bonuses
+      expect(result.scoreBreakdown.baseScore).toBe(0);
+      expect(result.scoreBreakdown.budgetBonus).toBe(15);
+      expect(result.scoreBreakdown.timelineBonus).toBe(10);
+      expect(result.scoreBreakdown.decisionMakerBonus).toBe(20);
+      expect(result.scoreBreakdown.engagementBonus).toBe(20);
     });
 
-    it('should handle invalid budget and timeline values', () => {
-      const invalidData = {
-        ...mockQualificationData,
-        budget: 'invalid_budget_option',
-        timeline: 'invalid_timeline_option'
-      };
+    it('should cap scores at 100', () => {
+      // Create data with maximum possible scores
+      const maxScoreData = createMockQualificationData({
+        answeredQuestions: [
+          {
+            questionId: 'test',
+            question: 'Test question',
+            answer: 'Test answer',
+            answeredAt: new Date(),
+            scoringWeight: 100,
+            scoreContribution: 100 // Perfect score
+          }
+        ],
+        engagementLevel: 'high'
+      });
 
-      const result = scoringService.calculateLeadScore(invalidData, mockSessionContext);
+      const result = LeadScoringService.calculateScore(maxScoreData);
 
-      expect(result.totalScore).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.budgetScore).toBe(0);
-      expect(result.breakdown.timelineScore).toBe(0);
+      expect(result.score).toBeLessThanOrEqual(100);
+    });
+
+    it('should ensure scores are never negative', () => {
+      const minimalData = QualificationData.createEmpty();
+      const result = LeadScoringService.calculateScore(minimalData);
+
+      expect(result.score).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('score breakdown validation', () => {
+    it('should have consistent score breakdown calculations', () => {
+      const qualificationData = createMockQualificationData();
+      const result = LeadScoringService.calculateScore(qualificationData);
+
+      const expectedTotal = result.scoreBreakdown.baseScore + result.scoreBreakdown.totalBonuses;
+      
+      expect(result.scoreBreakdown.finalScore).toBe(Math.min(100, Math.max(0, expectedTotal)));
+      expect(result.scoreBreakdown.totalBonuses).toBe(
+        result.scoreBreakdown.engagementBonus +
+        result.scoreBreakdown.budgetBonus +
+        result.scoreBreakdown.timelineBonus +
+        result.scoreBreakdown.decisionMakerBonus
+      );
     });
   });
 }); 

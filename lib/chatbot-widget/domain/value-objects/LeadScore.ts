@@ -1,225 +1,36 @@
-export interface ScoringCriteria {
-  questionAnswerWeight: number; // Weight for answered qualification questions (0-1)
-  engagementWeight: number; // Weight for engagement metrics (0-1)
-  contactInfoWeight: number; // Weight for providing contact information (0-1)
-  budgetTimelineWeight: number; // Weight for budget/timeline indicators (0-1)
-  industryCompanySizeWeight: number; // Weight for industry/company size (0-1)
-}
+import { ScoringFactors, ScoringCriteria, QualificationLevel, ScoreBreakdown, LeadScoreThresholds } from './LeadScoreTypes';
+import { LeadScoreCalculationService } from '../services/LeadScoreCalculationService';
+import { LeadScoreValidationService } from '../services/LeadScoreValidationService';
 
-export interface ScoringFactors {
-  answeredQuestionsCount: number;
-  totalQuestionsCount: number;
-  engagementScore: number; // 0-100
-  hasContactInfo: boolean;
-  hasBudgetInfo: boolean;
-  hasTimelineInfo: boolean;
-  hasIndustryInfo: boolean;
-  hasCompanySizeInfo: boolean;
-  conversationLength: number; // Number of messages
-  sessionDuration: number; // Duration in minutes
-}
-
-export enum QualificationLevel {
-  NOT_QUALIFIED = 'not_qualified',
-  QUALIFIED = 'qualified', 
-  HIGHLY_QUALIFIED = 'highly_qualified',
-  DISQUALIFIED = 'disqualified'
-}
-
-export interface ScoreBreakdown {
-  questionScore: number;
-  engagementScore: number;
-  contactInfoScore: number;
-  budgetTimelineScore: number;
-  industryCompanySizeScore: number;
-  totalScore: number;
-  qualificationLevel: QualificationLevel;
-}
-
+/**
+ * Lead Score Value Object
+ * Following DDD principles: Pure value object with immutable state
+ * Delegates calculation and validation to domain services
+ */
 export class LeadScore {
-  private static readonly MIN_SCORE = 0;
-  private static readonly MAX_SCORE = 100;
-  private static readonly QUALIFIED_THRESHOLD = 60;
-  private static readonly HIGHLY_QUALIFIED_THRESHOLD = 80;
-
   constructor(
     public readonly score: number,
     public readonly qualificationLevel: QualificationLevel,
     public readonly breakdown: ScoreBreakdown,
     public readonly calculatedAt: Date = new Date()
   ) {
-    this.validate();
-  }
-
-  private validate(): void {
-    if (typeof this.score !== 'number' || this.score < LeadScore.MIN_SCORE || this.score > LeadScore.MAX_SCORE) {
-      throw new Error(`Score must be a number between ${LeadScore.MIN_SCORE} and ${LeadScore.MAX_SCORE}`);
-    }
-
-    if (!Object.values(QualificationLevel).includes(this.qualificationLevel)) {
-      throw new Error(`Invalid qualification level: ${this.qualificationLevel}`);
-    }
-
-    if (!this.breakdown) {
-      throw new Error('Score breakdown is required');
-    }
-
-    if (!(this.calculatedAt instanceof Date)) {
-      throw new Error('calculatedAt must be a Date');
-    }
+    LeadScoreValidationService.validateLeadScoreParams(score, qualificationLevel, breakdown, calculatedAt);
   }
 
   /**
    * Calculate lead score from scoring factors
+   * Delegates to domain service for calculation logic
    */
-  public static calculate(factors: ScoringFactors, criteria: ScoringCriteria = LeadScore.getDefaultCriteria()): LeadScore {
-    LeadScore.validateScoringFactors(factors);
-    LeadScore.validateScoringCriteria(criteria);
-
-    const questionScore = LeadScore.calculateQuestionScore(factors, criteria);
-    const engagementScore = LeadScore.calculateEngagementScore(factors, criteria);
-    const contactInfoScore = LeadScore.calculateContactInfoScore(factors, criteria);
-    const budgetTimelineScore = LeadScore.calculateBudgetTimelineScore(factors, criteria);
-    const industryCompanySizeScore = LeadScore.calculateIndustryCompanySizeScore(factors, criteria);
-
-    const totalScore = Math.round(
-      questionScore + engagementScore + contactInfoScore + budgetTimelineScore + industryCompanySizeScore
-    );
-
-    const qualificationLevel = LeadScore.determineQualificationLevel(totalScore, factors);
-
-    const breakdown: ScoreBreakdown = {
-      questionScore: Math.round(questionScore),
-      engagementScore: Math.round(engagementScore),
-      contactInfoScore: Math.round(contactInfoScore),
-      budgetTimelineScore: Math.round(budgetTimelineScore),
-      industryCompanySizeScore: Math.round(industryCompanySizeScore),
-      totalScore,
-      qualificationLevel
-    };
-
-    return new LeadScore(totalScore, qualificationLevel, breakdown);
-  }
-
-  private static validateScoringFactors(factors: ScoringFactors): void {
-    if (typeof factors.answeredQuestionsCount !== 'number' || factors.answeredQuestionsCount < 0) {
-      throw new Error('answeredQuestionsCount must be a non-negative number');
-    }
-
-    if (typeof factors.totalQuestionsCount !== 'number' || factors.totalQuestionsCount < 0) {
-      throw new Error('totalQuestionsCount must be a non-negative number');
-    }
-
-    if (factors.answeredQuestionsCount > factors.totalQuestionsCount) {
-      throw new Error('answeredQuestionsCount cannot exceed totalQuestionsCount');
-    }
-
-    if (typeof factors.engagementScore !== 'number' || factors.engagementScore < 0 || factors.engagementScore > 100) {
-      throw new Error('engagementScore must be a number between 0 and 100');
-    }
-
-    if (typeof factors.conversationLength !== 'number' || factors.conversationLength < 0) {
-      throw new Error('conversationLength must be a non-negative number');
-    }
-
-    if (typeof factors.sessionDuration !== 'number' || factors.sessionDuration < 0) {
-      throw new Error('sessionDuration must be a non-negative number');
-    }
-  }
-
-  private static validateScoringCriteria(criteria: ScoringCriteria): void {
-    const weights = [
-      criteria.questionAnswerWeight,
-      criteria.engagementWeight,
-      criteria.contactInfoWeight,
-      criteria.budgetTimelineWeight,
-      criteria.industryCompanySizeWeight
-    ];
-
-    weights.forEach((weight, index) => {
-      if (typeof weight !== 'number' || weight < 0 || weight > 1) {
-        throw new Error(`Weight at index ${index} must be a number between 0 and 1`);
-      }
-    });
-
-    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-    if (Math.abs(totalWeight - 1) > 0.001) { // Allow for floating point precision
-      throw new Error(`Total weights must sum to 1, got ${totalWeight}`);
-    }
-  }
-
-  private static calculateQuestionScore(factors: ScoringFactors, criteria: ScoringCriteria): number {
-    if (factors.totalQuestionsCount === 0) return 0;
-    
-    const completionRate = factors.answeredQuestionsCount / factors.totalQuestionsCount;
-    return completionRate * criteria.questionAnswerWeight * LeadScore.MAX_SCORE;
-  }
-
-  private static calculateEngagementScore(factors: ScoringFactors, criteria: ScoringCriteria): number {
-    // Base engagement score from the provided engagement metric
-    let engagementMultiplier = factors.engagementScore / 100;
-    
-    // Bonus for conversation length (up to 20% bonus)
-    const conversationBonus = Math.min(factors.conversationLength / 20, 1) * 0.2;
-    
-    // Bonus for session duration (up to 15% bonus)
-    const durationBonus = Math.min(factors.sessionDuration / 10, 1) * 0.15;
-    
-    engagementMultiplier = Math.min(engagementMultiplier + conversationBonus + durationBonus, 1);
-    
-    return engagementMultiplier * criteria.engagementWeight * LeadScore.MAX_SCORE;
-  }
-
-  private static calculateContactInfoScore(factors: ScoringFactors, criteria: ScoringCriteria): number {
-    const contactInfoMultiplier = factors.hasContactInfo ? 1 : 0;
-    return contactInfoMultiplier * criteria.contactInfoWeight * LeadScore.MAX_SCORE;
-  }
-
-  private static calculateBudgetTimelineScore(factors: ScoringFactors, criteria: ScoringCriteria): number {
-    let budgetTimelineScore = 0;
-    
-    if (factors.hasBudgetInfo) budgetTimelineScore += 0.6;
-    if (factors.hasTimelineInfo) budgetTimelineScore += 0.4;
-    
-    return budgetTimelineScore * criteria.budgetTimelineWeight * LeadScore.MAX_SCORE;
-  }
-
-  private static calculateIndustryCompanySizeScore(factors: ScoringFactors, criteria: ScoringCriteria): number {
-    let industryCompanyScore = 0;
-    
-    if (factors.hasIndustryInfo) industryCompanyScore += 0.5;
-    if (factors.hasCompanySizeInfo) industryCompanyScore += 0.5;
-    
-    return industryCompanyScore * criteria.industryCompanySizeWeight * LeadScore.MAX_SCORE;
-  }
-
-  private static determineQualificationLevel(score: number, factors: ScoringFactors): QualificationLevel {
-    // Automatic disqualification conditions
-    if (factors.engagementScore < 20 && factors.conversationLength < 3) {
-      return QualificationLevel.DISQUALIFIED;
-    }
-
-    // Score-based qualification
-    if (score >= LeadScore.HIGHLY_QUALIFIED_THRESHOLD) {
-      return QualificationLevel.HIGHLY_QUALIFIED;
-    } else if (score >= LeadScore.QUALIFIED_THRESHOLD) {
-      return QualificationLevel.QUALIFIED;
-    } else {
-      return QualificationLevel.NOT_QUALIFIED;
-    }
+  public static calculate(factors: ScoringFactors, criteria: ScoringCriteria = LeadScoreCalculationService.getDefaultCriteria()): LeadScore {
+    const result = LeadScoreCalculationService.calculateScore(factors, criteria);
+    return new LeadScore(result.score, result.qualificationLevel, result.breakdown);
   }
 
   /**
    * Get default scoring criteria
    */
   public static getDefaultCriteria(): ScoringCriteria {
-    return {
-      questionAnswerWeight: 0.3,
-      engagementWeight: 0.25,
-      contactInfoWeight: 0.25,
-      budgetTimelineWeight: 0.15,
-      industryCompanySizeWeight: 0.05
-    };
+    return LeadScoreCalculationService.getDefaultCriteria();
   }
 
   /**
@@ -247,13 +58,8 @@ export class LeadScore {
   /**
    * Get qualification threshold values
    */
-  public static getThresholds() {
-    return {
-      qualified: LeadScore.QUALIFIED_THRESHOLD,
-      highlyQualified: LeadScore.HIGHLY_QUALIFIED_THRESHOLD,
-      min: LeadScore.MIN_SCORE,
-      max: LeadScore.MAX_SCORE
-    };
+  public static getThresholds(): LeadScoreThresholds {
+    return LeadScoreCalculationService.getThresholds();
   }
 
   /**
@@ -333,7 +139,7 @@ export class LeadScore {
    * Create a copy with updated score
    */
   public withScore(newScore: number): LeadScore {
-    const newQualificationLevel = LeadScore.determineQualificationLevel(newScore, {
+    const newQualificationLevel = LeadScoreCalculationService.determineQualificationLevel(newScore, {
       answeredQuestionsCount: 0,
       totalQuestionsCount: 0,
       engagementScore: 50,

@@ -72,7 +72,7 @@ export function useCreateChatbotConfig() {
       }
     },
     onError: (error) => {
-      console.error('Failed to create chatbot config:', error);
+      // Error logged by error boundary
     },
   });
 }
@@ -111,7 +111,7 @@ export function useUpdateChatbotConfig() {
       }
     },
     onError: (error) => {
-      console.error('Failed to update chatbot config:', error);
+      // Error logged by error boundary
     },
   });
 }
@@ -139,7 +139,7 @@ export function useDeleteChatbotConfig() {
       });
     },
     onError: (error) => {
-      console.error('Failed to delete chatbot config:', error);
+      // Error logged by error boundary
     },
   });
 }

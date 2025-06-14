@@ -1,68 +1,38 @@
+/**
+ * Chat Message Entity
+ * 
+ * Core domain entity representing a chat message with rich metadata
+ * through composed value objects following DDD principles.
+ */
+
+import { MessageAIMetadata } from '../value-objects/MessageAIMetadata';
+import { MessageContextMetadata } from '../value-objects/MessageContextMetadata';
+import { MessageProcessingMetrics } from '../value-objects/MessageProcessingMetrics';
+import { MessageCostTracking } from '../value-objects/MessageCostTracking';
+
 export interface ChatMessageProps {
   id: string;
   sessionId: string;
   messageType: MessageType;
   content: string;
-  metadata: MessageMetadata;
   timestamp: Date;
   isVisible: boolean;
   processingTime?: number;
+  aiMetadata: MessageAIMetadata;
+  contextMetadata: MessageContextMetadata;
+  processingMetrics: MessageProcessingMetrics;
+  costTracking: MessageCostTracking;
 }
 
 export type MessageType = 'user' | 'bot' | 'system' | 'lead_capture' | 'qualification';
 
-export interface MessageMetadata {
-  // AI-specific metadata
-  aiModel?: string;
-  promptTokens?: number;
-  completionTokens?: number;
-  totalTokens?: number;
-  
-  // User message metadata
-  inputMethod?: 'text' | 'voice' | 'button';
-  
-  // Bot response metadata
-  confidence?: number;
-  intentDetected?: string;
-  entitiesExtracted?: ExtractedEntity[];
-  
-  // Lead qualification metadata
-  qualificationStep?: number;
-  questionId?: string;
-  expectedAnswerType?: 'text' | 'email' | 'phone' | 'select' | 'multiselect';
-  
-  // System metadata
-  errorType?: string;
-  processingSteps?: ProcessingStep[];
-  
-  // Context metadata
-  topicsDiscussed?: string[];
-  sentiment?: 'positive' | 'neutral' | 'negative';
-  urgency?: 'low' | 'medium' | 'high';
-  
-  // Performance metadata
-  responseTime?: number;
-  cacheHit?: boolean;
-}
-
-export interface ExtractedEntity {
-  type: string;
-  value: string;
-  confidence: number;
-  start?: number;
-  end?: number;
-}
-
-export interface ProcessingStep {
-  step: string;
-  duration: number;
-  success: boolean;
-  error?: string;
-}
-
 export class ChatMessage {
   private constructor(private readonly props: ChatMessageProps) {
     this.validateProps(props);
+  }
+
+  static create(props: ChatMessageProps): ChatMessage {
+    return new ChatMessage(props);
   }
 
   static createUserMessage(
@@ -75,11 +45,12 @@ export class ChatMessage {
       sessionId,
       messageType: 'user',
       content: content.trim(),
-      metadata: {
-        inputMethod,
-      },
       timestamp: new Date(),
       isVisible: true,
+      aiMetadata: MessageAIMetadata.createEmpty(),
+      contextMetadata: MessageContextMetadata.createForUser(inputMethod),
+      processingMetrics: MessageProcessingMetrics.createEmpty(),
+      costTracking: MessageCostTracking.createZeroCost(),
     });
   }
 
@@ -95,85 +66,40 @@ export class ChatMessage {
       processingTime?: number;
     }
   ): ChatMessage {
+    const messageAIMetadata = aiMetadata 
+      ? MessageAIMetadata.createFromTokens(
+          aiMetadata.model || 'gpt-4o-mini',
+          aiMetadata.promptTokens || 0,
+          aiMetadata.completionTokens || 0,
+          aiMetadata.confidence,
+          aiMetadata.intentDetected
+        )
+      : MessageAIMetadata.createEmpty();
+
+    const processingMetrics = aiMetadata?.processingTime
+      ? MessageProcessingMetrics.createWithResponseTime(aiMetadata.processingTime)
+      : MessageProcessingMetrics.createEmpty();
+
+    const costTracking = (aiMetadata?.promptTokens && aiMetadata?.completionTokens)
+      ? MessageCostTracking.createFromTokens(
+          aiMetadata.promptTokens,
+          aiMetadata.completionTokens,
+          0.0001
+        )
+      : MessageCostTracking.createZeroCost();
+
     return new ChatMessage({
       id: crypto.randomUUID(),
       sessionId,
       messageType: 'bot',
       content: content.trim(),
-      metadata: {
-        aiModel: aiMetadata?.model,
-        promptTokens: aiMetadata?.promptTokens,
-        completionTokens: aiMetadata?.completionTokens,
-        totalTokens: (aiMetadata?.promptTokens || 0) + (aiMetadata?.completionTokens || 0),
-        confidence: aiMetadata?.confidence,
-        intentDetected: aiMetadata?.intentDetected,
-        responseTime: aiMetadata?.processingTime,
-      },
       timestamp: new Date(),
       isVisible: true,
       processingTime: aiMetadata?.processingTime,
-    });
-  }
-
-  static createSystemMessage(
-    sessionId: string,
-    content: string,
-    errorType?: string
-  ): ChatMessage {
-    return new ChatMessage({
-      id: crypto.randomUUID(),
-      sessionId,
-      messageType: 'system',
-      content,
-      metadata: {
-        errorType,
-      },
-      timestamp: new Date(),
-      isVisible: false, // System messages are typically not visible to users
-    });
-  }
-
-  static createLeadCaptureMessage(
-    sessionId: string,
-    content: string,
-    qualificationStep: number,
-    questionId?: string,
-    expectedAnswerType?: 'text' | 'email' | 'phone' | 'select' | 'multiselect'
-  ): ChatMessage {
-    return new ChatMessage({
-      id: crypto.randomUUID(),
-      sessionId,
-      messageType: 'lead_capture',
-      content,
-      metadata: {
-        qualificationStep,
-        questionId,
-        expectedAnswerType,
-      },
-      timestamp: new Date(),
-      isVisible: true,
-    });
-  }
-
-  static createQualificationMessage(
-    sessionId: string,
-    content: string,
-    questionId: string,
-    qualificationStep: number,
-    expectedAnswerType: 'text' | 'email' | 'phone' | 'select' | 'multiselect'
-  ): ChatMessage {
-    return new ChatMessage({
-      id: crypto.randomUUID(),
-      sessionId,
-      messageType: 'qualification',
-      content,
-      metadata: {
-        questionId,
-        qualificationStep,
-        expectedAnswerType,
-      },
-      timestamp: new Date(),
-      isVisible: true,
+      aiMetadata: messageAIMetadata,
+      contextMetadata: MessageContextMetadata.createEmpty(),
+      processingMetrics,
+      costTracking,
     });
   }
 
@@ -198,70 +124,47 @@ export class ChatMessage {
   get sessionId(): string { return this.props.sessionId; }
   get messageType(): MessageType { return this.props.messageType; }
   get content(): string { return this.props.content; }
-  get metadata(): MessageMetadata { return this.props.metadata; }
   get timestamp(): Date { return this.props.timestamp; }
   get isVisible(): boolean { return this.props.isVisible; }
   get processingTime(): number | undefined { return this.props.processingTime; }
+  get aiMetadata(): MessageAIMetadata { return this.props.aiMetadata; }
+  get contextMetadata(): MessageContextMetadata { return this.props.contextMetadata; }
+  get processingMetrics(): MessageProcessingMetrics { return this.props.processingMetrics; }
+  get costTracking(): MessageCostTracking { return this.props.costTracking; }
 
-  // Business methods
+  // Business methods - delegate to value objects
   addProcessingStep(step: string, duration: number, success: boolean, error?: string): ChatMessage {
-    const newStep: ProcessingStep = { step, duration, success, error };
-    const existingSteps = this.props.metadata.processingSteps || [];
-    
     return new ChatMessage({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        processingSteps: [...existingSteps, newStep],
-      },
+      processingMetrics: this.props.processingMetrics.addProcessingStep(step, duration, success, error),
     });
   }
 
-  addExtractedEntity(entity: ExtractedEntity): ChatMessage {
-    const existingEntities = this.props.metadata.entitiesExtracted || [];
-    
+  addExtractedEntity(entity: { type: string; value: string; confidence: number; start?: number; end?: number }): ChatMessage {
     return new ChatMessage({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        entitiesExtracted: [...existingEntities, entity],
-      },
+      aiMetadata: this.props.aiMetadata.addExtractedEntity(entity),
     });
   }
 
   updateSentiment(sentiment: 'positive' | 'neutral' | 'negative'): ChatMessage {
     return new ChatMessage({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        sentiment,
-      },
+      contextMetadata: this.props.contextMetadata.updateSentiment(sentiment),
     });
   }
 
   updateUrgency(urgency: 'low' | 'medium' | 'high'): ChatMessage {
     return new ChatMessage({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        urgency,
-      },
+      contextMetadata: this.props.contextMetadata.updateUrgency(urgency),
     });
   }
 
   addTopicDiscussed(topic: string): ChatMessage {
-    const existingTopics = this.props.metadata.topicsDiscussed || [];
-    
-    if (existingTopics.includes(topic)) {
-      return this;
-    }
-    
     return new ChatMessage({
       ...this.props,
-      metadata: {
-        ...this.props.metadata,
-        topicsDiscussed: [...existingTopics, topic],
-      },
+      contextMetadata: this.props.contextMetadata.addTopicDiscussed(topic),
     });
   }
 
@@ -283,63 +186,43 @@ export class ChatMessage {
     return new ChatMessage({
       ...this.props,
       processingTime,
-      metadata: {
-        ...this.props.metadata,
-        responseTime: processingTime,
-      },
+      processingMetrics: this.props.processingMetrics.updateResponseTime(processingTime),
     });
   }
 
-  // Query methods
-  isFromUser(): boolean {
-    return this.props.messageType === 'user';
+  addCostTracking(costCents: number, breakdown?: any): ChatMessage {
+    const newCostTracking = breakdown 
+      ? MessageCostTracking.create({ costCents, costBreakdown: breakdown })
+      : MessageCostTracking.create({ costCents });
+
+    return new ChatMessage({
+      ...this.props,
+      costTracking: newCostTracking,
+    });
   }
 
-  isFromBot(): boolean {
-    return this.props.messageType === 'bot';
-  }
-
-  isSystemMessage(): boolean {
-    return this.props.messageType === 'system';
-  }
-
-  isLeadCapture(): boolean {
-    return this.props.messageType === 'lead_capture' || this.props.messageType === 'qualification';
-  }
-
-  hasError(): boolean {
-    return !!this.props.metadata.errorType;
-  }
-
-  hasEntities(): boolean {
-    return (this.props.metadata.entitiesExtracted?.length || 0) > 0;
-  }
-
-  getTokenCost(): number {
-    return this.props.metadata.totalTokens || 0;
-  }
-
-  getProcessingDuration(): number {
-    const steps = this.props.metadata.processingSteps || [];
-    return steps.reduce((total, step) => total + step.duration, 0);
-  }
-
-  hasHighConfidence(threshold: number = 0.8): boolean {
-    return (this.props.metadata.confidence || 0) >= threshold;
-  }
+  // Query methods - delegate to value objects
+  isFromUser(): boolean { return this.props.messageType === 'user'; }
+  isFromBot(): boolean { return this.props.messageType === 'bot'; }
+  isSystemMessage(): boolean { return this.props.messageType === 'system'; }
+  isLeadCapture(): boolean { return this.props.messageType === 'lead_capture' || this.props.messageType === 'qualification'; }
+  hasError(): boolean { return this.props.contextMetadata.hasError(); }
+  hasEntities(): boolean { return this.props.aiMetadata.hasEntities(); }
+  getTokenCost(): number { return this.props.costTracking.costCents; }
+  getCostBreakdown(): any { return this.props.costTracking.costBreakdown; }
+  hasErrorDetails(): boolean { return this.props.contextMetadata.hasErrorDetails(); }
+  getProcessingDuration(): number { return this.props.processingMetrics.getTotalProcessingDuration(); }
+  hasHighConfidence(threshold: number = 0.8): boolean { return this.props.aiMetadata.hasHighConfidence(threshold); }
 
   isRecentMessage(minutesThreshold: number = 5): boolean {
     const now = new Date().getTime();
     const messageTime = this.props.timestamp.getTime();
     const thresholdMs = minutesThreshold * 60 * 1000;
-    
     return (now - messageTime) <= thresholdMs;
   }
 
   // Export methods
-  toDisplayText(): string {
-    return this.props.content;
-  }
+  toDisplayText(): string { return this.props.content; }
 
   toAnalyticsEvent(): object {
     return {
@@ -350,9 +233,9 @@ export class ChatMessage {
       contentLength: this.props.content.length,
       processingTime: this.props.processingTime,
       tokenCost: this.getTokenCost(),
-      confidence: this.props.metadata.confidence,
-      sentiment: this.props.metadata.sentiment,
-      urgency: this.props.metadata.urgency,
+      confidence: this.props.aiMetadata.confidence,
+      sentiment: this.props.contextMetadata.sentiment,
+      urgency: this.props.contextMetadata.urgency,
       hasEntities: this.hasEntities(),
       hasError: this.hasError(),
     };

@@ -13,25 +13,21 @@ import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
-import { IAIConversationService, ConversationContext, AIResponse } from '../../domain/services/IAIConversationService';
+import { IAIConversationService, ConversationContext } from '../../domain/services/IAIConversationService';
 import { ConversationContextService } from '../../domain/services/ConversationContextService';
 import { ConversationContextWindow } from '../../domain/value-objects/ConversationContextWindow';
 import { ITokenCountingService } from '../../domain/services/ITokenCountingService';
 import { IIntentClassificationService } from '../../domain/services/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../domain/services/IKnowledgeRetrievalService';
 import { IDebugInformationService } from '../../domain/services/IDebugInformationService';
-import { IntentResult } from '../../domain/value-objects/IntentResult';
-import { UserJourneyState } from '../../domain/value-objects/UserJourneyState';
 
-export interface ProcessMessageRequest {
-  sessionId: string;
-  userMessage: string;
-  clientInfo?: {
-    userAgent?: string;
-    ipAddress?: string;
-    location?: string;
-  };
-}
+// Import focused services
+import { MessageProcessingService, ProcessMessageRequest } from '../services/MessageProcessingService';
+import { ConversationMetricsService, ConversationMetrics } from '../services/ConversationMetricsService';
+import { LeadCaptureDecisionService } from '../services/LeadCaptureDecisionService';
+import { SystemPromptBuilderService } from '../services/SystemPromptBuilderService';
+import { SessionUpdateService } from '../services/SessionUpdateService';
+import { ConversationContextManagementService } from '../services/ConversationContextManagementService';
 
 export interface ProcessMessageResult {
   chatSession: ChatSession;
@@ -39,12 +35,7 @@ export interface ProcessMessageResult {
   botResponse: ChatMessage;
   shouldCaptureLeadInfo: boolean;
   suggestedNextActions: string[];
-  conversationMetrics: {
-    messageCount: number;
-    sessionDuration: number; // minutes
-    engagementScore: number; // 0-100
-    leadQualificationProgress: number; // 0-100
-  };
+  conversationMetrics: ConversationMetrics;
   intentAnalysis?: {
     intent: string;
     confidence: number;
@@ -66,6 +57,12 @@ export interface ProcessMessageResult {
 
 export class ProcessChatMessageUseCase {
   private readonly contextWindow: ConversationContextWindow;
+  private readonly messageProcessingService: MessageProcessingService;
+  private readonly conversationMetricsService: ConversationMetricsService;
+  private readonly leadCaptureDecisionService: LeadCaptureDecisionService;
+  private readonly systemPromptBuilderService: SystemPromptBuilderService;
+  private readonly sessionUpdateService: SessionUpdateService;
+  private readonly contextManagementService: ConversationContextManagementService;
 
   constructor(
     private readonly sessionRepository: IChatSessionRepository,
@@ -85,6 +82,19 @@ export class ProcessChatMessageUseCase {
       responseReservedTokens: 3000,
       summaryTokens: 200
     });
+
+    // Initialize focused services
+    this.messageProcessingService = new MessageProcessingService(messageRepository);
+    this.conversationMetricsService = new ConversationMetricsService();
+    this.leadCaptureDecisionService = new LeadCaptureDecisionService();
+    this.systemPromptBuilderService = new SystemPromptBuilderService(aiConversationService);
+    this.sessionUpdateService = new SessionUpdateService(sessionRepository);
+    this.contextManagementService = new ConversationContextManagementService(
+      conversationContextService,
+      tokenCountingService,
+      sessionRepository,
+      messageRepository
+    );
   }
 
   /**
@@ -93,87 +103,69 @@ export class ProcessChatMessageUseCase {
   async execute(request: ProcessMessageRequest): Promise<ProcessMessageResult> {
     const startTime = Date.now();
     
-    // 🎯 PIPELINE START
-    console.log('🎯 ===== CHATBOT PIPELINE START =====');
-    console.log('📝 Request:', JSON.stringify({
-      sessionId: request.sessionId,
-      userMessage: request.userMessage,
-      timestamp: new Date().toISOString()
-    }, null, 2));
-
     // 1. Load and validate session
-    const session = await this.sessionRepository.findById(request.sessionId);
-    if (!session) {
-      throw new Error(`Chat session ${request.sessionId} not found`);
-    }
+    const session = await this.loadAndValidateSession(request.sessionId);
 
     // 2. Load chatbot configuration
-    const config = await this.chatbotConfigRepository.findById(session.chatbotConfigId);
-    if (!config) {
-      throw new Error(`Chatbot configuration not found for session ${request.sessionId}`);
-    }
+    const config = await this.loadChatbotConfig(session.chatbotConfigId);
 
     // 3. Validate operating hours
-    if (!config.isWithinOperatingHours()) {
-      throw new Error('Chatbot is currently outside operating hours');
-    }
+    this.validateOperatingHours(config);
 
     // 4. Create and save user message
-    const userMessage = await this.createAndSaveUserMessage(session, request);
+    const userMessage = await this.messageProcessingService.createAndSaveUserMessage(session, request);
 
-    // 5. Initialize debug session (will be populated by OpenAI services)
-    if (this.debugInformationService) {
-      // We'll set botMessageId after creating the bot response
-      this.debugInformationService.initializeSession(session.id, userMessage.id, 'temp');
-    }
+    // 5. Initialize debug session
+    this.initializeDebugSession(session.id, userMessage.id);
 
-    // 5. Update session activity
+    // 6. Update session activity
     let updatedSession = session.updateActivity();
 
-    // 6. Get token-aware messages for context
-    const contextResult = await this.getTokenAwareContext(session.id, userMessage);
+    // 7. Get token-aware messages for context
+    const contextResult = await this.contextManagementService.getTokenAwareContext(
+      session.id, 
+      userMessage, 
+      this.contextWindow
+    );
 
-    // 7. Enhanced context analysis with intent classification and knowledge retrieval
+    // 8. Enhanced context analysis
     const enhancedContext = await this.conversationContextService.analyzeContextEnhanced(
       [...contextResult.messages, userMessage],
       config,
       updatedSession
     );
 
-    // 8. Update session with journey state if available
+    // 9. Update session with journey state if available
     if (enhancedContext.journeyState) {
-      updatedSession = this.updateSessionWithJourneyState(updatedSession, enhancedContext.journeyState);
+      updatedSession = this.sessionUpdateService.updateSessionWithJourneyState(
+        updatedSession, 
+        enhancedContext.journeyState
+      );
     }
 
-    // 9. Build conversation context with optimized message history and enhanced context
-    const conversationContext: ConversationContext = {
-      chatbotConfig: config,
-      session: updatedSession,
-      messageHistory: [...contextResult.messages, userMessage],
-      systemPrompt: this.buildEnhancedSystemPrompt(
-        config, 
-        updatedSession, 
-        contextResult.messages, 
-        enhancedContext
-      ),
-      conversationSummary: contextResult.summary
-    };
+    // 10. Build conversation context with enhanced system prompt
+    const conversationContext = this.buildConversationContext(
+      config,
+      updatedSession,
+      contextResult.messages,
+      userMessage,
+      contextResult.summary,
+      enhancedContext
+    );
 
-    // 10. Generate AI response
+    // 11. Generate AI response
     const aiResponse = await this.aiConversationService.generateResponse(
       request.userMessage,
       conversationContext
     );
 
-    // 11. Create and save bot response message
-    const botMessage = await this.createAndSaveBotMessage(session, aiResponse);
+    // 12. Create and save bot response message
+    const botMessage = await this.messageProcessingService.createAndSaveBotMessage(session, aiResponse);
 
-    // 12. Update debug session with correct bot message ID
-    if (this.debugInformationService) {
-      this.debugInformationService.initializeSession(session.id, userMessage.id, botMessage.id);
-    }
+    // 13. Update debug session with correct bot message ID
+    this.updateDebugSession(session.id, botMessage.id);
 
-    // 12. Update session with conversation context
+    // 14. Update session with conversation context
     const allMessages = [...contextResult.messages, userMessage, botMessage];
     updatedSession = this.conversationContextService.updateSessionContext(
       updatedSession,
@@ -181,30 +173,131 @@ export class ProcessChatMessageUseCase {
       allMessages
     );
 
-    // 13. Save updated session
-    const finalSession = await this.sessionRepository.update(updatedSession);
+    // 15. Save updated session
+    const finalSession = await this.sessionUpdateService.saveSession(updatedSession);
 
-    // 14. Determine if lead capture should be triggered
-    const shouldCaptureLeadInfo = this.shouldTriggerLeadCapture(finalSession, config);
-
-    // 15. Calculate conversation metrics
-    const conversationMetrics = await this.calculateConversationMetrics(finalSession, allMessages);
-
-    // 16. Generate suggested next actions
-    const suggestedNextActions = this.generateSuggestedActions(
+    // 16. Calculate metrics and determine actions
+    const shouldCaptureLeadInfo = this.leadCaptureDecisionService.shouldTriggerLeadCapture(finalSession, config);
+    const conversationMetrics = await this.conversationMetricsService.calculateConversationMetrics(finalSession, allMessages);
+    const suggestedNextActions = this.leadCaptureDecisionService.generateSuggestedActions(
       finalSession,
       config,
       shouldCaptureLeadInfo
     );
 
+    // 17. Update debug session with processing time
     const totalProcessingTime = Date.now() - startTime;
+    this.updateDebugProcessingTime(session.id, totalProcessingTime);
 
-    // Update debug session with total processing time
-    if (this.debugInformationService) {
-      this.debugInformationService.updateProcessingTime(session.id, totalProcessingTime);
+    return this.buildResult(
+      finalSession,
+      userMessage,
+      botMessage,
+      shouldCaptureLeadInfo,
+      suggestedNextActions,
+      conversationMetrics,
+      enhancedContext
+    );
+  }
+
+  /**
+   * Load and validate session
+   */
+  private async loadAndValidateSession(sessionId: string): Promise<ChatSession> {
+    const session = await this.sessionRepository.findById(sessionId);
+    if (!session) {
+      throw new Error(`Chat session ${sessionId} not found`);
     }
+    return session;
+  }
 
-    const result = {
+  /**
+   * Load chatbot configuration
+   */
+  private async loadChatbotConfig(configId: string): Promise<ChatbotConfig> {
+    const config = await this.chatbotConfigRepository.findById(configId);
+    if (!config) {
+      throw new Error(`Chatbot configuration not found for config ${configId}`);
+    }
+    return config;
+  }
+
+  /**
+   * Validate operating hours
+   */
+  private validateOperatingHours(config: ChatbotConfig): void {
+    if (!config.isWithinOperatingHours()) {
+      throw new Error('Chatbot is currently outside operating hours');
+    }
+  }
+
+  /**
+   * Initialize debug session
+   */
+  private initializeDebugSession(sessionId: string, userMessageId: string): void {
+    if (this.debugInformationService) {
+      this.debugInformationService.initializeSession(sessionId, userMessageId, 'temp');
+    }
+  }
+
+  /**
+   * Update debug session with bot message ID
+   */
+  private updateDebugSession(sessionId: string, botMessageId: string): void {
+    if (this.debugInformationService) {
+      this.debugInformationService.initializeSession(sessionId, '', botMessageId);
+    }
+  }
+
+  /**
+   * Update debug session with processing time
+   */
+  private updateDebugProcessingTime(sessionId: string, processingTime: number): void {
+    if (this.debugInformationService) {
+      this.debugInformationService.updateProcessingTime(sessionId, processingTime);
+    }
+  }
+
+  /**
+   * Build conversation context
+   */
+  private buildConversationContext(
+    config: ChatbotConfig,
+    session: ChatSession,
+    messages: ChatMessage[],
+    userMessage: ChatMessage,
+    summary: string | undefined,
+    enhancedContext: any
+  ): ConversationContext {
+    const systemPrompt = this.systemPromptBuilderService.buildEnhancedSystemPrompt(
+      config,
+      session,
+      messages,
+      enhancedContext
+    );
+
+    return {
+      chatbotConfig: config,
+      session,
+      messageHistory: [...messages, userMessage],
+      systemPrompt,
+      conversationSummary: summary
+    };
+  }
+
+  /**
+   * Build final result
+   */
+  private buildResult(
+    finalSession: ChatSession,
+    userMessage: ChatMessage,
+    botMessage: ChatMessage,
+    shouldCaptureLeadInfo: boolean,
+    suggestedNextActions: string[],
+    conversationMetrics: ConversationMetrics,
+    enhancedContext: any
+  ): ProcessMessageResult {
+    return {
       chatSession: finalSession,
       userMessage,
       botResponse: botMessage,
@@ -225,359 +318,5 @@ export class ProcessChatMessageUseCase {
       } : undefined,
       relevantKnowledge: enhancedContext.relevantKnowledge
     };
-
-    // 🎯 PIPELINE END
-    console.log('🎯 ===== CHATBOT PIPELINE COMPLETE =====');
-    console.log('📊 Summary:', JSON.stringify({
-      totalProcessingTime: `${totalProcessingTime}ms`,
-      userMessageId: userMessage.id,
-      botMessageId: botMessage.id,
-      intentDetected: result.intentAnalysis?.intent,
-      intentConfidence: result.intentAnalysis?.confidence,
-      shouldCaptureLeadInfo,
-      conversationMetrics: result.conversationMetrics,
-      timestamp: new Date().toISOString()
-    }, null, 2));
-
-    return result;
-  }
-
-  /**
-   * Create and save user message
-   */
-  private async createAndSaveUserMessage(
-    session: ChatSession,
-    request: ProcessMessageRequest
-  ): Promise<ChatMessage> {
-    const userMessage = ChatMessage.createUserMessage(
-      session.id,
-      request.userMessage,
-      'text' // Default input method, could be derived from clientInfo
-    );
-
-    return await this.messageRepository.save(userMessage);
-  }
-
-  /**
-   * Create and save bot response message
-   */
-  private async createAndSaveBotMessage(
-    session: ChatSession,
-    aiResponse: AIResponse
-  ): Promise<ChatMessage> {
-    const botMessage = ChatMessage.createBotMessage(
-      session.id,
-      aiResponse.content,
-      {
-        model: aiResponse.metadata.model,
-        promptTokens: aiResponse.metadata.promptTokens,
-        completionTokens: aiResponse.metadata.completionTokens,
-        confidence: aiResponse.confidence,
-        intentDetected: aiResponse.intentDetected,
-        processingTime: aiResponse.processingTimeMs
-      }
-    );
-
-    return await this.messageRepository.save(botMessage);
-  }
-
-  /**
-   * Get token-aware context for conversation
-   */
-  private async getTokenAwareContext(
-    sessionId: string, 
-    newUserMessage: ChatMessage
-  ): Promise<{
-    messages: ChatMessage[];
-    summary?: string;
-    tokenUsage: { messagesTokens: number; summaryTokens: number; totalTokens: number };
-    wasCompressed: boolean;
-  }> {
-    // Get all messages for this session
-    const allMessages = await this.messageRepository.findBySessionId(sessionId);
-    
-    if (allMessages.length === 0) {
-      return {
-        messages: [],
-        tokenUsage: { messagesTokens: 0, summaryTokens: 0, totalTokens: 0 },
-        wasCompressed: false
-      };
-    }
-
-    // Get existing conversation summary from session if available
-    const session = await this.sessionRepository.findById(sessionId);
-    const existingSummary = session?.contextData.conversationSummary;
-
-    // Use conversation context service to get optimized message window
-    const contextResult = await this.conversationContextService.getMessagesForContextWindow(
-      allMessages,
-      this.contextWindow,
-      existingSummary
-    );
-
-    // If we need to compress and don't have a summary, create one
-    if (contextResult.wasCompressed && !existingSummary && allMessages.length > 5) {
-      const messagesToSummarize = allMessages.slice(0, -2); // Don't summarize the most recent messages
-      const summary = await this.conversationContextService.createAISummary(
-        messagesToSummarize,
-        this.contextWindow.summaryTokens
-      );
-
-      // Update session with new summary
-      if (session) {
-        const updatedSession = session.updateConversationSummary(summary);
-        await this.sessionRepository.update(updatedSession);
-      }
-
-      return {
-        messages: contextResult.messages,
-        summary,
-        tokenUsage: {
-          messagesTokens: contextResult.tokenUsage.messagesTokens,
-          summaryTokens: await this.tokenCountingService.countTextTokens(summary),
-          totalTokens: contextResult.tokenUsage.totalTokens
-        },
-        wasCompressed: true
-      };
-    }
-
-    return {
-      messages: contextResult.messages,
-      summary: existingSummary,
-      tokenUsage: contextResult.tokenUsage,
-      wasCompressed: contextResult.wasCompressed
-    };
-  }
-
-  /**
-   * Get recent messages for context (legacy method - kept for compatibility)
-   */
-  private async getRecentMessages(sessionId: string): Promise<ChatMessage[]> {
-    // Get last 10 messages for context - using correct method signature
-    const messages = await this.messageRepository.findBySessionId(sessionId);
-    return messages.slice(-10); // Get last 10 messages
-  }
-
-  /**
-   * Calculate engagement score for this interaction
-   */
-  private calculateEngagementScore(userMessage: string, aiResponse: AIResponse): number {
-    let score = 0;
-
-    // Message length indicates engagement
-    if (userMessage.length > 50) score += 10;
-    if (userMessage.length > 100) score += 10;
-
-    // Questions indicate engagement
-    if (userMessage.includes('?')) score += 15;
-
-    // AI confidence in response
-    score += Math.round(aiResponse.confidence * 20); // Convert 0-1 to 0-20
-
-    // Specific keywords that indicate interest
-    const interestKeywords = ['interested', 'price', 'cost', 'buy', 'purchase', 'demo', 'trial'];
-    const hasInterestKeywords = interestKeywords.some(keyword => 
-      userMessage.toLowerCase().includes(keyword)
-    );
-    if (hasInterestKeywords) score += 25;
-
-    return Math.min(score, 100); // Cap at 100
-  }
-
-  /**
-   * Determine if lead capture should be triggered
-   */
-  private shouldTriggerLeadCapture(session: ChatSession, config: ChatbotConfig): boolean {
-    // Check if lead already captured
-    if (session.hasContactInfo()) {
-      return false;
-    }
-
-    // Check if already in qualification process
-    if (session.leadQualificationState.qualificationStatus === 'in_progress' || 
-        session.leadQualificationState.qualificationStatus === 'completed') {
-      return false;
-    }
-
-    // Check engagement score threshold
-    if (session.contextData.engagementScore >= 70) {
-      return true;
-    }
-
-    // Check session duration (more than 5 minutes of active conversation)
-    const sessionDuration = session.getSessionDuration();
-    if (sessionDuration >= 5) {
-      return true;
-    }
-
-    // Check if user shows buying intent
-    const buyingIntentTopics = ['pricing', 'trial', 'demo', 'features'];
-    const hasBuyingIntent = session.contextData.topics.some(topic => 
-      buyingIntentTopics.includes(topic)
-    );
-    
-    if (hasBuyingIntent && session.contextData.engagementScore >= 50) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Calculate comprehensive conversation metrics
-   */
-  private async calculateConversationMetrics(
-    session: ChatSession, 
-    allMessages: ChatMessage[]
-  ): Promise<ProcessMessageResult['conversationMetrics']> {
-    const sessionDuration = session.getSessionDuration();
-
-    // Calculate lead qualification progress
-    const totalQuestions = session.leadQualificationState.answeredQuestions.length;
-    const maxPossibleQuestions = 5; // Typical number of qualification questions
-    const leadQualificationProgress = Math.round((totalQuestions / maxPossibleQuestions) * 100);
-
-    return {
-      messageCount: allMessages.length,
-      sessionDuration,
-      engagementScore: session.contextData.engagementScore,
-      leadQualificationProgress: Math.min(leadQualificationProgress, 100)
-    };
-  }
-
-  /**
-   * Generate suggested next actions based on session state
-   */
-  private generateSuggestedActions(
-    session: ChatSession,
-    config: ChatbotConfig,
-    shouldCaptureLeadInfo: boolean
-  ): string[] {
-    const actions: string[] = [];
-
-    if (shouldCaptureLeadInfo) {
-      actions.push('Initiate lead capture flow');
-      actions.push('Ask for contact information');
-    }
-
-    if (session.contextData.engagementScore > 80) {
-      actions.push('Offer product demo');
-      actions.push('Connect with sales representative');
-    }
-
-    const sessionDuration = session.getSessionDuration();
-    if (sessionDuration > 10) {
-      actions.push('Suggest scheduling a call');
-      actions.push('Provide comprehensive resource links');
-    }
-
-    if (session.leadQualificationState.answeredQuestions.length > 0) {
-      const progress = session.leadQualificationState.answeredQuestions.length / config.leadQualificationQuestions.length;
-      if (progress > 0.5) {
-        actions.push('Continue qualification process');
-      }
-    }
-
-    // Check for specific topics that warrant actions
-    if (session.contextData.topics.includes('pricing')) {
-      actions.push('Provide pricing information');
-    }
-
-    if (session.contextData.topics.includes('demo')) {
-      actions.push('Schedule product demonstration');
-    }
-
-    if (session.contextData.topics.includes('support')) {
-      actions.push('Connect with support team');
-    }
-
-    // Default actions if none specific
-    if (actions.length === 0) {
-      actions.push('Continue conversation');
-      actions.push('Ask clarifying questions');
-    }
-
-    return actions;
-  }
-
-  /**
-   * Update session with journey state information
-   */
-  private updateSessionWithJourneyState(
-    session: ChatSession,
-    journeyState: UserJourneyState
-  ): ChatSession {
-    const updatedContextData = {
-      ...session.contextData,
-      journeyState: {
-        stage: journeyState.stage,
-        confidence: journeyState.confidence,
-        metadata: journeyState.metadata
-      }
-    };
-
-    return ChatSession.fromPersistence({
-      ...session.toPlainObject(),
-      contextData: updatedContextData,
-      lastActivityAt: new Date()
-    });
-  }
-
-  /**
-   * Build enhanced system prompt with intent and knowledge context
-   */
-  private buildEnhancedSystemPrompt(
-    config: ChatbotConfig,
-    session: ChatSession,
-    messageHistory: ChatMessage[],
-    enhancedContext: any
-  ): string {
-    // Start with base system prompt
-    let systemPrompt = this.aiConversationService.buildSystemPrompt(config, session, messageHistory);
-
-    // Add intent context if available
-    if (enhancedContext.intentResult) {
-      const intent = enhancedContext.intentResult;
-      systemPrompt += `\n\nCURRENT USER INTENT: ${intent.intent} (confidence: ${intent.confidence.toFixed(2)})`;
-      
-      if (intent.entities && Object.keys(intent.entities).length > 0) {
-        systemPrompt += `\nEXTRACTED ENTITIES: ${JSON.stringify(intent.entities)}`;
-      }
-
-      systemPrompt += `\nINTENT CATEGORY: ${intent.getCategory()}`;
-      
-      if (intent.isSalesIntent()) {
-        systemPrompt += `\nNOTE: User is showing sales interest. Focus on qualification and next steps.`;
-      } else if (intent.isSupportIntent()) {
-        systemPrompt += `\nNOTE: User needs support. Provide helpful information and solutions.`;
-      }
-    }
-
-    // Add journey state context if available
-    if (enhancedContext.journeyState) {
-      const journey = enhancedContext.journeyState;
-      systemPrompt += `\n\nUSER JOURNEY STAGE: ${journey.stage} (confidence: ${journey.confidence.toFixed(2)})`;
-      
-      if (journey.isSalesReady()) {
-        systemPrompt += `\nNOTE: User is sales-ready. Focus on closing and next steps.`;
-      }
-
-      const recommendedActions = journey.getRecommendedActions();
-      if (recommendedActions.length > 0) {
-        systemPrompt += `\nRECOMMENDED ACTIONS: ${recommendedActions.join(', ')}`;
-      }
-    }
-
-    // Add relevant knowledge context if available
-    if (enhancedContext.relevantKnowledge && enhancedContext.relevantKnowledge.length > 0) {
-      systemPrompt += `\n\nRELEVANT KNOWLEDGE:`;
-      enhancedContext.relevantKnowledge.forEach((knowledge: any, index: number) => {
-        systemPrompt += `\n${index + 1}. ${knowledge.title} (relevance: ${knowledge.relevanceScore.toFixed(2)})`;
-        systemPrompt += `\n   ${knowledge.content.substring(0, 200)}${knowledge.content.length > 200 ? '...' : ''}`;
-      });
-      systemPrompt += `\n\nUse this knowledge to provide accurate, helpful responses. Reference specific information when relevant.`;
-    }
-
-    return systemPrompt;
   }
 } 

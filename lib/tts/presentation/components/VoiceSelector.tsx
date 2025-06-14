@@ -59,7 +59,7 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
           modelIdToPass = REPLICATE_MODELS.KOKORO_82M;
         }
         
-        console.log(`VoiceSelector: Fetching voices for provider: ${selectedProvider}, model: ${modelIdToPass || 'N/A'}`);
+    
         const result = await getTtsVoices(selectedProvider, modelIdToPass);
         if (result.success && result.data) {
           // Use VoiceId domain logic for sorting

@@ -17,7 +17,7 @@ export function ChatApiDebugPanel({ apiDebugInfo }: ChatApiDebugPanelProps) {
   if (!apiDebugInfo) return null;
 
   return (
-    <Card className="w-full max-w-6xl mx-auto overflow-hidden">
+    <Card className="w-full overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Code className="h-5 w-5" />

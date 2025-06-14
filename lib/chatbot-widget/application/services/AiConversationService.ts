@@ -45,9 +45,14 @@ export class AiConversationService implements IAIConversationService {
       const messageHistory = context.messageHistory;
 
       // 3. Convert to OpenAI message format
+      // Remove current message from history to avoid duplication
+      const historyWithoutCurrentMessage = messageHistory.filter(msg => 
+        !(msg.messageType === 'user' && msg.content.trim() === userMessage.trim())
+      );
+      
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: 'system', content: systemPrompt },
-        ...messageHistory.map(msg => ({
+        ...historyWithoutCurrentMessage.map(msg => ({
           role: msg.isFromBot() ? 'assistant' as const : 'user' as const,
           content: msg.content
         })),
@@ -97,28 +102,7 @@ export class AiConversationService implements IAIConversationService {
       // Update provider configuration for this request
       await this.configureProviderForRequest(aiConfig);
 
-      // Console log the second API call request
-      console.log('🚀 SECOND API CALL (Response Generation) - REQUEST:');
-      console.log(JSON.stringify({
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        method: 'POST',
-        timestamp: new Date().toISOString(),
-        payload: {
-          model: aiConfig?.openaiModel || 'gpt-4o-mini',
-          messages: messages,
-          functions: [leadCaptureFunction],
-          function_call: 'auto',
-          temperature: aiConfig?.openaiTemperature || 0.7,
-          max_tokens: aiConfig?.openaiMaxTokens || 1000
-        },
-        payloadSize: JSON.stringify({
-          messages: messages,
-          functions: [leadCaptureFunction]
-        }).length + ' characters',
-        messageCount: messages.length,
-        conversationHistoryLength: messageHistory.length,
-        userMessage: userMessage
-      }, null, 2));
+
 
       // 6. Generate response with function calling capability
       const response = await this.openAIProvider.createChatCompletion(
@@ -129,13 +113,7 @@ export class AiConversationService implements IAIConversationService {
         'second' // This is the second API call
       );
 
-      // Console log the second API call response
-      console.log('🚀 SECOND API CALL (Response Generation) - RESPONSE:');
-      console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        response: response,
-        responseSize: JSON.stringify(response).length + ' characters'
-      }, null, 2));
+
 
       const choice = response.choices[0];
       const usage = response.usage;

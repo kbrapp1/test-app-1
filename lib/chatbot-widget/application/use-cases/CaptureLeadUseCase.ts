@@ -1,19 +1,22 @@
 /**
  * Capture Lead Use Case
  * 
- * Application-specific business rules for lead capture scenarios.
- * Orchestrates domain objects for lead qualification process and contact information capture.
- * 
- * Single Responsibility: Handles the complete lead capture and qualification workflow
+ * Application Use Case: Handles the business logic for capturing a new lead
+ * Single Responsibility: Lead capture workflow coordination
+ * Following DDD application layer patterns
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
-import { Lead, ContactInfo, QualificationData, LeadSource } from '../../domain/entities/Lead';
+import { Lead } from '../../domain/entities/Lead';
+import { ContactInfo } from '../../domain/value-objects/ContactInfo';
+import { QualificationData } from '../../domain/value-objects/QualificationData';
+import { LeadSource } from '../../domain/value-objects/LeadSource';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
 import { LeadScoringService } from '../../domain/services/LeadScoringService';
+
 
 export interface CaptureLeadRequest {
   sessionId: string;
@@ -198,9 +201,9 @@ export class CaptureLeadUseCase {
       `Chatbot session with ${session.contextData.topics.join(', ') || 'general inquiries'}`;
 
     return {
-      contactInfo: leadContactInfo,
-      qualificationData: leadQualificationData,
-      source: leadSource,
+      contactInfo: ContactInfo.create(leadContactInfo),
+      qualificationData: QualificationData.create(leadQualificationData),
+      source: LeadSource.create(leadSource),
       conversationSummary
     };
   }

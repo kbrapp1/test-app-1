@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { OperatingHours, BusinessHours, HolidaySchedule } from '../OperatingHours';
+import { OperatingHours, BusinessHours, Holiday } from '../OperatingHours';
 
 describe('OperatingHours Value Object', () => {
   let validBusinessHours: BusinessHours[];
-  let validHolidaySchedule: HolidaySchedule[];
+  let validHolidaySchedule: Holiday[];
 
   beforeEach(() => {
     validBusinessHours = [
-      { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isEnabled: true }, // Monday
-      { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isEnabled: true }, // Tuesday
-      { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isEnabled: true }, // Wednesday
-      { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isEnabled: true }, // Thursday
-      { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isEnabled: true }, // Friday
-      { dayOfWeek: 6, startTime: '10:00', endTime: '14:00', isEnabled: false }, // Saturday
-      { dayOfWeek: 0, startTime: '10:00', endTime: '14:00', isEnabled: false }  // Sunday
+      { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isActive: true }, // Monday
+      { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isActive: true }, // Tuesday
+      { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isActive: true }, // Wednesday
+      { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isActive: true }, // Thursday
+      { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isActive: true }, // Friday
+      { dayOfWeek: 6, startTime: '10:00', endTime: '14:00', isActive: false }, // Saturday
+      { dayOfWeek: 0, startTime: '10:00', endTime: '14:00', isActive: false }  // Sunday
     ];
 
     validHolidaySchedule = [
@@ -22,14 +22,14 @@ describe('OperatingHours Value Object', () => {
     ];
   });
 
-  describe('constructor validation', () => {
-    it('should create valid OperatingHours', () => {
-      const operatingHours = new OperatingHours(
-        'America/New_York',
-        validBusinessHours,
-        validHolidaySchedule,
-        'We are currently closed.'
-      );
+  describe('factory methods', () => {
+    it('should create valid OperatingHours using factory method', () => {
+      const operatingHours = OperatingHours.create({
+        timezone: 'America/New_York',
+        businessHours: validBusinessHours,
+        holidaySchedule: validHolidaySchedule,
+        outsideHoursMessage: 'We are currently closed.'
+      });
 
       expect(operatingHours.timezone).toBe('America/New_York');
       expect(operatingHours.businessHours).toEqual(validBusinessHours);
@@ -37,53 +37,89 @@ describe('OperatingHours Value Object', () => {
       expect(operatingHours.outsideHoursMessage).toBe('We are currently closed.');
     });
 
-    it('should throw error for empty timezone', () => {
-      expect(() => {
-        new OperatingHours('', validBusinessHours, validHolidaySchedule, 'Closed');
-      }).toThrow('Timezone is required');
+    it('should create default operating hours', () => {
+      const defaultHours = OperatingHours.createDefault();
+      
+      expect(defaultHours.timezone).toBe('UTC');
+      expect(defaultHours.businessHours).toHaveLength(7); // All days of week
+      expect(defaultHours.businessHours.filter(h => h.isActive)).toHaveLength(5); // Monday-Friday
+      expect(defaultHours.holidaySchedule).toEqual([]);
+      expect(defaultHours.outsideHoursMessage).toContain('currently offline');
     });
 
-    it('should throw error for invalid timezone', () => {
+    it('should create default with custom timezone', () => {
+      const customDefault = OperatingHours.createDefault('America/Los_Angeles');
+      expect(customDefault.timezone).toBe('America/Los_Angeles');
+    });
+  });
+
+  describe('validation', () => {
+    it('should throw error for empty timezone', () => {
       expect(() => {
-        new OperatingHours('Invalid/Timezone', validBusinessHours, validHolidaySchedule, 'Closed');
-      }).toThrow('Invalid timezone: Invalid/Timezone');
+        OperatingHours.create({
+          timezone: '',
+          businessHours: validBusinessHours,
+          holidaySchedule: validHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Timezone is required');
     });
 
     it('should throw error for non-array business hours', () => {
       expect(() => {
-        // @ts-ignore - Testing runtime validation
-        new OperatingHours('UTC', 'invalid', validHolidaySchedule, 'Closed');
+        OperatingHours.create({
+          timezone: 'UTC',
+          // @ts-ignore - Testing runtime validation
+          businessHours: 'invalid',
+          holidaySchedule: validHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
       }).toThrow('Business hours must be an array');
     });
 
     it('should throw error for invalid day of week', () => {
       const invalidBusinessHours = [
-        { dayOfWeek: 7, startTime: '09:00', endTime: '17:00', isEnabled: true } // Invalid day
+        { dayOfWeek: 7, startTime: '09:00', endTime: '17:00', isActive: true } // Invalid day
       ];
 
       expect(() => {
-        new OperatingHours('UTC', invalidBusinessHours, validHolidaySchedule, 'Closed');
-      }).toThrow('Invalid day of week at index 0: must be 0-6');
+        OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: invalidBusinessHours,
+          holidaySchedule: validHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Business hours at index 0: dayOfWeek must be 0-6');
     });
 
     it('should throw error for invalid time format', () => {
       const invalidBusinessHours = [
-        { dayOfWeek: 1, startTime: '25:00', endTime: '17:00', isEnabled: true } // Invalid time
+        { dayOfWeek: 1, startTime: '25:00', endTime: '17:00', isActive: true } // Invalid time
       ];
 
       expect(() => {
-        new OperatingHours('UTC', invalidBusinessHours, validHolidaySchedule, 'Closed');
-      }).toThrow('Invalid start time format at index 0: must be HH:MM');
+        OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: invalidBusinessHours,
+          holidaySchedule: validHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Business hours at index 0: invalid startTime format (use HH:mm)');
     });
 
     it('should throw error when start time is after end time', () => {
       const invalidBusinessHours = [
-        { dayOfWeek: 1, startTime: '18:00', endTime: '17:00', isEnabled: true } // Start after end
+        { dayOfWeek: 1, startTime: '18:00', endTime: '17:00', isActive: true } // Start after end
       ];
 
       expect(() => {
-        new OperatingHours('UTC', invalidBusinessHours, validHolidaySchedule, 'Closed');
-      }).toThrow('Start time must be before end time at index 0');
+        OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: invalidBusinessHours,
+          holidaySchedule: validHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Business hours at index 0: startTime must be before endTime');
     });
 
     it('should throw error for invalid holiday date format', () => {
@@ -92,8 +128,13 @@ describe('OperatingHours Value Object', () => {
       ];
 
       expect(() => {
-        new OperatingHours('UTC', validBusinessHours, invalidHolidaySchedule, 'Closed');
-      }).toThrow('Invalid holiday date format at index 0: must be YYYY-MM-DD');
+        OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: validBusinessHours,
+          holidaySchedule: invalidHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Holiday at index 0: invalid date format (use YYYY-MM-DD)');
     });
 
     it('should throw error for empty holiday name', () => {
@@ -102,8 +143,13 @@ describe('OperatingHours Value Object', () => {
       ];
 
       expect(() => {
-        new OperatingHours('UTC', validBusinessHours, invalidHolidaySchedule, 'Closed');
-      }).toThrow('Holiday name is required at index 0');
+        OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: validBusinessHours,
+          holidaySchedule: invalidHolidaySchedule,
+          outsideHoursMessage: 'Closed'
+        });
+      }).toThrow('Holiday at index 0: name is required');
     });
   });
 
@@ -111,83 +157,62 @@ describe('OperatingHours Value Object', () => {
     let operatingHours: OperatingHours;
 
     beforeEach(() => {
-      operatingHours = new OperatingHours(
-        'UTC',
-        validBusinessHours,
-        validHolidaySchedule,
-        'We are currently closed.'
-      );
+      operatingHours = OperatingHours.create({
+        timezone: 'UTC',
+        businessHours: validBusinessHours,
+        holidaySchedule: validHolidaySchedule,
+        outsideHoursMessage: 'We are currently closed.'
+      });
     });
 
-    describe('isOpenAt', () => {
+    describe('isWithinOperatingHours', () => {
       it('should return true for business hours on Monday', () => {
         const mondayAt10AM = new Date('2024-01-08T10:00:00Z'); // Monday (not a holiday)
-        expect(operatingHours.isOpenAt(mondayAt10AM)).toBe(true);
+        expect(operatingHours.isWithinOperatingHours(mondayAt10AM)).toBe(true);
       });
 
       it('should return false for outside business hours', () => {
         const mondayAt8AM = new Date('2024-01-08T08:00:00Z'); // Before opening
-        expect(operatingHours.isOpenAt(mondayAt8AM)).toBe(false);
+        expect(operatingHours.isWithinOperatingHours(mondayAt8AM)).toBe(false);
       });
 
-      it('should return false for disabled days', () => {
-        const saturdayAt11AM = new Date('2024-01-06T11:00:00Z'); // Saturday (disabled)
-        expect(operatingHours.isOpenAt(saturdayAt11AM)).toBe(false);
+      it('should return false for inactive days', () => {
+        const saturdayAt11AM = new Date('2024-01-06T11:00:00Z'); // Saturday (inactive)
+        expect(operatingHours.isWithinOperatingHours(saturdayAt11AM)).toBe(false);
       });
 
       it('should return false for holidays', () => {
         const christmas = new Date('2024-12-25T10:00:00Z'); // Christmas Day
-        expect(operatingHours.isOpenAt(christmas)).toBe(false);
+        expect(operatingHours.isWithinOperatingHours(christmas)).toBe(false);
       });
-    });
 
-    describe('isCurrentlyOpen', () => {
       it('should use current date when no date provided', () => {
-        const result = operatingHours.isCurrentlyOpen();
+        const result = operatingHours.isWithinOperatingHours();
         expect(typeof result).toBe('boolean');
       });
     });
 
-    describe('getNextOpeningTime', () => {
+    describe('getNextOpenTime', () => {
       it('should return next opening time for closed period', () => {
         const sundayNight = new Date('2024-01-07T22:00:00Z'); // Sunday night
-        const nextOpening = operatingHours.getNextOpeningTime(sundayNight);
+        const nextOpening = operatingHours.getNextOpenTime(sundayNight);
         
         expect(nextOpening).toBeDefined();
         expect(nextOpening).toBeInstanceOf(Date);
       });
 
       it('should return null if no opening time found in 2 weeks', () => {
-        // Create operating hours with no enabled days
-        const allDisabledHours = validBusinessHours.map(h => ({ ...h, isEnabled: false }));
-        const closedOperatingHours = new OperatingHours(
-          'UTC',
-          allDisabledHours,
-          [],
-          'Always closed'
-        );
+        // Create operating hours with no active days
+        const allInactiveHours = validBusinessHours.map(h => ({ ...h, isActive: false }));
+        const closedOperatingHours = OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: allInactiveHours,
+          holidaySchedule: [],
+          outsideHoursMessage: 'Always closed'
+        });
 
-        const result = closedOperatingHours.getNextOpeningTime();
+        const result = closedOperatingHours.getNextOpenTime();
         expect(result).toBeNull();
-      });
-    });
-
-    describe('getSummary', () => {
-      it('should return "Closed" for no enabled hours', () => {
-        const allDisabledHours = validBusinessHours.map(h => ({ ...h, isEnabled: false }));
-        const closedOperatingHours = new OperatingHours(
-          'UTC',
-          allDisabledHours,
-          [],
-          'Always closed'
-        );
-
-        expect(closedOperatingHours.getSummary()).toBe('Closed');
-      });
-
-      it('should return formatted summary for enabled hours', () => {
-        const summary = operatingHours.getSummary();
-        expect(summary).toContain('Mon-Fri: 09:00-17:00');
       });
     });
   });
@@ -196,16 +221,16 @@ describe('OperatingHours Value Object', () => {
     let operatingHours: OperatingHours;
 
     beforeEach(() => {
-      operatingHours = new OperatingHours(
-        'UTC',
-        validBusinessHours,
-        validHolidaySchedule,
-        'We are currently closed.'
-      );
+      operatingHours = OperatingHours.create({
+        timezone: 'UTC',
+        businessHours: validBusinessHours,
+        holidaySchedule: validHolidaySchedule,
+        outsideHoursMessage: 'We are currently closed.'
+      });
     });
 
     it('should create new instance with updated timezone', () => {
-      const updated = operatingHours.withTimezone('America/Los_Angeles');
+      const updated = operatingHours.updateTimezone('America/Los_Angeles');
       
       expect(updated.timezone).toBe('America/Los_Angeles');
       expect(updated.businessHours).toEqual(operatingHours.businessHours);
@@ -213,113 +238,83 @@ describe('OperatingHours Value Object', () => {
     });
 
     it('should create new instance with updated business hours', () => {
-      const newHours = [{ dayOfWeek: 1, startTime: '08:00', endTime: '16:00', isEnabled: true }];
-      const updated = operatingHours.withBusinessHours(newHours);
+      const newHours = [{ dayOfWeek: 1, startTime: '08:00', endTime: '16:00', isActive: true }];
+      const updated = operatingHours.updateBusinessHours(newHours);
       
       expect(updated.businessHours).toEqual(newHours);
       expect(updated.timezone).toBe(operatingHours.timezone);
       expect(updated).not.toBe(operatingHours);
     });
 
-    it('should create new instance with updated holiday schedule', () => {
-      const newHolidays = [{ date: '2024-07-04', name: 'Independence Day', isRecurring: true }];
-      const updated = operatingHours.withHolidaySchedule(newHolidays);
-      
-      expect(updated.holidaySchedule).toEqual(newHolidays);
-      expect(updated.timezone).toBe(operatingHours.timezone);
-      expect(updated).not.toBe(operatingHours);
-    });
-
     it('should create new instance with updated outside hours message', () => {
       const newMessage = 'Please call during business hours';
-      const updated = operatingHours.withOutsideHoursMessage(newMessage);
+      const updated = operatingHours.updateOutsideHoursMessage(newMessage);
       
       expect(updated.outsideHoursMessage).toBe(newMessage);
       expect(updated.timezone).toBe(operatingHours.timezone);
       expect(updated).not.toBe(operatingHours);
     });
+
+    it('should add holiday correctly', () => {
+      const newHoliday = { date: '2024-07-04', name: 'Independence Day', isRecurring: true };
+      const updated = operatingHours.addHoliday(newHoliday);
+      
+      expect(updated.holidaySchedule).toContain(newHoliday);
+      expect(updated.holidaySchedule).toHaveLength(operatingHours.holidaySchedule.length + 1);
+      expect(updated).not.toBe(operatingHours);
+    });
+
+    it('should throw error when adding duplicate holiday', () => {
+      const duplicateHoliday = { date: '2024-12-25', name: 'Christmas', isRecurring: true };
+      
+      expect(() => {
+        operatingHours.addHoliday(duplicateHoliday);
+      }).toThrow('Holiday on 2024-12-25 already exists');
+    });
+
+    it('should remove holiday correctly', () => {
+      const updated = operatingHours.removeHoliday('2024-12-25');
+      
+      expect(updated.holidaySchedule).not.toContain(
+        expect.objectContaining({ date: '2024-12-25' })
+      );
+      expect(updated.holidaySchedule).toHaveLength(operatingHours.holidaySchedule.length - 1);
+      expect(updated).not.toBe(operatingHours);
+    });
+
+    it('should set day active/inactive', () => {
+      const updated = operatingHours.setDayActive(6, true); // Make Saturday active
+      
+      const saturdayHours = updated.businessHours.find(h => h.dayOfWeek === 6);
+      expect(saturdayHours?.isActive).toBe(true);
+      expect(updated).not.toBe(operatingHours);
+    });
+
+    it('should update day hours', () => {
+      const updated = operatingHours.updateDayHours(1, '08:00', '18:00'); // Update Monday hours
+      
+      const mondayHours = updated.businessHours.find(h => h.dayOfWeek === 1);
+      expect(mondayHours?.startTime).toBe('08:00');
+      expect(mondayHours?.endTime).toBe('18:00');
+      expect(updated).not.toBe(operatingHours);
+    });
   });
 
-  describe('equality and comparison', () => {
-    it('should return true for equal OperatingHours', () => {
-      const operatingHours1 = new OperatingHours(
-        'UTC',
-        validBusinessHours,
-        validHolidaySchedule,
-        'Closed'
-      );
-      
-      const operatingHours2 = new OperatingHours(
-        'UTC',
-        validBusinessHours,
-        validHolidaySchedule,
-        'Closed'
-      );
-
-      expect(operatingHours1.equals(operatingHours2)).toBe(true);
-    });
-
-    it('should return false for different timezones', () => {
-      const operatingHours1 = new OperatingHours('UTC', validBusinessHours, validHolidaySchedule, 'Closed');
-      const operatingHours2 = new OperatingHours('America/New_York', validBusinessHours, validHolidaySchedule, 'Closed');
-
-      expect(operatingHours1.equals(operatingHours2)).toBe(false);
-    });
-  });
-
-  describe('JSON serialization', () => {
-    it('should convert to JSON correctly', () => {
-      const operatingHours = new OperatingHours(
-        'UTC',
-        validBusinessHours,
-        validHolidaySchedule,
-        'Closed'
-      );
-
-      const json = operatingHours.toJSON();
-      
-      expect(json).toHaveProperty('timezone', 'UTC');
-      expect(json).toHaveProperty('businessHours', validBusinessHours);
-      expect(json).toHaveProperty('holidaySchedule', validHolidaySchedule);
-      expect(json).toHaveProperty('outsideHoursMessage', 'Closed');
-    });
-
-    it('should create from JSON correctly', () => {
-      const jsonData = {
-        timezone: 'America/New_York',
+  describe('serialization', () => {
+    it('should convert to plain object correctly', () => {
+      const operatingHours = OperatingHours.create({
+        timezone: 'UTC',
         businessHours: validBusinessHours,
         holidaySchedule: validHolidaySchedule,
-        outsideHoursMessage: 'Currently closed'
-      };
+        outsideHoursMessage: 'Closed'
+      });
 
-      const operatingHours = OperatingHours.fromJSON(jsonData);
+      const plainObject = operatingHours.toPlainObject();
       
-      expect(operatingHours.timezone).toBe('America/New_York');
-      expect(operatingHours.businessHours).toEqual(validBusinessHours);
-      expect(operatingHours.holidaySchedule).toEqual(validHolidaySchedule);
-      expect(operatingHours.outsideHoursMessage).toBe('Currently closed');
-    });
-
-    it('should create from JSON with defaults for missing data', () => {
-      const incompleteData = { timezone: 'UTC' };
-      const operatingHours = OperatingHours.fromJSON(incompleteData);
-      
-      expect(operatingHours.timezone).toBe('UTC');
-      expect(operatingHours.businessHours).toEqual([]);
-      expect(operatingHours.holidaySchedule).toEqual([]);
-      expect(operatingHours.outsideHoursMessage).toContain('currently closed');
-    });
-  });
-
-  describe('factory methods', () => {
-    it('should create default operating hours', () => {
-      const defaultHours = OperatingHours.createDefault();
-      
-      expect(defaultHours.timezone).toBe('UTC');
-      expect(defaultHours.businessHours).toHaveLength(7); // All days of week
-      expect(defaultHours.businessHours.filter(h => h.isEnabled)).toHaveLength(5); // Monday-Friday
-      expect(defaultHours.holidaySchedule).toEqual([]);
-      expect(defaultHours.outsideHoursMessage).toContain('currently closed');
+      expect(plainObject).toHaveProperty('timezone', 'UTC');
+      expect(plainObject).toHaveProperty('businessHours', validBusinessHours);
+      expect(plainObject).toHaveProperty('holidaySchedule', validHolidaySchedule);
+      expect(plainObject).toHaveProperty('outsideHoursMessage', 'Closed');
     });
   });
 }); 

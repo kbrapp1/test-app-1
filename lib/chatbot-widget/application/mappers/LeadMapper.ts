@@ -5,7 +5,11 @@
  * Follows DDD principles by maintaining clear separation between domain and application layers.
  */
 
-import { Lead, LeadProps, ContactInfo, QualificationData, QualificationAnswer, LeadSource, LeadNote } from '../../domain/entities/Lead';
+import { Lead } from '../../domain/entities/Lead';
+import { ContactInfo, ContactInfoProps } from '../../domain/value-objects/ContactInfo';
+import { QualificationData, QualificationDataProps, QualificationAnswer } from '../../domain/value-objects/QualificationData';
+import { LeadSource, LeadSourceProps } from '../../domain/value-objects/LeadSource';
+import { LeadNote } from '../../domain/value-objects/LeadMetadata';
 import { LeadDto, ContactInfoDto, QualificationDataDto, AnsweredQuestionDto, LeadSourceDto, CreateLeadDto } from '../dto/LeadDto';
 
 export class LeadMapper {
@@ -39,9 +43,9 @@ export class LeadMapper {
     sessionId: string;
     organizationId: string;
     chatbotConfigId: string;
-    contactInfo: ContactInfo;
-    qualificationData: QualificationData;
-    source: LeadSource;
+    contactInfo: ContactInfoProps;
+    qualificationData: QualificationDataProps;
+    source: LeadSourceProps;
     conversationSummary: string;
   } {
     return {
@@ -78,9 +82,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map DTO ContactInfo to domain
+   * Map DTO ContactInfo to domain props
    */
-  private mapContactInfoFromDto(dto: ContactInfoDto): ContactInfo {
+  private mapContactInfoFromDto(dto: ContactInfoDto): ContactInfoProps {
     return {
       name: dto.name,
       firstName: dto.name?.split(' ')[0], // Simple extraction
@@ -120,9 +124,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map DTO QualificationData to domain
+   * Map DTO QualificationData to domain props
    */
-  private mapQualificationDataFromDto(dto: QualificationDataDto): QualificationData {
+  private mapQualificationDataFromDto(dto: QualificationDataDto): QualificationDataProps {
     return {
       budget: dto.budget,
       timeline: dto.timeline,
@@ -183,9 +187,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map DTO LeadSource to domain
+   * Map DTO LeadSource to domain props
    */
-  private mapSourceFromDto(dto: LeadSourceDto): LeadSource {
+  private mapSourceFromDto(dto: LeadSourceDto): LeadSourceProps {
     return {
       channel: 'chatbot_widget',
       campaign: dto.campaignSource,

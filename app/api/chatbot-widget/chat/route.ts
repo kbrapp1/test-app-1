@@ -82,9 +82,7 @@ async function postHandler(
     result.suggestedNextActions
   );
 
-  // Console log debug info for troubleshooting
-  console.log('🐛 DOMAIN DEBUG INFO:', JSON.stringify(domainDebugInfo, null, 2));
-  console.log('🐛 TRANSFORMED DTO:', JSON.stringify(debugInfo, null, 2));
+  // Debug info available in response for client-side debugging
 
   // Return successful response
   return NextResponse.json({

@@ -14,8 +14,12 @@
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
-import { LeadScoringService } from '../../domain/services/LeadScoringService';
-import { Lead, QualificationData, ContactInfo, LeadSource, FollowUpStatus, QualificationStatus } from '../../domain/entities/Lead';
+import { LeadScoringService, QualificationStatus } from '../../domain/services/LeadScoringService';
+import { FollowUpStatus } from '../../domain/entities/LeadLifecycleManager';
+import { Lead } from '../../domain/entities/Lead';
+import { QualificationData } from '../../domain/value-objects/QualificationData';
+import { ContactInfo } from '../../domain/value-objects/ContactInfo';
+import { LeadSource } from '../../domain/value-objects/LeadSource';
 import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatMessage } from '../../domain/entities/ChatMessage';
 
@@ -203,17 +207,16 @@ export class LeadManagementService {
     const sessionContext = undefined; // TODO: Implement getContext method in ChatSession
 
     // Calculate new score using domain service
-    const scoringResult = this.leadScoringService.calculateLeadScore(
-      lead.qualificationData,
-      sessionContext
+    const scoringResult = LeadScoringService.calculateScore(
+      lead.qualificationData
     );
 
     // Update lead with new score - this would require adding a method to Lead entity
     // For now, we'll create a new lead with updated score
     const updatedLead = Lead.fromPersistence({
       ...lead.toPlainObject(),
-      leadScore: scoringResult.totalScore,
-      qualificationStatus: this.determineQualificationStatus(scoringResult.totalScore),
+      leadScore: scoringResult.score,
+      qualificationStatus: scoringResult.qualificationStatus,
       updatedAt: new Date(),
     });
 

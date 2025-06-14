@@ -1,152 +1,95 @@
-// DEPRECATED: Legacy ApiDebugInfo interface - now using DebugInfoDto from application layer
-// This interface is obsolete and will be removed
-export interface ApiDebugInfo {
-  // First API Call - Intent Classification with Function Calling
-  firstApiCall?: {
-    requestData: {
-      model: string;
-      messagesCount: number;
-      temperature: number;
-      maxTokens: number;
-      timestamp: string;
-      systemPrompt?: string;
-      userMessage: string;
-      fullPrompt?: string;
-      requestHeaders?: Record<string, string>;
-      requestPayload?: any;
-      fullRequestPayload?: any;
-      apiEndpoint?: string;
-      requestSize?: number;
-      userAgent?: string;
-      functionsProvided?: Array<{
-        name: string;
-        description: string;
-        parameters: any;
-      }>;
-    };
-    responseData: {
-      id: string;
-      model: string;
-      usage: {
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-      };
-      responseLength: number;
-      processingTime: number;
-      fullResponse?: string;
-      responseHeaders?: Record<string, string>;
-      responsePayload?: any;
-      responseSize?: number;
-      statusCode?: number;
-      rateLimitInfo?: {
-        remaining: number;
-        resetTime: string;
-        limit: number;
-      };
-      functionCallsExecuted?: Array<{
-        name: string;
-        arguments: any;
-        result: any;
-        executionTime: number;
-        success: boolean;
-        error?: string;
-      }>;
-    };
-    costData: {
-      inputTokens: number;
-      outputTokens: number;
-      totalTokens: number;
-      estimatedCost: string;
-      model: string;
-      inputCostPerToken?: number;
-      outputCostPerToken?: number;
-      totalCostBreakdown?: {
-        inputCost: number;
-        outputCost: number;
-        total: number;
-      };
+/**
+ * Debug Panel Types
+ * 
+ * Presentation layer types for debug panel components.
+ * Following DDD principles: Presentation layer defines UI-specific contracts.
+ * 
+ * Note: The large ApiDebugInfo interface has been moved to DebugInfoDto 
+ * in the application layer following proper DDD layer separation.
+ */
+
+import { DebugInfoDto } from '../../application/dto/DebugInfoDto';
+
+/**
+ * Props for the main debug panel component
+ */
+export interface ChatApiDebugPanelProps {
+  apiDebugInfo: DebugInfoDto | null;
+}
+
+/**
+ * Debug step component props for consistent step rendering
+ */
+export interface DebugStepProps {
+  stepNumber: number;
+  title: string;
+  isActive?: boolean;
+  isCompleted?: boolean;
+  children: React.ReactNode;
+}
+
+/**
+ * Debug section component props for consistent section rendering
+ */
+export interface DebugSectionProps {
+  sectionNumber: number;
+  title: string;
+  businessLogic: string;
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  badgeColor: string;
+  children: React.ReactNode;
+}
+
+/**
+ * Performance metrics display props
+ */
+export interface PerformanceMetricsProps {
+  processingTimeMs?: number;
+  componentTimings?: {
+    intentClassification?: number;
+    entityExtraction?: number;
+    leadScoring?: number;
+    responseGeneration?: number;
+    total?: number;
+  };
+  cacheHits?: number;
+  dbQueries?: number;
+  apiCalls?: number;
+}
+
+/**
+ * Cost analysis display props
+ */
+export interface CostAnalysisProps {
+  costData?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCost: string;
+    model: string;
+    totalCostBreakdown?: {
+      inputCost: number;
+      outputCost: number;
+      total: number;
     };
   };
+}
 
-  // Second API Call - Response Generation with Enhanced Context
-  secondApiCall?: {
-    requestData: {
-      model: string;
-      messagesCount: number;
-      temperature: number;
-      maxTokens: number;
-      timestamp: string;
-      systemPrompt?: string;
-      userMessage: string;
-      fullPrompt?: string;
-      requestHeaders?: Record<string, string>;
-      requestPayload?: any;
-      fullRequestPayload?: any;
-      apiEndpoint?: string;
-      requestSize?: number;
-      userAgent?: string;
-      enhancedContext?: any;
-      additionalInstructions?: string[];
-    };
-    responseData: {
-      id: string;
-      model: string;
-      usage: {
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-      };
-      responseLength: number;
-      processingTime: number;
-      fullResponse?: string;
-      responseHeaders?: Record<string, string>;
-      responsePayload?: any;
-      responseSize?: number;
-      statusCode?: number;
-      rateLimitInfo?: {
-        remaining: number;
-        resetTime: string;
-        limit: number;
-      };
-      streamingDetails?: {
-        firstTokenTime: number;
-        tokensPerSecond: number;
-        totalChunks: number;
-      };
-    };
-    costData: {
-      inputTokens: number;
-      outputTokens: number;
-      totalTokens: number;
-      estimatedCost: string;
-      model: string;
-      inputCostPerToken?: number;
-      outputCostPerToken?: number;
-      totalCostBreakdown?: {
-        inputCost: number;
-        outputCost: number;
-        total: number;
-      };
-    };
-  };
-
-  // Legacy fields for backward compatibility (will be deprecated)
+/**
+ * API call details display props
+ */
+export interface ApiCallDetailsProps {
   requestData?: {
     model: string;
     messagesCount: number;
     temperature: number;
     maxTokens: number;
     timestamp: string;
-    systemPrompt?: string;
     userMessage: string;
-    fullPrompt?: string;
-    requestHeaders?: Record<string, string>;
-    requestPayload?: any;
-    fullRequestPayload?: any;
     apiEndpoint?: string;
     requestSize?: number;
-    userAgent?: string;
   };
   responseData?: {
     id: string;
@@ -158,143 +101,42 @@ export interface ApiDebugInfo {
     };
     responseLength: number;
     processingTime: number;
-    fullResponse?: string;
-    responseHeaders?: Record<string, string>;
-    responsePayload?: any;
-    responseSize?: number;
     statusCode?: number;
-    rateLimitInfo?: {
-      remaining: number;
-      resetTime: string;
-      limit: number;
-    };
-    streamingDetails?: {
-      firstTokenTime: number;
-      tokensPerSecond: number;
-      totalChunks: number;
-    };
   };
-  costData?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    estimatedCost: string;
-    model: string;
-    inputCostPerToken?: number;
-    outputCostPerToken?: number;
-    totalCostBreakdown?: {
-      inputCost: number;
-      outputCost: number;
-      total: number;
-    };
-  };
+}
+
+/**
+ * Function call execution display props
+ */
+export interface FunctionCallsProps {
   functionCalls?: {
-    firstApiCall?: {
-      functions: Array<{
-        name: string;
-        description: string;
-        parameters: any;
-      }>;
-      functionCallsMade: Array<{
-        name: string;
-        arguments: any;
-        result: any;
-        executionTime: number;
-        success: boolean;
-        error?: string;
-      }>;
-      totalFunctionExecutionTime: number;
-    };
-    secondApiCall?: {
-      contextFromFunctions: any;
-      enhancedPrompt: string;
-      additionalInstructions: string[];
-    };
-  };
-  intentClassification?: {
-    detectedIntent: string;
-    confidence: number;
-    alternativeIntents: Array<{ intent: string; confidence: number }>;
-    category: 'sales' | 'support' | 'qualification' | 'general';
-    threshold: number;
-    isAmbiguous: boolean;
-    rawClassificationResult?: any;
-    processingTime?: number;
-    modelUsed?: string;
-  };
-  entityExtraction?: {
-    extractedEntities: Array<{
-      type: string;
-      value: string;
-      confidence: number;
-      category: 'core_business' | 'advanced' | 'contact';
-      sourceText?: string;
-      position?: { start: number; end: number };
-      normalizedValue?: string;
+    functions?: Array<{
+      name: string;
+      description: string;
+      parameters: any;
     }>;
-    totalEntitiesFound: number;
-    extractionMode: 'basic' | 'comprehensive' | 'custom';
-    rawExtractionResult?: any;
-    processingTime?: number;
-    patternsMatched?: string[];
-  };
-  leadScoring?: {
-    currentScore: number;
-    maxPossibleScore: number;
-    qualificationThreshold: number;
-    isQualified: boolean;
-    scoreBreakdown: Array<{
-      entityType: string;
-      points: number;
-      reason: string;
-      weight: number;
-      category: string;
-      ruleId: string;
+    functionCallsMade?: Array<{
+      name: string;
+      arguments: any;
+      result: any;
+      executionTime: number;
+      success: boolean;
+      error?: string;
     }>;
-    previousScore: number;
-    scoreChange: number;
-    scoringRules?: Array<{
-      ruleId: string;
-      condition: string;
-      points: number;
-      triggered: boolean;
-    }>;
-    processingTime?: number;
+    totalFunctionExecutionTime?: number;
   };
-  journeyProgression?: {
-    currentStage: string;
-    previousStage: string;
-    stageConfidence: number;
-    transitionReason: string;
-    engagementCategory: 'actively_engaged' | 'sales_ready' | 'general';
-    progressionPath: string[];
-    stageAnalysis?: {
-      indicators: string[];
-      signals: Array<{
-        type: string;
-        strength: number;
-        description: string;
-      }>;
-      nextPossibleStages: Array<{
-        stage: string;
-        probability: number;
-        requirements: string[];
-      }>;
-    };
-    processingTime?: number;
-  };
+}
+
+/**
+ * Business rules execution display props
+ */
+export interface BusinessRulesProps {
   businessRules?: {
     rulesTriggered: Array<{
       ruleName: string;
       condition: string;
       action: string;
       result: 'success' | 'failed' | 'skipped';
-      ruleId: string;
-      priority: number;
-      executionTime: number;
-      inputData?: any;
-      outputData?: any;
-      errorDetails?: string;
     }>;
     thresholds: {
       intentConfidence: number;
@@ -305,76 +147,55 @@ export interface ApiDebugInfo {
       behavior: string;
       triggered: boolean;
       reason: string;
-      behaviorId: string;
-      executionTime?: number;
-      result?: any;
-      nextScheduledExecution?: string;
     }>;
-    totalRulesEvaluated?: number;
-    ruleEngineVersion?: string;
-    processingTime?: number;
-  };
-  performance?: {
-    componentTimings: {
-      intentClassification: number;
-      entityExtraction: number;
-      leadScoring: number;
-      responseGeneration: number;
-      total: number;
-      requestPreprocessing?: number;
-      functionCallExecution?: number;
-      businessRuleProcessing?: number;
-      responsePostprocessing?: number;
-      databaseOperations?: number;
-      externalApiCalls?: number;
-    };
-    cacheHits: number;
-    dbQueries: number;
-    apiCalls: number;
-    memoryUsage?: {
-      heapUsed: number;
-      heapTotal: number;
-      external: number;
-    };
-    networkMetrics?: {
-      totalBytesIn: number;
-      totalBytesOut: number;
-      averageLatency: number;
-    };
-    systemHealth?: {
-      cpuUsage: number;
-      memoryUsage: number;
-      activeConnections: number;
-      queueDepth: number;
-    };
-  };
-  debugTrace?: {
-    traceId: string;
-    spanId: string;
-    events: Array<{
-      timestamp: string;
-      event: string;
-      data?: any;
-      duration?: number;
-    }>;
-    errors?: Array<{
-      timestamp: string;
-      error: string;
-      stack?: string;
-      context?: any;
-    }>;
-  };
-  environmentInfo?: {
-    nodeVersion: string;
-    environment: 'development' | 'staging' | 'production';
-    region: string;
-    instanceId: string;
-    deploymentVersion: string;
   };
 }
 
-import { DebugInfoDto } from '../../application/dto/DebugInfoDto';
+/**
+ * Debug panel theme configuration
+ */
+export interface DebugPanelTheme {
+  primary: {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+  };
+  secondary: {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+  };
+  success: {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+  };
+  warning: {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+  };
+  error: {
+    bg: string;
+    border: string;
+    text: string;
+    badge: string;
+  };
+}
 
-export interface ChatApiDebugPanelProps {
-  apiDebugInfo: DebugInfoDto | null;
+/**
+ * Debug panel configuration
+ */
+export interface DebugPanelConfig {
+  showPerformanceMetrics: boolean;
+  showCostAnalysis: boolean;
+  showFunctionCalls: boolean;
+  showBusinessRules: boolean;
+  showRawData: boolean;
+  maxDisplayItems: number;
+  theme: DebugPanelTheme;
 } 

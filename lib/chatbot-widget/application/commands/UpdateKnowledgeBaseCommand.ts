@@ -7,7 +7,7 @@
  * Single Responsibility: Encapsulate knowledge base update request data
  */
 
-import { KnowledgeBase } from '../../domain/entities/ChatbotConfig';
+import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
 
 export interface UpdateKnowledgeBaseCommand {
   configId: string;

@@ -22,12 +22,15 @@ export interface AIResponse {
   content: string;
   confidence: number;
   intentDetected?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
   processingTimeMs: number;
   metadata: {
     model: string;
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
+    errorCode?: string;
+    errorMessage?: string;
   };
   functionCall?: {
     name: string;

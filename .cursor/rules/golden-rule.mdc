@@ -12,6 +12,7 @@ alwaysApply: true
    → Each service has one clear purpose
    → keep to 200-250 lines if possible
 3. Review appropriate codebase to ensure new code is not redundant with existing code. If so, pls provide a recommendation and design that is using practices, DDD, network efficient, api efficient (minimize redundant calls), memory/cache efficient, rendering efficient.
+4. Please avoid pnpm/npm run build. The dev enviroment hotloads.
 
 ## DDD Layer Architecture for Next.js
 

@@ -39,7 +39,7 @@ export default function WidgetPreview({ config, className }: WidgetPreviewProps)
       await navigator.clipboard.writeText(getEmbedCode());
       // Could add toast notification here
     } catch (err) {
-      console.error('Failed to copy embed code:', err);
+      // Copy failed - user will need to manually copy
     }
   };
 

@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-13T05:41:05.635Z
+// Generated: 2025-06-14T03:56:58.149Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -15,8 +15,13 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "ChatInterface",
       "ChatSimulator",
       "BusinessRulesSection",
+      "EntityExtractionResults",
+      "FunctionCallDetails",
+      "IntentClassificationResults",
       "IntentAnalysisSection",
+      "JourneyProgressionResults",
       "JourneyProgressionSection",
+      "LeadScoringResults",
       "LeadScoringSection",
       "PerformanceMetricsSection",
       "ResponseGenerationSection",
@@ -28,6 +33,21 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "EmbedCodeGenerator",
       "KnowledgeBaseSection",
       "LeadSettingsSection",
+      "AiConfigurationSection",
+      "AutomatedBehaviorsDisplay",
+      "ConversationFlowEngineDisplay",
+      "LeadScoringDisplay",
+      "SystemStatusDisplay",
+      "ContextWindowSection",
+      "ConversationFlowSection",
+      "CustomerJourneyDisplay",
+      "DomainStatisticsDisplay",
+      "EntityFrameworkDisplay",
+      "EnumeratedValuesDisplay",
+      "IntentClassificationDisplay",
+      "DomainConstantsSection",
+      "IntentEntitiesSection",
+      "PerformanceSection",
       "ComponentTimingBreakdown",
       "MemoryUsageDetails",
       "NetworkMetrics",

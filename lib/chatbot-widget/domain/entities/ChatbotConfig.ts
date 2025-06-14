@@ -1,3 +1,16 @@
+/**
+ * Chatbot Configuration Entity
+ * 
+ * Domain entity representing a complete chatbot configuration.
+ * Coordinates value objects and delegates complex operations to domain services.
+ */
+
+import { PersonalitySettings } from '../value-objects/PersonalitySettings';
+import { KnowledgeBase } from '../value-objects/KnowledgeBase';
+import { OperatingHours } from '../value-objects/OperatingHours';
+import { AIConfiguration } from '../value-objects/AIConfiguration';
+import { ChatbotSystemPromptService } from '../services/ChatbotSystemPromptService';
+
 export interface ChatbotConfigProps {
   id: string;
   organizationId: string;
@@ -14,70 +27,6 @@ export interface ChatbotConfigProps {
   updatedAt: Date;
 }
 
-export interface PersonalitySettings {
-  tone: 'professional' | 'friendly' | 'casual' | 'formal';
-  communicationStyle: 'direct' | 'conversational' | 'helpful' | 'sales-focused';
-  responseLength: 'brief' | 'detailed' | 'adaptive';
-  escalationTriggers: string[];
-  responseBehavior: ResponseBehavior;
-  conversationFlow: ConversationFlow;
-  customInstructions: string;
-}
-
-export interface ResponseBehavior {
-  useEmojis: boolean;
-  askFollowUpQuestions: boolean;
-  proactiveOffering: boolean;
-  personalizeResponses: boolean;
-  acknowledgePreviousInteractions: boolean;
-}
-
-export interface ConversationFlow {
-  greetingMessage: string;
-  fallbackMessage: string;
-  escalationMessage: string;
-  endConversationMessage: string;
-  leadCapturePrompt: string;
-  maxConversationTurns: number;
-  inactivityTimeout: number;
-}
-
-export interface KnowledgeBase {
-  companyInfo: string;
-  productCatalog: string;
-  faqs: FAQ[];
-  supportDocs: string;
-  complianceGuidelines: string;
-}
-
-export interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-  isActive: boolean;
-}
-
-export interface OperatingHours {
-  timezone: string;
-  businessHours: BusinessHours[];
-  holidaySchedule: Holiday[];
-  outsideHoursMessage: string;
-}
-
-export interface BusinessHours {
-  dayOfWeek: number; // 0-6 (Sunday-Saturday)
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
-  isActive: boolean;
-}
-
-export interface Holiday {
-  date: string; // YYYY-MM-DD format
-  name: string;
-  isRecurring: boolean;
-}
-
 export interface LeadQualificationQuestion {
   id: string;
   question: string;
@@ -86,48 +35,6 @@ export interface LeadQualificationQuestion {
   isRequired: boolean;
   order: number;
   scoringWeight: number;
-}
-
-export interface AIConfiguration {
-  // OpenAI Configuration
-  openaiModel: 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
-  openaiTemperature: number;
-  openaiMaxTokens: number;
-  
-  // Context Window Configuration
-  contextMaxTokens: number;
-  contextSystemPromptTokens: number;
-  contextResponseReservedTokens: number;
-  contextSummaryTokens: number;
-  
-  // Intent Classification
-  intentConfidenceThreshold: number;
-  intentAmbiguityThreshold: number;
-  enableMultiIntentDetection: boolean;
-  enablePersonaInference: boolean;
-  
-  // Entity Extraction
-  enableAdvancedEntities: boolean;
-  entityExtractionMode: 'basic' | 'comprehensive' | 'custom';
-  customEntityTypes: string[];
-  
-  // Conversation Flow
-  maxConversationTurns: number;
-  inactivityTimeoutSeconds: number;
-  enableJourneyRegression: boolean;
-  enableContextSwitchDetection: boolean;
-  
-  // Lead Scoring
-  enableAdvancedScoring: boolean;
-  entityCompletenessWeight: number;
-  personaConfidenceWeight: number;
-  journeyProgressionWeight: number;
-  
-  // Performance & Monitoring
-  enablePerformanceLogging: boolean;
-  enableIntentAnalytics: boolean;
-  enablePersonaAnalytics: boolean;
-  responseTimeThresholdMs: number;
 }
 
 export class ChatbotConfig {
@@ -245,47 +152,7 @@ export class ChatbotConfig {
 
   // Static method to get default AI configuration
   static getDefaultAIConfiguration(): AIConfiguration {
-    return {
-      // OpenAI Configuration
-      openaiModel: 'gpt-4o-mini', // Default to mini per user preference
-      openaiTemperature: 0.3,
-      openaiMaxTokens: 1000,
-      
-      // Context Window Configuration
-      contextMaxTokens: 12000,
-      contextSystemPromptTokens: 500,
-      contextResponseReservedTokens: 3000,
-      contextSummaryTokens: 200,
-      
-      // Intent Classification
-      intentConfidenceThreshold: 0.7,
-      intentAmbiguityThreshold: 0.2,
-      enableMultiIntentDetection: true,
-      enablePersonaInference: true,
-      
-      // Entity Extraction
-      enableAdvancedEntities: true,
-      entityExtractionMode: 'comprehensive',
-      customEntityTypes: [],
-      
-      // Conversation Flow
-      maxConversationTurns: 20,
-      inactivityTimeoutSeconds: 300,
-      enableJourneyRegression: true,
-      enableContextSwitchDetection: true,
-      
-      // Lead Scoring
-      enableAdvancedScoring: true,
-      entityCompletenessWeight: 0.3,
-      personaConfidenceWeight: 0.2,
-      journeyProgressionWeight: 0.25,
-      
-      // Performance & Monitoring
-      enablePerformanceLogging: true,
-      enableIntentAnalytics: true,
-      enablePersonaAnalytics: true,
-      responseTimeThresholdMs: 2000,
-    };
+    return AIConfiguration.createDefault();
   }
 
   activate(): ChatbotConfig {
@@ -305,94 +172,15 @@ export class ChatbotConfig {
   }
 
   isWithinOperatingHours(timestamp: Date = new Date()): boolean {
-    const now = new Date(timestamp.toLocaleString("en-US", { timeZone: this.props.operatingHours.timezone }));
-    const dayOfWeek = now.getDay();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
-    // Check if it's a holiday
-    const dateString = now.toISOString().split('T')[0];
-    const isHoliday = this.props.operatingHours.holidaySchedule.some(holiday => 
-      holiday.date === dateString || (holiday.isRecurring && holiday.date.slice(5) === dateString.slice(5))
-    );
-    
-    if (isHoliday) {
-      return false;
-    }
-    
-    // Check business hours for the day
-    const todayHours = this.props.operatingHours.businessHours.find(hours => 
-      hours.dayOfWeek === dayOfWeek && hours.isActive
-    );
-    
-    if (!todayHours) {
-      return false;
-    }
-    
-    return currentTime >= todayHours.startTime && currentTime <= todayHours.endTime;
+    return this.props.operatingHours.isWithinOperatingHours(timestamp);
   }
 
   generateSystemPrompt(): string {
-    const { personalitySettings, knowledgeBase } = this.props;
-    
-    let prompt = `You are ${this.props.name}, a helpful assistant for this organization. `;
-    
-    // Add personality
-    switch (personalitySettings.tone) {
-      case 'professional':
-        prompt += 'Maintain a professional and courteous tone. ';
-        break;
-      case 'friendly':
-        prompt += 'Be warm, friendly, and approachable. ';
-        break;
-      case 'casual':
-        prompt += 'Keep the conversation casual and relaxed. ';
-        break;
-      case 'formal':
-        prompt += 'Use formal language and maintain business etiquette. ';
-        break;
-    }
-    
-    // Add communication style
-    switch (personalitySettings.communicationStyle) {
-      case 'direct':
-        prompt += 'Be direct and concise in your responses. ';
-        break;
-      case 'conversational':
-        prompt += 'Engage in natural, conversational dialogue. ';
-        break;
-      case 'helpful':
-        prompt += 'Focus on being helpful and providing value. ';
-        break;
-      case 'sales-focused':
-        prompt += 'Guide conversations toward sales opportunities while being helpful. ';
-        break;
-    }
-    
-    // Add company knowledge
-    if (knowledgeBase.companyInfo) {
-      prompt += `\n\nCompany Information:\n${knowledgeBase.companyInfo}\n`;
-    }
-    
-    // Add FAQs
-    if (knowledgeBase.faqs.length > 0) {
-      prompt += '\n\nFrequently Asked Questions:\n';
-      knowledgeBase.faqs
-        .filter(faq => faq.isActive)
-        .forEach(faq => {
-          prompt += `Q: ${faq.question}\nA: ${faq.answer}\n\n`;
-        });
-    }
-    
-    // Add compliance guidelines
-    if (knowledgeBase.complianceGuidelines) {
-      prompt += `\n\nCompliance Guidelines:\n${knowledgeBase.complianceGuidelines}\n`;
-    }
-    
-    // Add lead qualification guidance
-    prompt += '\n\nLead Qualification: When appropriate, ask qualifying questions to help identify potential customers. ';
-    prompt += 'Be natural about gathering contact information when the visitor shows interest in products or services.';
-    
-    return prompt;
+    return ChatbotSystemPromptService.generateSystemPrompt(
+      this.props.name,
+      this.props.personalitySettings,
+      this.props.knowledgeBase
+    );
   }
 
   toPlainObject(): ChatbotConfigProps {

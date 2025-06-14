@@ -7,7 +7,10 @@
  * Single Responsibility: Handles the complete chatbot configuration process
  */
 
-import { ChatbotConfig, PersonalitySettings, KnowledgeBase, OperatingHours, LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
+import { ChatbotConfig, LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
+import { PersonalitySettings } from '../../domain/value-objects/PersonalitySettings';
+import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
+import { OperatingHours } from '../../domain/value-objects/OperatingHours';
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
 
 export interface ConfigureChatbotRequest {

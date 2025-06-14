@@ -7,7 +7,10 @@
  * Single Responsibility: Encapsulate chatbot creation request data
  */
 
-import { PersonalitySettings, KnowledgeBase, OperatingHours, LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
+import { LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
+import { PersonalitySettings } from '../../domain/value-objects/PersonalitySettings';
+import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
+import { OperatingHours } from '../../domain/value-objects/OperatingHours';
 
 export interface CreateChatbotConfigCommand {
   organizationId: string;

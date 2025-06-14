@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { LeadScore } from '../LeadScore';
 import { 
-  LeadScore, 
   ScoringFactors, 
   ScoringCriteria, 
   QualificationLevel,
   ScoreBreakdown 
-} from '../LeadScore';
+} from '../LeadScoreTypes';
 
 describe('LeadScore Value Object', () => {
   describe('constructor validation', () => {

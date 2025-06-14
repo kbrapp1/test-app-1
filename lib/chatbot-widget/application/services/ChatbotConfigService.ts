@@ -44,7 +44,7 @@ export class ChatbotConfigService {
       // Convert back to DTO for response
       return ChatbotConfigMapper.toDto(savedConfig);
     } catch (error) {
-      console.error('Error creating chatbot config:', error);
+      // Error creating chatbot config - handled by error boundary
       throw error;
     }
   }
@@ -102,7 +102,7 @@ export class ChatbotConfigService {
       
       return ChatbotConfigMapper.toDto(savedConfig);
     } catch (error) {
-      console.error('Error updating chatbot config:', error);
+      // Error updating chatbot config - handled by error boundary
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class ChatbotConfigService {
       
       return ChatbotConfigMapper.toDto(config);
     } catch (error) {
-      console.error('Error in getChatbotConfigByOrganization:', error);
+      // Error in getChatbotConfigByOrganization - handled by error boundary
       throw error;
     }
   }

@@ -138,13 +138,7 @@ export class OpenAIProvider implements BaseProvider {
         responseSize: `${JSON.stringify(response).length} characters`
       };
 
-      // Console log the API call request
-      console.log(`🤖 OPENAI PROVIDER - ${callType?.toUpperCase()} API CALL - REQUEST:`);
-      console.log(JSON.stringify(requestData, null, 2));
 
-      // Console log the API call response
-      console.log(`🤖 OPENAI PROVIDER - ${callType?.toUpperCase()} API CALL - RESPONSE:`);
-      console.log(JSON.stringify(responseData, null, 2));
 
       // Capture API call for debugging
       if (sessionId && callType) {
@@ -158,29 +152,12 @@ export class OpenAIProvider implements BaseProvider {
           response.usage.completion_tokens
         );
         
-        console.log('💰 OPENAI PROVIDER - COST ANALYSIS:', {
-          timestamp: new Date().toISOString(),
-          model: response.model,
-          tokenUsage: {
-            inputTokens: response.usage.prompt_tokens,
-            outputTokens: response.usage.completion_tokens,
-            totalTokens: response.usage.total_tokens
-          },
-          costBreakdown: {
-            inputCost: `$${((response.usage.prompt_tokens / 1000) * 0.005).toFixed(6)}`,
-            outputCost: `$${((response.usage.completion_tokens / 1000) * 0.020).toFixed(6)}`,
-            totalEstimatedCost: `$${costEstimate.toFixed(6)}`
-          },
-          efficiency: {
-            tokensPerDollar: Math.round(response.usage.total_tokens / costEstimate),
-            costPerMessage: `$${(costEstimate / params.messages.length).toFixed(6)}`
-          }
-        });
+
       }
 
       return response;
     } catch (error) {
-      console.error('❌ OpenAI API Error:', error);
+      // OpenAI API Error - handled by error boundary
       
       if (error instanceof Error) {
         if (error.message.includes('API key')) {

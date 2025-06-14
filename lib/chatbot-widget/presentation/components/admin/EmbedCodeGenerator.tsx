@@ -110,7 +110,7 @@ export default function ChatbotWidget() {
       setCopiedCode(type);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error('Failed to copy code:', err);
+      // Copy failed - user will need to manually copy
     }
   };
 

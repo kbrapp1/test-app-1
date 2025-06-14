@@ -1,4 +1,10 @@
-import { Lead, LeadProps, ContactInfo, LeadSource, QualificationStatus, FollowUpStatus, QualificationData, LeadNote } from '../../../../domain/entities/Lead';
+import { Lead, LeadProps } from '../../../../domain/entities/Lead';
+import { ContactInfo } from '../../../../domain/value-objects/ContactInfo';
+import { LeadSource } from '../../../../domain/value-objects/LeadSource';
+import { QualificationData } from '../../../../domain/value-objects/QualificationData';
+import { LeadMetadata, LeadNote } from '../../../../domain/value-objects/LeadMetadata';
+import { QualificationStatus } from '../../../../domain/services/LeadScoringService';
+import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 
 /**
  * Raw database record structure from Supabase
@@ -72,7 +78,7 @@ export class LeadMapper {
    * Transform database record to domain entity
    */
   static toDomain(record: RawLeadDbRecord): Lead {
-    const props: LeadProps = {
+    const props = {
       id: record.id,
       organizationId: record.organization_id,
       sessionId: record.session_id,
@@ -80,13 +86,11 @@ export class LeadMapper {
       contactInfo: this.mapContactInfo(record.contact_info),
       qualificationData: this.mapQualificationData(record.qualification_data),
       source: this.mapSource(record.source),
+      metadata: this.mapMetadata(record.conversation_summary, record.tags, record.notes),
       leadScore: record.lead_score,
       qualificationStatus: record.qualification_status as QualificationStatus,
-      conversationSummary: record.conversation_summary,
       followUpStatus: record.follow_up_status as FollowUpStatus,
       assignedTo: record.assigned_to || undefined,
-      tags: record.tags || [],
-      notes: this.mapNotes(record.notes),
       capturedAt: new Date(record.captured_at),
       lastContactedAt: record.last_contacted_at ? new Date(record.last_contacted_at) : undefined,
       createdAt: new Date(record.created_at),
@@ -140,9 +144,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map JSONB contact info to domain object
+   * Map JSONB contact info to domain props
    */
-  private static mapContactInfo(data: any): ContactInfo {
+  private static mapContactInfo(data: any) {
     return {
       name: data?.name || undefined,
       firstName: data?.firstName || undefined,
@@ -164,9 +168,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map JSONB qualification data to domain object
+   * Map JSONB qualification data to domain props
    */
-  private static mapQualificationData(data: any): QualificationData {
+  private static mapQualificationData(data: any) {
     return {
       budget: data?.budget || undefined,
       timeline: data?.timeline || undefined,
@@ -189,9 +193,9 @@ export class LeadMapper {
   }
 
   /**
-   * Map JSONB source to domain object
+   * Map JSONB source to domain props
    */
-  private static mapSource(data: any): LeadSource {
+  private static mapSource(data: any) {
     return {
       channel: data?.channel || 'chatbot_widget',
       campaign: data?.campaign || undefined,
@@ -201,6 +205,17 @@ export class LeadMapper {
       utmCampaign: data?.utmCampaign || undefined,
       pageUrl: data?.pageUrl || '',
       pageTitle: data?.pageTitle || undefined,
+    };
+  }
+
+  /**
+   * Map metadata to domain props
+   */
+  private static mapMetadata(conversationSummary: string, tags: string[], notes: any) {
+    return {
+      conversationSummary: conversationSummary || '',
+      tags: tags || [],
+      notes: this.mapNotes(notes),
     };
   }
 

@@ -7,8 +7,10 @@
  */
 
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
-import { BotPersonality } from '../../domain/value-objects/BotPersonality';
+import { PersonalitySettings } from '../../domain/value-objects/PersonalitySettings';
+import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
 import { OperatingHours } from '../../domain/value-objects/OperatingHours';
+import { AIConfiguration } from '../../domain/value-objects/AIConfiguration';
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,
@@ -133,16 +135,16 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static personalityFromDto(dto: PersonalitySettingsDto): any {
-    return {
-      tone: dto.tone,
-      communicationStyle: dto.communicationStyle,
-      responseLength: dto.responseLength,
+  private static personalityFromDto(dto: PersonalitySettingsDto): PersonalitySettings {
+    return PersonalitySettings.create({
+      tone: dto.tone as 'professional' | 'friendly' | 'casual' | 'formal',
+      communicationStyle: dto.communicationStyle as 'direct' | 'conversational' | 'helpful' | 'sales-focused',
+      responseLength: dto.responseLength as 'brief' | 'detailed' | 'adaptive',
       escalationTriggers: dto.escalationTriggers,
       responseBehavior: dto.responseBehavior,
       conversationFlow: dto.conversationFlow,
       customInstructions: dto.customInstructions,
-    };
+    });
   }
 
   private static knowledgeBaseToDto(kb: any): KnowledgeBaseDto {
@@ -162,14 +164,20 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static knowledgeBaseFromDto(dto: KnowledgeBaseDto): any {
-    return {
+  private static knowledgeBaseFromDto(dto: KnowledgeBaseDto): KnowledgeBase {
+    return KnowledgeBase.create({
       companyInfo: dto.companyInfo,
       productCatalog: dto.productCatalog,
-      faqs: dto.faqs,
+      faqs: dto.faqs.map(faq => ({
+        id: faq.id,
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category,
+        isActive: true, // Default to active for DTOs
+      })),
       supportDocs: dto.supportDocs,
       complianceGuidelines: dto.complianceGuidelines,
-    };
+    });
   }
 
   private static operatingHoursToDto(oh: any): OperatingHoursDto {
@@ -190,13 +198,18 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static operatingHoursFromDto(dto: OperatingHoursDto): any {
-    return {
+  private static operatingHoursFromDto(dto: OperatingHoursDto): OperatingHours {
+    return OperatingHours.create({
       timezone: dto.timezone,
-      businessHours: dto.businessHours,
+      businessHours: dto.businessHours.map(bh => ({
+        dayOfWeek: bh.dayOfWeek,
+        startTime: bh.startTime,
+        endTime: bh.endTime,
+        isActive: bh.isOpen, // Map isOpen to isActive
+      })),
       holidaySchedule: dto.holidaySchedule,
       outsideHoursMessage: dto.outsideHoursMessage,
-    };
+    });
   }
 
   private static aiConfigurationToDto(aiConfig: any): AIConfigurationDto {
@@ -230,8 +243,8 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static aiConfigurationFromDto(dto: AIConfigurationDto): any {
-    return {
+  private static aiConfigurationFromDto(dto: AIConfigurationDto): AIConfiguration {
+    return AIConfiguration.create({
       openaiModel: dto.openaiModel as 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo',
       openaiTemperature: dto.openaiTemperature,
       openaiMaxTokens: dto.openaiMaxTokens,
@@ -258,6 +271,6 @@ export class ChatbotConfigMapper {
       enableIntentAnalytics: dto.enableIntentAnalytics,
       enablePersonaAnalytics: dto.enablePersonaAnalytics,
       responseTimeThresholdMs: dto.responseTimeThresholdMs,
-    };
+    });
   }
 } 
