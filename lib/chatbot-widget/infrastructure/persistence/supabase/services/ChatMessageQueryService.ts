@@ -1,21 +1,33 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
-import { ChatMessage } from '../../../../domain/entities/ChatMessage';
-import { ChatMessageMapper, RawChatMessageDbRecord } from '../mappers/ChatMessageMapper';
-import { DatabaseError } from '@/lib/errors/base';
-
 /**
  * Chat Message Query Service
  * 
- * Single responsibility: Complex queries, search, and pagination for chat messages
- * Following DDD infrastructure layer patterns with focused query operations
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Coordinate chat message query operations
+ * - Delegate specialized queries to focused services
+ * - Keep under 200-250 lines by extracting query services
+ * - Use composition pattern for complex operations
+ * - Follow @golden-rule patterns exactly
  */
+
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { ChatMessage } from '../../../../domain/entities/ChatMessage';
+import { 
+  ChatMessageBasicQueryService,
+  ChatMessageSearchService,
+  ChatMessageAnalyticsQueryService
+} from './chat-message-queries';
+
 export class ChatMessageQueryService {
-  private supabase: SupabaseClient;
-  private readonly tableName = 'chat_messages';
+  private readonly basicQueryService: ChatMessageBasicQueryService;
+  private readonly searchService: ChatMessageSearchService;
+  private readonly analyticsQueryService: ChatMessageAnalyticsQueryService;
 
   constructor(supabaseClient?: SupabaseClient) {
-    this.supabase = supabaseClient ?? createClient();
+    const supabase = supabaseClient ?? createClient();
+    this.basicQueryService = new ChatMessageBasicQueryService(supabase);
+    this.searchService = new ChatMessageSearchService(supabase);
+    this.analyticsQueryService = new ChatMessageAnalyticsQueryService(supabase);
   }
 
   async findBySessionIdWithPagination(
@@ -29,60 +41,11 @@ export class ChatMessageQueryService {
     limit: number;
     totalPages: number;
   }> {
-    // Get total count
-    const { count, error: countError } = await this.supabase
-      .from(this.tableName)
-      .select('id', { count: 'exact', head: true })
-      .eq('session_id', sessionId);
-
-    if (countError) {
-      throw new DatabaseError('Failed to count chat messages', countError.message);
-    }
-
-    // Get paginated data
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select('*')
-      .eq('session_id', sessionId)
-      .order('timestamp', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1);
-
-    if (error) {
-      throw new DatabaseError('Failed to find chat messages with pagination', error.message);
-    }
-
-    const messages = (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
-    const total = count || 0;
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      messages,
-      total,
-      page,
-      limit,
-      totalPages,
-    };
+    return this.basicQueryService.findBySessionIdWithPagination(sessionId, page, limit);
   }
 
   async findRecentByOrganizationId(organizationId: string, limit: number): Promise<ChatMessage[]> {
-    const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find recent messages by organization', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.basicQueryService.findRecentByOrganizationId(organizationId, limit);
   }
 
   async searchByContent(
@@ -97,47 +60,7 @@ export class ChatMessageQueryService {
       hasErrors?: boolean;
     }
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .ilike('content', `%${searchTerm}%`);
-
-    // Apply filters
-    if (filters?.messageType) {
-      query = query.eq('message_type', filters.messageType);
-    }
-    if (filters?.dateFrom) {
-      query = query.gte('timestamp', filters.dateFrom.toISOString());
-    }
-    if (filters?.dateTo) {
-      query = query.lte('timestamp', filters.dateTo.toISOString());
-    }
-    if (filters?.sessionId) {
-      query = query.eq('session_id', filters.sessionId);
-    }
-    if (filters?.sentiment) {
-      query = query.eq('metadata->>sentiment', filters.sentiment);
-    }
-    if (filters?.hasErrors) {
-      query = query.not('metadata->>errorType', 'is', null);
-    }
-
-    const { data, error } = await query
-      .order('timestamp', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      throw new DatabaseError('Failed to search messages by content', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.searchService.searchByContent(organizationId, searchTerm, filters);
   }
 
   async findByIntentDetected(
@@ -147,34 +70,7 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 50
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .eq('metadata->>intentDetected', intent);
-
-    if (dateFrom) {
-      query = query.gte('timestamp', dateFrom.toISOString());
-    }
-    if (dateTo) {
-      query = query.lte('timestamp', dateTo.toISOString());
-    }
-
-    const { data, error } = await query
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find messages by intent', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.analyticsQueryService.findByIntentDetected(organizationId, intent, dateFrom, dateTo, limit);
   }
 
   async findBySentiment(
@@ -184,34 +80,7 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 50
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .eq('metadata->>sentiment', sentiment);
-
-    if (dateFrom) {
-      query = query.gte('timestamp', dateFrom.toISOString());
-    }
-    if (dateTo) {
-      query = query.lte('timestamp', dateTo.toISOString());
-    }
-
-    const { data, error } = await query
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find messages by sentiment', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.analyticsQueryService.findBySentiment(organizationId, sentiment, dateFrom, dateTo, limit);
   }
 
   async findHighCostMessages(
@@ -221,34 +90,7 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 50
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .gte('metadata->>costCents', minCostCents.toString());
-
-    if (dateFrom) {
-      query = query.gte('timestamp', dateFrom.toISOString());
-    }
-    if (dateTo) {
-      query = query.lte('timestamp', dateTo.toISOString());
-    }
-
-    const { data, error } = await query
-      .order('metadata->>costCents', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find high-cost messages', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.analyticsQueryService.findHighCostMessages(organizationId, minCostCents, dateFrom, dateTo, limit);
   }
 
   async findLowConfidenceMessages(
@@ -258,35 +100,7 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 50
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .lte('metadata->>confidence', maxConfidence.toString())
-      .not('metadata->>confidence', 'is', null);
-
-    if (dateFrom) {
-      query = query.gte('timestamp', dateFrom.toISOString());
-    }
-    if (dateTo) {
-      query = query.lte('timestamp', dateTo.toISOString());
-    }
-
-    const { data, error } = await query
-      .order('metadata->>confidence', { ascending: true })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find low-confidence messages', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.analyticsQueryService.findLowConfidenceMessages(organizationId, maxConfidence, dateFrom, dateTo, limit);
   }
 
   async findMessagesByModel(
@@ -296,33 +110,6 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 100
   ): Promise<ChatMessage[]> {
-    let query = this.supabase
-      .from(this.tableName)
-      .select(`
-        *,
-        chat_sessions!inner(
-          chatbot_config_id,
-          chatbot_configs!inner(organization_id)
-        )
-      `)
-      .eq('chat_sessions.chatbot_configs.organization_id', organizationId)
-      .eq('metadata->>aiModel', model);
-
-    if (dateFrom) {
-      query = query.gte('timestamp', dateFrom.toISOString());
-    }
-    if (dateTo) {
-      query = query.lte('timestamp', dateTo.toISOString());
-    }
-
-    const { data, error } = await query
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new DatabaseError('Failed to find messages by model', error.message);
-    }
-
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return this.analyticsQueryService.findMessagesByModel(organizationId, model, dateFrom, dateTo, limit);
   }
 } 

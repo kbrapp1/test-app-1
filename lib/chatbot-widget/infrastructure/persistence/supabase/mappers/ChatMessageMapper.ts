@@ -1,8 +1,8 @@
 import { ChatMessage, ChatMessageProps, MessageType } from '../../../../domain/entities/ChatMessage';
-import { MessageAIMetadata } from '../../../../domain/value-objects/MessageAIMetadata';
-import { MessageContextMetadata } from '../../../../domain/value-objects/MessageContextMetadata';
-import { MessageProcessingMetrics } from '../../../../domain/value-objects/MessageProcessingMetrics';
-import { MessageCostTracking } from '../../../../domain/value-objects/MessageCostTracking';
+import { MessageAIMetadata } from '../../../../domain/value-objects/message-processing/MessageAIMetadata';
+import { MessageContextMetadata } from '../../../../domain/value-objects/message-processing/MessageContextMetadata';
+import { MessageProcessingMetrics } from '../../../../domain/value-objects/message-processing/MessageProcessingMetrics';
+import { MessageCostTracking } from '../../../../domain/value-objects/message-processing/MessageCostTracking';
 
 /**
  * Raw database record structure from Supabase

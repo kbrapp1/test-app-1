@@ -1,5 +1,5 @@
 import { Lead } from '../entities/Lead';
-import { QualificationStatus } from '../services/LeadScoringService';
+import { QualificationStatus } from '../services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../entities/LeadLifecycleManager';
 
 export interface ILeadRepository {

@@ -7,7 +7,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Lead } from '../../../../domain/entities/Lead';
-import { QualificationStatus } from '../../../../domain/services/LeadScoringService';
+import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
 

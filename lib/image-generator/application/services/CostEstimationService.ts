@@ -88,7 +88,7 @@ export class CostEstimationService {
       };
     }
 
-    let baseCost = model.capabilities.costPerGeneration;
+    const baseCost = model.capabilities.costPerGeneration;
     let qualityMultiplier = 1;
     let dimensionMultiplier = 1;
     let editingMultiplier = 1;

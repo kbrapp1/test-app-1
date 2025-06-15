@@ -1,7 +1,7 @@
-import { ChatSimulationContext } from '../value-objects/ChatSimulationContext';
-import { SimulationResults } from '../value-objects/SimulationResults';
-import { SimulationMetadata, SimulationMetadataProps } from '../value-objects/SimulationMetadata';
-import { SimulationMetrics } from '../value-objects/SimulationMetrics';
+import { ChatSimulationContext } from '../value-objects/simulation/ChatSimulationContext';
+import { SimulationResults } from '../value-objects/simulation/SimulationResults';
+import { SimulationMetadata, SimulationMetadataProps } from '../value-objects/simulation/SimulationMetadata';
+import { SimulationMetrics } from '../value-objects/simulation/SimulationMetrics';
 import { ChatMessage } from './ChatMessage';
 
 export interface ChatSimulationProps {

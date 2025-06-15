@@ -3,7 +3,7 @@ import { ContactInfo } from '../../../../domain/value-objects/ContactInfo';
 import { LeadSource } from '../../../../domain/value-objects/LeadSource';
 import { QualificationData } from '../../../../domain/value-objects/QualificationData';
 import { LeadMetadata, LeadNote } from '../../../../domain/value-objects/LeadMetadata';
-import { QualificationStatus } from '../../../../domain/services/LeadScoringService';
+import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 
 /**

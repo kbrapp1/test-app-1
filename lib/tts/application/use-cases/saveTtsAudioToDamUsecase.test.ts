@@ -1,5 +1,5 @@
-var mockGeneratedAssetId = 'mock-asset-uuid-generated';
-var mockRandomUUIDSpy = vi.fn(() => mockGeneratedAssetId);
+const mockGeneratedAssetId = 'mock-asset-uuid-generated';
+const mockRandomUUIDSpy = vi.fn(() => mockGeneratedAssetId);
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveTtsAudioToDam } from './saveTtsAudioToDamUsecase';

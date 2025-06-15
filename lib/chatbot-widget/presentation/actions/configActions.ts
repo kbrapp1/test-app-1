@@ -10,7 +10,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { ChatbotConfigService } from '../../application/services/ChatbotConfigService';
+import { ChatbotConfigService } from '../../application/services/configuration-management/ChatbotConfigService';
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,

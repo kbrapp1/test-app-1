@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../LeadScoringService';
-import { QualificationData, QualificationAnswer } from '../../value-objects/QualificationData';
+import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../lead-management/LeadScoringService';
+import { QualificationData, QualificationAnswer } from '../../value-objects/lead-management/QualificationData';
 
 describe('LeadScoringService', () => {
   const createMockQualificationData = (overrides: Partial<any> = {}): QualificationData => {

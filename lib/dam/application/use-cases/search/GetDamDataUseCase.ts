@@ -30,8 +30,8 @@ export class GetDamDataUseCase {
       organizationId 
     } = request;
 
-    let finalAssets: DomainAsset[] = [];
-    let finalFolders: DomainFolder[] = [];
+    const finalAssets: DomainAsset[] = [];
+    const finalFolders: DomainFolder[] = [];
 
     // Determine operation type
     const hasSearchTerm = !!searchTerm && searchTerm.trim() !== '';

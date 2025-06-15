@@ -5,7 +5,7 @@ import {
   SessionStatus,
   ContactInfo,
   SessionMetrics
-} from '../value-objects/ChatSessionTypes';
+} from '../value-objects/session-management/ChatSessionTypes';
 
 // Re-export types for external use
 export type {
@@ -16,12 +16,12 @@ export type {
   ContactInfo,
   SessionMetrics
 };
-import { ChatSessionValidationService } from '../services/ChatSessionValidationService';
-import { SessionEngagementService } from '../services/SessionEngagementService';
-import { SessionLeadQualificationService } from '../services/SessionLeadQualificationService';
-import { SessionStateService } from '../services/SessionStateService';
-import { SessionContextService } from '../services/SessionContextService';
-import { ChatSessionFactory } from '../services/ChatSessionFactory';
+import { ChatSessionValidationService } from '../services/session-management/ChatSessionValidationService';
+import { SessionEngagementService } from '../services/session-management/SessionEngagementService';
+import { SessionLeadQualificationService } from '../services/session-management/SessionLeadQualificationService';
+import { SessionStateService } from '../services/session-management/SessionStateService';
+import { SessionContextService } from '../services/session-management/SessionContextService';
+import { ChatSessionFactory } from '../services/session-management/ChatSessionFactory';
 
 /**
  * Chat Session Entity

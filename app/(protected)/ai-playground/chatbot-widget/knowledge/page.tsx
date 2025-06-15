@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { KnowledgeBaseSection } from '@/lib/chatbot-widget/presentation/components/admin/KnowledgeBaseSection';
+import { KnowledgeBaseSection } from '@/lib/chatbot-widget/presentation/components/admin/knowledge-base/KnowledgeBaseSection';
 
 export default function KnowledgeBasePage() {
   return (

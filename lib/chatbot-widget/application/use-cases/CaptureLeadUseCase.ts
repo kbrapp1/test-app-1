@@ -1,22 +1,36 @@
 /**
  * Capture Lead Use Case
  * 
- * Application Use Case: Handles the business logic for capturing a new lead
- * Single Responsibility: Lead capture workflow coordination
- * Following DDD application layer patterns
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Orchestrate lead capture workflow only
+ * - Delegate specialized tasks to focused components
+ * - Handle error coordination and transaction management
+ * - Use domain-specific errors with proper context
+ * - Stay under 200-250 lines by delegating to components
+ * - Follow @golden-rule patterns exactly
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
 import { Lead } from '../../domain/entities/Lead';
-import { ContactInfo } from '../../domain/value-objects/ContactInfo';
-import { QualificationData } from '../../domain/value-objects/QualificationData';
-import { LeadSource } from '../../domain/value-objects/LeadSource';
+import { ContactInfo } from '../../domain/value-objects/lead-management/ContactInfo';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
-import { LeadScoringService } from '../../domain/services/LeadScoringService';
+import { LeadScoringService } from '../../domain/services/lead-management/LeadScoringService';
 
+// Specialized components
+import {
+  LeadDataFactory,
+  QualificationProcessor,
+  LeadQualificationAnalyzer,
+  LeadRecommendationEngine,
+  LeadNextStepsGenerator,
+  QualificationAnswer,
+  QualificationStatus,
+  LeadRecommendation,
+  NextStep
+} from './lead-capture-components';
 
 export interface CaptureLeadRequest {
   sessionId: string;
@@ -26,19 +40,21 @@ export interface CaptureLeadRequest {
     name?: string;
     company?: string;
   };
-  qualificationAnswers?: Array<{
-    questionId: string;
-    answer: string | string[];
-  }>;
+  qualificationAnswers?: QualificationAnswer[];
 }
 
 export interface CaptureLeadResult {
   lead: Lead;
   updatedSession: ChatSession;
   leadScore: number;
-  qualificationStatus: 'qualified' | 'unqualified' | 'needs_review';
-  recommendations: string[];
-  nextSteps: string[];
+  qualificationStatus: QualificationStatus;
+  recommendations: LeadRecommendation[];
+  nextSteps: NextStep[];
+  processingStats: {
+    qualificationAnswersProcessed: number;
+    qualificationAnswersSkipped: number;
+    validationErrors: string[];
+  };
 }
 
 export class CaptureLeadUseCase {
@@ -53,260 +69,210 @@ export class CaptureLeadUseCase {
    * Execute the complete lead capture workflow
    */
   async execute(request: CaptureLeadRequest): Promise<CaptureLeadResult> {
-    // 1. Load and validate session
-    const session = await this.sessionRepository.findById(request.sessionId);
-    if (!session) {
-      throw new Error(`Chat session ${request.sessionId} not found`);
-    }
+    // 1. Load and validate dependencies
+    const { session, config } = await this.loadDependencies(request.sessionId);
 
-    // 2. Load chatbot configuration for qualification questions
-    const config = await this.chatbotConfigRepository.findById(session.chatbotConfigId);
-    if (!config) {
-      throw new Error(`Chatbot configuration not found for session ${request.sessionId}`);
-    }
+    // 2. Validate business rules
+    await this.validateBusinessRules(session);
 
-    // 3. Validate that lead hasn't already been captured for this session
-    const existingLead = await this.leadRepository.findBySessionId(session.id);
-    if (existingLead) {
-      throw new Error(`Lead already captured for session ${request.sessionId}`);
-    }
+    // 3. Process qualification answers if provided
+    const { updatedSession, processingStats } = this.processQualificationAnswers(
+      session,
+      request.qualificationAnswers || [],
+      config
+    );
 
     // 4. Update session with contact information
-    let updatedSession = session.captureContactInfo(
-      request.contactInfo.email,
-      request.contactInfo.phone,
-      request.contactInfo.name,
-      request.contactInfo.company
+    const sessionWithContact = this.updateSessionContact(updatedSession, request.contactInfo);
+
+    // 5. Create lead from session data
+    const lead = this.createLead(sessionWithContact, config, request.contactInfo);
+
+    // 6. Analyze qualification status
+    const qualificationAnalysis = LeadQualificationAnalyzer.analyzeQualification(
+      lead,
+      lead.leadScore
     );
 
-    // 5. Process qualification answers if provided
-    if (request.qualificationAnswers) {
-      updatedSession = this.processQualificationAnswers(
-        updatedSession,
-        request.qualificationAnswers,
-        config
-      );
-    }
-
-    // 6. Create lead entity from session and contact info
-    const { contactInfo, qualificationData, source, conversationSummary } = this.createLeadFromSession(updatedSession, config, request.contactInfo);
-    const lead = Lead.create(
-      updatedSession.id,
-      config.organizationId,
-      updatedSession.chatbotConfigId,
-      contactInfo,
-      qualificationData,
-      source,
-      conversationSummary
+    // 7. Generate recommendations and next steps
+    const recommendations = LeadRecommendationEngine.generateRecommendations(
+      lead,
+      sessionWithContact,
+      lead.leadScore
     );
 
-    // 7. Calculate lead score (already calculated in Lead.create)
-    const leadScore = lead.leadScore;
+    const nextSteps = LeadNextStepsGenerator.generateNextSteps(
+      lead,
+      qualificationAnalysis.status
+    );
 
-    // 8. Determine qualification status
-    const qualificationStatus = this.determineQualificationStatus(leadScore, lead);
-
-    // 9. Save lead and updated session
-    const savedLead = await this.leadRepository.save(lead);
-    const finalSession = await this.sessionRepository.update(updatedSession);
-
-    // 10. Generate recommendations and next steps
-    const recommendations = this.generateRecommendations(savedLead, finalSession, leadScore);
-    const nextSteps = this.generateNextSteps(savedLead, qualificationStatus);
+    // 8. Persist changes
+    const { savedLead, finalSession } = await this.persistChanges(lead, sessionWithContact);
 
     return {
       lead: savedLead,
       updatedSession: finalSession,
-      leadScore,
-      qualificationStatus,
+      leadScore: lead.leadScore,
+      qualificationStatus: qualificationAnalysis.status,
       recommendations,
-      nextSteps
+      nextSteps,
+      processingStats
     };
   }
 
   /**
-   * Process qualification answers from the request
+   * Load and validate required dependencies
+   */
+  private async loadDependencies(sessionId: string): Promise<{
+    session: ChatSession;
+    config: ChatbotConfig;
+  }> {
+    const session = await this.sessionRepository.findById(sessionId);
+    if (!session) {
+      throw new Error(`Chat session ${sessionId} not found`);
+    }
+
+    const config = await this.chatbotConfigRepository.findById(session.chatbotConfigId);
+    if (!config) {
+      throw new Error(`Chatbot configuration not found for session ${sessionId}`);
+    }
+
+    return { session, config };
+  }
+
+  /**
+   * Validate business rules for lead capture
+   */
+  private async validateBusinessRules(session: ChatSession): Promise<void> {
+    // Check if lead already exists for this session
+    const existingLead = await this.leadRepository.findBySessionId(session.id);
+    if (existingLead) {
+      throw new Error(`Lead already captured for session ${session.id}`);
+    }
+
+    // Additional business rule validations can be added here
+  }
+
+  /**
+   * Process qualification answers using specialized processor
    */
   private processQualificationAnswers(
     session: ChatSession,
-    answers: CaptureLeadRequest['qualificationAnswers'],
+    answers: QualificationAnswer[],
     config: ChatbotConfig
-  ): ChatSession {
-    if (!answers) return session;
+  ): {
+    updatedSession: ChatSession;
+    processingStats: {
+      qualificationAnswersProcessed: number;
+      qualificationAnswersSkipped: number;
+      validationErrors: string[];
+    };
+  } {
+    const result = QualificationProcessor.processAnswers(session, answers, config);
 
-    let updatedSession = session;
-
-    for (const answer of answers) {
-      // Find the question configuration
-      const questionConfig = config.leadQualificationQuestions.find(q => q.id === answer.questionId);
-      if (!questionConfig) {
-        continue; // Skip unknown questions
+    return {
+      updatedSession: result.updatedSession,
+      processingStats: {
+        qualificationAnswersProcessed: result.processedAnswers,
+        qualificationAnswersSkipped: result.skippedAnswers,
+        validationErrors: result.validationErrors
       }
-
-      // Add the answer to session's qualification state
-      updatedSession = updatedSession.answerQualificationQuestion(
-        answer.questionId,
-        questionConfig.question,
-        answer.answer,
-        questionConfig.scoringWeight
-      );
-    }
-
-    return updatedSession;
+    };
   }
 
   /**
-   * Create lead data from session information
+   * Update session with contact information
    */
-  private createLeadFromSession(
+  private updateSessionContact(
+    session: ChatSession,
+    contactInfo: CaptureLeadRequest['contactInfo']
+  ): ChatSession {
+    const sessionContactInfo = ContactInfo.create({
+      email: contactInfo.email || '',
+      phone: contactInfo.phone || '',
+      name: contactInfo.name || '',
+      company: contactInfo.company || ''
+    });
+
+    return session.captureContactInfo(sessionContactInfo);
+  }
+
+  /**
+   * Create lead entity using specialized factory
+   */
+  private createLead(
     session: ChatSession,
     config: ChatbotConfig,
     contactInfo: CaptureLeadRequest['contactInfo']
-  ): {
-    contactInfo: ContactInfo;
-    qualificationData: QualificationData;
-    source: LeadSource;
-    conversationSummary: string;
-  } {
-    const leadContactInfo = {
-      email: contactInfo.email || session.contextData.email,
-      phone: contactInfo.phone || session.contextData.phone,
-      name: contactInfo.name || session.contextData.visitorName,
-      company: contactInfo.company || session.contextData.company
-    };
+  ): Lead {
+    const leadData = LeadDataFactory.createFromSession({
+      session,
+      config,
+      contactInfo
+    });
 
-    const leadQualificationData = {
-      painPoints: [],
-      interests: session.contextData.interests,
-      answeredQuestions: session.leadQualificationState.answeredQuestions.map(aq => ({
-        questionId: aq.questionId,
-        question: aq.question,
-        answer: aq.answer,
-        answeredAt: aq.answeredAt,
-        scoringWeight: aq.scoringWeight,
-        scoreContribution: aq.scoringWeight // Simple 1:1 mapping for now
-      })),
-      engagementLevel: (session.contextData.engagementScore > 70 ? 'high' : 
-                      session.contextData.engagementScore > 40 ? 'medium' : 'low') as 'high' | 'medium' | 'low'
-    };
-
-    const leadSource = {
-      channel: 'chatbot_widget' as const,
-      referrer: session.referrerUrl,
-      pageUrl: session.currentUrl || '',
-      pageTitle: session.currentUrl // Would need actual page title
-    };
-
-    const conversationSummary = session.contextData.conversationSummary || 
-      `Chatbot session with ${session.contextData.topics.join(', ') || 'general inquiries'}`;
-
-    return {
-      contactInfo: ContactInfo.create(leadContactInfo),
-      qualificationData: QualificationData.create(leadQualificationData),
-      source: LeadSource.create(leadSource),
-      conversationSummary
-    };
+    return Lead.create(
+      session.id,
+      config.organizationId,
+      session.chatbotConfigId,
+      leadData.contactInfo,
+      leadData.qualificationData,
+      leadData.source,
+      leadData.conversationSummary
+    );
   }
 
   /**
-   * Determine qualification status based on score and criteria
+   * Persist lead and session changes
    */
-  private determineQualificationStatus(
-    leadScore: number,
-    lead: Lead
-  ): 'qualified' | 'unqualified' | 'needs_review' {
-    // High score leads are qualified
-    if (leadScore >= 80) {
-      return 'qualified';
-    }
-
-    // Very low score leads are unqualified
-    if (leadScore < 30) {
-      return 'unqualified';
-    }
-
-    // Check if minimum contact info is provided
-    if (!lead.contactInfo.email && !lead.contactInfo.phone) {
-      return 'unqualified';
-    }
-
-    // Medium scores need review
-    return 'needs_review';
-  }
-
-  /**
-   * Generate recommendations based on lead data
-   */
-  private generateRecommendations(
+  private async persistChanges(
     lead: Lead,
-    session: ChatSession,
-    leadScore: number
-  ): string[] {
-    const recommendations: string[] = [];
+    session: ChatSession
+  ): Promise<{
+    savedLead: Lead;
+    finalSession: ChatSession;
+  }> {
+    // Save lead first
+    const savedLead = await this.leadRepository.save(lead);
 
-    if (leadScore >= 80) {
-      recommendations.push('High-quality lead - prioritize immediate follow-up');
-      recommendations.push('Schedule demo or sales call within 24 hours');
-    } else if (leadScore >= 50) {
-      recommendations.push('Moderate lead quality - nurture with targeted content');
-      recommendations.push('Send personalized email sequence');
-    } else {
-      recommendations.push('Low lead score - add to general nurture campaign');
-    }
+    // Update session
+    const finalSession = await this.sessionRepository.update(session);
 
-    if (!lead.contactInfo.email) {
-      recommendations.push('Missing email - attempt to capture in follow-up');
-    }
-
-    if (!lead.contactInfo.phone) {
-      recommendations.push('Missing phone number - consider phone capture campaign');
-    }
-
-    if (session.contextData.interests.length > 0) {
-      recommendations.push(`Focus on interests: ${session.contextData.interests.join(', ')}`);
-    }
-
-    if (session.contextData.company) {
-      recommendations.push('B2B lead - research company for account-based approach');
-    }
-
-    return recommendations;
+    return { savedLead, finalSession };
   }
 
   /**
-   * Generate next steps based on qualification status
+   * Get capture eligibility for a session
    */
-  private generateNextSteps(
-    lead: Lead,
-    qualificationStatus: 'qualified' | 'unqualified' | 'needs_review'
-  ): string[] {
-    const nextSteps: string[] = [];
+  async getCaptureEligibility(sessionId: string): Promise<{
+    eligible: boolean;
+    reason?: string;
+    existingLeadId?: string;
+  }> {
+    try {
+      const session = await this.sessionRepository.findById(sessionId);
+      if (!session) {
+        return {
+          eligible: false,
+          reason: 'Session not found'
+        };
+      }
 
-    switch (qualificationStatus) {
-      case 'qualified':
-        nextSteps.push('Assign to sales representative');
-        nextSteps.push('Schedule follow-up call or demo');
-        nextSteps.push('Add to high-priority lead list');
-        nextSteps.push('Send personalized welcome sequence');
-        break;
+      const existingLead = await this.leadRepository.findBySessionId(sessionId);
+      if (existingLead) {
+        return {
+          eligible: false,
+          reason: 'Lead already captured for this session',
+          existingLeadId: existingLead.id
+        };
+      }
 
-      case 'needs_review':
-        nextSteps.push('Queue for manual review');
-        nextSteps.push('Send additional qualification email');
-        nextSteps.push('Add to nurture campaign');
-        break;
-
-      case 'unqualified':
-        nextSteps.push('Add to general newsletter list');
-        nextSteps.push('Monitor for future engagement');
-        nextSteps.push('Consider re-qualification campaign in 3 months');
-        break;
+      return { eligible: true };
+    } catch (error) {
+      return {
+        eligible: false,
+        reason: 'Error checking eligibility'
+      };
     }
-
-    // Always add these general next steps
-    nextSteps.push('Update CRM with lead information');
-    nextSteps.push('Track engagement metrics');
-
-    return nextSteps;
   }
 } 

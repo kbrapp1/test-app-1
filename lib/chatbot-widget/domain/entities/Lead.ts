@@ -6,15 +6,15 @@
  * Following DDD entity patterns with value objects and domain services
  */
 
-import { ContactInfo, ContactInfoProps } from '../value-objects/ContactInfo';
-import { QualificationData, QualificationDataProps } from '../value-objects/QualificationData';
-import { LeadSource, LeadSourceProps } from '../value-objects/LeadSource';
-import { LeadMetadata, LeadMetadataProps, LeadNote } from '../value-objects/LeadMetadata';
-import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../services/LeadScoringService';
+import { ContactInfo, ContactInfoProps } from '../value-objects/lead-management/ContactInfo';
+import { QualificationData, QualificationDataProps } from '../value-objects/lead-management/QualificationData';
+import { LeadSource, LeadSourceProps } from '../value-objects/lead-management/LeadSource';
+import { LeadMetadata, LeadMetadataProps, LeadNote } from '../value-objects/lead-management/LeadMetadata';
+import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../services/lead-management/LeadScoringService';
 import { LeadLifecycleManager, FollowUpStatus, LeadLifecycleState } from './LeadLifecycleManager';
-import { LeadExportService } from '../services/LeadExportService';
-import { LeadQueryService } from '../services/LeadQueryService';
-import { LeadBusinessService } from '../services/LeadBusinessService';
+import { LeadExportService } from '../services/lead-management/LeadExportService';
+import { LeadQueryService } from '../services/lead-management/LeadQueryService';
+import { LeadBusinessService } from '../services/lead-management/LeadBusinessService';
 
 export interface LeadProps {
   id: string;

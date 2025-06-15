@@ -6,10 +6,10 @@
  */
 
 import { Lead } from '../../domain/entities/Lead';
-import { ContactInfo, ContactInfoProps } from '../../domain/value-objects/ContactInfo';
-import { QualificationData, QualificationDataProps, QualificationAnswer } from '../../domain/value-objects/QualificationData';
-import { LeadSource, LeadSourceProps } from '../../domain/value-objects/LeadSource';
-import { LeadNote } from '../../domain/value-objects/LeadMetadata';
+import { ContactInfo, ContactInfoProps } from '../../domain/value-objects/lead-management/ContactInfo';
+import { QualificationData, QualificationDataProps, QualificationAnswer } from '../../domain/value-objects/lead-management/QualificationData';
+import { LeadSource, LeadSourceProps } from '../../domain/value-objects/lead-management/LeadSource';
+import { LeadNote } from '../../domain/value-objects/lead-management/LeadMetadata';
 import { LeadDto, ContactInfoDto, QualificationDataDto, AnsweredQuestionDto, LeadSourceDto, CreateLeadDto } from '../dto/LeadDto';
 
 export class LeadMapper {

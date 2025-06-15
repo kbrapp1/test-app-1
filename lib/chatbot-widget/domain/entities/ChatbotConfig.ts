@@ -5,11 +5,11 @@
  * Coordinates value objects and delegates complex operations to domain services.
  */
 
-import { PersonalitySettings } from '../value-objects/PersonalitySettings';
-import { KnowledgeBase } from '../value-objects/KnowledgeBase';
-import { OperatingHours } from '../value-objects/OperatingHours';
-import { AIConfiguration } from '../value-objects/AIConfiguration';
-import { ChatbotSystemPromptService } from '../services/ChatbotSystemPromptService';
+import { PersonalitySettings } from '../value-objects/ai-configuration/PersonalitySettings';
+import { KnowledgeBase } from '../value-objects/ai-configuration/KnowledgeBase';
+import { OperatingHours } from '../value-objects/session-management/OperatingHours';
+import { AIConfiguration } from '../value-objects/ai-configuration/AIConfiguration';
+import { ChatbotSystemPromptService } from '../services/ai-configuration/ChatbotSystemPromptService';
 
 export interface ChatbotConfigProps {
   id: string;

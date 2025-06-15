@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-14T03:56:58.149Z
+// Generated: 2025-06-15T02:42:34.170Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -9,11 +9,8 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "domain": "chatbot-widget",
     "components": [
       "AdvancedParametersSection",
-      "BotConfigurationSection",
-      "ChatApiDebugPanel",
-      "ChatConfigurationPanel",
-      "ChatInterface",
-      "ChatSimulator",
+      "BotIdentityForm",
+      "OperatingHoursForm",
       "BusinessRulesSection",
       "EntityExtractionResults",
       "FunctionCallDetails",
@@ -30,8 +27,14 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "FirstApiCallStep",
       "LeadScoringProgressionStep",
       "RequestPreprocessingStep",
-      "EmbedCodeGenerator",
+      "CompanyInformationCard",
+      "FaqManagementCard",
+      "KnowledgeBaseActions",
       "KnowledgeBaseSection",
+      "AddQuestionForm",
+      "LeadQualificationEditor",
+      "LeadQualificationOverview",
+      "LeadQualificationQuestionItem",
       "LeadSettingsSection",
       "AiConfigurationSection",
       "AutomatedBehaviorsDisplay",
@@ -58,7 +61,18 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "ApiResponseDetails",
       "CostAnalysis",
       "PerformanceTiming",
+      "ChatApiDebugPanel",
+      "ChatConfigurationPanel",
+      "ChatInterface",
+      "ChatSimulator",
       "TestScenarios",
+      "CodeDisplaySection",
+      "ConfigurationInfo",
+      "EmbedCodeStatusBadge",
+      "InstallationInstructions",
+      "PlatformNotes",
+      "PlatformSelector",
+      "EmbedCodeGenerator",
       "WidgetPreview"
     ],
     "files": [
@@ -89,6 +103,7 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     ],
     "optimizationTargets": [
       "Form validation optimization",
+      "Card component memoization",
       "Detail view caching",
       "Layout component optimization",
       "Dynamic route optimization"

@@ -5,10 +5,10 @@
  * through composed value objects following DDD principles.
  */
 
-import { MessageAIMetadata } from '../value-objects/MessageAIMetadata';
-import { MessageContextMetadata } from '../value-objects/MessageContextMetadata';
-import { MessageProcessingMetrics } from '../value-objects/MessageProcessingMetrics';
-import { MessageCostTracking } from '../value-objects/MessageCostTracking';
+import { MessageAIMetadata } from '../value-objects/message-processing/MessageAIMetadata';
+import { MessageContextMetadata } from '../value-objects/message-processing/MessageContextMetadata';
+import { MessageProcessingMetrics } from '../value-objects/message-processing/MessageProcessingMetrics';
+import { MessageCostTracking } from '../value-objects/message-processing/MessageCostTracking';
 
 export interface ChatMessageProps {
   id: string;

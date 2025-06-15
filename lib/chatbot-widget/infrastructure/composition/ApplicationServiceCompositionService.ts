@@ -1,13 +1,16 @@
 // Application services
-import { LeadManagementService } from '../../application/services/LeadManagementService';
-import { AiConversationService } from '../../application/services/AiConversationService';
+import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
+import { LeadCaptureService } from '../../application/services/lead-management/LeadCaptureService';
+import { LeadLifecycleService } from '../../application/services/lead-management/LeadLifecycleService';
+import { LeadQueryService } from '../../application/services/lead-management/LeadQueryService';
+import { AiConversationService } from '../../application/services/conversation-management/AiConversationService';
 
 // Application mappers
 import { LeadMapper } from '../../application/mappers/LeadMapper';
 
 // Infrastructure services
 import { OpenAIProvider, OpenAIConfig } from '../providers/openai/OpenAIProvider';
-import { IAIConversationService } from '../../domain/services/IAIConversationService';
+import { IAIConversationService } from '../../domain/services/interfaces/IAIConversationService';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
@@ -24,6 +27,9 @@ export class ApplicationServiceCompositionService {
 
   // Application service singletons
   private static leadManagementService: LeadManagementService | null = null;
+  private static leadCaptureService: LeadCaptureService | null = null;
+  private static leadLifecycleService: LeadLifecycleService | null = null;
+  private static leadQueryService: LeadQueryService | null = null;
   private static aiConversationService: AiConversationService | null = null;
 
   /**
@@ -62,15 +68,63 @@ export class ApplicationServiceCompositionService {
     if (!this.aiConversationService) {
       const openAIProvider = await this.getOpenAIProvider();
       const dynamicPromptService = DomainServiceCompositionService.getDynamicPromptService();
-      const conversationContextService = await DomainServiceCompositionService.getConversationContextService();
+      const intentService = DomainServiceCompositionService.getConversationIntentService();
+      const sentimentService = DomainServiceCompositionService.getConversationSentimentService();
+      const leadExtractionService = DomainServiceCompositionService.getLeadExtractionService();
+      const fallbackService = DomainServiceCompositionService.getConversationFallbackService();
 
       this.aiConversationService = new AiConversationService(
         openAIProvider,
         dynamicPromptService,
-        conversationContextService
+        intentService,
+        sentimentService,
+        leadExtractionService,
+        fallbackService
       );
     }
     return this.aiConversationService as AiConversationService;
+  }
+
+  /**
+   * Get Lead Capture Service
+   */
+  static getLeadCaptureService(): LeadCaptureService {
+    if (!this.leadCaptureService) {
+      this.leadCaptureService = new LeadCaptureService(
+        RepositoryCompositionService.getLeadRepository(),
+        RepositoryCompositionService.getChatSessionRepository(),
+        DomainServiceCompositionService.getLeadScoringService(),
+        new LeadMapper()
+      );
+    }
+    return this.leadCaptureService;
+  }
+
+  /**
+   * Get Lead Lifecycle Service
+   */
+  static getLeadLifecycleService(): LeadLifecycleService {
+    if (!this.leadLifecycleService) {
+      this.leadLifecycleService = new LeadLifecycleService(
+        RepositoryCompositionService.getLeadRepository(),
+        DomainServiceCompositionService.getLeadScoringService(),
+        new LeadMapper()
+      );
+    }
+    return this.leadLifecycleService;
+  }
+
+  /**
+   * Get Lead Query Service
+   */
+  static getLeadQueryService(): LeadQueryService {
+    if (!this.leadQueryService) {
+      this.leadQueryService = new LeadQueryService(
+        RepositoryCompositionService.getLeadRepository(),
+        new LeadMapper()
+      );
+    }
+    return this.leadQueryService;
   }
 
   /**
@@ -79,11 +133,9 @@ export class ApplicationServiceCompositionService {
   static getLeadManagementService(): LeadManagementService {
     if (!this.leadManagementService) {
       this.leadManagementService = new LeadManagementService(
-        RepositoryCompositionService.getLeadRepository(),
-        RepositoryCompositionService.getChatSessionRepository(),
-        RepositoryCompositionService.getChatMessageRepository(),
-        DomainServiceCompositionService.getLeadScoringService(),
-        new LeadMapper() // Create new instance since it's a static class
+        this.getLeadCaptureService(),
+        this.getLeadLifecycleService(),
+        this.getLeadQueryService()
       );
     }
     return this.leadManagementService;
@@ -102,6 +154,9 @@ export class ApplicationServiceCompositionService {
   static reset(): void {
     this.openAIProvider = null;
     this.leadManagementService = null;
+    this.leadCaptureService = null;
+    this.leadLifecycleService = null;
+    this.leadQueryService = null;
     this.aiConversationService = null;
   }
 } 

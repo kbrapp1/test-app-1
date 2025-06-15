@@ -7,10 +7,10 @@
  */
 
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
-import { PersonalitySettings } from '../../domain/value-objects/PersonalitySettings';
-import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
-import { OperatingHours } from '../../domain/value-objects/OperatingHours';
-import { AIConfiguration } from '../../domain/value-objects/AIConfiguration';
+import { PersonalitySettings } from '../../domain/value-objects/ai-configuration/PersonalitySettings';
+import { KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { OperatingHours } from '../../domain/value-objects/session-management/OperatingHours';
+import { AIConfiguration } from '../../domain/value-objects/ai-configuration/AIConfiguration';
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,

@@ -7,12 +7,12 @@ import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRe
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 
   // Domain service interfaces
-import { IKnowledgeRetrievalService } from '../../domain/services/IKnowledgeRetrievalService';
-import { IIntentClassificationService } from '../../domain/services/IIntentClassificationService';
-import { IDebugInformationService } from '../../domain/services/IDebugInformationService';
+import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { IIntentClassificationService } from '../../domain/services/interfaces/IIntentClassificationService';
+import { IDebugInformationService } from '../../domain/services/interfaces/IDebugInformationService';
 
 // Application services
-import { LeadManagementService } from '../../application/services/LeadManagementService';
+import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
 
 // Application use cases
 import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
@@ -60,6 +60,45 @@ export class ChatbotWidgetCompositionRoot {
 
   static getDebugInformationService(): IDebugInformationService {
     return DomainServiceCompositionService.getDebugInformationService();
+  }
+
+  // New focused domain service access methods
+  static getConversationIntentService() {
+    return DomainServiceCompositionService.getConversationIntentService();
+  }
+
+  static getConversationSentimentService() {
+    return DomainServiceCompositionService.getConversationSentimentService();
+  }
+
+  static getLeadExtractionService() {
+    return DomainServiceCompositionService.getLeadExtractionService();
+  }
+
+  static getConversationFallbackService() {
+    return DomainServiceCompositionService.getConversationFallbackService();
+  }
+
+  // Message processing services (new refactored structure)
+  static getMessageAnalysisOrchestrator() {
+    return DomainServiceCompositionService.getMessageAnalysisOrchestrator();
+  }
+
+  static getMessageContentAnalysisService() {
+    return DomainServiceCompositionService.getMessageContentAnalysisService();
+  }
+
+  static getMessageSentimentAnalysisService() {
+    return DomainServiceCompositionService.getMessageSentimentAnalysisService();
+  }
+
+  static getMessageIntentAnalysisService() {
+    return DomainServiceCompositionService.getMessageIntentAnalysisService();
+  }
+
+  // Conversation context services (new refactored structure)
+  static async getConversationContextOrchestrator(): Promise<any> {
+    return DomainServiceCompositionService.getConversationContextOrchestrator();
   }
 
   // Application service access methods

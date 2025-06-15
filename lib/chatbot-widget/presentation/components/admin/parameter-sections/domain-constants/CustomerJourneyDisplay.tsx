@@ -6,7 +6,7 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DomainConstants } from '../../../../../domain/value-objects/DomainConstants';
+import { DomainConstants } from '../../../../../domain/value-objects/ai-configuration/DomainConstants';
 
 export function CustomerJourneyDisplay() {
   return (

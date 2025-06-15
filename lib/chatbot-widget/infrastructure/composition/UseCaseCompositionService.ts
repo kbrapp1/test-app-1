@@ -4,7 +4,7 @@ import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessCh
 import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCase';
 
 // Domain service interfaces
-import { IAIConversationService } from '../../domain/services/IAIConversationService';
+import { IAIConversationService } from '../../domain/services/interfaces/IAIConversationService';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
@@ -44,7 +44,7 @@ export class UseCaseCompositionService {
       const chatMessageRepository = RepositoryCompositionService.getChatMessageRepository();
       const chatbotConfigRepository = RepositoryCompositionService.getChatbotConfigRepository();
       const aiConversationService = await ApplicationServiceCompositionService.getAiConversationServiceInterface();
-      const conversationContextService = await DomainServiceCompositionService.getConversationContextService();
+      const conversationContextOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator();
       const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
 
@@ -53,7 +53,7 @@ export class UseCaseCompositionService {
         chatMessageRepository,
         chatbotConfigRepository,
         aiConversationService as IAIConversationService,
-        conversationContextService,
+        conversationContextOrchestrator,
         tokenCountingService,
         intentClassificationService,
         undefined, // knowledgeRetrievalService is passed per-request in the use case

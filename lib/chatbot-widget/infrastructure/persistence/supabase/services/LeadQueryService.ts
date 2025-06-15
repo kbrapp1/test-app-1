@@ -6,7 +6,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { QualificationStatus } from '../../../../domain/services/LeadScoringService';
+import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 
 export interface LeadFilters {

@@ -1,8 +1,8 @@
-import { ProcessingDebugInfo } from '../../domain/services/IDebugInformationService';
+import { ProcessingDebugInfo } from '../../domain/services/interfaces/IDebugInformationService';
 import { DebugInfoDto } from '../dto/DebugInfoDto';
-import { ApiResponseExtractor } from '../services/ApiResponseExtractor';
-import { MessageCostCalculationService } from '../../domain/services/MessageCostCalculationService';
-import { DebugDataEnricher } from '../services/DebugDataEnricher';
+import { ApiResponseExtractor } from '../services/analysis/ApiResponseExtractor';
+import { MessageCostCalculationService } from '../../domain/services/utilities/MessageCostCalculationService';
+import { DebugDataEnricher } from '../services/analysis/DebugDataEnricher';
 
 export class DebugInfoMapper {
   /**

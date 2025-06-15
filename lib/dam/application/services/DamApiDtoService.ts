@@ -115,7 +115,7 @@ export class DamApiDtoService {
     folders: TransformedFolder[], 
     sortParams?: DamSortParameters
   ): CombinedDamItem[] {
-    let combinedData: CombinedDamItem[] = [...folders, ...assets];
+    const combinedData: CombinedDamItem[] = [...folders, ...assets];
 
     // Apply sorting if specified
     if (sortParams?.sortBy && sortParams?.sortOrder) {

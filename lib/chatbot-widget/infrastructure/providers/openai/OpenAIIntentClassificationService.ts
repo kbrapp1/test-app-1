@@ -7,10 +7,10 @@
  * Single responsibility: Orchestrate OpenAI API calls for intent classification.
  */
 
-import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/IIntentClassificationService';
-import { IntentResult, IntentType } from '../../../domain/value-objects/IntentResult';
+import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
+import { IntentResult, IntentType } from '../../../domain/value-objects/message-processing/IntentResult';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { IDebugInformationService } from '../../../domain/services/IDebugInformationService';
+import { IDebugInformationService } from '../../../domain/services/interfaces/IDebugInformationService';
 import OpenAI from 'openai';
 
 // Import refactored components

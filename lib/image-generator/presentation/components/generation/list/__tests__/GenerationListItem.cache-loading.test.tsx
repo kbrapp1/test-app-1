@@ -159,7 +159,7 @@ describe('GenerationListItem - Cache-Aware Loading', () => {
       const { rerender } = render(<GenerationListItem {...defaultProps} />);
 
       // First generation
-      let mainImage = screen.getByAltText('A cat in space');
+      const mainImage = screen.getByAltText('A cat in space');
       expect(mainImage).toBeInTheDocument();
 
       // Change to different generation

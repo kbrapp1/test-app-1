@@ -1,6 +1,6 @@
 'use client';
 
-import { AdvancedParametersSection } from '../../../../../lib/chatbot-widget/presentation/components/admin/AdvancedParametersSection';
+import { AdvancedParametersSection } from '../../../../../lib/chatbot-widget/presentation/components/admin/configuration/AdvancedParametersSection';
 
 export default function ParametersPage() {
   return (

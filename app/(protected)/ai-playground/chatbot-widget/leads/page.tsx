@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { LeadSettingsSection } from '@/lib/chatbot-widget/presentation/components/admin/LeadSettingsSection';
+import { LeadSettingsSection } from '@/lib/chatbot-widget/presentation/components/admin/lead-management/LeadSettingsSection';
 
 export default function LeadSettingsPage() {
   return (
