@@ -76,4 +76,17 @@ export class LeadAccessDeniedError extends LeadDomainError {
       organizationId 
     });
   }
+}
+
+export class EntityPersistenceError extends LeadDomainError {
+  readonly code = 'ENTITY_PERSISTENCE_FAILED';
+  readonly severity = LeadErrorSeverity.HIGH;
+  
+  constructor(operation: string, entityType: string, context: Record<string, any> = {}) {
+    super(`Failed to persist ${entityType} during ${operation}`, { 
+      ...context, 
+      operation, 
+      entityType 
+    });
+  }
 } 

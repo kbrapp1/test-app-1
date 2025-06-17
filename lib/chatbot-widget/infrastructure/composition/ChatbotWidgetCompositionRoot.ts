@@ -13,11 +13,13 @@ import { IDebugInformationService } from '../../domain/services/interfaces/IDebu
 
 // Application services
 import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
+import { EntityAccumulationApplicationService } from '../../application/services/context/EntityAccumulationApplicationService';
 
 // Application use cases
 import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
 import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessChatMessageUseCase';
 import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCase';
+import { AccumulateConversationEntitiesUseCase } from '../../application/use-cases/AccumulateConversationEntitiesUseCase';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
@@ -106,6 +108,12 @@ export class ChatbotWidgetCompositionRoot {
     return ApplicationServiceCompositionService.getLeadManagementService();
   }
 
+  static async getEntityAccumulationApplicationService(): Promise<EntityAccumulationApplicationService> {
+    const sessionRepository = this.getChatSessionRepository();
+    const intentClassificationService = await this.getIntentClassificationService();
+    return new EntityAccumulationApplicationService(sessionRepository, intentClassificationService);
+  }
+
   // Use case access methods
   static getConfigureChatbotUseCase(): ConfigureChatbotUseCase {
     return UseCaseCompositionService.getConfigureChatbotUseCase();
@@ -117,6 +125,18 @@ export class ChatbotWidgetCompositionRoot {
 
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     return UseCaseCompositionService.getCaptureLeadUseCase();
+  }
+
+  static async getAccumulateConversationEntitiesUseCase(): Promise<AccumulateConversationEntitiesUseCase> {
+    const sessionRepository = this.getChatSessionRepository();
+    const intentClassificationService = await this.getIntentClassificationService();
+    const debugInformationService = this.getDebugInformationService();
+    
+    return new AccumulateConversationEntitiesUseCase(
+      sessionRepository,
+      intentClassificationService,
+      debugInformationService
+    );
   }
 
   // Configuration and testing methods

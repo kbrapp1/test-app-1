@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IntentResult, IntentType, ExtractedEntities } from '../IntentResult';
+import { IntentResult, IntentType, ExtractedEntities } from '../message-processing/IntentResult';
 
 describe('IntentResult', () => {
   const mockMetadata = {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { OperatingHours, BusinessHours, Holiday } from '../OperatingHours';
+import { OperatingHours, BusinessHours, Holiday } from '../session-management/OperatingHours';
 
 describe('OperatingHours Value Object', () => {
   let validBusinessHours: BusinessHours[];

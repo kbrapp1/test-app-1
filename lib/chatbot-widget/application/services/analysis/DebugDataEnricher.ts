@@ -1,4 +1,4 @@
-import { ProcessingDebugInfo } from '../../domain/services/IDebugInformationService';
+import { ProcessingDebugInfo } from '../../../domain/services/interfaces/IDebugInformationService';
 import { EntityCategorizationService } from './EntityCategorizationService';
 
 /**
@@ -28,6 +28,9 @@ export class DebugDataEnricher {
 
   static buildLeadScoring(conversationMetrics: any) {
     const currentScore = conversationMetrics.engagementScore || 0;
+    const previousScore = 0; // First message in a new session starts from 0
+    const scoreChange = currentScore - previousScore;
+    
     return {
       currentScore,
       maxPossibleScore: 100,
@@ -43,8 +46,8 @@ export class DebugDataEnricher {
           ruleId: 'engagement_001'
         }
       ],
-      previousScore: Math.max(0, currentScore - 10),
-      scoreChange: 10,
+      previousScore,
+      scoreChange,
       processingTime: 0
     };
   }

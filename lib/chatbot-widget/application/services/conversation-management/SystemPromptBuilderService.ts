@@ -5,10 +5,10 @@
  * Single responsibility: Handle system prompt construction with intent and knowledge context.
  */
 
-import { ChatSession } from '../../domain/entities/ChatSession';
-import { ChatMessage } from '../../domain/entities/ChatMessage';
-import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
-import { IAIConversationService } from '../../domain/services/IAIConversationService';
+import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
 
 export interface EnhancedContext {
   intentResult?: {
@@ -30,6 +30,7 @@ export interface EnhancedContext {
     content: string;
     relevanceScore: number;
   }>;
+  entityContextPrompt?: string;
 }
 
 export class SystemPromptBuilderService {
@@ -80,6 +81,13 @@ export class SystemPromptBuilderService {
       if (recommendedActions.length > 0) {
         systemPrompt += `\nRECOMMENDED ACTIONS: ${recommendedActions.join(', ')}`;
       }
+    }
+
+    // Add accumulated entity context if available
+    if (enhancedContext.entityContextPrompt) {
+      systemPrompt += `\n\n${enhancedContext.entityContextPrompt}`;
+      systemPrompt += `\nUse this accumulated entity information to provide contextual responses. `;
+      systemPrompt += `Reference specific entities mentioned previously in the conversation.`;
     }
 
     // Add relevant knowledge context if available

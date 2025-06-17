@@ -157,4 +157,55 @@ export class SessionContextService {
                       context.engagementScore >= 40 ? 'medium' : 'low'
     };
   }
+
+  /**
+   * Merge new context data with existing context
+   * AI INSTRUCTIONS:
+   * - Pure function following @golden-rule immutability
+   * - Deep merge for nested objects like accumulatedEntities
+   * - Preserve array integrity for pageViews, topics, interests
+   * - Always return new object, never mutate input
+   */
+  static mergeContextData(
+    existingContext: SessionContext, 
+    newContextData: Partial<SessionContext>
+  ): SessionContext {
+    // Handle accumulated entities deep merge
+    let mergedAccumulatedEntities = existingContext.accumulatedEntities;
+    
+    if (newContextData.accumulatedEntities) {
+      mergedAccumulatedEntities = {
+        // Merge arrays (new values replace old)
+        decisionMakers: newContextData.accumulatedEntities.decisionMakers || existingContext.accumulatedEntities?.decisionMakers || [],
+        painPoints: newContextData.accumulatedEntities.painPoints || existingContext.accumulatedEntities?.painPoints || [],
+        integrationNeeds: newContextData.accumulatedEntities.integrationNeeds || existingContext.accumulatedEntities?.integrationNeeds || [],
+        evaluationCriteria: newContextData.accumulatedEntities.evaluationCriteria || existingContext.accumulatedEntities?.evaluationCriteria || [],
+        
+        // Merge single-value entities (confidence-based updates)
+        budget: newContextData.accumulatedEntities.budget || existingContext.accumulatedEntities?.budget,
+        timeline: newContextData.accumulatedEntities.timeline || existingContext.accumulatedEntities?.timeline,
+        urgency: newContextData.accumulatedEntities.urgency || existingContext.accumulatedEntities?.urgency,
+        contactMethod: newContextData.accumulatedEntities.contactMethod || existingContext.accumulatedEntities?.contactMethod,
+        role: newContextData.accumulatedEntities.role || existingContext.accumulatedEntities?.role,
+        industry: newContextData.accumulatedEntities.industry || existingContext.accumulatedEntities?.industry,
+        company: newContextData.accumulatedEntities.company || existingContext.accumulatedEntities?.company,
+        teamSize: newContextData.accumulatedEntities.teamSize || existingContext.accumulatedEntities?.teamSize,
+        
+        // Merge metadata
+        lastEntityUpdate: newContextData.accumulatedEntities.lastEntityUpdate || existingContext.accumulatedEntities?.lastEntityUpdate,
+        entityMetadata: newContextData.accumulatedEntities.entityMetadata || existingContext.accumulatedEntities?.entityMetadata,
+      };
+    }
+
+    return {
+      ...existingContext,
+      ...newContextData,
+      // Handle special array fields that should be preserved/merged correctly
+      pageViews: newContextData.pageViews || existingContext.pageViews,
+      topics: newContextData.topics || existingContext.topics,
+      interests: newContextData.interests || existingContext.interests,
+      // Deep merge accumulated entities
+      accumulatedEntities: mergedAccumulatedEntities,
+    };
+  }
 } 

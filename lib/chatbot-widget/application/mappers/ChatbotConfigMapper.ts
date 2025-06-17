@@ -109,7 +109,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  private static personalityToDto(personality: any): PersonalitySettingsDto {
+  static personalityToDto(personality: any): PersonalitySettingsDto {
     return {
       tone: personality.tone,
       communicationStyle: personality.communicationStyle,
@@ -135,7 +135,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static personalityFromDto(dto: PersonalitySettingsDto): PersonalitySettings {
+  static personalityFromDto(dto: PersonalitySettingsDto): PersonalitySettings {
     return PersonalitySettings.create({
       tone: dto.tone as 'professional' | 'friendly' | 'casual' | 'formal',
       communicationStyle: dto.communicationStyle as 'direct' | 'conversational' | 'helpful' | 'sales-focused',
@@ -147,7 +147,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  private static knowledgeBaseToDto(kb: any): KnowledgeBaseDto {
+  static knowledgeBaseToDto(kb: any): KnowledgeBaseDto {
     return {
       companyInfo: kb.companyInfo,
       productCatalog: kb.productCatalog,
@@ -164,7 +164,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static knowledgeBaseFromDto(dto: KnowledgeBaseDto): KnowledgeBase {
+  static knowledgeBaseFromDto(dto: KnowledgeBaseDto): KnowledgeBase {
     return KnowledgeBase.create({
       companyInfo: dto.companyInfo,
       productCatalog: dto.productCatalog,
@@ -180,7 +180,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  private static operatingHoursToDto(oh: any): OperatingHoursDto {
+  static operatingHoursToDto(oh: any): OperatingHoursDto {
     return {
       timezone: oh.timezone,
       businessHours: oh.businessHours.map((bh: any) => ({
@@ -198,7 +198,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  private static operatingHoursFromDto(dto: OperatingHoursDto): OperatingHours {
+  static operatingHoursFromDto(dto: OperatingHoursDto): OperatingHours {
     return OperatingHours.create({
       timezone: dto.timezone,
       businessHours: dto.businessHours.map(bh => ({

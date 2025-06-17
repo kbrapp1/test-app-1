@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ChatbotConfig, LeadQualificationQuestion } from '../ChatbotConfig';
-import { PersonalitySettings, PersonalitySettingsProps } from '../../value-objects/PersonalitySettings';
-import { KnowledgeBase, KnowledgeBaseProps } from '../../value-objects/KnowledgeBase';
-import { OperatingHours, OperatingHoursProps } from '../../value-objects/OperatingHours';
+import { PersonalitySettings, PersonalitySettingsProps } from '../../value-objects/ai-configuration/PersonalitySettings';
+import { KnowledgeBase, KnowledgeBaseProps } from '../../value-objects/ai-configuration/KnowledgeBase';
+import { OperatingHours, OperatingHoursProps } from '../../value-objects/session-management/OperatingHours';
 
 describe('ChatbotConfig', () => {
   let defaultPersonality: PersonalitySettings;

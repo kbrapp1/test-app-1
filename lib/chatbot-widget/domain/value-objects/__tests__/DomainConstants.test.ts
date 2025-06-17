@@ -7,7 +7,7 @@ import {
   ADVANCED_ENTITIES,
   LEAD_SCORING_RULES,
   DEFAULT_THRESHOLDS
-} from '../DomainConstants';
+} from '../ai-configuration/DomainConstants';
 
 describe('DomainConstants', () => {
   describe('Intent Types', () => {

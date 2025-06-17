@@ -82,15 +82,50 @@ export class ChatbotConfigService {
       }
 
       if (updateDto.personalitySettings) {
-        updatedConfig = updatedConfig.updatePersonality(updateDto.personalitySettings as any);
+        // Convert DTO to domain value object following @golden-rule patterns
+        // Handle partial DTO by merging with current values
+        const currentPersonality = ChatbotConfigMapper.personalityToDto(updatedConfig.personalitySettings.toPlainObject());
+        const mergedPersonalityDto = {
+          tone: updateDto.personalitySettings.tone ?? currentPersonality.tone,
+          communicationStyle: updateDto.personalitySettings.communicationStyle ?? currentPersonality.communicationStyle,
+          responseLength: updateDto.personalitySettings.responseLength ?? currentPersonality.responseLength,
+          escalationTriggers: updateDto.personalitySettings.escalationTriggers ?? currentPersonality.escalationTriggers,
+          responseBehavior: updateDto.personalitySettings.responseBehavior ?? currentPersonality.responseBehavior,
+          conversationFlow: updateDto.personalitySettings.conversationFlow ?? currentPersonality.conversationFlow,
+          customInstructions: updateDto.personalitySettings.customInstructions ?? currentPersonality.customInstructions,
+        };
+        const personalityDomain = ChatbotConfigMapper.personalityFromDto(mergedPersonalityDto);
+        updatedConfig = updatedConfig.updatePersonality(personalityDomain);
       }
 
       if (updateDto.knowledgeBase) {
-        updatedConfig = updatedConfig.updateKnowledgeBase(updateDto.knowledgeBase as any);
+        // Convert DTO to domain value object following @golden-rule patterns
+        // Handle partial DTO by merging with current values
+        const currentKb = ChatbotConfigMapper.knowledgeBaseToDto(updatedConfig.knowledgeBase.toPlainObject());
+        const mergedKbDto = {
+          companyInfo: updateDto.knowledgeBase.companyInfo ?? currentKb.companyInfo,
+          productCatalog: updateDto.knowledgeBase.productCatalog ?? currentKb.productCatalog,
+          supportDocs: updateDto.knowledgeBase.supportDocs ?? currentKb.supportDocs,
+          complianceGuidelines: updateDto.knowledgeBase.complianceGuidelines ?? currentKb.complianceGuidelines,
+          faqs: updateDto.knowledgeBase.faqs ?? currentKb.faqs,
+        };
+        
+        const knowledgeBaseDomain = ChatbotConfigMapper.knowledgeBaseFromDto(mergedKbDto);
+        updatedConfig = updatedConfig.updateKnowledgeBase(knowledgeBaseDomain);
       }
 
       if (updateDto.operatingHours) {
-        updatedConfig = updatedConfig.updateOperatingHours(updateDto.operatingHours as any);
+        // Convert DTO to domain value object following @golden-rule patterns
+        // Handle partial DTO by merging with current values
+        const currentOperatingHours = ChatbotConfigMapper.operatingHoursToDto(updatedConfig.operatingHours.toPlainObject());
+        const mergedOperatingHoursDto = {
+          timezone: updateDto.operatingHours.timezone ?? currentOperatingHours.timezone,
+          businessHours: updateDto.operatingHours.businessHours ?? currentOperatingHours.businessHours,
+          holidaySchedule: updateDto.operatingHours.holidaySchedule ?? currentOperatingHours.holidaySchedule,
+          outsideHoursMessage: updateDto.operatingHours.outsideHoursMessage ?? currentOperatingHours.outsideHoursMessage,
+        };
+        const operatingHoursDomain = ChatbotConfigMapper.operatingHoursFromDto(mergedOperatingHoursDto);
+        updatedConfig = updatedConfig.updateOperatingHours(operatingHoursDomain);
       }
 
       if (updateDto.isActive !== undefined) {

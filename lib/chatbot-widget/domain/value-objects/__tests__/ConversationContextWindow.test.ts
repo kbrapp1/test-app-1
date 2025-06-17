@@ -1,4 +1,4 @@
-import { ConversationContextWindow } from '../ConversationContextWindow';
+import { ConversationContextWindow } from '../session-management/ConversationContextWindow';
 
 describe('ConversationContextWindow', () => {
   describe('create', () => {

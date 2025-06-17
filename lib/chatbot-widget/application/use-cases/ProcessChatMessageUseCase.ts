@@ -83,7 +83,8 @@ export class ProcessChatMessageUseCase {
       conversationContextOrchestrator,
       tokenCountingService,
       sessionRepository,
-      messageRepository
+      messageRepository,
+      intentClassificationService
     );
 
     this.processingService = new ChatMessageProcessingService(

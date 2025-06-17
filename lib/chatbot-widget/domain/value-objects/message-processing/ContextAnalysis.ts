@@ -6,7 +6,7 @@
  */
 
 import { IntentResult } from './IntentResult';
-import { UserJourneyState } from './UserJourneyState';
+import { UserJourneyState } from '../session-management/UserJourneyState';
 
 export interface ContextAnalysis {
   topics: string[];
@@ -67,12 +67,12 @@ export class ContextAnalysisValueObject {
    * Calculate engagement score from analysis
    */
   calculateEngagementScore(): number {
-    let score = 50; // Base score
+    let score = 0; // Base score - starts at zero
     
     // Engagement level
-    if (this.engagementLevel === 'high') score += 30;
-    else if (this.engagementLevel === 'medium') score += 15;
-    else score -= 10;
+    if (this.engagementLevel === 'high') score += 50;
+    else if (this.engagementLevel === 'medium') score += 25;
+    else score += 5; // Minimal score for any engagement
     
     // Sentiment
     if (this.sentiment === 'positive') score += 20;

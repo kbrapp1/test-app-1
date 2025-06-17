@@ -196,6 +196,27 @@ export class ChatSession {
     });
   }
 
+  /**
+   * Update session context data with new values
+   * AI INSTRUCTIONS:
+   * - Pure entity method following @golden-rule immutability
+   * - Always return new instance, never mutate existing
+   * - Update lastActivityAt timestamp
+   * - Delegate validation to domain services
+   */
+  updateContextData(newContextData: Partial<SessionContext>): ChatSession {
+    const updatedContext = SessionContextService.mergeContextData(
+      this.props.contextData, 
+      newContextData
+    );
+    
+    return new ChatSession({
+      ...this.props,
+      contextData: updatedContext,
+      lastActivityAt: new Date(),
+    });
+  }
+
   markAsIdle(): ChatSession {
     const updatedProps = SessionStateService.markAsIdle(this.props);
     return new ChatSession(updatedProps);

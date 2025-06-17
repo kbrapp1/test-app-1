@@ -1,6 +1,6 @@
 import { ScoringFactors, ScoringCriteria, QualificationLevel, ScoreBreakdown, LeadScoreThresholds } from './LeadScoreTypes';
-import { LeadScoreCalculationService } from '../services/LeadScoreCalculationService';
-import { LeadScoreValidationService } from '../services/LeadScoreValidationService';
+import { LeadScoreCalculationService } from '../../services/lead-management/LeadScoreCalculationService';
+import { LeadScoreValidationService } from '../../services/lead-management/LeadScoreValidationService';
 
 /**
  * Lead Score Value Object

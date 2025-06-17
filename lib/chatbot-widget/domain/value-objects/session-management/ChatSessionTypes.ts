@@ -36,6 +36,67 @@ export interface SessionContext {
     confidence: number;
     metadata: any;
   };
+  accumulatedEntities?: {
+    decisionMakers: string[];
+    painPoints: string[];
+    integrationNeeds: string[];
+    evaluationCriteria: string[];
+    budget?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    timeline?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    urgency?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    contactMethod?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    role?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    industry?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    company?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    teamSize?: {
+      value: string;
+      confidence: number;
+      lastUpdated: string;
+      sourceMessageId: string;
+    };
+    lastEntityUpdate?: string;
+    entityMetadata?: {
+      totalEntitiesExtracted: number;
+      correctionsApplied: number;
+      lastExtractionMethod: 'enhanced' | 'basic' | 'fallback';
+      lastProcessedMessageId: string;
+    };
+  };
 }
 
 export interface PageView {

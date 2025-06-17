@@ -76,6 +76,92 @@ export class OpenAIFunctionSchemaBuilder {
   }
 
   /**
+   * Build entity extraction with corrections schema
+   * 
+   * AI INSTRUCTIONS:
+   * - Extends existing entity extraction to include corrections detection
+   * - Maintains backward compatibility with existing extraction
+   * - Follow @golden-rule patterns exactly
+   * - Support all entity types for removal and correction operations
+   */
+  static buildEntityExtractionWithCorrectionsSchema(): OpenAIFunctionSchema {
+    return {
+      name: "extract_entities_with_corrections",
+      description: "Extract entities from user message, including corrections and removals",
+      parameters: {
+        type: "object",
+        properties: {
+          // Standard entity extraction (from existing schema)
+          ...this.buildEntitySchema().properties,
+          
+          // NEW: Corrections detection
+          corrections: {
+            type: "object",
+            description: "Entity corrections, removals, and clarifications mentioned by user",
+            properties: {
+              removedDecisionMakers: {
+                type: "array",
+                items: { type: "string" },
+                description: "People explicitly stated as NOT being decision makers or no longer involved"
+              },
+              removedPainPoints: {
+                type: "array",
+                items: { type: "string" },
+                description: "Pain points explicitly stated as resolved, not applicable, or incorrect"
+              },
+              removedIntegrationNeeds: {
+                type: "array",
+                items: { type: "string" },
+                description: "Integration needs explicitly stated as not needed or resolved"
+              },
+              removedEvaluationCriteria: {
+                type: "array",
+                items: { type: "string" },
+                description: "Evaluation criteria explicitly stated as not important or incorrect"
+              },
+              correctedBudget: {
+                type: "string",
+                description: "Explicit budget correction (e.g., 'Actually our budget is X, not Y')"
+              },
+              correctedTimeline: {
+                type: "string", 
+                description: "Explicit timeline correction (e.g., 'I meant 6 months, not 3 months')"
+              },
+              correctedUrgency: {
+                type: "string",
+                enum: ["low", "medium", "high"],
+                description: "Explicit urgency correction"
+              },
+              correctedContactMethod: {
+                type: "string",
+                enum: ["email", "phone", "meeting"],
+                description: "Explicit contact method correction"
+              },
+              correctedRole: {
+                type: "string",
+                description: "Explicit role correction (e.g., 'I'm actually a Director, not Manager')"
+              },
+              correctedIndustry: {
+                type: "string",
+                description: "Explicit industry correction"
+              },
+              correctedCompany: {
+                type: "string",
+                description: "Explicit company name correction"
+              },
+              correctedTeamSize: {
+                type: "string",
+                description: "Explicit team size correction"
+              }
+            }
+          }
+        },
+        required: [] // corrections are optional
+      }
+    };
+  }
+
+  /**
    * Build entity extraction schema
    */
   private static buildEntitySchema() {

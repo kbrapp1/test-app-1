@@ -6,7 +6,7 @@
  */
 
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
-import { IntentClassificationContext } from '../../../../domain/services/IIntentClassificationService';
+import { IntentClassificationContext } from '../../../../domain/services/interfaces/IIntentClassificationService';
 
 export class OpenAIPromptBuilder {
   /**
@@ -55,8 +55,9 @@ DISAMBIGUATION DETECTION:
 - Flag when multiple intents have similar confidence (>0.6)
 - Identify when context is insufficient for confident classification
 - Suggest specific clarifying questions
-- Consider conversation history for context`;
+- Consider conversation history for context
 
+`;
     // Add conversation context
     if (conversationHistory.length > 0) {
       const recentIntents = this.extractRecentIntents(conversationHistory);
@@ -173,5 +174,61 @@ Respond with structured JSON containing:
     }
     
     return signals;
+  }
+
+  /**
+   * Build entity extraction prompt with correction detection
+   * 
+   * AI INSTRUCTIONS:
+   * - Focus on detecting entity corrections and removals
+   * - Provide clear examples for correction patterns
+   * - Follow @golden-rule patterns exactly
+   * - Keep under 200 lines with focused responsibility
+   */
+  static buildEntityExtractionPrompt(): string {
+    return `
+ENTITY EXTRACTION WITH CORRECTION DETECTION:
+
+Extract entities from the user's message AND detect any corrections or removals.
+
+REMOVAL PATTERNS TO DETECT:
+- "X is NOT a decision maker" → removedDecisionMakers: ["X"]
+- "Jane is no longer involved in decisions" → removedDecisionMakers: ["Jane"]
+- "We don't have that integration need anymore" → removedIntegrationNeeds: [specific need]
+- "That pain point doesn't apply to us" → removedPainPoints: [specific point]
+- "We solved that problem already" → removedPainPoints: [specific point]
+
+CORRECTION PATTERNS TO DETECT:
+- "Actually our budget is $100K, not $50K" → correctedBudget: "$100K"
+- "I misspoke, our timeline is 6 months" → correctedTimeline: "6 months"
+- "Sorry, I meant John Smith, not John Jones" → handle as removal + addition
+- "I'm actually a Director, not a Manager" → correctedRole: "Director"
+
+EXAMPLES:
+
+User: "Jane Doe is not a decision maker"
+Function Call: {
+  "corrections": {
+    "removedDecisionMakers": ["Jane Doe"]
+  }
+}
+
+User: "Actually our budget is $200K, not the $100K I mentioned before"
+Function Call: {
+  "corrections": {
+    "correctedBudget": "$200K"
+  }
+}
+
+User: "We don't need CRM integration anymore, but we do need email automation"
+Function Call: {
+  "integrationNeeds": ["email automation"],
+  "corrections": {
+    "removedIntegrationNeeds": ["CRM integration"]
+  }
+}
+
+IMPORTANT: Always look for negations, corrections, and clarifications. Process corrections BEFORE additions.
+`;
   }
 } 

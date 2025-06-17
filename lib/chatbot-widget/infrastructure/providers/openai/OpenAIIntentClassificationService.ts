@@ -19,6 +19,8 @@ import { OpenAIFunctionSchemaBuilder } from './services/OpenAIFunctionSchemaBuil
 import { OpenAIPromptBuilder } from './services/OpenAIPromptBuilder';
 import { OpenAIRuleBasedClassifier } from './services/OpenAIRuleBasedClassifier';
 import { OpenAIMessageFormatter } from './services/OpenAIMessageFormatter';
+import { CorrectionsTransformationService, OpenAICorrectionsResponse, CorrectionsTransformationContext } from './services/CorrectionsTransformationService';
+import { EntityCorrections } from '../../../domain/value-objects/context/EntityCorrections';
 
 export class OpenAIIntentClassificationService implements IIntentClassificationService {
   private readonly config: OpenAIIntentConfig;
@@ -183,6 +185,109 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
    */
   getConfidenceThreshold(intentType: string): number {
     return OpenAIRuleBasedClassifier.getConfidenceThreshold(intentType);
+  }
+
+  /**
+   * Extract entities with corrections detection
+   * 
+   * AI INSTRUCTIONS:
+   * - NEW METHOD for Phase 2 entity accumulation enhancement
+   * - Detect corrections and removals in user messages
+   * - Use enhanced prompts and function schemas
+   * - Follow @golden-rule patterns exactly
+   * - Handle errors gracefully with fallback
+   */
+  async extractEntitiesWithCorrections(
+    message: string,
+    sessionId: string,
+    messageId: string,
+    context?: {
+      messageHistory?: ChatMessage[];
+      defaultConfidence?: number;
+    }
+  ): Promise<{
+    entities: any; // Raw entities from OpenAI (matching ExtractedEntities interface)
+    corrections: EntityCorrections | null;
+  }> {
+    try {
+      const startTime = Date.now();
+
+      // Build function schema for entity extraction with corrections
+      const functions = [OpenAIFunctionSchemaBuilder.buildEntityExtractionWithCorrectionsSchema()];
+      
+      // Build system prompt with correction detection patterns
+      const systemPrompt = OpenAIPromptBuilder.buildEntityExtractionPrompt();
+
+      // Build message array for entity extraction
+      const openAIMessages = OpenAIMessageFormatter.buildMessageArray(
+        systemPrompt,
+        context?.messageHistory || [],
+        message,
+        true
+      );
+
+      // Prepare request payload
+      const requestPayload = {
+        model: this.config.model,
+        messages: openAIMessages,
+        functions: functions,
+        function_call: { name: "extract_entities_with_corrections" },
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens
+      };
+
+      // Make API call
+      const response = await this.client.chat.completions.create(requestPayload);
+      const processingTime = Date.now() - startTime;
+
+      // Parse function call response
+      const functionCall = response.choices[0]?.message?.function_call;
+      if (!functionCall || !functionCall.arguments) {
+        return {
+          entities: {},
+          corrections: null
+        };
+      }
+
+      const extractionResult = JSON.parse(functionCall.arguments) as OpenAICorrectionsResponse & any;
+
+      // Transform corrections using transformation service
+      const correctionContext: CorrectionsTransformationContext = {
+        sessionId,
+        messageId,
+        extractionMethod: 'ai',
+        defaultConfidence: context?.defaultConfidence || 0.8,
+        timestamp: new Date()
+      };
+
+      const corrections = CorrectionsTransformationService.transformCorrections(
+        extractionResult,
+        correctionContext
+      );
+
+      // Extract standard entities (remove corrections from the result)
+      const { corrections: _, ...entities } = extractionResult;
+
+      // Capture debug information if needed
+      if (this.debugService) {
+        // Use existing debug service methods for API call tracking
+        // Debug information captured via debugService - console.log removed per @golden-rule patterns
+      }
+
+      return {
+        entities,
+        corrections
+      };
+
+    } catch (error) {
+      // Log error and return empty result
+      console.error('Entity extraction with corrections failed:', error);
+      
+      return {
+        entities: {},
+        corrections: null
+      };
+    }
   }
 
   /**

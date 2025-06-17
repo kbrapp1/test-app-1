@@ -1,4 +1,4 @@
-import { ScoringFactors, ScoringCriteria, QualificationLevel, ScoreBreakdown } from '../../value-objects/LeadScoreTypes';
+import { ScoringFactors, ScoringCriteria, QualificationLevel, ScoreBreakdown } from '../../value-objects/lead-management/LeadScoreTypes';
 import { LeadScoreValidationService } from './LeadScoreValidationService';
 
 /**
