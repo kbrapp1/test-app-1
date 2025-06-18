@@ -33,18 +33,6 @@ const mockIntentClassificationService = {
       confidence: 0.8,
       categories: ['general']
     };
-  },
-  async classifyIntentQuick(): Promise<any> {
-    return { intent: 'information', confidence: 0.5 };
-  },
-  async classifyIntentsBatch(): Promise<any[]> {
-    return [];
-  },
-  async getConfidenceThreshold(): Promise<number> {
-    return 0.5;
-  },
-  async healthCheck(): Promise<boolean> {
-    return true;
   }
 };
 

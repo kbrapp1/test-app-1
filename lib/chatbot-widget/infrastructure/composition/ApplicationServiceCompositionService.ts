@@ -68,18 +68,20 @@ export class ApplicationServiceCompositionService {
     if (!this.aiConversationService) {
       const openAIProvider = await this.getOpenAIProvider();
       const dynamicPromptService = DomainServiceCompositionService.getDynamicPromptService();
-      const intentService = DomainServiceCompositionService.getConversationIntentService();
+      const intentService = await DomainServiceCompositionService.getIntentClassificationService();
+      const knowledgeRetrievalService = DomainServiceCompositionService.getKnowledgeRetrievalService({});
+      const leadScoringService = DomainServiceCompositionService.getLeadScoringService();
       const sentimentService = DomainServiceCompositionService.getConversationSentimentService();
       const leadExtractionService = DomainServiceCompositionService.getLeadExtractionService();
-      const fallbackService = DomainServiceCompositionService.getConversationFallbackService();
 
       this.aiConversationService = new AiConversationService(
         openAIProvider,
         dynamicPromptService,
         intentService,
+        knowledgeRetrievalService,
+        leadScoringService,
         sentimentService,
-        leadExtractionService,
-        fallbackService
+        leadExtractionService
       );
     }
     return this.aiConversationService as AiConversationService;

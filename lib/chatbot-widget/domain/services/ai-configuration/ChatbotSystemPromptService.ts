@@ -105,28 +105,6 @@ export class ChatbotSystemPromptService {
     return baseGreeting;
   }
 
-  static generateFallbackMessage(personalitySettings: PersonalitySettings): string {
-    const baseFallback = personalitySettings.conversationFlow.fallbackMessage;
-    
-    if (!baseFallback || baseFallback.trim() === '') {
-      // Generate default fallback based on tone
-      switch (personalitySettings.tone) {
-        case 'professional':
-          return "I apologize, but I don't quite understand. Could you please rephrase your question?";
-        case 'friendly':
-          return "I'm not sure I understand. Could you help me out by rephrasing that?";
-        case 'casual':
-          return "Sorry, I didn't catch that. Can you try saying it differently?";
-        case 'formal':
-          return "I regret that I do not comprehend your inquiry. Might you rephrase it, please?";
-        default:
-          return "I'm not sure I understand. Could you please rephrase that?";
-      }
-    }
-    
-    return baseFallback;
-  }
-
   static generateEscalationMessage(personalitySettings: PersonalitySettings): string {
     const baseEscalation = personalitySettings.conversationFlow.escalationMessage;
     

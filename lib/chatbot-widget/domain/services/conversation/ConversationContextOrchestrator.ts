@@ -27,14 +27,13 @@ import {
 import { MessageAnalysisOrchestrator } from '../message-processing/MessageAnalysisOrchestrator';
 import { ConversationStageService } from './ConversationStageService';
 import { ContextWindowService } from '../utilities/ContextWindowService';
-import { ConversationEnhancedAnalysisService } from './ConversationEnhancedAnalysisService';
 import { ConversationSessionUpdateService } from './ConversationSessionUpdateService';
+import { UserJourneyState } from '../../value-objects/session-management/UserJourneyState';
 
 export class ConversationContextOrchestrator {
   private readonly messageAnalysisOrchestrator: MessageAnalysisOrchestrator;
   private readonly conversationStageService: ConversationStageService;
   private readonly contextWindowService: ContextWindowService;
-  private readonly enhancedAnalysisService: ConversationEnhancedAnalysisService;
   private readonly sessionUpdateService: ConversationSessionUpdateService;
 
   constructor(
@@ -45,10 +44,6 @@ export class ConversationContextOrchestrator {
     this.messageAnalysisOrchestrator = new MessageAnalysisOrchestrator();
     this.conversationStageService = new ConversationStageService();
     this.contextWindowService = new ContextWindowService(tokenCountingService);
-    this.enhancedAnalysisService = new ConversationEnhancedAnalysisService(
-      intentClassificationService,
-      knowledgeRetrievalService
-    );
     this.sessionUpdateService = new ConversationSessionUpdateService(
       this.conversationStageService
     );
@@ -80,9 +75,9 @@ export class ConversationContextOrchestrator {
   }
 
   /**
-   * Analyze conversation context from messages (synchronous version)
+   * Analyze conversation context from messages with journey state update
    */
-  analyzeContext(messages: ChatMessage[]): ContextAnalysis {
+  analyzeContext(messages: ChatMessage[], session?: ChatSession): ContextAnalysis {
     const userMessages = messages.filter(m => m.isFromUser());
     const totalMessages = messages.length;
     
@@ -94,40 +89,39 @@ export class ConversationContextOrchestrator {
     const interests = this.messageAnalysisOrchestrator.extractInterests(userMessages);
     const sentiment = this.messageAnalysisOrchestrator.analyzeSentiment(userMessages);
     const engagementLevel = this.messageAnalysisOrchestrator.calculateEngagementLevel(userMessages, totalMessages);
-    const userIntent = this.messageAnalysisOrchestrator.detectUserIntent(userMessages);
     const urgency = this.messageAnalysisOrchestrator.assessUrgency(userMessages);
     const conversationStage = this.conversationStageService.determineConversationStage(messages);
+
+    // Update journey state based on current session state (lightweight, no API calls)
+    let journeyState: any = undefined;
+    if (session) {
+      const currentJourneyState = session.contextData.journeyState 
+        ? UserJourneyState.create(
+            session.contextData.journeyState.stage as any,
+            session.contextData.journeyState.confidence,
+            session.contextData.journeyState.metadata
+          )
+        : UserJourneyState.create();
+
+      const newEngagementScore = typeof engagementLevel === 'number' ? engagementLevel : 0.5;
+      journeyState = currentJourneyState.updateEngagement(newEngagementScore);
+    }
 
     const analysis = new ContextAnalysisValueObject(
       topics,
       interests,
       sentiment,
       engagementLevel,
-      userIntent,
+      'unknown', // No preliminary intent guessing - let OpenAI handle it
       urgency,
-      conversationStage
+      conversationStage,
+      journeyState
     );
 
     return analysis.toPlainObject();
   }
 
-  /**
-   * Analyze conversation context with enhanced intent and knowledge (async version)
-   */
-  async analyzeContextEnhanced(
-    messages: ChatMessage[],
-    chatbotConfig?: ChatbotConfig,
-    session?: ChatSession
-  ): Promise<ContextAnalysis> {
-    const baseAnalysis = this.analyzeContext(messages);
-    
-    return this.enhancedAnalysisService.enhanceAnalysis(
-      baseAnalysis,
-      messages,
-      chatbotConfig,
-      session
-    );
-  }
+
 
   /**
    * Generate conversation summary
@@ -164,12 +158,13 @@ export class ConversationContextOrchestrator {
     message: ChatMessage,
     allMessages: ChatMessage[]
   ): ChatSession {
-    const analysis = this.analyzeContext([...allMessages, message]);
+    const analysis = this.analyzeContext([...allMessages, message], session);
     return this.sessionUpdateService.updateSessionContext(session, message, allMessages, analysis);
   }
 
   /**
    * Update session context with enhanced analysis
+   * @deprecated Use updateSessionContext instead - enhanced analysis is now integrated
    */
   async updateSessionContextEnhanced(
     session: ChatSession,
@@ -177,17 +172,14 @@ export class ConversationContextOrchestrator {
     allMessages: ChatMessage[],
     chatbotConfig?: ChatbotConfig
   ): Promise<ChatSession> {
-    const enhancedAnalysis = await this.analyzeContextEnhanced(
-      [...allMessages, message],
-      chatbotConfig,
-      session
-    );
+    // Enhanced analysis is now integrated into base analyzeContext
+    const analysis = this.analyzeContext([...allMessages, message], session);
     
     return this.sessionUpdateService.updateSessionWithEnhancedAnalysis(
       session,
       message,
       allMessages,
-      enhancedAnalysis
+      analysis
     );
   }
 } 

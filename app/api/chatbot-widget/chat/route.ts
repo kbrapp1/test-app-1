@@ -96,6 +96,7 @@ async function postHandler(
     processingTimeMs: processingTime,
     intentAnalysis: result.intentAnalysis,
     journeyState: result.journeyState,
+    callToAction: result.callToAction, // Include CTA information
     debugInfo: debugInfo, // Include transformed debug data
   });
 }

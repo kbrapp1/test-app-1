@@ -13,10 +13,10 @@ export interface ContextAnalysis {
   interests: string[];
   sentiment: 'positive' | 'neutral' | 'negative';
   engagementLevel: 'low' | 'medium' | 'high';
-  userIntent: string;
+  userIntent: string; // Will be 'unknown' until OpenAI provides intentResult
   urgency: 'low' | 'medium' | 'high';
   conversationStage: 'greeting' | 'discovery' | 'qualification' | 'closing' | 'support';
-  intentResult?: IntentResult;
+  intentResult?: IntentResult; // OpenAI's sophisticated intent classification
   journeyState?: UserJourneyState;
   relevantKnowledge?: Array<{
     title: string;
@@ -114,7 +114,7 @@ export class ContextAnalysisValueObject {
       [], // interests
       'neutral', // sentiment
       'low', // engagementLevel
-      'general_inquiry', // userIntent
+      'unknown', // userIntent - no preliminary guessing, let OpenAI determine
       'low', // urgency
       'greeting' // conversationStage
     );

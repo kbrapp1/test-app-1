@@ -126,13 +126,6 @@ Respond with structured JSON containing:
   }
 
   /**
-   * Build quick classification system prompt
-   */
-  static buildQuickSystemPrompt(): string {
-    return "You are an intent classifier. Classify the user's message into one of these intents: greeting, faq_general, faq_pricing, faq_features, sales_inquiry, booking_request, demo_request, support_request, objection_handling, qualification, closing, unknown. Respond with just the intent name.";
-  }
-
-  /**
    * Extract recent intents from conversation history
    */
   private static extractRecentIntents(conversationHistory: ChatMessage[]): string[] {

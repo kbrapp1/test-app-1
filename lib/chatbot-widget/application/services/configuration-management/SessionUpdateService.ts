@@ -30,17 +30,17 @@ export class SessionUpdateService {
       }
     };
 
-    return ChatSession.fromPersistence({
-      ...session.toPlainObject(),
-      contextData: updatedContextData,
-      lastActivityAt: new Date()
-    });
+    // Use the domain entity's updateContextData method to ensure proper state management
+    return session.updateContextData(updatedContextData);
   }
 
   /**
    * Save updated session
    */
-  async saveSession(session: ChatSession): Promise<ChatSession> {
+  async saveSession(session: ChatSession, sharedLogFile?: string): Promise<ChatSession> {
+    if (sharedLogFile && 'update' in this.sessionRepository && typeof this.sessionRepository.update === 'function') {
+      return await (this.sessionRepository as any).update(session, sharedLogFile);
+    }
     return await this.sessionRepository.update(session);
   }
 } 

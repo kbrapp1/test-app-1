@@ -13,13 +13,11 @@ import { IDebugInformationService } from '../../domain/services/interfaces/IDebu
 
 // Application services
 import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
-import { EntityAccumulationApplicationService } from '../../application/services/context/EntityAccumulationApplicationService';
 
 // Application use cases
-import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
 import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessChatMessageUseCase';
 import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCase';
-import { AccumulateConversationEntitiesUseCase } from '../../application/use-cases/AccumulateConversationEntitiesUseCase';
+import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
@@ -77,10 +75,6 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getLeadExtractionService();
   }
 
-  static getConversationFallbackService() {
-    return DomainServiceCompositionService.getConversationFallbackService();
-  }
-
   // Message processing services (new refactored structure)
   static getMessageAnalysisOrchestrator() {
     return DomainServiceCompositionService.getMessageAnalysisOrchestrator();
@@ -94,10 +88,6 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getMessageSentimentAnalysisService();
   }
 
-  static getMessageIntentAnalysisService() {
-    return DomainServiceCompositionService.getMessageIntentAnalysisService();
-  }
-
   // Conversation context services (new refactored structure)
   static async getConversationContextOrchestrator(): Promise<any> {
     return DomainServiceCompositionService.getConversationContextOrchestrator();
@@ -106,12 +96,6 @@ export class ChatbotWidgetCompositionRoot {
   // Application service access methods
   static getLeadManagementService(): LeadManagementService {
     return ApplicationServiceCompositionService.getLeadManagementService();
-  }
-
-  static async getEntityAccumulationApplicationService(): Promise<EntityAccumulationApplicationService> {
-    const sessionRepository = this.getChatSessionRepository();
-    const intentClassificationService = await this.getIntentClassificationService();
-    return new EntityAccumulationApplicationService(sessionRepository, intentClassificationService);
   }
 
   // Use case access methods
@@ -125,18 +109,6 @@ export class ChatbotWidgetCompositionRoot {
 
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     return UseCaseCompositionService.getCaptureLeadUseCase();
-  }
-
-  static async getAccumulateConversationEntitiesUseCase(): Promise<AccumulateConversationEntitiesUseCase> {
-    const sessionRepository = this.getChatSessionRepository();
-    const intentClassificationService = await this.getIntentClassificationService();
-    const debugInformationService = this.getDebugInformationService();
-    
-    return new AccumulateConversationEntitiesUseCase(
-      sessionRepository,
-      intentClassificationService,
-      debugInformationService
-    );
   }
 
   // Configuration and testing methods

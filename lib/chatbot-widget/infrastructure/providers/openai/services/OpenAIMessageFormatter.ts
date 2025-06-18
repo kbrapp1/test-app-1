@@ -43,24 +43,4 @@ export class OpenAIMessageFormatter {
       { role: "user", content: currentMessage }
     ];
   }
-
-  /**
-   * Build simple message array for quick classification
-   */
-  static buildQuickMessageArray(
-    systemPrompt: string,
-    message: string
-  ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    return [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: message }
-    ];
-  }
-
-  /**
-   * Build health check message array
-   */
-  static buildHealthCheckMessageArray(): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    return [{ role: "user", content: "Hello" }];
-  }
 } 

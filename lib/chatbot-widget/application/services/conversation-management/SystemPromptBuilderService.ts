@@ -39,7 +39,7 @@ export class SystemPromptBuilderService {
   ) {}
 
   /**
-   * Build enhanced system prompt with intent and knowledge context
+   * Build enhanced system prompt with knowledge context (removed preliminary intent)
    */
   buildEnhancedSystemPrompt(
     config: ChatbotConfig,
@@ -50,25 +50,10 @@ export class SystemPromptBuilderService {
     // Start with base system prompt
     let systemPrompt = this.aiConversationService.buildSystemPrompt(config, session, messageHistory);
 
-    // Add intent context if available
-    if (enhancedContext.intentResult) {
-      const intent = enhancedContext.intentResult;
-      systemPrompt += `\n\nCURRENT USER INTENT: ${intent.intent} (confidence: ${intent.confidence.toFixed(2)})`;
-      
-      if (intent.entities && Object.keys(intent.entities).length > 0) {
-        systemPrompt += `\nEXTRACTED ENTITIES: ${JSON.stringify(intent.entities)}`;
-      }
+    // Removed preliminary intent context - let OpenAI handle intent classification
+    // No longer adding: CURRENT USER INTENT, INTENT CATEGORY, etc.
 
-      systemPrompt += `\nINTENT CATEGORY: ${intent.getCategory()}`;
-      
-      if (intent.isSalesIntent()) {
-        systemPrompt += `\nNOTE: User is showing sales interest. Focus on qualification and next steps.`;
-      } else if (intent.isSupportIntent()) {
-        systemPrompt += `\nNOTE: User needs support. Provide helpful information and solutions.`;
-      }
-    }
-
-    // Add journey state context if available
+    // Add journey state context if available (journey is based on conversation state, not preliminary intent)
     if (enhancedContext.journeyState) {
       const journey = enhancedContext.journeyState;
       systemPrompt += `\n\nUSER JOURNEY STAGE: ${journey.stage} (confidence: ${journey.confidence.toFixed(2)})`;

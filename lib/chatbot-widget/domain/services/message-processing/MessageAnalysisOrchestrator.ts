@@ -3,7 +3,7 @@
  * 
  * AI INSTRUCTIONS:
  * - Main orchestrator for all message analysis operations
- * - Coordinate content, sentiment, and intent analysis services
+ * - Coordinate content and sentiment analysis services (intent now handled by OpenAI)
  * - Keep under 200 lines following @golden-rule patterns
  * - Delegate all analysis to specialized services
  * - Maintain single responsibility for coordination
@@ -12,17 +12,17 @@
 import { ChatMessage } from '../../entities/ChatMessage';
 import { MessageContentAnalysisService } from './MessageContentAnalysisService';
 import { MessageSentimentAnalysisService } from './MessageSentimentAnalysisService';
-import { MessageIntentAnalysisService } from './MessageIntentAnalysisService';
+// Removed: MessageIntentAnalysisService - using OpenAI intent classification only
 
 export class MessageAnalysisOrchestrator {
   private readonly contentAnalysisService: MessageContentAnalysisService;
   private readonly sentimentAnalysisService: MessageSentimentAnalysisService;
-  private readonly intentAnalysisService: MessageIntentAnalysisService;
+  // Removed: intentAnalysisService
 
   constructor() {
     this.contentAnalysisService = new MessageContentAnalysisService();
     this.sentimentAnalysisService = new MessageSentimentAnalysisService();
-    this.intentAnalysisService = new MessageIntentAnalysisService();
+    // Removed: this.intentAnalysisService = new MessageIntentAnalysisService();
   }
 
   /**
@@ -78,14 +78,7 @@ export class MessageAnalysisOrchestrator {
   }
 
   /**
-   * Detect user intent
-   */
-  detectUserIntent(userMessages: ChatMessage[]): string {
-    return this.intentAnalysisService.detectUserIntent(userMessages);
-  }
-
-  /**
-   * Comprehensive message analysis
+   * Comprehensive message analysis (removed intent analysis)
    */
   analyzeMessagesComprehensive(
     userMessages: ChatMessage[],
@@ -105,29 +98,21 @@ export class MessageAnalysisOrchestrator {
       urgency: 'low' | 'medium' | 'high';
       urgencyScore: number;
     };
-    intent: {
-      primaryIntent: string;
-      confidence: number;
-      category: 'sales' | 'support' | 'information' | 'technical';
-      allIntents: Array<{ intent: string; confidence: number; keywords: string[] }>;
-    };
   } {
     return {
       content: this.contentAnalysisService.extractContentPatterns(userMessages),
-      sentiment: this.sentimentAnalysisService.analyzeSentimentMetrics(userMessages, totalMessages),
-      intent: this.intentAnalysisService.analyzeIntentComprehensive(userMessages)
+      sentiment: this.sentimentAnalysisService.analyzeSentimentMetrics(userMessages, totalMessages)
     };
   }
 
   /**
-   * Quick analysis for basic operations (maintains backward compatibility)
+   * Quick analysis for basic operations (removed intent analysis)
    */
   analyzeBasic(userMessages: ChatMessage[], totalMessages: number): {
     topics: string[];
     interests: string[];
     sentiment: 'positive' | 'neutral' | 'negative';
     engagementLevel: 'low' | 'medium' | 'high';
-    userIntent: string;
     urgency: 'low' | 'medium' | 'high';
   } {
     return {
@@ -135,7 +120,6 @@ export class MessageAnalysisOrchestrator {
       interests: this.extractInterests(userMessages),
       sentiment: this.analyzeSentiment(userMessages),
       engagementLevel: this.calculateEngagementLevel(userMessages, totalMessages),
-      userIntent: this.detectUserIntent(userMessages),
       urgency: this.assessUrgency(userMessages)
     };
   }

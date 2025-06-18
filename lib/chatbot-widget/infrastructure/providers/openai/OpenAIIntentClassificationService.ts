@@ -1,397 +1,112 @@
 /**
  * OpenAI Intent Classification Service
  * 
- * Infrastructure service implementing intent classification using OpenAI API.
- * Refactored following DDD principles with single responsibility components.
- * 
- * Single responsibility: Orchestrate OpenAI API calls for intent classification.
+ * AI INSTRUCTIONS:
+ * - Implements classifyIntent method for legacy compatibility 
+ * - Delegates unified processing to OpenAIChatbotProcessingService
+ * - Maintains interface compatibility while providing unified processing
+ * - Follows @golden-rule patterns: orchestration only
  */
 
-import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
-import { IntentResult, IntentType } from '../../../domain/value-objects/message-processing/IntentResult';
-import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { IDebugInformationService } from '../../../domain/services/interfaces/IDebugInformationService';
 import OpenAI from 'openai';
+import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
+import { IntentResult } from '../../../domain/value-objects/message-processing/IntentResult';
+import { OpenAIAnalysisService } from './services/OpenAIAnalysisService';
+import { OpenAIIntentUtilityService } from './services/OpenAIIntentUtilityService';
+import { OpenAIChatbotProcessingService } from './services/OpenAIChatbotProcessingService';
+import { OpenAIIntentConfig } from './types/OpenAITypes';
 
-// Import refactored components
-import { OpenAIIntentConfig, OpenAIRequestData, OpenAIResponseData } from './types/OpenAITypes';
-import { OpenAIFunctionSchemaBuilder } from './services/OpenAIFunctionSchemaBuilder';
-import { OpenAIPromptBuilder } from './services/OpenAIPromptBuilder';
-import { OpenAIRuleBasedClassifier } from './services/OpenAIRuleBasedClassifier';
-import { OpenAIMessageFormatter } from './services/OpenAIMessageFormatter';
-import { CorrectionsTransformationService, OpenAICorrectionsResponse, CorrectionsTransformationContext } from './services/CorrectionsTransformationService';
-import { EntityCorrections } from '../../../domain/value-objects/context/EntityCorrections';
-
+/**
+ * OpenAI Intent Classification Service
+ * 
+ * AI INSTRUCTIONS:
+ * - Implements classifyIntent method for legacy compatibility 
+ * - Delegates unified processing to OpenAIChatbotProcessingService
+ * - Maintains interface compatibility while providing unified processing
+ * - Follows @golden-rule patterns: orchestration only
+ */
 export class OpenAIIntentClassificationService implements IIntentClassificationService {
-  private readonly config: OpenAIIntentConfig;
-  private readonly client: OpenAI;
-  private readonly debugService: IDebugInformationService | null = null;
+  private client: OpenAI;
+  private analysisService: OpenAIAnalysisService;
+  private chatbotProcessingService: OpenAIChatbotProcessingService;
 
-  constructor(config: OpenAIIntentConfig, debugService?: IDebugInformationService) {
-    this.config = config;
+  constructor(
+    private config: OpenAIIntentConfig
+  ) {
     this.client = new OpenAI({
       apiKey: config.apiKey,
+      timeout: 30000
     });
-    this.debugService = debugService || null;
+    
+    this.analysisService = new OpenAIAnalysisService(config);
+    this.chatbotProcessingService = new OpenAIChatbotProcessingService(config);
   }
 
   /**
-   * Main intent classification method
+   * Main intent classification method (legacy compatibility)
+   * 
+   * AI INSTRUCTIONS:
+   * - Delegate to analysis service for processing
+   * - Transform result to IntentResult format using utility
+   * - Handle errors with utility fallback classification
+   * - Follow @golden-rule patterns: orchestration only
    */
   async classifyIntent(
     message: string,
     context: IntentClassificationContext
   ): Promise<IntentResult> {
-    return this.classifyIntentEnhanced(message, context.messageHistory, context.session?.id);
-  }
-
-  /**
-   * Enhanced intent classification with full context
-   */
-  async classifyIntentEnhanced(
-    message: string,
-    messageHistory: ChatMessage[],
-    sessionId?: string
-  ): Promise<IntentResult> {
     try {
-      const startTime = Date.now();
-
-      // Build function schema and system prompt
-      const functions = [OpenAIFunctionSchemaBuilder.buildIntentClassificationSchema()];
-      const systemPrompt = OpenAIPromptBuilder.buildEnhancedSystemPrompt(messageHistory);
-
-      // Build message array
-      const openAIMessages = OpenAIMessageFormatter.buildMessageArray(
-        systemPrompt,
-        messageHistory,
+      // Delegate to analysis service
+      const analysisResult = await this.analysisService.analyzeMessageComplete(
         message,
-        true // Exclude current message from history to avoid duplication
+        context.session?.id || 'unknown',
+        'temp-message-id',
+        {
+          messageHistory: context.messageHistory,
+          defaultConfidence: 0.8
+        }
       );
 
-      // Prepare request payload
-      const requestPayload = {
-        model: this.config.model,
-        messages: openAIMessages,
-        functions: functions,
-        function_call: { name: "classify_intent_and_persona" },
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens
-      };
+      // Transform analysis result to IntentResult using utility
+      const intent = OpenAIIntentUtilityService.validateAndMapIntent(
+        analysisResult.intent.primaryIntent
+      );
 
-      // Prepare debug data
-      const requestData: OpenAIRequestData = {
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        method: 'POST',
-        timestamp: new Date().toISOString(),
-        payload: requestPayload,
-        payloadSize: `${JSON.stringify(requestPayload).length} characters`,
-        messageCount: openAIMessages.length,
-        conversationHistoryLength: messageHistory.length,
-        userMessage: message
-      };
-
-      // Make API call
-      const response = await this.client.chat.completions.create(requestPayload);
-      const processingTime = Date.now() - startTime;
-
-      // Prepare response debug data
-      const responseData: OpenAIResponseData = {
-        timestamp: new Date().toISOString(),
-        processingTime: `${processingTime}ms`,
-        response: response,
-        responseSize: `${JSON.stringify(response).length} characters`
-      };
-
-      // Capture debug information
-      if (sessionId) {
-        this.captureApiCall(sessionId, requestData, responseData, processingTime);
-      }
-
-      // Parse and return result
-      return this.parseOpenAIResponse(response, processingTime);
+      return IntentResult.create(
+        intent,
+        analysisResult.intent.primaryConfidence,
+        analysisResult.entities,
+        analysisResult.intent.reasoning,
+        {
+          model: this.config.model,
+          processingTimeMs: analysisResult.processingTime,
+          alternativeIntents: analysisResult.intent.alternativeIntents || []
+        }
+      );
 
     } catch (error) {
-      // Fallback to rule-based classification
-      return this.handleClassificationError(error, message, messageHistory);
+      // Use utility for error handling
+      return OpenAIIntentUtilityService.handleClassificationError(
+        error, 
+        message, 
+        context.messageHistory, 
+        this.config
+      );
     }
   }
 
   /**
-   * Quick classification without full context
-   */
-  async classifyIntentQuick(message: string): Promise<IntentResult> {
-    const startTime = Date.now();
-
-    try {
-      const systemPrompt = OpenAIPromptBuilder.buildQuickSystemPrompt();
-      const quickMessages = OpenAIMessageFormatter.buildQuickMessageArray(systemPrompt, message);
-
-      const quickRequestPayload = {
-        model: this.config.model,
-        messages: quickMessages,
-        temperature: 0.1,
-        max_tokens: 50
-      };
-
-      const response = await this.client.chat.completions.create(quickRequestPayload);
-      const intentText = response.choices[0]?.message?.content?.trim().toLowerCase() || 'unknown';
-      
-      return this.createQuickIntentResult(intentText, Date.now() - startTime);
-
-    } catch (error) {
-      const fallbackResult = OpenAIRuleBasedClassifier.classifyQuick(message);
-      return this.convertToIntentResult(fallbackResult, Date.now() - startTime);
-    }
-  }
-
-  /**
-   * Batch classify multiple messages
-   */
-  async classifyIntentsBatch(
-    messages: string[],
-    context: IntentClassificationContext
-  ): Promise<IntentResult[]> {
-    const results: IntentResult[] = [];
-    
-    for (const message of messages) {
-      const result = await this.classifyIntent(message, context);
-      results.push(result);
-    }
-
-    return results;
-  }
-
-  /**
-   * Health check for the service
-   */
-  async healthCheck(): Promise<boolean> {
-    try {
-      const healthCheckPayload = {
-        model: this.config.model,
-        messages: OpenAIMessageFormatter.buildHealthCheckMessageArray(),
-        max_tokens: 5,
-        temperature: 0
-      };
-
-      const response = await this.client.chat.completions.create(healthCheckPayload);
-      return !!response.choices[0]?.message?.content;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * Get confidence threshold for intent type
-   */
-  getConfidenceThreshold(intentType: string): number {
-    return OpenAIRuleBasedClassifier.getConfidenceThreshold(intentType);
-  }
-
-  /**
-   * Extract entities with corrections detection
+   * Unified processing method for complete chatbot interaction
    * 
    * AI INSTRUCTIONS:
-   * - NEW METHOD for Phase 2 entity accumulation enhancement
-   * - Detect corrections and removals in user messages
-   * - Use enhanced prompts and function schemas
-   * - Follow @golden-rule patterns exactly
-   * - Handle errors gracefully with fallback
+   * - Delegate to OpenAIChatbotProcessingService for unified processing
+   * - This enables the unified API approach while maintaining interface compatibility
+   * - Follow @golden-rule patterns: orchestration only
    */
-  async extractEntitiesWithCorrections(
+  async processChatbotInteractionComplete(
     message: string,
-    sessionId: string,
-    messageId: string,
-    context?: {
-      messageHistory?: ChatMessage[];
-      defaultConfidence?: number;
-    }
-  ): Promise<{
-    entities: any; // Raw entities from OpenAI (matching ExtractedEntities interface)
-    corrections: EntityCorrections | null;
-  }> {
-    try {
-      const startTime = Date.now();
-
-      // Build function schema for entity extraction with corrections
-      const functions = [OpenAIFunctionSchemaBuilder.buildEntityExtractionWithCorrectionsSchema()];
-      
-      // Build system prompt with correction detection patterns
-      const systemPrompt = OpenAIPromptBuilder.buildEntityExtractionPrompt();
-
-      // Build message array for entity extraction
-      const openAIMessages = OpenAIMessageFormatter.buildMessageArray(
-        systemPrompt,
-        context?.messageHistory || [],
-        message,
-        true
-      );
-
-      // Prepare request payload
-      const requestPayload = {
-        model: this.config.model,
-        messages: openAIMessages,
-        functions: functions,
-        function_call: { name: "extract_entities_with_corrections" },
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens
-      };
-
-      // Make API call
-      const response = await this.client.chat.completions.create(requestPayload);
-      const processingTime = Date.now() - startTime;
-
-      // Parse function call response
-      const functionCall = response.choices[0]?.message?.function_call;
-      if (!functionCall || !functionCall.arguments) {
-        return {
-          entities: {},
-          corrections: null
-        };
-      }
-
-      const extractionResult = JSON.parse(functionCall.arguments) as OpenAICorrectionsResponse & any;
-
-      // Transform corrections using transformation service
-      const correctionContext: CorrectionsTransformationContext = {
-        sessionId,
-        messageId,
-        extractionMethod: 'ai',
-        defaultConfidence: context?.defaultConfidence || 0.8,
-        timestamp: new Date()
-      };
-
-      const corrections = CorrectionsTransformationService.transformCorrections(
-        extractionResult,
-        correctionContext
-      );
-
-      // Extract standard entities (remove corrections from the result)
-      const { corrections: _, ...entities } = extractionResult;
-
-      // Capture debug information if needed
-      if (this.debugService) {
-        // Use existing debug service methods for API call tracking
-        // Debug information captured via debugService - console.log removed per @golden-rule patterns
-      }
-
-      return {
-        entities,
-        corrections
-      };
-
-    } catch (error) {
-      // Log error and return empty result
-      console.error('Entity extraction with corrections failed:', error);
-      
-      return {
-        entities: {},
-        corrections: null
-      };
-    }
+    context: any
+  ): Promise<any> {
+    return this.chatbotProcessingService.processChatbotInteractionComplete(message, context);
   }
-
-  /**
-   * Parse OpenAI API response
-   */
-  private parseOpenAIResponse(response: any, processingTime: number): IntentResult {
-    const functionCall = response.choices[0]?.message?.function_call;
-
-    if (!functionCall || !functionCall.arguments) {
-      throw new Error('No function call response received from OpenAI');
-    }
-
-    const result = JSON.parse(functionCall.arguments);
-
-    return IntentResult.create(
-      result.primaryIntent,
-      result.primaryConfidence,
-      result.entities || {},
-      result.reasoning,
-      {
-        model: this.config.model,
-        processingTimeMs: processingTime,
-        alternativeIntents: result.alternativeIntents || []
-      }
-    );
-  }
-
-  /**
-   * Handle classification errors with fallback
-   */
-  private handleClassificationError(
-    error: any,
-    message: string,
-    messageHistory: ChatMessage[]
-  ): IntentResult {
-    const fallbackResult = OpenAIRuleBasedClassifier.classifyWithContext(message, {
-      chatbotConfig: {} as any,
-      session: {} as any,
-      messageHistory,
-      currentMessage: message
-    });
-
-    return this.convertToIntentResult(fallbackResult, 0);
-  }
-
-  /**
-   * Convert classification result to IntentResult
-   */
-  private convertToIntentResult(result: any, processingTime: number): IntentResult {
-    return IntentResult.create(
-      result.intent,
-      result.confidence,
-      result.entities,
-      result.reasoning,
-      {
-        model: this.config.model,
-        processingTimeMs: processingTime,
-        alternativeIntents: result.alternativeIntents
-      }
-    );
-  }
-
-  /**
-   * Create quick intent result
-   */
-  private createQuickIntentResult(intentText: string, processingTime: number): IntentResult {
-    const validIntents: IntentType[] = [
-      'greeting', 'faq_general', 'faq_pricing', 'faq_features',
-      'sales_inquiry', 'booking_request', 'demo_request', 'support_request',
-      'objection_handling', 'qualification', 'closing', 'unknown'
-    ];
-
-    const intent = validIntents.includes(intentText as IntentType) ? intentText as IntentType : 'unknown';
-
-    return IntentResult.create(
-      intent,
-      intent === 'unknown' ? 0.1 : 0.8,
-      {},
-      `Quick classification: ${intent}`,
-      {
-        model: this.config.model,
-        processingTimeMs: processingTime,
-        alternativeIntents: []
-      }
-    );
-  }
-
-  /**
-   * Capture API call for debugging
-   */
-  private captureApiCall(
-    sessionId: string,
-    requestData: OpenAIRequestData,
-    responseData: OpenAIResponseData,
-    processingTime: number
-  ): void {
-    if (this.debugService) {
-      const apiCallInfo = this.debugService.captureApiCall(
-        'first',
-        requestData,
-        responseData,
-        processingTime
-      );
-      this.debugService.addApiCallToSession(sessionId, 'first', apiCallInfo);
-    }
-  }
-} 
+}

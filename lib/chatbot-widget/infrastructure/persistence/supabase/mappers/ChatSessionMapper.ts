@@ -71,14 +71,14 @@ export class ChatSessionMapper {
       sessionToken: record.session_token,
       contextData: this.mapContextData(record.context_data),
       leadQualificationState: this.mapLeadQualificationState(record.lead_qualification_state),
-             status: record.status as SessionStatus,
+      status: record.status as SessionStatus,
       startedAt: new Date(record.started_at),
       lastActivityAt: new Date(record.last_activity_at),
       endedAt: record.ended_at ? new Date(record.ended_at) : undefined,
       ipAddress: record.ip_address || undefined,
-             userAgent: record.user_agent || undefined,
-       referrerUrl: record.referrer_url || undefined,
-       currentUrl: record.current_url || undefined,
+      userAgent: record.user_agent || undefined,
+      referrerUrl: record.referrer_url || undefined,
+      currentUrl: record.current_url || undefined,
     };
 
     return ChatSession.fromPersistence(props);

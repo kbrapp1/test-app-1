@@ -138,23 +138,14 @@ export class KnowledgeSearchService {
     maxResults: number = 5,
     minScore: number = 0.3
   ): Promise<KnowledgeItem[]> {
-    // Try primary search
+    // API-only approach: no static fallbacks, just throw error if search fails
     const primaryResults = await this.searchKnowledge(query, intent, maxResults, minScore);
     
-    if (primaryResults.items.length > 0) {
-      return primaryResults.items;
+    if (primaryResults.items.length === 0) {
+      throw new Error(`No knowledge items found for query "${query}" with intent "${intent}". API-only mode - no static fallbacks available.`);
     }
 
-    // Fallback to FAQ search with lower threshold
-    const faqResults = await this.itemService.getFrequentlyAskedQuestions(maxResults);
-    
-    if (faqResults.length > 0) {
-      return faqResults;
-    }
-
-    // Final fallback to any available content
-    const allItems = await this.itemService.getAllKnowledgeItems();
-    return allItems.slice(0, maxResults);
+    return primaryResults.items;
   }
 
   private calculateIntentFocusedScore(

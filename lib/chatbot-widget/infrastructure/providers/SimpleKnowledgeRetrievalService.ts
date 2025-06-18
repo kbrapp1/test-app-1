@@ -50,17 +50,8 @@ export class SimpleKnowledgeRetrievalService implements IKnowledgeRetrievalServi
         usedFallback: false
       };
     } catch (error) {
-      // Knowledge search failed - returning fallback results
-      const fallbackItems = await this.itemService.getFrequentlyAskedQuestions(maxResults);
-      const processingTime = Date.now() - startTime;
-
-      return {
-        items: fallbackItems,
-        totalFound: fallbackItems.length,
-        searchQuery: userQuery,
-        searchTimeMs: processingTime,
-        usedFallback: true
-      };
+      // API-only approach: throw error instead of static fallback
+      throw new Error(`Knowledge search failed: ${error instanceof Error ? error.message : 'Unknown error'}. API-only mode - no static fallbacks available.`);
     }
   }
 

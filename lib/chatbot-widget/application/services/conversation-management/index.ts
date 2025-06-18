@@ -2,22 +2,19 @@
  * Conversation Management Services
  * 
  * AI INSTRUCTIONS:
- * - Handle conversation flow, AI responses, and context management
- * - Coordinate message processing and conversation metrics
- * - Orchestrate AI conversation services and prompt building
- * - Maintain conversation state and context awareness
+ * - Handle conversation flow, AI response generation, and context management
+ * - Coordinate AI provider interactions and conversation state
+ * - Maintain conversation context and handle conversation lifecycle
+ * - Delegate business logic to domain services
  */
 
 export { AiConversationService } from './AiConversationService';
-export { ConversationContextManagementService } from './ConversationContextManagementService';
+export { AIResponseGenerationService } from './AIResponseGenerationService';
 export { ConversationMetricsService } from './ConversationMetricsService';
-export { MessageProcessingService } from './MessageProcessingService';
+export { ConversationContextManagementService } from './ConversationContextManagementService';
 export { SystemPromptBuilderService } from './SystemPromptBuilderService';
 
-// Re-export commonly used types
-export type { 
-  ProcessMessageRequest
-} from './MessageProcessingService';
-export type { 
+// Types
+export type {
   ConversationMetrics
 } from './ConversationMetricsService'; 

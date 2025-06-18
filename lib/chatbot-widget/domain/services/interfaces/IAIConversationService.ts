@@ -6,9 +6,9 @@
  * infrastructure layer implements.
  */
 
-import { ChatMessage } from '../entities/ChatMessage';
-import { ChatSession } from '../entities/ChatSession';
-import { ChatbotConfig } from '../entities/ChatbotConfig';
+import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 
 export interface ConversationContext {
   chatbotConfig: ChatbotConfig;
@@ -16,6 +16,7 @@ export interface ConversationContext {
   messageHistory: ChatMessage[];
   systemPrompt: string;
   conversationSummary?: string;
+  sharedLogFile?: string;
 }
 
 export interface AIResponse {
@@ -68,12 +69,9 @@ export interface IAIConversationService {
   ): string;
 
   /**
-   * Detect if user message should trigger lead capture
+   * Analyze sentiment of user message
    */
-  shouldTriggerLeadCapture(
-    userMessage: string,
-    context: ConversationContext
-  ): Promise<boolean>;
+  analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'>;
 
   /**
    * Extract lead information from conversation
@@ -82,17 +80,4 @@ export interface IAIConversationService {
     messageHistory: ChatMessage[],
     context: ConversationContext
   ): Promise<Partial<LeadCaptureRequest>>;
-
-  /**
-   * Determine conversation intent
-   */
-  detectIntent(
-    userMessage: string,
-    context: ConversationContext
-  ): Promise<string>;
-
-  /**
-   * Analyze conversation sentiment
-   */
-  analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'>;
 } 

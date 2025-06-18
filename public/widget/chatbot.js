@@ -286,12 +286,20 @@
     // Hide typing indicator
     hideTyping();
     
+    // Build complete response content
+    let fullResponse = response.botResponse || response.response || "I'm sorry, I'm having trouble responding right now.";
+    
+    // Add CTA message if present
+    if (response.callToAction?.message) {
+      fullResponse += '\n\n' + response.callToAction.message;
+    }
+    
     // Add response
-    addMessage(response.response, false, response.error);
+    addMessage(fullResponse, false, response.error);
     
     // Handle lead capture if present
-    if (response.leadCaptured) {
-      console.log('Lead captured:', response.leadData);
+    if (response.shouldCaptureLeadInfo) {
+      console.log('Lead capture triggered');
     }
   }
   

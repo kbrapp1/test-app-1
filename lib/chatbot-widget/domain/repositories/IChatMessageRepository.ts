@@ -34,7 +34,7 @@ export interface IChatMessageRepository {
   /**
    * Save a new message
    */
-  save(message: ChatMessage): Promise<ChatMessage>;
+  save(message: ChatMessage, sharedLogFile?: string): Promise<ChatMessage>;
 
   /**
    * Update an existing message

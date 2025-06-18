@@ -16,10 +16,16 @@ import { IChatSessionRepository } from '../../../domain/repositories/IChatSessio
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotConfigRepository';
 import { IDebugInformationService } from '../../../domain/services/interfaces/IDebugInformationService';
-import { ProcessMessageRequest } from '../conversation-management/MessageProcessingService';
 import { ConversationMetricsService } from '../conversation-management/ConversationMetricsService';
 import { LeadCaptureDecisionService } from '../lead-management/LeadCaptureDecisionService';
 import { SessionUpdateService } from '../configuration-management/SessionUpdateService';
+
+export interface ProcessMessageRequest {
+  userMessage: string;
+  sessionId: string;
+  organizationId?: string;
+  metadata?: any;
+}
 
 export interface WorkflowContext {
   session: ChatSession;
@@ -37,6 +43,11 @@ export interface WorkflowFinalResult {
   intentAnalysis?: any;
   journeyState?: any;
   relevantKnowledge?: any;
+  callToAction?: {
+    type: string;
+    message: string;
+    priority: string;
+  };
 }
 
 export class MessageProcessingWorkflowService {
@@ -55,7 +66,7 @@ export class MessageProcessingWorkflowService {
     this.sessionUpdateService = new SessionUpdateService(sessionRepository);
   }
 
-  async initializeWorkflow(request: ProcessMessageRequest): Promise<WorkflowContext> {
+  async initializeWorkflow(request: ProcessMessageRequest, sharedLogFile: string): Promise<WorkflowContext> {
     // Load and validate session
     const session = await this.loadAndValidateSession(request.sessionId);
 
@@ -66,7 +77,7 @@ export class MessageProcessingWorkflowService {
     this.validateOperatingHours(config);
 
     // Create user message
-    const userMessage = await this.createUserMessage(session, request);
+    const userMessage = await this.createUserMessage(session, request, sharedLogFile);
 
     // Initialize debug session
     this.initializeDebugSession(session.id, userMessage.id);
@@ -80,12 +91,13 @@ export class MessageProcessingWorkflowService {
 
   async finalizeWorkflow(
     responseResult: any,
-    startTime: number
+    startTime: number,
+    sharedLogFile: string
   ): Promise<WorkflowFinalResult> {
     const { session, userMessage, botMessage, allMessages, config, enhancedContext } = responseResult;
 
     // Save updated session
-    const finalSession = await this.sessionUpdateService.saveSession(session);
+    const finalSession = await this.sessionUpdateService.saveSession(session, sharedLogFile);
 
     // Calculate metrics and determine actions
     const shouldCaptureLeadInfo = this.leadCaptureDecisionService.shouldTriggerLeadCapture(finalSession, config);
@@ -109,7 +121,8 @@ export class MessageProcessingWorkflowService {
       conversationMetrics,
       intentAnalysis: this.buildIntentAnalysis(enhancedContext),
       journeyState: this.buildJourneyState(enhancedContext),
-      relevantKnowledge: enhancedContext?.relevantKnowledge
+      relevantKnowledge: enhancedContext?.relevantKnowledge,
+      callToAction: enhancedContext?.callToAction
     };
   }
 
@@ -135,14 +148,15 @@ export class MessageProcessingWorkflowService {
     }
   }
 
-  private async createUserMessage(session: ChatSession, request: ProcessMessageRequest): Promise<ChatMessage> {
+  private async createUserMessage(session: ChatSession, request: ProcessMessageRequest, sharedLogFile: string): Promise<ChatMessage> {
     const userMessage = ChatMessage.createUserMessage(
       session.id,
       request.userMessage,
       'text' // Default input method
     );
 
-    return await this.messageRepository.save(userMessage);
+    // Always use shared log file for consistency
+    return await this.messageRepository.save(userMessage, sharedLogFile);
   }
 
   private initializeDebugSession(sessionId: string, userMessageId: string): void {
@@ -158,24 +172,42 @@ export class MessageProcessingWorkflowService {
   }
 
   private buildIntentAnalysis(enhancedContext: any): any {
-    if (!enhancedContext?.intentResult) return undefined;
+    // Handle unified API response structure (consistent data contract)
+    if (enhancedContext?.unifiedAnalysis) {
+      const analysis = enhancedContext.unifiedAnalysis;
+      return {
+        intent: analysis.primaryIntent || 'unknown',
+        confidence: analysis.primaryConfidence || 0,
+        entities: analysis.entities || {},
+        category: 'general' // Unified API doesn't provide category - use default
+      };
+    }
 
-    return {
-      intent: enhancedContext.intentResult.intent,
-      confidence: enhancedContext.intentResult.confidence,
-      entities: enhancedContext.intentResult.entities,
-      category: enhancedContext.intentResult.getCategory()
-    };
+    // No intent analysis available
+    return undefined;
   }
 
   private buildJourneyState(enhancedContext: any): any {
-    if (!enhancedContext?.journeyState) return undefined;
+    // Handle unified API lead score structure (consistent data contract)
+    if (enhancedContext?.leadScore) {
+      const leadScore = enhancedContext.leadScore;
+      return {
+        stage: this.mapLeadScoreToStage(leadScore.totalScore),
+        confidence: leadScore.totalScore / 100, // Convert 0-100 to 0-1 confidence
+        isSalesReady: leadScore.qualificationStatus?.readyForSales || false,
+        recommendedActions: leadScore.qualificationStatus?.nextSteps || []
+      };
+    }
 
-    return {
-      stage: enhancedContext.journeyState.stage,
-      confidence: enhancedContext.journeyState.confidence,
-      isSalesReady: enhancedContext.journeyState.isSalesReady(),
-      recommendedActions: enhancedContext.journeyState.getRecommendedActions()
-    };
+    // No journey state available
+    return undefined;
+  }
+
+  private mapLeadScoreToStage(totalScore: number): string {
+    if (totalScore >= 80) return 'qualified-ready';
+    if (totalScore >= 70) return 'qualified';
+    if (totalScore >= 50) return 'interested';
+    if (totalScore >= 30) return 'engaged';
+    return 'initial';
   }
 } 

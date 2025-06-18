@@ -11,13 +11,11 @@ import { IDebugInformationService } from '../../domain/services/interfaces/IDebu
 import { ConversationIntentService } from '../../domain/services/conversation/ConversationIntentService';
 import { ConversationSentimentService } from '../../domain/services/conversation/ConversationSentimentService';
 import { LeadExtractionService } from '../../domain/services/lead-management/LeadExtractionService';
-import { ConversationFallbackService } from '../../domain/services/conversation/ConversationFallbackService';
 
 // Message processing services
 import { MessageAnalysisOrchestrator } from '../../domain/services/message-processing/MessageAnalysisOrchestrator';
 import { MessageContentAnalysisService } from '../../domain/services/message-processing/MessageContentAnalysisService';
 import { MessageSentimentAnalysisService } from '../../domain/services/message-processing/MessageSentimentAnalysisService';
-import { MessageIntentAnalysisService } from '../../domain/services/message-processing/MessageIntentAnalysisService';
 
 // Infrastructure services
 import { OpenAITokenCountingService } from '../providers/openai/OpenAITokenCountingService';
@@ -42,13 +40,11 @@ export class DomainServiceCompositionService {
   private static conversationIntentService: ConversationIntentService | null = null;
   private static conversationSentimentService: ConversationSentimentService | null = null;
   private static leadExtractionService: LeadExtractionService | null = null;
-  private static conversationFallbackService: ConversationFallbackService | null = null;
 
   // Message processing service singletons
   private static messageAnalysisOrchestrator: MessageAnalysisOrchestrator | null = null;
   private static messageContentAnalysisService: MessageContentAnalysisService | null = null;
   private static messageSentimentAnalysisService: MessageSentimentAnalysisService | null = null;
-  private static messageIntentAnalysisService: MessageIntentAnalysisService | null = null;
 
   /**
    * Get Lead Scoring Service
@@ -168,16 +164,6 @@ export class DomainServiceCompositionService {
   }
 
   /**
-   * Get Conversation Fallback Service
-   */
-  static getConversationFallbackService(): ConversationFallbackService {
-    if (!this.conversationFallbackService) {
-      this.conversationFallbackService = new ConversationFallbackService();
-    }
-    return this.conversationFallbackService;
-  }
-
-  /**
    * Get Message Analysis Orchestrator
    */
   static getMessageAnalysisOrchestrator(): MessageAnalysisOrchestrator {
@@ -208,16 +194,6 @@ export class DomainServiceCompositionService {
   }
 
   /**
-   * Get Message Intent Analysis Service
-   */
-  static getMessageIntentAnalysisService(): MessageIntentAnalysisService {
-    if (!this.messageIntentAnalysisService) {
-      this.messageIntentAnalysisService = new MessageIntentAnalysisService();
-    }
-    return this.messageIntentAnalysisService;
-  }
-
-  /**
    * Reset all domain service singletons
    */
   static reset(): void {
@@ -231,12 +207,10 @@ export class DomainServiceCompositionService {
     this.conversationIntentService = null;
     this.conversationSentimentService = null;
     this.leadExtractionService = null;
-    this.conversationFallbackService = null;
 
     // Reset message processing services
     this.messageAnalysisOrchestrator = null;
     this.messageContentAnalysisService = null;
     this.messageSentimentAnalysisService = null;
-    this.messageIntentAnalysisService = null;
   }
 } 

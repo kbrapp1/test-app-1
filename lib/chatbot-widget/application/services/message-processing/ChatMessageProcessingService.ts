@@ -9,17 +9,33 @@
  * - Follow @golden-rule patterns exactly
  */
 
+import {
+  MessageProcessingWorkflowService,
+  WorkflowContext
+} from './MessageProcessingWorkflowService';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
+import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
 import { IAIConversationService, ConversationContext } from '../../../domain/services/interfaces/IAIConversationService';
 import { IIntentClassificationService } from '../../../domain/services/interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
 import { SystemPromptBuilderService } from '../conversation-management/SystemPromptBuilderService';
-import { MessageProcessingService } from '../conversation-management/MessageProcessingService';
-import { WorkflowContext } from './MessageProcessingWorkflowService';
-import { AnalysisResult } from './ConversationAnalysisService';
-import { ProcessMessageRequest } from '../conversation-management/MessageProcessingService';
+import { ChatMessageFactoryService } from '../../../domain/services/utilities/ChatMessageFactoryService';
+
+export interface ProcessMessageRequest {
+  userMessage: string;
+  sessionId: string;
+  organizationId?: string;
+  metadata?: any;
+}
+
+export interface AnalysisResult {
+  session: any;
+  userMessage: ChatMessage;
+  contextResult: any;
+  config: any;
+  enhancedContext: any;
+}
 
 export interface MessageProcessingContext {
   session: any;
@@ -38,7 +54,6 @@ export interface ResponseResult {
 
 export class ChatMessageProcessingService {
   private readonly systemPromptBuilderService: SystemPromptBuilderService;
-  private readonly messageProcessingService: MessageProcessingService;
 
   constructor(
     private readonly aiConversationService: IAIConversationService,
@@ -48,10 +63,6 @@ export class ChatMessageProcessingService {
     private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService
   ) {
     this.systemPromptBuilderService = new SystemPromptBuilderService(aiConversationService);
-    this.messageProcessingService = new MessageProcessingService(
-      // Note: This will need to be injected properly in the composition root
-      {} as any // Temporary placeholder
-    );
   }
 
   async processUserMessage(
@@ -67,42 +78,151 @@ export class ChatMessageProcessingService {
     };
   }
 
-  async generateAIResponse(analysisResult: AnalysisResult): Promise<ResponseResult> {
-    const { session, config, userMessage, contextResult, enhancedContext } = analysisResult;
+  async generateAIResponse(analysisResult: AnalysisResult, sharedLogFile?: string): Promise<ResponseResult> {
+    const { session, userMessage, contextResult, config, enhancedContext } = analysisResult;
+    
+    // Check if userMessage is already in contextResult.messages to avoid duplication
+    const isUserMessageInContext = contextResult.messages.some((msg: ChatMessage) => msg.id === userMessage.id);
+    const allMessages = isUserMessageInContext 
+      ? contextResult.messages 
+      : [...contextResult.messages, userMessage];
 
-    // Build conversation context with enhanced system prompt
-    const conversationContext = this.buildConversationContext(
-      config,
-      session,
-      contextResult.messages,
-      userMessage,
-      contextResult.summary,
-      enhancedContext
-    );
+    // Use provided shared log file or create new one as fallback
+    const logFileName = sharedLogFile || `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
 
-    // Generate AI response
-    const aiResponse = await this.aiConversationService.generateResponse(
-      userMessage.content,
-      conversationContext
-    );
+    // Try unified processing first (1 API call)
+    if (this.intentClassificationService && 'processChatbotInteractionComplete' in this.intentClassificationService) {
+      try {
+        // Build conversation context for unified processing
+        const conversationContext = this.buildConversationContext(
+          config,
+          session,
+          contextResult.messages,
+          userMessage,
+          contextResult.summary,
+          enhancedContext
+        );
 
-    // Create and save bot response message
-    const botMessage = await this.createBotMessage(session, aiResponse);
+        // Add shared log file to context
+        conversationContext.sharedLogFile = logFileName;
 
-    // Update session with conversation context
-    // contextResult.messages already contains all messages including the current userMessage
-    // We only need to add the bot response
-    const allMessages = [...contextResult.messages, botMessage];
-    const updatedSession = this.updateSessionContext(session, botMessage, allMessages, enhancedContext);
+        const apiCallStart = Date.now();
+        
+        // Make single unified API call
+        const unifiedResult = await (this.intentClassificationService as any).processChatbotInteractionComplete(
+          userMessage.content,
+          conversationContext
+        );
+        
+        const apiCallDuration = Date.now() - apiCallStart;
 
-    return {
-      session: updatedSession,
-      userMessage,
-      botMessage,
-      allMessages,
-      config,
-      enhancedContext
-    };
+        // Log unified result structure for debugging
+        const fs = require('fs');
+        const path = require('path');
+        const logDir = path.join(process.cwd(), 'logs');
+        const logFile = path.join(logDir, logFileName);
+        
+        const logEntry = (logMessage: string) => {
+          // Check if file logging is disabled via environment variable
+          const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+          if (!fileLoggingEnabled) return;
+          
+          const timestamp = new Date().toISOString();
+          const logLine = `[${timestamp}] ${logMessage}\\n`;
+          fs.appendFileSync(logFile, logLine);
+        };
+        
+        logEntry('🔍 CHAT MESSAGE PROCESSING - UNIFIED RESULT VALIDATION:');
+        logEntry(`📋 Unified result type: ${typeof unifiedResult}`);
+        logEntry(`📋 Unified result keys: ${Object.keys(unifiedResult || {}).join(', ')}`);
+        logEntry(`📋 Has analysis: ${!!unifiedResult?.analysis}`);
+        logEntry(`📋 Has leadScore: ${!!unifiedResult?.leadScore}`);
+        logEntry(`📋 Has response: ${!!unifiedResult?.response}`);
+        if (unifiedResult?.leadScore) {
+          logEntry(`📋 LeadScore structure: ${JSON.stringify(unifiedResult.leadScore, null, 2)}`);
+        }
+
+        // Create bot message from unified result (with shared log file)
+        const botMessage = await this.createBotMessageUnified(session, unifiedResult, logFileName);
+
+        // Update session with unified processing results (with shared log file)
+        const updatedSession = this.updateSessionContextUnified(
+          session,
+          botMessage,
+          allMessages,
+          unifiedResult,
+          logFileName
+        );
+
+        return {
+          session: updatedSession,
+          userMessage,
+          botMessage,
+          allMessages,
+          config,
+          enhancedContext: {
+            ...enhancedContext,
+            unifiedAnalysis: unifiedResult?.analysis || { primaryIntent: 'unknown', primaryConfidence: 0 },
+            leadScore: unifiedResult?.leadScore || { totalScore: 0 },
+            callToAction: unifiedResult?.response?.callToAction || { type: 'none', priority: 'low' }
+          }
+        };
+
+      } catch (error) {        
+        // API-only approach: Still use OpenAI for error responses
+        try {
+          const errorContext = this.buildConversationContext(
+            config,
+            session,
+            contextResult.messages,
+            userMessage,
+            contextResult.summary,
+            enhancedContext
+          );
+
+          // Use OpenAI to generate an appropriate error response
+          const errorPrompt = this.buildErrorRecoveryPrompt(error, userMessage.content);
+          const errorConversationContext = { ...errorContext, systemPrompt: errorPrompt };
+          
+          const aiErrorResponse = await this.aiConversationService.generateResponse(
+            userMessage.content,
+            errorConversationContext
+          );
+
+          // Create bot message from AI error response
+          const botMessage = await this.createBotMessage(session, aiErrorResponse, logFileName);
+          
+          // Check if userMessage is already in contextResult.messages to avoid duplication
+          const isUserMessageInErrorContext = contextResult.messages.some((msg: ChatMessage) => msg.id === userMessage.id);
+          const allMessages = isUserMessageInErrorContext 
+            ? [...contextResult.messages, botMessage]
+            : [...contextResult.messages, userMessage, botMessage];
+            
+          const updatedSession = this.updateSessionContext(session, botMessage, allMessages, enhancedContext);
+
+          return {
+            session: updatedSession,
+            userMessage,
+            botMessage,
+            allMessages,
+            config,
+            enhancedContext: {
+              ...enhancedContext,
+              fallbackUsed: false, // API-generated error response, not fallback
+              errorRecovery: true,
+              originalError: error instanceof Error ? error.message : 'Unknown error'
+            }
+          };
+
+        } catch (secondaryError) {
+          // If API fails completely, throw error instead of static fallback
+          throw new Error(`API unavailable. Primary error: ${error instanceof Error ? error.message : 'Unknown'}. Secondary error: ${secondaryError instanceof Error ? secondaryError.message : 'Unknown'}`);
+        }
+      }
+    }
+
+    // If unified processing is not available, throw error instead of static fallback
+    throw new Error('Unified processing not available and no alternative API methods configured');
   }
 
   private buildConversationContext(
@@ -113,6 +233,7 @@ export class ChatMessageProcessingService {
     summary: string | undefined,
     enhancedContext: any
   ): ConversationContext {
+    // Build enhanced system prompt with knowledge base integration
     const systemPrompt = this.systemPromptBuilderService.buildEnhancedSystemPrompt(
       config,
       session,
@@ -129,19 +250,18 @@ export class ChatMessageProcessingService {
     };
   }
 
-  private async createBotMessage(session: any, aiResponse: any): Promise<ChatMessage> {
-    // Create bot message with enhanced metadata
-    let botMessage = ChatMessage.createBotMessage(
+  private async createBotMessage(session: any, aiResponse: any, sharedLogFile: string): Promise<ChatMessage> {
+    // Create bot message with enhanced metadata using factory service
+    let botMessage = ChatMessageFactoryService.createBotMessageWithFullMetadata(
       session.id,
       aiResponse.content,
-      {
-        model: aiResponse.metadata?.model || 'unknown',
-        promptTokens: aiResponse.metadata?.promptTokens || 0,
-        completionTokens: aiResponse.metadata?.completionTokens || 0,
-        confidence: aiResponse.confidence || 0,
-        intentDetected: aiResponse.intentDetected || false,
-        processingTime: aiResponse.processingTimeMs || 0
-      }
+      aiResponse.metadata?.model || 'unknown',
+      aiResponse.metadata?.promptTokens || 0,
+      aiResponse.metadata?.completionTokens || 0,
+      aiResponse.confidence || 0,
+      aiResponse.intentDetected?.toString() || 'false',
+      [], // entities - will be extracted separately if needed
+      aiResponse.processingTimeMs || 0
     );
 
     // Add cost tracking if available
@@ -157,8 +277,8 @@ export class ChatMessageProcessingService {
       botMessage = botMessage.updateSentiment(aiResponse.sentiment);
     }
 
-    // Save bot message to database
-    return await this.messageRepository.save(botMessage);
+    // Save bot message to database with shared log file
+    return await this.messageRepository.save(botMessage, sharedLogFile);
   }
 
   private updateSessionContext(
@@ -173,14 +293,6 @@ export class ChatMessageProcessingService {
       botMessage,
       allMessages
     );
-  }
-
-  async classifyIntent(message: string, context: any): Promise<any> {
-    if (!this.intentClassificationService) {
-      return null;
-    }
-
-    return await this.intentClassificationService.classifyIntent(message, context);
   }
 
   async retrieveKnowledge(query: string, context?: any): Promise<any> {
@@ -199,5 +311,171 @@ export class ChatMessageProcessingService {
 
     const result = await this.knowledgeRetrievalService.searchKnowledge(searchContext);
     return result.items;
+  }
+
+  /**
+   * Build error recovery prompt for OpenAI API
+   * 
+   * AI INSTRUCTIONS:
+   * - Create a system prompt that helps AI generate appropriate error responses
+   * - Include context about the error for better response generation
+   * - Follow @golden-rule patterns for single responsibility
+   */
+  private buildErrorRecoveryPrompt(error: unknown, userMessage: string): string {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    return `You are a helpful AI assistant for a business website. The system encountered a technical issue while processing the user's message, but you should still provide a helpful response.
+
+ERROR CONTEXT:
+- Technical issue: ${errorMessage}
+- User's message: "${userMessage}"
+
+INSTRUCTIONS:
+1. Acknowledge there was a brief technical issue
+2. Still try to address the user's question or need as best you can
+3. Be helpful and professional
+4. If you can't fully address their request due to the technical issue, suggest alternative ways to get help
+5. Don't mention specific technical details about the error
+
+Respond as if you're a knowledgeable business assistant who experienced a brief hiccup but is still ready to help.`;
+  }
+
+  /**
+   * Create bot message from unified processing result
+   * 
+   * AI INSTRUCTIONS:
+   * - Extract response content and metadata from unified result
+   * - Include lead scoring and CTA information in metadata
+   * - Follow @golden-rule patterns for single responsibility
+   * - Add proper validation for API response structure
+   * - FIXED: Now properly extracts token usage AND entity data from unified API response
+   */
+  private async createBotMessageUnified(session: any, unifiedResult: any, sharedLogFile: string): Promise<ChatMessage> {
+    // Safely extract response content with fallback
+    const responseContent = unifiedResult?.response?.content || 
+      "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";
+    
+    // Safely extract confidence with fallback
+    const confidence = unifiedResult?.analysis?.primaryConfidence || 0;
+
+    // FIXED: Extract token usage from unified result (available in API response)
+    const promptTokens = unifiedResult?.usage?.prompt_tokens || 0;
+    const completionTokens = unifiedResult?.usage?.completion_tokens || 0;
+    const totalTokens = unifiedResult?.usage?.total_tokens || promptTokens + completionTokens;
+
+    // FIXED: Extract entity data from unified analysis and convert to required format
+    const entitiesExtracted = this.extractEntitiesFromUnified(unifiedResult?.analysis?.entities);
+    
+    // Create bot message with proper token usage AND entity data using factory service
+    let botMessage = ChatMessageFactoryService.createBotMessageWithFullMetadata(
+      session.id,
+      responseContent,
+      unifiedResult?.model || 'gpt-4o-mini',
+      promptTokens,
+      completionTokens,
+      confidence,
+      unifiedResult?.analysis?.primaryIntent || 'unified_processing',
+      entitiesExtracted,
+      0 // processingTime - will be calculated by provider
+    );
+
+    // Add cost tracking using the actual token usage
+    if (promptTokens > 0 || completionTokens > 0) {
+      const totalCostCents = this.calculateCostFromTokens(
+        promptTokens, 
+        completionTokens, 
+        unifiedResult?.model || 'gpt-4o-mini'
+      );
+      
+      botMessage = botMessage.addCostTracking(totalCostCents, {
+        promptTokensCents: (promptTokens / 1000) * 0.15, // GPT-4o-mini rates
+        completionTokensCents: (completionTokens / 1000) * 0.60,
+        totalCents: totalCostCents,
+        displayCents: Math.round(totalCostCents * 10000) / 10000,
+        modelRate: 0.15
+      });
+    }
+
+    // Save bot message to database with shared log file
+    return await this.messageRepository.save(botMessage, sharedLogFile);
+  }
+
+  /**
+   * Extract entities from unified API response into factory service format
+   * 
+   * AI INSTRUCTIONS:
+   * - Transform unified API entity structure to factory service format
+   * - Handle missing or malformed entity data gracefully
+   * - Follow @golden-rule patterns for data transformation
+   * - Use the format expected by ChatMessageFactoryService
+   */
+  private extractEntitiesFromUnified(entities: any): Array<{ type: string; value: string; confidence: number; start?: number; end?: number }> {
+    if (!entities || typeof entities !== 'object') {
+      return [];
+    }
+
+    return Object.entries(entities).map(([type, value]) => ({
+      type,
+      value: String(value),
+      confidence: 0.9, // Unified API doesn't provide per-entity confidence
+      start: undefined, // Position data not available from unified API
+      end: undefined
+    }));
+  }
+
+  /**
+   * Calculate cost from token usage using proper pricing
+   * 
+   * AI INSTRUCTIONS:
+   * - Use correct GPT-4o-mini pricing
+   * - Return cost in cents for precision
+   * - Follow domain service patterns
+   */
+  private calculateCostFromTokens(promptTokens: number, completionTokens: number, model: string): number {
+    // GPT-4o-mini pricing (per 1K tokens)
+    const promptRate = 0.00015; // $0.15 per 1K tokens
+    const completionRate = 0.0006; // $0.60 per 1K tokens
+    
+    const promptCost = (promptTokens / 1000) * promptRate;
+    const completionCost = (completionTokens / 1000) * completionRate;
+    const totalCostDollars = promptCost + completionCost;
+    
+    return totalCostDollars * 100; // Convert to cents
+  }
+
+  /**
+   * Update session context with unified processing results
+   * 
+   * AI INSTRUCTIONS:
+   * - Include lead scoring and qualification data in session context
+   * - Track unified processing analytics
+   * - Follow @golden-rule patterns for data consistency
+   * - Preserve domain entity integrity
+   * - Add proper validation for API response structure
+   */
+  private updateSessionContextUnified(
+    session: any,
+    botMessage: ChatMessage,
+    allMessages: ChatMessage[],
+    unifiedResult: any,
+    sharedLogFile: string
+  ): any {
+    // Use ConversationContextOrchestrator to update session (returns ChatSession entity)
+    const updatedSession = this.conversationContextOrchestrator.updateSessionContext(
+      session,
+      botMessage,
+      allMessages
+    );
+
+    // Enhanced context data with unified processing metadata using domain methods
+    const enhancedContextData = {
+      ...updatedSession.contextData,
+      lastLeadScore: unifiedResult?.leadScore?.totalScore || 0,
+      lastProcessingMode: 'unified',
+      sharedLogFile
+    };
+
+    // Use domain entity method to update context data
+    return updatedSession.updateContextData(enhancedContextData);
   }
 } 
