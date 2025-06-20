@@ -125,11 +125,7 @@ export class ProcessChatMessageUseCase {
       summaryTokens: 200
     });
 
-    // Create logs directory if it doesn't exist
-    const logsDir = path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-    }
+    // Logs directory will be created only when needed (when CHATBOT_FILE_LOGGING !== 'false')
   }
 
   private writeLog(message: string): void {

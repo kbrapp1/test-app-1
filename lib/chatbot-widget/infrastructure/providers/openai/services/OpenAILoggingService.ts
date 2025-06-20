@@ -103,6 +103,7 @@ export class OpenAILoggingService {
    * - Create logs directory if it doesn't exist
    * - Handle permissions errors gracefully
    * - Use synchronous operation for directory creation
+   * - Only called when logging is actually enabled
    */
   private ensureLogDirectoryExists(logDir: string): void {
     try {

@@ -85,43 +85,39 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
   }
 
   async update(session: ChatSession, sharedLogFile?: string): Promise<ChatSession> {
-    const fs = require('fs');
-    const path = require('path');
-    const timestamp = new Date().toISOString();
-    const logDir = path.join(process.cwd(), 'logs');
+    // Check if file logging is enabled first, before any file operations
+    const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
     
-    // Ensure logs directory exists
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
+    let logEntry: (message: string) => void = () => {}; // Default no-op function
     
-    let logFile: string;
-    if (sharedLogFile) {
-      // Use the shared log file directly (it should be a full filename)
-      logFile = path.join(logDir, sharedLogFile);
-    } else {
-      // Create new log file only if no shared file provided
-      const logFileName = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
-      logFile = path.join(logDir, logFileName);
-    }
-    
-    // Optimized logging: Check environment variable once and return appropriate function
-    const createLogEntry = () => {
-      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+    if (fileLoggingEnabled) {
+      // Only import fs and set up logging if enabled
+      const fs = require('fs');
+      const path = require('path');
+      const timestamp = new Date().toISOString();
+      const logDir = path.join(process.cwd(), 'logs');
       
-      if (!fileLoggingEnabled) {
-        // Return no-op function when logging disabled - zero overhead
-        return () => {};
+      // Ensure logs directory exists only when logging is enabled
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
       }
       
-      // Return active logging function when enabled
-      return (message: string) => {
+      let logFile: string;
+      if (sharedLogFile) {
+        // Use the shared log file directly (it should be a full filename)
+        logFile = path.join(logDir, sharedLogFile);
+      } else {
+        // Create new log file only if no shared file provided
+        const logFileName = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+        logFile = path.join(logDir, logFileName);
+      }
+      
+      // Create active logging function when enabled
+      logEntry = (message: string) => {
         const logLine = `[${timestamp}] ${message}\n`;
         fs.appendFileSync(logFile, logLine);
       };
-    };
-    
-    const logEntry = createLogEntry();
+    }
     
     logEntry('\n🗄️  =================================');
     logEntry('🗄️  DATABASE OPERATION - UPDATE SESSION');
@@ -236,43 +232,39 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
   }
 
   async create(session: ChatSession, sharedLogFile?: string): Promise<ChatSession> {
-    const fs = require('fs');
-    const path = require('path');
-    const timestamp = new Date().toISOString();
-    const logDir = path.join(process.cwd(), 'logs');
+    // Check if file logging is enabled first, before any file operations
+    const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
     
-    // Ensure logs directory exists
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
+    let logEntry: (message: string) => void = () => {}; // Default no-op function
     
-    let logFile: string;
-    if (sharedLogFile) {
-      // Use the shared log file directly (it should be a full filename)
-      logFile = path.join(logDir, sharedLogFile);
-    } else {
-      // Create new log file only if no shared file provided
-      const logFileName = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
-      logFile = path.join(logDir, logFileName);
-    }
-    
-    // Optimized logging: Check environment variable once and return appropriate function
-    const createLogEntry = () => {
-      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+    if (fileLoggingEnabled) {
+      // Only import fs and set up logging if enabled
+      const fs = require('fs');
+      const path = require('path');
+      const timestamp = new Date().toISOString();
+      const logDir = path.join(process.cwd(), 'logs');
       
-      if (!fileLoggingEnabled) {
-        // Return no-op function when logging disabled - zero overhead
-        return () => {};
+      // Ensure logs directory exists only when logging is enabled
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
       }
       
-      // Return active logging function when enabled
-      return (message: string) => {
+      let logFile: string;
+      if (sharedLogFile) {
+        // Use the shared log file directly (it should be a full filename)
+        logFile = path.join(logDir, sharedLogFile);
+      } else {
+        // Create new log file only if no shared file provided
+        const logFileName = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+        logFile = path.join(logDir, logFileName);
+      }
+      
+      // Create active logging function when enabled
+      logEntry = (message: string) => {
         const logLine = `[${timestamp}] ${message}\n`;
         fs.appendFileSync(logFile, logLine);
       };
-    };
-    
-    const logEntry = createLogEntry();
+    }
     
     logEntry('\n🗄️  =================================');
     logEntry('🗄️  DATABASE OPERATION - CREATE SESSION');

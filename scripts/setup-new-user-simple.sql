@@ -20,10 +20,10 @@
 
 WITH params AS (
   SELECT 
-    'don@vistaonemarketing.com' AS user_email,     -- CHANGE THIS: User's email
-    'Don Clark' AS user_full_name,                 -- CHANGE THIS: User's display name
+    'lynne@vistaonemarketing.com' AS user_email,     -- CHANGE THIS: User's email
+    'Lynne Kingsley' AS user_full_name,                 -- CHANGE THIS: User's display name
     'Ironmark' AS org_name,                        -- CHANGE THIS: Organization name
-    'admin' AS role_name                           -- CHANGE THIS: Role (admin/member/editor)
+    'member' AS role_name                           -- CHANGE THIS: Role (admin/member/editor)
 ),
 
 -- Get the actual IDs we need

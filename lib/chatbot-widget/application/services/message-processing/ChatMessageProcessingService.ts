@@ -117,30 +117,32 @@ export class ChatMessageProcessingService {
         
         const apiCallDuration = Date.now() - apiCallStart;
 
-        // Log unified result structure for debugging
-        const fs = require('fs');
-        const path = require('path');
-        const logDir = path.join(process.cwd(), 'logs');
-        const logFile = path.join(logDir, logFileName);
+        // Log unified result structure for debugging  
+        // Check if file logging is enabled first, before any file operations
+        const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
         
-        // Optimized logging: Check environment variable once and return appropriate function
-        const createLogEntry = () => {
-          const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+        let logEntry: (message: string) => void = () => {}; // Default no-op function
+        
+        if (fileLoggingEnabled) {
+          // Only import fs and set up logging if enabled
+          const fs = require('fs');
+          const path = require('path');
+          const logDir = path.join(process.cwd(), 'logs');
           
-          if (!fileLoggingEnabled) {
-            // Return no-op function when logging disabled - zero overhead
-            return () => {};
+          // Ensure logs directory exists only when logging is enabled
+          if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
           }
           
-          // Return active logging function when enabled
-          return (logMessage: string) => {
+          const logFile = path.join(logDir, logFileName);
+          
+          // Create active logging function when enabled
+          logEntry = (logMessage: string) => {
             const timestamp = new Date().toISOString();
             const logLine = `[${timestamp}] ${logMessage}\\n`;
             fs.appendFileSync(logFile, logLine);
           };
-        };
-        
-        const logEntry = createLogEntry();
+        }
         
         logEntry('🔍 CHAT MESSAGE PROCESSING - UNIFIED RESULT VALIDATION:');
         logEntry(`📋 Unified result type: ${typeof unifiedResult}`);
