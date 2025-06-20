@@ -4,13 +4,17 @@
  * Domain Service: Handles lead data export operations
  * Single Responsibility: Lead export and summary data generation
  * Following DDD domain service patterns
+ * 
+ * AI INSTRUCTIONS:
+ * - UPDATED: Removed dependency on LeadScoringService - using API-only approach
+ * - Lead scores are provided externally, not calculated here
+ * - Keep under 200 lines following @golden-rule patterns
  */
 
 import { Lead } from '../../entities/Lead';
 import { ContactInfo } from '../../value-objects/lead-management/ContactInfo';
 import { LeadMetadata } from '../../value-objects/lead-management/LeadMetadata';
 import { LeadSource } from '../../value-objects/lead-management/LeadSource';
-import { LeadScoringService } from './LeadScoringService';
 
 export class LeadExportService {
   /**
@@ -23,7 +27,7 @@ export class LeadExportService {
       email: lead.contactInfo.email,
       company: lead.contactInfo.company,
       leadScore: lead.leadScore,
-      scoreGrade: LeadScoringService.getScoreGrade(lead.leadScore),
+      scoreGrade: lead.getScoreGrade(),
       qualificationStatus: lead.qualificationStatus,
       followUpStatus: lead.followUpStatus,
       isAssigned: !!lead.assignedTo,
@@ -62,8 +66,6 @@ export class LeadExportService {
    * Generate detailed analytics data
    */
   static generateAnalyticsData(lead: Lead): object {
-    const scoringResult = LeadScoringService.calculateScore(lead.qualificationData);
-    
     return {
       id: lead.id,
       contactInfo: lead.contactInfo.toPlainObject(),
@@ -71,10 +73,8 @@ export class LeadExportService {
       source: lead.source.toAnalyticsData(),
       scoring: {
         score: lead.leadScore,
-        grade: LeadScoringService.getScoreGrade(lead.leadScore),
-        breakdown: scoringResult.scoreBreakdown,
+        grade: lead.getScoreGrade(),
         qualificationStatus: lead.qualificationStatus,
-        recommendations: LeadScoringService.getScoreRecommendations(scoringResult),
       },
       lifecycle: {
         followUpStatus: lead.followUpStatus,
@@ -98,7 +98,7 @@ export class LeadExportService {
       email: lead.contactInfo.email,
       company: lead.contactInfo.company,
       score: lead.leadScore,
-      grade: LeadScoringService.getScoreGrade(lead.leadScore),
+      grade: lead.getScoreGrade(),
       status: lead.qualificationStatus,
       followUp: lead.followUpStatus,
       assigned: lead.assignedTo,

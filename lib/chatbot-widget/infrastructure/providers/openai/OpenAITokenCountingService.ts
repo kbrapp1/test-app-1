@@ -1,5 +1,5 @@
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { ITokenCountingService, TokenUsage } from '../../../domain/services/ITokenCountingService';
+import { ITokenCountingService, TokenUsage } from '../../../domain/services/interfaces/ITokenCountingService';
 
 type SupportedOpenAIModel = 'gpt-4o' | 'gpt-4o-mini';
 

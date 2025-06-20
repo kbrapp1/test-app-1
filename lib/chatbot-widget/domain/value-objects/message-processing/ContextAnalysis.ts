@@ -3,6 +3,11 @@
  * 
  * Domain value object representing conversation context analysis results.
  * Single responsibility: Encapsulate context analysis data and behavior.
+ * 
+ * AI INSTRUCTIONS:
+ * - Engagement and sentiment now come from OpenAI API, not manual calculation
+ * - Focus on data encapsulation and conversion utilities
+ * - Remove manual scoring methods in favor of API-provided data
  */
 
 import { IntentResult } from './IntentResult';
@@ -64,31 +69,7 @@ export class ContextAnalysisValueObject {
   ) {}
 
   /**
-   * Calculate engagement score from analysis
-   */
-  calculateEngagementScore(): number {
-    let score = 0; // Base score - starts at zero
-    
-    // Engagement level
-    if (this.engagementLevel === 'high') score += 50;
-    else if (this.engagementLevel === 'medium') score += 25;
-    else score += 5; // Minimal score for any engagement
-    
-    // Sentiment
-    if (this.sentiment === 'positive') score += 20;
-    else if (this.sentiment === 'negative') score -= 15;
-    
-    // Topics diversity
-    score += Math.min(15, this.topics.length * 3);
-    
-    // Interests
-    score += Math.min(10, this.interests.length * 2);
-    
-    return Math.max(0, Math.min(100, score));
-  }
-
-  /**
-   * Check if analysis indicates high engagement
+   * Check if analysis indicates high engagement (based on API-provided data)
    */
   isHighlyEngaged(): boolean {
     return this.engagementLevel === 'high' && 

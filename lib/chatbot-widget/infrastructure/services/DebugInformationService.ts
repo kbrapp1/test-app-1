@@ -1,4 +1,4 @@
-import { IDebugInformationService, ApiCallDebugInfo, ProcessingDebugInfo } from '../../domain/services/IDebugInformationService';
+import { IDebugInformationService, ApiCallDebugInfo, ProcessingDebugInfo } from '../../domain/services/interfaces/IDebugInformationService';
 
 export class DebugInformationService implements IDebugInformationService {
   private debugSessions = new Map<string, ProcessingDebugInfo>();

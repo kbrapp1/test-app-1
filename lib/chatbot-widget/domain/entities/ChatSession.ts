@@ -17,7 +17,6 @@ export type {
   SessionMetrics
 };
 import { ChatSessionValidationService } from '../services/session-management/ChatSessionValidationService';
-import { SessionEngagementService } from '../services/session-management/SessionEngagementService';
 import { SessionLeadQualificationService } from '../services/session-management/SessionLeadQualificationService';
 import { SessionStateService } from '../services/session-management/SessionStateService';
 import { SessionContextService } from '../services/session-management/SessionContextService';
@@ -155,13 +154,6 @@ export class ChatSession {
     });
   }
 
-  calculateLeadScore(): number {
-    return SessionLeadQualificationService.calculateLeadScore(
-      this.props.leadQualificationState,
-      this.props.contextData
-    );
-  }
-
   completeLeadQualification(): ChatSession {
     const updatedState = SessionLeadQualificationService.completeQualification(
       this.props.leadQualificationState,
@@ -234,7 +226,12 @@ export class ChatSession {
 
   isExpired(timeoutMinutes: number = 30): boolean {
     ChatSessionValidationService.validateTimeout(timeoutMinutes);
-    return SessionEngagementService.isSessionExpired(this.props.lastActivityAt, timeoutMinutes);
+    
+    // AI INSTRUCTIONS: Inline session expiration logic following @golden-rule pure function pattern
+    // Domain logic: Session expires when lastActivityAt exceeds timeout threshold
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+    const now = new Date().getTime();
+    return now - this.props.lastActivityAt.getTime() > timeoutMs;
   }
 
   getSessionDuration(): number {
@@ -243,11 +240,18 @@ export class ChatSession {
   }
 
   getSessionMetrics(): SessionMetrics {
-    return SessionEngagementService.calculateSessionMetrics(
-      this.props.contextData,
-      this.props.startedAt,
-      this.props.endedAt
-    );
+    // AI INSTRUCTIONS: Inline session metrics calculation following @golden-rule domain patterns
+    // Pure business logic for calculating session analytics
+    const endTime = this.props.endedAt || new Date();
+    const duration = endTime.getTime() - this.props.startedAt.getTime();
+
+    return {
+      duration,
+      pageViewCount: this.props.contextData.pageViews.length,
+      topicCount: this.props.contextData.topics.length,
+      interestCount: this.props.contextData.interests.length,
+      hasContactInfo: !!(this.props.contextData.email || this.props.contextData.phone)
+    };
   }
 
   hasContactInfo(): boolean {

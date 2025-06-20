@@ -19,6 +19,7 @@ import { IDebugInformationService } from '../../../domain/services/interfaces/ID
 import { ConversationMetricsService } from '../conversation-management/ConversationMetricsService';
 import { LeadCaptureDecisionService } from '../lead-management/LeadCaptureDecisionService';
 import { SessionUpdateService } from '../configuration-management/SessionUpdateService';
+import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -59,6 +60,7 @@ export class MessageProcessingWorkflowService {
     private readonly sessionRepository: IChatSessionRepository,
     private readonly messageRepository: IChatMessageRepository,
     private readonly chatbotConfigRepository: IChatbotConfigRepository,
+    private readonly aiConversationService: IAIConversationService,
     private readonly debugInformationService?: IDebugInformationService
   ) {
     this.conversationMetricsService = new ConversationMetricsService();
@@ -100,12 +102,14 @@ export class MessageProcessingWorkflowService {
     const finalSession = await this.sessionUpdateService.saveSession(session, sharedLogFile);
 
     // Calculate metrics and determine actions
-    const shouldCaptureLeadInfo = this.leadCaptureDecisionService.shouldTriggerLeadCapture(finalSession, config);
+    const aiFlowContext = enhancedContext?.conversationFlow ? { aiFlowDecision: enhancedContext.conversationFlow } : undefined;
+    const shouldCaptureLeadInfo = this.leadCaptureDecisionService.shouldTriggerLeadCapture(finalSession, config, aiFlowContext);
     const conversationMetrics = await this.conversationMetricsService.calculateConversationMetrics(finalSession, allMessages);
     const suggestedNextActions = this.leadCaptureDecisionService.generateSuggestedActions(
       finalSession,
       config,
-      shouldCaptureLeadInfo
+      shouldCaptureLeadInfo,
+      aiFlowContext
     );
 
     // Update debug session with processing time
@@ -155,8 +159,33 @@ export class MessageProcessingWorkflowService {
       'text' // Default input method
     );
 
-    // Always use shared log file for consistency
-    return await this.messageRepository.save(userMessage, sharedLogFile);
+    // Save the initial user message first
+    const savedUserMessage = await this.messageRepository.save(userMessage, sharedLogFile);
+
+    // Analyze sentiment, urgency, and engagement using AI API and update the message
+    try {
+      // Get conversation history for engagement analysis
+      const allMessages = await this.messageRepository.findBySessionId(session.id);
+      
+      const [detectedSentiment, detectedUrgency, detectedEngagement] = await Promise.all([
+        this.aiConversationService.analyzeSentiment(request.userMessage),
+        this.aiConversationService.analyzeUrgency(request.userMessage),
+        this.aiConversationService.analyzeEngagement(request.userMessage, allMessages)
+      ]);
+      
+      // Update the message with the analyzed sentiment, urgency, and engagement
+      const updatedUserMessage = savedUserMessage
+        .updateSentiment(detectedSentiment)
+        .updateUrgency(detectedUrgency)
+        .updateEngagement(detectedEngagement);
+      
+      // Save the updated message with sentiment, urgency, and engagement information
+      return await this.messageRepository.save(updatedUserMessage, sharedLogFile);
+    } catch (error) {
+      // If analysis fails, return the original message
+      // This ensures the conversation can continue even if analysis has issues
+      return savedUserMessage;
+    }
   }
 
   private initializeDebugSession(sessionId: string, userMessageId: string): void {

@@ -148,7 +148,6 @@ export class ChatSessionMapper {
       answeredQuestions: data?.answeredQuestions || [],
       qualificationStatus: data?.qualificationStatus || 'not_started',
       isQualified: data?.isQualified || false,
-      leadScore: data?.leadScore || 0,
       capturedAt: data?.capturedAt ? new Date(data.capturedAt) : undefined,
     };
   }

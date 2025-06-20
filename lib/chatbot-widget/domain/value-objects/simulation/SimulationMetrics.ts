@@ -1,4 +1,4 @@
-import { ChatMessage } from '../entities/ChatMessage';
+import { ChatMessage } from '../../entities/ChatMessage';
 import { PerformanceMetrics, QualityAssessment } from './SimulationResults';
 
 export class SimulationMetrics {

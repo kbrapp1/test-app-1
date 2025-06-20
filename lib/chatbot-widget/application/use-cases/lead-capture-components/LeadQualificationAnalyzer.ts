@@ -1,166 +1,139 @@
 /**
- * Lead Qualification Analyzer
+ * Lead Qualification Analyzer (AI-Only Version)
  * 
  * AI INSTRUCTIONS:
- * - Main orchestrator for lead qualification analysis functionality
- * - Application layer component that coordinates specialized analyzers
- * - Keep under 150 lines, focused on orchestration only
- * - Delegate specific responsibilities to focused sub-components
+ * - Single responsibility: Extract and format AI-provided qualification data
+ * - No business rules or thresholds - AI determines everything
+ * - Keep under 100 lines, focused on data extraction only
+ * - Use AI-provided qualification status, reasons, and confidence
  * - Follow @golden-rule patterns exactly
+ * - UPDATED: Removed all business rule analyzers - using OpenAI API decisions only
  */
 
 import { Lead } from '../../../domain/entities/Lead';
-import {
-  QualificationThresholds,
-  ContactInfoValidator,
-  EngagementAnalyzer,
-  RiskFactorAnalyzer,
-  QualificationStatusDeterminer,
-  QualificationReasonGenerator,
-  QualificationConfidenceCalculator,
-  type QualificationStatus,
-  type QualificationCriteria
-} from './qualification-analyzers';
 
-export type { QualificationStatus } from './qualification-analyzers';
+// AI-provided qualification types (from OpenAI function calling)
+export type QualificationStatus = 'qualified' | 'unqualified' | 'needs_review';
 
 export interface QualificationAnalysis {
   status: QualificationStatus;
   score: number;
   reasons: string[];
   confidence: number;
-  criteria: QualificationCriteria;
+  aiProvided: boolean; // Flag to indicate this came from AI
 }
 
 export class LeadQualificationAnalyzer {
   /**
-   * Analyze lead qualification status
+   * Extract qualification analysis from AI-provided data
+   * This replaces all business rule logic with AI decisions
    */
-  static analyzeQualification(lead: Lead, leadScore: number): QualificationAnalysis {
-    const criteria = this.evaluateCriteria(lead, leadScore);
-    const status = QualificationStatusDeterminer.determineStatus(leadScore, criteria);
-    const reasons = QualificationReasonGenerator.generateReasons(status, criteria, leadScore);
-    const confidence = QualificationConfidenceCalculator.calculateConfidence(criteria, leadScore);
+  static extractAIQualification(
+    leadScore: number,
+    aiQualificationData?: {
+      isQualified?: boolean;
+      readyForSales?: boolean;
+      qualificationReason?: string;
+      confidence?: number;
+    }
+  ): QualificationAnalysis {
+    // If AI provided qualification data, use it
+    if (aiQualificationData) {
+      return {
+        status: this.mapAIStatusToQualificationStatus(aiQualificationData),
+        score: leadScore,
+        reasons: aiQualificationData.qualificationReason 
+          ? [aiQualificationData.qualificationReason]
+          : [`AI-determined lead score: ${leadScore}`],
+        confidence: aiQualificationData.confidence || 0.8,
+        aiProvided: true
+      };
+    }
+
+    // Fallback: Simple score-based classification (minimal business logic)
+    return this.createFallbackQualification(leadScore);
+  }
+
+  /**
+   * Map AI qualification flags to our status enum
+   */
+  private static mapAIStatusToQualificationStatus(
+    aiData: {
+      isQualified?: boolean;
+      readyForSales?: boolean;
+      qualificationReason?: string;
+    }
+  ): QualificationStatus {
+    // AI explicitly says qualified and ready for sales
+    if (aiData.isQualified && aiData.readyForSales) {
+      return 'qualified';
+    }
+
+    // AI explicitly says not qualified
+    if (aiData.isQualified === false) {
+      return 'unqualified';
+    }
+
+    // AI says qualified but not ready for sales, or unclear
+    return 'needs_review';
+  }
+
+  /**
+   * Create minimal fallback qualification when AI data is unavailable
+   */
+  private static createFallbackQualification(leadScore: number): QualificationAnalysis {
+    // Minimal fallback logic - just use score ranges
+    let status: QualificationStatus;
+    let reason: string;
+
+    if (leadScore >= 80) {
+      status = 'qualified';
+      reason = `High lead score (${leadScore}) indicates strong qualification`;
+    } else if (leadScore < 30) {
+      status = 'unqualified';
+      reason = `Low lead score (${leadScore}) indicates poor fit`;
+    } else {
+      status = 'needs_review';
+      reason = `Moderate lead score (${leadScore}) requires manual review`;
+    }
 
     return {
       status,
       score: leadScore,
-      reasons,
-      confidence,
-      criteria
+      reasons: [reason],
+      confidence: 0.6, // Lower confidence for fallback
+      aiProvided: false
     };
   }
 
   /**
-   * Evaluate qualification criteria using specialized analyzers
-   */
-  private static evaluateCriteria(lead: Lead, leadScore: number): QualificationCriteria {
-    const hasMinimumContactInfo = ContactInfoValidator.hasMinimumContactInfo(lead);
-    const meetsScoreThreshold = QualificationThresholds.isScoreClearlyQualified(leadScore);
-    const hasEngagement = EngagementAnalyzer.hasEngagement(lead);
-    const completedQualification = EngagementAnalyzer.hasCompletedQualification(lead);
-    const riskFactors = RiskFactorAnalyzer.identifyRiskFactors(lead, leadScore);
-
-    return {
-      hasMinimumContactInfo,
-      meetsScoreThreshold,
-      hasEngagement,
-      completedQualification,
-      riskFactors
-    };
-  }
-
-  /**
-   * Get qualification summary for reporting
+   * Get simple qualification summary for reporting
    */
   static getQualificationSummary(analysis: QualificationAnalysis): {
-    status: QualificationStatus;
-    score: number;
-    confidence: number;
-    primaryReason: string;
-    actionRequired: string;
+    isQualified: boolean;
+    readyForSales: boolean;
+    nextAction: string;
   } {
-    const primaryReason = QualificationReasonGenerator.getPrimaryReason(
-      analysis.status,
-      analysis.criteria,
-      analysis.score
-    );
-    
-    const actionRequired = QualificationStatusDeterminer.getNextAction(analysis.status);
-
     return {
-      status: analysis.status,
-      score: analysis.score,
-      confidence: analysis.confidence,
-      primaryReason,
-      actionRequired
+      isQualified: analysis.status === 'qualified',
+      readyForSales: analysis.status === 'qualified',
+      nextAction: this.getNextAction(analysis.status)
     };
   }
 
   /**
-   * Get detailed qualification breakdown
+   * Get recommended next action based on qualification status
    */
-  static getDetailedBreakdown(lead: Lead, leadScore: number): {
-    analysis: QualificationAnalysis;
-    contactInfo: {
-      completeness: number;
-      missing: string[];
-      hasMinimum: boolean;
-    };
-    engagement: {
-      score: number;
-      description: string;
-      strengths: string[];
-      concerns: string[];
-    };
-    riskAssessment: {
-      riskLevel: 'low' | 'medium' | 'high' | 'critical';
-      riskScore: number;
-      recommendations: string[];
-    };
-    confidenceFactors: Array<{
-      factor: string;
-      points: number;
-      description: string;
-    }>;
-  } {
-    const analysis = this.analyzeQualification(lead, leadScore);
-    
-    return {
-      analysis,
-      contactInfo: {
-        completeness: ContactInfoValidator.getContactInfoCompleteness(lead),
-        missing: ContactInfoValidator.getMissingContactInfo(lead),
-        hasMinimum: ContactInfoValidator.hasMinimumContactInfo(lead)
-      },
-      engagement: {
-        score: EngagementAnalyzer.getEngagementScore(lead),
-        description: EngagementAnalyzer.getEngagementDescription(lead),
-        strengths: EngagementAnalyzer.getEngagementStrengths(lead),
-        concerns: EngagementAnalyzer.getEngagementConcerns(lead)
-      },
-      riskAssessment: RiskFactorAnalyzer.assessRisk(lead, leadScore),
-      confidenceFactors: QualificationConfidenceCalculator.getConfidenceFactors(
-        analysis.criteria,
-        leadScore
-      )
-    };
-  }
-
-  /**
-   * Quick qualification check (simplified)
-   */
-  static isQualified(lead: Lead, leadScore: number): boolean {
-    const analysis = this.analyzeQualification(lead, leadScore);
-    return analysis.status === 'qualified';
-  }
-
-  /**
-   * Check if manual review is required
-   */
-  static requiresManualReview(lead: Lead, leadScore: number): boolean {
-    const analysis = this.analyzeQualification(lead, leadScore);
-    return analysis.status === 'needs_review' || 
-           QualificationConfidenceCalculator.requiresManualReview(analysis.confidence);
+  private static getNextAction(status: QualificationStatus): string {
+    switch (status) {
+      case 'qualified':
+        return 'immediate_sales_handoff';
+      case 'unqualified':
+        return 'nurture_sequence';
+      case 'needs_review':
+        return 'manual_review';
+      default:
+        return 'manual_review';
+    }
   }
 } 

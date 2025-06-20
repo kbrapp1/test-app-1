@@ -180,7 +180,13 @@ export function AdvancedParametersSection() {
 
         {/* Business Rules Tab */}
         <TabsContent value="business-rules" className="space-y-4">
-          <BusinessRulesSection />
+          <BusinessRulesSection 
+            config={existingConfig} 
+            onUpdate={(updates) => {
+              // AI-driven business rules don't need parameter updates
+              // This is just for interface compatibility
+            }} 
+          />
         </TabsContent>
       </Tabs>
 

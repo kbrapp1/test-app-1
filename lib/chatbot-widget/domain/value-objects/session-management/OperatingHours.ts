@@ -38,16 +38,33 @@ export class OperatingHours {
     return new OperatingHours({
       timezone,
       businessHours: [
-        { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isActive: true }, // Monday
-        { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isActive: true }, // Tuesday
-        { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isActive: true }, // Wednesday
-        { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isActive: true }, // Thursday
-        { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isActive: true }, // Friday
-        { dayOfWeek: 6, startTime: '10:00', endTime: '14:00', isActive: false }, // Saturday
-        { dayOfWeek: 0, startTime: '10:00', endTime: '14:00', isActive: false }, // Sunday
+        { dayOfWeek: 0, startTime: '00:00', endTime: '23:59', isActive: true }, // Sunday
+        { dayOfWeek: 1, startTime: '00:00', endTime: '23:59', isActive: true }, // Monday
+        { dayOfWeek: 2, startTime: '00:00', endTime: '23:59', isActive: true }, // Tuesday
+        { dayOfWeek: 3, startTime: '00:00', endTime: '23:59', isActive: true }, // Wednesday
+        { dayOfWeek: 4, startTime: '00:00', endTime: '23:59', isActive: true }, // Thursday
+        { dayOfWeek: 5, startTime: '00:00', endTime: '23:59', isActive: true }, // Friday
+        { dayOfWeek: 6, startTime: '00:00', endTime: '23:59', isActive: true }, // Saturday
       ],
       holidaySchedule: [],
       outsideHoursMessage: 'Thank you for your message. Our team is currently offline. We will get back to you during our business hours.',
+    });
+  }
+
+  static create24x7(timezone: string = 'UTC'): OperatingHours {
+    return new OperatingHours({
+      timezone,
+      businessHours: [
+        { dayOfWeek: 0, startTime: '00:00', endTime: '23:59', isActive: true }, // Sunday
+        { dayOfWeek: 1, startTime: '00:00', endTime: '23:59', isActive: true }, // Monday
+        { dayOfWeek: 2, startTime: '00:00', endTime: '23:59', isActive: true }, // Tuesday
+        { dayOfWeek: 3, startTime: '00:00', endTime: '23:59', isActive: true }, // Wednesday
+        { dayOfWeek: 4, startTime: '00:00', endTime: '23:59', isActive: true }, // Thursday
+        { dayOfWeek: 5, startTime: '00:00', endTime: '23:59', isActive: true }, // Friday
+        { dayOfWeek: 6, startTime: '00:00', endTime: '23:59', isActive: true }, // Saturday
+      ],
+      holidaySchedule: [],
+      outsideHoursMessage: 'I\'m available 24/7 to help you!',
     });
   }
 

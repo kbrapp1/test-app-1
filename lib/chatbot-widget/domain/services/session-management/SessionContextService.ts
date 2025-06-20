@@ -1,15 +1,19 @@
 import { SessionContext, PageView, ContactInfo } from '../../value-objects/session-management/ChatSessionTypes';
-import { SessionEngagementService } from './SessionEngagementService';
 
 /**
  * Session Context Service
- * Domain Service: Pure business logic for managing session context data
- * Following DDD principles: Single responsibility for context management
+ * 
+ * AI INSTRUCTIONS:
+ * - Domain Service: Pure business logic for managing session context data
+ * - Following @golden-rule DDD principles: Single responsibility for context management
+ * - All utility functions inlined following pure function patterns
+ * - No external service dependencies, maintaining domain layer purity
  */
 export class SessionContextService {
   
   /**
    * Add page view to context
+   * AI INSTRUCTIONS: Inline page view creation following @golden-rule immutability patterns
    */
   static addPageView(
     context: SessionContext,
@@ -17,7 +21,13 @@ export class SessionContextService {
     title: string,
     timeOnPage: number = 0
   ): SessionContext {
-    const pageView = SessionEngagementService.createPageView(url, title, timeOnPage);
+    // Inline PageView creation - pure value object pattern
+    const pageView: PageView = {
+      url,
+      title,
+      timestamp: new Date(),
+      timeOnPage
+    };
     
     return {
       ...context,
@@ -37,9 +47,11 @@ export class SessionContextService {
 
   /**
    * Add topic to context
+   * AI INSTRUCTIONS: Inline topic existence check following @golden-rule pure function pattern
    */
   static addTopic(context: SessionContext, topic: string): SessionContext {
-    if (SessionEngagementService.hasTopicInContext(context, topic)) {
+    // Inline topic existence check - simple array includes
+    if (context.topics.includes(topic)) {
       return context;
     }
 
@@ -51,9 +63,11 @@ export class SessionContextService {
 
   /**
    * Add interest to context
+   * AI INSTRUCTIONS: Inline interest existence check following @golden-rule pure function pattern
    */
   static addInterest(context: SessionContext, interest: string): SessionContext {
-    if (SessionEngagementService.hasInterestInContext(context, interest)) {
+    // Inline interest existence check - simple array includes
+    if (context.interests.includes(interest)) {
       return context;
     }
 
@@ -65,9 +79,11 @@ export class SessionContextService {
 
   /**
    * Update engagement score
+   * AI INSTRUCTIONS: Inline score clamping following @golden-rule value object validation pattern
    */
   static updateEngagementScore(context: SessionContext, score: number): SessionContext {
-    const clampedScore = SessionEngagementService.clampEngagementScore(score);
+    // Inline engagement score clamping - ensures valid range 0-100
+    const clampedScore = Math.max(0, Math.min(100, score));
     
     return {
       ...context,

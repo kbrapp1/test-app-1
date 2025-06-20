@@ -24,6 +24,40 @@ export interface ChatMessageProps {
   costTracking: MessageCostTracking;
 }
 
+/**
+ * Collision-resistant ID generator for chat messages
+ * Uses crypto.randomUUID() with timestamp-based uniqueness guarantee
+ */
+class ChatMessageIdGenerator {
+  private static lastTimestamp = 0;
+  private static counter = 0;
+
+  static generate(): string {
+    const now = Date.now();
+    
+    // Reset counter if timestamp changed
+    if (now !== this.lastTimestamp) {
+      this.counter = 0;
+      this.lastTimestamp = now;
+    } else {
+      this.counter++;
+    }
+    
+    // Generate base UUID and modify the last few characters with counter
+    const baseUuid = crypto.randomUUID();
+    const counterHex = this.counter.toString(16).padStart(3, '0').substring(0, 3);
+    
+    // Replace last 3 characters before final hyphen with counter
+    // Original: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    // Modified: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx<counter>
+    const parts = baseUuid.split('-');
+    const lastPart = parts[4];
+    parts[4] = lastPart.substring(0, 9) + counterHex;
+    
+    return parts.join('-');
+  }
+}
+
 export type MessageType = 'user' | 'bot' | 'system' | 'lead_capture' | 'qualification';
 
 export class ChatMessage {
@@ -35,13 +69,21 @@ export class ChatMessage {
     return new ChatMessage(props);
   }
 
+  /**
+   * Generate collision-resistant ID for chat messages
+   * Static method to expose the ID generator for external use
+   */
+  static generateId(): string {
+    return ChatMessageIdGenerator.generate();
+  }
+
   static createUserMessage(
     sessionId: string,
     content: string,
     inputMethod: 'text' | 'voice' | 'button' = 'text'
   ): ChatMessage {
     return new ChatMessage({
-      id: crypto.randomUUID(),
+      id: ChatMessageIdGenerator.generate(),
       sessionId,
       messageType: 'user',
       content: content.trim(),
@@ -89,7 +131,7 @@ export class ChatMessage {
       : MessageCostTracking.createZeroCost();
 
     return new ChatMessage({
-      id: crypto.randomUUID(),
+      id: ChatMessageIdGenerator.generate(),
       sessionId,
       messageType: 'bot',
       content: content.trim(),
@@ -158,6 +200,13 @@ export class ChatMessage {
     return new ChatMessage({
       ...this.props,
       contextMetadata: this.props.contextMetadata.updateUrgency(urgency),
+    });
+  }
+
+  updateEngagement(engagement: 'low' | 'medium' | 'high'): ChatMessage {
+    return new ChatMessage({
+      ...this.props,
+      contextMetadata: this.props.contextMetadata.updateEngagement(engagement),
     });
   }
 
@@ -236,6 +285,7 @@ export class ChatMessage {
       confidence: this.props.aiMetadata.confidence,
       sentiment: this.props.contextMetadata.sentiment,
       urgency: this.props.contextMetadata.urgency,
+      engagement: this.props.contextMetadata.engagement,
       hasEntities: this.hasEntities(),
       hasError: this.hasError(),
     };

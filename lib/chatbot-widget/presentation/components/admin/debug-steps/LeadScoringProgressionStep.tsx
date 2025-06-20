@@ -33,7 +33,7 @@ export function LeadScoringProgressionStep({
                 <strong>Score Change:</strong> +{leadScoring.scoreChange}
               </div>
               <div>
-                <strong>Processing Time:</strong> {leadScoring.processingTime}ms
+                <strong>Processing Time:</strong> {leadScoring.scoringMetrics?.processingTime || 'N/A'}ms
               </div>
             </div>
           )}

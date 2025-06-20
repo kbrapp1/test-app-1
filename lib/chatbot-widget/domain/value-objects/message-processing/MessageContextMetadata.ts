@@ -15,6 +15,7 @@ export interface MessageContextMetadataProps {
   topicsDiscussed: string[];
   sentiment?: 'positive' | 'neutral' | 'negative';
   urgency?: 'low' | 'medium' | 'high';
+  engagement?: 'low' | 'medium' | 'high';
   
   // User interaction metadata
   inputMethod?: 'text' | 'voice' | 'button';
@@ -91,6 +92,10 @@ export class MessageContextMetadata {
       throw new Error('Urgency must be low, medium, or high');
     }
 
+    if (props.engagement && !['low', 'medium', 'high'].includes(props.engagement)) {
+      throw new Error('Engagement must be low, medium, or high');
+    }
+
     if (props.inputMethod && !['text', 'voice', 'button'].includes(props.inputMethod)) {
       throw new Error('Input method must be text, voice, or button');
     }
@@ -111,6 +116,7 @@ export class MessageContextMetadata {
   get topicsDiscussed(): string[] { return [...this.props.topicsDiscussed]; }
   get sentiment(): 'positive' | 'neutral' | 'negative' | undefined { return this.props.sentiment; }
   get urgency(): 'low' | 'medium' | 'high' | undefined { return this.props.urgency; }
+  get engagement(): 'low' | 'medium' | 'high' | undefined { return this.props.engagement; }
   get inputMethod(): 'text' | 'voice' | 'button' | undefined { return this.props.inputMethod; }
   get errorType(): string | undefined { return this.props.errorType; }
   get errorCode(): string | undefined { return this.props.errorCode; }
@@ -145,6 +151,14 @@ export class MessageContextMetadata {
     return new MessageContextMetadata({
       ...this.props,
       urgency,
+      updatedAt: new Date(),
+    });
+  }
+
+  updateEngagement(engagement: 'low' | 'medium' | 'high'): MessageContextMetadata {
+    return new MessageContextMetadata({
+      ...this.props,
+      engagement,
       updatedAt: new Date(),
     });
   }
@@ -228,6 +242,14 @@ export class MessageContextMetadata {
     return this.props.urgency === 'low';
   }
 
+  isHighEngagement(): boolean {
+    return this.props.engagement === 'high';
+  }
+
+  isLowEngagement(): boolean {
+    return this.props.engagement === 'low';
+  }
+
   isVoiceInput(): boolean {
     return this.props.inputMethod === 'voice';
   }
@@ -273,6 +295,10 @@ export class MessageContextMetadata {
       parts.push(`${this.props.urgency} urgency`);
     }
     
+    if (this.props.engagement) {
+      parts.push(`${this.props.engagement} engagement`);
+    }
+    
     if (this.isLeadQualification()) {
       parts.push(`qualification step ${this.props.qualificationStep}`);
     }
@@ -291,6 +317,7 @@ export class MessageContextMetadata {
       this.props.expectedAnswerType === other.props.expectedAnswerType &&
       this.props.sentiment === other.props.sentiment &&
       this.props.urgency === other.props.urgency &&
+      this.props.engagement === other.props.engagement &&
       this.props.inputMethod === other.props.inputMethod &&
       this.props.errorType === other.props.errorType &&
       this.props.topicsDiscussed.length === other.props.topicsDiscussed.length

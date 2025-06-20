@@ -2,25 +2,32 @@
  * Conversation Session Update Service
  * 
  * AI INSTRUCTIONS:
- * - Handle session context updates with new messages
- * - Focus on session state management and context updates
+ * - UPDATED: Added intent persistence for smart context maintenance
+ * - Use IntentPersistenceService to maintain business context across turns
+ * - Update session context with new message using API-provided data
+ * - Extract and update lead information (company, visitor name)
+ * - Single responsibility: Session state updates based on conversation analysis
  * - Keep under 200 lines following @golden-rule patterns
- * - Maintain single responsibility for session updates
- * - Use domain-specific value objects for context analysis
+ * - Create simple conversation summaries without business rule dependencies
+ * - Maintain clean separation of concerns
  */
 
 import { ChatSession } from '../../entities/ChatSession';
 import { ChatMessage } from '../../entities/ChatMessage';
 import { ContextAnalysis, ContextAnalysisValueObject } from '../../value-objects/message-processing/ContextAnalysis';
-import { ConversationStageService } from './ConversationStageService';
+import { LeadExtractionService } from '../lead-management/LeadExtractionService';
+import { ContactInfo } from '../../value-objects/lead-management/ContactInfo';
+import { IntentPersistenceService } from '../session-management/IntentPersistenceService';
 
 export class ConversationSessionUpdateService {
-  constructor(
-    private conversationStageService: ConversationStageService
-  ) {}
+  private readonly leadExtractionService: LeadExtractionService;
+
+  constructor() {
+    this.leadExtractionService = new LeadExtractionService();
+  }
 
   /**
-   * Update session context with new message
+   * Update session context with new message using API-provided data
    */
   updateSessionContext(
     session: ChatSession,
@@ -28,19 +35,12 @@ export class ConversationSessionUpdateService {
     allMessages: ChatMessage[],
     analysis: ContextAnalysis
   ): ChatSession {
-    const analysisValueObject = new ContextAnalysisValueObject(
-      analysis.topics,
-      analysis.interests,
-      analysis.sentiment,
-      analysis.engagementLevel,
-      analysis.userIntent,
-      analysis.urgency,
-      analysis.conversationStage
-    );
+    // Convert API-provided engagement level to numerical score for session storage
+    const engagementScore = this.convertEngagementLevelToScore(analysis.engagementLevel);
     
     let updatedSession = session
-      .updateEngagementScore(analysisValueObject.calculateEngagementScore())
-      .updateConversationSummary(this.conversationStageService.createConversationSummary(allMessages));
+      .updateEngagementScore(engagementScore)
+      .updateConversationSummary(this.createSimpleConversationSummary(allMessages));
 
     // Add new topics
     analysis.topics.forEach(topic => {
@@ -52,25 +52,121 @@ export class ConversationSessionUpdateService {
       updatedSession = updatedSession.addInterest(interest);
     });
 
+    // Extract and update lead information (company, visitor name, contact info)
+    updatedSession = this.updateSessionWithLeadInfo(updatedSession, allMessages);
+
     return updatedSession;
   }
 
   /**
-   * Update session with enhanced analysis results
+   * Extract and update session with lead information
    */
-  updateSessionWithEnhancedAnalysis(
+  private updateSessionWithLeadInfo(session: ChatSession, allMessages: ChatMessage[]): ChatSession {
+    const extractedInfo = this.leadExtractionService.extractLeadInformation(allMessages);
+    
+    // Prepare contact info data
+    const contactData = {
+      email: extractedInfo.email || session.contextData.email,
+      phone: extractedInfo.phone || session.contextData.phone,
+      name: extractedInfo.name || session.contextData.visitorName || undefined,
+      company: extractedInfo.company || session.contextData.company || undefined
+    };
+    
+    // Only create ContactInfo if we have at least email or phone
+    const hasRequiredContact = contactData.email || contactData.phone;
+    
+    // Only update if we have extracted some lead information AND have required contact info
+    if ((extractedInfo.name || extractedInfo.email || extractedInfo.phone || extractedInfo.company) && hasRequiredContact) {
+      const contactInfo = ContactInfo.create(contactData);
+      return session.captureContactInfo(contactInfo);
+    }
+    
+    return session;
+  }
+
+  /**
+   * Convert API-provided engagement level to numerical score
+   */
+  private convertEngagementLevelToScore(engagementLevel: 'low' | 'medium' | 'high'): number {
+    switch (engagementLevel) {
+      case 'high': return 85;
+      case 'medium': return 55;
+      case 'low': return 25;
+      default: return 25;
+    }
+  }
+
+  /**
+   * Create simple conversation summary from messages
+   * AI INSTRUCTIONS: Simple summary without complex business rule dependencies
+   */
+  private createSimpleConversationSummary(messages: ChatMessage[]): string {
+    const userMessages = messages.filter(m => m.isFromUser());
+    const botMessages = messages.filter(m => !m.isFromUser());
+    
+    if (userMessages.length === 0) {
+      return 'No user messages yet';
+    }
+    
+    const totalMessages = messages.length;
+    const conversationLength = userMessages.length;
+    
+    // Simple summary based on message count and basic patterns
+    const summary = `Conversation with ${conversationLength} user messages (${totalMessages} total). ` +
+      `Latest user message: "${userMessages[userMessages.length - 1]?.content.substring(0, 100)}..."`;
+    
+    return summary;
+  }
+
+  /**
+   * Update conversation summary from messages
+   */
+  updateConversationSummary(
+    session: ChatSession,
+    messages: ChatMessage[]
+  ): ChatSession {
+    const conversationSummary = this.createSimpleConversationSummary(messages);
+    return session.updateConversationSummary(conversationSummary);
+  }
+
+  /**
+   * Update session with intent data for persistence
+   */
+  updateSessionWithIntentData(
+    session: ChatSession,
+    message: ChatMessage,
+    intentData: any,
+    turnNumber: number
+  ): ChatSession {
+    // Update intent history using the persistence service
+    const updatedContextData = IntentPersistenceService.updateIntentHistory(
+      session.contextData,
+      intentData,
+      message.id,
+      turnNumber
+    );
+
+    return session.updateContextData(updatedContextData);
+  }
+
+  /**
+   * Update session context with enhanced analysis including intent persistence
+   */
+  updateSessionWithEnhancedAnalysisAndIntent(
     session: ChatSession,
     message: ChatMessage,
     allMessages: ChatMessage[],
-    enhancedAnalysis: ContextAnalysis
+    enhancedAnalysis: ContextAnalysis,
+    intentData?: any
   ): ChatSession {
     // First apply base context updates
     let updatedSession = this.updateSessionContext(session, message, allMessages, enhancedAnalysis);
 
-    // Apply enhanced analysis updates if available
-    // Note: Enhanced analysis data is already included in the context
-    // Journey state and intent result are part of the context analysis
-    // but don't require separate session updates as they're handled through context
+    // Add intent persistence if intent data is available
+    if (intentData) {
+      const turnNumber = allMessages.length + 1; // Current turn number
+      updatedSession = this.updateSessionWithIntentData(updatedSession, message, intentData, turnNumber);
+    }
 
     return updatedSession;
   }
@@ -82,28 +178,18 @@ export class ConversationSessionUpdateService {
     session: ChatSession,
     messages: ChatMessage[]
   ): ChatSession {
-    const conversationSummary = this.conversationStageService.createConversationSummary(messages);
+    const conversationSummary = this.createSimpleConversationSummary(messages);
     return session.updateConversationSummary(conversationSummary);
   }
 
   /**
-   * Update session engagement metrics
+   * Update session engagement metrics using API-provided data
    */
   updateSessionEngagement(
     session: ChatSession,
     analysis: ContextAnalysis
   ): ChatSession {
-    const analysisValueObject = new ContextAnalysisValueObject(
-      analysis.topics,
-      analysis.interests,
-      analysis.sentiment,
-      analysis.engagementLevel,
-      analysis.userIntent,
-      analysis.urgency,
-      analysis.conversationStage
-    );
-
-    const engagementScore = analysisValueObject.calculateEngagementScore();
+    const engagementScore = this.convertEngagementLevelToScore(analysis.engagementLevel);
     return session.updateEngagementScore(engagementScore);
   }
 } 

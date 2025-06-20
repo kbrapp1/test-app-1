@@ -5,7 +5,7 @@
  * and handling complex creation scenarios with proper value object composition.
  */
 
-import { ChatMessage, ChatMessageProps } from '../../entities/ChatMessage';
+import { ChatMessage, ChatMessageProps, MessageType } from '../../entities/ChatMessage';
 import { MessageAIMetadata } from '../../value-objects/message-processing/MessageAIMetadata';
 import { MessageContextMetadata } from '../../value-objects/message-processing/MessageContextMetadata';
 import { MessageProcessingMetrics } from '../../value-objects/message-processing/MessageProcessingMetrics';
@@ -123,7 +123,7 @@ export class ChatMessageFactoryService {
     const contextMetadata = MessageContextMetadata.createEmpty();
 
     const props: ChatMessageProps = {
-      id: crypto.randomUUID(),
+      id: ChatMessage.generateId(),
       sessionId,
       messageType: 'bot',
       content: content.trim(),
@@ -155,7 +155,7 @@ export class ChatMessageFactoryService {
     const costTracking = MessageCostTracking.createZeroCost();
 
     const props: ChatMessageProps = {
-      id: crypto.randomUUID(),
+      id: ChatMessage.generateId(),
       sessionId,
       messageType: 'system',
       content,

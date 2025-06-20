@@ -105,14 +105,23 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       logFile = path.join(logDir, logFileName);
     }
     
-    const logEntry = (message: string) => {
-      // Check if file logging is disabled via environment variable
+    // Optimized logging: Check environment variable once and return appropriate function
+    const createLogEntry = () => {
       const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-      if (!fileLoggingEnabled) return;
       
-      const logLine = `[${timestamp}] ${message}\n`;
-      fs.appendFileSync(logFile, logLine);
+      if (!fileLoggingEnabled) {
+        // Return no-op function when logging disabled - zero overhead
+        return () => {};
+      }
+      
+      // Return active logging function when enabled
+      return (message: string) => {
+        const logLine = `[${timestamp}] ${message}\n`;
+        fs.appendFileSync(logFile, logLine);
+      };
     };
+    
+    const logEntry = createLogEntry();
     
     logEntry('\n🗄️  =================================');
     logEntry('🗄️  DATABASE OPERATION - UPDATE SESSION');
@@ -247,14 +256,23 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       logFile = path.join(logDir, logFileName);
     }
     
-    const logEntry = (message: string) => {
-      // Check if file logging is disabled via environment variable
+    // Optimized logging: Check environment variable once and return appropriate function
+    const createLogEntry = () => {
       const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-      if (!fileLoggingEnabled) return;
       
-      const logLine = `[${timestamp}] ${message}\n`;
-      fs.appendFileSync(logFile, logLine);
+      if (!fileLoggingEnabled) {
+        // Return no-op function when logging disabled - zero overhead
+        return () => {};
+      }
+      
+      // Return active logging function when enabled
+      return (message: string) => {
+        const logLine = `[${timestamp}] ${message}\n`;
+        fs.appendFileSync(logFile, logLine);
+      };
     };
+    
+    const logEntry = createLogEntry();
     
     logEntry('\n🗄️  =================================');
     logEntry('🗄️  DATABASE OPERATION - CREATE SESSION');

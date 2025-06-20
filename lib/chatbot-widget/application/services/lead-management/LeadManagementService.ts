@@ -14,7 +14,7 @@ import { LeadCaptureService, LeadCaptureRequest } from './LeadCaptureService';
 import { LeadLifecycleService } from './LeadLifecycleService';
 import { LeadQueryService, LeadSearchFilters, PaginatedLeadResult } from './LeadQueryService';
 
-import { LeadDto, UpdateLeadDto, LeadAnalyticsDto } from '../dto/LeadDto';
+import { LeadDto, UpdateLeadDto, LeadAnalyticsDto } from '../../dto/LeadDto';
 
 export class LeadManagementService {
   constructor(
@@ -134,18 +134,25 @@ export class LeadManagementService {
 
   /**
    * Update lead information
-   * Delegates to LeadLifecycleService
+   * Delegates to appropriate services based on update type
    */
   async updateLead(id: string, updates: UpdateLeadDto): Promise<LeadDto> {
-    return this.leadLifecycleService.updateLead(id, updates);
-  }
+    // Use the updateFollowUpStatus method if status is being updated
+    if (updates.followUpStatus) {
+      const updatedLead = await this.leadLifecycleService.updateFollowUpStatus(id, updates.followUpStatus);
+      // Convert Lead to LeadDto through query service
+      return this.leadQueryService.getLeadById(updatedLead.id) as Promise<LeadDto>;
+    }
 
-  /**
-   * Recalculate lead score
-   * Delegates to LeadLifecycleService
-   */
-  async recalculateLeadScore(id: string): Promise<LeadDto> {
-    return this.leadLifecycleService.recalculateLeadScore(id);
+    // Use assignLead if assignedTo is being updated
+    if (updates.assignedTo) {
+      const updatedLead = await this.leadLifecycleService.assignLead(id, updates.assignedTo);
+      return this.leadQueryService.getLeadById(updatedLead.id) as Promise<LeadDto>;
+    }
+
+    // For other updates, delegate to query service (which should handle updates)
+    // This is a simplified approach - in a real implementation, we'd need a proper update service
+    throw new Error('Complex lead updates not yet implemented - please use specific methods');
   }
 
   /**
@@ -153,7 +160,12 @@ export class LeadManagementService {
    * Delegates to LeadLifecycleService
    */
   async markAsContacted(id: string): Promise<LeadDto> {
-    return this.leadLifecycleService.markAsContacted(id);
+    await this.leadLifecycleService.updateFollowUpStatus(id, 'contacted');
+    const result = await this.leadQueryService.getLeadById(id);
+    if (!result) {
+      throw new Error(`Lead ${id} not found after update`);
+    }
+    return result;
   }
 
   /**
@@ -161,7 +173,12 @@ export class LeadManagementService {
    * Delegates to LeadLifecycleService
    */
   async markAsConverted(id: string): Promise<LeadDto> {
-    return this.leadLifecycleService.markAsConverted(id);
+    await this.leadLifecycleService.convertLead(id);
+    const result = await this.leadQueryService.getLeadById(id);
+    if (!result) {
+      throw new Error(`Lead ${id} not found after conversion`);
+    }
+    return result;
   }
 
   /**
@@ -169,7 +186,12 @@ export class LeadManagementService {
    * Delegates to LeadLifecycleService
    */
   async markAsLost(id: string): Promise<LeadDto> {
-    return this.leadLifecycleService.markAsLost(id);
+    await this.leadLifecycleService.markAsLost(id);
+    const result = await this.leadQueryService.getLeadById(id);
+    if (!result) {
+      throw new Error(`Lead ${id} not found after marking as lost`);
+    }
+    return result;
   }
 
   /**
@@ -177,22 +199,29 @@ export class LeadManagementService {
    * Delegates to LeadLifecycleService
    */
   async assignLead(id: string, userId: string): Promise<LeadDto> {
-    return this.leadLifecycleService.assignLead(id, userId);
+    await this.leadLifecycleService.assignLead(id, userId);
+    const result = await this.leadQueryService.getLeadById(id);
+    if (!result) {
+      throw new Error(`Lead ${id} not found after assignment`);
+    }
+    return result;
   }
 
   /**
    * Add tag to lead
-   * Delegates to LeadLifecycleService
+   * Note: This functionality should be implemented in LeadLifecycleService
    */
   async addTag(id: string, tag: string): Promise<LeadDto> {
-    return this.leadLifecycleService.addTag(id, tag);
+    // For now, throw an error indicating this needs to be implemented
+    throw new Error('Add tag functionality not yet implemented - needs to be added to LeadLifecycleService');
   }
 
   /**
    * Remove tag from lead
-   * Delegates to LeadLifecycleService
+   * Note: This functionality should be implemented in LeadLifecycleService
    */
   async removeTag(id: string, tag: string): Promise<LeadDto> {
-    return this.leadLifecycleService.removeTag(id, tag);
+    // For now, throw an error indicating this needs to be implemented
+    throw new Error('Remove tag functionality not yet implemented - needs to be added to LeadLifecycleService');
   }
 } 

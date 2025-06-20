@@ -29,73 +29,51 @@
 └── Returns: ProcessMessageResult
 ```
 
-### **3. Context Analysis Flow (⭐ Key Path)**
+### **3. Context Analysis Flow (⭐ Key Path) - NOW API-DRIVEN**
 ```
 📁 lib/chatbot-widget/domain/services/conversation/ConversationContextOrchestrator.ts
 ├── Imports:
-│   ├── MessageAnalysisOrchestrator ⭐
 │   ├── ConversationStageService
-│   └── ConversationEnhancedAnalysisService
-├── analyzeContextEnhanced() calls:
-│   ├── analyzeContext() ⭐
-│   └── enhancedAnalysisService.enhanceAnalysis()
-├── analyzeContext() calls:
-│   ├── messageAnalysisOrchestrator.extractTopics() ⭐
-│   ├── messageAnalysisOrchestrator.extractInterests() ⭐
-│   ├── messageAnalysisOrchestrator.analyzeSentiment() ⭐
-│   ├── messageAnalysisOrchestrator.calculateEngagementLevel() ⭐
-│   ├── messageAnalysisOrchestrator.detectUserIntent() ⭐
-│   └── messageAnalysisOrchestrator.assessUrgency() ⭐
-└── Returns: ContextAnalysis
+│   └── UserJourneyState (NO MORE manual analysis services)
+├── analyzeContext() calls (SIMPLIFIED):
+│   ├── Uses API-provided data from OpenAI ⭐
+│   ├── conversationStageService.determineConversationStage()
+│   └── Creates ContextAnalysisValueObject with API data
+└── Returns: ContextAnalysis (API-powered)
 ```
 
-### **4. Message Analysis Orchestration (⭐ Core Analysis)**
+### **4. Message Processing (⭐ Now API-Driven)**
 ```
-📁 lib/chatbot-widget/domain/services/message-processing/MessageAnalysisOrchestrator.ts
-├── Imports:
-│   ├── MessageContentAnalysisService ⭐
-│   ├── MessageSentimentAnalysisService ⭐
-│   └── MessageIntentAnalysisService ⭐
-├── Constructor creates instances of all 3 services
-├── Methods delegate to specific services:
-│   ├── extractTopics() → contentAnalysisService.extractTopics()
-│   ├── extractInterests() → contentAnalysisService.extractInterests()
-│   ├── analyzeSentiment() → sentimentAnalysisService.analyzeSentiment()
-│   ├── calculateEngagementLevel() → sentimentAnalysisService.calculateEngagementLevel()
-│   ├── detectUserIntent() → intentAnalysisService.detectUserIntent()
-│   └── assessUrgency() → sentimentAnalysisService.assessUrgency()
-└── Returns: Analysis results
+📁 lib/chatbot-widget/application/services/message-processing/MessageProcessingWorkflowService.ts
+├── Creates user message in database
+├── Calls OpenAI API for sentiment, urgency, engagement analysis ⭐
+├── Updates message with API-provided analysis:
+│   ├── aiConversationService.analyzeSentiment() → API call
+│   ├── aiConversationService.analyzeUrgency() → API call
+│   └── aiConversationService.analyzeEngagement() → API call
+└── Returns: Message with API analysis
 ```
 
-### **5. Specialized Analysis Services (⭐ Actual Processing)**
+### **5. OpenAI API Analysis (⭐ Actual Processing)**
 ```
-📁 lib/chatbot-widget/domain/services/message-processing/
-├── MessageContentAnalysisService.ts
-│   ├── extractTopics(["Hi"]) → [] (no topics in greeting)
-│   ├── extractInterests(["Hi"]) → [] (no interests detected)
-│   └── extractUserNeeds(["Hi"]) → [] (no needs in greeting)
-├── MessageSentimentAnalysisService.ts
-│   ├── analyzeSentiment(["Hi"]) → 'neutral' (greeting sentiment)
-│   ├── calculateEngagementLevel(["Hi"]) → 'low' (short message)
-│   └── assessUrgency(["Hi"]) → 'low' (no urgency keywords)
-└── MessageIntentAnalysisService.ts
-    ├── detectUserIntent(["Hi"]) → 'general_inquiry' (no specific intent)
-    └── analyzeIntentConfidence(["Hi"]) → 0.1 (low confidence)
+📁 lib/chatbot-widget/application/services/conversation-management/AiConversationService.ts
+├── analyzeSentiment(["Hi"]) → OpenAI API → 'neutral' (greeting sentiment)
+├── analyzeUrgency(["Hi"]) → OpenAI API → 'low' (no urgency keywords)
+├── analyzeEngagement(["Hi"]) → OpenAI API → 'low' (short message)
+└── All analysis done by OpenAI with comprehensive context understanding
 ```
 
 ### **6. AI Response Generation**
 ```
-📁 lib/chatbot-widget/application/services/AiConversationService.ts
+📁 lib/chatbot-widget/application/services/conversation-management/AiConversationService.ts
 ├── Imports:
-│   ├── OpenAIProvider ⭐
-│   ├── ConversationIntentService (unused in main flow)
-│   └── ConversationSentimentService (unused in main flow)
+│   └── OpenAIProvider ⭐ (CLEANED: No more manual analysis services)
 ├── generateResponse() calls:
 │   ├── validateContext()
-│   ├── dynamicPromptService.generateSystemPrompt()
+│   ├── dynamicPromptService.generateSystemPrompt() (includes sentiment/urgency context)
 │   ├── buildConversationMessages()
 │   └── openAIProvider.createChatCompletion() ⭐
-└── Returns: AIResponse
+└── Returns: AIResponse (with enhanced context awareness)
 ```
 
 ### **7. OpenAI Provider (⭐ External API)**
@@ -122,41 +100,48 @@
 
 ## **🎯 Execution Order Summary**
 
-### **When User Types "Hi":**
+### **When User Types "Hi" (NEW API-DRIVEN FLOW):**
 
 1. **API Route** → ProcessChatMessageUseCase
-2. **Use Case** → ConversationContextOrchestrator.analyzeContextEnhanced()
-3. **Context Orchestrator** → MessageAnalysisOrchestrator (1st time)
-4. **Message Orchestrator** → 3 Analysis Services process ["Hi"]
-5. **Use Case** → AiConversationService.generateResponse()
-6. **AI Service** → OpenAIProvider → OpenAI API
-7. **OpenAI** → Returns "Hello! How can I help you?"
-8. **Use Case** → ConversationContextOrchestrator.updateSessionContext()
-9. **Context Orchestrator** → MessageAnalysisOrchestrator (2nd time)
-10. **Message Orchestrator** → 3 Analysis Services process ["Hi", "Hello! How can I help you?"]
-11. **Use Case** → Save session and return response
+2. **Use Case** → MessageProcessingWorkflowService.createAndSaveUserMessage()
+3. **Workflow Service** → AiConversationService (3x API calls for sentiment/urgency/engagement)
+4. **Use Case** → AiConversationService.generateResponse()
+5. **AI Service** → OpenAIProvider → OpenAI API (with sentiment/urgency context)
+6. **OpenAI** → Returns "Hello! How can I help you?" (context-aware response)
+7. **Use Case** → ConversationContextOrchestrator.updateSessionContext()
+8. **Context Orchestrator** → Uses stored API analysis data (no re-analysis)
+9. **Use Case** → Save session and return response
+
+**Key Improvement**: Analysis happens once per message, stored, and reused! ⚡
 
 ## **📊 File Processing Count**
 
-### **Message* Services (Comprehensive Analysis):**
-- **MessageContentAnalysisService.ts**: Called 2x
-- **MessageSentimentAnalysisService.ts**: Called 2x  
-- **MessageIntentAnalysisService.ts**: Called 2x
+### **API-Driven Analysis (NEW EFFICIENT APPROACH):**
+- **AiConversationService.analyzeSentiment()**: Called 1x per message ⚡
+- **AiConversationService.analyzeUrgency()**: Called 1x per message ⚡  
+- **AiConversationService.analyzeEngagement()**: Called 1x per message ⚡
 
-### **Conversation* Services (Simple Analysis):**
-- **ConversationIntentService.ts**: Called 0x (methods exist but unused)
-- **ConversationSentimentService.ts**: Called 0x (methods exist but unused)
+### **Removed Manual Services (CLEANED UP):**
+- **MessageSentimentAnalysisService.ts**: DELETED ✅
+- **MessageAnalysisOrchestrator.ts**: DELETED ✅
+- **ConversationSentimentService.ts**: DELETED ✅
 
 ### **Infrastructure Services:**
-- **OpenAIProvider.ts**: Called 1x (for AI response)
+- **OpenAIProvider.ts**: Called 4x total (1x response + 3x analysis) but more accurate ⚡
 - **OpenAITokenCountingService.ts**: Called multiple times (context management)
 
-## **🔍 Key Insights from Static Analysis**
+## **🔍 Key Insights from Updated Analysis**
 
-1. **Message* services are the workhorses** - called twice per chat
-2. **Conversation* services are currently unused** in main flow
-3. **OpenAI is only called once** for response generation
-4. **Analysis happens before AND after** AI response
-5. **Session context is updated** with complete conversation
+1. **API-driven analysis is more accurate** - OpenAI understands context better than manual rules
+2. **Clean architecture** - Removed 6+ manual analysis services, simplified codebase
+3. **Performance improvement** - Analysis once per message, stored and reused
+4. **Better context awareness** - Sentiment, urgency, engagement inform response generation
+5. **Maintainable code** - No more manual keyword matching or scoring algorithms
 
-This static analysis shows the exact execution flow without running any code! 🎯 
+**Cleanup Results**: 
+- ✅ Deleted manual sentiment/engagement calculation services
+- ✅ Removed redundant calculation methods 
+- ✅ Simplified context orchestration logic
+- ✅ Updated documentation to reflect API-driven approach
+
+This shows how moving from manual calculations to API-driven analysis creates cleaner, more accurate code! 🎯 

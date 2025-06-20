@@ -38,7 +38,7 @@ async function postHandler(
   const result = await processChatMessageUseCase.execute({
     sessionId,
     userMessage: message,
-    clientInfo
+    metadata: { clientInfo }
   });
 
   const processingTime = Date.now() - startTime;

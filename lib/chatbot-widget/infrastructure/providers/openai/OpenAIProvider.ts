@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { BaseProvider, ProviderType, ProviderConfig } from '../../../../infrastructure/providers/registry/types';
-import { IDebugInformationService } from '../../../domain/services/IDebugInformationService';
+import { IDebugInformationService } from '../../../domain/services/interfaces/IDebugInformationService';
 
 export interface OpenAIConfig extends ProviderConfig {
   apiKey: string;

@@ -1,10 +1,24 @@
-import { Lead, LeadProps } from '../../../../domain/entities/Lead';
-import { ContactInfo } from '../../../../domain/value-objects/ContactInfo';
-import { LeadSource } from '../../../../domain/value-objects/LeadSource';
-import { QualificationData } from '../../../../domain/value-objects/QualificationData';
-import { LeadMetadata, LeadNote } from '../../../../domain/value-objects/LeadMetadata';
-import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
+/**
+ * Lead Domain-Database Mapper
+ * 
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Lead entity mapping only
+ * - Handle transformation between domain and database
+ * - Use domain-specific errors with proper context
+ * - Stay under 200-250 lines
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now stored as provided by external API
+ */
+
+import { Lead } from '../../../../domain/entities/Lead';
+import { ContactInfo } from '../../../../domain/value-objects/lead-management/ContactInfo';
+import { LeadSource } from '../../../../domain/value-objects/lead-management/LeadSource';
+import { QualificationData } from '../../../../domain/value-objects/lead-management/QualificationData';
+import { LeadMetadata, LeadNote } from '../../../../domain/value-objects/lead-management/LeadMetadata';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 /**
  * Raw database record structure from Supabase
@@ -88,7 +102,7 @@ export class LeadMapper {
       source: this.mapSource(record.source),
       metadata: this.mapMetadata(record.conversation_summary, record.tags, record.notes),
       leadScore: record.lead_score,
-      qualificationStatus: record.qualification_status as QualificationStatus,
+              qualificationStatus: record.qualification_status as QualificationStatus,
       followUpStatus: record.follow_up_status as FollowUpStatus,
       assignedTo: record.assigned_to || undefined,
       capturedAt: new Date(record.captured_at),

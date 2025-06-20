@@ -30,8 +30,21 @@ export class LeadExtractionService {
   ];
 
   private readonly companyPatterns = [
+    // Explicit company mentions
     /(?:i work at|i'm from|i represent|my company is|company:)\s*([^,.!?]+)/gi,
-    /([A-Z][a-z]+ (?:Inc|LLC|Corp|Ltd|Company|Co\.?))/g
+    
+    // CEO/Title + Company patterns
+    /(?:ceo|president|founder|owner|director|manager)\s+(?:of|at)\s+([^,.!?]+)/gi,
+    /(?:i'm|i am)\s+(?:the\s+)?(?:ceo|president|founder|owner|director|manager)\s+(?:of|at)\s+([^,.!?]+)/gi,
+    
+    // "Company Name + company/corp/inc" patterns
+    /([A-Z][a-zA-Z\s]+(?:company|corp|corporation|inc|incorporated|llc|ltd|limited))/gi,
+    
+    // Formal company suffixes
+    /([A-Z][a-z]+ (?:Inc|LLC|Corp|Ltd|Company|Co\.?))/g,
+    
+    // Informal "at Company" or "Company Name" patterns (when mentioned with professional context)
+    /(?:work(?:ing)?\s+(?:at|for)|employed\s+(?:at|by))\s+([A-Z][a-zA-Z\s]{1,40})/gi
   ];
 
   private readonly interestKeywords = [

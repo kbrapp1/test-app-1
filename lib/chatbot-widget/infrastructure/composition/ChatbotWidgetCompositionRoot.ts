@@ -6,10 +6,9 @@ import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRe
 import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 
-  // Domain service interfaces
-import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
+// Domain service interfaces
 import { IIntentClassificationService } from '../../domain/services/interfaces/IIntentClassificationService';
-import { IDebugInformationService } from '../../domain/services/interfaces/IDebugInformationService';
+import { ITokenCountingService } from '../../domain/services/interfaces/ITokenCountingService';
 
 // Application services
 import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
@@ -27,8 +26,12 @@ import { UseCaseCompositionService } from './UseCaseCompositionService';
 
 /**
  * Composition Root for Chatbot Widget Domain
- * Orchestrates focused composition services following DDD principles
- * Following @golden-rule.mdc: Single responsibility for high-level coordination
+ * 
+ * AI INSTRUCTIONS:
+ * - Following @golden-rule.mdc DDD composition root patterns
+ * - Removed deprecated services (replaced by OpenAI API)
+ * - Clean separation of concerns with focused composition services
+ * - Single responsibility for high-level coordination
  */
 export class ChatbotWidgetCompositionRoot {
 
@@ -49,48 +52,44 @@ export class ChatbotWidgetCompositionRoot {
     return RepositoryCompositionService.getLeadRepository();
   }
 
-  // Domain service access methods
-  static async getIntentClassificationService(chatbotConfig?: any): Promise<IIntentClassificationService> {
-    return DomainServiceCompositionService.getIntentClassificationService(chatbotConfig);
-  }
-
-  static getKnowledgeRetrievalService(chatbotConfig: any): IKnowledgeRetrievalService {
-    return DomainServiceCompositionService.getKnowledgeRetrievalService(chatbotConfig);
-  }
-
-  static getDebugInformationService(): IDebugInformationService {
-    return DomainServiceCompositionService.getDebugInformationService();
-  }
-
-  // New focused domain service access methods
-  static getConversationIntentService() {
-    return DomainServiceCompositionService.getConversationIntentService();
-  }
-
-  static getConversationSentimentService() {
-    return DomainServiceCompositionService.getConversationSentimentService();
-  }
-
-  static getLeadExtractionService() {
-    return DomainServiceCompositionService.getLeadExtractionService();
-  }
-
-  // Message processing services (new refactored structure)
-  static getMessageAnalysisOrchestrator() {
-    return DomainServiceCompositionService.getMessageAnalysisOrchestrator();
-  }
-
-  static getMessageContentAnalysisService() {
-    return DomainServiceCompositionService.getMessageContentAnalysisService();
-  }
-
-  static getMessageSentimentAnalysisService() {
-    return DomainServiceCompositionService.getMessageSentimentAnalysisService();
-  }
-
-  // Conversation context services (new refactored structure)
-  static async getConversationContextOrchestrator(): Promise<any> {
+  // Domain service access methods - API-driven services only
+  // Conversation context services
+  static getConversationContextOrchestrator() {
     return DomainServiceCompositionService.getConversationContextOrchestrator();
+  }
+
+  static getConversationSessionUpdateService() {
+    return DomainServiceCompositionService.getConversationSessionUpdateService();
+  }
+
+  static getSessionContextService() {
+    return DomainServiceCompositionService.getSessionContextService();
+  }
+
+  static getSessionStateService() {
+    return DomainServiceCompositionService.getSessionStateService();
+  }
+
+  static getContextWindowService(tokenCountingService: ITokenCountingService) {
+    return DomainServiceCompositionService.getContextWindowService(tokenCountingService);
+  }
+
+  // Static validation services
+  static getChatSessionValidationService() {
+    return DomainServiceCompositionService.getChatSessionValidationService();
+  }
+
+  static getSessionLeadQualificationService() {
+    return DomainServiceCompositionService.getSessionLeadQualificationService();
+  }
+
+  static getEntityAccumulationService() {
+    return DomainServiceCompositionService.getEntityAccumulationService();
+  }
+
+  // Debug and utility services
+  static getDebugInformationService() {
+    return DomainServiceCompositionService.getDebugInformationService();
   }
 
   // Application service access methods
@@ -116,10 +115,19 @@ export class ChatbotWidgetCompositionRoot {
     RepositoryCompositionService.configureWithSupabaseClient(client);
   }
 
-  static reset(): void {
+  static resetForTesting(): void {
     RepositoryCompositionService.reset();
-    DomainServiceCompositionService.reset();
+    DomainServiceCompositionService.clearCache();
     ApplicationServiceCompositionService.reset();
     UseCaseCompositionService.reset();
+  }
+
+  // ConversationFlowService is now handled through static methods in DomainServiceCompositionService
+  static processAIFlowDecision(decision: any, currentState: any) {
+    return DomainServiceCompositionService.processAIFlowDecision(decision, currentState);
+  }
+
+  static shouldTriggerLeadCapture(decision: any) {
+    return DomainServiceCompositionService.shouldTriggerLeadCapture(decision);
   }
 } 

@@ -4,44 +4,14 @@ import { LeadQualificationState, AnsweredQuestion, SessionContext } from '../../
  * Session Lead Qualification Service
  * Domain Service: Pure business logic for lead qualification
  * Following DDD principles: Single responsibility for qualification logic
+ * 
+ * AI INSTRUCTIONS:
+ * - UPDATED: Removed domain lead score calculation - using API-only approach
+ * - Focus on qualification process management only
+ * - Keep under 200 lines following @golden-rule patterns
  */
 export class SessionLeadQualificationService {
   private static readonly QUALIFICATION_THRESHOLD = 60;
-
-  /**
-   * Calculate lead score based on answered questions and engagement
-   */
-  static calculateLeadScore(
-    qualificationState: LeadQualificationState,
-    contextData: SessionContext
-  ): number {
-    const { answeredQuestions } = qualificationState;
-    
-    if (answeredQuestions.length === 0) {
-      return 0;
-    }
-
-    // Base score calculation from questions
-    let totalScore = 0;
-    let totalWeight = 0;
-
-    answeredQuestions.forEach(answer => {
-      totalWeight += answer.scoringWeight;
-      
-      // Score based on answer quality
-      const answerScore = this.scoreAnswer(answer);
-      totalScore += answerScore * answer.scoringWeight;
-    });
-
-    // Calculate base score from questions
-    const baseScore = totalWeight > 0 ? (totalScore / totalWeight) * 100 : 0;
-
-    // Apply engagement factor
-    const engagementFactor = contextData.engagementScore / 100;
-    const finalScore = baseScore * (0.7 + 0.3 * engagementFactor);
-
-    return Math.round(Math.min(finalScore, 100));
-  }
 
   /**
    * Score individual answer based on content quality
@@ -61,27 +31,41 @@ export class SessionLeadQualificationService {
   }
 
   /**
-   * Determine if lead is qualified based on score
+   * Determine if lead is qualified based on external score (from API)
    */
   static isLeadQualified(leadScore: number): boolean {
     return leadScore >= this.QUALIFICATION_THRESHOLD;
   }
 
   /**
-   * Create answered question object
+   * Create answered question for qualification tracking
    */
   static createAnsweredQuestion(
     questionId: string,
     question: string,
     answer: string | string[],
-    scoringWeight: number
+    scoringWeight: number = 1
   ): AnsweredQuestion {
     return {
       questionId,
       question,
       answer,
-      answeredAt: new Date(),
-      scoringWeight
+      scoringWeight,
+      answeredAt: new Date()
+    };
+  }
+
+  /**
+   * Add answer to qualification state
+   */
+  static addAnswer(
+    currentState: LeadQualificationState,
+    answer: AnsweredQuestion
+  ): LeadQualificationState {
+    return {
+      ...currentState,
+      answeredQuestions: [...currentState.answeredQuestions, answer],
+      currentStep: currentState.currentStep + 1
     };
   }
 
@@ -97,38 +81,18 @@ export class SessionLeadQualificationService {
   }
 
   /**
-   * Add answer to qualification state
-   */
-  static addAnswer(
-    currentState: LeadQualificationState,
-    answeredQuestion: AnsweredQuestion
-  ): LeadQualificationState {
-    // Remove existing answer for same question
-    const existingAnswers = currentState.answeredQuestions.filter(
-      q => q.questionId !== answeredQuestion.questionId
-    );
-
-    return {
-      ...currentState,
-      answeredQuestions: [...existingAnswers, answeredQuestion],
-      currentStep: currentState.currentStep + 1
-    };
-  }
-
-  /**
    * Complete qualification process
+   * Note: Lead score is now provided by API, not calculated here
    */
   static completeQualification(
     currentState: LeadQualificationState,
-    contextData: SessionContext
+    contextData: SessionContext,
+    apiLeadScore?: number
   ): LeadQualificationState {
-    const leadScore = this.calculateLeadScore(currentState, contextData);
-    
     return {
       ...currentState,
       qualificationStatus: 'completed',
-      leadScore,
-      isQualified: this.isLeadQualified(leadScore),
+      isQualified: apiLeadScore ? this.isLeadQualified(apiLeadScore) : false,
       capturedAt: new Date()
     };
   }

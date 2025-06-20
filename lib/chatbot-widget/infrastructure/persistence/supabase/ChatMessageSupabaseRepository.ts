@@ -59,7 +59,16 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
 
   // CRUD operations continued - delegated to CrudService
   async save(message: ChatMessage, sharedLogFile?: string): Promise<ChatMessage> {
-    return this.create(message, sharedLogFile);
+    // Check if message already exists
+    const existingMessage = await this.findById(message.id);
+    
+    if (existingMessage) {
+      // Message exists - update it
+      return this.update(message);
+    } else {
+      // Message doesn't exist - create it
+      return this.create(message, sharedLogFile);
+    }
   }
 
   async update(message: ChatMessage): Promise<ChatMessage> {
@@ -167,14 +176,23 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
       logFile = path.join(logDir, logFileName);
     }
     
-    const logEntry = (logMessage: string) => {
-      // Check if file logging is disabled via environment variable
+    // Optimized logging: Check environment variable once and return appropriate function
+    const createLogEntry = () => {
       const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-      if (!fileLoggingEnabled) return;
       
-      const logLine = `[${timestamp}] ${logMessage}\n`;
-      fs.appendFileSync(logFile, logLine);
+      if (!fileLoggingEnabled) {
+        // Return no-op function when logging disabled - zero overhead
+        return () => {};
+      }
+      
+      // Return active logging function when enabled
+      return (logMessage: string) => {
+        const logLine = `[${timestamp}] ${logMessage}\n`;
+        fs.appendFileSync(logFile, logLine);
+      };
     };
+    
+    const logEntry = createLogEntry();
     
     logEntry('\n💬 =================================');
     logEntry('💬 DATABASE OPERATION - CREATE MESSAGE');

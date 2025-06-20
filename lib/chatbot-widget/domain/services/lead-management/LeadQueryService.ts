@@ -4,11 +4,18 @@
  * Domain Service: Handles lead query and status checking operations
  * Single Responsibility: Lead status queries and business rule evaluation
  * Following DDD domain service patterns
+ * 
+ * AI INSTRUCTIONS:
+ * - UPDATED: Removed dependency on LeadScoringService - using API-only approach
+ * - QualificationStatus defined locally
+ * - Keep under 200 lines following @golden-rule patterns
  */
 
 import { Lead } from '../../entities/Lead';
-import { QualificationStatus } from './LeadScoringService';
 import { FollowUpStatus } from '../../entities/LeadLifecycleManager';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export class LeadQueryService {
   /**

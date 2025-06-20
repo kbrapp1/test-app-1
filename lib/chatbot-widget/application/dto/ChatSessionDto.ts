@@ -41,7 +41,6 @@ export interface LeadQualificationStateDto {
   readonly answeredQuestions: AnsweredQuestionDto[];
   readonly qualificationStatus: QualificationStatus;
   readonly isQualified: boolean;
-  readonly leadScore: number;
   readonly engagementLevel: EngagementLevel;
 }
 

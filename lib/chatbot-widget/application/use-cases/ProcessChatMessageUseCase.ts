@@ -95,6 +95,7 @@ export class ProcessChatMessageUseCase {
       sessionRepository,
       messageRepository,
       chatbotConfigRepository,
+      aiConversationService,
       debugInformationService
     );
 
@@ -132,20 +133,34 @@ export class ProcessChatMessageUseCase {
   }
 
   private writeLog(message: string): void {
-    // Check if file logging is disabled via environment variable
-    const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-    if (!fileLoggingEnabled || !this.sharedLogFile) return;
+    if (!this.sharedLogFile) return;
     
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${message}\n`;
-    const logDir = path.join(process.cwd(), 'logs');
-    const logFilePath = path.join(logDir, this.sharedLogFile);
+    // Optimized logging: Check environment variable once and return appropriate function
+    const createLogFunction = () => {
+      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+      
+      if (!fileLoggingEnabled) {
+        // Return no-op function when logging disabled - zero overhead
+        return () => {};
+      }
+      
+      // Return active logging function when enabled
+      return (logMessage: string) => {
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] ${logMessage}\n`;
+        const logDir = path.join(process.cwd(), 'logs');
+        const logFilePath = path.join(logDir, this.sharedLogFile!);
+        
+        try {
+          fs.appendFileSync(logFilePath, logEntry);
+        } catch (error) {
+          console.error('Failed to write to log file:', error);
+        }
+      };
+    };
     
-    try {
-      fs.appendFileSync(logFilePath, logEntry);
-    } catch (error) {
-      console.error('Failed to write to log file:', error);
-    }
+    const logFunction = createLogFunction();
+    logFunction(message);
   }
 
   private logObject(label: string, obj: any): void {

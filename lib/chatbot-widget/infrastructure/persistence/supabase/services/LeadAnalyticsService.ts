@@ -1,15 +1,23 @@
 /**
  * Lead Analytics Service
  * 
- * Infrastructure service for calculating lead analytics and metrics.
- * Single responsibility: Handle analytics calculations and data aggregation.
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Lead analytics data processing only
+ * - Handle complex analytics queries and calculations
+ * - Use domain-specific errors with proper context
+ * - Stay under 200-250 lines
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now stored as provided by external API
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { DatabaseError } from '@/lib/errors/base';
 import { Lead } from '../../../../domain/entities/Lead';
-import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadAnalytics {
   totalLeads: number;

@@ -1,23 +1,26 @@
 // Domain services
-import { LeadScoringService } from '../../domain/services/lead-management/LeadScoringService';
 import { ConversationContextOrchestrator } from '../../domain/services/conversation/ConversationContextOrchestrator';
+import { ConversationSessionUpdateService } from '../../domain/services/conversation/ConversationSessionUpdateService';
+// ConversationSentimentService removed - using OpenAI API for sentiment analysis
+import { SessionContextService } from '../../domain/services/session-management/SessionContextService';
+import { SessionStateService } from '../../domain/services/session-management/SessionStateService';
+import { ChatSessionValidationService } from '../../domain/services/session-management/ChatSessionValidationService';
+import { SessionLeadQualificationService } from '../../domain/services/session-management/SessionLeadQualificationService';
+import { ContextWindowService } from '../../domain/services/utilities/ContextWindowService';
+import { EntityAccumulationService } from '../../domain/services/context/EntityAccumulationService';
 import { DynamicPromptService } from '../../domain/services/ai-configuration/DynamicPromptService';
+import { LeadExtractionService } from '../../domain/services/lead-management/LeadExtractionService';
+import { ConversationFlowService } from '../../domain/services/conversation-management/ConversationFlowService';
+import { ConversationMetricsService } from '../../application/services/conversation-management/ConversationMetricsService';
+import { AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
+
+// Interfaces
 import { ITokenCountingService } from '../../domain/services/interfaces/ITokenCountingService';
 import { IIntentClassificationService } from '../../domain/services/interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { IDebugInformationService } from '../../domain/services/interfaces/IDebugInformationService';
 
-// New focused domain services
-import { ConversationIntentService } from '../../domain/services/conversation/ConversationIntentService';
-import { ConversationSentimentService } from '../../domain/services/conversation/ConversationSentimentService';
-import { LeadExtractionService } from '../../domain/services/lead-management/LeadExtractionService';
-
-// Message processing services
-import { MessageAnalysisOrchestrator } from '../../domain/services/message-processing/MessageAnalysisOrchestrator';
-import { MessageContentAnalysisService } from '../../domain/services/message-processing/MessageContentAnalysisService';
-import { MessageSentimentAnalysisService } from '../../domain/services/message-processing/MessageSentimentAnalysisService';
-
-// Infrastructure services
+// Infrastructure services for interfaces
 import { OpenAITokenCountingService } from '../providers/openai/OpenAITokenCountingService';
 import { OpenAIIntentClassificationService } from '../providers/openai/OpenAIIntentClassificationService';
 import { SimpleKnowledgeRetrievalService } from '../providers/SimpleKnowledgeRetrievalService';
@@ -25,36 +28,31 @@ import { DebugInformationService } from '../services/DebugInformationService';
 
 /**
  * Domain Service Composition Service
- * Infrastructure Service: Manages domain service creation and lifecycle
- * Following DDD principles: Single responsibility for domain service management
+ * 
+ * AI INSTRUCTIONS:
+ * - Provide centralized service instantiation for domain services
+ * - Use singleton pattern for stateless services
+ * - Wire dependencies through composition root
+ * - Follow @golden-rule patterns exactly
+ * - UPDATED: Replaced ConversationStageService with AI-driven ConversationFlowService
  */
 export class DomainServiceCompositionService {
-  // Service singletons
-  private static leadScoringService: LeadScoringService | null = null;
+  // Singleton instances for stateless services
   private static conversationContextOrchestrator: ConversationContextOrchestrator | null = null;
-  private static dynamicPromptService: DynamicPromptService | null = null;
-  private static tokenCountingService: ITokenCountingService | null = null;
-  private static debugInformationService: IDebugInformationService | null = null;
+  private static conversationMetricsService: ConversationMetricsService | null = null;
   
-  // New focused service singletons
-  private static conversationIntentService: ConversationIntentService | null = null;
-  private static conversationSentimentService: ConversationSentimentService | null = null;
+  // Additional domain services
+  private static sessionContextService: SessionContextService | null = null;
+  private static sessionStateService: SessionStateService | null = null;
+  private static contextWindowService: ContextWindowService | null = null;
+  private static dynamicPromptService: DynamicPromptService | null = null;
   private static leadExtractionService: LeadExtractionService | null = null;
 
-  // Message processing service singletons
-  private static messageAnalysisOrchestrator: MessageAnalysisOrchestrator | null = null;
-  private static messageContentAnalysisService: MessageContentAnalysisService | null = null;
-  private static messageSentimentAnalysisService: MessageSentimentAnalysisService | null = null;
-
-  /**
-   * Get Lead Scoring Service
-   */
-  static getLeadScoringService(): LeadScoringService {
-    if (!this.leadScoringService) {
-      this.leadScoringService = new LeadScoringService();
-    }
-    return this.leadScoringService;
-  }
+  // Infrastructure service singletons for interfaces
+  private static tokenCountingService: ITokenCountingService | null = null;
+  private static intentClassificationService: IIntentClassificationService | null = null;
+  private static knowledgeRetrievalService: IKnowledgeRetrievalService | null = null;
+  private static debugInformationService: IDebugInformationService | null = null;
 
   /**
    * Get Token Counting Service
@@ -67,60 +65,25 @@ export class DomainServiceCompositionService {
   }
 
   /**
-   * Get Intent Classification Service with dynamic configuration
+   * Get Intent Classification Service
    */
-  static async getIntentClassificationService(chatbotConfig?: any): Promise<IIntentClassificationService> {
-    // For now, create a new instance each time to use the latest config
-    // In production, you might want to cache based on config hash
-    const aiConfig = chatbotConfig?.aiConfiguration;
-    
+  static async getIntentClassificationService(): Promise<IIntentClassificationService> {
+    // Create new instance each time as it requires config
     const config = {
       apiKey: process.env.OPENAI_API_KEY || '',
-      model: aiConfig?.openaiModel || 'gpt-4o-mini',
-      temperature: aiConfig?.openaiTemperature || 0.3,
-      maxTokens: 500 // Use fixed value for intent classification
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      maxTokens: 1000
     };
-
-    if (!config.apiKey) {
-      // OPENAI_API_KEY not found, intent classification will be limited
-    }
-
-    return new OpenAIIntentClassificationService(config, this.getDebugInformationService());
+    return new OpenAIIntentClassificationService(config);
   }
 
   /**
    * Get Knowledge Retrieval Service
    */
   static getKnowledgeRetrievalService(chatbotConfig: any): IKnowledgeRetrievalService {
-    // Create a new instance for each chatbot config to ensure proper knowledge base
+    // Create new instance each time as it requires config
     return new SimpleKnowledgeRetrievalService(chatbotConfig);
-  }
-
-  /**
-   * Get Conversation Context Orchestrator
-   */
-  static async getConversationContextOrchestrator(): Promise<ConversationContextOrchestrator> {
-    if (!this.conversationContextOrchestrator) {
-      const tokenCountingService = this.getTokenCountingService();
-      const intentClassificationService = await this.getIntentClassificationService();
-      
-      this.conversationContextOrchestrator = new ConversationContextOrchestrator(
-        tokenCountingService,
-        intentClassificationService
-        // Note: knowledgeRetrievalService is passed per-request since it depends on chatbot config
-      );
-    }
-    return this.conversationContextOrchestrator;
-  }
-
-  /**
-   * Get Dynamic Prompt Service
-   */
-  static getDynamicPromptService(): DynamicPromptService {
-    if (!this.dynamicPromptService) {
-      this.dynamicPromptService = new DynamicPromptService();
-    }
-    return this.dynamicPromptService;
   }
 
   /**
@@ -134,23 +97,13 @@ export class DomainServiceCompositionService {
   }
 
   /**
-   * Get Conversation Intent Service
+   * Get Dynamic Prompt Service
    */
-  static getConversationIntentService(): ConversationIntentService {
-    if (!this.conversationIntentService) {
-      this.conversationIntentService = new ConversationIntentService();
+  static getDynamicPromptService(): DynamicPromptService {
+    if (!this.dynamicPromptService) {
+      this.dynamicPromptService = new DynamicPromptService();
     }
-    return this.conversationIntentService;
-  }
-
-  /**
-   * Get Conversation Sentiment Service
-   */
-  static getConversationSentimentService(): ConversationSentimentService {
-    if (!this.conversationSentimentService) {
-      this.conversationSentimentService = new ConversationSentimentService();
-    }
-    return this.conversationSentimentService;
+    return this.dynamicPromptService;
   }
 
   /**
@@ -163,54 +116,133 @@ export class DomainServiceCompositionService {
     return this.leadExtractionService;
   }
 
+  // getConversationSentimentService removed - using OpenAI API for sentiment analysis
+
   /**
-   * Get Message Analysis Orchestrator
+   * Get Conversation Context Orchestrator
+   * AI INSTRUCTIONS: Main orchestrator - now purely API-driven, no manual analysis dependencies
    */
-  static getMessageAnalysisOrchestrator(): MessageAnalysisOrchestrator {
-    if (!this.messageAnalysisOrchestrator) {
-      this.messageAnalysisOrchestrator = new MessageAnalysisOrchestrator();
+  static getConversationContextOrchestrator(): ConversationContextOrchestrator {
+    if (!this.conversationContextOrchestrator) {
+      const tokenCountingService = this.getTokenCountingService();
+      this.conversationContextOrchestrator = new ConversationContextOrchestrator(
+        tokenCountingService
+      );
     }
-    return this.messageAnalysisOrchestrator;
+    return this.conversationContextOrchestrator;
   }
 
   /**
-   * Get Message Content Analysis Service
+   * Get Conversation Metrics Service
    */
-  static getMessageContentAnalysisService(): MessageContentAnalysisService {
-    if (!this.messageContentAnalysisService) {
-      this.messageContentAnalysisService = new MessageContentAnalysisService();
+  static getConversationMetricsService(): ConversationMetricsService {
+    if (!this.conversationMetricsService) {
+      this.conversationMetricsService = new ConversationMetricsService();
     }
-    return this.messageContentAnalysisService;
+    return this.conversationMetricsService;
   }
 
   /**
-   * Get Message Sentiment Analysis Service
+   * Get Conversation Session Update Service
+   * This service is stateful and should not be singleton
    */
-  static getMessageSentimentAnalysisService(): MessageSentimentAnalysisService {
-    if (!this.messageSentimentAnalysisService) {
-      this.messageSentimentAnalysisService = new MessageSentimentAnalysisService();
-    }
-    return this.messageSentimentAnalysisService;
+  static getConversationSessionUpdateService(): ConversationSessionUpdateService {
+    // Create new instance with AI-driven flow service
+    return new ConversationSessionUpdateService();
   }
 
   /**
-   * Reset all domain service singletons
+   * Get Session Context Service
    */
-  static reset(): void {
-    this.leadScoringService = null;
+  static getSessionContextService(): SessionContextService {
+    if (!this.sessionContextService) {
+      this.sessionContextService = new SessionContextService();
+    }
+    return this.sessionContextService;
+  }
+
+  /**
+   * Get Session State Service
+   */
+  static getSessionStateService(): SessionStateService {
+    if (!this.sessionStateService) {
+      this.sessionStateService = new SessionStateService();
+    }
+    return this.sessionStateService;
+  }
+
+  /**
+   * Get Context Window Service
+   */
+  static getContextWindowService(tokenCountingService: ITokenCountingService): ContextWindowService {
+    if (!this.contextWindowService) {
+      this.contextWindowService = new ContextWindowService(tokenCountingService);
+    }
+    return this.contextWindowService;
+  }
+
+  /**
+   * Get Chat Session Validation Service
+   */
+  static getChatSessionValidationService(): typeof ChatSessionValidationService {
+    return ChatSessionValidationService;
+  }
+
+  /**
+   * Get Session Lead Qualification Service
+   */
+  static getSessionLeadQualificationService(): typeof SessionLeadQualificationService {
+    return SessionLeadQualificationService;
+  }
+
+  /**
+   * Get Entity Accumulation Service
+   */
+  static getEntityAccumulationService(): typeof EntityAccumulationService {
+    return EntityAccumulationService;
+  }
+
+  /**
+   * Process AI conversation flow decision
+   * Static method since ConversationFlowService is purely functional
+   */
+  static processAIFlowDecision(
+    decision: AIConversationFlowDecision,
+    currentState: any
+  ): any {
+    return ConversationFlowService.processAIFlowDecision(decision, currentState);
+  }
+
+  /**
+   * Check if lead capture should be triggered using AI decision
+   */
+  static shouldTriggerLeadCapture(decision: AIConversationFlowDecision): boolean {
+    return ConversationFlowService.shouldTriggerLeadCapture(decision);
+  }
+
+  /**
+   * Get recommended actions from AI decision
+   */
+  static getRecommendedActions(decision: AIConversationFlowDecision): string[] {
+    return ConversationFlowService.getRecommendedActions(decision);
+  }
+
+  /**
+   * Calculate readiness score from AI indicators
+   */
+  static calculateReadinessScore(indicators: AIConversationFlowDecision['readinessIndicators']): number {
+    return ConversationFlowService.calculateReadinessScore(indicators);
+  }
+
+  /**
+   * Clear all cached instances (for testing or cleanup)
+   */
+  static clearCache(): void {
     this.conversationContextOrchestrator = null;
-    this.dynamicPromptService = null;
+    this.conversationMetricsService = null;
     this.tokenCountingService = null;
+    this.intentClassificationService = null;
+    this.knowledgeRetrievalService = null;
     this.debugInformationService = null;
-    
-    // Reset new focused services
-    this.conversationIntentService = null;
-    this.conversationSentimentService = null;
-    this.leadExtractionService = null;
-
-    // Reset message processing services
-    this.messageAnalysisOrchestrator = null;
-    this.messageContentAnalysisService = null;
-    this.messageSentimentAnalysisService = null;
   }
 } 

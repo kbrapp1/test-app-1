@@ -13,7 +13,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, Palette } from 'lucide-react';
-import { BotConfigurationViewState } from '../../types/BotConfigurationTypes';
+import { BotConfigurationViewState } from '../../../types/BotConfigurationTypes';
 
 interface WidgetPreviewProps {
   viewState: BotConfigurationViewState;

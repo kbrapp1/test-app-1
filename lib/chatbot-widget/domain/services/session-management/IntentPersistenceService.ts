@@ -1,0 +1,247 @@
+import { SessionContext } from '../../value-objects/session-management/ChatSessionTypes';
+import { ChatMessage } from '../../entities/ChatMessage';
+
+/**
+ * Intent Persistence Service - 2025 Context Memory Implementation
+ * 
+ * AI INSTRUCTIONS:
+ * - Tracks intent classification results across conversation turns
+ * - Maintains business context flags for smart prompt injection
+ * - Prevents context loss between casual and business interactions
+ * - Follows @golden-rule.mdc DDD patterns for domain services
+ */
+export class IntentPersistenceService {
+
+  /**
+   * Update session with new intent data and maintain context flags
+   */
+  static updateIntentHistory(
+    sessionContext: SessionContext,
+    intentData: any,
+    messageId: string,
+    turnNumber: number
+  ): SessionContext {
+    const currentIntentHistory = sessionContext.intentHistory || this.createInitialIntentHistory();
+    
+    // Add new intent to sequence
+    const newIntentEntry = {
+      turn: turnNumber,
+      intent: intentData?.primary || 'unknown',
+      confidence: intentData?.confidence || 0,
+      timestamp: new Date().toISOString(),
+      messageId: messageId
+    };
+
+    const updatedSequence = [
+      ...currentIntentHistory.intentSequence,
+      newIntentEntry
+    ].slice(-10); // Keep last 10 intents for performance
+
+    // Update business context flags based on new intent
+    const updatedContextFlags = this.updateContextFlags(
+      currentIntentHistory.contextFlags,
+      intentData,
+      turnNumber
+    );
+
+    // Determine business context establishment
+    const businessContextEstablished = this.determineBusinessContextStatus(
+      intentData,
+      updatedContextFlags,
+      currentIntentHistory.businessContextEstablished
+    );
+
+    // Determine conversation mode
+    const conversationMode = this.determineConversationMode(
+      intentData,
+      updatedContextFlags,
+      businessContextEstablished
+    );
+
+    return {
+      ...sessionContext,
+      intentHistory: {
+        businessContextEstablished,
+        lastBusinessIntent: this.isBusinessIntent(intentData) ? intentData.primary : currentIntentHistory.lastBusinessIntent,
+        lastBusinessTurn: this.isBusinessIntent(intentData) ? turnNumber : currentIntentHistory.lastBusinessTurn,
+        currentConversationMode: conversationMode,
+        intentSequence: updatedSequence,
+        contextFlags: updatedContextFlags
+      }
+    };
+  }
+
+  /**
+   * Check if knowledge base should be injected based on intent history
+   */
+  static shouldInjectKnowledgeBase(sessionContext: SessionContext): boolean {
+    const intentHistory = sessionContext.intentHistory;
+    
+    if (!intentHistory) {
+      return false;
+    }
+
+    // Always inject if business context was established and hasn't expired
+    if (intentHistory.businessContextEstablished) {
+      const turnsSinceLastBusiness = this.getTurnsSinceLastBusiness(intentHistory);
+      // Keep business context for 5 turns after last business question
+      return turnsSinceLastBusiness <= 5;
+    }
+
+    // Check if current conversation mode needs knowledge base
+    return intentHistory.currentConversationMode === 'business' || 
+           intentHistory.currentConversationMode === 'qualification';
+  }
+
+  /**
+   * Get business context strength for prompt weighting
+   */
+  static getBusinessContextStrength(sessionContext: SessionContext): number {
+    const intentHistory = sessionContext.intentHistory;
+    
+    if (!intentHistory?.businessContextEstablished) {
+      return 0;
+    }
+
+    const turnsSince = this.getTurnsSinceLastBusiness(intentHistory);
+    const businessIntentCount = this.getBusinessIntentCount(intentHistory);
+    
+    // Decay strength over time but maintain baseline if multiple business intents
+    let strength = Math.max(0.3, 1.0 - (turnsSince * 0.15));
+    
+    // Boost for multiple business interactions
+    if (businessIntentCount >= 2) {
+      strength = Math.min(1.0, strength + 0.2);
+    }
+    
+    return strength;
+  }
+
+  /**
+   * Create initial intent history structure
+   */
+  private static createInitialIntentHistory() {
+    return {
+      businessContextEstablished: false,
+      lastBusinessIntent: '',
+      lastBusinessTurn: 0,
+      currentConversationMode: 'greeting' as const,
+      intentSequence: [],
+      contextFlags: {
+        productInterestEstablished: false,
+        pricingDiscussed: false,
+        comparisonMode: false,
+        companyInquiryMade: false,
+        knowledgeBaseNeeded: false,
+        lastBusinessQuestionTurn: 0
+      }
+    };
+  }
+
+  /**
+   * Update context flags based on new intent
+   */
+  private static updateContextFlags(currentFlags: any, intentData: any, turnNumber: number) {
+    const newFlags = { ...currentFlags };
+
+    if (intentData?.primary === 'product_inquiry' || intentData?.primary === 'feature_inquiry') {
+      newFlags.productInterestEstablished = true;
+      newFlags.knowledgeBaseNeeded = true;
+    }
+
+    if (intentData?.primary === 'pricing_inquiry' || intentData?.primary === 'cost_inquiry') {
+      newFlags.pricingDiscussed = true;
+      newFlags.knowledgeBaseNeeded = true;
+    }
+
+    if (intentData?.primary === 'comparison_inquiry' || intentData?.primary === 'competitor_inquiry') {
+      newFlags.comparisonMode = true;
+      newFlags.knowledgeBaseNeeded = true;
+    }
+
+    if (intentData?.primary === 'company_inquiry' || intentData?.primary === 'business_inquiry') {
+      newFlags.companyInquiryMade = true;
+      newFlags.knowledgeBaseNeeded = true;
+      newFlags.lastBusinessQuestionTurn = turnNumber;
+    }
+
+    return newFlags;
+  }
+
+  /**
+   * Determine if business context should be established
+   */
+  private static determineBusinessContextStatus(
+    intentData: any, 
+    contextFlags: any, 
+    currentStatus: boolean
+  ): boolean {
+    // Once established, maintain unless explicitly cleared
+    if (currentStatus) return true;
+
+    // Establish on business intents
+    return this.isBusinessIntent(intentData) || 
+           contextFlags.productInterestEstablished ||
+           contextFlags.companyInquiryMade;
+  }
+
+  /**
+   * Determine current conversation mode
+   */
+  private static determineConversationMode(
+    intentData: any,
+    contextFlags: any,
+    businessContextEstablished: boolean
+  ): 'greeting' | 'business' | 'casual' | 'qualification' {
+    if (this.isBusinessIntent(intentData)) {
+      return 'business';
+    }
+
+    if (businessContextEstablished && (contextFlags.productInterestEstablished || contextFlags.pricingDiscussed)) {
+      return 'qualification';
+    }
+
+    if (intentData?.primary === 'greeting') {
+      return businessContextEstablished ? 'casual' : 'greeting';
+    }
+
+    return businessContextEstablished ? 'casual' : 'greeting';
+  }
+
+  /**
+   * Check if intent is business-related
+   */
+  private static isBusinessIntent(intentData: any): boolean {
+    const businessIntents = [
+      'company_inquiry',
+      'business_inquiry', 
+      'product_inquiry',
+      'feature_inquiry',
+      'pricing_inquiry',
+      'cost_inquiry',
+      'comparison_inquiry',
+      'competitor_inquiry',
+      'faq_general'
+    ];
+
+    return businessIntents.includes(intentData?.primary);
+  }
+
+  /**
+   * Get turns since last business intent
+   */
+  private static getTurnsSinceLastBusiness(intentHistory: any): number {
+    const lastSequenceEntry = intentHistory.intentSequence[intentHistory.intentSequence.length - 1];
+    const currentTurn = lastSequenceEntry?.turn || 0;
+    return currentTurn - intentHistory.lastBusinessTurn;
+  }
+
+  /**
+   * Count business intents in history
+   */
+  private static getBusinessIntentCount(intentHistory: any): number {
+    return intentHistory.intentSequence.filter((entry: any) => 
+      this.isBusinessIntent({ primary: entry.intent })
+    ).length;
+  }
+} 

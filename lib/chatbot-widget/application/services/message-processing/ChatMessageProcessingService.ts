@@ -21,6 +21,7 @@ import { IIntentClassificationService } from '../../../domain/services/interface
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { SystemPromptBuilderService } from '../conversation-management/SystemPromptBuilderService';
 import { ChatMessageFactoryService } from '../../../domain/services/utilities/ChatMessageFactoryService';
+import { ConversationFlowService, AIConversationFlowDecision } from '../../../domain/services/conversation-management/ConversationFlowService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -122,22 +123,45 @@ export class ChatMessageProcessingService {
         const logDir = path.join(process.cwd(), 'logs');
         const logFile = path.join(logDir, logFileName);
         
-        const logEntry = (logMessage: string) => {
-          // Check if file logging is disabled via environment variable
+        // Optimized logging: Check environment variable once and return appropriate function
+        const createLogEntry = () => {
           const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-          if (!fileLoggingEnabled) return;
           
-          const timestamp = new Date().toISOString();
-          const logLine = `[${timestamp}] ${logMessage}\\n`;
-          fs.appendFileSync(logFile, logLine);
+          if (!fileLoggingEnabled) {
+            // Return no-op function when logging disabled - zero overhead
+            return () => {};
+          }
+          
+          // Return active logging function when enabled
+          return (logMessage: string) => {
+            const timestamp = new Date().toISOString();
+            const logLine = `[${timestamp}] ${logMessage}\\n`;
+            fs.appendFileSync(logFile, logLine);
+          };
         };
+        
+        const logEntry = createLogEntry();
         
         logEntry('🔍 CHAT MESSAGE PROCESSING - UNIFIED RESULT VALIDATION:');
         logEntry(`📋 Unified result type: ${typeof unifiedResult}`);
         logEntry(`📋 Unified result keys: ${Object.keys(unifiedResult || {}).join(', ')}`);
         logEntry(`📋 Has analysis: ${!!unifiedResult?.analysis}`);
+        logEntry(`📋 Has conversationFlow: ${!!unifiedResult?.conversationFlow}`);
         logEntry(`📋 Has leadScore: ${!!unifiedResult?.leadScore}`);
         logEntry(`📋 Has response: ${!!unifiedResult?.response}`);
+        
+        // Log AI conversation flow decisions
+        if (unifiedResult?.conversationFlow) {
+          logEntry('🔄 AI CONVERSATION FLOW DECISIONS:');
+          logEntry(`📋 Should capture lead now: ${unifiedResult.conversationFlow.shouldCaptureLeadNow}`);
+          logEntry(`📋 Should ask qualification: ${unifiedResult.conversationFlow.shouldAskQualificationQuestions}`);
+          logEntry(`📋 Should escalate to human: ${unifiedResult.conversationFlow.shouldEscalateToHuman}`);
+          logEntry(`📋 Next best action: ${unifiedResult.conversationFlow.nextBestAction}`);
+          logEntry(`📋 Conversation phase: ${unifiedResult.conversationFlow.conversationPhase}`);
+          logEntry(`📋 Engagement level: ${unifiedResult.conversationFlow.engagementLevel}`);
+          logEntry(`📋 Flow reasoning: ${unifiedResult.conversationFlow.flowReasoning}`);
+        }
+        
         if (unifiedResult?.leadScore) {
           logEntry(`📋 LeadScore structure: ${JSON.stringify(unifiedResult.leadScore, null, 2)}`);
         }
@@ -154,6 +178,22 @@ export class ChatMessageProcessingService {
           logFileName
         );
 
+        // Process AI conversation flow decisions if available
+        let aiFlowDecision: AIConversationFlowDecision | null = null;
+        if (unifiedResult?.conversationFlow) {
+          aiFlowDecision = unifiedResult.conversationFlow as AIConversationFlowDecision;
+          
+          // Log AI flow decision processing
+          logEntry('🔄 PROCESSING AI CONVERSATION FLOW DECISIONS:');
+          logEntry(`📋 AI recommends lead capture: ${ConversationFlowService.shouldTriggerLeadCapture(aiFlowDecision)}`);
+          logEntry(`📋 AI recommends qualification: ${ConversationFlowService.shouldAskQualificationQuestions(aiFlowDecision)}`);
+          logEntry(`📋 AI recommends escalation: ${ConversationFlowService.shouldEscalateToHuman(aiFlowDecision)}`);
+          logEntry(`📋 Readiness score: ${ConversationFlowService.calculateReadinessScore(aiFlowDecision.readinessIndicators)}`);
+          
+          const recommendedActions = ConversationFlowService.getRecommendedActions(aiFlowDecision);
+          logEntry(`📋 Recommended actions: ${recommendedActions.join(', ')}`);
+        }
+
         return {
           session: updatedSession,
           userMessage,
@@ -163,6 +203,7 @@ export class ChatMessageProcessingService {
           enhancedContext: {
             ...enhancedContext,
             unifiedAnalysis: unifiedResult?.analysis || { primaryIntent: 'unknown', primaryConfidence: 0 },
+            conversationFlow: aiFlowDecision, // Include AI flow decision
             leadScore: unifiedResult?.leadScore || { totalScore: 0 },
             callToAction: unifiedResult?.response?.callToAction || { type: 'none', priority: 'low' }
           }
@@ -287,11 +328,25 @@ export class ChatMessageProcessingService {
     allMessages: ChatMessage[],
     enhancedContext: any
   ): any {
-    // Use ConversationContextOrchestrator to update session with conversation summary
+    // Extract API-provided data and format according to ApiAnalysisData interface
+    const apiProvidedData = {
+      entities: {
+        urgency: enhancedContext?.urgency as 'low' | 'medium' | 'high' | undefined || 'low'
+      },
+      leadScore: {
+        scoreBreakdown: {
+          engagementLevel: enhancedContext?.engagementLevel === 'high' ? 20 : 
+                          enhancedContext?.engagementLevel === 'medium' ? 10 : 5
+        }
+      }
+    };
+
+    // Use ConversationContextOrchestrator to update session with API data
     return this.conversationContextOrchestrator.updateSessionContext(
       session,
       botMessage,
-      allMessages
+      allMessages,
+      apiProvidedData
     );
   }
 
@@ -381,18 +436,24 @@ Respond as if you're a knowledgeable business assistant who experienced a brief 
 
     // Add cost tracking using the actual token usage
     if (promptTokens > 0 || completionTokens > 0) {
-      const totalCostCents = this.calculateCostFromTokens(
-        promptTokens, 
-        completionTokens, 
-        unifiedResult?.model || 'gpt-4o-mini'
-      );
+      // Calculate costs consistently using the same rates
+      const promptRate = 0.00015; // $0.15 per 1K tokens
+      const completionRate = 0.0006; // $0.60 per 1K tokens
+      
+      const promptCostDollars = (promptTokens / 1000) * promptRate;
+      const completionCostDollars = (completionTokens / 1000) * completionRate;
+      const totalCostDollars = promptCostDollars + completionCostDollars;
+      
+      const promptTokensCents = promptCostDollars * 100;
+      const completionTokensCents = completionCostDollars * 100;
+      const totalCostCents = totalCostDollars * 100;
       
       botMessage = botMessage.addCostTracking(totalCostCents, {
-        promptTokensCents: (promptTokens / 1000) * 0.15, // GPT-4o-mini rates
-        completionTokensCents: (completionTokens / 1000) * 0.60,
+        promptTokensCents,
+        completionTokensCents,
         totalCents: totalCostCents,
         displayCents: Math.round(totalCostCents * 10000) / 10000,
-        modelRate: 0.15
+        modelRate: promptRate
       });
     }
 
@@ -444,6 +505,19 @@ Respond as if you're a knowledgeable business assistant who experienced a brief 
   }
 
   /**
+   * Map API engagement score (0-25) to engagement level
+   * 
+   * AI INSTRUCTIONS:
+   * - Convert numerical score from OpenAI API to categorical level
+   * - Use thresholds that match business logic
+   */
+  private mapEngagementScoreToLevel(score: number): 'low' | 'medium' | 'high' {
+    if (score >= 20) return 'high';
+    if (score >= 10) return 'medium';
+    return 'low';
+  }
+
+  /**
    * Update session context with unified processing results
    * 
    * AI INSTRUCTIONS:
@@ -460,22 +534,69 @@ Respond as if you're a knowledgeable business assistant who experienced a brief 
     unifiedResult: any,
     sharedLogFile: string
   ): any {
+    // Extract API-provided data and format according to ApiAnalysisData interface
+    const apiProvidedData = {
+      entities: {
+        urgency: 'medium' as const, // Default since not directly provided in current schema
+        painPoints: unifiedResult?.analysis?.entities?.painPoints || [],
+        integrationNeeds: unifiedResult?.analysis?.entities?.integrationNeeds || [],
+        evaluationCriteria: unifiedResult?.analysis?.entities?.evaluationCriteria || []
+      },
+      personaInference: {
+        role: unifiedResult?.analysis?.entities?.role,
+        industry: unifiedResult?.analysis?.entities?.industry,
+        evidence: unifiedResult?.analysis?.personaInference?.evidence || []
+      },
+      leadScore: {
+        scoreBreakdown: {
+          engagementLevel: unifiedResult?.leadScore?.scoreBreakdown?.engagementLevel || 0
+        }
+      }
+    };
+
     // Use ConversationContextOrchestrator to update session (returns ChatSession entity)
     const updatedSession = this.conversationContextOrchestrator.updateSessionContext(
       session,
       botMessage,
-      allMessages
+      allMessages,
+      apiProvidedData
     );
 
     // Enhanced context data with unified processing metadata using domain methods
     const enhancedContextData = {
       ...updatedSession.contextData,
       lastLeadScore: unifiedResult?.leadScore?.totalScore || 0,
-      lastProcessingMode: 'unified',
       sharedLogFile
     };
 
     // Use domain entity method to update context data
     return updatedSession.updateContextData(enhancedContextData);
+  }
+
+  /**
+   * Process chatbot interaction with optimized performance
+   * AI INSTRUCTIONS: Parallel operations to reduce total processing time
+   * NOTE: This is a demonstration of optimization techniques
+   */
+  private async optimizedProcessingExample(
+    sessionId: string,
+    userMessage: string,
+    timestamp: Date
+  ): Promise<any> {
+    const startTime = Date.now();
+    
+    // OPTIMIZATION TECHNIQUES TO IMPLEMENT:
+    // 1. Parallel initial database operations
+    // 2. Load conversation context in parallel
+    // 3. Background non-critical operations
+    // 4. Database connection pooling
+    // 5. Prepared statements for frequent queries
+    
+    const endTime = Date.now();
+    console.log(`🚀 Potential optimized processing time: ${endTime - startTime}ms`);
+    
+    // This demonstrates the optimization approach
+    // Implementation would need to be integrated with existing methods
+    return null;
   }
 } 

@@ -8,11 +8,12 @@
  * - Use domain-specific errors with proper context
  * - Stay under 200-250 lines
  * - Publish domain events for cross-aggregate communication
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now provided externally from OpenAI API
  */
 
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
-import { LeadScoringService } from '../../../domain/services/lead-management/LeadScoringService';
 import { Lead } from '../../../domain/entities/Lead';
 import { ContactInfo } from '../../../domain/value-objects/lead-management/ContactInfo';
 import { QualificationData } from '../../../domain/value-objects/lead-management/QualificationData';
@@ -34,13 +35,14 @@ export interface LeadCaptureRequest {
   qualificationData: QualificationData;
   conversationSummary: string;
   source: LeadSource;
+  leadScore?: number; // Optional - from OpenAI API
+  qualificationStatus?: 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified'; // Optional - from OpenAI API
 }
 
 export class LeadCaptureService {
   constructor(
     private readonly leadRepository: ILeadRepository,
     private readonly sessionRepository: IChatSessionRepository,
-    private readonly leadScoringService: LeadScoringService,
     private readonly leadMapper: LeadMapper
   ) {}
 
@@ -68,7 +70,7 @@ export class LeadCaptureService {
       });
     }
 
-    // Create lead entity using domain factory
+    // Create lead entity using domain factory with API-provided scores
     const lead = Lead.create(
       request.sessionId,
       request.organizationId,
@@ -76,7 +78,9 @@ export class LeadCaptureService {
       request.contactInfo,
       request.qualificationData,
       request.source,
-      request.conversationSummary
+      request.conversationSummary,
+      request.leadScore || 0, // Use API-provided score or default to 0
+      request.qualificationStatus || 'not_qualified' // Use API-provided status or default
     );
 
     // Save lead through repository

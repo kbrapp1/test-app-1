@@ -5,13 +5,13 @@
  * Single responsibility: Handle context retrieval, token management, and conversation summaries.
  */
 
-import { ChatSession } from '../../domain/entities/ChatSession';
-import { ChatMessage } from '../../domain/entities/ChatMessage';
-import { ConversationContextWindow } from '../../domain/value-objects/ConversationContextWindow';
-import { ConversationContextOrchestrator } from '../../domain/services/conversation/ConversationContextOrchestrator';
-import { ITokenCountingService } from '../../domain/services/ITokenCountingService';
-import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
-import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
+import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ConversationContextWindow } from '../../../domain/value-objects/session-management/ConversationContextWindow';
+import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
+import { ITokenCountingService } from '../../../domain/services/interfaces/ITokenCountingService';
+import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
+import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 
 export interface TokenAwareContextResult {
   messages: ChatMessage[];

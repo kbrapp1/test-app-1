@@ -1,4 +1,4 @@
-import { IntentResult } from './IntentResult';
+import { IntentResult } from '../message-processing/IntentResult';
 
 export type JourneyStage = 
   | 'visitor'        // Just arrived, browsing

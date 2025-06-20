@@ -1,4 +1,4 @@
-import { IntentResult } from '../value-objects/IntentResult';
+import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 
 export interface KnowledgeItem {
   id: string;

@@ -6,21 +6,48 @@
  * without containing business logic.
  */
 
-import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { ChatSessionMapper } from '../mappers/ChatSessionMapper';
+import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { ChatSessionMapper } from '../../mappers/ChatSessionMapper';
 import {
   ChatSessionDto,
   CreateChatSessionDto,
   UpdateChatSessionDto,
-} from '../dto/ChatSessionDto';
+} from '../../dto/ChatSessionDto';
 
 export class ChatSessionService {
   private readonly chatSessionRepository;
   private readonly conversationContextService;
+  
+  // Simple token counting service for basic operations
+  private readonly basicTokenCountingService = {
+    async countTextTokens(text: string): Promise<number> {
+      // Simple approximation: ~4 characters per token
+      return Math.ceil(text.length / 4);
+    },
+    async countMessageTokens(): Promise<number> {
+      return 10; // Default estimate
+    },
+    async countMessagesTokens(): Promise<number> {
+      return 50; // Default estimate  
+    },
+    estimateTextTokens(text: string): number {
+      // Return synchronous number, not Promise
+      return Math.ceil(text.length / 4);
+    },
+    async getTokenUsage(): Promise<any> {
+      // Return minimal TokenUsage interface
+      return { 
+        messageTokens: 50, 
+        totalTokens: 100, 
+        estimatedCost: 0.001 
+      };
+    }
+  };
 
   constructor() {
     this.chatSessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
-    this.conversationContextService = ChatbotWidgetCompositionRoot.getConversationContextService();
+    // AI INSTRUCTIONS: Follow @golden-rule dependency injection - orchestrator now manages its own dependencies
+    this.conversationContextService = ChatbotWidgetCompositionRoot.getConversationContextOrchestrator();
   }
 
   /**
@@ -130,7 +157,7 @@ export class ChatSessionService {
    */
   async getSessionsByVisitor(visitorId: string): Promise<ChatSessionDto[]> {
     const sessions = await this.chatSessionRepository.findByVisitorId(visitorId);
-    return sessions.map(session => ChatSessionMapper.toDto(session));
+    return sessions.map((session: any) => ChatSessionMapper.toDto(session));
   }
 
   /**

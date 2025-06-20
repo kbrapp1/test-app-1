@@ -1,13 +1,22 @@
 /**
- * Lead Query Service
+ * Lead Query Service (Infrastructure)
  * 
- * Infrastructure service for building and executing lead queries.
- * Single responsibility: Handle query construction and filtering logic.
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Lead database query operations only
+ * - Handle complex database queries and filtering
+ * - Use domain-specific errors with proper context
+ * - Stay under 200-250 lines
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now stored as provided by external API
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { QualificationStatus } from '../../../../domain/services/lead-management/LeadScoringService';
+import { Lead } from '../../../../domain/entities/Lead';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
+import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadFilters {
   qualificationStatus?: QualificationStatus;

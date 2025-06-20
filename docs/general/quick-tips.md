@@ -66,6 +66,10 @@ note: for set-active-org-claim edge function, make sure the Enforce JWT Verifica
 ## Finding file lengths
 Get-ChildItem -Path "lib/chatbot-widget" -Recurse -Include "*.ts","*.tsx" | Where-Object { $_.Name -notmatch "test" } | ForEach-Object { $lc = (Get-Content $_.FullName | Measure-Object -Line).Lines; [PSCustomObject]@{File=$_.Name; Lines=$lc; Path=$_.FullName} } | Sort-Object Lines -Descending | Select-Object -First 15
 
+## Finding Type Script errors
+npx tsc --noEmit --project tsconfig.json | findstr /C:"chatbot-widget"
+.next/types/app/api/chatbot-widget/config/[configId]/route.ts(49,7): error TS2344: Type '{ __tag__: "GET"; __param_position__: "second"; __param_type__: RouteContext; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
+
 ## Run bundle analyzer and lighthouse
 pnpm run analyze     # Bundle analysis only
 pnpm run lighthouse  # Lighthouse audit only

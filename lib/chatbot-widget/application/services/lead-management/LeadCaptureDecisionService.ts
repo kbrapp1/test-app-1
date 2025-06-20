@@ -1,29 +1,147 @@
 /**
- * Lead Capture Decision Service
+ * AI-Driven Lead Capture Decision Service
  * 
- * Application service for determining when to trigger lead capture.
- * Single responsibility: Handle lead capture decision logic and suggested actions.
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Process AI-provided lead capture decisions
+ * - Use AI conversation flow decisions instead of business rule thresholds
+ * - Follow @golden-rule patterns exactly
+ * - Stay under 200-250 lines
+ * - Delegate to ConversationFlowService for AI decision processing
+ * - UPDATED: Replaced rule-based decisions with AI-driven approach
  */
 
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { ConversationFlowService, AIConversationFlowDecision } from '../../../domain/services/conversation-management/ConversationFlowService';
+
+export interface LeadCaptureDecisionContext {
+  session: ChatSession;
+  config: ChatbotConfig;
+  aiFlowDecision?: AIConversationFlowDecision;
+  enhancedContext?: any; // From unified processing result
+}
 
 export class LeadCaptureDecisionService {
+  
   /**
    * Determine if lead capture should be triggered
+   * Uses AI decision when available, fallback to basic checks when not
    */
-  shouldTriggerLeadCapture(session: ChatSession, config: ChatbotConfig): boolean {
+  shouldTriggerLeadCapture(
+    session: ChatSession, 
+    config: ChatbotConfig, 
+    context?: { aiFlowDecision?: AIConversationFlowDecision }
+  ): boolean {
     // Check if lead already captured
     if (session.hasContactInfo()) {
       return false;
     }
 
-    // Check if already in qualification process
-    if (session.leadQualificationState.qualificationStatus === 'in_progress' || 
-        session.leadQualificationState.qualificationStatus === 'completed') {
-      return false;
+    // Use AI decision when available (preferred approach)
+    if (context?.aiFlowDecision) {
+      return ConversationFlowService.shouldTriggerLeadCapture(context.aiFlowDecision);
     }
 
+    // Fallback: Basic engagement check (no AI available)
+    return this.shouldTriggerLeadCaptureFallback(session, config);
+  }
+
+  /**
+   * Generate suggested next actions based on AI flow decisions
+   * Uses AI recommendations when available, fallback to basic logic when not
+   */
+  generateSuggestedActions(
+    session: ChatSession,
+    config: ChatbotConfig,
+    shouldCaptureLeadInfo: boolean,
+    context?: { aiFlowDecision?: AIConversationFlowDecision }
+  ): string[] {
+    // Use AI-recommended actions when available (preferred approach)
+    if (context?.aiFlowDecision) {
+      return ConversationFlowService.getRecommendedActions(context.aiFlowDecision);
+    }
+
+    // Fallback: Generate basic actions (no AI available)
+    return this.generateSuggestedActionsFallback(session, config, shouldCaptureLeadInfo);
+  }
+
+  /**
+   * Check if qualification questions should be asked
+   * Uses AI decision when available
+   */
+  shouldAskQualificationQuestions(
+    session: ChatSession,
+    context?: { aiFlowDecision?: AIConversationFlowDecision }
+  ): boolean {
+    // Use AI decision when available
+    if (context?.aiFlowDecision) {
+      return ConversationFlowService.shouldAskQualificationQuestions(context.aiFlowDecision);
+    }
+
+    // Fallback: Check if already in qualification process
+    return session.leadQualificationState.qualificationStatus === 'not_started' &&
+           session.contextData.engagementScore >= 60;
+  }
+
+  /**
+   * Check if escalation to human is needed
+   * Uses AI decision when available
+   */
+  shouldEscalateToHuman(
+    session: ChatSession,
+    context?: { aiFlowDecision?: AIConversationFlowDecision }
+  ): boolean {
+    // Use AI decision when available
+    if (context?.aiFlowDecision) {
+      return ConversationFlowService.shouldEscalateToHuman(context.aiFlowDecision);
+    }
+
+    // Fallback: Basic escalation triggers
+    return session.getSessionDuration() > 15; // Long session indicates need for human intervention
+  }
+
+  /**
+   * Get conversation readiness metrics
+   * Uses AI indicators when available
+   */
+  getConversationReadiness(
+    session: ChatSession,
+    context?: { aiFlowDecision?: AIConversationFlowDecision }
+  ): {
+    readinessScore: number;
+    phase: string;
+    engagementLevel: string;
+    indicators: Record<string, boolean>;
+  } {
+    if (context?.aiFlowDecision) {
+      return {
+        readinessScore: ConversationFlowService.calculateReadinessScore(context.aiFlowDecision.readinessIndicators),
+        phase: context.aiFlowDecision.conversationPhase,
+        engagementLevel: context.aiFlowDecision.engagementLevel,
+        indicators: context.aiFlowDecision.readinessIndicators
+      };
+    }
+
+    // Fallback: Basic readiness calculation
+    return {
+      readinessScore: session.contextData.engagementScore || 0,
+      phase: 'discovery',
+      engagementLevel: session.contextData.engagementScore > 70 ? 'high' : 'medium',
+      indicators: {
+        hasContactInfo: session.hasContactInfo(),
+        showsBuyingIntent: session.contextData.topics.includes('pricing'),
+        hasDecisionAuthority: false, // Cannot determine without AI
+        hasBudgetIndications: false, // Cannot determine without AI
+        hasTimelineUrgency: false   // Cannot determine without AI
+      }
+    };
+  }
+
+  /**
+   * Fallback method for lead capture decision (when AI not available)
+   * Maintains backward compatibility
+   */
+  private shouldTriggerLeadCaptureFallback(session: ChatSession, config: ChatbotConfig): boolean {
     // Check engagement score threshold
     if (session.contextData.engagementScore >= 70) {
       return true;
@@ -41,17 +159,14 @@ export class LeadCaptureDecisionService {
       buyingIntentTopics.includes(topic)
     );
     
-    if (hasBuyingIntent && session.contextData.engagementScore >= 50) {
-      return true;
-    }
-
-    return false;
+    return hasBuyingIntent && session.contextData.engagementScore >= 50;
   }
 
   /**
-   * Generate suggested next actions based on session state
+   * Fallback method for generating actions (when AI not available)
+   * Maintains backward compatibility
    */
-  generateSuggestedActions(
+  private generateSuggestedActionsFallback(
     session: ChatSession,
     config: ChatbotConfig,
     shouldCaptureLeadInfo: boolean
@@ -72,13 +187,6 @@ export class LeadCaptureDecisionService {
     if (sessionDuration > 10) {
       actions.push('Suggest scheduling a call');
       actions.push('Provide comprehensive resource links');
-    }
-
-    if (session.leadQualificationState.answeredQuestions.length > 0) {
-      const progress = session.leadQualificationState.answeredQuestions.length / config.leadQualificationQuestions.length;
-      if (progress > 0.5) {
-        actions.push('Continue qualification process');
-      }
     }
 
     // Check for specific topics that warrant actions

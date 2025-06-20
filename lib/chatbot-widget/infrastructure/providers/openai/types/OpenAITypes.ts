@@ -5,7 +5,7 @@
  * Single responsibility: Define OpenAI-specific data structures and configurations.
  */
 
-import { IntentType, ExtractedEntities } from '../../../../domain/value-objects/IntentResult';
+import { IntentType, ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
 
 export interface OpenAIIntentConfig {
   apiKey: string;

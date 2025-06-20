@@ -1,5 +1,4 @@
 import { Lead } from '../entities/Lead';
-import { QualificationStatus } from '../services/lead-management/LeadScoringService';
 import { FollowUpStatus } from '../entities/LeadLifecycleManager';
 
 export interface ILeadRepository {
@@ -14,23 +13,18 @@ export interface ILeadRepository {
   findBySessionId(sessionId: string): Promise<Lead | null>;
 
   /**
+   * Find leads by organization ID
+   */
+  findByOrganizationId(organizationId: string): Promise<Lead[]>;
+
+  /**
    * Find leads by organization ID with pagination and filters
    */
   findByOrganizationIdWithPagination(
     organizationId: string,
     page: number,
     limit: number,
-    filters?: {
-      qualificationStatus?: QualificationStatus;
-      followUpStatus?: FollowUpStatus;
-      assignedTo?: string;
-      dateFrom?: Date;
-      dateTo?: Date;
-      minScore?: number;
-      maxScore?: number;
-      tags?: string[];
-      searchTerm?: string; // Search in name, email, company
-    }
+    filters?: any
   ): Promise<{
     leads: Lead[];
     total: number;
@@ -71,43 +65,14 @@ export interface ILeadRepository {
     organizationId: string,
     dateFrom: Date,
     dateTo: Date
-  ): Promise<{
-    totalLeads: number;
-    qualifiedLeads: number;
-    highlyQualifiedLeads: number;
-    convertedLeads: number;
-    avgLeadScore: number;
-    conversionRate: number;
-    qualificationDistribution: {
-      not_qualified: number;
-      qualified: number;
-      highly_qualified: number;
-      disqualified: number;
-    };
-    followUpDistribution: {
-      new: number;
-      contacted: number;
-      in_progress: number;
-      converted: number;
-      lost: number;
-      nurturing: number;
-    };
-    sourceBreakdown: Array<{ source: string; count: number }>;
-    topCompanies: Array<{ company: string; count: number; avgScore: number }>;
-    leadTrends: Array<{ date: string; count: number; avgScore: number }>;
-  }>;
+  ): Promise<any>;
 
   /**
    * Get leads for export (CSV/Excel)
    */
   findForExport(
     organizationId: string,
-    filters?: {
-      qualificationStatus?: QualificationStatus;
-      followUpStatus?: FollowUpStatus;
-      dateFrom?: Date;
-      dateTo?: Date;
-    }
+    filters?: any
   ): Promise<Lead[]>;
 
   /**
@@ -144,7 +109,7 @@ export interface ILeadRepository {
   searchByQuery(
     organizationId: string,
     query: string,
-    limit?: number
+    limit: number
   ): Promise<Lead[]>;
 
   /**
@@ -185,4 +150,9 @@ export interface ILeadRepository {
     assignedTo?: string;
     tags?: { add?: string[]; remove?: string[] };
   }): Promise<number>;
+
+  /**
+   * Create a new lead
+   */
+  create(lead: Lead): Promise<Lead>;
 } 

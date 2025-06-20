@@ -4,17 +4,24 @@
  * Domain Entity: Core lead business object with identity
  * Single Responsibility: Lead coordination and core business logic
  * Following DDD entity patterns with value objects and domain services
+ * 
+ * AI INSTRUCTIONS:
+ * - UPDATED: Removed domain lead scoring - using API-only approach
+ * - Lead score is now provided externally (from API) not calculated internally
+ * - Keep under 250 lines following @golden-rule patterns
  */
 
 import { ContactInfo, ContactInfoProps } from '../value-objects/lead-management/ContactInfo';
 import { QualificationData, QualificationDataProps } from '../value-objects/lead-management/QualificationData';
 import { LeadSource, LeadSourceProps } from '../value-objects/lead-management/LeadSource';
 import { LeadMetadata, LeadMetadataProps, LeadNote } from '../value-objects/lead-management/LeadMetadata';
-import { LeadScoringService, QualificationStatus, LeadScoringResult } from '../services/lead-management/LeadScoringService';
 import { LeadLifecycleManager, FollowUpStatus, LeadLifecycleState } from './LeadLifecycleManager';
 import { LeadExportService } from '../services/lead-management/LeadExportService';
 import { LeadQueryService } from '../services/lead-management/LeadQueryService';
 import { LeadBusinessService } from '../services/lead-management/LeadBusinessService';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadProps {
   id: string;
@@ -47,7 +54,9 @@ export class Lead {
     contactInfoProps: ContactInfoProps,
     qualificationDataProps: QualificationDataProps,
     sourceProps: LeadSourceProps,
-    conversationSummary: string
+    conversationSummary: string,
+    leadScore: number = 0,
+    qualificationStatus: QualificationStatus = 'not_qualified'
   ): Lead {
     const contactInfo = ContactInfo.create(contactInfoProps);
     const qualificationData = QualificationData.create(qualificationDataProps);
@@ -58,9 +67,6 @@ export class Lead {
       notes: [],
     });
     
-    // Calculate score using domain service
-    const scoringResult = LeadScoringService.calculateScore(qualificationData);
-    
     const now = new Date();
     
     return new Lead({
@@ -70,8 +76,8 @@ export class Lead {
       chatbotConfigId,
       contactInfo,
       qualificationData,
-      leadScore: scoringResult.score,
-      qualificationStatus: scoringResult.qualificationStatus,
+      leadScore,
+      qualificationStatus,
       source,
       metadata,
       capturedAt: now,
@@ -201,44 +207,35 @@ export class Lead {
   }
 
   isNew(): boolean { 
-    return LeadQueryService.isNew(this.props.followUpStatus); 
+    return this.props.followUpStatus === 'new'; 
   }
 
   isConverted(): boolean { 
-    return LeadQueryService.isConverted(this.props.followUpStatus); 
+    return this.props.followUpStatus === 'converted'; 
   }
 
   isAssigned(): boolean { 
-    return LeadQueryService.isAssigned(this.props.assignedTo); 
+    return this.props.assignedTo !== undefined; 
   }
 
   hasRecentActivity(daysThreshold: number = 7): boolean {
-    return LeadQueryService.hasRecentActivity(
-      this.props.lastContactedAt,
-      this.props.createdAt,
-      daysThreshold
-    );
+    if (!this.props.lastContactedAt) return false;
+    const daysSinceContact = (Date.now() - this.props.lastContactedAt.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceContact <= daysThreshold;
   }
 
   getDaysSinceCreated(): number {
-    return LeadQueryService.getDaysSinceCreated(this.props.createdAt);
+    return Math.floor((Date.now() - this.props.createdAt.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // Delegation to domain service for scoring analysis
   getScoreGrade(): 'A' | 'B' | 'C' | 'D' | 'F' {
-    return LeadScoringService.getScoreGrade(this.props.leadScore);
+    if (this.props.leadScore >= 90) return 'A';
+    if (this.props.leadScore >= 80) return 'B';
+    if (this.props.leadScore >= 70) return 'C';
+    if (this.props.leadScore >= 60) return 'D';
+    return 'F';
   }
 
-  getScoringResult(): LeadScoringResult {
-    return LeadScoringService.calculateScore(this.props.qualificationData);
-  }
-
-  getScoreRecommendations(): string[] {
-    const scoringResult = this.getScoringResult();
-    return LeadScoringService.getScoreRecommendations(scoringResult);
-  }
-
-  // Export methods (delegated to LeadExportService)
   toSummary(): object {
     return LeadExportService.generateSummary(this);
   }
@@ -259,7 +256,6 @@ export class Lead {
     return { ...this.props };
   }
 
-  // Private helper methods
   private getLifecycleState(): LeadLifecycleState {
     return {
       followUpStatus: this.props.followUpStatus,

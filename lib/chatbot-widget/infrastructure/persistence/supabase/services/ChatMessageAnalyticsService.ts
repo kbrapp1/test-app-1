@@ -15,11 +15,11 @@ import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { ChatMessageMapper, RawChatMessageDbRecord } from '../mappers/ChatMessageMapper';
 import { DatabaseError } from '@/lib/errors/base';
 import { 
-  ChatMessageQueryService,
   AnalyticsCalculationService,
   ResponseTimeAnalyticsService,
   CostAnalyticsService
 } from './analytics';
+import { ChatMessageAnalyticsQueryService } from './chat-message-queries';
 
 export interface ChatAnalyticsResult {
   totalMessages: number;
@@ -52,7 +52,7 @@ export interface CostAnalytics {
 }
 
 export class ChatMessageAnalyticsService {
-  private queryService: ChatMessageQueryService;
+  private queryService: ChatMessageAnalyticsQueryService;
   private calculationService: AnalyticsCalculationService;
   private responseTimeService: ResponseTimeAnalyticsService;
   private costService: CostAnalyticsService;
@@ -60,7 +60,7 @@ export class ChatMessageAnalyticsService {
   constructor(supabaseClient?: SupabaseClient) {
     const supabase = supabaseClient ?? createClient();
     
-    this.queryService = new ChatMessageQueryService(supabase);
+    this.queryService = new ChatMessageAnalyticsQueryService(supabase);
     this.calculationService = new AnalyticsCalculationService();
     this.responseTimeService = new ResponseTimeAnalyticsService();
     this.costService = new CostAnalyticsService();

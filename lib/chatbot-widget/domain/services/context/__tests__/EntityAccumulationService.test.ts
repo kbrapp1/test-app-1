@@ -127,24 +127,7 @@ describe('EntityAccumulationService', () => {
     });
   });
 
-  describe('mergeEntities (legacy method)', () => {
-    it('should work as backward-compatible wrapper', () => {
-      const freshEntities: ExtractedEntities = {
-        budget: '10000',
-        company: 'Acme Corp'
-      };
 
-      const result = EntityAccumulationService.mergeEntities(
-        null,
-        freshEntities,
-        mockContext
-      );
-
-      expect(result).toBeInstanceOf(AccumulatedEntities);
-      expect(result.budget?.value).toBe('10000');
-      expect(result.company?.value).toBe('Acme Corp');
-    });
-  });
 
   describe('buildEntityContextPrompt', () => {
     it('should build context prompt from accumulated entities', () => {
@@ -196,15 +179,15 @@ describe('EntityAccumulationService', () => {
         company: 'New Corp' // Will use default confidence 0.9
       };
 
-      const result = EntityAccumulationService.mergeEntities(
+      const result = EntityAccumulationService.mergeEntitiesWithCorrections(
         existing,
         freshEntities,
         mockContext
       );
 
       // Should keep existing higher confidence entity
-      expect(result.company?.value).toBe('Old Corp');
-      expect(result.company?.confidence).toBe(0.95);
+      expect(result.accumulatedEntities.company?.value).toBe('Old Corp');
+      expect(result.accumulatedEntities.company?.confidence).toBe(0.95);
     });
 
     it('should replace with higher confidence entity', () => {
@@ -215,15 +198,15 @@ describe('EntityAccumulationService', () => {
         company: 'New Corp' // Will use default confidence 0.9
       };
 
-      const result = EntityAccumulationService.mergeEntities(
+      const result = EntityAccumulationService.mergeEntitiesWithCorrections(
         existing,
         freshEntities,
         mockContext
       );
 
       // Should replace with new higher confidence entity
-      expect(result.company?.value).toBe('New Corp');
-      expect(result.company?.confidence).toBe(0.9);
+      expect(result.accumulatedEntities.company?.value).toBe('New Corp');
+      expect(result.accumulatedEntities.company?.confidence).toBe(0.9);
     });
   });
 
@@ -236,14 +219,14 @@ describe('EntityAccumulationService', () => {
         budget: '10000'
       };
 
-      const result = EntityAccumulationService.mergeEntities(
+      const result = EntityAccumulationService.mergeEntitiesWithCorrections(
         existing,
         freshEntities,
         mockContext
       );
 
-      expect(result.budget?.value).toBe('10000');
-      expect(result.budget?.sourceMessageId).toBe('msg-123');
+      expect(result.accumulatedEntities.budget?.value).toBe('10000');
+      expect(result.accumulatedEntities.budget?.sourceMessageId).toBe('msg-123');
     });
   });
 
@@ -292,14 +275,14 @@ describe('EntityAccumulationService', () => {
         timeline: 'Q2 2024'
       };
 
-      const result = EntityAccumulationService.mergeEntities(
+      const result = EntityAccumulationService.mergeEntitiesWithCorrections(
         null,
         freshEntities,
         mockContext
       );
 
-      expect(result.budget).toBeNull();
-      expect(result.timeline?.value).toBe('Q2 2024');
+      expect(result.accumulatedEntities.budget).toBeNull();
+      expect(result.accumulatedEntities.timeline?.value).toBe('Q2 2024');
     });
 
     it('should handle empty string values', () => {
@@ -308,15 +291,15 @@ describe('EntityAccumulationService', () => {
         timeline: 'Q2 2024'
       };
 
-      const result = EntityAccumulationService.mergeEntities(
+      const result = EntityAccumulationService.mergeEntitiesWithCorrections(
         null,
         freshEntities,
         mockContext
       );
 
       // Empty strings are filtered out and become null
-      expect(result.budget).toBeNull();
-      expect(result.timeline?.value).toBe('Q2 2024');
+      expect(result.accumulatedEntities.budget).toBeNull();
+      expect(result.accumulatedEntities.timeline?.value).toBe('Q2 2024');
     });
   });
 

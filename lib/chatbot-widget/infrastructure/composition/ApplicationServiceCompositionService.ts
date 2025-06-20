@@ -70,8 +70,7 @@ export class ApplicationServiceCompositionService {
       const dynamicPromptService = DomainServiceCompositionService.getDynamicPromptService();
       const intentService = await DomainServiceCompositionService.getIntentClassificationService();
       const knowledgeRetrievalService = DomainServiceCompositionService.getKnowledgeRetrievalService({});
-      const leadScoringService = DomainServiceCompositionService.getLeadScoringService();
-      const sentimentService = DomainServiceCompositionService.getConversationSentimentService();
+      // ConversationSentimentService removed - using OpenAI API for sentiment analysis
       const leadExtractionService = DomainServiceCompositionService.getLeadExtractionService();
 
       this.aiConversationService = new AiConversationService(
@@ -79,8 +78,6 @@ export class ApplicationServiceCompositionService {
         dynamicPromptService,
         intentService,
         knowledgeRetrievalService,
-        leadScoringService,
-        sentimentService,
         leadExtractionService
       );
     }
@@ -95,7 +92,6 @@ export class ApplicationServiceCompositionService {
       this.leadCaptureService = new LeadCaptureService(
         RepositoryCompositionService.getLeadRepository(),
         RepositoryCompositionService.getChatSessionRepository(),
-        DomainServiceCompositionService.getLeadScoringService(),
         new LeadMapper()
       );
     }
@@ -108,9 +104,7 @@ export class ApplicationServiceCompositionService {
   static getLeadLifecycleService(): LeadLifecycleService {
     if (!this.leadLifecycleService) {
       this.leadLifecycleService = new LeadLifecycleService(
-        RepositoryCompositionService.getLeadRepository(),
-        DomainServiceCompositionService.getLeadScoringService(),
-        new LeadMapper()
+        RepositoryCompositionService.getLeadRepository()
       );
     }
     return this.leadLifecycleService;

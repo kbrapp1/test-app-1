@@ -7,7 +7,6 @@
  * - Follow @golden-rule patterns exactly
  */
 
-export { ChatMessageQueryService } from './ChatMessageQueryService';
 export { AnalyticsCalculationService, type AnalyticsResult } from './AnalyticsCalculationService';
 export { ResponseTimeAnalyticsService, type ResponseTimeMetrics } from './ResponseTimeAnalyticsService';
 export { CostAnalyticsService, type CostAnalytics } from './CostAnalyticsService'; 

@@ -54,7 +54,6 @@ export class ChatSessionFactory {
       isQualified: false,
       currentStep: 0,
       answeredQuestions: [],
-      leadScore: 0,
       qualificationStatus: 'not_started' as const,
     };
   }
@@ -108,7 +107,6 @@ export class ChatSessionFactory {
       isQualified: data.is_qualified || false,
       currentStep: data.current_step || 0,
       answeredQuestions: data.answered_questions || [],
-      leadScore: data.lead_score || 0,
       qualificationStatus: data.qualification_status || 'not_started',
       capturedAt: data.captured_at ? new Date(data.captured_at) : undefined,
     };
@@ -163,7 +161,6 @@ export class ChatSessionFactory {
       is_qualified: state.isQualified,
       current_step: state.currentStep,
       answered_questions: state.answeredQuestions,
-      lead_score: state.leadScore,
       qualification_status: state.qualificationStatus,
       captured_at: state.capturedAt?.toISOString(),
     };

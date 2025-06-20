@@ -7,7 +7,7 @@
  * Single Responsibility: Encapsulate knowledge base update request data
  */
 
-import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
+import { KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 
 export interface UpdateKnowledgeBaseCommand {
   configId: string;

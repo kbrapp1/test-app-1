@@ -8,9 +8,9 @@
  */
 
 import { LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
-import { PersonalitySettings } from '../../domain/value-objects/PersonalitySettings';
-import { KnowledgeBase } from '../../domain/value-objects/KnowledgeBase';
-import { OperatingHours } from '../../domain/value-objects/OperatingHours';
+import { PersonalitySettings } from '../../domain/value-objects/ai-configuration/PersonalitySettings';
+import { KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { OperatingHours } from '../../domain/value-objects/session-management/OperatingHours';
 
 export interface CreateChatbotConfigCommand {
   organizationId: string;

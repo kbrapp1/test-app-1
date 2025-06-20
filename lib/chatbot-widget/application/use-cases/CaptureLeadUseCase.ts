@@ -1,278 +1,193 @@
 /**
- * Capture Lead Use Case
+ * Capture Lead Use Case (Application)
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Orchestrate lead capture workflow only
- * - Delegate specialized tasks to focused components
- * - Handle error coordination and transaction management
+ * - Single responsibility: Lead capture orchestration only
+ * - Orchestrate domain services without business logic
+ * - Handle workflow coordination, delegate all business logic
  * - Use domain-specific errors with proper context
- * - Stay under 200-250 lines by delegating to components
- * - Follow @golden-rule patterns exactly
+ * - Stay under 200-250 lines
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now provided externally from OpenAI API
  */
 
-import { ChatSession } from '../../domain/entities/ChatSession';
 import { Lead } from '../../domain/entities/Lead';
-import { ContactInfo } from '../../domain/value-objects/lead-management/ContactInfo';
-import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
-import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
-import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
-import { LeadScoringService } from '../../domain/services/lead-management/LeadScoringService';
-
-// Specialized components
-import {
-  LeadDataFactory,
-  QualificationProcessor,
-  LeadQualificationAnalyzer,
-  LeadRecommendationEngine,
-  LeadNextStepsGenerator,
-  QualificationAnswer,
-  QualificationStatus,
-  LeadRecommendation,
-  NextStep
-} from './lead-capture-components';
+import { LeadCaptureService } from '../services/lead-management/LeadCaptureService';
+import { LeadDto } from '../dto/LeadDto';
+import { LeadMapper } from '../mappers/LeadMapper';
+import { BusinessRuleViolationError } from '../../domain/errors/BusinessRuleViolationError';
+import { ContactInfo } from '../../domain/value-objects/lead-management/ContactInfo';
+import { LeadSource } from '../../domain/value-objects/lead-management/LeadSource';
+import { QualificationData } from '../../domain/value-objects/lead-management/QualificationData';
 
 export interface CaptureLeadRequest {
   sessionId: string;
+  organizationId: string;
   contactInfo: {
+    name?: string;
     email?: string;
     phone?: string;
-    name?: string;
     company?: string;
   };
-  qualificationAnswers?: QualificationAnswer[];
-}
-
-export interface CaptureLeadResult {
-  lead: Lead;
-  updatedSession: ChatSession;
-  leadScore: number;
-  qualificationStatus: QualificationStatus;
-  recommendations: LeadRecommendation[];
-  nextSteps: NextStep[];
-  processingStats: {
-    qualificationAnswersProcessed: number;
-    qualificationAnswersSkipped: number;
-    validationErrors: string[];
+  conversationSummary: string;
+  source: {
+    channel: string;
+    page?: string;
+    referrer?: string;
   };
+  // API-provided scoring data
+  leadScore?: number;
+  qualificationStatus?: 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
+  engagementScore?: number;
+  tags?: string[];
 }
 
 export class CaptureLeadUseCase {
   constructor(
-    private readonly sessionRepository: IChatSessionRepository,
-    private readonly leadRepository: ILeadRepository,
-    private readonly chatbotConfigRepository: IChatbotConfigRepository,
-    private readonly leadScoringService: LeadScoringService
+    private leadRepository: ILeadRepository,
+    private leadCaptureService: LeadCaptureService,
+    private leadMapper: LeadMapper
   ) {}
 
   /**
-   * Execute the complete lead capture workflow
+   * Execute lead capture use case
    */
-  async execute(request: CaptureLeadRequest): Promise<CaptureLeadResult> {
-    // 1. Load and validate dependencies
-    const { session, config } = await this.loadDependencies(request.sessionId);
-
-    // 2. Validate business rules
-    await this.validateBusinessRules(session);
-
-    // 3. Process qualification answers if provided
-    const { updatedSession, processingStats } = this.processQualificationAnswers(
-      session,
-      request.qualificationAnswers || [],
-      config
-    );
-
-    // 4. Update session with contact information
-    const sessionWithContact = this.updateSessionContact(updatedSession, request.contactInfo);
-
-    // 5. Create lead from session data
-    const lead = this.createLead(sessionWithContact, config, request.contactInfo);
-
-    // 6. Analyze qualification status
-    const qualificationAnalysis = LeadQualificationAnalyzer.analyzeQualification(
-      lead,
-      lead.leadScore
-    );
-
-    // 7. Generate recommendations and next steps
-    const recommendations = LeadRecommendationEngine.generateRecommendations(
-      lead,
-      sessionWithContact,
-      lead.leadScore
-    );
-
-    const nextSteps = LeadNextStepsGenerator.generateNextSteps(
-      lead,
-      qualificationAnalysis.status
-    );
-
-    // 8. Persist changes
-    const { savedLead, finalSession } = await this.persistChanges(lead, sessionWithContact);
-
-    return {
-      lead: savedLead,
-      updatedSession: finalSession,
-      leadScore: lead.leadScore,
-      qualificationStatus: qualificationAnalysis.status,
-      recommendations,
-      nextSteps,
-      processingStats
-    };
-  }
-
-  /**
-   * Load and validate required dependencies
-   */
-  private async loadDependencies(sessionId: string): Promise<{
-    session: ChatSession;
-    config: ChatbotConfig;
-  }> {
-    const session = await this.sessionRepository.findById(sessionId);
-    if (!session) {
-      throw new Error(`Chat session ${sessionId} not found`);
-    }
-
-    const config = await this.chatbotConfigRepository.findById(session.chatbotConfigId);
-    if (!config) {
-      throw new Error(`Chatbot configuration not found for session ${sessionId}`);
-    }
-
-    return { session, config };
-  }
-
-  /**
-   * Validate business rules for lead capture
-   */
-  private async validateBusinessRules(session: ChatSession): Promise<void> {
-    // Check if lead already exists for this session
-    const existingLead = await this.leadRepository.findBySessionId(session.id);
-    if (existingLead) {
-      throw new Error(`Lead already captured for session ${session.id}`);
-    }
-
-    // Additional business rule validations can be added here
-  }
-
-  /**
-   * Process qualification answers using specialized processor
-   */
-  private processQualificationAnswers(
-    session: ChatSession,
-    answers: QualificationAnswer[],
-    config: ChatbotConfig
-  ): {
-    updatedSession: ChatSession;
-    processingStats: {
-      qualificationAnswersProcessed: number;
-      qualificationAnswersSkipped: number;
-      validationErrors: string[];
-    };
-  } {
-    const result = QualificationProcessor.processAnswers(session, answers, config);
-
-    return {
-      updatedSession: result.updatedSession,
-      processingStats: {
-        qualificationAnswersProcessed: result.processedAnswers,
-        qualificationAnswersSkipped: result.skippedAnswers,
-        validationErrors: result.validationErrors
-      }
-    };
-  }
-
-  /**
-   * Update session with contact information
-   */
-  private updateSessionContact(
-    session: ChatSession,
-    contactInfo: CaptureLeadRequest['contactInfo']
-  ): ChatSession {
-    const sessionContactInfo = ContactInfo.create({
-      email: contactInfo.email || '',
-      phone: contactInfo.phone || '',
-      name: contactInfo.name || '',
-      company: contactInfo.company || ''
-    });
-
-    return session.captureContactInfo(sessionContactInfo);
-  }
-
-  /**
-   * Create lead entity using specialized factory
-   */
-  private createLead(
-    session: ChatSession,
-    config: ChatbotConfig,
-    contactInfo: CaptureLeadRequest['contactInfo']
-  ): Lead {
-    const leadData = LeadDataFactory.createFromSession({
-      session,
-      config,
-      contactInfo
-    });
-
-    return Lead.create(
-      session.id,
-      config.organizationId,
-      session.chatbotConfigId,
-      leadData.contactInfo,
-      leadData.qualificationData,
-      leadData.source,
-      leadData.conversationSummary
-    );
-  }
-
-  /**
-   * Persist lead and session changes
-   */
-  private async persistChanges(
-    lead: Lead,
-    session: ChatSession
-  ): Promise<{
-    savedLead: Lead;
-    finalSession: ChatSession;
-  }> {
-    // Save lead first
-    const savedLead = await this.leadRepository.save(lead);
-
-    // Update session
-    const finalSession = await this.sessionRepository.update(session);
-
-    return { savedLead, finalSession };
-  }
-
-  /**
-   * Get capture eligibility for a session
-   */
-  async getCaptureEligibility(sessionId: string): Promise<{
-    eligible: boolean;
-    reason?: string;
-    existingLeadId?: string;
-  }> {
+  async execute(request: CaptureLeadRequest): Promise<LeadDto> {
     try {
-      const session = await this.sessionRepository.findById(sessionId);
-      if (!session) {
-        return {
-          eligible: false,
-          reason: 'Session not found'
-        };
-      }
-
-      const existingLead = await this.leadRepository.findBySessionId(sessionId);
+      // Check if lead already exists for this session
+      const existingLead = await this.leadRepository.findBySessionId(request.sessionId);
       if (existingLead) {
-        return {
-          eligible: false,
-          reason: 'Lead already captured for this session',
-          existingLeadId: existingLead.id
-        };
+        // Update existing lead with new information
+        return this.updateExistingLead(existingLead, request);
       }
 
-      return { eligible: true };
+      // Create ContactInfo and other value objects
+      const contactInfo = ContactInfo.create({
+        email: request.contactInfo.email || '',
+        phone: request.contactInfo.phone || '',
+        name: request.contactInfo.name || '',
+        company: request.contactInfo.company || ''
+      });
+
+      const source = LeadSource.create({
+        channel: 'chatbot_widget',
+        pageUrl: request.source.page || 'https://example.com',
+        pageTitle: request.source.channel,
+        campaign: request.source.page,
+        referrer: request.source.referrer
+      });
+
+      // Create qualification data with API-provided scores
+      const qualificationData = QualificationData.create({
+        painPoints: [],
+        interests: [],
+        answeredQuestions: [],
+        engagementLevel: 'low'
+      });
+
+      // Use LeadCaptureService to capture the lead
+      const savedLead = await this.leadCaptureService.captureLead({
+        sessionId: request.sessionId,
+        organizationId: request.organizationId,
+        chatbotConfigId: 'default', // Would need to get this from session
+        contactInfo,
+        qualificationData,
+        conversationSummary: request.conversationSummary,
+        source,
+        leadScore: request.leadScore,
+        qualificationStatus: request.qualificationStatus
+      });
+
+      return savedLead;
+
     } catch (error) {
-      return {
-        eligible: false,
-        reason: 'Error checking eligibility'
-      };
+      if (error instanceof BusinessRuleViolationError) {
+        throw error;
+      }
+      
+      throw new BusinessRuleViolationError(
+        `Failed to capture lead: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
+  }
+
+  /**
+   * Update existing lead with new information
+   */
+  private async updateExistingLead(
+    existingLead: Lead,
+    request: CaptureLeadRequest
+  ): Promise<LeadDto> {
+    try {
+      // Update lead with new conversation summary and contact info if provided
+      let updatedLead = existingLead;
+      
+      if (request.conversationSummary) {
+        updatedLead = updatedLead.updateConversationSummary(request.conversationSummary);
+      }
+
+      // Update contact info if provided
+      if (request.contactInfo.email || request.contactInfo.phone || request.contactInfo.name || request.contactInfo.company) {
+        const newContactInfo = ContactInfo.create({
+          email: request.contactInfo.email || existingLead.contactInfo.email,
+          phone: request.contactInfo.phone || existingLead.contactInfo.phone,
+          name: request.contactInfo.name || existingLead.contactInfo.name,
+          company: request.contactInfo.company || existingLead.contactInfo.company
+        });
+        updatedLead = updatedLead.updateContactInfo(newContactInfo);
+      }
+
+      const savedLead = await this.leadRepository.update(updatedLead);
+      return this.leadMapper.toDto(savedLead);
+
+    } catch (error) {
+      throw new BusinessRuleViolationError(
+        `Failed to update existing lead: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Validate capture request
+   */
+  private validateRequest(request: CaptureLeadRequest): void {
+    if (!request.sessionId) {
+      throw new BusinessRuleViolationError('Session ID is required for lead capture');
+    }
+
+    if (!request.organizationId) {
+      throw new BusinessRuleViolationError('Organization ID is required for lead capture');
+    }
+
+    if (!request.contactInfo.email && !request.contactInfo.phone) {
+      throw new BusinessRuleViolationError('Either email or phone is required for lead capture');
+    }
+
+    if (!request.conversationSummary) {
+      throw new BusinessRuleViolationError('Conversation summary is required for lead capture');
+    }
+  }
+
+  /**
+   * Get lead capture analytics
+   */
+  async getCaptureAnalytics(organizationId: string, dateFrom: Date, dateTo: Date): Promise<{
+    totalCaptured: number;
+    avgLeadScore: number;
+    qualificationBreakdown: Record<string, number>;
+    sourceBreakdown: Record<string, number>;
+  }> {
+    const analytics = await this.leadRepository.getAnalytics(organizationId, dateFrom, dateTo);
+    
+    return {
+      totalCaptured: analytics.totalLeads,
+      avgLeadScore: analytics.avgLeadScore,
+      qualificationBreakdown: analytics.qualificationDistribution,
+      sourceBreakdown: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: any) => {
+        acc[item.source] = item.count;
+        return acc;
+      }, {})
+    };
   }
 } 

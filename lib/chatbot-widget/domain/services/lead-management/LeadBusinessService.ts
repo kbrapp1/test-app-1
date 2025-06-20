@@ -4,13 +4,20 @@
  * Domain Service: Handles lead business operations and state transitions
  * Single Responsibility: Lead business logic coordination and state management
  * Following DDD domain service patterns
+ * 
+ * AI INSTRUCTIONS:
+ * - UPDATED: Removed dependency on LeadScoringService - using API-only approach
+ * - Lead scores are provided externally, not calculated here
+ * - Keep under 200 lines following @golden-rule patterns
  */
 
 import { ContactInfo, ContactInfoProps } from '../../value-objects/lead-management/ContactInfo';
 import { QualificationData, QualificationDataProps } from '../../value-objects/lead-management/QualificationData';
 import { LeadMetadata } from '../../value-objects/lead-management/LeadMetadata';
-import { LeadScoringService, QualificationStatus } from './LeadScoringService';
 import { LeadLifecycleManager, FollowUpStatus, LeadLifecycleState } from '../../entities/LeadLifecycleManager';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadUpdateResult {
   contactInfo?: ContactInfo;
@@ -44,7 +51,8 @@ export class LeadBusinessService {
   }
 
   /**
-   * Update qualification data and recalculate score
+   * Update qualification data
+   * Note: Lead score is now provided by API, not calculated here
    */
   static updateQualificationData(
     currentQualificationData: QualificationData,
@@ -55,13 +63,8 @@ export class LeadBusinessService {
       ...updates,
     });
 
-    // Recalculate score using domain service
-    const scoringResult = LeadScoringService.calculateScore(updatedQualificationData);
-
     return {
       qualificationData: updatedQualificationData,
-      leadScore: scoringResult.score,
-      qualificationStatus: scoringResult.qualificationStatus,
       updatedAt: new Date(),
     };
   }

@@ -80,17 +80,7 @@ export class EntityAccumulationService {
     };
   }
   
-  /**
-   * Legacy method for backward compatibility
-   */
-  static mergeEntities(
-    existingEntities: AccumulatedEntities | null,
-    freshEntities: ExtractedEntities,
-    context: EntityMergeContext
-  ): AccumulatedEntities {
-    const result = this.mergeEntitiesWithCorrections(existingEntities, freshEntities, context);
-    return result.accumulatedEntities;
-  }
+
   
   /**
    * Build entity context for AI prompts

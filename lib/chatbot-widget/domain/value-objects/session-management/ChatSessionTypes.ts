@@ -97,6 +97,27 @@ export interface SessionContext {
       lastProcessedMessageId: string;
     };
   };
+  intentHistory?: {
+    businessContextEstablished: boolean;
+    lastBusinessIntent: string;
+    lastBusinessTurn: number;
+    currentConversationMode: 'greeting' | 'business' | 'casual' | 'qualification';
+    intentSequence: Array<{
+      turn: number;
+      intent: string;
+      confidence: number;
+      timestamp: string;
+      messageId: string;
+    }>;
+    contextFlags: {
+      productInterestEstablished: boolean;
+      pricingDiscussed: boolean;
+      comparisonMode: boolean;
+      companyInquiryMade: boolean;
+      knowledgeBaseNeeded: boolean;
+      lastBusinessQuestionTurn: number;
+    };
+  };
 }
 
 export interface PageView {
@@ -110,7 +131,6 @@ export interface LeadQualificationState {
   isQualified: boolean;
   currentStep: number;
   answeredQuestions: AnsweredQuestion[];
-  leadScore: number;
   qualificationStatus: 'not_started' | 'in_progress' | 'completed' | 'skipped';
   capturedAt?: Date;
 }

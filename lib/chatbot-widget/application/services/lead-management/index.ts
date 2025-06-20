@@ -12,9 +12,4 @@ export { LeadCaptureService } from './LeadCaptureService';
 export { LeadCaptureDecisionService } from './LeadCaptureDecisionService';
 export { LeadLifecycleService } from './LeadLifecycleService';
 export { LeadManagementService } from './LeadManagementService';
-export { LeadQueryService } from './LeadQueryService';
-
-// Re-export commonly used types for convenience
-export type { 
-  ProcessMessageRequest 
-} from '../conversation-management/MessageProcessingService'; 
+export { LeadQueryService } from './LeadQueryService'; 

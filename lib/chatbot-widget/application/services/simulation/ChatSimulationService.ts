@@ -1,13 +1,14 @@
-import { ChatSimulation, SimulationResults } from '../../domain/entities/ChatSimulation';
-import { ChatSimulationContext, SimulatedUserProfile, TestingGoal } from '../../domain/value-objects/ChatSimulationContext';
-import { ChatMessage } from '../../domain/entities/ChatMessage';
-import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
-import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
+import { ChatSimulation } from '../../../domain/entities/ChatSimulation';
+import { SimulationResults, PerformanceMetrics, QualityAssessment, GoalAchievement } from '../../../domain/value-objects/simulation/SimulationResults';
+import { ChatSimulationContext, SimulatedUserProfile, TestingGoal } from '../../../domain/value-objects/simulation/ChatSimulationContext';
+import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotConfigRepository';
 
 export interface IChatSimulationService {
   startSimulation(context: ChatSimulationContext): Promise<ChatSimulation>;
   sendMessage(simulationId: string, message: string): Promise<{ simulation: ChatSimulation; response: string }>;
-  completeSimulation(simulationId: string, results?: Partial<SimulationResults>): Promise<ChatSimulation>;
+  completeSimulation(simulationId: string, results?: Partial<PerformanceMetrics & QualityAssessment>): Promise<ChatSimulation>;
   cancelSimulation(simulationId: string, reason?: string): Promise<ChatSimulation>;
 }
 
@@ -73,34 +74,40 @@ export class ChatSimulationService implements IChatSimulationService {
     return { simulation, response };
   }
 
-  async completeSimulation(simulationId: string, results?: Partial<SimulationResults>): Promise<ChatSimulation> {
+  async completeSimulation(simulationId: string, overrides?: Partial<PerformanceMetrics & QualityAssessment>): Promise<ChatSimulation> {
     const simulation = this.activeSimulations.get(simulationId);
     if (!simulation) {
       throw new Error(`Simulation not found: ${simulationId}`);
     }
 
-    const defaultResults: SimulationResults = {
-      completedSuccessfully: true,
-      totalMessages: simulation.getCurrentMessageCount(),
-      leadCaptured: this.hasLeadCapture(simulation),
-      goalsAchieved: this.evaluateGoals(simulation),
-      performanceMetrics: {
-        averageResponseTime: this.calculateAverageResponseTime(simulation),
-        totalDuration: simulation.getDurationInSeconds(),
-        messagesPerMinute: simulation.getDurationInSeconds() > 0 ? 
-          (simulation.getCurrentMessageCount() / simulation.getDurationInSeconds()) * 60 : 0,
-        errorCount: 0,
-      },
-      qualityAssessment: {
-        relevanceScore: 85,
-        accuracyScore: 90,
-        userSatisfactionScore: 80,
-        knowledgeBaseUtilization: 75,
-      },
+    const performanceMetrics: PerformanceMetrics = {
+      averageResponseTime: this.calculateAverageResponseTime(simulation),
+      totalDuration: simulation.getDurationInSeconds(),
+      messagesPerMinute: simulation.getDurationInSeconds() > 0 ? 
+        (simulation.getCurrentMessageCount() / simulation.getDurationInSeconds()) * 60 : 0,
+      errorCount: 0,
+      ...overrides
     };
 
-    const finalResults = { ...defaultResults, ...results };
-    const completedSimulation = simulation.complete(finalResults);
+    const qualityAssessment: QualityAssessment = {
+      relevanceScore: 85,
+      accuracyScore: 90,
+      userSatisfactionScore: 80,
+      knowledgeBaseUtilization: 75,
+      ...overrides
+    };
+
+    const goalsAchieved: GoalAchievement[] = this.evaluateGoals(simulation);
+
+    const simulationResults = SimulationResults.createSuccess(
+      simulation.getCurrentMessageCount(),
+      this.hasLeadCapture(simulation),
+      goalsAchieved,
+      performanceMetrics,
+      qualityAssessment
+    );
+
+    const completedSimulation = simulation.complete(simulationResults);
     
     this.activeSimulations.delete(simulationId);
     return completedSimulation;
@@ -128,25 +135,32 @@ export class ChatSimulationService implements IChatSimulationService {
 
 
   private async autoCompleteSimulation(simulation: ChatSimulation): Promise<ChatSimulation> {
-    return simulation.complete({
-      completedSuccessfully: true,
-      totalMessages: simulation.getCurrentMessageCount(),
-      leadCaptured: this.hasLeadCapture(simulation),
-      goalsAchieved: this.evaluateGoals(simulation),
-      performanceMetrics: {
-        averageResponseTime: this.calculateAverageResponseTime(simulation),
-        totalDuration: simulation.getDurationInSeconds(),
-        messagesPerMinute: simulation.getDurationInSeconds() > 0 ? 
-          (simulation.getCurrentMessageCount() / simulation.getDurationInSeconds()) * 60 : 0,
-        errorCount: 0,
-      },
-      qualityAssessment: {
-        relevanceScore: 75,
-        accuracyScore: 80,
-        userSatisfactionScore: 70,
-        knowledgeBaseUtilization: 65,
-      },
-    });
+    const performanceMetrics: PerformanceMetrics = {
+      averageResponseTime: this.calculateAverageResponseTime(simulation),
+      totalDuration: simulation.getDurationInSeconds(),
+      messagesPerMinute: simulation.getDurationInSeconds() > 0 ? 
+        (simulation.getCurrentMessageCount() / simulation.getDurationInSeconds()) * 60 : 0,
+      errorCount: 0,
+    };
+
+    const qualityAssessment: QualityAssessment = {
+      relevanceScore: 75,
+      accuracyScore: 80,
+      userSatisfactionScore: 70,
+      knowledgeBaseUtilization: 65,
+    };
+
+    const goalsAchieved: GoalAchievement[] = this.evaluateGoals(simulation);
+
+    const simulationResults = SimulationResults.createSuccess(
+      simulation.getCurrentMessageCount(),
+      this.hasLeadCapture(simulation),
+      goalsAchieved,
+      performanceMetrics,
+      qualityAssessment
+    );
+
+    return simulation.complete(simulationResults);
   }
 
   private hasLeadCapture(simulation: ChatSimulation): boolean {
@@ -154,13 +168,13 @@ export class ChatSimulationService implements IChatSimulationService {
     const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
     const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/;
     
-    return userMessages.some(msg => 
+    return userMessages.some((msg: ChatMessage) => 
       emailPattern.test(msg.content) || phonePattern.test(msg.content)
     );
   }
 
-  private evaluateGoals(simulation: ChatSimulation): Array<{ goalId: string; achieved: boolean; notes?: string }> {
-    return simulation.context.testingGoals.map(goal => ({
+  private evaluateGoals(simulation: ChatSimulation): GoalAchievement[] {
+    return simulation.context.testingGoals.map((goal: TestingGoal) => ({
       goalId: goal.type,
       achieved: this.evaluateGoal(goal, simulation),
       notes: `Goal: ${goal.criteria}`,
@@ -170,13 +184,13 @@ export class ChatSimulationService implements IChatSimulationService {
   private evaluateGoal(goal: TestingGoal, simulation: ChatSimulation): boolean {
     switch (goal.type) {
       case 'knowledge_validation':
-        return simulation.getBotMessages().some(msg => msg.content.length > 100);
+        return simulation.getBotMessages().some((msg: ChatMessage) => msg.content.length > 100);
       case 'lead_capture':
         return this.hasLeadCapture(simulation);
       case 'conversation_flow':
         return simulation.getCurrentMessageCount() >= 4;
       case 'response_quality':
-        return simulation.getBotMessages().every(msg => msg.content.length > 20);
+        return simulation.getBotMessages().every((msg: ChatMessage) => msg.content.length > 20);
       default:
         return false;
     }
@@ -186,7 +200,7 @@ export class ChatSimulationService implements IChatSimulationService {
     const botMessages = simulation.getBotMessages();
     if (botMessages.length === 0) return 0;
     
-    const totalTime = botMessages.reduce((sum, msg) => sum + (msg.processingTime || 1000), 0);
+    const totalTime = botMessages.reduce((sum: number, msg: ChatMessage) => sum + (msg.processingTime || 1000), 0);
     return totalTime / botMessages.length;
   }
 
@@ -200,7 +214,7 @@ export class ChatSimulationService implements IChatSimulationService {
   }
 
   clearInactiveSimulations(): void {
-    for (const [id, simulation] of this.activeSimulations.entries()) {
+    for (const [id, simulation] of Array.from(this.activeSimulations.entries())) {
       if (!simulation.isActive()) {
         this.activeSimulations.delete(id);
       }

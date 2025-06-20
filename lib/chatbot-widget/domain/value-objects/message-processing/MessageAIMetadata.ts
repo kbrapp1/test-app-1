@@ -152,7 +152,7 @@ export class MessageAIMetadata {
 
   getEntityTypes(): string[] {
     const types = this.props.entitiesExtracted.map(entity => entity.type);
-    return [...new Set(types)];
+    return Array.from(new Set(types));
   }
 
   getProcessingQuality(): 'excellent' | 'good' | 'fair' | 'poor' {

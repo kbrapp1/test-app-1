@@ -5,7 +5,7 @@ import {
   SimulatedUserProfile, 
   TestingGoal, 
   SimulationResults 
-} from '../types/ChatSimulationTypes';
+  } from '../types/ChatSimulationTypes';
 
 // Types imported from presentation types file
 
@@ -97,28 +97,68 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
     try {
       setIsLoading(true);
       
-      // Calculate real simulation results from actual data
+      // Calculate real simulation results from actual data using domain logic
+      const userMessages = messages.filter(m => m.messageType === 'user');
+      const botMessages = messages.filter(m => m.messageType === 'bot');
+      
+      // Detect lead capture from actual conversation analysis
+      const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+      const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/;
+      const leadCaptured = userMessages.some(msg => 
+        emailPattern.test(msg.content) || phonePattern.test(msg.content)
+      );
+      
+      // Analyze actual conversation against goals
+      const goalsAchieved = testingGoals.map(goal => {
+        let achieved = false;
+        switch (goal.type) {
+          case 'knowledge_validation':
+            achieved = botMessages.some(msg => msg.content.length > 100);
+            break;
+          case 'lead_capture':
+            achieved = leadCaptured;
+            break;
+          case 'conversation_flow':
+            achieved = messages.length >= 4;
+            break;
+          case 'response_quality':
+            achieved = botMessages.every(msg => msg.content.length > 20);
+            break;
+          default:
+            achieved = false;
+        }
+        
+        return {
+          goalId: goal.type,
+          achieved,
+          notes: goal.criteria,
+        };
+      });
+      
+      // Calculate quality assessment from actual AI responses and conversation flow
+      const qualityAssessment = {
+        relevanceScore: botMessages.length > 0 ? Math.min(75 + (botMessages.filter(msg => msg.content.length > 50).length / botMessages.length) * 25, 100) : 0,
+        accuracyScore: botMessages.length > 0 ? (botMessages.filter(msg => !msg.content.toLowerCase().includes('error')).length / botMessages.length) * 100 : 0,
+        userSatisfactionScore: Math.min(50 + (messages.length >= 4 ? 20 : 0) + (leadCaptured ? 20 : 0) + (botMessages.length > 0 && botMessages.every(msg => msg.content.length > 20) ? 10 : 0), 100),
+        knowledgeBaseUtilization: botMessages.length > 0 ? (botMessages.filter(msg => 
+          msg.content.length > 50 && 
+          !msg.content.toLowerCase().includes('i don\'t know') &&
+          !msg.content.toLowerCase().includes('i\'m not sure')
+        ).length / botMessages.length) * 100 : 0,
+      };
+      
       const realResults: SimulationResults = {
         completedSuccessfully: true,
         totalMessages: messages.length,
-        leadCaptured: false, // TODO: Detect from actual conversation analysis
-        goalsAchieved: testingGoals.map(goal => ({
-          goalId: goal.type,
-          achieved: true, // TODO: Analyze actual conversation against goals
-          notes: goal.criteria,
-        })),
+        leadCaptured,
+        goalsAchieved,
         performanceMetrics: {
           averageResponseTime: messages.reduce((sum, msg) => sum + (msg.processingTime || 0), 0) / Math.max(messages.filter(m => m.processingTime).length, 1),
           totalDuration: messages.length > 0 ? Math.floor((messages[messages.length - 1].timestamp.getTime() - messages[0].timestamp.getTime()) / 1000) : 0,
           messagesPerMinute: messages.length > 0 ? (messages.length / Math.max(Math.floor((messages[messages.length - 1].timestamp.getTime() - messages[0].timestamp.getTime()) / 60000), 1)) : 0,
           errorCount: messages.filter(m => m.messageType === 'system' && m.content.includes('Error')).length,
         },
-        qualityAssessment: {
-          relevanceScore: 85, // TODO: Calculate from actual AI responses
-          accuracyScore: 90,  // TODO: Calculate from knowledge base matches
-          userSatisfactionScore: 80, // TODO: Calculate from conversation flow
-          knowledgeBaseUtilization: 75, // TODO: Calculate from FAQ/knowledge matches
-        },
+        qualityAssessment,
       };
       
       setSimulationResults(realResults);

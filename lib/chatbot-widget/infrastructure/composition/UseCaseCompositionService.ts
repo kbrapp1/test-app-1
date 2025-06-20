@@ -3,6 +3,9 @@ import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureCh
 import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessChatMessageUseCase';
 import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCase';
 
+// Application mappers
+import { LeadMapper } from '../../application/mappers/LeadMapper';
+
 // Domain service interfaces
 import { IAIConversationService } from '../../domain/services/interfaces/IAIConversationService';
 
@@ -44,9 +47,9 @@ export class UseCaseCompositionService {
       const chatMessageRepository = RepositoryCompositionService.getChatMessageRepository();
       const chatbotConfigRepository = RepositoryCompositionService.getChatbotConfigRepository();
       const aiConversationService = await ApplicationServiceCompositionService.getAiConversationServiceInterface();
-      const conversationContextOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator();
       const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
+      const conversationContextOrchestrator = DomainServiceCompositionService.getConversationContextOrchestrator();
 
       this.processChatMessageUseCase = new ProcessChatMessageUseCase(
         chatSessionRepository,
@@ -69,10 +72,9 @@ export class UseCaseCompositionService {
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     if (!this.captureLeadUseCase) {
       this.captureLeadUseCase = new CaptureLeadUseCase(
-        RepositoryCompositionService.getChatSessionRepository(),
         RepositoryCompositionService.getLeadRepository(),
-        RepositoryCompositionService.getChatbotConfigRepository(),
-        DomainServiceCompositionService.getLeadScoringService()
+        ApplicationServiceCompositionService.getLeadCaptureService(),
+        new LeadMapper()
       );
     }
     return this.captureLeadUseCase;

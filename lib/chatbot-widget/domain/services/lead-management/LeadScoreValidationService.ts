@@ -1,4 +1,4 @@
-import { ScoringFactors, ScoringCriteria } from '../../value-objects/LeadScoreTypes';
+import { ScoringFactors, ScoringCriteria } from '../../value-objects/lead-management/LeadScoreTypes';
 
 /**
  * Lead Score Validation Service

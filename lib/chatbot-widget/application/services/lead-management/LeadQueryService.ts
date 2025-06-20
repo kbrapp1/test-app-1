@@ -1,26 +1,29 @@
 /**
- * Lead Query Service
+ * Lead Query Application Service
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Lead queries, searches, and analytics only
- * - Orchestrate domain objects, no business logic  
- * - Handle read operations and data coordination only
+ * - Single responsibility: Lead query orchestration only
+ * - Orchestrate domain objects, no business logic
+ * - Handle workflow coordination, delegate all business logic
  * - Use domain-specific errors with proper context
  * - Stay under 200-250 lines
- * - Focus on data retrieval and transformation
+ * - UPDATED: Removed LeadScoringService dependency - using API-only approach
+ * - Lead scores are now provided externally from OpenAI API
  */
 
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
-import { LeadScoringService, QualificationStatus } from '../../../domain/services/lead-management/LeadScoringService';
-import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
-
+import { Lead } from '../../../domain/entities/Lead';
 import { LeadDto, LeadAnalyticsDto } from '../../dto/LeadDto';
 import { LeadMapper } from '../../mappers/LeadMapper';
+import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 
 import { 
   LeadNotFoundError,
   LeadAccessDeniedError 
 } from '../../../domain/errors/LeadManagementErrors';
+
+// Define QualificationStatus locally since we removed LeadScoringService
+export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadSearchFilters {
   qualificationStatus?: QualificationStatus;
@@ -171,7 +174,7 @@ export class LeadQueryService {
       qualifiedLeads: analytics.qualifiedLeads + analytics.highlyQualifiedLeads,
       conversionRate: analytics.conversionRate,
       averageScore: analytics.avgLeadScore,
-      leadsBySource: analytics.sourceBreakdown.reduce((acc, item) => {
+      leadsBySource: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: any) => {
         acc[item.source] = item.count;
         return acc;
       }, {} as Record<string, number>),
@@ -206,7 +209,7 @@ export class LeadQueryService {
   }
 
   /**
-   * Get recent leads for organization dashboard
+   * Get recent leads for organization
    */
   async getRecentLeads(
     organizationId: string,
@@ -221,6 +224,6 @@ export class LeadQueryService {
       }
     );
 
-    return result.leads.map(lead => this.leadMapper.toDto(lead));
+    return result.leads.map((lead: Lead) => this.leadMapper.toDto(lead));
   }
 } 

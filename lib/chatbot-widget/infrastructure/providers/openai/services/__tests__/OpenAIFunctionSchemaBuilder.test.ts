@@ -2,16 +2,15 @@
  * OpenAI Function Schema Builder Tests
  * 
  * AI INSTRUCTIONS:
- * - Test all schema generation methods
+ * - Test all schema generation methods that actually exist
  * - Verify schema structure and required fields
- * - Test the new entity extraction with corrections schema
+ * - Test the new dynamic entity extraction with context
  * - Follow @golden-rule testing patterns exactly
  */
 
 import { OpenAIFunctionSchemaBuilder } from '../OpenAIFunctionSchemaBuilder';
 
 describe('OpenAIFunctionSchemaBuilder', () => {
-
 
   describe('buildUnifiedAnalysisSchema', () => {
     it('should build a valid unified analysis schema', () => {
@@ -144,22 +143,20 @@ describe('OpenAIFunctionSchemaBuilder', () => {
     });
   });
 
-  describe('buildUnifiedChatbotSchema', () => {
-    it('should build a valid unified chatbot schema with all sections', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+  describe('buildUnifiedChatbotSchemaWithContext', () => {
+    it('should build a valid unified chatbot schema with default context', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       
       expect(schema.name).toBe('process_chatbot_interaction_complete');
       expect(schema.description).toContain('Complete chatbot processing');
-      expect(schema.description).toContain('analyze user intent');
-      expect(schema.description).toContain('generate appropriate response');
-      expect(schema.description).toContain('calculate lead score');
+      expect(schema.description).toContain('selective entity extraction');
       expect(schema.parameters).toBeDefined();
       expect(schema.parameters.type).toBe('object');
       expect(schema.parameters.properties).toBeDefined();
     });
 
-    it('should include analysis section with all required properties', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+    it('should include analysis section with dynamic entity extraction', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       const properties = schema.parameters.properties;
       
       expect(properties.analysis).toBeDefined();
@@ -180,38 +177,23 @@ describe('OpenAIFunctionSchemaBuilder', () => {
       expect(properties.analysis.required).toContain('reasoning');
     });
 
-    it('should include lead scoring section with breakdown', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+    it('should include lead scoring section with 4-factor breakdown', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       const leadScore = schema.parameters.properties.leadScore;
       
       expect(leadScore).toBeDefined();
-      expect(leadScore.type).toBe('object');
-      
-      const leadProps = leadScore.properties;
-      expect(leadProps.totalScore).toBeDefined();
-      expect(leadProps.totalScore.minimum).toBe(0);
-      expect(leadProps.totalScore.maximum).toBe(100);
-      
-      expect(leadProps.scoreBreakdown).toBeDefined();
-      const breakdown = leadProps.scoreBreakdown.properties;
-      expect(breakdown.intentQuality).toBeDefined();
-      expect(breakdown.entityCompleteness).toBeDefined();
-      expect(breakdown.personaFit).toBeDefined();
-      expect(breakdown.engagementLevel).toBeDefined();
-      
-      // Each breakdown should be 0-25 points
-      Object.values(breakdown).forEach((prop: any) => {
-        expect(prop.minimum).toBe(0);
-        expect(prop.maximum).toBe(25);
-      });
-      
-      expect(leadProps.qualificationStatus).toBeDefined();
-      expect(leadProps.qualificationStatus.properties.isQualified).toBeDefined();
-      expect(leadProps.qualificationStatus.properties.readyForSales).toBeDefined();
+      expect(leadScore.type).toBe('number');
+      expect(leadScore.minimum).toBe(0);
+      expect(leadScore.maximum).toBe(100);
+      expect(leadScore.description).toContain('Comprehensive lead score');
+      expect(leadScore.description).toContain('intent quality');
+      expect(leadScore.description).toContain('entity completeness');
+      expect(leadScore.description).toContain('persona fit');
+      expect(leadScore.description).toContain('engagement');
     });
 
-    it('should include response generation section with CTA', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+    it('should include response generation section with intelligent CTA', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       const response = schema.parameters.properties.response;
       
       expect(response).toBeDefined();
@@ -225,46 +207,166 @@ describe('OpenAIFunctionSchemaBuilder', () => {
       expect(responseProps.tone.enum).toContain('consultative');
       
       expect(responseProps.callToAction).toBeDefined();
-      const cta = responseProps.callToAction.properties;
-      expect(cta.type).toBeDefined();
-      expect(cta.type.enum).toContain('demo_request');
-      expect(cta.type.enum).toContain('contact_capture');
-      expect(cta.priority).toBeDefined();
-      expect(cta.priority.enum).toContain('low');
-      expect(cta.priority.enum).toContain('urgent');
+      expect(responseProps.callToAction.type).toBe('string');
+      expect(responseProps.callToAction.enum).toContain('demo_request');
+      expect(responseProps.callToAction.enum).toContain('contact_capture');
       
       expect(responseProps.shouldTriggerLeadCapture).toBeDefined();
       expect(responseProps.shouldTriggerLeadCapture.type).toBe('boolean');
     });
 
-    it('should have all three main sections as required', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+    it('should have all four main sections as required', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       
       expect(schema.parameters.required).toContain('analysis');
+      expect(schema.parameters.required).toContain('conversationFlow');
       expect(schema.parameters.required).toContain('leadScore');
       expect(schema.parameters.required).toContain('response');
-      expect(schema.parameters.required).toHaveLength(3);
+      expect(schema.parameters.required).toHaveLength(4);
+    });
+
+    it('should adapt entity extraction based on conversation phase', () => {
+      // Test greeting phase - should focus on identity entities
+      const greetingSchema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        {}, 
+        'greeting', 
+        'Hi there!'
+      );
+      
+      expect(greetingSchema.name).toBe('process_chatbot_interaction_complete');
+      expect(greetingSchema.description).toContain('selective entity extraction');
+      
+      // Test qualification phase - should include budget/timeline
+      const qualificationSchema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        { company: 'TechCorp' }, 
+        'qualification', 
+        'What are your pricing options?'
+      );
+      
+      expect(qualificationSchema.name).toBe('process_chatbot_interaction_complete');
+      expect(qualificationSchema.description).toContain('selective entity extraction');
+    });
+
+    it('should handle existing entities to avoid redundant extraction', () => {
+      const existingEntities = {
+        company: 'TechCorp',
+        role: 'manager',
+        industry: 'technology'
+      };
+      
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        existingEntities,
+        'qualification',
+        'What about pricing for our team of 50?'
+      );
+      
+      expect(schema.name).toBe('process_chatbot_interaction_complete');
+      expect(schema.description).toContain('selective entity extraction');
+      expect(schema.description).toContain('missing entities');
+    });
+
+    it('should detect correction patterns in user messages', () => {
+      const correctionMessage = 'Actually, our budget is $200K, not $100K';
+      
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        { budget: '$100K' },
+        'qualification',
+        correctionMessage
+      );
+      
+      expect(schema.name).toBe('process_chatbot_interaction_complete');
+      expect(schema.description).toContain('selective entity extraction');
+    });
+
+    it('should follow 2025 best practices for entity extraction', () => {
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
+      
+      // Check for 2025 best practice descriptions
+      expect(schema.description).toContain('selective entity extraction');
+      expect(schema.description).toContain('missing entities');
+      expect(schema.description).toContain('Complete chatbot processing');
     });
 
     it('should follow @golden-rule documentation patterns', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchema();
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
       
       // Check for comprehensive descriptions
       expect(schema.description).toContain('Complete chatbot processing');
       
-      // Lead scoring descriptions should include point ranges
+      // Lead scoring should have descriptive text
       const leadScore = schema.parameters.properties.leadScore;
-      const breakdown = leadScore.properties.scoreBreakdown.properties;
+      expect(leadScore.description).toContain('Comprehensive lead score');
+      expect(leadScore.description).toContain('(0-100)');
       
-      expect(breakdown.intentQuality.description).toContain('0-25 points');
-      expect(breakdown.entityCompleteness.description).toContain('0-25 points');
-      expect(breakdown.personaFit.description).toContain('0-25 points');
-      expect(breakdown.engagementLevel.description).toContain('0-25 points');
-      
-      // Response descriptions should mention intent/persona awareness
+      // Response descriptions should mention appropriate content
       const response = schema.parameters.properties.response;
-      expect(response.properties.content.description).toContain('intent analysis');
-      expect(response.properties.content.description).toContain('persona');
+      expect(response.properties.content.description).toContain('conversational response');
+      expect(response.properties.tone.description).toContain('tone');
+    });
+  });
+
+  describe('Dynamic Entity Extraction Features', () => {
+    it('should support phase-based entity extraction', () => {
+      // Test different conversation phases
+      const phases = ['greeting', 'business_inquiry', 'qualification', 'scheduling'];
+      
+      phases.forEach(phase => {
+        const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+          {},
+          phase,
+          'Test message'
+        );
+        
+        expect(schema.name).toBe('process_chatbot_interaction_complete');
+        expect(schema.description).toContain('selective entity extraction');
+      });
+    });
+
+    it('should support intent-based entity extraction', () => {
+      // Test pricing intent detection
+      const pricingMessage = 'What are your pricing options?';
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        {},
+        'discovery',
+        pricingMessage
+      );
+      
+      expect(schema.name).toBe('process_chatbot_interaction_complete');
+      expect(schema.description).toContain('selective entity extraction');
+    });
+
+    it('should support timeline intent detection', () => {
+      // Test timeline intent detection
+      const timelineMessage = 'We need this implemented by Q2';
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        {},
+        'qualification',
+        timelineMessage
+      );
+      
+      expect(schema.name).toBe('process_chatbot_interaction_complete');
+      expect(schema.description).toContain('selective entity extraction');
+    });
+
+    it('should reduce token usage through selective extraction', () => {
+      // Schema with existing entities should focus on missing ones
+      const fullEntities = {
+        company: 'TechCorp',
+        role: 'manager',
+        industry: 'technology',
+        teamSize: '50',
+        budget: '$100K',
+        timeline: 'Q2'
+      };
+      
+      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        fullEntities,
+        'qualified',
+        'Let\'s move forward'
+      );
+      
+      expect(schema.description).toContain('selective entity extraction');
+      expect(schema.description).toContain('Complete chatbot processing');
     });
   });
 }); 

@@ -74,6 +74,16 @@ export interface IAIConversationService {
   analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'>;
 
   /**
+   * Analyze urgency of user message
+   */
+  analyzeUrgency(userMessage: string): Promise<'low' | 'medium' | 'high'>;
+
+  /**
+   * Analyze engagement level of user message
+   */
+  analyzeEngagement(userMessage: string, conversationHistory?: ChatMessage[]): Promise<'low' | 'medium' | 'high'>;
+
+  /**
    * Extract lead information from conversation
    */
   extractLeadInformation(

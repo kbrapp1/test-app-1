@@ -157,26 +157,28 @@ export class EngagementRecommendationGenerator {
       });
     }
 
-    // Check message count (approximated from engagement data)
-    const messageCount = session.contextData.engagementScore > 50 ? 12 : 5; // Approximation
-    if (messageCount > 10) {
+    // Check engagement score for additional recommendations
+    const engagementScore = session.contextData.engagementScore || 0;
+    
+    // Extended conversation check (substantial engagement)
+    if (engagementScore >= 50) { // Indicates substantial conversation
       recommendations.push({
         type: 'immediate_follow_up',
         priority: 'medium',
         action: 'Reference detailed conversation in follow-up',
-        reasoning: 'Multiple messages show engagement depth',
+        reasoning: 'High engagement indicates meaningful conversation exchanges',
         timeline: 'Within 6 hours',
         category: 'sales_action'
       });
     }
 
-    // Check for specific engagement signals
-    if (this.hasHighEngagementSignals(session)) {
+    // High engagement check (immediate action needed)
+    if (engagementScore >= 70) { // High engagement threshold
       recommendations.push({
         type: 'immediate_follow_up',
         priority: 'high',
-        action: 'Capitalize on engagement signals immediately',
-        reasoning: 'Strong engagement signals detected in conversation',
+        action: 'Capitalize on high engagement immediately',
+        reasoning: 'API-detected high engagement indicates strong interest',
         timeline: 'Within 1 hour',
         category: 'sales_action'
       });
@@ -186,67 +188,16 @@ export class EngagementRecommendationGenerator {
   }
 
   /**
-   * Calculate session duration in seconds
+   * Get session duration from session data
    */
   private static calculateSessionDuration(session: ChatSession): number {
-    // This would need to be implemented based on session timestamps
-    // For now, return a placeholder
-    return session.contextData.engagementScore * 10; // Rough approximation
+    // Use the session's built-in duration calculation method
+    return session.getSessionDuration(); // Already implemented in ChatSession entity
   }
 
-  /**
-   * Check for high engagement signals in session
-   */
-  private static hasHighEngagementSignals(session: ChatSession): boolean {
-    const highEngagementKeywords = [
-      'pricing', 'cost', 'demo', 'trial', 'when can we start',
-      'how much', 'budget', 'timeline', 'implementation'
-    ];
 
-    const conversationText = session.contextData.conversationSummary?.toLowerCase() || '';
-    
-    return highEngagementKeywords.some(keyword => 
-      conversationText.includes(keyword)
-    );
-  }
 
-  /**
-   * Get engagement score based on session data
-   */
-  static calculateEngagementScore(session: ChatSession): number {
-    let score = 0;
 
-    // Base engagement from context
-    score += session.contextData.engagementScore || 0;
-
-    // Message count factor (approximated from engagement data)
-    const messageCount = session.contextData.engagementScore > 70 ? 16 : 
-                         session.contextData.engagementScore > 50 ? 12 : 6;
-    if (messageCount > 15) score += 20;
-    else if (messageCount > 10) score += 15;
-    else if (messageCount > 5) score += 10;
-
-    // High-intent keywords
-    if (this.hasHighEngagementSignals(session)) {
-      score += 25;
-    }
-
-    // Session duration factor (approximated)
-    const duration = this.calculateSessionDuration(session);
-    if (duration > 600) score += 15; // 10+ minutes
-    else if (duration > 300) score += 10; // 5+ minutes
-
-    return Math.min(score, 100); // Cap at 100
-  }
-
-  /**
-   * Determine engagement level from score
-   */
-  static getEngagementLevel(score: number): 'high' | 'medium' | 'low' {
-    if (score >= 70) return 'high';
-    if (score >= 40) return 'medium';
-    return 'low';
-  }
 
   /**
    * Get engagement improvement suggestions

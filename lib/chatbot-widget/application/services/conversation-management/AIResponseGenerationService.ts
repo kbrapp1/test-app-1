@@ -76,6 +76,7 @@ export class AIResponseGenerationService {
     return {
       content: choice.message.content || 'I apologize, but I\'m having trouble generating a response right now.',
       confidence: 0.8,
+      sentiment: this.extractSentimentFromResponse(response),
       processingTimeMs: 0,
       metadata: {
         model: response.model || aiConfig?.openaiModel || 'gpt-4o-mini',
@@ -84,6 +85,28 @@ export class AIResponseGenerationService {
         totalTokens: usage?.total_tokens || 0,
       }
     };
+  }
+
+  /**
+   * Extract sentiment from OpenAI response (when function calling includes sentiment)
+   */
+  private extractSentimentFromResponse(response: any): 'positive' | 'neutral' | 'negative' | undefined {
+    try {
+      // Check if response includes function call with sentiment analysis
+      const choice = response.choices[0];
+      if (choice?.message?.function_call?.arguments) {
+        const functionArgs = JSON.parse(choice.message.function_call.arguments);
+        if (functionArgs.analysis?.sentiment) {
+          return functionArgs.analysis.sentiment;
+        }
+        if (functionArgs.sentiment) {
+          return functionArgs.sentiment;
+        }
+      }
+      return undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   /**
