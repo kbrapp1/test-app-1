@@ -10,9 +10,10 @@ import { ContextWindowService } from '../../domain/services/utilities/ContextWin
 import { EntityAccumulationService } from '../../domain/services/context/EntityAccumulationService';
 import { DynamicPromptService } from '../../domain/services/ai-configuration/DynamicPromptService';
 import { LeadExtractionService } from '../../domain/services/lead-management/LeadExtractionService';
-import { ConversationFlowService } from '../../domain/services/conversation-management/ConversationFlowService';
+import { ConversationFlowService, AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
 import { ConversationMetricsService } from '../../application/services/conversation-management/ConversationMetricsService';
-import { AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
+import { ReadinessIndicatorDomainService } from '../../domain/services/conversation-management/ReadinessIndicatorDomainService';
+import { LeadCaptureDecisionService } from '../../application/services/lead-management/LeadCaptureDecisionService';
 
 // Interfaces
 import { ITokenCountingService } from '../../domain/services/interfaces/ITokenCountingService';
@@ -223,15 +224,40 @@ export class DomainServiceCompositionService {
   /**
    * Get recommended actions from AI decision
    */
-  static getRecommendedActions(decision: AIConversationFlowDecision): string[] {
-    return ConversationFlowService.getRecommendedActions(decision);
+  /**
+   * Get next best action from AI flow decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Replaced getRecommendedActions with more specific methods
+   * - Uses individual decision methods from ConversationFlowService
+   * - Follows @golden-rule.mdc single responsibility pattern
+   */
+  static getNextBestAction(decision: AIConversationFlowDecision): string {
+    return ConversationFlowService.getNextBestAction(decision);
   }
 
   /**
-   * Calculate readiness score from AI indicators
+   * Calculate readiness score using AI flow decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Uses ConversationFlowService with proper DDD pattern
+   * - No longer expects readinessIndicators parameter
+   * - Delegates to domain service for calculation
    */
-  static calculateReadinessScore(indicators: AIConversationFlowDecision['readinessIndicators']): number {
-    return ConversationFlowService.calculateReadinessScore(indicators);
+  static calculateReadinessScore(flowDecision: AIConversationFlowDecision): number {
+    return ConversationFlowService.calculateReadinessScore(flowDecision);
+  }
+
+  /**
+   * Get derived readiness indicators from AI flow decision
+   * 
+   * AI INSTRUCTIONS:
+   * - New method to expose readiness indicators
+   * - Uses domain service for consistent calculation
+   * - Returns proper ReadinessIndicators interface
+   */
+  static getReadinessIndicators(flowDecision: AIConversationFlowDecision): any {
+    return ConversationFlowService.getReadinessIndicators(flowDecision);
   }
 
   /**

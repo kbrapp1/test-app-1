@@ -63,8 +63,8 @@ export class OpenAIAnalysisService {
     try {
       const startTime = Date.now();
 
-      // Build unified function schema
-      const functions = [OpenAIFunctionSchemaBuilder.buildUnifiedAnalysisSchema()];
+      // Build unified function schema with context-aware entity extraction
+      const functions = [OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext()];
       
       // Build enhanced system prompt
       const systemPrompt = OpenAIPromptBuilder.buildEnhancedSystemPrompt(context?.messageHistory || []);
@@ -82,7 +82,7 @@ export class OpenAIAnalysisService {
         model: this.config.model,
         messages: openAIMessages,
         functions: functions,
-        function_call: { name: "analyze_message_complete" },
+        function_call: { name: "process_chatbot_interaction_complete" },
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens
       };

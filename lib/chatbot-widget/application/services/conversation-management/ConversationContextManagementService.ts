@@ -34,7 +34,8 @@ export class ConversationContextManagementService {
   async getTokenAwareContext(
     sessionId: string, 
     newUserMessage: ChatMessage,
-    contextWindow: ConversationContextWindow
+    contextWindow: ConversationContextWindow,
+    loggingContext?: { logEntry: (message: string) => void }
   ): Promise<TokenAwareContextResult> {
     // Get all messages for this session
     const allMessages = await this.messageRepository.findBySessionId(sessionId);
@@ -51,11 +52,12 @@ export class ConversationContextManagementService {
     const session = await this.sessionRepository.findById(sessionId);
     const existingSummary = session?.contextData.conversationSummary;
 
-    // Use conversation context orchestrator to get optimized message window
+    // Use conversation context orchestrator to get optimized message window with logging
     const contextResult = await this.conversationContextOrchestrator.getMessagesForContextWindow(
       allMessages,
       contextWindow,
-      existingSummary
+      existingSummary,
+      loggingContext
     );
 
     // If we need to compress and don't have a summary, create one

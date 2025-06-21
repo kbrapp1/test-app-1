@@ -40,8 +40,7 @@ describe('AccumulatedEntities Value Object', () => {
         value: 'John Doe',
         extractedAt: mockDate,
         confidence: 0.9,
-        sourceMessageId: 'msg-1',
-        extractionMethod: 'ai'
+        sourceMessageId: 'msg-1'
       }];
 
       const entities = AccumulatedEntities.create({
@@ -61,8 +60,7 @@ describe('AccumulatedEntities Value Object', () => {
             value: 'John Doe',
             extractedAt: mockDate,
             confidence: 1.5, // Invalid confidence
-            sourceMessageId: 'msg-1',
-            extractionMethod: 'ai'
+            sourceMessageId: 'msg-1'
           }]
         });
       }).toThrow('Invalid confidence score: 1.5. Must be between 0 and 1');
@@ -401,8 +399,7 @@ describe('AccumulatedEntities Value Object', () => {
         value: 'Hacker',
         extractedAt: new Date(),
         confidence: 1.0,
-        sourceMessageId: 'hack',
-        extractionMethod: 'explicit'
+        sourceMessageId: 'hack'
       });
       
       // Original should be unchanged

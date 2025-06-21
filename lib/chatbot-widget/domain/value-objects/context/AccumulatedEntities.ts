@@ -16,7 +16,6 @@ export interface EntityWithMetadata<T> {
   extractedAt: Date;
   confidence: number;
   sourceMessageId: string;
-  extractionMethod: 'ai' | 'explicit' | 'inferred';
 }
 
 export interface AccumulatedEntitiesProps {
@@ -91,7 +90,6 @@ export class AccumulatedEntities {
           extractedAt: new Date(entity.extractedAt || entity.lastUpdated || new Date()),
           confidence: entity.confidence || 0.5,
           sourceMessageId: entity.sourceMessageId || 'unknown',
-          extractionMethod: entity.extractionMethod || 'ai'
         };
       };
 
@@ -105,8 +103,7 @@ export class AccumulatedEntities {
               value: item,
               extractedAt: new Date(),
               confidence: 0.5,
-              sourceMessageId: 'legacy',
-              extractionMethod: 'ai' as const
+              sourceMessageId: 'legacy'
             };
           }
           return parseEntityWithMetadata(item);
@@ -174,8 +171,7 @@ export class AccumulatedEntities {
       value,
       extractedAt: new Date(),
       confidence,
-      sourceMessageId: messageId,
-      extractionMethod: 'ai' as const
+      sourceMessageId: messageId
     }));
     
     const mergedEntities = this.deduplicateArray([...existingEntities, ...newEntities]);
@@ -201,8 +197,7 @@ export class AccumulatedEntities {
       value,
       extractedAt: new Date(),
       confidence,
-      sourceMessageId: messageId,
-      extractionMethod: 'ai' as const
+      sourceMessageId: messageId
     };
     
     return new AccumulatedEntities({
@@ -228,8 +223,7 @@ export class AccumulatedEntities {
       value,
       extractedAt: new Date(),
       confidence,
-      sourceMessageId: messageId,
-      extractionMethod: 'ai' as const
+      sourceMessageId: messageId
     };
     
     // Keep existing if it has higher confidence and exceeds threshold
@@ -284,8 +278,7 @@ export class AccumulatedEntities {
       value,
       extractedAt: new Date(),
       confidence,
-      sourceMessageId: messageId,
-      extractionMethod: 'ai' as const
+      sourceMessageId: messageId
     };
     
     return new AccumulatedEntities({
@@ -352,8 +345,7 @@ export class AccumulatedEntities {
         value: entity.value,
         extractedAt: entity.extractedAt.toISOString(),
         confidence: entity.confidence,
-        sourceMessageId: entity.sourceMessageId,
-        extractionMethod: entity.extractionMethod
+        sourceMessageId: entity.sourceMessageId
       };
     };
 

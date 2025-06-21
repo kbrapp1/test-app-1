@@ -117,12 +117,12 @@ export class ProcessChatMessageUseCase {
 
     this.sessionUpdateService = new SessionUpdateService(sessionRepository);
 
-    // Initialize context window with sensible defaults
+    // Initialize context window with 2025 optimization defaults
     this.contextWindow = ConversationContextWindow.create({
-      maxTokens: 12000, // Safe for most models
-      systemPromptTokens: 500,
-      responseReservedTokens: 3000,
-      summaryTokens: 200
+      maxTokens: 16000, // 2025 optimization: Enhanced context retention
+      systemPromptTokens: 800,  // More room for business context injection
+      responseReservedTokens: 3500, // Enhanced response capacity
+      summaryTokens: 300 // Better conversation summarization
     });
 
     // Logs directory will be created only when needed (when CHATBOT_FILE_LOGGING !== 'false')
@@ -168,11 +168,17 @@ export class ProcessChatMessageUseCase {
   private async analyzeConversationContext(messageContext: any): Promise<any> {
     const { session, config, userMessage } = messageContext;
 
-    // Get token-aware messages for context
+    // Create logging context for advanced context intelligence
+    const loggingContext = {
+      logEntry: (message: string) => this.writeLog(message)
+    };
+
+    // Get token-aware messages for context with advanced logging
     const contextResult = await this.contextManagementService.getTokenAwareContext(
       session.id, 
       userMessage, 
-      this.contextWindow
+      this.contextWindow,
+      loggingContext
     );
 
     // Enhanced context analysis (now unified - no redundant API calls)
@@ -266,9 +272,9 @@ export class ProcessChatMessageUseCase {
         unifiedProcessingUsed: responseResult.enhancedContext?.unifiedAnalysis ? true : false,
         fallbackUsed: responseResult.enhancedContext?.fallbackUsed || false,
         fallbackReason: responseResult.enhancedContext?.fallbackReason,
-        leadScore: responseResult.enhancedContext?.leadScore?.totalScore,
         callToAction: responseResult.enhancedContext?.callToAction,
         responseTimestamp: new Date().toISOString()
+        // REMOVED: leadScore - now calculated by domain service only
       });
 
       // Log API call details if available
@@ -276,8 +282,8 @@ export class ProcessChatMessageUseCase {
         this.writeLog('\n📡 UNIFIED API CALL DETAILS:');
         this.logObject('🔄 UNIFIED PROCESSING', {
           analysis: responseResult.enhancedContext.unifiedAnalysis,
-          leadScore: responseResult.enhancedContext.leadScore,
           apiCallType: 'unified-single-call'
+          // REMOVED: leadScore - now calculated by domain service only
         });
       }
 

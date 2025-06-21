@@ -18,7 +18,6 @@ export interface CorrectionMetadata {
   sourceMessageId: string;
   confidence: number;
   correctionReason?: string;
-  extractionMethod: 'ai' | 'explicit' | 'inferred';
 }
 
 export interface RemovalOperation {
@@ -122,8 +121,7 @@ export class EntityCorrections {
         timestamp: new Date(),
         sourceMessageId: messageId,
         confidence,
-        correctionReason: reason,
-        extractionMethod: 'ai'
+        correctionReason: reason
       }
     };
     
@@ -155,8 +153,7 @@ export class EntityCorrections {
         timestamp: new Date(),
         sourceMessageId: messageId,
         confidence,
-        correctionReason: reason,
-        extractionMethod: 'ai'
+        correctionReason: reason
       }
     };
     

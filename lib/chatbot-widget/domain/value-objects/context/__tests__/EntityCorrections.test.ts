@@ -37,7 +37,7 @@ describe('EntityCorrections', () => {
             timestamp: new Date(),
             sourceMessageId: 'msg-1',
             confidence: 0.9,
-            extractionMethod: 'ai' as const
+    
           }
         }]
       };

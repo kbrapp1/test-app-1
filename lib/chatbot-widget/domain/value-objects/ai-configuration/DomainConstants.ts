@@ -6,20 +6,37 @@
  * to ensure consistency and maintainability across the system.
  */
 
-// Core Intent Types
+// Core Intent Types (Updated to include all business logic intents)
 export const INTENT_TYPES = [
+  // General intents
   'greeting',
+  'unknown',
+  
+  // Support/FAQ intents
   'faq_general', 
   'faq_pricing',
   'faq_features',
+  'support_request',
+  
+  // Sales intents
   'sales_inquiry',
   'booking_request',
   'demo_request',
-  'support_request',
-  'objection_handling',
-  'qualification',
   'closing',
-  'unknown'
+  
+  // Qualification intents
+  'qualification',
+  'objection_handling',
+  
+  // Business context intents (used by IntentPersistenceService)
+  'company_inquiry',
+  'business_inquiry',
+  'product_inquiry',
+  'feature_inquiry',
+  'pricing_inquiry',
+  'cost_inquiry',
+  'comparison_inquiry',
+  'competitor_inquiry'
 ] as const;
 
 export type IntentType = typeof INTENT_TYPES[number];
@@ -85,8 +102,51 @@ export const LEAD_SCORING_RULES = {
   industry: 10,
   teamSize: 15,
   urgency: 10,
-  contactMethod: 5,
-  role: 10
+  contactMethod: 5
+  // REMOVED: role - now uses authority-based scoring via ROLE_AUTHORITY_WEIGHTS
+} as const;
+
+// Role Authority-Based Scoring (B2B Best Practice)
+export const ROLE_AUTHORITY_WEIGHTS = {
+  // C-Suite & Founders (Decision Makers) - 25 points
+  'ceo': 25, 'chief executive officer': 25, 'chief executive': 25,
+  'cto': 25, 'chief technology officer': 25, 'chief technical officer': 25,
+  'cfo': 25, 'chief financial officer': 25,
+  'coo': 25, 'chief operating officer': 25,
+  'cmo': 25, 'chief marketing officer': 25,
+  'cso': 25, 'chief security officer': 25,
+  'cpo': 25, 'chief product officer': 25,
+  'president': 25, 'founder': 25, 'co-founder': 25, 'owner': 25,
+  'managing director': 25, 'executive director': 25,
+  
+  // Senior Leadership (Influencers) - 20 points  
+  'vp': 20, 'vice president': 20, 'svp': 20, 'senior vice president': 20,
+  'evp': 20, 'executive vice president': 20,
+  'head of': 20, 'chief': 20, 'general manager': 20,
+  
+  // Mid-Level Management (Evaluators) - 15 points
+  'director': 15, 'senior director': 15,
+  'principal': 15, 'lead': 15, 'team lead': 15, 'tech lead': 15,
+  'senior principal': 15, 'staff': 15,
+  
+  // Team Management (Users) - 10 points
+  'manager': 10, 'senior manager': 10, 'project manager': 10,
+  'product manager': 10, 'program manager': 10,
+  'supervisor': 10, 'team leader': 10, 'scrum master': 10,
+  
+  // Senior Individual Contributors (Influencers) - 8 points
+  'senior engineer': 8, 'senior developer': 8, 'senior analyst': 8,
+  'senior consultant': 8, 'senior architect': 8, 'principal engineer': 8,
+  'staff engineer': 8, 'senior specialist': 8,
+  
+  // Individual Contributors (End Users) - 5 points
+  'engineer': 5, 'developer': 5, 'analyst': 5, 'consultant': 5,
+  'specialist': 5, 'coordinator': 5, 'administrator': 5,
+  'architect': 5, 'designer': 5, 'researcher': 5,
+  
+  // Entry Level (Researchers) - 2 points
+  'associate': 2, 'junior': 2, 'intern': 2, 'trainee': 2,
+  'assistant': 2, 'entry level': 2, 'graduate': 2
 } as const;
 
 // Stage Transition Rules
@@ -125,6 +185,22 @@ export const QUALIFICATION_INTENTS: readonly IntentType[] = [
   'objection_handling'
 ];
 
+export const BUSINESS_CONTEXT_INTENTS: readonly IntentType[] = [
+  'company_inquiry',
+  'business_inquiry',
+  'product_inquiry',
+  'feature_inquiry',
+  'pricing_inquiry',
+  'cost_inquiry',
+  'comparison_inquiry',
+  'competitor_inquiry'
+];
+
+export const GENERAL_INTENTS: readonly IntentType[] = [
+  'greeting',
+  'unknown'
+];
+
 /**
  * DomainConstants Value Object
  * Provides structured access to all domain constants and business rules
@@ -148,8 +224,20 @@ export class DomainConstants {
     return QUALIFICATION_INTENTS;
   }
 
+  static getBusinessContextIntents(): readonly IntentType[] {
+    return BUSINESS_CONTEXT_INTENTS;
+  }
+
+  static getGeneralIntents(): readonly IntentType[] {
+    return GENERAL_INTENTS;
+  }
+
   static isValidIntentType(intent: string): intent is IntentType {
     return INTENT_TYPES.includes(intent as IntentType);
+  }
+
+  static isBusinessContextIntent(intent: string): boolean {
+    return BUSINESS_CONTEXT_INTENTS.includes(intent as IntentType);
   }
 
   // Journey Stage Methods
@@ -224,11 +312,42 @@ export class DomainConstants {
     return LEAD_SCORING_RULES[entity];
   }
 
-  static calculateLeadScore(entities: Partial<Record<keyof typeof LEAD_SCORING_RULES, any>>): number {
+  static getRoleAuthorityScore(role: string): number {
+    if (!role) return 0;
+    
+    const normalizedRole = role.toLowerCase().trim();
+    
+    // Check for exact matches first
+    if (normalizedRole in ROLE_AUTHORITY_WEIGHTS) {
+      return ROLE_AUTHORITY_WEIGHTS[normalizedRole as keyof typeof ROLE_AUTHORITY_WEIGHTS];
+    }
+    
+    // Check for partial matches (e.g., "VP of Sales" should match "vp")
+    for (const [roleKey, score] of Object.entries(ROLE_AUTHORITY_WEIGHTS)) {
+      if (normalizedRole.includes(roleKey)) {
+        return score;
+      }
+    }
+    
+    // Default score for unknown roles (treated as individual contributor)
+    return 5;
+  }
+
+  static getRoleAuthorityWeights(): typeof ROLE_AUTHORITY_WEIGHTS {
+    return ROLE_AUTHORITY_WEIGHTS;
+  }
+
+  static calculateLeadScore(entities: any): number {
     let score = 0;
     
+    // Handle role with authority-based scoring
+    if (entities.role) {
+      score += this.getRoleAuthorityScore(entities.role);
+    }
+    
+    // Handle other entities with standard scoring
     Object.entries(entities).forEach(([key, value]) => {
-      if (value && key in LEAD_SCORING_RULES) {
+      if (value && key !== 'role' && key in LEAD_SCORING_RULES) {
         score += LEAD_SCORING_RULES[key as keyof typeof LEAD_SCORING_RULES];
       }
     });
@@ -279,10 +398,11 @@ export class DomainConstants {
   }
 
   // Categorization Methods
-  static getIntentCategory(intent: IntentType): 'sales' | 'support' | 'qualification' | 'general' {
+  static getIntentCategory(intent: IntentType): 'sales' | 'support' | 'qualification' | 'business_context' | 'general' {
     if (SALES_INTENTS.includes(intent)) return 'sales';
     if (SUPPORT_INTENTS.includes(intent)) return 'support';
     if (QUALIFICATION_INTENTS.includes(intent)) return 'qualification';
+    if (BUSINESS_CONTEXT_INTENTS.includes(intent)) return 'business_context';
     return 'general';
   }
 

@@ -15,15 +15,13 @@
 import { ChatSession } from '../../entities/ChatSession';
 import { ChatMessage } from '../../entities/ChatMessage';
 import { ContextAnalysis, ContextAnalysisValueObject } from '../../value-objects/message-processing/ContextAnalysis';
-import { LeadExtractionService } from '../lead-management/LeadExtractionService';
 import { ContactInfo } from '../../value-objects/lead-management/ContactInfo';
 import { IntentPersistenceService } from '../session-management/IntentPersistenceService';
+import { ApiAnalysisData } from './ConversationContextOrchestrator';
 
 export class ConversationSessionUpdateService {
-  private readonly leadExtractionService: LeadExtractionService;
 
   constructor() {
-    this.leadExtractionService = new LeadExtractionService();
   }
 
   /**
@@ -33,7 +31,8 @@ export class ConversationSessionUpdateService {
     session: ChatSession,
     message: ChatMessage,
     allMessages: ChatMessage[],
-    analysis: ContextAnalysis
+    analysis: ContextAnalysis,
+    apiAnalysisData?: ApiAnalysisData, // Pass API data directly
   ): ChatSession {
     // Convert API-provided engagement level to numerical score for session storage
     const engagementScore = this.convertEngagementLevelToScore(analysis.engagementLevel);
@@ -52,35 +51,47 @@ export class ConversationSessionUpdateService {
       updatedSession = updatedSession.addInterest(interest);
     });
 
-    // Extract and update lead information (company, visitor name, contact info)
-    updatedSession = this.updateSessionWithLeadInfo(updatedSession, allMessages);
+    // Extract and update lead information from API data if available
+    if (apiAnalysisData?.entities) {
+      updatedSession = this.updateSessionWithLeadInfo(updatedSession, apiAnalysisData.entities);
+    }
 
     return updatedSession;
   }
 
   /**
-   * Extract and update session with lead information
+   * Extract and update session with lead information from API analysis
+   * AI INSTRUCTIONS: Use API-provided entities as the single source of truth, removing redundancy.
    */
-  private updateSessionWithLeadInfo(session: ChatSession, allMessages: ChatMessage[]): ChatSession {
-    const extractedInfo = this.leadExtractionService.extractLeadInformation(allMessages);
+  private updateSessionWithLeadInfo(session: ChatSession, entities: NonNullable<ApiAnalysisData['entities']>): ChatSession {
     
-    // Prepare contact info data
+    // Prepare contact info data directly from API entities
     const contactData = {
-      email: extractedInfo.email || session.contextData.email,
-      phone: extractedInfo.phone || session.contextData.phone,
-      name: extractedInfo.name || session.contextData.visitorName || undefined,
-      company: extractedInfo.company || session.contextData.company || undefined
+      email: entities.email || session.contextData.email,
+      phone: entities.phone || session.contextData.phone,
+      name: entities.visitorName || session.contextData.visitorName,
+      company: entities.company || session.contextData.company,
     };
     
     // Only create ContactInfo if we have at least email or phone
     const hasRequiredContact = contactData.email || contactData.phone;
     
-    // Only update if we have extracted some lead information AND have required contact info
-    if ((extractedInfo.name || extractedInfo.email || extractedInfo.phone || extractedInfo.company) && hasRequiredContact) {
+    const hasNewInfo = entities.visitorName || entities.email || entities.phone || entities.company;
+
+    // Only update if we have new information AND have required contact info
+    if (hasNewInfo && hasRequiredContact) {
       const contactInfo = ContactInfo.create(contactData);
       return session.captureContactInfo(contactInfo);
     }
     
+    // If only name or company is provided without contact info, update them separately
+    if (contactData.name && !session.contextData.visitorName) {
+      session = session.updateVisitorName(contactData.name);
+    }
+    if (contactData.company && !session.contextData.company) {
+      session = session.updateCompany(contactData.company);
+    }
+
     return session;
   }
 

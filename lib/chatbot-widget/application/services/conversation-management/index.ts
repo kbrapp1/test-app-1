@@ -9,7 +9,6 @@
  */
 
 export { AiConversationService } from './AiConversationService';
-export { AIResponseGenerationService } from './AIResponseGenerationService';
 export { ConversationMetricsService } from './ConversationMetricsService';
 export { ConversationContextManagementService } from './ConversationContextManagementService';
 export { SystemPromptBuilderService } from './SystemPromptBuilderService';

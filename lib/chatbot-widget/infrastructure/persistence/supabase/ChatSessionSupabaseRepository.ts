@@ -168,7 +168,7 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
         id: updatedSession.id,
         status: updatedSession.status,
         lastActivityAt: updatedSession.lastActivityAt.toISOString(),
-        contextData: Object.keys(updatedSession.contextData || {})
+        contextData: updatedSession.contextData || {}
       }, null, 2));
 
       logEntry('🗄️  =================================');

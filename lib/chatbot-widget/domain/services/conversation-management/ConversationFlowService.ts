@@ -12,6 +12,11 @@
  */
 
 import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { 
+  ReadinessIndicatorDomainService, 
+  ReadinessIndicators, 
+  ReadinessCalculationContext 
+} from './ReadinessIndicatorDomainService';
 
 export interface AIConversationFlowDecision {
   shouldCaptureLeadNow: boolean;
@@ -20,14 +25,10 @@ export interface AIConversationFlowDecision {
   nextBestAction: 'continue_conversation' | 'capture_contact' | 'ask_qualification' | 'request_demo' | 'escalate_human' | 'provide_resources';
   conversationPhase: 'discovery' | 'qualification' | 'demonstration' | 'closing' | 'support' | 'escalation';
   engagementLevel: 'low' | 'medium' | 'high' | 'very_high';
-  readinessIndicators: {
-    hasContactInfo: boolean;
-    showsBuyingIntent: boolean;
-    hasDecisionAuthority: boolean;
-    hasBudgetIndications: boolean;
-    hasTimelineUrgency: boolean;
-  };
   flowReasoning: string;
+  // Note: readinessIndicators are now derived from API data, not provided by API
+  leadScore?: number;
+  entities?: Record<string, any>;
 }
 
 export interface ConversationFlowState {
@@ -63,89 +64,180 @@ export class ConversationFlowService {
   }
   
   /**
-   * Determine if lead capture should be triggered
-   * Uses AI decision instead of message count rules
+   * Get conversation readiness score using derived indicators
+   * 
+   * AI INSTRUCTIONS:
+   * - Uses ReadinessIndicatorDomainService for proper domain logic separation
+   * - Transforms API data into readiness calculation context
+   * - Follows @golden-rule.mdc anti-corruption layer pattern
+   */
+  static calculateReadinessScore(flowDecision: AIConversationFlowDecision): number {
+    // Return 0 if no flow decision provided
+    if (!flowDecision) {
+      return 0;
+    }
+
+    // Create context from API data for readiness calculation
+    const context: ReadinessCalculationContext = {
+      leadScore: flowDecision.leadScore || 0,
+      entities: flowDecision.entities || {},
+      conversationPhase: flowDecision.conversationPhase || 'discovery',
+      engagementLevel: flowDecision.engagementLevel || 'low'
+    };
+
+    try {
+      // Derive indicators from API data using domain service
+      const indicators = ReadinessIndicatorDomainService.deriveReadinessIndicators(context);
+      
+      // Calculate score using domain service
+      return ReadinessIndicatorDomainService.calculateReadinessScore(indicators);
+    } catch (error) {
+      if (error instanceof BusinessRuleViolationError) {
+        // Log domain error but don't fail the flow
+        console.warn('Domain validation error in readiness calculation:', error.message);
+        return 0;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get derived readiness indicators from API data
+   * 
+   * AI INSTRUCTIONS:
+   * - Public method to expose derived indicators for external use
+   * - Uses domain service for consistent calculation
+   * - Handles missing API data gracefully
+   */
+  static getReadinessIndicators(flowDecision: AIConversationFlowDecision): ReadinessIndicators {
+    if (!flowDecision) {
+      return {
+        hasContactInfo: false,
+        showsBuyingIntent: false,
+        hasDecisionAuthority: false,
+        hasBudgetIndications: false,
+        hasTimelineUrgency: false
+      };
+    }
+
+    const context: ReadinessCalculationContext = {
+      leadScore: flowDecision.leadScore || 0,
+      entities: flowDecision.entities || {},
+      conversationPhase: flowDecision.conversationPhase || 'discovery',
+      engagementLevel: flowDecision.engagementLevel || 'low'
+    };
+
+    try {
+      return ReadinessIndicatorDomainService.deriveReadinessIndicators(context);
+    } catch (error) {
+      if (error instanceof BusinessRuleViolationError) {
+        console.warn('Domain validation error in indicator derivation:', error.message);
+        return {
+          hasContactInfo: false,
+          showsBuyingIntent: false,
+          hasDecisionAuthority: false,
+          hasBudgetIndications: false,
+          hasTimelineUrgency: false
+        };
+      }
+      throw error;
+    }
+  }
+  
+  /**
+   * Should trigger lead capture based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
    */
   static shouldTriggerLeadCapture(decision: AIConversationFlowDecision): boolean {
-    return decision.shouldCaptureLeadNow || decision.nextBestAction === 'capture_contact';
+    this.validateFlowDecision(decision);
+    return decision.shouldCaptureLeadNow;
   }
   
   /**
-   * Determine if qualification questions should be asked
-   * Uses AI contextual understanding instead of timing rules
+   * Should ask qualification questions based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
    */
   static shouldAskQualificationQuestions(decision: AIConversationFlowDecision): boolean {
-    return decision.shouldAskQualificationQuestions || decision.nextBestAction === 'ask_qualification';
+    this.validateFlowDecision(decision);
+    return decision.shouldAskQualificationQuestions;
   }
   
   /**
-   * Determine if escalation to human is needed
-   * Uses AI analysis instead of keyword/threshold rules
+   * Should escalate to human based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
    */
   static shouldEscalateToHuman(decision: AIConversationFlowDecision): boolean {
-    return decision.shouldEscalateToHuman || decision.nextBestAction === 'escalate_human';
+    this.validateFlowDecision(decision);
+    return decision.shouldEscalateToHuman;
   }
-  
+
   /**
-   * Get conversation readiness score based on AI indicators
-   * Replaces manual scoring calculations
+   * Get next best action based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
    */
-  static calculateReadinessScore(indicators: AIConversationFlowDecision['readinessIndicators']): number {
-    const weights = {
-      hasContactInfo: 25,
-      showsBuyingIntent: 30,
-      hasDecisionAuthority: 20,
-      hasBudgetIndications: 15,
-      hasTimelineUrgency: 10
-    };
-    
-    let score = 0;
-    if (indicators.hasContactInfo) score += weights.hasContactInfo;
-    if (indicators.showsBuyingIntent) score += weights.showsBuyingIntent;
-    if (indicators.hasDecisionAuthority) score += weights.hasDecisionAuthority;
-    if (indicators.hasBudgetIndications) score += weights.hasBudgetIndications;
-    if (indicators.hasTimelineUrgency) score += weights.hasTimelineUrgency;
-    
-    return score;
+  static getNextBestAction(decision: AIConversationFlowDecision): string {
+    this.validateFlowDecision(decision);
+    return decision.nextBestAction;
   }
-  
+
   /**
-   * Get next recommended actions based on AI decision
+   * Get conversation phase based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
    */
-  static getRecommendedActions(decision: AIConversationFlowDecision): string[] {
-    const actions: string[] = [];
-    
-    if (decision.shouldCaptureLeadNow) {
-      actions.push('Capture lead contact information');
-    }
-    
-    if (decision.shouldAskQualificationQuestions) {
-      actions.push('Ask qualification questions');
-    }
-    
-    if (decision.shouldEscalateToHuman) {
-      actions.push('Escalate to human agent');
-    }
-    
-    switch (decision.nextBestAction) {
-      case 'request_demo':
-        actions.push('Offer product demonstration');
-        break;
-      case 'provide_resources':
-        actions.push('Share relevant resources');
-        break;
-      case 'continue_conversation':
-        actions.push('Continue natural conversation');
-        break;
-    }
-    
-    return actions;
+  static getConversationPhase(decision: AIConversationFlowDecision): string {
+    this.validateFlowDecision(decision);
+    return decision.conversationPhase;
   }
-  
+
+  /**
+   * Get engagement level based on AI decision
+   * 
+   * AI INSTRUCTIONS:
+   * - Pure delegation to AI decision
+   * - No business logic in application service
+   * - Validate input structure only
+   */
+  static getEngagementLevel(decision: AIConversationFlowDecision): string {
+    this.validateFlowDecision(decision);
+    return decision.engagementLevel;
+  }
+
   /**
    * Validate AI conversation flow decision structure
+   * 
+   * AI INSTRUCTIONS:
+   * - Validate only required fields from API contract
+   * - No longer expects readinessIndicators from API
+   * - Follow @golden-rule.mdc validation patterns
    */
   private static validateFlowDecision(decision: AIConversationFlowDecision): void {
+    if (!decision) {
+      throw new BusinessRuleViolationError(
+        'AI conversation flow decision is required',
+        { decision }
+      );
+    }
+
     if (typeof decision.shouldCaptureLeadNow !== 'boolean') {
       throw new BusinessRuleViolationError(
         'shouldCaptureLeadNow must be a boolean',
@@ -166,42 +258,19 @@ export class ConversationFlowService {
         { decision }
       );
     }
-    
-    const validActions = ['continue_conversation', 'capture_contact', 'ask_qualification', 'request_demo', 'escalate_human', 'provide_resources'];
-    if (!validActions.includes(decision.nextBestAction)) {
+
+    // Validate optional fields exist if provided
+    if (decision.leadScore !== undefined && (typeof decision.leadScore !== 'number' || decision.leadScore < 0 || decision.leadScore > 100)) {
       throw new BusinessRuleViolationError(
-        `Invalid nextBestAction: ${decision.nextBestAction}`,
-        { decision, validActions }
+        'leadScore must be a number between 0 and 100 when provided',
+        { providedScore: decision.leadScore }
       );
     }
-    
-    const validPhases = ['discovery', 'qualification', 'demonstration', 'closing', 'support', 'escalation'];
-    if (!validPhases.includes(decision.conversationPhase)) {
+
+    if (decision.entities !== undefined && typeof decision.entities !== 'object') {
       throw new BusinessRuleViolationError(
-        `Invalid conversationPhase: ${decision.conversationPhase}`,
-        { decision, validPhases }
-      );
-    }
-    
-    const validEngagementLevels = ['low', 'medium', 'high', 'very_high'];
-    if (!validEngagementLevels.includes(decision.engagementLevel)) {
-      throw new BusinessRuleViolationError(
-        `Invalid engagementLevel: ${decision.engagementLevel}`,
-        { decision, validEngagementLevels }
-      );
-    }
-    
-    if (!decision.readinessIndicators || typeof decision.readinessIndicators !== 'object') {
-      throw new BusinessRuleViolationError(
-        'readinessIndicators must be an object',
-        { decision }
-      );
-    }
-    
-    if (!decision.flowReasoning || typeof decision.flowReasoning !== 'string') {
-      throw new BusinessRuleViolationError(
-        'flowReasoning must be a non-empty string',
-        { decision }
+        'entities must be an object when provided',
+        { providedEntities: decision.entities }
       );
     }
   }

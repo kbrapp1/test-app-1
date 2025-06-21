@@ -7,8 +7,8 @@
  * - Handle workflow coordination, delegate all business logic
  * - Use domain-specific errors with proper context
  * - Stay under 200-250 lines
- * - UPDATED: Removed LeadScoringService dependency - using API-only approach
- * - Lead scores are now provided externally from OpenAI API
+ * - UPDATED: Uses domain-calculated lead scores from session context
+ * - Lead scores calculated via DomainConstants.calculateLeadScore()
  */
 
 import { Lead } from '../../domain/entities/Lead';
@@ -36,9 +36,8 @@ export interface CaptureLeadRequest {
     page?: string;
     referrer?: string;
   };
-  // API-provided scoring data
-  leadScore?: number;
-  qualificationStatus?: 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
+  // REMOVED: leadScore - Domain calculates this from session entities
+  // REMOVED: qualificationStatus - Domain determines this from score
   engagementScore?: number;
   tags?: string[];
 }
@@ -87,6 +86,7 @@ export class CaptureLeadUseCase {
       });
 
       // Use LeadCaptureService to capture the lead
+      // Domain will calculate score from session entities and determine qualification status
       const savedLead = await this.leadCaptureService.captureLead({
         sessionId: request.sessionId,
         organizationId: request.organizationId,
@@ -94,9 +94,8 @@ export class CaptureLeadUseCase {
         contactInfo,
         qualificationData,
         conversationSummary: request.conversationSummary,
-        source,
-        leadScore: request.leadScore,
-        qualificationStatus: request.qualificationStatus
+        source
+        // REMOVED: leadScore and qualificationStatus - Domain handles these
       });
 
       return savedLead;

@@ -13,12 +13,14 @@ export type IntentType =
   | 'unknown';
 
 export interface ExtractedEntities {
+  visitorName?: string;
   location?: string;
   budget?: string;
   timeline?: string;
   company?: string;
   industry?: string;
   teamSize?: string;
+  role?: string;
   urgency?: 'low' | 'medium' | 'high';
   contactMethod?: 'email' | 'phone' | 'meeting';
 }

@@ -13,10 +13,19 @@ describe('DomainConstants', () => {
   describe('Intent Types', () => {
     it('should return all intent types', () => {
       const intents = DomainConstants.getAllIntentTypes();
-      expect(intents).toHaveLength(12);
+      expect(intents).toHaveLength(20);
       expect(intents).toContain('greeting');
       expect(intents).toContain('sales_inquiry');
       expect(intents).toContain('unknown');
+      // Business context intents
+      expect(intents).toContain('company_inquiry');
+      expect(intents).toContain('business_inquiry');
+      expect(intents).toContain('product_inquiry');
+      expect(intents).toContain('feature_inquiry');
+      expect(intents).toContain('pricing_inquiry');
+      expect(intents).toContain('cost_inquiry');
+      expect(intents).toContain('comparison_inquiry');
+      expect(intents).toContain('competitor_inquiry');
     });
 
     it('should return sales intents correctly', () => {
@@ -34,6 +43,27 @@ describe('DomainConstants', () => {
       expect(qualificationIntents).toEqual(['qualification', 'objection_handling']);
     });
 
+    it('should return business context intents correctly', () => {
+      const businessContextIntents = DomainConstants.getBusinessContextIntents();
+      expect(businessContextIntents).toEqual([
+        'company_inquiry', 'business_inquiry', 'product_inquiry', 'feature_inquiry',
+        'pricing_inquiry', 'cost_inquiry', 'comparison_inquiry', 'competitor_inquiry'
+      ]);
+    });
+
+    it('should return general intents correctly', () => {
+      const generalIntents = DomainConstants.getGeneralIntents();
+      expect(generalIntents).toEqual(['greeting', 'unknown']);
+    });
+
+    it('should identify business context intents correctly', () => {
+      expect(DomainConstants.isBusinessContextIntent('company_inquiry')).toBe(true);
+      expect(DomainConstants.isBusinessContextIntent('product_inquiry')).toBe(true);
+      expect(DomainConstants.isBusinessContextIntent('pricing_inquiry')).toBe(true);
+      expect(DomainConstants.isBusinessContextIntent('sales_inquiry')).toBe(false);
+      expect(DomainConstants.isBusinessContextIntent('greeting')).toBe(false);
+    });
+
     it('should validate intent types correctly', () => {
       expect(DomainConstants.isValidIntentType('greeting')).toBe(true);
       expect(DomainConstants.isValidIntentType('sales_inquiry')).toBe(true);
@@ -44,6 +74,8 @@ describe('DomainConstants', () => {
       expect(DomainConstants.getIntentCategory('sales_inquiry')).toBe('sales');
       expect(DomainConstants.getIntentCategory('support_request')).toBe('support');
       expect(DomainConstants.getIntentCategory('qualification')).toBe('qualification');
+      expect(DomainConstants.getIntentCategory('company_inquiry')).toBe('business_context');
+      expect(DomainConstants.getIntentCategory('product_inquiry')).toBe('business_context');
       expect(DomainConstants.getIntentCategory('greeting')).toBe('general');
     });
   });
@@ -156,8 +188,8 @@ describe('DomainConstants', () => {
       expect(rules.teamSize).toBe(15);
       expect(rules.industry).toBe(10);
       expect(rules.urgency).toBe(10);
-      expect(rules.role).toBe(10);
       expect(rules.contactMethod).toBe(5);
+      // REMOVED: role - now uses authority-based scoring via getRoleAuthorityScore()
     });
 
     it('should return individual scoring weights', () => {
@@ -189,9 +221,84 @@ describe('DomainConstants', () => {
         teamSize: '50+',
         urgency: 'high',
         contactMethod: 'phone',
-        role: 'cto'
+        role: 'cto' // CTO = 25 points via authority-based scoring
       };
+      // 25+20+15+10+15+10+5+25 = 125, capped at 100
       expect(DomainConstants.calculateLeadScore(allEntities)).toBe(100);
+    });
+  });
+
+  describe('Role Authority Scoring', () => {
+    it('should return role authority weights', () => {
+      const weights = DomainConstants.getRoleAuthorityWeights();
+      expect(weights.ceo).toBe(25);
+      expect(weights.engineer).toBe(5);
+      expect(weights.manager).toBe(10);
+      expect(weights.director).toBe(15);
+      expect(weights.vp).toBe(20);
+    });
+
+    it('should calculate role authority scores correctly', () => {
+      // C-Suite roles
+      expect(DomainConstants.getRoleAuthorityScore('CEO')).toBe(25);
+      expect(DomainConstants.getRoleAuthorityScore('cto')).toBe(25);
+      expect(DomainConstants.getRoleAuthorityScore('Chief Technology Officer')).toBe(25);
+      
+      // Senior leadership
+      expect(DomainConstants.getRoleAuthorityScore('VP')).toBe(20);
+      expect(DomainConstants.getRoleAuthorityScore('Vice President')).toBe(20);
+      expect(DomainConstants.getRoleAuthorityScore('VP of Sales')).toBe(20); // Partial match
+      
+      // Mid-level management
+      expect(DomainConstants.getRoleAuthorityScore('Director')).toBe(15);
+      expect(DomainConstants.getRoleAuthorityScore('Senior Director')).toBe(15);
+      expect(DomainConstants.getRoleAuthorityScore('Lead')).toBe(15);
+      
+      // Team management
+      expect(DomainConstants.getRoleAuthorityScore('Manager')).toBe(10);
+      expect(DomainConstants.getRoleAuthorityScore('Project Manager')).toBe(10);
+      
+      // Senior individual contributors
+      expect(DomainConstants.getRoleAuthorityScore('Senior Engineer')).toBe(8);
+      expect(DomainConstants.getRoleAuthorityScore('Staff Engineer')).toBe(8);
+      
+      // Individual contributors
+      expect(DomainConstants.getRoleAuthorityScore('Engineer')).toBe(5);
+      expect(DomainConstants.getRoleAuthorityScore('Developer')).toBe(5);
+      
+      // Entry level
+      expect(DomainConstants.getRoleAuthorityScore('Junior')).toBe(2);
+      expect(DomainConstants.getRoleAuthorityScore('Intern')).toBe(2);
+      
+      // Unknown roles default to individual contributor level
+      expect(DomainConstants.getRoleAuthorityScore('Unknown Role')).toBe(5);
+      expect(DomainConstants.getRoleAuthorityScore('')).toBe(0);
+    });
+
+    it('should handle case-insensitive role matching', () => {
+      expect(DomainConstants.getRoleAuthorityScore('ceo')).toBe(25);
+      expect(DomainConstants.getRoleAuthorityScore('CEO')).toBe(25);
+      expect(DomainConstants.getRoleAuthorityScore('Chief Executive Officer')).toBe(25);
+      expect(DomainConstants.getRoleAuthorityScore('ENGINEER')).toBe(5);
+      expect(DomainConstants.getRoleAuthorityScore('engineer')).toBe(5);
+    });
+
+    it('should integrate role authority scoring with lead score calculation', () => {
+      // CEO vs Engineer comparison
+      const ceoEntities = { company: 'Acme', role: 'CEO', budget: '$50k' };
+      const engineerEntities = { company: 'Acme', role: 'Engineer', budget: '$50k' };
+      
+      const ceoScore = DomainConstants.calculateLeadScore(ceoEntities);
+      const engineerScore = DomainConstants.calculateLeadScore(engineerEntities);
+      
+      // CEO: 15 (company) + 25 (CEO role) + 25 (budget) = 65
+      expect(ceoScore).toBe(65);
+      
+      // Engineer: 15 (company) + 5 (engineer role) + 25 (budget) = 45  
+      expect(engineerScore).toBe(45);
+      
+      // CEO should score 20 points higher due to authority difference
+      expect(ceoScore - engineerScore).toBe(20);
     });
   });
 
@@ -241,10 +348,10 @@ describe('DomainConstants', () => {
     it('should provide accurate domain summary', () => {
       const summary = DomainConstants.getDomainSummary();
       
-      expect(summary.intentTypes).toBe(12);
+      expect(summary.intentTypes).toBe(20);
       expect(summary.journeyStages).toBe(8);
       expect(summary.entityTypes).toBe(22);
-      expect(summary.businessRules).toBe(8); // Number of lead scoring rules
+      expect(summary.businessRules).toBe(7); // Number of lead scoring rules (role moved to authority-based)
       expect(summary.thresholds).toBe(8); // Number of default thresholds
       expect(summary.validation.isValid).toBe(true);
     });
@@ -264,15 +371,15 @@ describe('DomainConstants', () => {
 
     it('should maintain constant values', () => {
       // Verify constants haven't changed from expected values
-      expect(INTENT_TYPES).toHaveLength(12);
+      expect(INTENT_TYPES).toHaveLength(20);
       expect(JOURNEY_STAGES).toHaveLength(8);
       expect(ALL_ENTITY_TYPES).toHaveLength(22);
       expect(CORE_BUSINESS_ENTITIES).toHaveLength(12);
       expect(ADVANCED_ENTITIES).toHaveLength(10);
       
-      // Verify lead scoring totals
+      // Verify lead scoring totals (role removed, now handled separately)
       const totalPoints = Object.values(LEAD_SCORING_RULES).reduce((sum, points) => sum + points, 0);
-      expect(totalPoints).toBe(110);
+      expect(totalPoints).toBe(100);
     });
   });
 
@@ -283,6 +390,8 @@ describe('DomainConstants', () => {
       const salesIntents = DomainConstants.getSalesIntents();
       const supportIntents = DomainConstants.getSupportIntents();
       const qualificationIntents = DomainConstants.getQualificationIntents();
+      const businessContextIntents = DomainConstants.getBusinessContextIntents();
+      const generalIntents = DomainConstants.getGeneralIntents();
       
       salesIntents.forEach(intent => {
         expect(allIntents).toContain(intent);
@@ -293,6 +402,14 @@ describe('DomainConstants', () => {
       });
       
       qualificationIntents.forEach(intent => {
+        expect(allIntents).toContain(intent);
+      });
+
+      businessContextIntents.forEach(intent => {
+        expect(allIntents).toContain(intent);
+      });
+
+      generalIntents.forEach(intent => {
         expect(allIntents).toContain(intent);
       });
     });

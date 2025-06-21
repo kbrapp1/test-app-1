@@ -118,6 +118,8 @@ export interface SessionContext {
       lastBusinessQuestionTurn: number;
     };
   };
+  // Domain-calculated lead score from DomainConstants.calculateLeadScore()
+  leadScore?: number;
 }
 
 export interface PageView {

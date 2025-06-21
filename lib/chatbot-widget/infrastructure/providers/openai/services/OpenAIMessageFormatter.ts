@@ -15,7 +15,7 @@ export class OpenAIMessageFormatter {
   static formatConversationHistory(
     messageHistory: ChatMessage[]
   ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    return messageHistory.slice(-10).map(msg => ({
+    return messageHistory.slice(-18).map(msg => ({
       role: msg.messageType === 'user' ? 'user' as const : 'assistant' as const,
       content: msg.content
     }));

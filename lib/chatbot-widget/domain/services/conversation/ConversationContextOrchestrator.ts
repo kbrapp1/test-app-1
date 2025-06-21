@@ -9,6 +9,7 @@
  * - Stay under 200-250 lines
  * - Delegate to specialized services, no business logic here
  * - UPDATED: Removed all ConversationStageService dependencies
+ * - ENHANCED: Integrated ConversationCompressionService and ContextRelevanceService
  */
 
 import { ChatSession } from '../../entities/ChatSession';
@@ -30,9 +31,20 @@ import { ContextWindowService } from '../utilities/ContextWindowService';
 import { ConversationSessionUpdateService } from './ConversationSessionUpdateService';
 import { UserJourneyState } from '../../value-objects/session-management/UserJourneyState';
 
+// Import new 2025 advanced services
+import { ConversationCompressionService, CompressionResult } from '../utilities/ConversationCompressionService';
+import { ContextRelevanceService, PrioritizedMessages, RelevanceContext } from '../utilities/ContextRelevanceService';
+import { IntentResult } from '../../value-objects/message-processing/IntentResult';
+
+// AI INSTRUCTIONS: Logging interface for advanced context management
+interface LoggingContext {
+  logEntry: (message: string) => void;
+}
+
 /**
  * API-provided analysis data from OpenAI
  * Following @golden-rule.mdc DTO pattern for external data contracts
+ * UPDATED: Added all core business entities for proper lead scoring
  */
 export interface ApiAnalysisData {
   entities?: {
@@ -40,6 +52,18 @@ export interface ApiAnalysisData {
     painPoints?: string[];
     integrationNeeds?: string[];
     evaluationCriteria?: string[];
+    // Core business entities for lead scoring
+    company?: string;
+    role?: string;
+    budget?: string;
+    timeline?: string;
+    teamSize?: string;
+    industry?: string;
+    contactMethod?: string;
+    // Visitor identification
+    visitorName?: string;
+    email?: string;
+    phone?: string;
   };
   personaInference?: {
     role?: string;
@@ -73,19 +97,195 @@ export class ConversationContextOrchestrator {
   }
 
   /**
-   * Get messages that fit within context window with token management
-   * AI INSTRUCTIONS: Pure utility coordination, delegate to specialized service
+   * Get messages that fit within context window with advanced compression and relevance analysis
+   * AI INSTRUCTIONS: Enhanced with 2025 optimization services - comprehensive logging
    */
   async getMessagesForContextWindow(
     messages: ChatMessage[],
     contextWindow: ConversationContextWindow,
-    existingSummary?: string
+    existingSummary?: string,
+    loggingContext?: LoggingContext
   ): Promise<ContextWindowResult> {
-    return this.contextWindowService.getMessagesForContextWindow(
-      messages, 
-      contextWindow, 
-      existingSummary
+    const logEntry = loggingContext?.logEntry || (() => {});
+    
+    logEntry('\n🧠 =================================');
+    logEntry('🧠 ADVANCED CONTEXT INTELLIGENCE (2025)');
+    logEntry('🧠 =================================');
+    
+    // Basic validation
+    if (messages.length === 0) {
+      logEntry('📋 No messages to process - returning empty context');
+      return {
+        messages: [],
+        tokenUsage: { messagesTokens: 0, summaryTokens: 0, totalTokens: 0 },
+        wasCompressed: false
+      };
+    }
+
+    logEntry(`📊 INPUT ANALYSIS:`);
+    logEntry(`📋 Total messages: ${messages.length}`);
+    logEntry(`📋 Context window max tokens: ${contextWindow.maxTokens}`);
+    logEntry(`📋 Available for messages: ${contextWindow.getAvailableTokensForMessages()}`);
+    logEntry(`📋 Existing summary: ${existingSummary ? 'Yes' : 'No'}`);
+
+    // Step 1: Analyze message relevance for intelligent prioritization
+    logEntry('\n🎯 STEP 1: MESSAGE RELEVANCE ANALYSIS');
+    
+    // Create a basic relevance context for analysis
+    const relevanceContext: RelevanceContext = {
+      currentIntent: IntentResult.createUnknown(), // Default unknown intent for now
+      businessEntities: {}, // Will be populated from session context if available
+      conversationPhase: 'discovery',
+      leadScore: 0,
+      maxRetentionMessages: Math.floor(contextWindow.getAvailableTokensForMessages() / 100) // Rough estimate
+    };
+
+    const prioritizedMessages = ContextRelevanceService.prioritizeMessages(
+      messages,
+      relevanceContext
     );
+
+    logEntry('📈 RELEVANCE SCORING RESULTS:');
+    logEntry(`📋 Critical messages: ${prioritizedMessages.criticalMessages.length}`);
+    logEntry(`📋 High priority messages: ${prioritizedMessages.highPriorityMessages.length}`);
+    logEntry(`📋 Medium priority messages: ${prioritizedMessages.mediumPriorityMessages.length}`);
+    logEntry(`📋 Low priority messages: ${prioritizedMessages.lowPriorityMessages.length}`);
+    logEntry(`📋 Average relevance score: ${prioritizedMessages.totalRelevanceScore.toFixed(2)}`);
+    
+    // Log top relevant messages (critical + high priority)
+    const topRelevantMessages = [
+      ...prioritizedMessages.criticalMessages,
+      ...prioritizedMessages.highPriorityMessages
+    ].slice(0, 3);
+    
+    if (topRelevantMessages.length > 0) {
+      logEntry('🏆 TOP RELEVANT MESSAGES:');
+      topRelevantMessages.forEach((msg, index) => {
+        const preview = msg.content.substring(0, 50) + '...';
+        logEntry(`📋 #${index + 1}: "${preview}"`);
+      });
+    }
+
+    // Step 2: Check if compression is needed
+    const totalTokensEstimate = await this.estimateTokenUsage(messages);
+    const availableTokens = contextWindow.getAvailableTokensForMessages();
+    const summaryTokens = existingSummary 
+      ? await this.tokenCountingService.countTextTokens(existingSummary)
+      : 0;
+    
+    logEntry('\n🔧 STEP 2: TOKEN USAGE ANALYSIS');
+    logEntry(`📋 Estimated message tokens: ${totalTokensEstimate}`);
+    logEntry(`📋 Existing summary tokens: ${summaryTokens}`);
+    logEntry(`📋 Available tokens: ${availableTokens}`);
+    logEntry(`📋 Total required: ${totalTokensEstimate + summaryTokens}`);
+    logEntry(`📋 Compression needed: ${(totalTokensEstimate + summaryTokens) > availableTokens ? 'YES' : 'NO'}`);
+
+    // Step 3: Apply compression if needed
+    let compressionResult: CompressionResult | null = null;
+    let finalMessages = messages;
+
+    if ((totalTokensEstimate + summaryTokens) > availableTokens && messages.length > 5) {
+      logEntry('\n🗜️ STEP 3: CONVERSATION COMPRESSION');
+      
+      compressionResult = ConversationCompressionService.compressConversationHistory(
+        messages,
+        {
+          maxSummaryTokens: contextWindow.summaryTokens,
+          preserveRecentCount: Math.min(5, Math.floor(messages.length * 0.3)),
+          businessContextWeight: 1.5,
+          topicImportanceThreshold: 2
+        }
+      );
+
+      logEntry('📊 COMPRESSION RESULTS:');
+      logEntry(`📋 Original message count: ${compressionResult.metadata.originalMessageCount}`);
+      logEntry(`📋 Compressed message count: ${compressionResult.metadata.compressedMessageCount}`);
+      logEntry(`📋 Tokens saved: ${compressionResult.tokensSaved}`);
+      logEntry(`📋 Compression ratio: ${(compressionResult.compressionRatio * 100).toFixed(1)}%`);
+      logEntry(`📋 Key topics preserved: ${compressionResult.metadata.keyTopicsPreserved.join(', ')}`);
+      logEntry(`📋 Business entities preserved: ${compressionResult.metadata.businessEntitiesPreserved.join(', ')}`);
+      
+      if (compressionResult.compressedSummary) {
+        logEntry('📝 COMPRESSED SUMMARY:');
+        logEntry(`"${compressionResult.compressedSummary}"`);
+      }
+
+      finalMessages = compressionResult.retainedMessages;
+    } else {
+      logEntry('\n✅ STEP 3: NO COMPRESSION NEEDED');
+      logEntry('📋 All messages fit within token limits');
+    }
+
+    // Step 4: Apply relevance-based filtering if still over limit
+    if (finalMessages.length > 0) {
+      const finalTokensEstimate = await this.estimateTokenUsage(finalMessages);
+      const finalSummaryTokens = compressionResult?.compressedSummary 
+        ? await this.tokenCountingService.countTextTokens(compressionResult.compressedSummary)
+        : summaryTokens;
+
+      if ((finalTokensEstimate + finalSummaryTokens) > availableTokens) {
+        logEntry('\n🎯 STEP 4: RELEVANCE-BASED FILTERING');
+        
+        // Use the retention recommendation from the prioritized messages
+        const retentionRecommendation = prioritizedMessages.retentionRecommendation;
+
+        logEntry('📊 RELEVANCE FILTERING RESULTS:');
+        logEntry(`📋 Should compress further: ${retentionRecommendation.shouldCompress ? 'YES' : 'NO'}`);
+        logEntry(`📋 Messages to retain: ${retentionRecommendation.messagesToRetain.length}`);
+        logEntry(`📋 Messages to compress: ${retentionRecommendation.messagesToCompress.length}`);
+
+        if (retentionRecommendation.shouldCompress) {
+          finalMessages = retentionRecommendation.messagesToRetain;
+        }
+      } else {
+        logEntry('\n✅ STEP 4: RELEVANCE FILTERING NOT NEEDED');
+        logEntry('📋 Messages fit within limits after compression');
+      }
+    }
+
+    // Step 5: Calculate final metrics
+    const finalTokensUsed = await this.estimateTokenUsage(finalMessages);
+    const finalSummary = compressionResult?.compressedSummary || existingSummary;
+    const finalSummaryTokens = finalSummary 
+      ? await this.tokenCountingService.countTextTokens(finalSummary)
+      : 0;
+
+    logEntry('\n📊 FINAL CONTEXT METRICS:');
+    logEntry(`📋 Final message count: ${finalMessages.length}`);
+    logEntry(`📋 Final message tokens: ${finalTokensUsed}`);
+    logEntry(`📋 Final summary tokens: ${finalSummaryTokens}`);
+    logEntry(`📋 Total context tokens: ${finalTokensUsed + finalSummaryTokens}`);
+    logEntry(`📋 Token utilization: ${(((finalTokensUsed + finalSummaryTokens) / availableTokens) * 100).toFixed(1)}%`);
+    logEntry(`📋 Compression applied: ${compressionResult ? 'YES' : 'NO'}`);
+    logEntry(`📋 Relevance filtering applied: ${prioritizedMessages ? 'YES' : 'NO'}`);
+
+    logEntry('🧠 =================================');
+    logEntry('🧠 ADVANCED CONTEXT INTELLIGENCE COMPLETE');
+    logEntry('🧠 =================================\n');
+
+    return {
+      messages: finalMessages,
+      summary: finalSummary,
+      tokenUsage: {
+        messagesTokens: finalTokensUsed,
+        summaryTokens: finalSummaryTokens,
+        totalTokens: finalTokensUsed + finalSummaryTokens
+      },
+      wasCompressed: !!compressionResult || messages.length !== finalMessages.length
+    };
+  }
+
+  /**
+   * Estimate token usage for messages
+   * AI INSTRUCTIONS: Simple token estimation for planning
+   */
+  private async estimateTokenUsage(messages: ChatMessage[]): Promise<number> {
+    try {
+      return await this.tokenCountingService.countMessagesTokens(messages);
+    } catch (error) {
+      // Fallback to simple estimation: ~4 characters per token
+      return messages.reduce((total, msg) => total + Math.ceil(msg.content.length / 4), 0);
+    }
   }
 
   /**
@@ -235,6 +435,13 @@ export class ConversationContextOrchestrator {
     apiAnalysisData?: ApiAnalysisData
   ): ChatSession {
     const analysis = this.analyzeContext([...allMessages, message], session, apiAnalysisData);
-    return this.sessionUpdateService.updateSessionContext(session, message, allMessages, analysis);
+    const updatedSession = this.sessionUpdateService.updateSessionContext(
+      session, 
+      message, 
+      allMessages, 
+      analysis, 
+      apiAnalysisData
+    );
+    return updatedSession.updateActivity();
   }
 } 

@@ -22,10 +22,10 @@ export class ConversationContextWindow {
 
   static create(config: Partial<ContextWindowConfig> = {}): ConversationContextWindow {
     const defaultConfig: ContextWindowConfig = {
-      maxTokens: 12000, // Safe limit for most models
-      systemPromptTokens: 500,
-      responseReservedTokens: 3000,
-      summaryTokens: 200
+      maxTokens: 16000, // 2025 optimization: Increased for better context retention
+      systemPromptTokens: 800,  // More room for enhanced business context
+      responseReservedTokens: 3500, // Slightly more for detailed responses
+      summaryTokens: 300 // Enhanced summarization capacity
     };
 
     const finalConfig = { ...defaultConfig, ...config };

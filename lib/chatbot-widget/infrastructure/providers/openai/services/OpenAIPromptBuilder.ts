@@ -262,7 +262,7 @@ Consider conversation history, user journey stage, and business context when ana
   private static extractRecentIntents(conversationHistory: ChatMessage[]): string[] {
     return conversationHistory
       .filter(m => m.messageType === 'user')
-      .slice(-5)
+      .slice(-8) // 2025 optimization: Increased from 5 to 8 for better intent tracking
       .map(m => this.inferIntentFromMessage(m.content));
   }
 

@@ -28,7 +28,6 @@ export interface EntityExtractionDebugDto {
     rawExtractionResult?: any;
     processingTime?: number;
     patternsMatched?: string[];
-    extractionMethod?: 'regex' | 'nlp' | 'hybrid';
     modelUsed?: string;
   };
   

@@ -210,6 +210,11 @@ export class EntityAccumulationService {
       entitiesAdded += 1;
     }
     
+    if (freshEntities.role) {
+      result = result.withConfidenceBasedEntity('role', freshEntities.role, context.messageId, context.defaultConfidence, context.confidenceThreshold);
+      entitiesAdded += 1;
+    }
+    
     return { updatedEntities: result, entitiesAdded };
   }
   
@@ -232,12 +237,14 @@ export class EntityAccumulationService {
   private static countExtractedEntities(entities: ExtractedEntities): number {
     let count = 0;
     // Only count fields that exist in current ExtractedEntities interface
+    count += entities.visitorName ? 1 : 0;
     count += entities.location ? 1 : 0;
     count += entities.budget ? 1 : 0;
     count += entities.timeline ? 1 : 0;
     count += entities.company ? 1 : 0;
     count += entities.industry ? 1 : 0;
     count += entities.teamSize ? 1 : 0;
+    count += entities.role ? 1 : 0;
     count += entities.urgency ? 1 : 0;
     count += entities.contactMethod ? 1 : 0;
     return count;

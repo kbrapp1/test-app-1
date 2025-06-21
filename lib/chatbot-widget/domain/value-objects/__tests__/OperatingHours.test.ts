@@ -42,7 +42,7 @@ describe('OperatingHours Value Object', () => {
       
       expect(defaultHours.timezone).toBe('UTC');
       expect(defaultHours.businessHours).toHaveLength(7); // All days of week
-      expect(defaultHours.businessHours.filter(h => h.isActive)).toHaveLength(5); // Monday-Friday
+      expect(defaultHours.businessHours.filter(h => h.isActive)).toHaveLength(7); // All days active (24/7)
       expect(defaultHours.holidaySchedule).toEqual([]);
       expect(defaultHours.outsideHoursMessage).toContain('currently offline');
     });

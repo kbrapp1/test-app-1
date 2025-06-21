@@ -35,7 +35,7 @@ export class IntentPersistenceService {
     const updatedSequence = [
       ...currentIntentHistory.intentSequence,
       newIntentEntry
-    ].slice(-10); // Keep last 10 intents for performance
+    ].slice(-15); // Keep last 15 intents for enhanced business context (2025 optimization)
 
     // Update business context flags based on new intent
     const updatedContextFlags = this.updateContextFlags(

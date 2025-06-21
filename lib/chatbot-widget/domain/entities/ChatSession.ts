@@ -255,10 +255,24 @@ export class ChatSession {
   }
 
   hasContactInfo(): boolean {
-    return SessionContextService.hasContactInfo(this.props.contextData);
+    return !!(this.props.contextData.email || this.props.contextData.phone);
   }
 
   toPlainObject(): ChatSessionProps {
     return { ...this.props };
+  }
+
+  updateVisitorName(name: string): ChatSession {
+    const newContextData = { ...this.props.contextData, visitorName: name };
+    return new ChatSession({ ...this.props, contextData: newContextData, lastActivityAt: new Date() });
+  }
+
+  updateCompany(company: string): ChatSession {
+    const newContextData = { ...this.props.contextData, company: company };
+    return new ChatSession({ ...this.props, contextData: newContextData, lastActivityAt: new Date() });
+  }
+
+  isOngoing(): boolean {
+    return this.status === 'active';
   }
 } 

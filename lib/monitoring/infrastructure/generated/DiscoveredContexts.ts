@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-20T20:47:11.852Z
+// Generated: 2025-06-21T03:30:16.131Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';

@@ -72,7 +72,7 @@ export class OpenAIChatbotProcessingService {
       conversationPhase: string;
       engagementLevel: string;
     };
-    leadScore: number;
+    leadScore?: number; // Optional - calculated by domain service when needed
     response: {
       content: string;
       tone: string;
@@ -183,7 +183,7 @@ export class OpenAIChatbotProcessingService {
       logContext.logEntry('🔍 VALIDATING FUNCTION ARGUMENTS STRUCTURE:');
       logContext.logEntry(`📋 Has analysis: ${!!functionArgs.analysis}`);
       logContext.logEntry(`📋 Has conversationFlow: ${!!functionArgs.conversationFlow}`);
-      logContext.logEntry(`📋 Has leadScore: ${!!functionArgs.leadScore}`);
+      logContext.logEntry(`📋 LeadScore: Domain-calculated (not AI-provided) ✅`);
       logContext.logEntry(`📋 Has response: ${!!functionArgs.response}`);
       
       if (functionArgs.analysis) {
@@ -192,9 +192,7 @@ export class OpenAIChatbotProcessingService {
       if (functionArgs.conversationFlow) {
         logContext.logEntry(`📋 ConversationFlow keys: ${Object.keys(functionArgs.conversationFlow).join(', ')}`);
       }
-      if (functionArgs.leadScore) {
-        logContext.logEntry(`📋 LeadScore: ${functionArgs.leadScore}`);
-      }
+      // leadScore intentionally not logged - calculated by domain service
       if (functionArgs.response) {
         logContext.logEntry(`📋 Response keys: ${Object.keys(functionArgs.response).join(', ')}`);
         logContext.logEntry(`📋 Response content length: ${functionArgs.response.content?.length || 0}`);
@@ -203,7 +201,7 @@ export class OpenAIChatbotProcessingService {
       const result = {
         analysis: functionArgs.analysis,
         conversationFlow: functionArgs.conversationFlow,
-        leadScore: functionArgs.leadScore,
+        // leadScore: Intentionally excluded - calculated by domain service
         response: functionArgs.response,
         usage: response.usage || {
           prompt_tokens: 0,

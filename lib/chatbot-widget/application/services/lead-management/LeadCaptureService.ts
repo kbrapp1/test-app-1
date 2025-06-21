@@ -8,8 +8,8 @@
  * - Use domain-specific errors with proper context
  * - Stay under 200-250 lines
  * - Publish domain events for cross-aggregate communication
- * - UPDATED: Removed LeadScoringService dependency - using API-only approach
- * - Lead scores are now provided externally from OpenAI API
+ * - UPDATED: Uses domain-calculated lead scores from session context
+ * - Lead scores calculated via DomainConstants.calculateLeadScore()
  */
 
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
@@ -35,8 +35,8 @@ export interface LeadCaptureRequest {
   qualificationData: QualificationData;
   conversationSummary: string;
   source: LeadSource;
-  leadScore?: number; // Optional - from OpenAI API
-  qualificationStatus?: 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified'; // Optional - from OpenAI API
+  // REMOVED: leadScore - Domain calculates this from session entities
+  // REMOVED: qualificationStatus - Domain determines this from score
 }
 
 export class LeadCaptureService {
@@ -70,7 +70,11 @@ export class LeadCaptureService {
       });
     }
 
-    // Create lead entity using domain factory with API-provided scores
+    // Create lead entity using domain-calculated score from session
+    // The session contains the lead score calculated by DomainConstants.calculateLeadScore()
+    const domainCalculatedScore = session.contextData.leadScore || 0;
+    const qualificationStatus = this.determineQualificationStatus(domainCalculatedScore);
+    
     const lead = Lead.create(
       request.sessionId,
       request.organizationId,
@@ -79,8 +83,8 @@ export class LeadCaptureService {
       request.qualificationData,
       request.source,
       request.conversationSummary,
-      request.leadScore || 0, // Use API-provided score or default to 0
-      request.qualificationStatus || 'not_qualified' // Use API-provided status or default
+      domainCalculatedScore, // Use domain-calculated score from session
+      qualificationStatus // Determine status from domain score
     );
 
     // Save lead through repository
@@ -130,5 +134,21 @@ export class LeadCaptureService {
     }
 
     return { eligible: true };
+  }
+
+  /**
+   * Determine qualification status based on domain-calculated lead score
+   * Following DDD principles: Business logic for qualification thresholds
+   */
+  private determineQualificationStatus(leadScore: number): 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified' {
+    if (leadScore >= 80) {
+      return 'highly_qualified';
+    } else if (leadScore >= 60) {
+      return 'qualified';
+    } else if (leadScore >= 30) {
+      return 'not_qualified';
+    } else {
+      return 'disqualified';
+    }
   }
 } 
