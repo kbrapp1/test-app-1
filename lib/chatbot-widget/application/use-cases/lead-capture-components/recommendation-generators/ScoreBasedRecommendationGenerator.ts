@@ -10,7 +10,12 @@
  * - Follow @golden-rule patterns exactly
  */
 
-import { LeadRecommendation, RecommendationType, RecommendationPriority, RecommendationCategory } from '../LeadRecommendationEngine';
+import { 
+  LeadRecommendation, 
+  RecommendationType, 
+  RecommendationPriority, 
+  RecommendationCategory 
+} from '../../../../domain/value-objects/lead-management/LeadRecommendation';
 
 export class ScoreBasedRecommendationGenerator {
   /**

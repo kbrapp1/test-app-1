@@ -32,6 +32,7 @@ export interface AccumulatedEntitiesProps {
   contactMethod: EntityWithMetadata<'email'|'phone'|'meeting'> | null;
   
   // Confidence-based entities (keep highest confidence)
+  visitorName: EntityWithMetadata<string> | null;
   role: EntityWithMetadata<string> | null;
   industry: EntityWithMetadata<string> | null;
   company: EntityWithMetadata<string> | null;
@@ -57,6 +58,7 @@ export class AccumulatedEntities {
       timeline: null,
       urgency: null,
       contactMethod: null,
+      visitorName: null,
       role: null,
       industry: null,
       company: null,
@@ -85,9 +87,23 @@ export class AccumulatedEntities {
       const parseEntityWithMetadata = (entity: any): EntityWithMetadata<any> | null => {
         if (!entity || typeof entity !== 'object') return null;
         
+        // Ensure extractedAt is a valid Date object
+        let extractedAt: Date;
+        try {
+          const dateValue = entity.extractedAt || entity.lastUpdated || new Date();
+          extractedAt = dateValue instanceof Date ? dateValue : new Date(dateValue);
+          
+          // If the date is invalid, use current time
+          if (isNaN(extractedAt.getTime())) {
+            extractedAt = new Date();
+          }
+        } catch (error) {
+          extractedAt = new Date();
+        }
+        
         return {
           value: entity.value,
-          extractedAt: new Date(entity.extractedAt || entity.lastUpdated || new Date()),
+          extractedAt,
           confidence: entity.confidence || 0.5,
           sourceMessageId: entity.sourceMessageId || 'unknown',
         };
@@ -122,6 +138,7 @@ export class AccumulatedEntities {
         timeline: parseEntityWithMetadata(storedData.timeline),
         urgency: parseEntityWithMetadata(storedData.urgency),
         contactMethod: parseEntityWithMetadata(storedData.contactMethod),
+        visitorName: parseEntityWithMetadata(storedData.visitorName),
         role: parseEntityWithMetadata(storedData.role),
         industry: parseEntityWithMetadata(storedData.industry),
         company: parseEntityWithMetadata(storedData.company),
@@ -135,8 +152,7 @@ export class AccumulatedEntities {
       return new AccumulatedEntities(props);
       
     } catch (error) {
-      // If deserialization fails, create fresh entities
-      console.warn('Failed to deserialize accumulated entities:', error);
+      // Deserialization failed - return empty entities without logging to console
       return AccumulatedEntities.create();
     }
   }
@@ -150,6 +166,7 @@ export class AccumulatedEntities {
   get timeline(): EntityWithMetadata<string> | null { return this.props.timeline; }
   get urgency(): EntityWithMetadata<'low'|'medium'|'high'> | null { return this.props.urgency; }
   get contactMethod(): EntityWithMetadata<'email'|'phone'|'meeting'> | null { return this.props.contactMethod; }
+  get visitorName(): EntityWithMetadata<string> | null { return this.props.visitorName; }
   get role(): EntityWithMetadata<string> | null { return this.props.role; }
   get industry(): EntityWithMetadata<string> | null { return this.props.industry; }
   get company(): EntityWithMetadata<string> | null { return this.props.company; }
@@ -212,7 +229,7 @@ export class AccumulatedEntities {
    * Strategy 3: Confidence-based entities - keep highest confidence value
    */
   withConfidenceBasedEntity(
-    entityType: 'role'|'industry'|'company'|'teamSize',
+    entityType: 'visitorName'|'role'|'industry'|'company'|'teamSize',
     value: string,
     messageId: string,
     confidence: number = 0.9,
@@ -269,7 +286,7 @@ export class AccumulatedEntities {
    * Correct/replace any entity type
    */
   withCorrectedEntity(
-    entityType: 'budget'|'timeline'|'urgency'|'contactMethod'|'role'|'industry'|'company'|'teamSize',
+    entityType: 'budget'|'timeline'|'urgency'|'contactMethod'|'visitorName'|'role'|'industry'|'company'|'teamSize',
     value: string,
     messageId: string,
     confidence: number = 0.9
@@ -302,6 +319,7 @@ export class AccumulatedEntities {
       timeline: this.timeline?.value || null,
       urgency: this.urgency?.value || null,
       contactMethod: this.contactMethod?.value || null,
+      visitorName: this.visitorName?.value || null,
       role: this.role?.value || null,
       industry: this.industry?.value || null,
       company: this.company?.value || null,
@@ -325,7 +343,7 @@ export class AccumulatedEntities {
                 this.integrationNeeds.length + this.evaluationCriteria.length,
       replaceable: [this.budget, this.timeline, this.urgency, this.contactMethod]
                   .filter(entity => entity !== null).length,
-      confidenceBased: [this.role, this.industry, this.company, this.teamSize]
+      confidenceBased: [this.visitorName, this.role, this.industry, this.company, this.teamSize]
                       .filter(entity => entity !== null).length
     };
   }
@@ -362,6 +380,7 @@ export class AccumulatedEntities {
       timeline: serializeEntity(this.props.timeline),
       urgency: serializeEntity(this.props.urgency),
       contactMethod: serializeEntity(this.props.contactMethod),
+      visitorName: serializeEntity(this.props.visitorName),
       role: serializeEntity(this.props.role),
       industry: serializeEntity(this.props.industry),
       company: serializeEntity(this.props.company),
@@ -411,6 +430,7 @@ export class AccumulatedEntities {
       this.props.timeline,
       this.props.urgency,
       this.props.contactMethod,
+      this.props.visitorName,
       this.props.role,
       this.props.industry,
       this.props.company,

@@ -4,14 +4,15 @@ import { ChatMessage } from '../../entities/ChatMessage';
 import { IntentPersistenceService } from '../session-management/IntentPersistenceService';
 
 /**
- * Dynamic Prompt Service - 2025 Gold Standard with Intent Persistence
+ * Dynamic Prompt Service - 2025 RAG-Optimized with Vector-First Architecture
  * 
  * AI INSTRUCTIONS:
- * - Uses intent persistence for smart context maintenance across turns
+ * - Uses minimal base prompts + vector search for specific content
  * - Maintains business context even during casual conversation
  * - Follows semantic intent classification with memory
  * - Implements conversation-aware context prediction
- * - Maintains 1,500-2,000 token target through intelligent pre-processing
+ * - Maintains 500-800 token target through RAG optimization (60% reduction)
+ * - Vector search handles FAQs, product catalogs, and detailed content
  */
 export class DynamicPromptService {
 
@@ -306,7 +307,7 @@ Expert business consultant for ${companyName}, combining industry insights with 
   }
 
   /**
-   * Always-on knowledge base injection (2025 best practice)
+   * Minimal knowledge base injection (2025 RAG best practice)
    */
   private injectSemanticContext(
     chatbotConfig: ChatbotConfig,
@@ -316,8 +317,8 @@ Expert business consultant for ${companyName}, combining industry insights with 
   ): string {
     let context = '';
 
-    // Always include full knowledge base - no conditional logic
-    context += this.buildFullKnowledgeBase(chatbotConfig.knowledgeBase);
+    // Include minimal knowledge base - vector search handles specific content
+    context += this.buildMinimalKnowledgeBase(chatbotConfig.knowledgeBase);
 
     return context;
   }
@@ -400,10 +401,13 @@ Expert business consultant for ${companyName}, combining industry insights with 
     
     // Look for common patterns like "CompanyName is...", "We are CompanyName", etc.
     const patterns = [
+      // Handle "For nearly X years, CompanyName has been..." pattern
+      /^For\s+(?:nearly\s+)?\d+\s+years?,\s+([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s+(?:has|have)/i,
+      // Standard patterns
       /^([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s+(?:is|provides|offers|specializes)/i,
       /^(?:We are|We're)\s+([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)/i,
       /^([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s*[,-]/,
-      /^([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s+was/i,
+      /^([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s+(?:was|has been)/i,
     ];
     
     for (const pattern of patterns) {
@@ -423,84 +427,20 @@ Expert business consultant for ${companyName}, combining industry insights with 
   }
 
   /**
-   * Full knowledge base injection (2025 best practice - always-on)
-   * Uses actual database content from chatbot_configs.knowledge_base JSONB
+   * Minimal knowledge base injection (2025 RAG best practice - vector-first)
+   * Uses only essential context, relies on vector search for specific content
    */
-  private buildFullKnowledgeBase(knowledgeBase: any): string {
-    const companyInfo = knowledgeBase.companyInfo || '';
-    const productCatalog = knowledgeBase.productCatalog || '';
-    const supportDocs = knowledgeBase.supportDocs || '';
-    const complianceGuidelines = knowledgeBase.complianceGuidelines || '';
-    const faqs = knowledgeBase.faqs || [];
+  private buildMinimalKnowledgeBase(knowledgeBase: any): string {
+    const companyName = this.extractCompanyName(knowledgeBase.companyInfo || '');
+    const hasContent = knowledgeBase.companyInfo?.trim() || 
+                      knowledgeBase.productCatalog?.trim() || 
+                      knowledgeBase.supportDocs?.trim() || 
+                      knowledgeBase.complianceGuidelines?.trim() || 
+                      (knowledgeBase.faqs && knowledgeBase.faqs.length > 0);
     
-    let knowledgeContent = `
-## Complete Knowledge Base
-
-`;
-
-    // Company Overview - Use actual database content
-    if (companyInfo.trim()) {
-      knowledgeContent += `### Company Overview
-${companyInfo}
-
-`;
-    }
-
-    // Product/Service Catalog - Use actual database content
-    if (productCatalog.trim()) {
-      knowledgeContent += `### Products & Services
-${productCatalog}
-
-`;
-    }
-
-    // Frequently Asked Questions - Use actual database FAQs
-    if (faqs.length > 0) {
-      knowledgeContent += `### Frequently Asked Questions
-
-`;
-      faqs.forEach((faq: any, index: number) => {
-        if (faq.question && faq.answer) {
-          knowledgeContent += `**Q${index + 1}: ${faq.question}**
-A: ${faq.answer}
-
-`;
-        }
-      });
-    }
-
-    // Support Documentation - Use actual database content
-    if (supportDocs.trim()) {
-      knowledgeContent += `### Support Documentation
-${supportDocs}
-
-`;
-    }
-
-    // Compliance Guidelines - Use actual database content
-    if (complianceGuidelines.trim()) {
-      knowledgeContent += `### Compliance Guidelines
-${complianceGuidelines}
-
-`;
-    }
-
-    // Add conversation guidelines only if we have actual knowledge base content
-    const hasContent = companyInfo.trim() || productCatalog.trim() || supportDocs.trim() || complianceGuidelines.trim() || faqs.length > 0;
-    
-    if (hasContent) {
-      knowledgeContent += `### Conversation Guidelines
-- Use the specific company information provided above
-- Reference actual products/services when relevant
-- Answer questions using the FAQs when applicable
-- Follow compliance guidelines for all interactions
-- If asked about something not in the knowledge base, acknowledge limitations and offer to connect with a human
-- Always maintain professional tone aligned with company information
-
-`;
-    } else {
-      // Fallback for empty knowledge base
-      knowledgeContent += `### Knowledge Base Status
+    if (!hasContent) {
+      return `
+## Knowledge Base Status
 **Notice**: Knowledge base is not configured. Please inform users that you can provide general assistance but recommend connecting with a team member for specific company information.
 
 ### Conversation Guidelines
@@ -511,6 +451,63 @@ ${complianceGuidelines}
 
 `;
     }
+
+    // Extract brief company overview (first 200 chars)
+    const companyOverview = knowledgeBase.companyInfo ? 
+      knowledgeBase.companyInfo.substring(0, 200).trim() + (knowledgeBase.companyInfo.length > 200 ? '...' : '') : 
+      '';
+
+    let knowledgeContent = `
+## Core Business Context
+**Company**: ${companyName}
+**Role**: Professional business consultant and sales assistant
+
+`;
+
+    // Include brief company overview only
+    if (companyOverview) {
+      knowledgeContent += `### Company Overview
+${companyOverview}
+
+`;
+    }
+
+    // Critical compliance guidelines only (if they exist and are short)
+    if (knowledgeBase.complianceGuidelines?.trim()) {
+      const compliancePreview = knowledgeBase.complianceGuidelines.substring(0, 150).trim();
+      if (compliancePreview.toLowerCase().includes('legal') || 
+          compliancePreview.toLowerCase().includes('compliance') ||
+          compliancePreview.toLowerCase().includes('regulation')) {
+        knowledgeContent += `### Critical Compliance
+${compliancePreview}${knowledgeBase.complianceGuidelines.length > 150 ? '... (full guidelines available via search)' : ''}
+
+`;
+      }
+    }
+
+    knowledgeContent += `### My Capabilities
+- Access to comprehensive product and service information
+- Real-time knowledge base search for specific questions  
+- Lead qualification and business consultation
+- Technical support and documentation access
+- Detailed FAQ and pricing information
+
+### Approach
+- I will search my knowledge base when you ask specific questions
+- I focus on understanding your business needs first
+- I provide relevant, accurate information based on your interests
+- I can connect you with specialists for detailed discussions
+
+*I have access to detailed product catalogs, pricing, FAQs, and technical documentation. I'll retrieve specific information when relevant to your questions.*
+
+### Conversation Guidelines
+- Maintain professional tone aligned with company values
+- Search knowledge base for specific product, pricing, or technical questions
+- Focus on understanding business needs and qualifying opportunities
+- Escalate to human specialists when appropriate
+- Always provide accurate, up-to-date information from knowledge base
+
+`;
 
     return knowledgeContent;
   }

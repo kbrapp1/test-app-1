@@ -161,6 +161,27 @@ export class ChatbotConfigMapper {
       })),
       supportDocs: kb.supportDocs,
       complianceGuidelines: kb.complianceGuidelines,
+      websiteSources: kb.websiteSources.map((ws: any) => ({
+        id: ws.id,
+        url: ws.url,
+        name: ws.name,
+        description: ws.description,
+        isActive: ws.isActive,
+        crawlSettings: {
+          maxPages: ws.crawlSettings.maxPages,
+          maxDepth: ws.crawlSettings.maxDepth,
+          includePatterns: ws.crawlSettings.includePatterns,
+          excludePatterns: ws.crawlSettings.excludePatterns,
+          respectRobotsTxt: ws.crawlSettings.respectRobotsTxt,
+          crawlFrequency: ws.crawlSettings.crawlFrequency,
+          includeImages: ws.crawlSettings.includeImages,
+          includePDFs: ws.crawlSettings.includePDFs,
+        },
+        lastCrawled: ws.lastCrawled?.toISOString(),
+        pageCount: ws.pageCount,
+        status: ws.status,
+        errorMessage: ws.errorMessage,
+      })),
     };
   }
 
@@ -177,6 +198,27 @@ export class ChatbotConfigMapper {
       })),
       supportDocs: dto.supportDocs,
       complianceGuidelines: dto.complianceGuidelines,
+      websiteSources: dto.websiteSources.map(ws => ({
+        id: ws.id,
+        url: ws.url,
+        name: ws.name,
+        description: ws.description,
+        isActive: ws.isActive,
+        crawlSettings: {
+          maxPages: ws.crawlSettings.maxPages,
+          maxDepth: ws.crawlSettings.maxDepth,
+          includePatterns: ws.crawlSettings.includePatterns,
+          excludePatterns: ws.crawlSettings.excludePatterns,
+          respectRobotsTxt: ws.crawlSettings.respectRobotsTxt,
+          crawlFrequency: ws.crawlSettings.crawlFrequency,
+          includeImages: ws.crawlSettings.includeImages,
+          includePDFs: ws.crawlSettings.includePDFs,
+        },
+        lastCrawled: ws.lastCrawled ? new Date(ws.lastCrawled) : undefined,
+        pageCount: ws.pageCount,
+        status: ws.status,
+        errorMessage: ws.errorMessage,
+      })),
     });
   }
 

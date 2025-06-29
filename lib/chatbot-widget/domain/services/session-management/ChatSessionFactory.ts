@@ -33,15 +33,26 @@ export class ChatSessionFactory {
 
   /**
    * Create initial session context
+   * AI INSTRUCTIONS: Use enhanced conversationSummary format following @golden-rule patterns
    */
   private static createInitialContext(initialContext?: Partial<SessionContext>): SessionContext {
     return {
       previousVisits: 0,
       pageViews: [],
-      conversationSummary: '',
+      conversationSummary: {
+        fullSummary: 'New conversation started',
+        phaseSummaries: [],
+        criticalMoments: []
+      },
       topics: [],
       interests: [],
       engagementScore: 0,
+      accumulatedEntities: {
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: []
+      },
       ...initialContext,
     };
   }
@@ -82,20 +93,45 @@ export class ChatSessionFactory {
 
   /**
    * Parse context data from persistence
+   * AI INSTRUCTIONS: Handle enhanced conversationSummary format with backwards compatibility
    */
   private static parseContextData(data: any): SessionContext {
+    // Handle conversationSummary format - could be string (legacy) or object (enhanced)
+    let conversationSummary;
+    if (typeof data.conversation_summary === 'string') {
+      // Legacy format - convert to enhanced format
+      conversationSummary = {
+        fullSummary: data.conversation_summary || 'New conversation started',
+        phaseSummaries: [],
+        criticalMoments: []
+      };
+    } else if (data.conversation_summary && typeof data.conversation_summary === 'object') {
+      // Enhanced format
+      conversationSummary = data.conversation_summary;
+    } else {
+      // Default format
+      conversationSummary = {
+        fullSummary: 'New conversation started',
+        phaseSummaries: [],
+        criticalMoments: []
+      };
+    }
+
     return {
-      visitorName: data.visitor_name,
-      email: data.email,
-      phone: data.phone,
-      company: data.company,
       previousVisits: data.previous_visits || 0,
       pageViews: data.page_views || [],
-      conversationSummary: data.conversation_summary || '',
+      conversationSummary,
       topics: data.topics || [],
       interests: data.interests || [],
       engagementScore: data.engagement_score || 0,
       journeyState: data.journey_state,
+      // MODERN: Legacy fields removed, data is now in accumulated entities
+      accumulatedEntities: data.accumulated_entities || {
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: []
+      }
     };
   }
 
@@ -135,14 +171,11 @@ export class ChatSessionFactory {
   }
 
   /**
-   * Convert context to persistence format
+   * Convert context to persistence format - MODERN: Use accumulated entities
    */
   private static contextToPersistence(context: SessionContext): any {
     return {
-      visitor_name: context.visitorName,
-      email: context.email,
-      phone: context.phone,
-      company: context.company,
+      // MODERN: Legacy fields removed, entity data is in accumulated_entities
       previous_visits: context.previousVisits,
       page_views: context.pageViews,
       conversation_summary: context.conversationSummary,
@@ -150,6 +183,7 @@ export class ChatSessionFactory {
       interests: context.interests,
       engagement_score: context.engagementScore,
       journey_state: context.journeyState,
+      accumulated_entities: context.accumulatedEntities,
     };
   }
 

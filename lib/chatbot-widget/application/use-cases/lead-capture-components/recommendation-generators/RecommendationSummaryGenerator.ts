@@ -2,15 +2,15 @@
  * Recommendation Summary Generator
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Generate summary information from recommendation lists
- * - Delegate complex calculations to specialized value objects
- * - Keep under 200 lines following @golden-rule patterns
- * - Use domain-specific error types for validation
- * - Focus on orchestration, not implementation
+ * - Single responsibility: Generate executive summaries of recommendations
+ * - Aggregate recommendation data into digestible insights
+ * - Handle summary workflow coordination only
+ * - Use domain-specific errors with proper context
+ * - Stay under 200 lines following @golden-rule patterns
  */
 
-import { LeadRecommendation } from '../LeadRecommendationEngine';
 import { RecommendationSummaryValueObject, RecommendationSummaryData } from '../../../../domain/value-objects/lead-management/RecommendationSummaryValueObject';
+import { LeadRecommendation } from '../../../../domain/value-objects/lead-management/LeadRecommendation';
 import { RecommendationPriorityAnalyzer } from '../../../../domain/services/lead-management/RecommendationPriorityAnalyzer';
 import { RecommendationCategoryAnalyzer } from '../../../../domain/services/lead-management/RecommendationCategoryAnalyzer';
 import { RecommendationTimelineAnalyzer } from '../../../../domain/services/lead-management/RecommendationTimelineAnalyzer';

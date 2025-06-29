@@ -69,13 +69,18 @@ export class ChatSessionMapper {
 
   /**
    * Convert create DTO to domain entity
+   * AI INSTRUCTIONS: Use enhanced conversationSummary format following @golden-rule patterns
    */
   static createDtoToDomain(dto: CreateChatSessionDto & { status?: string }): ChatSession {
-    // SessionContext properties only
+    // SessionContext properties with enhanced conversationSummary format
     const initialContext = {
       previousVisits: 0,
       pageViews: [],
-      conversationSummary: '',
+      conversationSummary: {
+        fullSummary: 'New conversation started',
+        phaseSummaries: [],
+        criticalMoments: []
+      },
       topics: [],
       interests: [],
       engagementScore: 0,
@@ -125,13 +130,9 @@ export class ChatSessionMapper {
 
   private static contextDataToDto(contextData: any): SessionContextDto {
     return {
-      visitorName: contextData?.visitorName,
-      email: contextData?.email,
-      phone: contextData?.phone,
-      company: contextData?.company,
       previousVisits: contextData?.previousVisits || 0,
       pageViews: contextData?.pageViews || [],
-      conversationSummary: contextData?.conversationSummary || '',
+      conversationSummary: contextData?.conversationSummary?.fullSummary || 'New conversation started',
       topics: contextData?.topics || [],
       interests: contextData?.interests || [],
       engagementScore: contextData?.engagementScore || 0,
@@ -139,17 +140,27 @@ export class ChatSessionMapper {
   }
 
   private static contextDataFromDto(dto: SessionContextDto): any {
+    // Convert DTO conversationSummary (string) to enhanced format
+    const conversationSummary = {
+      fullSummary: dto.conversationSummary || 'New conversation started',
+      phaseSummaries: [],
+      criticalMoments: []
+    };
+
     return {
-      visitorName: dto.visitorName,
-      email: dto.email,
-      phone: dto.phone,
-      company: dto.company,
       previousVisits: dto.previousVisits,
       pageViews: dto.pageViews,
-      conversationSummary: dto.conversationSummary,
+      conversationSummary,
       topics: dto.topics,
       interests: dto.interests,
       engagementScore: dto.engagementScore,
+      // MODERN: Legacy fields removed, entity data is in accumulated entities
+      accumulatedEntities: {
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: []
+      }
     };
   }
 

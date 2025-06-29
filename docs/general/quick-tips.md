@@ -68,7 +68,6 @@ Get-ChildItem -Path "lib/chatbot-widget" -Recurse -Include "*.ts","*.tsx" | Wher
 
 ## Finding Type Script errors
 npx tsc --noEmit --project tsconfig.json | findstr /C:"chatbot-widget"
-.next/types/app/api/chatbot-widget/config/[configId]/route.ts(49,7): error TS2344: Type '{ __tag__: "GET"; __param_position__: "second"; __param_type__: RouteContext; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
 
 ## Run bundle analyzer and lighthouse
 pnpm run analyze     # Bundle analysis only

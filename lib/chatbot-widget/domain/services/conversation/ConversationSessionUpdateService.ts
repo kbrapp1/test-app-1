@@ -65,31 +65,14 @@ export class ConversationSessionUpdateService {
    */
   private updateSessionWithLeadInfo(session: ChatSession, entities: NonNullable<ApiAnalysisData['entities']>): ChatSession {
     
-    // Prepare contact info data directly from API entities
-    const contactData = {
-      email: entities.email || session.contextData.email,
-      phone: entities.phone || session.contextData.phone,
-      name: entities.visitorName || session.contextData.visitorName,
-      company: entities.company || session.contextData.company,
-    };
+    // MODERN: Contact info and entity data is now handled through accumulated entities only
+    // Extract entities that would indicate contact information
+    const hasContactEntities = entities.visitorName || entities.email || entities.phone || entities.company;
     
-    // Only create ContactInfo if we have at least email or phone
-    const hasRequiredContact = contactData.email || contactData.phone;
-    
-    const hasNewInfo = entities.visitorName || entities.email || entities.phone || entities.company;
-
-    // Only update if we have new information AND have required contact info
-    if (hasNewInfo && hasRequiredContact) {
-      const contactInfo = ContactInfo.create(contactData);
-      return session.captureContactInfo(contactInfo);
-    }
-    
-    // If only name or company is provided without contact info, update them separately
-    if (contactData.name && !session.contextData.visitorName) {
-      session = session.updateVisitorName(contactData.name);
-    }
-    if (contactData.company && !session.contextData.company) {
-      session = session.updateCompany(contactData.company);
+    if (hasContactEntities) {
+      // Contact info is now managed via EntityAccumulationService in the main processing flow
+      // This service no longer directly updates legacy context fields
+      return session;
     }
 
     return session;

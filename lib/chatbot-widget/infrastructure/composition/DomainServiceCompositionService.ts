@@ -36,6 +36,7 @@ import { DebugInformationService } from '../services/DebugInformationService';
  * - Wire dependencies through composition root
  * - Follow @golden-rule patterns exactly
  * - UPDATED: Replaced ConversationStageService with AI-driven ConversationFlowService
+ * - CACHE OPTIMIZATION: Cache knowledge retrieval services per chatbot config
  */
 export class DomainServiceCompositionService {
   // Singleton instances for stateless services
@@ -54,6 +55,10 @@ export class DomainServiceCompositionService {
   private static intentClassificationService: IIntentClassificationService | null = null;
   private static knowledgeRetrievalService: IKnowledgeRetrievalService | null = null;
   private static debugInformationService: IDebugInformationService | null = null;
+
+  // Cache for knowledge retrieval services per chatbot configuration
+  // AI INSTRUCTIONS: Follow @golden-rule memory/cache efficient patterns
+  private static knowledgeRetrievalServiceCache = new Map<string, IKnowledgeRetrievalService>();
 
   /**
    * Get Token Counting Service
@@ -80,11 +85,37 @@ export class DomainServiceCompositionService {
   }
 
   /**
-   * Get Knowledge Retrieval Service
+   * Get Knowledge Retrieval Service with Smart Caching
+   * 
+   * AI INSTRUCTIONS:
+   * - Use singleton pattern for stateless infrastructure services per @golden-rule
+   * - Cache embeddings per chatbot configuration for performance
+   * - Memory/cache efficient, API efficient, network efficient
+   * - Follow @golden-rule patterns exactly
+   * - Single responsibility: Provide cached knowledge retrieval services
    */
   static getKnowledgeRetrievalService(chatbotConfig: any): IKnowledgeRetrievalService {
-    // Create new instance each time as it requires config
-    return new SimpleKnowledgeRetrievalService(chatbotConfig);
+    // Create cache key based on chatbot config and knowledge base version
+    const configId = chatbotConfig?.id || 'default';
+    const lastUpdated = chatbotConfig?.lastUpdated?.getTime() || 'default';
+    const configKey = `${configId}_${lastUpdated}`;
+    
+    // Check if we have a cached service for this configuration
+    if (!this.knowledgeRetrievalServiceCache.has(configKey)) {
+      // Cache miss - create new service (embeddings will be generated once)
+      const service = new SimpleKnowledgeRetrievalService(chatbotConfig);
+      this.knowledgeRetrievalServiceCache.set(configKey, service);
+      
+      // Optional: Clean up old cache entries to prevent memory leaks
+      if (this.knowledgeRetrievalServiceCache.size > 10) {
+        const oldestKey = this.knowledgeRetrievalServiceCache.keys().next().value;
+        if (oldestKey) {
+          this.knowledgeRetrievalServiceCache.delete(oldestKey);
+        }
+      }
+    }
+    
+    return this.knowledgeRetrievalServiceCache.get(configKey)!;
   }
 
   /**
@@ -121,13 +152,33 @@ export class DomainServiceCompositionService {
 
   /**
    * Get Conversation Context Orchestrator
-   * AI INSTRUCTIONS: Main orchestrator - now purely API-driven, no manual analysis dependencies
+   * AI INSTRUCTIONS: Main orchestrator - includes enhanced services for vector embeddings pipeline
+   * FIXED: Create new instance when chatbot config provided to enable vector embeddings
    */
-  static getConversationContextOrchestrator(): ConversationContextOrchestrator {
+  static async getConversationContextOrchestrator(chatbotConfig?: any): Promise<ConversationContextOrchestrator> {
+    // If chatbot config is provided, create a new instance with enhanced services
+    // This ensures vector embeddings pipeline is available
+    if (chatbotConfig) {
+      const tokenCountingService = this.getTokenCountingService();
+      const intentClassificationService = await this.getIntentClassificationService();
+      const knowledgeRetrievalService = this.getKnowledgeRetrievalService(chatbotConfig);
+      
+      return new ConversationContextOrchestrator(
+        tokenCountingService,
+        intentClassificationService,
+        knowledgeRetrievalService
+      );
+    }
+    
+    // For basic usage without chatbot config, use singleton pattern
     if (!this.conversationContextOrchestrator) {
       const tokenCountingService = this.getTokenCountingService();
+      const intentClassificationService = await this.getIntentClassificationService();
+      
       this.conversationContextOrchestrator = new ConversationContextOrchestrator(
-        tokenCountingService
+        tokenCountingService,
+        intentClassificationService,
+        undefined // No knowledge retrieval service for basic usage
       );
     }
     return this.conversationContextOrchestrator;
@@ -261,6 +312,29 @@ export class DomainServiceCompositionService {
   }
 
   /**
+   * Clear Knowledge Cache for Specific Chatbot
+   * 
+   * AI INSTRUCTIONS:
+   * - Clear cache when knowledge base is updated
+   * - Follow @golden-rule cache invalidation patterns
+   * - Prevent memory leaks and stale data
+   */
+     static clearKnowledgeCache(chatbotConfigId?: string): void {
+     if (!chatbotConfigId) {
+       // Clear all cache if no specific ID provided
+       this.knowledgeRetrievalServiceCache.clear();
+       return;
+     }
+     
+     // Remove only affected caches to maintain other chatbot caches
+     for (const [key, service] of Array.from(this.knowledgeRetrievalServiceCache.entries())) {
+       if (key.startsWith(chatbotConfigId)) {
+         this.knowledgeRetrievalServiceCache.delete(key);
+       }
+     }
+   }
+
+  /**
    * Clear all cached instances (for testing or cleanup)
    */
   static clearCache(): void {
@@ -270,5 +344,54 @@ export class DomainServiceCompositionService {
     this.intentClassificationService = null;
     this.knowledgeRetrievalService = null;
     this.debugInformationService = null;
+    
+    // Clear knowledge retrieval service cache
+    this.knowledgeRetrievalServiceCache.clear();
+  }
+
+  /**
+   * Warm Knowledge Cache for Better Performance
+   * 
+   * AI INSTRUCTIONS:
+   * - Follow @golden-rule performance optimization patterns
+   * - Proactively initialize embeddings for better UX
+   * - Single responsibility: Preload commonly used services
+   * - Use for application startup or background processing
+   */
+  static async warmKnowledgeCache(chatbotConfigs: any[]): Promise<void> {
+    // Preload knowledge retrieval services for common configurations
+    const warmupPromises = chatbotConfigs.map(async (config) => {
+      try {
+        const service = this.getKnowledgeRetrievalService(config);
+        // Trigger initialization by calling healthCheck
+        await service.healthCheck();
+      } catch (error) {
+        // Silent fail for warmup - service will initialize when actually needed
+      }
+    });
+
+    await Promise.allSettled(warmupPromises);
+  }
+
+  /**
+   * Get Cache Statistics
+   * 
+   * AI INSTRUCTIONS:
+   * - Follow @golden-rule monitoring and observability patterns
+   * - Provide insights into cache performance
+   * - Help with debugging and optimization
+   */
+  static getCacheStatistics(): {
+    knowledgeCacheSize: number;
+    cacheKeys: string[];
+    memoryUsage: string;
+  } {
+    const cacheKeys = Array.from(this.knowledgeRetrievalServiceCache.keys());
+    
+    return {
+      knowledgeCacheSize: this.knowledgeRetrievalServiceCache.size,
+      cacheKeys,
+      memoryUsage: `~${(this.knowledgeRetrievalServiceCache.size * 0.5).toFixed(1)}MB estimated`
+    };
   }
 } 

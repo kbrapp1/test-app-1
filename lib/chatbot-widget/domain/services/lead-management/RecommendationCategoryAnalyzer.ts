@@ -3,13 +3,13 @@
  * 
  * AI INSTRUCTIONS:
  * - Domain service for analyzing recommendation categories
- * - Single responsibility: Category breakdown and analysis
+ * - Single responsibility: Category analysis and classification
  * - Keep business logic pure, no external dependencies
  * - Use domain-specific error types for validation
  * - Stay under 200 lines following @golden-rule patterns
  */
 
-import { LeadRecommendation } from '../../../application/use-cases/lead-capture-components/LeadRecommendationEngine';
+import { LeadRecommendation } from '../../value-objects/lead-management/LeadRecommendation';
 import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
 
 export interface CategoryBreakdown {

@@ -54,7 +54,7 @@ export class ChatbotConfig {
   }
 
   static fromPersistence(props: ChatbotConfigProps): ChatbotConfig {
-    // Ensure AI configuration exists for backward compatibility
+    // Ensure AI configuration exists with defaults
     const propsWithAI = {
       ...props,
       aiConfiguration: props.aiConfiguration || this.getDefaultAIConfiguration(),

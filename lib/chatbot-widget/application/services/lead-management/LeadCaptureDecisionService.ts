@@ -42,8 +42,8 @@ export class LeadCaptureDecisionService {
       return ConversationFlowService.shouldTriggerLeadCapture(context.aiFlowDecision);
     }
 
-    // Fallback: Basic engagement check (no AI available)
-    return this.shouldTriggerLeadCaptureFallback(session, config);
+    // No fallback - AI service is required for lead capture decisions
+    throw new Error('AI flow decision is required for lead capture determination');
   }
 
   /**
@@ -88,8 +88,8 @@ export class LeadCaptureDecisionService {
       return actions.length > 0 ? actions : ['Continue conversation'];
     }
 
-    // Fallback: Generate basic actions (no AI available)
-    return this.generateSuggestedActionsFallback(session, config, shouldCaptureLeadInfo);
+    // No fallback - AI service is required for action generation
+    throw new Error('AI flow decision is required for action generation');
   }
 
   /**
@@ -181,77 +181,5 @@ export class LeadCaptureDecisionService {
     };
   }
 
-  /**
-   * Fallback method for lead capture decision (when AI not available)
-   * Maintains backward compatibility
-   */
-  private shouldTriggerLeadCaptureFallback(session: ChatSession, config: ChatbotConfig): boolean {
-    // Check engagement score threshold
-    if (session.contextData.engagementScore >= 70) {
-      return true;
-    }
-
-    // Check session duration (more than 5 minutes of active conversation)
-    const sessionDuration = session.getSessionDuration();
-    if (sessionDuration >= 5) {
-      return true;
-    }
-
-    // Check if user shows buying intent
-    const buyingIntentTopics = ['pricing', 'trial', 'demo', 'features'];
-    const hasBuyingIntent = session.contextData.topics.some(topic => 
-      buyingIntentTopics.includes(topic)
-    );
-    
-    return hasBuyingIntent && session.contextData.engagementScore >= 50;
-  }
-
-  /**
-   * Fallback method for generating actions (when AI not available)
-   * Maintains backward compatibility
-   */
-  private generateSuggestedActionsFallback(
-    session: ChatSession,
-    config: ChatbotConfig,
-    shouldCaptureLeadInfo: boolean
-  ): string[] {
-    const actions: string[] = [];
-
-    if (shouldCaptureLeadInfo) {
-      actions.push('Initiate lead capture flow');
-      actions.push('Ask for contact information');
-    }
-
-    if (session.contextData.engagementScore > 80) {
-      actions.push('Offer product demo');
-      actions.push('Connect with sales representative');
-    }
-
-    const sessionDuration = session.getSessionDuration();
-    if (sessionDuration > 10) {
-      actions.push('Suggest scheduling a call');
-      actions.push('Provide comprehensive resource links');
-    }
-
-    // Check for specific topics that warrant actions
-    if (session.contextData.topics.includes('pricing')) {
-      actions.push('Provide pricing information');
-    }
-
-    if (session.contextData.topics.includes('demo')) {
-      actions.push('Schedule product demonstration');
-    }
-
-    if (session.contextData.topics.includes('support')) {
-      actions.push('Connect with support team');
-    }
-
-    // Default actions if none specific
-    if (actions.length === 0) {
-      actions.push('Continue conversation');
-      actions.push('Ask clarifying questions');
-    }
-
-    return actions;
-  }
+  // Removed fallback methods - system now requires AI service for all decisions
 } 

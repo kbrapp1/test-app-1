@@ -64,10 +64,14 @@ export class OpenAIAnalysisService {
       const startTime = Date.now();
 
       // Build unified function schema with context-aware entity extraction
-      const functions = [OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext()];
+      const functions = [OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
+        undefined,  // existingEntities - will be handled separately  
+        'discovery', // conversationPhase - default to discovery to include painPoints
+        message     // userMessage - for intent-based entity detection
+      )];
       
       // Build enhanced system prompt
-      const systemPrompt = OpenAIPromptBuilder.buildEnhancedSystemPrompt(context?.messageHistory || []);
+      const systemPrompt = OpenAIPromptBuilder.buildUnifiedProcessingPrompt(context?.messageHistory || []);
 
       // Build message array
       const openAIMessages = OpenAIMessageFormatter.buildMessageArray(

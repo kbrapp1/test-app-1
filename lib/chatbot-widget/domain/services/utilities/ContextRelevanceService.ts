@@ -219,106 +219,85 @@ export class ContextRelevanceService {
   
   /**
    * Calculate intent alignment score based on current conversation intent
-   * AI INSTRUCTIONS: Score based on intent relevance and conversation flow continuity
+   * AI INSTRUCTIONS: Simplified scoring that trusts AI intent determination over keyword matching
    */
   private static calculateIntentAlignmentScore(
     message: ChatMessage,
     currentIntent: IntentResult
   ): number {
     if (!currentIntent?.intent) {
-      return 0.2; // Base score when no intent context available
+      return 0.3; // Base score when no intent context available
     }
     
-    const content = message.content.toLowerCase();
+    // Trust AI intent determination - high confidence intents indicate important messages
+    // Remove hardcoded keyword matching as it creates circular logic
+    const confidenceScore = currentIntent.confidence || 0.5;
     
-    // Intent-specific keywords for alignment scoring
-    const intentKeywords = {
-      'faq_pricing': ['price', 'cost', 'pricing', 'budget', 'expensive', 'affordable'],
-      'faq_features': ['feature', 'functionality', 'can it', 'does it', 'capability'],
-      'demo_request': ['demo', 'show', 'see it', 'demonstration', 'preview'],
-      'support_request': ['help', 'support', 'assistance', 'training'],
-      'sales_inquiry': ['compare', 'vs', 'versus', 'difference', 'better'],
-      'booking_request': ['trial', 'test', 'try', 'evaluate', 'pilot'],
-      'qualification': ['team', 'decision', 'budget', 'timeline', 'authority']
+    // Phase-based relevance scoring (business context over keyword matching)
+    const phaseScores: Record<string, number> = {
+      'faq_pricing': 0.8,      // High business value
+      'faq_features': 0.7,     // Product understanding
+      'demo_request': 0.95,    // Critical conversion moment
+      'support_request': 0.6,  // Moderate business value
+      'sales_inquiry': 0.9,    // High conversion potential
+      'booking_request': 1.0,  // Critical business outcome
+      'qualification': 1.0,    // Essential lead data
+      'unknown': 0.3           // Low but not zero
     };
     
-    const currentIntentKeywords = intentKeywords[currentIntent.intent as keyof typeof intentKeywords] || [];
+    const phaseScore = phaseScores[currentIntent.intent] || 0.5;
     
-    // Calculate keyword match score
-    const matchCount = currentIntentKeywords.filter(keyword => content.includes(keyword)).length;
-    const keywordScore = Math.min(1.0, matchCount * 0.2);
-    
-    // Bonus for high-confidence intent alignment
-    const confidenceBonus = currentIntent.confidence > 0.8 ? 0.2 : 0;
-    
-    return Math.min(1.0, keywordScore + confidenceBonus);
+    // Combine confidence and phase importance
+    return Math.min(1.0, (confidenceScore * 0.4) + (phaseScore * 0.6));
   }
   
   /**
    * Calculate business context score based on lead qualification signals
-   * AI INSTRUCTIONS: Score based on business value and qualification importance
+   * AI INSTRUCTIONS: Simplified scoring focused on lead score and phase, reducing keyword dependency
    */
   private static calculateBusinessContextScore(
     message: ChatMessage,
     leadScore: number,
     conversationPhase: string
   ): number {
-    const content = message.content.toLowerCase();
-    let businessScore = 0;
+    // Start with lead score as primary business indicator (0-100 scale)
+    let businessScore = Math.min(1.0, leadScore / 100);
     
-    // Business signal patterns with weighted scoring
-    const businessSignals = {
-      budget_mention: { patterns: ['budget', 'cost', 'price', '$'], weight: 0.3 },
-      authority_indication: { patterns: ['decision', 'approve', 'manager', 'director', 'ceo'], weight: 0.25 },
-      timeline_urgency: { patterns: ['timeline', 'when', 'urgent', 'soon', 'deadline'], weight: 0.2 },
-      pain_point: { patterns: ['problem', 'issue', 'challenge', 'difficult'], weight: 0.15 },
-      solution_seeking: { patterns: ['solution', 'solve', 'help', 'improve'], weight: 0.1 },
-      evaluation_intent: { patterns: ['evaluate', 'consider', 'looking at', 'compare'], weight: 0.15 }
+    // Conversation phase influence (business-critical phases get higher scores)
+    const phaseScores: Record<string, number> = {
+      'discovery': 0.6,
+      'qualification': 1.0,    // Critical for lead assessment
+      'demo': 0.8,
+      'objection_handling': 0.9,
+      'closing': 1.0,          // Critical business outcome
+      'evaluation': 0.9,
+      'unknown': 0.3
     };
     
-    // Score based on business signal presence
-    Object.values(businessSignals).forEach(signal => {
-      const hasSignal = signal.patterns.some(pattern => content.includes(pattern));
-      if (hasSignal) {
-        businessScore += signal.weight;
-      }
-    });
+    const phaseScore = phaseScores[conversationPhase] || 0.5;
     
-    // Lead score influence (higher lead scores boost message relevance)
-    const leadScoreBonus = leadScore > 60 ? 0.2 : leadScore > 40 ? 0.1 : 0;
+    // Weight lead score higher than phase, but both contribute
+    const combinedScore = (businessScore * 0.6) + (phaseScore * 0.4);
     
-    // Conversation phase influence
-    const phaseBonus = ['qualification', 'evaluation'].includes(conversationPhase) ? 0.15 : 0;
-    
-    return Math.min(1.0, businessScore + leadScoreBonus + phaseBonus);
+    return Math.min(1.0, combinedScore);
   }
   
   /**
    * Calculate engagement score based on message characteristics
-   * AI INSTRUCTIONS: Score based on user engagement indicators and message quality
+   * AI INSTRUCTIONS: Simplified engagement scoring focused on message substance over keywords
    */
   private static calculateEngagementScore(message: ChatMessage): number {
     const content = message.content;
-    let engagementScore = 0;
+    let engagementScore = 0.3; // Base engagement score
     
     // Message length scoring (detailed responses indicate engagement)
-    if (content.length > 100) engagementScore += 0.3;
-    else if (content.length > 50) engagementScore += 0.2;
-    else if (content.length > 20) engagementScore += 0.1;
+    if (content.length > 100) engagementScore += 0.4;
+    else if (content.length > 50) engagementScore += 0.3;
+    else if (content.length > 20) engagementScore += 0.2;
     
     // Question asking (indicates active engagement)
     const questionCount = (content.match(/\?/g) || []).length;
-    engagementScore += Math.min(0.3, questionCount * 0.1);
-    
-    // Enthusiasm markers
-    const enthusiasmMarkers = ['!', 'great', 'excellent', 'perfect', 'love', 'amazing', 'awesome'];
-    const hasEnthusiasm = enthusiasmMarkers.some(marker => content.toLowerCase().includes(marker));
-    if (hasEnthusiasm) engagementScore += 0.2;
-    
-    // Specific information sharing (indicates serious interest)
-    const infoPatterns = ['company', 'team', 'we have', 'our', 'currently using'];
-    const sharesInfo = infoPatterns.some(pattern => content.toLowerCase().includes(pattern));
-    if (sharesInfo) engagementScore += 0.2;
+    engagementScore += Math.min(0.3, questionCount * 0.15);
     
     return Math.min(1.0, engagementScore);
   }

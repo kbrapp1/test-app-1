@@ -34,17 +34,7 @@ describe('OpenAIFunctionSchemaBuilder', () => {
       );
     });
 
-    it('should request identity entities during "greeting" phase when none exist', () => {
-      const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext({}, 'greeting');
-      const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
-
-      expect(entityProperties.visitorName).toBeDefined();
-      expect(entityProperties.company).toBeDefined();
-      expect(entityProperties.role).toBeDefined();
-      expect(entityProperties.industry).toBeDefined();
-    });
-
-    it('should NOT request identity entities during "greeting" if they already exist', () => {
+    it('should ALWAYS include core identity entities for comprehensive extraction', () => {
       const existingEntities = {
         visitorName: 'Kip',
         company: 'Acme',
@@ -54,17 +44,28 @@ describe('OpenAIFunctionSchemaBuilder', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(existingEntities, 'greeting');
       const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
 
-      // None of the identity entities should be present in the schema
-      expect(entityProperties.visitorName).toBeUndefined();
-      expect(entityProperties.company).toBeUndefined();
-      expect(entityProperties.role).toBeUndefined();
-      expect(entityProperties.industry).toBeUndefined();
+      // FIXED: Core identity entities should ALWAYS be present for re-extraction and validation
+      expect(entityProperties.visitorName).toBeDefined();
+      expect(entityProperties.company).toBeDefined();
+      expect(entityProperties.role).toBeDefined();
+      expect(entityProperties.industry).toBeDefined();
+      
+      // Verify enhanced descriptions for better extraction
+      expect(entityProperties.visitorName.description).toContain('CRITICAL');
+      expect(entityProperties.visitorName.description).toContain('Never miss name introductions');
     });
 
     it('should request qualification entities during "qualification" phase', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext({}, 'qualification');
       const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
 
+      // Core entities always included
+      expect(entityProperties.visitorName).toBeDefined();
+      expect(entityProperties.company).toBeDefined();
+      expect(entityProperties.role).toBeDefined();
+      expect(entityProperties.industry).toBeDefined();
+      
+      // Qualification-specific entities
       expect(entityProperties.budget).toBeDefined();
       expect(entityProperties.timeline).toBeDefined();
       expect(entityProperties.urgency).toBeDefined();
@@ -74,40 +75,73 @@ describe('OpenAIFunctionSchemaBuilder', () => {
     it('should request scheduling entities during "booking" phase', () => {
         const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext({}, 'booking');
         const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
+
+        // Core entities always included
+        expect(entityProperties.visitorName).toBeDefined();
+        expect(entityProperties.company).toBeDefined();
+        expect(entityProperties.role).toBeDefined();
+        expect(entityProperties.industry).toBeDefined();
   
+        // Booking-specific entities
         expect(entityProperties.preferredTime).toBeDefined();
         expect(entityProperties.contactMethod).toBeDefined();
     });
 
-    it('should request budget if pricing intent is detected', () => {
+    it('should always include budget if pricing intent is detected', () => {
         const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext({}, 'discovery', 'how much does it cost?');
         const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
+
+        // Core entities always included
+        expect(entityProperties.visitorName).toBeDefined();
+        expect(entityProperties.company).toBeDefined();
+        expect(entityProperties.role).toBeDefined();
+        expect(entityProperties.industry).toBeDefined();
   
+        // Pricing-triggered entities
         expect(entityProperties.budget).toBeDefined();
     });
 
-    it('should not request budget if pricing intent is detected but budget already exists', () => {
-        const existingEntities = { budget: '$50k' };
-        const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(existingEntities, 'discovery', 'how much does it cost?');
-        const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
-  
-        // The budget property should not be in the schema since it already exists
-        expect(entityProperties.budget).toBeUndefined();
-    });
-
-    it('should request a generic entity if no other entities are applicable', () => {
+    it('should include comprehensive entities for unknown phases', () => {
         const existingEntities = {
             visitorName: 'Kip',
             company: 'Acme',
             role: 'ceo',
             industry: 'tech'
         };
-        // In the greeting phase, with all identity entities present, no other entities should be requested.
-        const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(existingEntities, 'greeting');
+        // Unknown phase should include business context entities
+        const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(existingEntities, 'unknown_phase');
         const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
 
-        expect(entityProperties.generic).toBeDefined();
-        expect(entityProperties.generic.description).toContain('Any relevant entity');
+        // Core entities always included
+        expect(entityProperties.visitorName).toBeDefined();
+        expect(entityProperties.company).toBeDefined();
+        expect(entityProperties.role).toBeDefined();
+        expect(entityProperties.industry).toBeDefined();
+        
+        // Business context entities for unknown phases
+        expect(entityProperties.teamSize).toBeDefined();
+        expect(entityProperties.budget).toBeDefined();
+        expect(entityProperties.timeline).toBeDefined();
+        expect(entityProperties.urgency).toBeDefined();
+        expect(entityProperties.contactMethod).toBeDefined();
+        expect(entityProperties.painPoints).toBeDefined();
+        expect(entityProperties.decisionMakers).toBeDefined();
+    });
+
+    it('should include core entities even when no specific entities are applicable', () => {
+        const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext({}, 'general_conversation');
+        const entityProperties = schema.parameters.properties.analysis.properties.entities.properties;
+
+        // Even for general conversation, core identity entities should be available
+        expect(entityProperties.visitorName).toBeDefined();
+        expect(entityProperties.company).toBeDefined();
+        expect(entityProperties.role).toBeDefined();
+        expect(entityProperties.industry).toBeDefined();
+        
+        // And business context entities for qualification
+        expect(entityProperties.budget).toBeDefined();
+        expect(entityProperties.timeline).toBeDefined();
+        expect(entityProperties.urgency).toBeDefined();
     });
 
     it('should include corrections schema when a correction is detected', () => {

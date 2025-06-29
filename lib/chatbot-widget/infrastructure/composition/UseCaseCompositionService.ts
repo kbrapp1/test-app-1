@@ -49,7 +49,7 @@ export class UseCaseCompositionService {
       const aiConversationService = await ApplicationServiceCompositionService.getAiConversationServiceInterface();
       const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
-      const conversationContextOrchestrator = DomainServiceCompositionService.getConversationContextOrchestrator();
+      const conversationContextOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator();
 
       this.processChatMessageUseCase = new ProcessChatMessageUseCase(
         chatSessionRepository,

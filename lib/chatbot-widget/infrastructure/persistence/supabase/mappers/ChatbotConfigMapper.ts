@@ -166,6 +166,25 @@ export class ChatbotConfigMapper {
       })),
       supportDocs: data?.supportDocs || '',
       complianceGuidelines: data?.complianceGuidelines || '',
+      websiteSources: (data?.websiteSources || []).map((source: any) => ({
+        id: source?.id || crypto.randomUUID(),
+        url: source?.url || '',
+        name: source?.name || '',
+        description: source?.description || '',
+        isActive: source?.isActive !== undefined ? source.isActive : true,
+        crawlSettings: {
+          maxPages: source?.crawlSettings?.maxPages || 50,
+          maxDepth: source?.crawlSettings?.maxDepth || 3,
+          respectRobotsTxt: source?.crawlSettings?.respectRobotsTxt !== undefined ? source.crawlSettings.respectRobotsTxt : true,
+          crawlDelay: source?.crawlSettings?.crawlDelay || 1000,
+          allowedDomains: source?.crawlSettings?.allowedDomains || [],
+          excludePatterns: source?.crawlSettings?.excludePatterns || [],
+        },
+        lastCrawledAt: source?.lastCrawledAt ? new Date(source.lastCrawledAt) : undefined,
+        crawlStatus: source?.crawlStatus || 'pending',
+        pageCount: source?.pageCount || 0,
+        errorCount: source?.errorCount || 0,
+      })),
     });
   }
 

@@ -1,0 +1,9 @@
+{
+	"id": "b6M8pUTU2KxCjWP",
+	"json": "{\"id\":\"b6M8pUTU2KxCjWP\",\"url\":\"https://ironmarkusa.com/company/our-team/\",\"loadedUrl\":\"https://ironmarkusa.com/company/our-team/\",\"uniqueKey\":\"https://ironmarkusa.com/company/our-team\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{\"User-Agent\":\"IronmarkChatbotCrawler/1.0 (Knowledge Base Builder)\",\"Accept\":\"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\"Accept-Language\":\"en-US,en;q=0.5\",\"Accept-Encoding\":\"gzip, deflate\",\"Connection\":\"keep-alive\",\"Upgrade-Insecure-Requests\":\"1\"},\"userData\":{\"depth\":2,\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-06-29T04:37:48.664Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://ironmarkusa.com/company/our-team",
+	"url": "https://ironmarkusa.com/company/our-team/"
+}

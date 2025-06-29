@@ -23,6 +23,29 @@ export interface ExtractedEntities {
   role?: string;
   urgency?: 'low' | 'medium' | 'high';
   contactMethod?: 'email' | 'phone' | 'meeting';
+  
+  // NEW: Complete Entity Storage (2025 Best Practice)
+  // Solution Context
+  currentSolution?: string;
+  preferredTime?: string;
+  
+  // Sentiment & Behavioral Data (from API analysis)
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  emotionalTone?: 'excited' | 'frustrated' | 'curious' | 'concerned' | 'satisfied' | 'urgent' | 'casual' | 'formal';
+  
+  // Conversation Flow Entities (from API analysis)
+  conversationPhase?: 'discovery' | 'qualification' | 'demonstration' | 'closing' | 'support' | 'escalation';
+  engagementLevel?: 'low' | 'medium' | 'high' | 'very_high';
+  nextBestAction?: 'continue_conversation' | 'capture_contact' | 'ask_qualification' | 'request_demo' | 'escalate_human' | 'provide_resources';
+  
+  // AI Response Context (from API analysis)
+  responseStyle?: 'professional' | 'friendly' | 'consultative' | 'educational' | 'urgent';
+  callToAction?: 'demo_request' | 'contact_capture' | 'information_gathering' | 'none';
+  
+  // Lead Capture Signals (from API analysis)
+  leadCaptureReadiness?: boolean;
+  shouldEscalateToHuman?: boolean;
+  shouldAskQualificationQuestions?: boolean;
 }
 
 export interface IntentClassificationMetadata {

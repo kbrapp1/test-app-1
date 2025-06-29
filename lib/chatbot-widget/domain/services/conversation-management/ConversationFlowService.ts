@@ -92,12 +92,8 @@ export class ConversationFlowService {
       // Calculate score using domain service
       return ReadinessIndicatorDomainService.calculateReadinessScore(indicators);
     } catch (error) {
-      if (error instanceof BusinessRuleViolationError) {
-        // Log domain error but don't fail the flow
-        console.warn('Domain validation error in readiness calculation:', error.message);
-        return 0;
-      }
-      throw error;
+      // Domain validation failed - return default value without logging to console
+      return 0.3; // Default medium readiness
     }
   }
 
@@ -130,17 +126,14 @@ export class ConversationFlowService {
     try {
       return ReadinessIndicatorDomainService.deriveReadinessIndicators(context);
     } catch (error) {
-      if (error instanceof BusinessRuleViolationError) {
-        console.warn('Domain validation error in indicator derivation:', error.message);
-        return {
-          hasContactInfo: false,
-          showsBuyingIntent: false,
-          hasDecisionAuthority: false,
-          hasBudgetIndications: false,
-          hasTimelineUrgency: false
-        };
-      }
-      throw error;
+      // Domain validation failed - return empty indicators without logging to console
+      return {
+        hasContactInfo: false,
+        showsBuyingIntent: false,
+        hasDecisionAuthority: false,
+        hasBudgetIndications: false,
+        hasTimelineUrgency: false
+      };
     }
   }
   

@@ -184,8 +184,7 @@ export class AIConfiguration {
   get leadScoring(): LeadScoringConfiguration { return this.leadScoringConfig; }
   get monitoring(): MonitoringConfiguration { return this.monitoringConfig; }
 
-  // Legacy getters for backward compatibility
-  get openaiModel(): string { return this.openaiConfig.model; }
+  // Removed legacy getters - use openaiConfig.model directly
   get openaiTemperature(): number { return this.openaiConfig.temperature; }
   get openaiMaxTokens(): number { return this.openaiConfig.maxTokens; }
   get contextMaxTokens(): number { return this.contextConfig.maxTokens; }

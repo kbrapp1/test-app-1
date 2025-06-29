@@ -95,18 +95,4 @@ export function calculateBusinessContextStrength(
   }
   
   return strength;
-}
-
-/**
- * Legacy compatibility - gradually migrate to new constants
- */
-export const LEGACY_COMPATIBILITY = {
-  OLD_MESSAGE_LIMIT: 10,
-  OLD_INTENT_LIMIT: 10,
-  OLD_MAX_TOKENS: 12000,
-  MIGRATION_FACTOR: {
-    MESSAGE_INCREASE: CONTEXT_LIMITS_2025.MESSAGE_HISTORY_TURNS / 10,
-    INTENT_INCREASE: CONTEXT_LIMITS_2025.INTENT_HISTORY_LIMIT / 10,
-    TOKEN_INCREASE: CONTEXT_LIMITS_2025.MAX_CONTEXT_TOKENS / 12000
-  }
-} as const; 
+} 

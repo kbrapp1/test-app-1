@@ -154,7 +154,7 @@ export class LeadExtractionService {
     });
 
     // Remove duplicates and return
-    return [...new Set(foundInterests)];
+    return Array.from(new Set(foundInterests));
   }
 
   /**

@@ -26,6 +26,8 @@ import { EntityAccumulationService } from '../../../domain/services/context/Enti
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 import { ExtractedEntities } from '../../../domain/value-objects/message-processing/IntentResult';
 import { DomainConstants } from '../../../domain/value-objects/ai-configuration/DomainConstants';
+import { ReadinessIndicatorDomainService } from '../../../domain/services/conversation-management/ReadinessIndicatorDomainService';
+import { ApiDrivenCompressionService, CompressionResult } from '../conversation-management/ApiDrivenCompressionService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -92,41 +94,19 @@ export class ChatMessageProcessingService {
       ? contextResult.messages 
       : [...contextResult.messages, userMessage];
 
-    // Use provided shared log file or create new one as fallback
-    const logFileName = sharedLogFile || `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    // Only create log files when explicitly requested or not in test environment
+    const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+    const logFileName = sharedLogFile || (isTestEnvironment ? undefined : `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`);
 
     // Unified processing only (single API call approach)
     if (this.intentClassificationService && 'processChatbotInteractionComplete' in this.intentClassificationService) {
-      // Build conversation context for unified processing
-      const conversationContext = this.buildConversationContext(
-        config,
-        session,
-        contextResult.messages,
-        userMessage,
-        contextResult.summary,
-        enhancedContext
-      );
-
-      // Add shared log file to context
-      conversationContext.sharedLogFile = logFileName;
-
-      const apiCallStart = Date.now();
       
-      // Make single unified API call
-      const unifiedResult = await (this.intentClassificationService as any).processChatbotInteractionComplete(
-        userMessage.content,
-        conversationContext
-      );
-      
-      const apiCallDuration = Date.now() - apiCallStart;
-
-      // Log unified result structure for debugging  
-      // Check if file logging is enabled first, before any file operations
-      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
+      // Set up logging BEFORE building conversation context so entity injection can be logged
+      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false' && logFileName;
       
       let logEntry: (message: string) => void = () => {}; // Default no-op function
       
-      if (fileLoggingEnabled) {
+      if (fileLoggingEnabled && logFileName) {
         // Only import fs and set up logging if enabled
         const fs = require('fs');
         const path = require('path');
@@ -147,6 +127,32 @@ export class ChatMessageProcessingService {
         };
       }
       
+      // Build conversation context for unified processing (now async with compression and entity injection logging)
+      const conversationContext = await this.buildConversationContext(
+        config,
+        session,
+        contextResult.messages,
+        userMessage,
+        contextResult.summary,
+        enhancedContext,
+        logEntry, // Pass logEntry for entity injection logging
+        logFileName // Pass shared log file for knowledge integration logging
+      );
+
+      // Add shared log file to context
+      (conversationContext as any).sharedLogFile = logFileName;
+
+      const apiCallStart = Date.now();
+      
+      // Make single unified API call
+      const unifiedResult = await (this.intentClassificationService as any).processChatbotInteractionComplete(
+        userMessage.content,
+        conversationContext
+      );
+      
+      const apiCallDuration = Date.now() - apiCallStart;
+
+      // Log unified result structure for debugging  
       logEntry('🔍 CHAT MESSAGE PROCESSING - UNIFIED RESULT VALIDATION:');
       logEntry(`📋 Unified result type: ${typeof unifiedResult}`);
       logEntry(`📋 Unified result keys: ${Object.keys(unifiedResult || {}).join(', ')}`);
@@ -180,7 +186,8 @@ export class ChatMessageProcessingService {
         botMessage,
         allMessages,
         unifiedResult,
-        logFileName
+        logFileName,
+        logEntry
       );
 
       return {
@@ -203,28 +210,181 @@ export class ChatMessageProcessingService {
     throw new Error('Unified processing service not available - chatbot cannot process messages without unified intent classification service');
   }
 
-  private buildConversationContext(
+  private async buildConversationContext(
     config: any,
     session: any,
     messages: ChatMessage[],
     userMessage: ChatMessage,
     summary: string | undefined,
-    enhancedContext: any
-  ): ConversationContext {
+    enhancedContext: any,
+    logEntry?: (message: string) => void,
+    sharedLogFile?: string
+  ): Promise<ConversationContext> {
+    // Default no-op logging function if not provided
+    const log = logEntry || (() => {});
+    
+    // Check if compression is needed using API-driven approach
+    const allMessages = [...messages, userMessage];
+    const tokenAnalysis = ApiDrivenCompressionService.analyzeTokenUsage(allMessages);
+    
+    let finalMessages = allMessages;
+    let conversationSummary = summary;
+    
+    // Apply API-driven compression if needed
+    if (tokenAnalysis.needsCompression) {
+      const compressionResult = await ApiDrivenCompressionService.compressConversation(
+        allMessages,
+        this.createSummarizationFunction(), // AI summarization function
+        {
+          tokenThresholdPercentage: 85,
+          maxTokenLimit: 16000,
+          recentTurnsToPreserve: 6
+        }
+      );
+      
+      finalMessages = compressionResult.recentMessages;
+      conversationSummary = compressionResult.conversationSummary;
+    }
+
+    // Build enhanced context with accumulated entities following DDD orchestration
+    log('🔍 ENTITY INJECTION ANALYSIS:');
+    log(`📋 Session has contextData: ${!!session.contextData}`);
+    log(`📋 Session has accumulatedEntities: ${!!session.contextData?.accumulatedEntities}`);
+    
+    if (session.contextData?.accumulatedEntities) {
+      // Log the raw accumulated entities structure
+      log(`📋 Raw accumulatedEntities structure: ${JSON.stringify(session.contextData.accumulatedEntities, null, 2)}`);
+      
+      // Analyze which entities have values and will be injected
+      const entities = session.contextData.accumulatedEntities;
+      const entitiesToInject = [];
+      
+      // Check each entity type for values
+      if (entities.visitorName?.value) {
+        entitiesToInject.push(`visitorName: "${entities.visitorName.value}" (confidence: ${entities.visitorName.confidence})`);
+      }
+      if (entities.role?.value) {
+        entitiesToInject.push(`role: "${entities.role.value}" (confidence: ${entities.role.confidence})`);
+      }
+      if (entities.company?.value) {
+        entitiesToInject.push(`company: "${entities.company.value}" (confidence: ${entities.company.confidence})`);
+      }
+      if (entities.industry?.value) {
+        entitiesToInject.push(`industry: "${entities.industry.value}" (confidence: ${entities.industry.confidence})`);
+      }
+      if (entities.teamSize?.value) {
+        entitiesToInject.push(`teamSize: "${entities.teamSize.value}" (confidence: ${entities.teamSize.confidence})`);
+      }
+      if (entities.budget?.value) {
+        entitiesToInject.push(`budget: "${entities.budget.value}" (confidence: ${entities.budget.confidence})`);
+      }
+      if (entities.timeline?.value) {
+        entitiesToInject.push(`timeline: "${entities.timeline.value}" (confidence: ${entities.timeline.confidence})`);
+      }
+      if (entities.urgency?.value) {
+        entitiesToInject.push(`urgency: "${entities.urgency.value}" (confidence: ${entities.urgency.confidence})`);
+      }
+      
+      // Check array entities
+      if (entities.painPoints?.length > 0) {
+        const painPointsList = entities.painPoints.map((p: any) => `"${p.value}"`).join(', ');
+        entitiesToInject.push(`painPoints: [${painPointsList}]`);
+      }
+      if (entities.decisionMakers?.length > 0) {
+        const decisionMakersList = entities.decisionMakers.map((d: any) => `"${d.value}"`).join(', ');
+        entitiesToInject.push(`decisionMakers: [${decisionMakersList}]`);
+      }
+      if (entities.integrationNeeds?.length > 0) {
+        const integrationNeedsList = entities.integrationNeeds.map((i: any) => `"${i.value}"`).join(', ');
+        entitiesToInject.push(`integrationNeeds: [${integrationNeedsList}]`);
+      }
+      if (entities.evaluationCriteria?.length > 0) {
+        const evaluationCriteriaList = entities.evaluationCriteria.map((e: any) => `"${e.value}"`).join(', ');
+        entitiesToInject.push(`evaluationCriteria: [${evaluationCriteriaList}]`);
+      }
+      
+      if (entitiesToInject.length > 0) {
+        log('✅ ENTITIES TO BE INJECTED INTO PROMPT:');
+        entitiesToInject.forEach(entity => log(`   ▶ ${entity}`));
+      } else {
+        log('⚠️  NO ENTITIES HAVE VALUES - EMPTY INJECTION');
+      }
+    } else {
+      log('❌ NO ACCUMULATED ENTITIES FOUND - NO INJECTION WILL OCCUR');
+    }
+    
+        const entityContextPrompt = session.contextData?.accumulatedEntities
+      ? EntityAccumulationService.buildEntityContextPrompt(
+          AccumulatedEntities.fromObject(session.contextData.accumulatedEntities)
+        )
+      : '';
+    
+    if (entityContextPrompt) {
+      log('📝 GENERATED ENTITY CONTEXT PROMPT:');
+      log(`${entityContextPrompt}`);
+      log('================================================================================');
+    } else {
+      log('📝 NO ENTITY CONTEXT PROMPT GENERATED (empty or no entities)');
+      log('================================================================================');
+    }
+
+    // Orchestrate enhanced context with all domain data
+    const completeEnhancedContext = {
+      ...enhancedContext,
+      entityContextPrompt, // Inject accumulated entities into system prompt
+      sharedLogFile // Pass shared log file for knowledge integration logging
+    };
+
     // Build enhanced system prompt with knowledge base integration
     const systemPrompt = this.systemPromptBuilderService.buildEnhancedSystemPrompt(
       config,
       session,
-      messages,
-      enhancedContext
+      finalMessages,
+      completeEnhancedContext
     );
 
     return {
       chatbotConfig: config,
       session,
-      messageHistory: [...messages, userMessage],
+      messageHistory: finalMessages,
       systemPrompt,
-      conversationSummary: summary
+      conversationSummary
+    };
+  }
+
+  /**
+   * Create AI summarization function for compression
+   * AI INSTRUCTIONS: Use the existing AI service to generate summaries
+   */
+  private createSummarizationFunction() {
+    return async (messages: ChatMessage[], instruction: string): Promise<string> => {
+      // Convert messages to conversation text
+      const conversationText = messages
+        .map(msg => `${msg.messageType === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+        .join('\n\n');
+
+      // Use the AI service to generate summary
+      const summaryPrompt = `${instruction}
+
+CONVERSATION TO SUMMARIZE:
+${conversationText}
+
+Provide a concise but comprehensive summary focusing on business-critical information.`;
+
+      try {
+        // Use existing AI conversation service for summarization
+        const result = await this.aiConversationService.generateResponse(summaryPrompt, {
+          chatbotConfig: { name: 'Summary Assistant' } as any,
+          session: { id: 'summary-session' } as any,
+          messageHistory: [],
+          systemPrompt: 'You are a conversation summarization assistant. Create concise, business-focused summaries.'
+        });
+        
+        return result.content || 'Conversation summary unavailable';
+      } catch (error) {
+        console.error('Failed to generate conversation summary:', error);
+        return 'Previous conversation context available but summary generation failed';
+      }
     };
   }
 
@@ -262,7 +422,7 @@ export class ChatMessageProcessingService {
    * - Add proper validation for API response structure
    * - FIXED: Now properly extracts token usage AND entity data from unified API response
    */
-  private async createBotMessageUnified(session: any, unifiedResult: any, sharedLogFile: string): Promise<ChatMessage> {
+  private async createBotMessageUnified(session: any, unifiedResult: any, sharedLogFile?: string): Promise<ChatMessage> {
     // Safely extract response content with fallback
     const responseContent = unifiedResult?.response?.content || 
       "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";
@@ -315,7 +475,8 @@ export class ChatMessageProcessingService {
     }
 
     // Save bot message to database with shared log file
-    return await this.messageRepository.save(botMessage, sharedLogFile);
+    await this.messageRepository.save(botMessage, sharedLogFile);
+    return botMessage;
   }
 
   /**
@@ -374,6 +535,8 @@ export class ChatMessageProcessingService {
     return 'low';
   }
 
+
+
   /**
    * Update session context with unified processing results
    * 
@@ -391,21 +554,63 @@ export class ChatMessageProcessingService {
     botMessage: ChatMessage,
     allMessages: ChatMessage[],
     unifiedResult: any,
-    sharedLogFile: string
+    sharedLogFile?: string,
+    logEntry?: (message: string) => void
   ): any {
-    // FIXED: Extract ALL entities from API response, not just a subset
-    const entities = unifiedResult?.analysis?.entities || {};
+    const log = logEntry || (() => {});
     
-
+    // Extract API result
+    const { analysis, conversationFlow, response } = unifiedResult;
     
-    // FIXED: Use EntityAccumulationService to properly merge entities into session context
-    const freshEntities = this.convertToExtractedEntitiesFormat(entities);
+    // Combine all API entities into a single entity object for processing
+    const combinedApiData = {
+      // Core business entities from API analysis.entities
+      ...analysis.entities,
+      // Conversation flow metadata  
+      conversationPhase: conversationFlow.conversationPhase,
+      engagementLevel: conversationFlow.engagementLevel,
+      nextBestAction: conversationFlow.nextBestAction,
+      leadCaptureReadiness: conversationFlow.shouldCaptureLeadNow,
+      shouldEscalateToHuman: conversationFlow.shouldEscalateToHuman,
+      shouldAskQualificationQuestions: conversationFlow.shouldAskQualificationQuestions,
+      // Add analysis data as entities  
+      sentiment: analysis.sentiment,
+      emotionalTone: analysis.emotionalTone,
+      // Add response data as entities
+      responseStyle: response.tone,
+      callToAction: response.callToAction
+    };
     
-
+    // FIXED: Separate array entities from single entities  
+    const arrayEntities = {
+      painPoints: analysis.entities.painPoints || [],
+      decisionMakers: analysis.entities.decisionMakers || [],
+      integrationNeeds: analysis.entities.integrationNeeds || [],
+      evaluationCriteria: analysis.entities.evaluationCriteria || []
+    };
+    
+    // ENHANCED: Add valuable sentiment/behavioral data to single entities
+    const enhancedApiData = {
+      ...combinedApiData,
+      // Add high-value emotional/behavioral context for business intelligence
+      sentiment: analysis.sentiment,
+      emotionalTone: analysis.emotionalTone
+    };
+    
+    // Process non-array entities through existing flow
+    const freshEntities = this.convertToExtractedEntitiesFormat(enhancedApiData);
+    
+    // DEBUG: Log what we're starting with
+    log(`🔍 ENTITY ACCUMULATION DEBUG:`);
+    log(`📋 Raw API entities: ${JSON.stringify(combinedApiData, null, 2)}`);
+    log(`📋 Array entities extracted: ${JSON.stringify(arrayEntities, null, 2)}`);
+    log(`📋 Converted freshEntities: ${JSON.stringify(freshEntities, null, 2)}`);
     
     const existingAccumulatedEntities = session.contextData.accumulatedEntities 
       ? AccumulatedEntities.fromObject(session.contextData.accumulatedEntities)
       : null;
+    
+    log(`📋 Existing accumulated entities: ${existingAccumulatedEntities ? JSON.stringify(existingAccumulatedEntities.getAllEntitiesSummary(), null, 2) : 'null'}`);
     
     const entityMergeContext = {
       messageId: botMessage.id,
@@ -414,33 +619,101 @@ export class ChatMessageProcessingService {
       confidenceThreshold: 0.7
     };
     
+    // Process single entities first
     const entityMergeResult = EntityAccumulationService.mergeEntitiesWithCorrections(
       existingAccumulatedEntities,
       freshEntities,
       entityMergeContext
     );
     
+    // FIXED: Process array entities separately using withAdditiveEntity method
+    let finalAccumulatedEntities = entityMergeResult.accumulatedEntities;
+    let arrayEntitiesAdded = 0;
+    
+    // Add pain points
+    if (arrayEntities.painPoints.length > 0) {
+      finalAccumulatedEntities = finalAccumulatedEntities.withAdditiveEntity(
+        'painPoints',
+        arrayEntities.painPoints,
+        botMessage.id,
+        0.9
+      );
+      arrayEntitiesAdded += arrayEntities.painPoints.length;
+    }
+    
+    // Add decision makers
+    if (arrayEntities.decisionMakers.length > 0) {
+      finalAccumulatedEntities = finalAccumulatedEntities.withAdditiveEntity(
+        'decisionMakers',
+        arrayEntities.decisionMakers,
+        botMessage.id,
+        0.9
+      );
+      arrayEntitiesAdded += arrayEntities.decisionMakers.length;
+    }
+    
+    // Add integration needs
+    if (arrayEntities.integrationNeeds.length > 0) {
+      finalAccumulatedEntities = finalAccumulatedEntities.withAdditiveEntity(
+        'integrationNeeds',
+        arrayEntities.integrationNeeds,
+        botMessage.id,
+        0.9
+      );
+      arrayEntitiesAdded += arrayEntities.integrationNeeds.length;
+    }
+    
+    // Add evaluation criteria
+    if (arrayEntities.evaluationCriteria.length > 0) {
+      finalAccumulatedEntities = finalAccumulatedEntities.withAdditiveEntity(
+        'evaluationCriteria',
+        arrayEntities.evaluationCriteria,
+        botMessage.id,
+        0.9
+      );
+      arrayEntitiesAdded += arrayEntities.evaluationCriteria.length;
+    }
+    
+    // DEBUG: Log what we got after merging
+    log(`📋 Entity merge result - single entities added: ${entityMergeResult.mergeMetadata.newEntitiesAdded}`);
+    log(`📋 Array entities added: ${arrayEntitiesAdded}`);
+    log(`📋 Final accumulated entities: ${JSON.stringify(finalAccumulatedEntities.getAllEntitiesSummary(), null, 2)}`);
+    log(`📋 AccumulatedEntities has visitorName: ${!!finalAccumulatedEntities.visitorName}`);
+    log(`📋 VisitorName value: ${finalAccumulatedEntities.visitorName?.value || 'MISSING'}`);
+    log(`📋 AccumulatedEntities has painPoints: ${finalAccumulatedEntities.painPoints.length > 0}`);
+    log(`📋 PainPoints count: ${finalAccumulatedEntities.painPoints.length}`);
+    
+    const accumulatedEntitiesPlain = finalAccumulatedEntities.toPlainObject();
+    
+    // DEBUG: Log what the plain object looks like
+    log(`📋 Plain object serialization: ${JSON.stringify(accumulatedEntitiesPlain, null, 2)}`);
+    log(`📋 Plain object has visitorName: ${!!accumulatedEntitiesPlain.visitorName}`);
+    log(`📋 Plain object has painPoints: ${Array.isArray(accumulatedEntitiesPlain.painPoints) && accumulatedEntitiesPlain.painPoints.length > 0}`);
+    log(`📋 Plain object painPoints count: ${Array.isArray(accumulatedEntitiesPlain.painPoints) ? accumulatedEntitiesPlain.painPoints.length : 0}`);
+    log(`📋 Plain object has emotional data: sentiment=${accumulatedEntitiesPlain.sentiment}, emotionalTone=${accumulatedEntitiesPlain.emotionalTone}`);
+    
     // Extract API-provided data and format according to ApiAnalysisData interface
+    // Use accumulated entities for the most up-to-date entity information
     const apiProvidedData = {
       entities: {
-        urgency: entities.urgency || 'medium' as const,
-        painPoints: entities.painPoints || [],
-        integrationNeeds: entities.integrationNeeds || [],
-        evaluationCriteria: entities.evaluationCriteria || [],
-        // ADDED: Core business entities for lead scoring
-        company: entities.company,
-        role: entities.role,
-        budget: entities.budget,
-        timeline: entities.timeline,
-        teamSize: entities.teamSize,
-        industry: entities.industry,
-        contactMethod: entities.contactMethod,
-        // ADDED: Visitor identification
-        visitorName: entities.visitorName || entities.name
+        urgency: accumulatedEntitiesPlain.urgency?.value || 'medium' as const,
+        painPoints: accumulatedEntitiesPlain.painPoints?.map((p: any) => p.value) || [],
+        integrationNeeds: accumulatedEntitiesPlain.integrationNeeds?.map((i: any) => i.value) || [],
+        evaluationCriteria: accumulatedEntitiesPlain.evaluationCriteria?.map((e: any) => e.value) || [],
+        // FIXED: Use accumulated entities instead of raw API entities
+        company: accumulatedEntitiesPlain.company?.value,
+        role: accumulatedEntitiesPlain.role?.value,
+        budget: accumulatedEntitiesPlain.budget?.value,
+        timeline: accumulatedEntitiesPlain.timeline?.value,
+        teamSize: accumulatedEntitiesPlain.teamSize?.value,
+        industry: accumulatedEntitiesPlain.industry?.value,
+        contactMethod: accumulatedEntitiesPlain.contactMethod?.value,
+        // FIXED: Use accumulated visitor name
+        visitorName: accumulatedEntitiesPlain.visitorName?.value
       },
       personaInference: {
-        role: entities.role,
-        industry: entities.industry,
+        role: accumulatedEntitiesPlain.role?.value,
+        industry: accumulatedEntitiesPlain.industry?.value,
         evidence: unifiedResult?.analysis?.personaInference?.evidence || []
       },
       leadScore: {
@@ -459,7 +732,6 @@ export class ChatMessageProcessingService {
     );
 
     // FIXED: Calculate lead score from accumulated entities using DomainConstants
-    const accumulatedEntitiesPlain = entityMergeResult.accumulatedEntities.toPlainObject();
     const leadScoreEntities = this.convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntitiesPlain);
     const calculatedLeadScore = DomainConstants.calculateLeadScore(leadScoreEntities);
     
@@ -532,15 +804,10 @@ ${Object.entries(scoreBreakdown).map(([entity, points]) =>
       }
     }
 
-    // FIXED: Enhanced context data with ALL extracted entities and proper lead scoring
+    // MODERN: Enhanced context data with accumulated entities and proper lead scoring
     const enhancedContextData = {
       ...updatedSession.contextData,
-      // Update core session fields from extracted entities
-      visitorName: entities.visitorName || entities.name || updatedSession.contextData.visitorName,
-      company: entities.company || updatedSession.contextData.company,
-      email: entities.email || updatedSession.contextData.email,
-      phone: entities.phone || updatedSession.contextData.phone,
-      // FIXED: Include properly accumulated entities
+      // MODERN: All entity data now stored in accumulatedEntities only
       accumulatedEntities: accumulatedEntitiesPlain,
       // FIXED: Use calculated lead score from accumulated entities
       leadScore: calculatedLeadScore,
@@ -588,8 +855,7 @@ ${Object.entries(scoreBreakdown).map(([entity, points]) =>
           engagementLevel: aiFlowDecision.engagementLevel || 'low'
         };
         
-        // Import the service here to avoid circular dependencies
-        const { ReadinessIndicatorDomainService } = require('../../../domain/services/conversation-management/ReadinessIndicatorDomainService');
+        // Use properly imported domain service
         const readinessIndicators = ReadinessIndicatorDomainService.deriveReadinessIndicators(context);
         const readinessScore = ReadinessIndicatorDomainService.calculateReadinessScore(readinessIndicators);
         
@@ -613,30 +879,35 @@ ${JSON.stringify(readinessIndicators, null, 2)}
    * Convert API entities to ExtractedEntities format for EntityAccumulationService
    * 
    * AI INSTRUCTIONS:
-   * - Transform API entity structure to domain service format
+   * - Transform ALL API entity values to domain service format (2025 Best Practice)
    * - Handle missing or malformed entity data gracefully
    * - Follow @golden-rule patterns for data transformation
-   * - Only use properties that exist in ExtractedEntities interface
+   * - Single entities only - array entities handled separately via withAdditiveEntity
    */
   private convertToExtractedEntitiesFormat(entities: any): ExtractedEntities {
     const extractedEntities: ExtractedEntities = {};
     
-    // Map API entities to ExtractedEntities format (only supported properties)
+    // Core Business Entities (existing)
     if (entities.visitorName) extractedEntities.visitorName = entities.visitorName;
     if (entities.budget) extractedEntities.budget = entities.budget;
     if (entities.timeline) extractedEntities.timeline = entities.timeline;
+    if (entities.company) extractedEntities.company = entities.company;
+    if (entities.industry) extractedEntities.industry = entities.industry;
+    if (entities.teamSize) extractedEntities.teamSize = entities.teamSize;
+    if (entities.role) extractedEntities.role = entities.role;
     if (entities.urgency) extractedEntities.urgency = entities.urgency;
     if (entities.contactMethod) extractedEntities.contactMethod = entities.contactMethod;
-    if (entities.industry) extractedEntities.industry = entities.industry;
-    if (entities.company) extractedEntities.company = entities.company;
-    if (entities.teamSize) extractedEntities.teamSize = entities.teamSize;
     if (entities.location) extractedEntities.location = entities.location;
-    // FIXED: Add missing role entity mapping for lead scoring
-    if (entities.role) extractedEntities.role = entities.role;
+    if (entities.currentSolution) extractedEntities.currentSolution = entities.currentSolution;
+    if (entities.preferredTime) extractedEntities.preferredTime = entities.preferredTime;
     
-    // Note: Array entities like painPoints, integrationNeeds, evaluationCriteria, decisionMakers
-    // are not part of the ExtractedEntities interface and will be handled separately
-    // in the AccumulatedEntities structure
+    // ENHANCED: Emotional Intelligence & Behavioral Data (high business value)
+    if (entities.sentiment) extractedEntities.sentiment = entities.sentiment;
+    if (entities.emotionalTone) extractedEntities.emotionalTone = entities.emotionalTone;
+    
+    // Conversation Flow Context (tactical data)
+    if (entities.conversationPhase) extractedEntities.conversationPhase = entities.conversationPhase;
+    if (entities.engagementLevel) extractedEntities.engagementLevel = entities.engagementLevel;
     
     return extractedEntities;
   }
@@ -703,7 +974,6 @@ ${JSON.stringify(readinessIndicators, null, 2)}
     // 5. Prepared statements for frequent queries
     
     const endTime = Date.now();
-    console.log(`🚀 Potential optimized processing time: ${endTime - startTime}ms`);
     
     // This demonstrates the optimization approach
     // Implementation would need to be integrated with existing methods

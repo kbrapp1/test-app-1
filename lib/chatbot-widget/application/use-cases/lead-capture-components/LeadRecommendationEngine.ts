@@ -12,6 +12,12 @@
 
 import { Lead } from '../../../domain/entities/Lead';
 import { ChatSession } from '../../../domain/entities/ChatSession';
+import { 
+  LeadRecommendation, 
+  RecommendationType, 
+  RecommendationPriority, 
+  RecommendationCategory 
+} from '../../../domain/value-objects/lead-management/LeadRecommendation';
 import {
   ScoreBasedRecommendationGenerator,
   ContactInfoRecommendationGenerator,
@@ -22,32 +28,6 @@ import {
   RecommendationSummaryGenerator,
   type RecommendationSummary
 } from './recommendation-generators';
-
-export interface LeadRecommendation {
-  type: RecommendationType;
-  priority: RecommendationPriority;
-  action: string;
-  reasoning: string;
-  timeline: string;
-  category: RecommendationCategory;
-}
-
-export type RecommendationType = 
-  | 'immediate_follow_up'
-  | 'nurture_campaign'
-  | 'content_delivery'
-  | 'data_capture'
-  | 'qualification'
-  | 'research'
-  | 'disqualify';
-
-export type RecommendationPriority = 'high' | 'medium' | 'low';
-
-export type RecommendationCategory = 
-  | 'sales_action'
-  | 'marketing_action'
-  | 'data_improvement'
-  | 'qualification_improvement';
 
 export class LeadRecommendationEngine {
   /**

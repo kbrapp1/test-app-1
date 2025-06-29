@@ -15,6 +15,7 @@ import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { ContactInfo } from '../../../domain/value-objects/lead-management/ContactInfo';
 import { QualificationData } from '../../../domain/value-objects/lead-management/QualificationData';
 import { LeadSource } from '../../../domain/value-objects/lead-management/LeadSource';
+import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 
 export interface LeadDataFactoryInput {
   session: ChatSession;
@@ -50,17 +51,22 @@ export class LeadDataFactory {
   }
 
   /**
-   * Create contact info from session and provided data
+   * Create contact info from session and provided data - MODERN: Use accumulated entities
    */
   private static createContactInfo(
     session: ChatSession,
     providedContactInfo: LeadDataFactoryInput['contactInfo']
   ): ContactInfo {
+    // MODERN: Extract contact info from accumulated entities with proper deserialization
+    const accumulatedEntities = session.contextData.accumulatedEntities
+      ? AccumulatedEntities.fromObject(session.contextData.accumulatedEntities)
+      : null;
+    
     const contactData = {
-      email: providedContactInfo.email || session.contextData.email || '',
-      phone: providedContactInfo.phone || session.contextData.phone || '',
-      name: providedContactInfo.name || session.contextData.visitorName || '',
-      company: providedContactInfo.company || session.contextData.company || ''
+      email: providedContactInfo.email || '',
+      phone: providedContactInfo.phone || '',
+      name: providedContactInfo.name || accumulatedEntities?.visitorName?.value || '',
+      company: providedContactInfo.company || accumulatedEntities?.company?.value || ''
     };
 
     return ContactInfo.create(contactData);
@@ -98,8 +104,11 @@ export class LeadDataFactory {
    * Create conversation summary from session
    */
   private static createConversationSummary(session: ChatSession): string {
-    if (session.contextData.conversationSummary) {
-      return session.contextData.conversationSummary;
+    const conversationSummary = session.contextData.conversationSummary;
+    
+    if (conversationSummary) {
+      // Use enhanced object format only
+      return conversationSummary.fullSummary;
     }
 
     const topics = session.contextData.topics || [];

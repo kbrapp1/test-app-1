@@ -13,18 +13,19 @@
 
 import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
-import { useChatbotConfig } from '../../../hooks/useChatbotConfig';
+import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useKnowledgeBaseSettings } from '../../../hooks/useKnowledgeBaseSettings';
 import { CompanyInformationCard } from './CompanyInformationCard';
 import { FaqManagementCard } from './FaqManagementCard';
 import { KnowledgeBaseActions } from './KnowledgeBaseActions';
+import { WebsiteSourcesSection } from '../website-sources/WebsiteSourcesSection';
 
 export function KnowledgeBaseSection() {
-  const { activeOrganizationId } = useOrganization();
   const [isEditing, setIsEditing] = useState(false);
 
-  const { existingConfig, isLoading, error } = useChatbotConfig(activeOrganizationId);
+  const { config: existingConfig, isLoading, error } = useChatbotConfiguration({ 
+    enableFormState: false 
+  });
   
   const {
     formData,
@@ -34,7 +35,7 @@ export function KnowledgeBaseSection() {
     updateFormData,
     addFaq,
     removeFaq
-  } = useKnowledgeBaseSettings(existingConfig || null, activeOrganizationId);
+  } = useKnowledgeBaseSettings(existingConfig || null, existingConfig?.organizationId || null);
 
   const handleSave = async () => {
     await saveSettings();
@@ -85,6 +86,8 @@ export function KnowledgeBaseSection() {
         onAddFaq={addFaq}
         onRemoveFaq={removeFaq}
       />
+
+      <WebsiteSourcesSection />
 
       {isEditing && (
         <KnowledgeBaseActions

@@ -2,7 +2,7 @@
  * OpenAI Intent Classification Service
  * 
  * AI INSTRUCTIONS:
- * - Implements classifyIntent method for legacy compatibility 
+ * - Implements classifyIntent method for interface compliance 
  * - Delegates unified processing to OpenAIChatbotProcessingService
  * - Maintains interface compatibility while providing unified processing
  * - Follows @golden-rule patterns: orchestration only
@@ -20,7 +20,7 @@ import { OpenAIIntentConfig } from './types/OpenAITypes';
  * OpenAI Intent Classification Service
  * 
  * AI INSTRUCTIONS:
- * - Implements classifyIntent method for legacy compatibility 
+ * - Implements classifyIntent method for interface compliance 
  * - Delegates unified processing to OpenAIChatbotProcessingService
  * - Maintains interface compatibility while providing unified processing
  * - Follows @golden-rule patterns: orchestration only
@@ -43,7 +43,7 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
   }
 
   /**
-   * Main intent classification method (legacy compatibility)
+   * Main intent classification method (interface compliance)
    * 
    * AI INSTRUCTIONS:
    * - Delegate to analysis service for processing

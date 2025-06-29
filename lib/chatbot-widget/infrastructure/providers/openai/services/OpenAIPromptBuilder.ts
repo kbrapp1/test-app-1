@@ -42,24 +42,67 @@ Classify user intent using contextual understanding, not just keywords:
 
 ## Advanced Entity Extraction Framework
 
-**Business Context Entities:**
-- company: Organization name, business type, industry vertical
-- teamSize: Employee count, department size, organizational scale
-- industry: Business sector, market vertical, regulatory environment
-- location: Geographic presence, market focus, operational regions
-- role: Job title, decision authority, organizational influence
-- budget: Investment capacity, budget range, financial constraints
-- timeline: Implementation urgency, decision timeframe, project deadlines
-- currentSolution: Existing tools, competitive landscape, switching barriers
-- painPoints: Business challenges, operational inefficiencies, growth obstacles
-- goals: Business objectives, success metrics, desired outcomes
+**CRITICAL: Extract ALL entity values from user messages - never leave entities undefined if mentioned**
 
-**Technical & Preference Entities:**
-- contactMethod: Communication preferences (email, phone, meeting, chat)
-- meetingType: Interaction preference (demo, consultation, discovery, presentation)
-- urgency: Business impact level (low, medium, high, critical)
-- decisionProcess: Buying process, stakeholders, approval requirements
-- integrationNeeds: Technical requirements, system compatibility, API needs
+**Personal Identity Entities (HIGHEST PRIORITY):**
+- **visitorName**: Extract ANY name mentioned by user (e.g., "My name is John", "I'm Sarah", "This is Mike calling")
+  - Include full names when provided: "John Smith", "Sarah Johnson"  
+  - Include partial names: "John", "Sarah", "Mike"
+  - Include professional titles with names: "Dr. Smith", "Mr. Johnson"
+  - NEVER ignore name introductions - this is critical for personalization
+
+- **role**: Extract job titles, positions, and professional roles
+  - Executive level: CEO, CTO, CFO, President, Founder, Owner
+  - Management: Manager, Director, VP, Head of, Lead
+  - Functional roles: Developer, Engineer, Analyst, Coordinator, Specialist
+  - Decision authority: "I make the decisions", "I'm in charge of", "I handle"
+
+**Business Context Entities:**
+- **company**: Organization name, business type, industry vertical
+  - Include company suffixes: "Acme Corp", "TechStart Inc", "Global Solutions LLC"
+  - Include business descriptions: "my consulting firm", "our startup", "the agency I work for"
+  - Handle informal references: "we're a small business", "my company", "our organization"
+
+- **teamSize**: Employee count, department size, organizational scale  
+- **industry**: Business sector, market vertical, regulatory environment
+- **location**: Geographic presence, market focus, operational regions
+
+**Decision Context Entities:**
+- **budget**: Investment capacity, budget range, financial constraints
+- **timeline**: Implementation urgency, decision timeframe, project deadlines  
+- **urgency**: Business impact level (low, medium, high, critical)
+- **currentSolution**: Existing tools, competitive landscape, switching barriers
+- **painPoints**: Business challenges, operational inefficiencies, growth obstacles
+- **goals**: Business objectives, success metrics, desired outcomes
+
+**Engagement Preference Entities:**
+- **contactMethod**: Communication preferences (email, phone, meeting, chat)
+- **meetingType**: Interaction preference (demo, consultation, discovery, presentation)
+- **decisionProcess**: Buying process, stakeholders, approval requirements  
+- **integrationNeeds**: Technical requirements, system compatibility, API needs
+
+## Entity Extraction Instructions
+
+**Extraction Methodology:**
+1. **Comprehensive Scanning**: Analyze the ENTIRE message for any entity mentions
+2. **Context Understanding**: Use conversation history to understand implied entities  
+3. **Professional Inference**: Infer professional context from business language
+4. **Authority Assessment**: Identify decision-making signals and authority levels
+5. **Normalization**: Standardize entity values to consistent formats
+
+**Name Extraction Examples:**
+- "Hello, my name is Kip Rapp" → visitorName: "Kip Rapp"
+- "I'm Sarah from Marketing" → visitorName: "Sarah", role: "Marketing"
+- "This is Dr. Johnson calling" → visitorName: "Dr. Johnson", role: "Doctor"
+- "John here, I'm the CTO" → visitorName: "John", role: "CTO"
+
+**Role Extraction Examples:**
+- "I am the CEO of Acme Corp" → role: "CEO", company: "Acme Corp"
+- "I'm a project manager" → role: "Project Manager"  
+- "I handle procurement decisions" → role: "Procurement Manager"
+- "I make the technical decisions" → role: "Technical Decision Maker"
+
+**NEVER SKIP ENTITY EXTRACTION** - If an entity is mentioned, extract it with appropriate confidence
 
 ## Sophisticated Persona Inference
 
@@ -211,12 +254,7 @@ ${this.buildMomentumIndicators(conversationHistory)}
 ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${pattern}`).join('\n')}`;
   }
 
-  /**
-   * Build enhanced system prompt for legacy compatibility
-   */
-  static buildEnhancedSystemPrompt(conversationHistory: ChatMessage[]): string {
-    return this.buildUnifiedProcessingPrompt(conversationHistory);
-  }
+  // Removed legacy buildEnhancedSystemPrompt - use buildUnifiedProcessingPrompt directly
 
   /**
    * Build system prompt for basic intent classification (legacy support)
@@ -480,20 +518,7 @@ Consider conversation history, user journey stage, and business context when ana
     return 'low';
   }
 
-  /**
-   * Legacy methods for backward compatibility
-   */
-  static buildUserPrompt(message: string, context: IntentClassificationContext): string {
-    const historyContext = context.messageHistory.length > 0 
-      ? `\n\nConversation history:\n${context.messageHistory.slice(-3).map(m => 
-          `${m.isFromUser() ? 'User' : 'Bot'}: ${m.content}`
-        ).join('\n')}`
-      : '';
-
-    return `Analyze this user message with comprehensive business intelligence: "${message}"${historyContext}
-
-Provide structured analysis including intent classification, entity extraction, persona assessment, sentiment analysis, and strategic recommendations for conversation progression.`;
-  }
+  // Removed legacy buildUserPrompt - use buildUnifiedProcessingPrompt with proper context
 
   static extractBehaviorSignals(conversationHistory: ChatMessage[]): string[] {
     return this.extractBehavioralPatterns(conversationHistory);

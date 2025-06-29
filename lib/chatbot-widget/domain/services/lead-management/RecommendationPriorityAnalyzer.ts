@@ -9,7 +9,7 @@
  * - Stay under 200 lines following @golden-rule patterns
  */
 
-import { LeadRecommendation } from '../../../application/use-cases/lead-capture-components/LeadRecommendationEngine';
+import { LeadRecommendation } from '../../value-objects/lead-management/LeadRecommendation';
 import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
 
 export class RecommendationPriorityAnalyzer {

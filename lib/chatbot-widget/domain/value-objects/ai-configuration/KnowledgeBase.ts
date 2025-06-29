@@ -1,8 +1,15 @@
+import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+
 /**
  * Knowledge Base Value Object
  * 
- * Domain layer value object representing chatbot knowledge and content.
- * Immutable object that encapsulates knowledge management and validation.
+ * AI INSTRUCTIONS:
+ * - Immutable value object representing chatbot knowledge
+ * - Contains company info, FAQs, documentation, and website sources
+ * - All mutations return new instances (immutable)
+ * - Validates business rules and constraints
+ * - Use domain-specific errors for rule violations
+ * - Follow @golden-rule patterns exactly
  */
 
 export interface KnowledgeBaseProps {
@@ -11,6 +18,7 @@ export interface KnowledgeBaseProps {
   faqs: FAQ[];
   supportDocs: string;
   complianceGuidelines: string;
+  websiteSources: WebsiteSource[];
 }
 
 export interface FAQ {
@@ -19,6 +27,30 @@ export interface FAQ {
   answer: string;
   category: string;
   isActive: boolean;
+}
+
+export interface WebsiteSource {
+  id: string;
+  url: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  crawlSettings: WebsiteCrawlSettings;
+  lastCrawled?: Date;
+  pageCount?: number;
+  status: 'pending' | 'crawling' | 'completed' | 'error';
+  errorMessage?: string;
+}
+
+export interface WebsiteCrawlSettings {
+  maxPages: number;           // Maximum pages to crawl (default: 50)
+  maxDepth: number;           // Maximum crawl depth (default: 3)
+  includePatterns: string[];  // URL patterns to include (e.g., ["/docs/*", "/help/*"])
+  excludePatterns: string[];  // URL patterns to exclude (e.g., ["/admin/*", "/login"])
+  respectRobotsTxt: boolean;  // Follow robots.txt (default: true)
+  crawlFrequency: 'manual' | 'daily' | 'weekly' | 'monthly'; // Auto-crawl frequency
+  includeImages: boolean;     // Extract image alt text (default: false)
+  includePDFs: boolean;       // Crawl linked PDFs (default: true)
 }
 
 export class KnowledgeBase {
@@ -37,6 +69,7 @@ export class KnowledgeBase {
       faqs: [],
       supportDocs: '',
       complianceGuidelines: '',
+      websiteSources: [],
     });
   }
 
@@ -68,6 +101,7 @@ export class KnowledgeBase {
   get faqs(): FAQ[] { return [...this.props.faqs]; }
   get supportDocs(): string { return this.props.supportDocs; }
   get complianceGuidelines(): string { return this.props.complianceGuidelines; }
+  get websiteSources(): WebsiteSource[] { return [...this.props.websiteSources]; }
 
   // Business methods
   updateCompanyInfo(info: string): KnowledgeBase {
@@ -101,7 +135,10 @@ export class KnowledgeBase {
   addFAQ(faq: FAQ): KnowledgeBase {
     // Check for duplicate ID
     if (this.props.faqs.some(existing => existing.id === faq.id)) {
-      throw new Error(`FAQ with ID ${faq.id} already exists`);
+      throw new BusinessRuleViolationError(
+        'FAQ with duplicate ID cannot be added',
+        { faqId: faq.id, existingFAQs: this.props.faqs.length }
+      );
     }
 
     return new KnowledgeBase({
@@ -113,7 +150,10 @@ export class KnowledgeBase {
   updateFAQ(faqId: string, updates: Partial<Omit<FAQ, 'id'>>): KnowledgeBase {
     const faqIndex = this.props.faqs.findIndex(faq => faq.id === faqId);
     if (faqIndex === -1) {
-      throw new Error(`FAQ with ID ${faqId} not found`);
+      throw new BusinessRuleViolationError(
+        'FAQ not found for update',
+        { faqId, availableFAQs: this.props.faqs.map(f => f.id) }
+      );
     }
 
     const updatedFAQs = [...this.props.faqs];
@@ -151,6 +191,8 @@ export class KnowledgeBase {
   }
 
   searchFAQs(query: string): FAQ[] {
+    // NOTE: This is a simple fallback for basic filtering
+    // For semantic search, use KnowledgeRetrievalService instead
     const lowerQuery = query.toLowerCase();
     return this.props.faqs.filter(faq => 
       faq.isActive && (
@@ -166,12 +208,102 @@ export class KnowledgeBase {
     return Array.from(categories).sort();
   }
 
+  // Website source management methods
+  addWebsiteSource(websiteSource: WebsiteSource): KnowledgeBase {
+    // Check for duplicate URL
+    if (this.props.websiteSources.some(existing => existing.url === websiteSource.url)) {
+      throw new BusinessRuleViolationError(
+        'Website source with duplicate URL cannot be added',
+        { 
+          url: websiteSource.url, 
+          existingSources: this.props.websiteSources.length,
+          existingUrls: this.props.websiteSources.map(s => s.url)
+        }
+      );
+    }
+
+    return new KnowledgeBase({
+      ...this.props,
+      websiteSources: [...this.props.websiteSources, websiteSource],
+    });
+  }
+
+  updateWebsiteSource(sourceId: string, updates: Partial<Omit<WebsiteSource, 'id'>>): KnowledgeBase {
+    const sourceIndex = this.props.websiteSources.findIndex(source => source.id === sourceId);
+    if (sourceIndex === -1) {
+      throw new BusinessRuleViolationError(
+        'Website source not found for update',
+        { 
+          sourceId, 
+          availableSources: this.props.websiteSources.map(s => ({ id: s.id, url: s.url }))
+        }
+      );
+    }
+
+    const updatedSources = [...this.props.websiteSources];
+    updatedSources[sourceIndex] = { ...updatedSources[sourceIndex], ...updates };
+
+    return new KnowledgeBase({
+      ...this.props,
+      websiteSources: updatedSources,
+    });
+  }
+
+  removeWebsiteSource(sourceId: string): KnowledgeBase {
+    const filteredSources = this.props.websiteSources.filter(source => source.id !== sourceId);
+    
+    return new KnowledgeBase({
+      ...this.props,
+      websiteSources: filteredSources,
+    });
+  }
+
+  activateWebsiteSource(sourceId: string): KnowledgeBase {
+    return this.updateWebsiteSource(sourceId, { isActive: true });
+  }
+
+  deactivateWebsiteSource(sourceId: string): KnowledgeBase {
+    return this.updateWebsiteSource(sourceId, { isActive: false });
+  }
+
+  getActiveWebsiteSources(): WebsiteSource[] {
+    return this.props.websiteSources.filter(source => source.isActive);
+  }
+
+  updateWebsiteCrawlStatus(sourceId: string, status: WebsiteSource['status'], errorMessage?: string): KnowledgeBase {
+    const updates: Partial<WebsiteSource> = { status };
+    
+    if (status === 'completed') {
+      updates.lastCrawled = new Date();
+    }
+    
+    if (errorMessage) {
+      updates.errorMessage = errorMessage;
+    }
+
+    return this.updateWebsiteSource(sourceId, updates);
+  }
+
+  static createDefaultWebsiteCrawlSettings(): WebsiteCrawlSettings {
+    return {
+      maxPages: 50,
+      maxDepth: 3,
+      includePatterns: [],
+      excludePatterns: ['/admin/*', '/login', '/logout', '/account/*', '/cart/*', '/checkout/*'],
+      respectRobotsTxt: true,
+      crawlFrequency: 'weekly',
+      includeImages: false,
+      includePDFs: true,
+    };
+  }
+
   isEmpty(): boolean {
     return !this.props.companyInfo.trim() &&
            !this.props.productCatalog.trim() &&
            !this.props.supportDocs.trim() &&
            !this.props.complianceGuidelines.trim() &&
-           this.props.faqs.length === 0;
+           this.props.faqs.length === 0 &&
+           this.props.websiteSources.length === 0;
   }
 
   toPlainObject(): KnowledgeBaseProps {

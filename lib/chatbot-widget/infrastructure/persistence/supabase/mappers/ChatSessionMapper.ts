@@ -122,20 +122,23 @@ export class ChatSessionMapper {
   }
 
   /**
-   * Map JSONB context data to domain object
+   * Map JSONB context data to domain object - MODERN: Use accumulated entities
    */
   private static mapContextData(data: any): SessionContext {
     return {
-      visitorName: data?.visitorName || null,
-      email: data?.email || null,
-      phone: data?.phone || null,
-      company: data?.company || null,
       previousVisits: data?.previousVisits || 0,
       pageViews: data?.pageViews || [],
       conversationSummary: data?.conversationSummary || '',
       topics: data?.topics || [],
       interests: data?.interests || [],
       engagementScore: data?.engagementScore || 50,
+      // MODERN: Legacy fields removed, entity data is in accumulated entities
+      accumulatedEntities: data?.accumulatedEntities || {
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: []
+      }
     };
   }
 

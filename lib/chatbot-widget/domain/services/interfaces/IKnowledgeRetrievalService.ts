@@ -16,16 +16,16 @@ export interface KnowledgeSearchResult {
   totalFound: number;
   searchQuery: string;
   searchTimeMs: number;
-  usedFallback: boolean;
 }
 
 export interface KnowledgeRetrievalContext {
   userQuery: string;
-  intentResult: IntentResult;
+  intentResult?: IntentResult;
   conversationHistory?: string[];
   userPreferences?: Record<string, any>;
   maxResults?: number;
   minRelevanceScore?: number;
+  sharedLogFile?: string;
 }
 
 export interface IKnowledgeRetrievalService {

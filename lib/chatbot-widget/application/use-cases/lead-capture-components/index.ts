@@ -32,9 +32,13 @@ export type {
 
 export type { QualificationAnswer } from './QualificationProcessor';
 
+// Domain types (imported from domain layer)
 export type { 
-  LeadRecommendation,
-  RecommendationType,
-  RecommendationPriority,
-  RecommendationCategory
-} from './LeadRecommendationEngine'; 
+  LeadRecommendation, 
+  RecommendationType, 
+  RecommendationPriority, 
+  RecommendationCategory 
+} from '../../../domain/value-objects/lead-management/LeadRecommendation';
+
+// Recommendation generators
+export * from './recommendation-generators'; 

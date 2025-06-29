@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-21T03:30:16.131Z
+// Generated: 2025-06-29T13:13:02.294Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -65,6 +65,16 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "ChatInterface",
       "ChatSimulator",
       "TestScenarios",
+      "CrawledPagesDisplay",
+      "CrawlProgressTracker",
+      "WebsiteSourcesDialogs",
+      "WebsiteSourcesForm",
+      "WebsiteSourcesGettingStarted",
+      "WebsiteSourcesHeader",
+      "WebsiteSourcesList",
+      "WebsiteSourcesMessages",
+      "WebsiteSourcesSection",
+      "WebsiteSourcesStats",
       "CodeDisplaySection",
       "ConfigurationInfo",
       "EmbedCodeStatusBadge",
@@ -87,13 +97,14 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "app/(protected)/ai-playground/chatbot-widget/page.tsx",
       "app/(protected)/ai-playground/chatbot-widget/parameters/page.tsx",
       "app/(protected)/ai-playground/chatbot-widget/testing/page.tsx",
+      "app/(protected)/ai-playground/chatbot-widget/website-sources/page.tsx",
       "app/api/chatbot-widget/chat/route.ts",
       "app/api/chatbot-widget/config/[configId]/route.ts",
       "app/api/chatbot-widget/session/route.ts"
     ],
     "queryKeys": [
-      "chatbot-configs",
-      "chatbot-config"
+      "chatbot-config",
+      "chatbot-configs"
     ],
     "endpoints": [
       "/api/chatbot-widget/chat",
@@ -103,6 +114,8 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "optimizationTargets": [
       "Form validation optimization",
       "Card component memoization",
+      "Modal lazy loading",
+      "List rendering optimization",
       "Detail view caching",
       "Layout component optimization",
       "Dynamic route optimization"

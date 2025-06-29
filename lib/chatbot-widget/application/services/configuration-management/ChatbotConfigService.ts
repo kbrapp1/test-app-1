@@ -108,6 +108,7 @@ export class ChatbotConfigService {
           supportDocs: updateDto.knowledgeBase.supportDocs ?? currentKb.supportDocs,
           complianceGuidelines: updateDto.knowledgeBase.complianceGuidelines ?? currentKb.complianceGuidelines,
           faqs: updateDto.knowledgeBase.faqs ?? currentKb.faqs,
+          websiteSources: updateDto.knowledgeBase.websiteSources ?? currentKb.websiteSources,
         };
         
         const knowledgeBaseDomain = ChatbotConfigMapper.knowledgeBaseFromDto(mergedKbDto);

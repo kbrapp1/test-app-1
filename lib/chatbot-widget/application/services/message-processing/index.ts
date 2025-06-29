@@ -10,7 +10,5 @@
 export { MessageProcessingWorkflowService } from './MessageProcessingWorkflowService';
 export type { WorkflowContext, WorkflowFinalResult } from './MessageProcessingWorkflowService';
 
-// ConversationAnalysisService removed - functionality moved to ProcessChatMessageUseCase
-
 export { ChatMessageProcessingService } from './ChatMessageProcessingService';
 export type { MessageProcessingContext, ResponseResult } from './ChatMessageProcessingService'; 

@@ -2,17 +2,17 @@
  * Interest-Based Recommendation Generator
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Generate recommendations based on lead interests
- * - Analyze interest patterns and intent signals
- * - Provide targeted content and follow-up strategies
- * - Return structured recommendation data
- * - Stay under 200-250 lines
- * - Follow @golden-rule patterns exactly
+ * - Single responsibility: Generate interest and preference based recommendations
+ * - Delegate specialized analysis to domain services
+ * - Handle recommendation workflow coordination only
+ * - Use domain-specific errors with proper context
+ * - Stay under 200 lines following @golden-rule patterns
  */
 
 import { Lead } from '../../../../domain/entities/Lead';
 import { ChatSession } from '../../../../domain/entities/ChatSession';
-import { LeadRecommendation } from '../LeadRecommendationEngine';
+import { LeadRecommendation } from '../../../../domain/value-objects/lead-management/LeadRecommendation';
+import { BusinessRuleViolationError } from '../../../../domain/errors/BusinessRuleViolationError';
 
 export class InterestBasedRecommendationGenerator {
   /**

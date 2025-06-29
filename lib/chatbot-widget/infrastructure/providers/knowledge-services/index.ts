@@ -8,5 +8,4 @@
  */
 
 export { KnowledgeItemService } from './KnowledgeItemService';
-export { KnowledgeRelevanceService } from './KnowledgeRelevanceService';
-export { KnowledgeSearchService } from './KnowledgeSearchService'; 
+export { KnowledgeRelevanceService } from './KnowledgeRelevanceService'; 

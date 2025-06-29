@@ -1,0 +1,9 @@
+{
+	"id": "cYWIAkzvNn3PpWs",
+	"json": "{\"id\":\"cYWIAkzvNn3PpWs\",\"url\":\"https://ironmarkusa.com/what-we-do/capabilities/creative-brand/\",\"loadedUrl\":\"https://ironmarkusa.com/what-we-do/capabilities/creative-brand/\",\"uniqueKey\":\"https://ironmarkusa.com/what-we-do/capabilities/creative-brand\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{\"User-Agent\":\"IronmarkChatbotCrawler/1.0 (Knowledge Base Builder)\",\"Accept\":\"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\"Accept-Language\":\"en-US,en;q=0.5\",\"Accept-Encoding\":\"gzip, deflate\",\"Connection\":\"keep-alive\",\"Upgrade-Insecure-Requests\":\"1\"},\"userData\":{\"depth\":2,\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-06-29T04:37:48.132Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://ironmarkusa.com/what-we-do/capabilities/creative-brand",
+	"url": "https://ironmarkusa.com/what-we-do/capabilities/creative-brand/"
+}

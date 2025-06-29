@@ -3,13 +3,13 @@
  * 
  * AI INSTRUCTIONS:
  * - Domain service for analyzing recommendation timelines
- * - Single responsibility: Timeline breakdown and urgency analysis
+ * - Single responsibility: Timeline analysis and urgency assessment
  * - Keep business logic pure, no external dependencies
  * - Use domain-specific error types for validation
  * - Stay under 200 lines following @golden-rule patterns
  */
 
-import { LeadRecommendation } from '../../../application/use-cases/lead-capture-components/LeadRecommendationEngine';
+import { LeadRecommendation } from '../../value-objects/lead-management/LeadRecommendation';
 import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
 
 export interface TimelineSummary {

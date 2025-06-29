@@ -30,6 +30,7 @@ export class ConversationContextManagementService {
 
   /**
    * Get token-aware context for conversation
+   * AI INSTRUCTIONS: Enhanced with Phase 2 services for intelligent context management
    */
   async getTokenAwareContext(
     sessionId: string, 
@@ -51,12 +52,15 @@ export class ConversationContextManagementService {
     // Get existing conversation summary from session if available
     const session = await this.sessionRepository.findById(sessionId);
     const existingSummary = session?.contextData.conversationSummary;
+    
+    // Use enhanced object format only
+    const summaryText = existingSummary?.fullSummary;
 
-    // Use conversation context orchestrator to get optimized message window with logging
+    // Use context orchestrator (enhanced method removed - now using API-driven compression)
     const contextResult = await this.conversationContextOrchestrator.getMessagesForContextWindow(
       allMessages,
       contextWindow,
-      existingSummary,
+      summaryText,
       loggingContext
     );
 
@@ -88,9 +92,11 @@ export class ConversationContextManagementService {
 
     return {
       messages: contextResult.messages,
-      summary: existingSummary,
+      summary: summaryText,
       tokenUsage: contextResult.tokenUsage,
       wasCompressed: contextResult.wasCompressed
     };
   }
+
+  // NOTE: updateSessionWithEnhancedSummary method removed - replaced by API-driven compression
 } 

@@ -2,17 +2,17 @@
  * Company-Based Recommendation Generator
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Generate recommendations based on company information
- * - Analyze company context for B2B opportunities
- * - Provide account-based marketing strategies
- * - Return structured recommendation data
- * - Stay under 200-250 lines
- * - Follow @golden-rule patterns exactly
+ * - Single responsibility: Generate company and business context recommendations
+ * - Delegate specialized analysis to domain services
+ * - Handle recommendation workflow coordination only
+ * - Use domain-specific errors with proper context
+ * - Stay under 200 lines following @golden-rule patterns
  */
 
 import { Lead } from '../../../../domain/entities/Lead';
 import { ChatSession } from '../../../../domain/entities/ChatSession';
-import { LeadRecommendation } from '../LeadRecommendationEngine';
+import { LeadRecommendation } from '../../../../domain/value-objects/lead-management/LeadRecommendation';
+import { BusinessRuleViolationError } from '../../../../domain/errors/BusinessRuleViolationError';
 
 export class CompanyBasedRecommendationGenerator {
   /**

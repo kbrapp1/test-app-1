@@ -10,7 +10,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,8 +26,7 @@ import {
   Database,
   GitBranch,
 } from 'lucide-react';
-import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
-import { getChatbotConfigByOrganization } from '../../../actions/configActions';
+import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useAdvancedParameters } from '../../../hooks/useAdvancedParameters';
 import { TabConfig } from '../../../types/AdvancedParametersTypes';
 
@@ -52,17 +50,12 @@ const TAB_CONFIGS: TabConfig[] = [
 ];
 
 export function AdvancedParametersSection() {
-  const { activeOrganizationId } = useOrganization();
   const [activeTab, setActiveTab] = useState('ai-config');
 
-  // Query for existing chatbot config
-  const { data: configResult, isLoading, error } = useQuery({
-    queryKey: ['chatbot-config', activeOrganizationId],
-    queryFn: () => activeOrganizationId ? getChatbotConfigByOrganization(activeOrganizationId) : null,
-    enabled: !!activeOrganizationId,
+  // Use consolidated hook for config management
+  const { config: existingConfig, isLoading, error } = useChatbotConfiguration({ 
+    enableFormState: false 
   });
-
-  const existingConfig = configResult?.success ? configResult.data : null;
 
   // Use custom hook for parameters management
   const {
@@ -74,7 +67,7 @@ export function AdvancedParametersSection() {
     updateMutation,
   } = useAdvancedParameters({
     existingConfig,
-    activeOrganizationId,
+    activeOrganizationId: null, // Will be handled by the hook internally
   });
 
   if (isLoading) {

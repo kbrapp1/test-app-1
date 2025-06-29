@@ -1,0 +1,9 @@
+{
+	"id": "lKib688aOneldgc",
+	"json": "{\"id\":\"lKib688aOneldgc\",\"url\":\"https://ironmarkusa.com/contact/\",\"loadedUrl\":\"https://ironmarkusa.com/contact/\",\"uniqueKey\":\"https://ironmarkusa.com/contact\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{\"User-Agent\":\"IronmarkChatbotCrawler/1.0 (Knowledge Base Builder)\",\"Accept\":\"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\"Accept-Language\":\"en-US,en;q=0.5\",\"Accept-Encoding\":\"gzip, deflate\",\"Connection\":\"keep-alive\",\"Upgrade-Insecure-Requests\":\"1\"},\"userData\":{\"depth\":1,\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-06-29T04:37:46.285Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://ironmarkusa.com/contact",
+	"url": "https://ironmarkusa.com/contact/"
+}

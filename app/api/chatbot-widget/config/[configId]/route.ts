@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     configId: string;
-  };
+  }>;
 }
 
 /**
@@ -18,7 +18,7 @@ export async function GET(
   { params }: RouteContext
 ) {
   try {
-    const { configId } = params;
+    const { configId } = await params;
 
     if (!configId) {
       return NextResponse.json(

@@ -5,7 +5,7 @@
 
 **Target Audience**: Product managers, technical stakeholders, and team members who need to understand the sophisticated conversation intelligence pipeline.
 
-**Last Updated**: January 2025
+**Last Updated**: June 20 2025
 
 ---
 
@@ -458,6 +458,92 @@ const readinessIndicators = ReadinessIndicatorDomainService.deriveReadinessIndic
 - 40% faster processing (eliminates second network round-trip)
 - Consistent context (no data loss between phases)
 - Simplified error handling (single failure point)
+
+### End-to-End Conversation Walkthrough
+
+This section provides a complete, multi-turn example of the intelligent pipeline in action. It demonstrates how conversation context is built, how entities are persisted, and how the system's responses become more intelligent and personalized as the conversation progresses.
+
+---
+
+### **Turn 1: Initial Inquiry**
+
+*   **👤 User:** "Hi, what do you guys do?"
+
+*   **🤖 AI Response:** "Hello! We provide an AI-powered marketing and sales platform designed to help businesses automate campaigns, manage digital assets, and generate qualified leads. What kind of business are you in?"
+
+*   **Pipeline Analysis:**
+    *   **Intent Classified:** `greeting` / `faq_general`
+    *   **Entities Extracted:** None.
+    *   **Session Context (Accumulated):** `[]` (Empty)
+    *   **Lead Score (Domain-Calculated):** 0
+    *   **Business Context Strength:** 0.0 (No business context yet)
+    *   **Next Prompt Injection:** Minimal. The system prompts the AI to provide a general overview and ask a clarifying question to establish initial context (like industry).
+
+---
+
+### **Turn 2: Establishing Business Context**
+
+*   **👤 User:** "I'm the CEO of Acme Inc. We're a 150-person tech company. We need to improve our lead generation."
+
+*   **🤖 AI Response:** "That's great, we can definitely help with that. For a 150-person tech company like Acme Inc., our platform can significantly boost lead quality. Are you working with a specific budget or timeline for this initiative?"
+
+*   **Pipeline Analysis:**
+    *   **Intent Classified:** `qualification`
+    *   **Entities Extracted (This Turn):**
+        *   `role`: "CEO" (Confidence: 0.9)
+        *   `company`: "Acme Inc." (Confidence: 0.95)
+        *   `teamSize`: "150" (Confidence: 1.0)
+        *   `painPoint`: "improve lead generation" (Confidence: 0.8)
+    *   **Session Context (Accumulated):**
+        *   `role`: "CEO"
+        *   `company`: "Acme Inc."
+        *   `teamSize`: "150"
+        *   `painPoints`: ["improve lead generation"]
+    *   **Lead Score (Domain-Calculated):** `25 (role) + 15 (company) + 15 (teamSize) = 55`
+    *   **Business Context Strength:** 1.0 (First business intent)
+    *   **Next Prompt Injection:** **High.** The system now injects the extracted entities (`role`, `company`, `teamSize`) into the next prompt. The AI is instructed to acknowledge the user's role and company, confirm the pain point, and ask qualifying questions about budget and timeline, as these are the next logical entities to capture. The `should_extract` schema is updated to prioritize `budget` and `timeline`.
+
+---
+
+### **Turn 3: Deeper Qualification**
+
+*   **👤 User:** "Our budget is around $50k for the year. We're hoping to get something in place by next quarter."
+
+*   **🤖 AI Response:** "A $50,000 budget is perfect for our Professional plan, which includes advanced lead scoring and DAM features. Implementing by next quarter is very realistic. Would you be interested in seeing a 15-minute demo next week to see how it works for a company like Acme Inc.?"
+
+*   **Pipeline Analysis:**
+    *   **Intent Classified:** `qualification` / `pricing_inquiry`
+    *   **Entities Extracted (This Turn):**
+        *   `budget`: "$50,000/year" (Confidence: 1.0)
+        *   `timeline`: "next quarter" (Confidence: 0.9)
+    *   **Session Context (Accumulated):**
+        *   `role`: "CEO"
+        *   `company`: "Acme Inc."
+        *   `teamSize`: "150"
+        *   `painPoints`: ["improve lead generation"]
+        *   `budget`: "$50,000/year"
+        *   `timeline`: "next quarter"
+    *   **Lead Score (Domain-Calculated):** `55 (previous) + 25 (budget) + 20 (timeline) = 100` (Max score)
+    *   **Business Context Strength:** 1.0 (Boosted by second consecutive business intent)
+    *   **Next Prompt Injection:** **Maximum.** The prompt is now rich with context. It includes all accumulated entities. The AI is instructed that the lead is highly qualified (score > 70), has provided budget and timeline, and is a key decision-maker. The system instructs the AI to pivot towards a `demo_request` call-to-action. The `should_extract` schema is deprioritized, as all key entities are captured.
+
+---
+
+### **Turn 4: Conversion**
+
+*   **👤 User:** "Yeah, a demo sounds good. What times are you available?"
+
+*   **🤖 AI Response:** "Excellent. I can book that for you right now. Please check your email for a link to my calendar to pick a time that works best for you. I've also sent over a brief overview of the Professional plan features we discussed. Looking forward to showing you the platform!"
+
+*   **Pipeline Analysis:**
+    *   **Intent Classified:** `demo_request`
+    *   **Entities Extracted (This Turn):** None.
+    *   **Session Context (Accumulated):** All previous entities are maintained.
+    *   **Lead Score (Domain-Calculated):** 100
+    *   **Business Context Strength:** 1.0
+    *   **Next Prompt Injection:** The prompt instructs the AI that the user has agreed to a demo. The primary goal is now `booking_request` fulfillment. The AI is instructed to confirm the action, provide the booking link (a placeholder action in this case), and end the conversation on a positive, professional note, referencing previously discussed context. The conversation is now flagged as `Ready for Sales Handoff`.
+
+---
 
 ### Conversation Context Management
 

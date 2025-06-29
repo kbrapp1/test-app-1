@@ -23,6 +23,7 @@ import { IIntentClassificationService } from '../../domain/services/interfaces/I
 import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { IDebugInformationService } from '../../domain/services/interfaces/IDebugInformationService';
 
+
 import { 
   MessageProcessingWorkflowService,
   ChatMessageProcessingService
@@ -33,6 +34,7 @@ import { SessionUpdateService } from '../services/configuration-management/Sessi
 import { ConversationContextWindow } from '../../domain/value-objects/session-management/ConversationContextWindow';
 import fs from 'fs';
 import path from 'path';
+import { DomainServiceCompositionService } from '../../infrastructure/composition/DomainServiceCompositionService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -74,8 +76,8 @@ export interface ProcessMessageResult {
 
 export class ProcessChatMessageUseCase {
   private readonly workflowService: MessageProcessingWorkflowService;
-  private readonly processingService: ChatMessageProcessingService;
   private readonly contextManagementService: ConversationContextManagementService;
+  private readonly processingService: ChatMessageProcessingService;
   private readonly sessionUpdateService: SessionUpdateService;
   private readonly contextWindow: ConversationContextWindow;
   private sharedLogFile?: string;
@@ -107,7 +109,7 @@ export class ProcessChatMessageUseCase {
       knowledgeRetrievalService
     );
 
-    // Initialize the services that were in ConversationAnalysisService
+    // Initialize conversation management services
     this.contextManagementService = new ConversationContextManagementService(
       conversationContextOrchestrator,
       tokenCountingService,
@@ -181,15 +183,22 @@ export class ProcessChatMessageUseCase {
       loggingContext
     );
 
-    // Enhanced context analysis (now unified - no redundant API calls)
-    const enhancedContext = this.conversationContextOrchestrator.analyzeContext(
+    // AI INSTRUCTIONS: Get enhanced orchestrator with chatbot config to trigger vector embeddings pipeline
+    // This enables ConversationEnhancedAnalysisService with knowledge retrieval
+    const enhancedOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator(config);
+    
+    // Use enhanced context analysis to trigger vector embeddings pipeline
+    // This calls ConversationContextOrchestrator.analyzeContextEnhanced which:
+    // 1. Calls ConversationEnhancedAnalysisService.enhanceAnalysis
+    // 2. Triggers knowledge retrieval via SimpleKnowledgeRetrievalService
+    // 3. Executes vector embeddings pipeline with comprehensive logging
+    const enhancedContext = await enhancedOrchestrator.analyzeContextEnhanced(
       [...contextResult.messages, userMessage],
-      session
+      config,
+      session,
+      this.sharedLogFile
     );
 
-    // Session remains unchanged since we only have basic context analysis
-    // Journey state updates will happen in the ChatMessageProcessingService when unified results are available
-    
     return {
       session,
       userMessage,
@@ -219,7 +228,7 @@ export class ProcessChatMessageUseCase {
     
     try {
       // 1. Initialize workflow and validate prerequisites
-      this.writeLog('\n📋 STEP 1: Initialize workflow and validate prerequisites');
+      this.writeLog('\n\n📋 STEP 1: Initialize workflow and validate prerequisites');
       const workflowContext = await this.workflowService.initializeWorkflow(request, this.sharedLogFile);
       
       this.logObject('🔧 WORKFLOW CONTEXT', {
@@ -231,7 +240,7 @@ export class ProcessChatMessageUseCase {
       });
 
       // 2. Process user message and update session
-      this.writeLog('\n📝 STEP 2: Process user message and update session');
+      this.writeLog('\n\n📝 STEP 2: Process user message and update session');
       const messageContext = await this.processingService.processUserMessage(
         workflowContext,
         request
@@ -245,7 +254,7 @@ export class ProcessChatMessageUseCase {
       });
 
       // 3. Analyze conversation context and generate enhanced context
-      this.writeLog('\n🔍 STEP 3: Analyze conversation context');
+      this.writeLog('\n\n🔍 STEP 3: Analyze conversation context');
       const analysisResult = await this.analyzeConversationContext(messageContext);
       
       this.logObject('📊 ANALYSIS RESULT', {
@@ -257,7 +266,7 @@ export class ProcessChatMessageUseCase {
       });
 
       // 4. Generate AI response with enhanced context
-      this.writeLog('\n🤖 STEP 4: Generate AI response');
+      this.writeLog('\n\n🤖 STEP 4: Generate AI response');
       const responseResult = await this.processingService.generateAIResponse(
         analysisResult,
         this.sharedLogFile
@@ -288,7 +297,7 @@ export class ProcessChatMessageUseCase {
       }
 
       // 5. Finalize workflow and calculate metrics
-      this.writeLog('\n✅ STEP 5: Finalize workflow and calculate metrics');
+      this.writeLog('\n\n✅ STEP 5: Finalize workflow and calculate metrics');
       const finalResult = await this.workflowService.finalizeWorkflow(
         responseResult,
         startTime,

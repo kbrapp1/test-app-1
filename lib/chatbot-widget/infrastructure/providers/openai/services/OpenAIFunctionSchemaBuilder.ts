@@ -14,63 +14,64 @@ export class OpenAIFunctionSchemaBuilder {
   /**
    * @private
    * Centralized store for all entity definitions. Single source of truth.
+   * Following @golden-rule: Enhanced descriptions for comprehensive extraction
    */
   private static readonly ENTITY_DEFINITIONS = {
     visitorName: {
       type: "string",
-      description: "Visitor's name when they introduce themselves (e.g., 'My name is John Smith'). Extract first name for personalization."
+      description: "CRITICAL: Extract visitor's name when they introduce themselves. Include full names ('John Smith'), partial names ('John'), or professional titles ('Dr. Smith'). Never miss name introductions - essential for personalization."
     },
     company: { 
       type: "string", 
-      description: "Company name - normalize capitalization and remove common suffixes" 
+      description: "Company or organization name. Include formal names ('Acme Corp'), business descriptions ('my consulting firm'), or informal references ('our startup', 'my company'). Normalize capitalization." 
     },
     role: { 
       type: "string", 
-      description: "User's job title - normalize to standard role categories" 
+      description: "Job title, position, or professional role. Extract executive roles (CEO, CTO), management (Manager, Director), functional roles (Developer, Engineer), or decision authority ('I make decisions', 'I handle procurement'). Normalize to standard categories." 
     },
     industry: { 
       type: "string", 
-      description: "Industry or business type - normalize to standard categories" 
+      description: "Industry, business sector, or market vertical. Extract from explicit mentions or infer from business context. Normalize to standard industry categories." 
     },
     budget: { 
       type: "string", 
-      description: "Budget information - normalize to standard format (e.g., '$5,000/month', '50K annually')" 
+      description: "Budget, investment capacity, or financial constraints. Extract specific amounts ('$50K'), ranges ('5-10K monthly'), or general indicators ('limited budget', 'enterprise budget'). Normalize format." 
     },
     timeline: { 
       type: "string", 
-      description: "Timeline or urgency - normalize to specific timeframes (e.g., 'Q2 2025', '3 months')" 
+      description: "Implementation timeline, decision timeframe, or project deadlines. Extract specific dates ('Q2 2025'), durations ('3 months'), or urgency indicators ('ASAP', 'next quarter'). Normalize to specific timeframes." 
     },
     urgency: { 
       type: "string", 
       enum: ["low", "medium", "high"],
-      description: "Urgency level inferred from context"
+      description: "Urgency level inferred from context, timeline pressure, business impact, or explicit statements about timing requirements."
     },
     decisionMakers: {
       type: "array",
       items: { type: "string" },
-      description: "Other people involved in decision - normalize roles and validate authority levels"
+      description: "Other decision makers, stakeholders, or people involved in the decision process. Extract names, roles, or references to approval processes. Validate authority levels."
     },
     teamSize: { 
       type: "string", 
-      description: "Team or company size - normalize to ranges (e.g., '1-10', '50-100', '500+')" 
+      description: "Team size, department size, or company scale. Extract specific numbers ('10 people'), ranges ('50-100 employees'), or scale indicators ('small team', 'enterprise'). Normalize to ranges." 
     },
     currentSolution: { 
       type: "string", 
-      description: "Current solution they're using - normalize to standard product/vendor names" 
+      description: "Current tools, solutions, vendors, or systems they use. Extract product names, competitor mentions, or technology stack references. Normalize to standard product/vendor names." 
     },
     painPoints: {
       type: "array",
       items: { type: "string" },
-      description: "Specific problems mentioned - categorize by business function"
+      description: "Specific business problems, challenges, inefficiencies, or obstacles mentioned. Extract explicit complaints, process issues, or improvement needs. Categorize by business function."
     },
     preferredTime: { 
       type: "string", 
-      description: "Preferred meeting time - normalize to specific time formats" 
+      description: "Preferred meeting or contact time when mentioned. Extract specific times, date ranges, or scheduling preferences. Normalize to specific time formats." 
     },
     contactMethod: {
       type: "string",
       enum: ["email", "phone", "meeting"],
-      description: "Preferred contact method if mentioned"
+      description: "Preferred contact or communication method if explicitly mentioned or strongly implied from context."
     }
   };
 
@@ -205,7 +206,7 @@ export class OpenAIFunctionSchemaBuilder {
   /**
    * @private
    * Build dynamic entity schema based on conversation context.
-   * Only extracts missing entities or those relevant to the current conversation phase.
+   * FIXED: Always include core identity entities for re-extraction and validation
    */
   private static buildDynamicEntitySchema(existingEntities?: any, conversationPhase?: string, userMessage?: string): any {
     const schema: any = {
@@ -213,23 +214,23 @@ export class OpenAIFunctionSchemaBuilder {
       properties: {}
     };
 
+    // FIXED: Always include core identity entities for validation and re-extraction
+    // Following @golden-rule: AI should always have opportunity to extract all entity values
     const addEntity = (name: keyof typeof OpenAIFunctionSchemaBuilder.ENTITY_DEFINITIONS) => {
-        if (!existingEntities?.[name]) {
-            schema.properties[name] = this.ENTITY_DEFINITIONS[name];
-        }
-    }
+      schema.properties[name] = this.ENTITY_DEFINITIONS[name];
+    };
 
-    if (userMessage && this.detectsCorrection(userMessage)) {
-      schema.properties.corrections = this.buildCorrectionsSchema();
-    }
+    // Core identity entities - ALWAYS include these for comprehensive extraction
+    addEntity('visitorName');
+    addEntity('company');
+    addEntity('role');
+    addEntity('industry');
 
+    // Add contextual entities based on conversation phase or content
     switch (conversationPhase) {
       case 'greeting':
       case 'introduction':
-        addEntity('visitorName');
-        addEntity('company');
-        addEntity('role');
-        addEntity('industry');
+        // Identity entities already added above
         break;
 
       case 'business_inquiry':
@@ -252,24 +253,36 @@ export class OpenAIFunctionSchemaBuilder {
         addEntity('preferredTime');
         addEntity('contactMethod');
         break;
+
+      default:
+        // For unknown phases, include business context entities
+        addEntity('teamSize');
+        addEntity('budget');
+        addEntity('timeline');
+        addEntity('urgency');
+        addEntity('contactMethod');
+        schema.properties.painPoints = this.ENTITY_DEFINITIONS.painPoints;
+        schema.properties.decisionMakers = this.ENTITY_DEFINITIONS.decisionMakers;
     }
 
+    // Always include budget and timeline if pricing/timeline intent detected
     if (userMessage) {
-      if (this.detectsPricingIntent(userMessage) && !existingEntities?.budget && !schema.properties.budget) {
-        schema.properties.budget = this.ENTITY_DEFINITIONS.budget;
+      if (this.detectsPricingIntent(userMessage)) {
+        addEntity('budget');
       }
-      if (this.detectsTimelineIntent(userMessage) && !existingEntities?.timeline && !schema.properties.timeline) {
-        schema.properties.timeline = this.ENTITY_DEFINITIONS.timeline;
+      if (this.detectsTimelineIntent(userMessage)) {
+        addEntity('timeline');
       }
+      if (this.detectsUrgencyIntent(userMessage)) {
+        addEntity('urgency');
+      }
+    }
+
+    // Add corrections schema if user message suggests corrections
+    if (userMessage && this.detectsCorrection(userMessage)) {
+      schema.properties.corrections = this.buildCorrectionsSchema();
     }
     
-    if (Object.keys(schema.properties).length === 0) {
-      schema.properties.generic = {
-        type: "string",
-        description: "Any relevant entity mentioned by the user, as no specific entities were targeted for extraction in this phase."
-      };
-    }
-
     return schema;
   }
 
@@ -296,6 +309,13 @@ export class OpenAIFunctionSchemaBuilder {
       /when|timeline|deadline|soon|urgent|asap|next|month|quarter|year/i
     ];
     return timelinePatterns.some(pattern => pattern.test(message));
+  }
+
+  private static detectsUrgencyIntent(message: string): boolean {
+    const urgencyPatterns = [
+      /urgent|asap|next|month|quarter|year/i
+    ];
+    return urgencyPatterns.some(pattern => pattern.test(message));
   }
 
   private static buildCorrectionsSchema(): any {

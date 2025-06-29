@@ -23,16 +23,13 @@ export interface ChatSessionDto {
 }
 
 export interface SessionContextDto {
-  readonly visitorName?: string;
-  readonly email?: string;
-  readonly phone?: string;
-  readonly company?: string;
   readonly previousVisits: number;
   readonly pageViews: string[];
   readonly conversationSummary: string;
   readonly topics: string[];
   readonly interests: string[];
   readonly engagementScore: number;
+  // MODERN: Legacy fields removed, entity data is in accumulated entities
 }
 
 export interface LeadQualificationStateDto {

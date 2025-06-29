@@ -1,0 +1,37 @@
+{
+  "requestsFinished": 30,
+  "requestsFailed": 20,
+  "requestsRetries": 0,
+  "requestsFailedPerMinute": 227,
+  "requestsFinishedPerMinute": 342,
+  "requestMinDurationMillis": 153,
+  "requestMaxDurationMillis": 644,
+  "requestTotalFailedDurationMillis": 986,
+  "requestTotalFinishedDurationMillis": 6865,
+  "crawlerStartedAt": "2025-06-29T04:37:43.631Z",
+  "crawlerFinishedAt": "2025-06-29T04:37:48.682Z",
+  "statsPersistedAt": "2025-06-29T04:37:48.682Z",
+  "crawlerRuntimeMillis": 5268,
+  "crawlerLastStartTimestamp": 1751171863414,
+  "requestRetryHistogram": [
+    50
+  ],
+  "statsId": 0,
+  "requestAvgFailedDurationMillis": 49,
+  "requestAvgFinishedDurationMillis": 229,
+  "requestTotalDurationMillis": 7851,
+  "requestsTotal": 50,
+  "requestsWithStatusCode": {},
+  "errors": {
+    "D:\\Projects\\test-app-1\\node_modules\\.pnpm\\@crawlee+http@3.13.9\\node_modules\\@crawlee\\http\\internals\\http-crawler.js:609:19": {
+      "missing error code": {
+        "Error": {
+          "Resource _ served Content-Type image/webp, but only text/html, text/xml, application/xhtml+xml, application/xml, application/json are allowed. Skipping resource.": {
+            "count": 20
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {}
+}

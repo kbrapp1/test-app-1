@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 const chatbotNavItems: Array<{ title: string; href: string }> = [
   { title: 'Configuration', href: '/ai-playground/chatbot-widget/config' },
   { title: 'Knowledge Base', href: '/ai-playground/chatbot-widget/knowledge' },
+  { title: 'Website Sources', href: '/ai-playground/chatbot-widget/website-sources' },
   { title: 'Lead Settings', href: '/ai-playground/chatbot-widget/leads' },
   { title: 'Parameters', href: '/ai-playground/chatbot-widget/parameters' },
   { title: 'Testing', href: '/ai-playground/chatbot-widget/testing' },

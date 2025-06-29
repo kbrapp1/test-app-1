@@ -56,6 +56,31 @@ export interface KnowledgeBaseDto {
   readonly faqs: FaqDto[];
   readonly supportDocs: string;
   readonly complianceGuidelines: string;
+  readonly websiteSources: WebsiteSourceDto[];
+}
+
+export interface WebsiteSourceDto {
+  readonly id: string;
+  readonly url: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly isActive: boolean;
+  readonly crawlSettings: WebsiteCrawlSettingsDto;
+  readonly lastCrawled?: string; // ISO string for serialization
+  readonly pageCount?: number;
+  readonly status: 'pending' | 'crawling' | 'completed' | 'error';
+  readonly errorMessage?: string;
+}
+
+export interface WebsiteCrawlSettingsDto {
+  readonly maxPages: number;
+  readonly maxDepth: number;
+  readonly includePatterns: string[];
+  readonly excludePatterns: string[];
+  readonly respectRobotsTxt: boolean;
+  readonly crawlFrequency: 'manual' | 'daily' | 'weekly' | 'monthly';
+  readonly includeImages: boolean;
+  readonly includePDFs: boolean;
 }
 
 export interface FaqDto {

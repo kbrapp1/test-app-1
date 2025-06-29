@@ -10,7 +10,11 @@
  * - Follow @golden-rule patterns exactly
  */
 
-import { LeadRecommendation, RecommendationPriority, RecommendationCategory } from '../LeadRecommendationEngine';
+import { 
+  LeadRecommendation, 
+  RecommendationPriority, 
+  RecommendationCategory 
+} from '../../../../domain/value-objects/lead-management/LeadRecommendation';
 
 export class RecommendationPrioritizer {
   /**

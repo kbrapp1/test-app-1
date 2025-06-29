@@ -50,6 +50,7 @@ describe('ChatbotConfig', () => {
       ],
       supportDocs: 'Support documentation',
       complianceGuidelines: 'Follow GDPR rules',
+      websiteSources: [],
     };
     defaultKnowledgeBase = KnowledgeBase.create(knowledgeBaseProps);
 
@@ -361,6 +362,7 @@ describe('ChatbotConfig', () => {
         ],
         supportDocs: '',
         complianceGuidelines: 'Be honest.',
+        websiteSources: [],
       });
 
       const config = ChatbotConfig.create({

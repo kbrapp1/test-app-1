@@ -21,18 +21,27 @@ import {
   BotConfigurationViewState,
   BotConfigurationActions,
 } from '../../../types/BotConfigurationTypes';
+import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 
 interface OperatingHoursFormProps {
-  formData: BotConfigurationFormData;
-  viewState: BotConfigurationViewState;
-  actions: BotConfigurationActions;
+  // No props needed - hook handles everything
 }
 
-export function OperatingHoursForm({
-  formData,
-  viewState,
-  actions,
-}: OperatingHoursFormProps) {
+export function OperatingHoursForm({}: OperatingHoursFormProps) {
+  const { formData, viewState, actions } = useChatbotConfiguration();
+  
+  // Early return if form state is not available
+  if (!formData || !viewState || !actions) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            Loading configuration...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const handleOperatingHoursChange = (enabled: boolean) => {
     actions.updateFormData({
       operatingHours: {

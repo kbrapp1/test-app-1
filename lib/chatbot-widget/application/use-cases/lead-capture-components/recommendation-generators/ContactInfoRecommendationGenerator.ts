@@ -2,16 +2,16 @@
  * Contact Info Recommendation Generator
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Generate recommendations based on contact information gaps
- * - Identify missing or incomplete contact data
- * - Provide actionable steps for data improvement
- * - Return structured recommendation data
- * - Stay under 200-250 lines
- * - Follow @golden-rule patterns exactly
+ * - Single responsibility: Generate contact information related recommendations
+ * - Delegate specialized analysis to domain services
+ * - Handle recommendation workflow coordination only
+ * - Use domain-specific errors with proper context
+ * - Stay under 200 lines following @golden-rule patterns
  */
 
 import { Lead } from '../../../../domain/entities/Lead';
-import { LeadRecommendation } from '../LeadRecommendationEngine';
+import { LeadRecommendation } from '../../../../domain/value-objects/lead-management/LeadRecommendation';
+import { BusinessRuleViolationError } from '../../../../domain/errors/BusinessRuleViolationError';
 
 export class ContactInfoRecommendationGenerator {
   /**

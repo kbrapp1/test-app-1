@@ -26,20 +26,27 @@ import {
   BotConfigurationActions,
   PERSONALITY_OPTIONS,
 } from '../../../types/BotConfigurationTypes';
+import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 
 interface BotIdentityFormProps {
-  formData: BotConfigurationFormData;
-  viewState: BotConfigurationViewState;
-  actions: BotConfigurationActions;
-  isSaving: boolean;
+  // No props needed - hook handles everything
 }
 
-export function BotIdentityForm({
-  formData,
-  viewState,
-  actions,
-  isSaving,
-}: BotIdentityFormProps) {
+export function BotIdentityForm({}: BotIdentityFormProps) {
+  const { formData, viewState, actions, isSaving } = useChatbotConfiguration();
+  
+  // Early return if form state is not available
+  if (!formData || !viewState || !actions) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            Loading configuration...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader>

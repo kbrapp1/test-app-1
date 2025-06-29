@@ -13,25 +13,23 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Target } from 'lucide-react';
-import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
-import { useChatbotConfig } from '../../../hooks/useChatbotConfig';
+import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useLeadQualificationSettings } from '../../../hooks/useLeadQualificationSettings';
 import { LeadQualificationOverview } from './LeadQualificationOverview';
 import { LeadQualificationEditor } from './LeadQualificationEditor';
 
 export function LeadSettingsSection() {
-  const { activeOrganizationId } = useOrganization();
   const [isEditing, setIsEditing] = useState(false);
 
   const { 
-    configResult, 
+    config: existingConfig, 
     isLoading, 
-    error, 
-    existingConfig 
-  } = useChatbotConfig(activeOrganizationId);
+    error 
+  } = useChatbotConfiguration({ 
+    enableFormState: false 
+  });
 
   const {
     formData,
@@ -41,7 +39,7 @@ export function LeadSettingsSection() {
     addQuestion,
     removeQuestion,
     moveQuestion
-  } = useLeadQualificationSettings(existingConfig || null, activeOrganizationId);
+  } = useLeadQualificationSettings(existingConfig || null, existingConfig?.organizationId || null);
 
   const handleEdit = () => {
     setIsEditing(true);

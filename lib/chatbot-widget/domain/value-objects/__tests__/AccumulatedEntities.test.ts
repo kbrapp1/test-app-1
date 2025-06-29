@@ -331,6 +331,7 @@ describe('AccumulatedEntities Value Object', () => {
         timeline: null,
         urgency: null,
         contactMethod: null,
+        visitorName: null,
         role: 'CTO',
         industry: null,
         company: null,

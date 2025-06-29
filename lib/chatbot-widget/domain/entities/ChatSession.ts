@@ -3,7 +3,6 @@ import {
   SessionContext, 
   LeadQualificationState,
   SessionStatus,
-  ContactInfo,
   SessionMetrics
 } from '../value-objects/session-management/ChatSessionTypes';
 
@@ -13,7 +12,6 @@ export type {
   SessionContext,
   LeadQualificationState,
   SessionStatus,
-  ContactInfo,
   SessionMetrics
 };
 import { ChatSessionValidationService } from '../services/session-management/ChatSessionValidationService';
@@ -77,6 +75,39 @@ export class ChatSession {
 
   updateConversationSummary(summary: string): ChatSession {
     const updatedContext = SessionContextService.updateConversationSummary(this.props.contextData, summary);
+    return new ChatSession({
+      ...this.props,
+      contextData: updatedContext,
+      lastActivityAt: new Date(),
+    });
+  }
+
+  /**
+   * Update conversation summary with enhanced format
+   * AI INSTRUCTIONS: Phase 2 integration - accept ConversationSummary object
+   */
+  updateConversationSummaryEnhanced(summary: {
+    fullSummary: string;
+    phaseSummaries?: Array<{
+      phase: string;
+      summary: string;
+      keyOutcomes: string[];
+      entitiesExtracted: string[];
+      timeframe: { start: Date; end: Date };
+    }>;
+    criticalMoments?: Array<{
+      messageId: string;
+      importance: 'high' | 'critical';
+      context: string;
+      preserveInContext: boolean;
+    }>;
+  }): ChatSession {
+    const updatedContext = SessionContextService.updateConversationSummary(
+      this.props.contextData, 
+      summary.fullSummary,
+      summary.phaseSummaries,
+      summary.criticalMoments
+    );
     return new ChatSession({
       ...this.props,
       contextData: updatedContext,
@@ -179,15 +210,6 @@ export class ChatSession {
     });
   }
 
-  captureContactInfo(contactInfo: ContactInfo): ChatSession {
-    const updatedContext = SessionContextService.updateContactInfo(this.props.contextData, contactInfo);
-    return new ChatSession({
-      ...this.props,
-      contextData: updatedContext,
-      lastActivityAt: new Date(),
-    });
-  }
-
   /**
    * Update session context data with new values
    * AI INSTRUCTIONS:
@@ -245,31 +267,25 @@ export class ChatSession {
     const endTime = this.props.endedAt || new Date();
     const duration = endTime.getTime() - this.props.startedAt.getTime();
 
+    // MODERN: Contact info is captured via accumulated entities system
+    const hasContactInfo = this.props.contextData.accumulatedEntities?.visitorName?.value;
+
     return {
       duration,
       pageViewCount: this.props.contextData.pageViews.length,
       topicCount: this.props.contextData.topics.length,
       interestCount: this.props.contextData.interests.length,
-      hasContactInfo: !!(this.props.contextData.email || this.props.contextData.phone)
+      hasContactInfo: !!hasContactInfo
     };
   }
 
   hasContactInfo(): boolean {
-    return !!(this.props.contextData.email || this.props.contextData.phone);
+    // MODERN: Check if we have visitor identification in accumulated entities
+    return !!this.props.contextData.accumulatedEntities?.visitorName?.value;
   }
 
   toPlainObject(): ChatSessionProps {
     return { ...this.props };
-  }
-
-  updateVisitorName(name: string): ChatSession {
-    const newContextData = { ...this.props.contextData, visitorName: name };
-    return new ChatSession({ ...this.props, contextData: newContextData, lastActivityAt: new Date() });
-  }
-
-  updateCompany(company: string): ChatSession {
-    const newContextData = { ...this.props.contextData, company: company };
-    return new ChatSession({ ...this.props, contextData: newContextData, lastActivityAt: new Date() });
   }
 
   isOngoing(): boolean {

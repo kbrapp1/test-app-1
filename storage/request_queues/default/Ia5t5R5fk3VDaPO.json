@@ -1,0 +1,9 @@
+{
+	"id": "Ia5t5R5fk3VDaPO",
+	"json": "{\"id\":\"Ia5t5R5fk3VDaPO\",\"url\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/brand-management/\",\"loadedUrl\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/brand-management/\",\"uniqueKey\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/brand-management\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{\"User-Agent\":\"IronmarkChatbotCrawler/1.0 (Knowledge Base Builder)\",\"Accept\":\"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\"Accept-Language\":\"en-US,en;q=0.5\",\"Accept-Encoding\":\"gzip, deflate\",\"Connection\":\"keep-alive\",\"Upgrade-Insecure-Requests\":\"1\"},\"userData\":{\"depth\":1,\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-06-29T04:37:45.643Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://ironmarkusa.com/what-we-do/integrated-solutions/brand-management",
+	"url": "https://ironmarkusa.com/what-we-do/integrated-solutions/brand-management/"
+}
