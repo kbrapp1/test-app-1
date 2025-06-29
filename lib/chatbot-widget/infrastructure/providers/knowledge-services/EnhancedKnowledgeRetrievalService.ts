@@ -1,6 +1,7 @@
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { IKnowledgeItemRepository } from '../../../domain/repositories/IKnowledgeItemRepository';
 import { OpenAIEmbeddingService } from '../openai/services/OpenAIEmbeddingService';
+import { VectorManagementService } from '../../../application/services/VectorManagementService';
 import { BusinessRuleViolationError } from '../../../domain/errors/BusinessRuleViolationError';
 
 /**
@@ -16,7 +17,8 @@ import { BusinessRuleViolationError } from '../../../domain/errors/BusinessRuleV
 export class EnhancedKnowledgeRetrievalService {
   constructor(
     private knowledgeItemRepository: IKnowledgeItemRepository,
-    private embeddingService: OpenAIEmbeddingService
+    private embeddingService: OpenAIEmbeddingService,
+    private vectorManagementService: VectorManagementService
   ) {}
 
   /**
@@ -158,6 +160,7 @@ export class EnhancedKnowledgeRetrievalService {
    * AI INSTRUCTIONS:
    * - Bulk cleanup when content sources are removed
    * - Used for website source deletion and refresh
+   * - Coordinates deletion of both knowledge items AND their vectors
    * - Returns count of deleted items for confirmation
    */
   async deleteKnowledgeItemsBySource(
@@ -167,15 +170,26 @@ export class EnhancedKnowledgeRetrievalService {
     sourceUrl?: string
   ): Promise<number> {
     try {
-      return await this.knowledgeItemRepository.deleteKnowledgeItemsBySource(
+      // Delete knowledge items first
+      const deletedItemsCount = await this.knowledgeItemRepository.deleteKnowledgeItemsBySource(
         organizationId,
         chatbotConfigId,
         sourceType,
         sourceUrl
       );
+
+      // Delete corresponding vectors
+      const deletedVectorsCount = await this.vectorManagementService.deleteVectorsBySource(
+        organizationId,
+        chatbotConfigId,
+        sourceType,
+        sourceUrl
+      );
+
+      return deletedItemsCount;
     } catch (error) {
       throw new BusinessRuleViolationError(
-        `Failed to delete knowledge items by source: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to delete knowledge items and vectors by source: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { organizationId, chatbotConfigId, sourceType, sourceUrl }
       );
     }

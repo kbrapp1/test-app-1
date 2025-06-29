@@ -143,9 +143,11 @@ export class ChatbotWidgetCompositionRoot {
     if (!this.enhancedKnowledgeRetrievalService) {
       const knowledgeItemRepository = this.getKnowledgeItemRepository();
       const embeddingService = this.getEmbeddingService();
+      const vectorManagementService = this.getVectorManagementService();
       this.enhancedKnowledgeRetrievalService = new EnhancedKnowledgeRetrievalService(
         knowledgeItemRepository,
-        embeddingService
+        embeddingService,
+        vectorManagementService
       );
     }
     return this.enhancedKnowledgeRetrievalService;
@@ -244,6 +246,7 @@ export class ChatbotWidgetCompositionRoot {
     this.embeddingService = null;
     this.openAIProvider = null;
     this.websiteCrawlerService = null;
+    this.enhancedKnowledgeRetrievalService = null;
     this.vectorManagementService = null;
     this.websiteKnowledgeApplicationService = null;
     

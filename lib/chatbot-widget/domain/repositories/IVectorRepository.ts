@@ -96,6 +96,22 @@ export interface IVectorRepository {
   ): Promise<number>; // Returns count of deleted vectors
 
   /**
+   * Delete vectors by source type and optional source URL
+   * 
+   * AI INSTRUCTIONS:
+   * - Bulk cleanup when website sources or content types are deleted
+   * - Supports filtering by source URL for specific website deletions
+   * - Maintains consistency with knowledge item deletions
+   * - Returns count of deleted vectors for confirmation
+   */
+  deleteVectorsBySource(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceType: string,
+    sourceUrl?: string
+  ): Promise<number>; // Returns count of deleted vectors
+
+  /**
    * Check if vector exists with current content hash
    * 
    * AI INSTRUCTIONS:

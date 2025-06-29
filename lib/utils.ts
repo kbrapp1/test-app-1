@@ -56,3 +56,13 @@ export function formatBytes(bytes: number, decimals = 2): string {
   
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
+
+/**
+ * Utility function to create a delay (sleep) for a specified duration.
+ * 
+ * @param ms The delay in milliseconds.
+ * @returns A Promise that resolves after the specified delay.
+ */
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

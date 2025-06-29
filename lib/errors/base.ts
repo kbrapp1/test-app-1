@@ -113,4 +113,71 @@ export class ConflictError extends AppError {
   ) {
     super(message, code, 409, context);
   }
+}
+
+// --- DDD Domain Error Hierarchy from @golden-rule ---
+
+export enum ErrorSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+/**
+ * Domain Error Hierarchy
+ *
+ * AI INSTRUCTIONS:
+ * - Create specific error types for each business rule violation
+ * - Include relevant context for debugging and user feedback
+ * - Use error codes for programmatic handling
+ * - Never expose technical details to domain layer
+ */
+export abstract class DomainError extends Error {
+  abstract readonly code: string;
+  abstract readonly severity: ErrorSeverity;
+
+  constructor(
+    message: string,
+    public readonly context: Record<string, any> = {},
+    public readonly timestamp: Date = new Date(),
+  ) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export class BusinessRuleViolationError extends DomainError {
+  readonly code = 'BUSINESS_RULE_VIOLATION';
+  readonly severity = ErrorSeverity.HIGH;
+
+  constructor(rule: string, context: Record<string, any> = {}) {
+    super(`Business rule violated: ${rule}`, context);
+  }
+}
+
+export class InvariantViolationError extends DomainError {
+  readonly code = 'INVARIANT_VIOLATION';
+  readonly severity = ErrorSeverity.CRITICAL;
+
+  constructor(invariant: string, context: Record<string, any> = {}) {
+    super(`Domain invariant violated: ${invariant}`, context);
+  }
+}
+
+export class ResourceNotFoundError extends DomainError {
+  readonly code = 'RESOURCE_NOT_FOUND';
+  readonly severity = ErrorSeverity.MEDIUM;
+
+  constructor(
+    resourceType: string,
+    identifier: string,
+    context: Record<string, any> = {},
+  ) {
+    super(`${resourceType} not found: ${identifier}`, {
+      ...context,
+      resourceType,
+      identifier,
+    });
+  }
 } 

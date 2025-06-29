@@ -35,6 +35,25 @@ export class SupabaseKnowledgeItemRepository implements IKnowledgeItemRepository
     }>
   ): Promise<void> {
     try {
+      // Get the unique IDs of the items being upserted
+      const knowledgeItemIds = items.map(item => item.knowledgeItemId);
+
+      // First, delete any existing items that match on the conflict keys.
+      // This ensures that any stale data (like an empty content field) is completely removed before inserting the new version.
+      const { error: deleteError } = await this.supabase
+        .from('chatbot_knowledge_items')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId)
+        .in('knowledge_item_id', knowledgeItemIds);
+
+      if (deleteError) {
+        throw new BusinessRuleViolationError(
+          `Failed to delete existing knowledge items before upsert: ${deleteError.message}`,
+          { organizationId, chatbotConfigId, itemCount: items.length }
+        );
+      }
+
       const records = items.map(item => ({
         organization_id: organizationId,
         chatbot_config_id: chatbotConfigId,
@@ -53,15 +72,14 @@ export class SupabaseKnowledgeItemRepository implements IKnowledgeItemRepository
         updated_at: new Date().toISOString()
       }));
 
-      const { error } = await this.supabase
+      // Now, insert the new, clean records. Since we've already deleted conflicts, this is a pure insert.
+      const { error: insertError } = await this.supabase
         .from('chatbot_knowledge_items')
-        .upsert(records, {
-          onConflict: 'organization_id,chatbot_config_id,knowledge_item_id'
-        });
+        .insert(records);
 
-      if (error) {
+      if (insertError) {
         throw new BusinessRuleViolationError(
-          `Failed to store knowledge items: ${error.message}`,
+          `Failed to insert new knowledge items: ${insertError.message}`,
           { organizationId, chatbotConfigId, itemCount: items.length }
         );
       }

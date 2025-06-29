@@ -147,6 +147,57 @@ export class SupabaseVectorRepository implements IVectorRepository {
     return data?.length || 0;
   }
 
+  async deleteVectorsBySource(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceType: string,
+    sourceUrl?: string
+  ): Promise<number> {
+    try {
+      // First, get the knowledge item IDs that match the source criteria
+      let knowledgeItemsQuery = this.supabase
+        .from('chatbot_knowledge_items')
+        .select('knowledge_item_id')
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId)
+        .eq('source_type', sourceType);
+
+      if (sourceUrl) {
+        knowledgeItemsQuery = knowledgeItemsQuery.eq('source_url', sourceUrl);
+      }
+
+      const { data: knowledgeItems, error: itemsError } = await knowledgeItemsQuery;
+
+      if (itemsError) {
+        throw new Error(`Failed to get knowledge items for deletion: ${itemsError.message}`);
+      }
+
+      if (!knowledgeItems || knowledgeItems.length === 0) {
+        return 0; // No items to delete
+      }
+
+      // Extract the knowledge item IDs
+      const knowledgeItemIds = knowledgeItems.map(item => item.knowledge_item_id);
+
+      // Delete vectors that match these knowledge item IDs
+      const { data: deletedVectors, error: deleteError } = await this.supabase
+        .from('chatbot_knowledge_vectors')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId)
+        .in('knowledge_item_id', knowledgeItemIds)
+        .select('id');
+
+      if (deleteError) {
+        throw new Error(`Failed to delete vectors by source: ${deleteError.message}`);
+      }
+
+      return deletedVectors?.length || 0;
+    } catch (error) {
+      throw new Error(`Failed to delete vectors by source: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async vectorExists(
     organizationId: string,
     chatbotConfigId: string,

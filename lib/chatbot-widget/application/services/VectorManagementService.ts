@@ -187,6 +187,29 @@ export class VectorManagementService {
   }
 
   /**
+   * Delete vectors by source type and optional source URL
+   * 
+   * AI INSTRUCTIONS:
+   * - Removes cached vectors for specific website sources
+   * - Used when website sources are deleted or refreshed
+   * - Maintains consistency with knowledge item deletions
+   * - Returns count of deleted vectors for confirmation
+   */
+  async deleteVectorsBySource(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceType: string,
+    sourceUrl?: string
+  ): Promise<number> {
+    return await this.vectorRepository.deleteVectorsBySource(
+      organizationId,
+      chatbotConfigId,
+      sourceType,
+      sourceUrl
+    );
+  }
+
+  /**
    * Calculate content hash for change detection
    * 
    * AI INSTRUCTIONS:

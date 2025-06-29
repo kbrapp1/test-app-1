@@ -6,6 +6,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Transpile problematic ES modules
+  transpilePackages: ['@tanstack/react-table', '@tanstack/table-core'],
+  
   // Turbopack configuration (moved from experimental.turbo as it's now stable)
   turbopack: {
     // Resolve aliases for better module resolution
@@ -56,7 +59,8 @@ const nextConfig = {
       '@radix-ui/react-select',
       '@radix-ui/react-tooltip',
       '@tanstack/react-query',
-      '@tanstack/react-table',
+      // Disable @tanstack/react-table optimization as it conflicts with transpilePackages
+      // '@tanstack/react-table',
       'lucide-react',
       'framer-motion',
     ],
@@ -113,20 +117,10 @@ const nextConfig = {
         '@keyv/offline',
         '@keyv/tiered'
       ];
-    }
-    
-    return config;
-  },
-
-  // Production optimizations
-  ...(process.env.NODE_ENV === 'production' && {
-    // Enable SWC minification for production
-    swcMinify: true,
-    // Enable gzip compression
-    compress: true,
-    // Optimize chunk splitting
-    webpack: (config, { isServer }) => {
-      if (!isServer) {
+    } else {
+      // Client-side webpack configuration
+      // Optimize chunk splitting for production
+      if (process.env.NODE_ENV === 'production') {
         config.optimization.splitChunks = {
           chunks: 'all',
           cacheGroups: {
@@ -144,9 +138,10 @@ const nextConfig = {
           },
         };
       }
-      return config;
-    },
-  }),
+    }
+    
+    return config;
+  },
   
   // Performance optimizations for both dev and prod
   poweredByHeader: false,

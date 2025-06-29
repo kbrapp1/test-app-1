@@ -173,19 +173,13 @@ export async function crawlWebsiteSource(
   sourceId: string
 ): Promise<ActionResult<{ itemsProcessed: number; crawledPages?: any[] }>> {
   try {
-    console.log('🕷️ Starting crawl for:', { configId, organizationId, sourceId });
-    
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
     const applicationService = ChatbotWidgetCompositionRoot.getWebsiteKnowledgeApplicationService();
     
-    console.log('✅ Got services');
-    
     // Get existing config
     const existingConfig = await configRepository.findById(configId);
-    console.log('📋 Config found:', existingConfig ? 'yes' : 'no');
     
     if (!existingConfig) {
-      console.log('❌ Config not found');
       return {
         success: false,
         error: {
@@ -198,11 +192,8 @@ export async function crawlWebsiteSource(
 
     // Find the website source
     const websiteSource = existingConfig.knowledgeBase.websiteSources.find(ws => ws.id === sourceId);
-    console.log('🌐 Website source found:', websiteSource ? 'yes' : 'no');
-    console.log('🌐 Website source details:', websiteSource);
     
     if (!websiteSource) {
-      console.log('❌ Website source not found');
       return {
         success: false,
         error: {
@@ -213,21 +204,13 @@ export async function crawlWebsiteSource(
       };
     }
     
-    console.log('🚀 Calling application service...');
     const result = await applicationService.crawlWebsiteSource({
       organizationId,
       chatbotConfigId: configId,
       websiteSource
     });
     
-    console.log('📊 Application service result:', result);
-    console.log('📊 Result success:', result.success);
-    console.log('📊 Result knowledgeItems count:', result.knowledgeItems?.length);
-    console.log('📊 Result crawledPages count:', result.crawledPages?.length);
-    console.log('📊 Result error:', result.error);
-    
     if (!result.success) {
-      console.log('❌ Crawl failed with application service error');
       return {
         success: false,
         error: {
@@ -238,7 +221,6 @@ export async function crawlWebsiteSource(
       };
     }
     
-    console.log('🎉 Crawl completed successfully');
     revalidatePath('/ai-playground/chatbot-widget/website-sources');
     revalidatePath('/ai-playground/chatbot-widget/knowledge');
     
@@ -249,15 +231,8 @@ export async function crawlWebsiteSource(
         crawledPages: result.crawledPages || []
       }
     };
-  } catch (error) {
-    console.error('💥 Unexpected error in crawlWebsiteSource:', error);
-    console.error('💥 Error type:', typeof error);
-    console.error('💥 Error constructor:', error?.constructor?.name);
-    console.error('💥 Error message:', (error as Error)?.message);
-    console.error('💥 Error stack:', (error as Error)?.stack);
-    
+  } catch (error) {    
     if (error instanceof DomainError) {
-      console.log('📋 Domain error detected');
       return {
         success: false,
         error: {
@@ -268,7 +243,6 @@ export async function crawlWebsiteSource(
       };
     }
     
-    console.log('⚠️ Non-domain error, returning generic error');
     return {
       success: false,
       error: {
