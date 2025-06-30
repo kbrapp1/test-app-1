@@ -13,11 +13,11 @@
 
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
 import { Lead } from '../../../domain/entities/Lead';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../supabase/server';
 import { LeadMapper, RawLeadDbRecord } from './mappers/LeadMapper';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../errors/base';
 import { LeadQueryService, LeadFilters } from './services/LeadQueryService';
 import { LeadAnalyticsService } from './services/LeadAnalyticsService';
 

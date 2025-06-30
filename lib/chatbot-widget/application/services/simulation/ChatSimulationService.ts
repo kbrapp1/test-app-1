@@ -165,12 +165,12 @@ export class ChatSimulationService implements IChatSimulationService {
 
   private hasLeadCapture(simulation: ChatSimulation): boolean {
     const userMessages = simulation.getUserMessages();
-    const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
-    const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/;
+    // Note: For full lead extraction, use LeadExtractionService
+    const allText = userMessages.map(msg => msg.content).join(' ');
+    const emailPattern = /[\w\.-]+@[\w\.-]+\.\w+/;
+    const phonePattern = /(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/;
     
-    return userMessages.some((msg: ChatMessage) => 
-      emailPattern.test(msg.content) || phonePattern.test(msg.content)
-    );
+    return emailPattern.test(allText) || phonePattern.test(allText);
   }
 
   private evaluateGoals(simulation: ChatSimulation): GoalAchievement[] {

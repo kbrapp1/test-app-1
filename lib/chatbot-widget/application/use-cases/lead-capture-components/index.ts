@@ -2,18 +2,13 @@
  * Lead Capture Components Index
  * 
  * AI INSTRUCTIONS:
- * - Clean export interface for all lead capture components
- * - Application layer components for lead capture functionality
- * - Single responsibility components following DDD principles
- * - Maintain clean separation between capture concerns
- * - UPDATED: Removed qualification-analyzers - using AI-only approach
+ * - Export only existing lead capture components
+ * - Removed human-readable admin UI features per user requirements
+ * - Keep only simulation and log file tracking functionality
  */
 
 // Main components that exist
 export { LeadQualificationAnalyzer } from './LeadQualificationAnalyzer';
-export { LeadNextStepsGenerator } from './LeadNextStepsGenerator';
-export { NextStepDefinitions } from './NextStepDefinitions';
-export { LeadRecommendationEngine } from './LeadRecommendationEngine';
 export { LeadDataFactory } from './LeadDataFactory';
 export { QualificationProcessor } from './QualificationProcessor';
 
@@ -22,13 +17,6 @@ export type {
   QualificationAnalysis,
   QualificationStatus
 } from './LeadQualificationAnalyzer';
-
-export type {
-  NextStep,
-  StepPriority,
-  StepAssignee,
-  StepCategory
-} from './LeadNextStepsGenerator';
 
 export type { QualificationAnswer } from './QualificationProcessor';
 
@@ -40,5 +28,6 @@ export type {
   RecommendationCategory 
 } from '../../../domain/value-objects/lead-management/LeadRecommendation';
 
-// Recommendation generators
-export * from './recommendation-generators'; 
+// Note: Human-readable recommendation generators and next step generators have been removed
+// System now uses pure log file tracking instead of human-readable actions
+// Only simulation functionality remains for testing API and turns 

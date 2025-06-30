@@ -26,7 +26,7 @@ import {
 } from '../../value-objects/message-processing/ContextAnalysis';
 import { ContextWindowService } from '../utilities/ContextWindowService';
 import { ConversationSessionUpdateService } from './ConversationSessionUpdateService';
-import { UserJourneyState } from '../../value-objects/session-management/UserJourneyState';
+// Removed UserJourneyState import - using pure API-driven approach
 import { ContextRelevanceService, RelevanceContext } from '../utilities/ContextRelevanceService';
 import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 import { ConversationEnhancedAnalysisService } from './ConversationEnhancedAnalysisService';
@@ -214,32 +214,38 @@ export class ConversationContextOrchestrator {
     const interests = apiAnalysisData?.personaInference?.evidence || [];
     const urgency = apiAnalysisData?.entities?.urgency || 'low';
     
-    // Update journey state based on API data and session state
-    let journeyState: any = undefined;
-    if (session && apiAnalysisData) {
-      const currentJourneyState = session.contextData.journeyState 
-        ? UserJourneyState.create(
-            session.contextData.journeyState.stage as any,
-            session.contextData.journeyState.confidence,
-            session.contextData.journeyState.metadata
-          )
-        : UserJourneyState.create();
-
-      const sessionEngagementScore = session.contextData.engagementScore || 0;
-      const normalizedEngagementScore = sessionEngagementScore / 25;
-      journeyState = currentJourneyState.updateEngagement(normalizedEngagementScore);
+    // Determine engagement level from API data or fallback to message-based logic
+    let engagementLevel: 'low' | 'medium' | 'high' = 'low';
+    if (apiAnalysisData?.leadScore?.scoreBreakdown?.engagementLevel) {
+      const apiEngagement = apiAnalysisData.leadScore.scoreBreakdown.engagementLevel;
+      if (apiEngagement >= 8) {
+        engagementLevel = 'high';
+      } else if (apiEngagement >= 5) {
+        engagementLevel = 'medium';
+      }
+    } else {
+      // Fallback: Basic engagement calculation based on message count and topics
+      const messageCount = userMessages.length;
+      const topicCount = topics.length;
+      
+      if (messageCount >= 8 || (messageCount >= 5 && topicCount >= 3)) {
+        engagementLevel = 'high';
+      } else if (messageCount >= 4 || (messageCount >= 2 && topicCount >= 2)) {
+        engagementLevel = 'medium';
+      }
     }
+    
+    // Removed journey state tracking - using pure API-driven approach
 
     const analysis = new ContextAnalysisValueObject(
       topics,
       interests,
       'neutral', // Sentiment from API
-      'low', // Engagement from API
+      engagementLevel, // Now properly using calculated engagement level
       'unknown', // Intent from separate classification
       urgency,
-      'discovery', // Stage from API
-      undefined, // intentResult - handled separately
-      journeyState
+      'discovery' // Stage from API
+      // Removed journeyState parameter - using pure API-driven approach
     );
 
     return analysis.toPlainObject();

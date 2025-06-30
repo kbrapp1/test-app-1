@@ -14,7 +14,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+import { useOrganization } from '../../../organization/application/providers/OrganizationProvider';
 import { 
   getChatbotConfigByOrganization, 
   updateChatbotConfig, 

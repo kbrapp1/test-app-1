@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Globe, Settings, Play } from 'lucide-react';
-import { WebsiteSourceDto } from '@/lib/chatbot-widget/application/dto/ChatbotConfigDto';
+import { WebsiteSourceDto } from '../../../../application/dto/ChatbotConfigDto';
 import { CrawlProgressTracker } from './CrawlProgressTracker';
 import { CrawledPagesDisplay, CrawledPageInfo } from './CrawledPagesDisplay';
 import { CrawlProgress } from './WebsiteSourcesSection';

@@ -1,9 +1,0 @@
-{
-	"id": "mSXtCpBFaP3EohT",
-	"json": "{\"id\":\"mSXtCpBFaP3EohT\",\"url\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/multi-location/\",\"loadedUrl\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/multi-location/\",\"uniqueKey\":\"https://ironmarkusa.com/what-we-do/integrated-solutions/multi-location\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{\"User-Agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\",\"Accept\":\"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\",\"Accept-Language\":\"en-US,en;q=0.5\",\"Accept-Encoding\":\"gzip, deflate\",\"Connection\":\"keep-alive\",\"Upgrade-Insecure-Requests\":\"1\"},\"userData\":{\"depth\":1,\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-06-29T14:08:03.454Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://ironmarkusa.com/what-we-do/integrated-solutions/multi-location",
-	"url": "https://ironmarkusa.com/what-we-do/integrated-solutions/multi-location/"
-}

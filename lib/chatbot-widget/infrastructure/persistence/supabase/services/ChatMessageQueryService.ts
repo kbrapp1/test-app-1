@@ -10,7 +10,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../../supabase/server';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { 
   ChatMessageBasicQueryService,

@@ -12,7 +12,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ChatSession } from '../../../../../domain/entities/ChatSession';
 import { ChatSessionMapper, RawChatSessionDbRecord } from '../../mappers/ChatSessionMapper';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../../../errors/base';
 
 export class ChatSessionQueryService {
   private readonly tableName = 'chat_sessions';

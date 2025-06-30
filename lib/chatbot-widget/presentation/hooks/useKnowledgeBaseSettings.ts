@@ -14,6 +14,25 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateChatbotConfig } from '../actions/configActions';
 import { UpdateChatbotConfigDto, FaqDto, ChatbotConfigDto } from '../../application/dto/ChatbotConfigDto';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
+// Import will be done dynamically to avoid server-side issues
+
+/**
+ * Create content hash for deduplication
+ * 
+ * AI INSTRUCTIONS:
+ * - Simple hash function for content deduplication
+ * - No external dependencies
+ * - Consistent output for same input
+ */
+function createContentHash(content: string): string {
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
 
 /**
  * Product chunk interface for intelligent chunking
@@ -216,7 +235,7 @@ export function useKnowledgeBaseSettings(
     // Step 2: Trigger proactive vector generation
     try {
       // Import the vector update action
-      const { updateKnowledgeBaseImmediate } = await import('../actions/updateKnowledgeBaseActions');
+      // updateKnowledgeBaseImmediate removed - using direct vector service calls instead
       
       // Convert knowledge base to knowledge items using the same logic as KnowledgeItemService
       const knowledgeItems = [];
@@ -307,16 +326,23 @@ export function useKnowledgeBaseSettings(
         });
       });
 
-      // Trigger vector generation
-      const vectorResult = await updateKnowledgeBaseImmediate(
-        organizationId,
-        existingConfig.id,
-        knowledgeItems,
-        'manual_upload'
-      );
+      // Vector generation using VectorKnowledgeApplicationService
+      if (knowledgeItems.length > 0) {
+        // Transform knowledge items to vector service format
+        const vectorItems = knowledgeItems.map(item => ({
+          knowledgeItemId: item.id,
+          title: item.title,
+          content: item.content,
+          category: item.category,
+          sourceType: 'faq' as const, // All config-based items are treated as FAQ type
+          sourceUrl: undefined, // No URL for config-based items
+          contentHash: createContentHash(item.content)
+        }));
 
-      // Vector generation completed successfully or with errors
-      // Results are handled internally by the vector management service
+        // Get vector service and store items
+        const { storeKnowledgeItems } = await import('../actions/updateKnowledgeBaseActions');
+        await storeKnowledgeItems(organizationId, existingConfig.id, vectorItems);
+      }
 
     } catch (vectorError) {
       // Don't fail the whole operation if vector generation fails

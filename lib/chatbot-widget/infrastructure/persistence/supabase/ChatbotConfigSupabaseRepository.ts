@@ -1,10 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../supabase/server';
 import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotConfigRepository';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { FAQ } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { ChatbotConfigMapper, RawChatbotConfigDbRecord } from './mappers/ChatbotConfigMapper';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../errors/base';
 
 /**
  * Supabase ChatbotConfig Repository Implementation

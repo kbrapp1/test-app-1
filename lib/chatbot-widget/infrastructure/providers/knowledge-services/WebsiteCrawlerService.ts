@@ -17,10 +17,11 @@ import { WebsiteSource, WebsiteCrawlSettings } from '../../../domain/value-objec
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { BusinessRuleViolationError } from '../../../domain/errors/BusinessRuleViolationError';
 import { OpenAIProvider } from '../openai/OpenAIProvider';
-import { IKnowledgeItemRepository } from '../../../domain/repositories/IKnowledgeItemRepository';
+import { IVectorKnowledgeRepository } from '../../../domain/repositories/IVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../openai/services/OpenAIEmbeddingService';
 import { createHash } from 'crypto';
-import { logger } from '@/lib/logging';
+import { logger } from '../../../../logging';
+
 
 /**
  * Domain-specific error classes for website crawling
@@ -67,12 +68,12 @@ export class InvalidUrlError extends Error {
  */
 export class WebsiteCrawlerService {
   private readonly openAIProvider: OpenAIProvider;
-  private readonly knowledgeItemRepository: IKnowledgeItemRepository;
+  private readonly vectorKnowledgeRepository: IVectorKnowledgeRepository;
   private readonly embeddingService: OpenAIEmbeddingService;
 
   constructor(
     openAIProvider: OpenAIProvider,
-    knowledgeItemRepository: IKnowledgeItemRepository,
+    vectorKnowledgeRepository: IVectorKnowledgeRepository,
     embeddingService: OpenAIEmbeddingService
   ) {
     // Ensure this service is only used on the server side
@@ -81,7 +82,7 @@ export class WebsiteCrawlerService {
     }
     
     this.openAIProvider = openAIProvider;
-    this.knowledgeItemRepository = knowledgeItemRepository;
+    this.vectorKnowledgeRepository = vectorKnowledgeRepository;
     this.embeddingService = embeddingService;
   }
 
@@ -451,7 +452,7 @@ export class WebsiteCrawlerService {
    * Crawl website and store content persistently (2025 Best Practice)
    * 
    * AI INSTRUCTIONS:
-   * - Crawls website content and stores in chatbot_knowledge_items table
+   * - Crawls website content and stores in chatbot_knowledge_vectors table
    * - Generates embeddings for semantic search capabilities
    * - Provides complete RAG pipeline with content persistence
    * - Supports efficient content retrieval for answering questions
@@ -492,32 +493,17 @@ export class WebsiteCrawlerService {
             .update(knowledgeItem.content)
             .digest('hex');
 
-          // Check if content already exists and is unchanged
-          const exists = await this.knowledgeItemRepository.knowledgeItemExists(
-            organizationId,
-            chatbotConfigId,
-            knowledgeItem.id,
+          // Always store items (using delete-then-insert pattern in repository)
+          itemsToStore.push({
+            knowledgeItemId: knowledgeItem.id,
+            title: knowledgeItem.title,
+            content: knowledgeItem.content,
+            category: knowledgeItem.category,
+            sourceType: 'website_crawled' as const,
+            sourceUrl: knowledgeItem.source,
+            embedding: embedding,
             contentHash
-          );
-
-          if (!exists) {
-            itemsToStore.push({
-              knowledgeItemId: knowledgeItem.id,
-              title: knowledgeItem.title,
-              content: knowledgeItem.content,
-              category: knowledgeItem.category,
-              tags: knowledgeItem.tags || [],
-              sourceType: 'website_crawled' as const,
-              sourceUrl: knowledgeItem.source,
-              sourceMetadata: {
-                crawledAt: new Date().toISOString(),
-                originalUrl: knowledgeItem.source
-              },
-              relevanceScore: knowledgeItem.relevanceScore || 0.8,
-              embedding: embedding,
-              contentHash
-            });
-          }
+          });
         } catch (error) {
           // Continue with other items
         }
@@ -525,7 +511,7 @@ export class WebsiteCrawlerService {
 
       // Store knowledge items with content and embeddings
       if (itemsToStore.length > 0) {
-        await this.knowledgeItemRepository.storeKnowledgeItems(
+        await this.vectorKnowledgeRepository.storeKnowledgeItems(
           organizationId,
           chatbotConfigId,
           itemsToStore
@@ -554,31 +540,6 @@ export class WebsiteCrawlerService {
         }
       );
     }
-  }
-
-  /**
-   * Crawl multiple website sources in batch
-   */
-  async crawlMultipleWebsites(
-    sources: WebsiteSource[], 
-    settings: WebsiteCrawlSettings
-  ): Promise<{ results: KnowledgeItem[]; errors: Array<{ source: WebsiteSource; error: string }> }> {
-    const results: KnowledgeItem[] = [];
-    const errors: Array<{ source: WebsiteSource; error: string }> = [];
-
-    for (const source of sources) {
-      try {
-        const crawlResult = await this.crawlWebsite(source, settings);
-        results.push(...crawlResult.knowledgeItems);
-      } catch (error) {
-        errors.push({
-          source,
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    }
-
-    return { results, errors };
   }
 
   /**

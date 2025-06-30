@@ -11,7 +11,7 @@
  */
 
 import { IntentResult } from './IntentResult';
-import { UserJourneyState } from '../session-management/UserJourneyState';
+// Removed UserJourneyState import - using pure API-driven approach
 
 export interface ContextAnalysis {
   topics: string[];
@@ -22,12 +22,14 @@ export interface ContextAnalysis {
   urgency: 'low' | 'medium' | 'high';
   conversationStage: 'greeting' | 'discovery' | 'qualification' | 'closing' | 'support';
   intentResult?: IntentResult; // OpenAI's sophisticated intent classification
-  journeyState?: UserJourneyState;
+  // Removed journeyState - using pure API-driven approach
   relevantKnowledge?: Array<{
+    id: string;
     title: string;
     content: string;
     relevanceScore: number;
   }>;
+  knowledgeRetrievalThreshold?: number; // Threshold used for semantic knowledge injection
 }
 
 export interface ConversationSummary {
@@ -60,12 +62,14 @@ export class ContextAnalysisValueObject {
     public readonly urgency: 'low' | 'medium' | 'high',
     public readonly conversationStage: 'greeting' | 'discovery' | 'qualification' | 'closing' | 'support',
     public readonly intentResult?: IntentResult,
-    public readonly journeyState?: UserJourneyState,
+    // Removed journeyState parameter - using pure API-driven approach
     public readonly relevantKnowledge?: Array<{
+      id: string;
       title: string;
       content: string;
       relevanceScore: number;
-    }>
+    }>,
+    public readonly knowledgeRetrievalThreshold?: number
   ) {}
 
   /**
@@ -114,8 +118,9 @@ export class ContextAnalysisValueObject {
       urgency: this.urgency,
       conversationStage: this.conversationStage,
       intentResult: this.intentResult,
-      journeyState: this.journeyState,
-      relevantKnowledge: this.relevantKnowledge
+      // Removed journeyState - using pure API-driven approach
+      relevantKnowledge: this.relevantKnowledge,
+      knowledgeRetrievalThreshold: this.knowledgeRetrievalThreshold
     };
   }
 } 

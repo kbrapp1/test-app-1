@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-06-29T14:37:53.122Z
+// Generated: 2025-06-30T04:53:12.223Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -11,22 +11,6 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "AdvancedParametersSection",
       "BotIdentityForm",
       "OperatingHoursForm",
-      "BusinessRulesSection",
-      "EntityExtractionResults",
-      "FunctionCallDetails",
-      "IntentClassificationResults",
-      "IntentAnalysisSection",
-      "JourneyProgressionResults",
-      "JourneyProgressionSection",
-      "LeadScoringResults",
-      "LeadScoringSection",
-      "PerformanceMetricsSection",
-      "ResponseGenerationSection",
-      "UserInputSection",
-      "ContextEnhancementStep",
-      "FirstApiCallStep",
-      "LeadScoringProgressionStep",
-      "RequestPreprocessingStep",
       "CompanyInformationCard",
       "FaqManagementCard",
       "KnowledgeBaseActions",
@@ -60,11 +44,9 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "ApiResponseDetails",
       "CostAnalysis",
       "PerformanceTiming",
-      "ChatApiDebugPanel",
       "ChatConfigurationPanel",
       "ChatInterface",
       "ChatSimulator",
-      "TestScenarios",
       "CrawledPagesDisplay",
       "CrawlProgressTracker",
       "WebsiteSourcesDialogs",

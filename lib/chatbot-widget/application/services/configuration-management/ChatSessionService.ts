@@ -74,13 +74,17 @@ export class ChatSessionService {
         status: 'completed',
       });
       
-      const savedSession = await this.chatSessionRepository.save(outsideHoursSession);
+      // Create operation-specific log file for outside hours session creation
+      const outsideHoursLogFile = `session-outside-hours-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+      const savedSession = await this.chatSessionRepository.save(outsideHoursSession, outsideHoursLogFile);
       return ChatSessionMapper.toDto(savedSession);
     }
 
     // Create new session
     const chatSession = ChatSessionMapper.createDtoToDomain(createDto);
-    const savedSession = await this.chatSessionRepository.save(chatSession);
+    // Create operation-specific log file for session creation
+    const sessionCreateLogFile = `session-create-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    const savedSession = await this.chatSessionRepository.save(chatSession, sessionCreateLogFile);
     
     return ChatSessionMapper.toDto(savedSession);
   }
@@ -127,7 +131,9 @@ export class ChatSessionService {
       }
     }
 
-    const savedSession = await this.chatSessionRepository.update(updatedSession);
+    // Create operation-specific log file for session updates outside conversation context
+    const operationLogFile = `session-update-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    const savedSession = await this.chatSessionRepository.update(updatedSession, operationLogFile);
     return ChatSessionMapper.toDto(savedSession);
   }
 
@@ -171,7 +177,9 @@ export class ChatSessionService {
     }
 
     const endedSession = session.end();
-    const savedSession = await this.chatSessionRepository.update(endedSession);
+    // Create operation-specific log file for session ending operations
+    const endSessionLogFile = `session-end-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    const savedSession = await this.chatSessionRepository.update(endedSession, endSessionLogFile);
     
     return ChatSessionMapper.toDto(savedSession);
   }
@@ -188,7 +196,9 @@ export class ChatSessionService {
 
     // For escalation, we keep the session active but add a note
     const escalatedSession = session.updateActivity(); // Keep session active
-    const savedSession = await this.chatSessionRepository.update(escalatedSession);
+    // Create operation-specific log file for session escalation operations
+    const escalationLogFile = `session-escalation-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    const savedSession = await this.chatSessionRepository.update(escalatedSession, escalationLogFile);
     
     return ChatSessionMapper.toDto(savedSession);
   }
@@ -204,7 +214,9 @@ export class ChatSessionService {
     }
 
     const updatedSession = session.updateActivity();
-    await this.chatSessionRepository.update(updatedSession);
+    // Create operation-specific log file for activity updates
+    const activityLogFile = `session-activity-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    await this.chatSessionRepository.update(updatedSession, activityLogFile);
   }
 
   /**

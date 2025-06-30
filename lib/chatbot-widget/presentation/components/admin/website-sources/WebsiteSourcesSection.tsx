@@ -15,7 +15,7 @@
 import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+import { useOrganization } from '../../../../../organization/application/providers/OrganizationProvider';
 import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useWebsiteSourcesState } from '../../../hooks/useWebsiteSourcesState';
 import { WebsiteSourcesHeader } from './WebsiteSourcesHeader';

@@ -8,10 +8,10 @@
  * - Follow @golden-rule patterns exactly.
  */
 
-import { OpenAICompositionRoot } from '@/lib/openai/infrastructure/composition/OpenAICompositionRoot';
-import { OpenAIApplicationService } from '@/lib/openai/application/services/OpenAIApplicationService';
-import { logger } from '@/lib/logging';
-import { BusinessRuleViolationError } from '@/lib/errors/base';
+import { OpenAICompositionRoot } from '../../../openai/infrastructure/composition/OpenAICompositionRoot';
+import { OpenAIApplicationService } from '../../../openai/application/services/OpenAIApplicationService';
+import { logger } from '../../../logging';
+import { BusinessRuleViolationError } from '../../../errors/base';
 
 const SERVICE_NAME = 'EmbeddingBatchApplicationService';
 

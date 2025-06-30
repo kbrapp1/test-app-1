@@ -1,13 +1,12 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../supabase/server';
 
 // Repository interfaces
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
-import { IVectorRepository } from '../../domain/repositories/IVectorRepository';
-import { IKnowledgeItemRepository } from '../../domain/repositories/IKnowledgeItemRepository';
+import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 
 // Domain service interfaces
 import { IIntentClassificationService } from '../../domain/services/interfaces/IIntentClassificationService';
@@ -15,8 +14,8 @@ import { ITokenCountingService } from '../../domain/services/interfaces/ITokenCo
 
 // Application services
 import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
-import { VectorManagementService } from '../../application/services/VectorManagementService';
 import { WebsiteKnowledgeApplicationService } from '../../application/services/WebsiteKnowledgeApplicationService';
+import { VectorKnowledgeApplicationService } from '../../application/services/VectorKnowledgeApplicationService';
 
 // Application use cases
 import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessChatMessageUseCase';
@@ -24,39 +23,44 @@ import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCa
 import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
 
 // Infrastructure services
-import { SupabaseVectorRepository } from '../persistence/supabase/SupabaseVectorRepository';
-import { SupabaseKnowledgeItemRepository } from '../persistence/supabase/SupabaseKnowledgeItemRepository';
+import { SupabaseVectorKnowledgeRepository } from '../persistence/supabase/SupabaseVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';
 import { WebsiteCrawlerService } from '../providers/knowledge-services/WebsiteCrawlerService';
-import { EnhancedKnowledgeRetrievalService } from '../providers/knowledge-services/EnhancedKnowledgeRetrievalService';
+
+// Infrastructure providers
 import { OpenAIProvider } from '../providers/openai/OpenAIProvider';
 
-// Composition services
+// Internal composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
 import { DomainServiceCompositionService } from './DomainServiceCompositionService';
 import { ApplicationServiceCompositionService } from './ApplicationServiceCompositionService';
 import { UseCaseCompositionService } from './UseCaseCompositionService';
 
+// Import centralized logging service
+import { IChatbotLoggingService } from '../../domain/services/interfaces/IChatbotLoggingService';
+import { ChatbotFileLoggingService } from '../providers/logging/ChatbotFileLoggingService';
+
 /**
- * Composition Root for Chatbot Widget Domain
+ * Main Composition Root for Chatbot Widget Domain
  * 
  * AI INSTRUCTIONS:
- * - Following @golden-rule.mdc DDD composition root patterns
- * - Single composition root for entire chatbot widget bounded context
- * - Clean separation of concerns with focused service management
- * - Eliminates circular dependencies by consolidating all services
- * - Single responsibility for high-level coordination
+ * - Central dependency injection container for the chatbot widget domain
+ * - Manages singleton instances and proper dependency wiring
+ * - Uses unified vector table for knowledge storage and retrieval
+ * - Provides clean separation between infrastructure and domain layers
+ * - Supports testing through configurable client injection
  */
 export class ChatbotWidgetCompositionRoot {
-  // Vector-related singletons
-  private static vectorRepository: IVectorRepository | null = null;
-  private static knowledgeItemRepository: IKnowledgeItemRepository | null = null;
+  // Infrastructure singletons
+  private static vectorKnowledgeRepository: IVectorKnowledgeRepository | null = null;
   private static embeddingService: OpenAIEmbeddingService | null = null;
   private static openAIProvider: OpenAIProvider | null = null;
   private static websiteCrawlerService: WebsiteCrawlerService | null = null;
-  private static enhancedKnowledgeRetrievalService: EnhancedKnowledgeRetrievalService | null = null;
-  private static vectorManagementService: VectorManagementService | null = null;
+  private static vectorKnowledgeApplicationService: VectorKnowledgeApplicationService | null = null;
   private static websiteKnowledgeApplicationService: WebsiteKnowledgeApplicationService | null = null;
+
+  // Singleton instances
+  private static loggingService: IChatbotLoggingService | null = null;
 
   // Repository access methods
   static getChatbotConfigRepository(): IChatbotConfigRepository {
@@ -75,20 +79,12 @@ export class ChatbotWidgetCompositionRoot {
     return RepositoryCompositionService.getLeadRepository();
   }
 
-  static getVectorRepository(): IVectorRepository {
-    if (!this.vectorRepository) {
+  static getVectorKnowledgeRepository(): IVectorKnowledgeRepository {
+    if (!this.vectorKnowledgeRepository) {
       const supabase = createClient();
-      this.vectorRepository = new SupabaseVectorRepository(supabase);
+      this.vectorKnowledgeRepository = new SupabaseVectorKnowledgeRepository(supabase);
     }
-    return this.vectorRepository;
-  }
-
-  static getKnowledgeItemRepository(): IKnowledgeItemRepository {
-    if (!this.knowledgeItemRepository) {
-      const supabase = createClient();
-      this.knowledgeItemRepository = new SupabaseKnowledgeItemRepository(supabase);
-    }
-    return this.knowledgeItemRepository;
+    return this.vectorKnowledgeRepository;
   }
 
   // Vector and AI service methods
@@ -128,50 +124,34 @@ export class ChatbotWidgetCompositionRoot {
   static getWebsiteCrawlerService(): WebsiteCrawlerService {
     if (!this.websiteCrawlerService) {
       const openAIProvider = this.getOpenAIProvider();
-      const knowledgeItemRepository = this.getKnowledgeItemRepository();
+      const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
       const embeddingService = this.getEmbeddingService();
       this.websiteCrawlerService = new WebsiteCrawlerService(
         openAIProvider,
-        knowledgeItemRepository,
+        vectorKnowledgeRepository,
         embeddingService
       );
     }
     return this.websiteCrawlerService;
   }
 
-  static getEnhancedKnowledgeRetrievalService(): EnhancedKnowledgeRetrievalService {
-    if (!this.enhancedKnowledgeRetrievalService) {
-      const knowledgeItemRepository = this.getKnowledgeItemRepository();
+  static getVectorKnowledgeApplicationService(): VectorKnowledgeApplicationService {
+    if (!this.vectorKnowledgeApplicationService) {
+      const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
       const embeddingService = this.getEmbeddingService();
-      const vectorManagementService = this.getVectorManagementService();
-      this.enhancedKnowledgeRetrievalService = new EnhancedKnowledgeRetrievalService(
-        knowledgeItemRepository,
-        embeddingService,
-        vectorManagementService
-      );
-    }
-    return this.enhancedKnowledgeRetrievalService;
-  }
-
-  static getVectorManagementService(): VectorManagementService {
-    if (!this.vectorManagementService) {
-      const vectorRepository = this.getVectorRepository();
-      const embeddingService = this.getEmbeddingService();
-      this.vectorManagementService = new VectorManagementService(
-        vectorRepository,
+      this.vectorKnowledgeApplicationService = new VectorKnowledgeApplicationService(
+        vectorKnowledgeRepository,
         embeddingService
       );
     }
-    return this.vectorManagementService;
+    return this.vectorKnowledgeApplicationService;
   }
 
   static getWebsiteKnowledgeApplicationService(): WebsiteKnowledgeApplicationService {
     if (!this.websiteKnowledgeApplicationService) {
       const websiteCrawlerService = this.getWebsiteCrawlerService();
-      const vectorManagementService = this.getVectorManagementService();
       this.websiteKnowledgeApplicationService = new WebsiteKnowledgeApplicationService(
-        websiteCrawlerService,
-        vectorManagementService
+        websiteCrawlerService
       );
     }
     return this.websiteKnowledgeApplicationService;
@@ -217,6 +197,11 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getDebugInformationService();
   }
 
+  // Knowledge retrieval service access method
+  static getKnowledgeRetrievalService(chatbotConfig?: any) {
+    return DomainServiceCompositionService.getKnowledgeRetrievalService(chatbotConfig);
+  }
+
   // Application service access methods
   static getLeadManagementService(): LeadManagementService {
     return ApplicationServiceCompositionService.getLeadManagementService();
@@ -241,13 +226,12 @@ export class ChatbotWidgetCompositionRoot {
   }
 
   static resetForTesting(): void {
-    // Reset vector-related singletons
-    this.vectorRepository = null;
+    // Reset infrastructure singletons
+    this.vectorKnowledgeRepository = null;
     this.embeddingService = null;
     this.openAIProvider = null;
     this.websiteCrawlerService = null;
-    this.enhancedKnowledgeRetrievalService = null;
-    this.vectorManagementService = null;
+    this.vectorKnowledgeApplicationService = null;
     this.websiteKnowledgeApplicationService = null;
     
     // Reset composition services
@@ -264,5 +248,20 @@ export class ChatbotWidgetCompositionRoot {
 
   static shouldTriggerLeadCapture(decision: any) {
     return DomainServiceCompositionService.shouldTriggerLeadCapture(decision);
+  }
+
+  /**
+   * Get centralized logging service
+   * 
+   * AI INSTRUCTIONS:
+   * - Singleton pattern for consistent logging across domain
+   * - Return same instance for correlation and performance
+   * - Handle environment configuration automatically
+   */
+  static getLoggingService(): IChatbotLoggingService {
+    if (!this.loggingService) {
+      this.loggingService = new ChatbotFileLoggingService();
+    }
+    return this.loggingService;
   }
 } 

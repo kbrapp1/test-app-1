@@ -1,12 +1,14 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../supabase/server';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatMessageCrudService } from './services/ChatMessageCrudService';
 import { ChatMessageAnalyticsService } from './services/ChatMessageAnalyticsService';
 import { ChatMessageQueryService } from './services/ChatMessageQueryService';
 import { ChatMessageMapper } from './mappers/ChatMessageMapper';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../errors/base';
+import { IChatbotLoggingService, IOperationLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
+import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCompositionRoot';
 
 /**
  * Refactored ChatMessage Repository Implementation
@@ -21,12 +23,16 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   private analyticsService: ChatMessageAnalyticsService;
   private queryService: ChatMessageQueryService;
   private supabase: SupabaseClient;
+  private readonly loggingService: IChatbotLoggingService;
 
   constructor(supabaseClient?: SupabaseClient) {
     this.supabase = supabaseClient ?? createClient();
     this.crudService = new ChatMessageCrudService(this.supabase);
     this.analyticsService = new ChatMessageAnalyticsService(this.supabase);
     this.queryService = new ChatMessageQueryService(this.supabase);
+    
+    // Initialize centralized logging service
+    this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
   }
 
   // Basic CRUD operations - delegated to CrudService
@@ -58,21 +64,49 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   }
 
   // CRUD operations continued - delegated to CrudService
-  async save(message: ChatMessage, sharedLogFile?: string): Promise<ChatMessage> {
+  async save(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
     // Check if message already exists
     const existingMessage = await this.findById(message.id);
     
     if (existingMessage) {
       // Message exists - update it
-      return this.update(message);
+      return this.update(message, sharedLogFile);
     } else {
       // Message doesn't exist - create it
       return this.create(message, sharedLogFile);
     }
   }
 
-  async update(message: ChatMessage): Promise<ChatMessage> {
-    return this.crudService.update(message);
+  async update(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
+    // Create operation logger for database operations
+    const logger = this.loggingService.createOperationLogger(
+      'db-update-message',
+      sharedLogFile,
+      {
+        operation: 'updateMessage',
+        messageId: message.id
+      }
+    );
+
+    // Create session logger for detailed database logging with shared log file
+    const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
+    sessionLogger.logHeader('💬 DATABASE OPERATION - UPDATE MESSAGE');
+    
+    try {
+      logger.start({ messageId: message.id, sessionId: message.sessionId });
+      const result = await this.crudService.update(message);
+      logger.complete(result);
+      sessionLogger.logStep('Message updated successfully');
+      return result;
+    } catch (error) {
+      sessionLogger.logError(error as Error, {
+        operation: 'updateMessage',
+        messageId: message.id,
+        sessionId: message.sessionId
+      });
+      logger.fail(error as Error);
+      throw error;
+    }
   }
 
   async delete(id: string): Promise<void> {
@@ -155,55 +189,30 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
     return this.analyticsService.getResponseTimeMetrics(organizationId, dateFrom, dateTo, groupBy);
   }
 
-  async create(message: ChatMessage, sharedLogFile?: string): Promise<ChatMessage> {
-    // Check if file logging is enabled first, before any file operations
-    const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-    
-    let logEntry: (message: string) => void = () => {}; // Default no-op function
-    
-    if (fileLoggingEnabled) {
-      // Only import fs and set up logging if enabled
-      const fs = require('fs');
-      const path = require('path');
-      const timestamp = new Date().toISOString();
-      const logDir = path.join(process.cwd(), 'logs');
-      
-      // Ensure logs directory exists only when logging is enabled
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
+  async create(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
+    // Create operation logger for database operations
+    const logger = this.loggingService.createOperationLogger(
+      'db-create-message',
+      sharedLogFile,
+      {
+        operation: 'createMessage',
+        messageId: message.id
       }
-      
-      let logFile: string;
-      if (sharedLogFile) {
-        // Use the shared log file directly (it should be a full filename)
-        logFile = path.join(logDir, sharedLogFile);
-      } else {
-        // Create new log file only if no shared file provided
-        const logFileName = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
-        logFile = path.join(logDir, logFileName);
-      }
-      
-      // Create active logging function when enabled
-      logEntry = (logMessage: string) => {
-        const logLine = `[${timestamp}] ${logMessage}\n`;
-        fs.appendFileSync(logFile, logLine);
-      };
-    }
-    
-    logEntry('\n💬 =================================');
-    logEntry('💬 DATABASE OPERATION - CREATE MESSAGE');
-    logEntry('💬 =================================');
+    );
+
+    // Create session logger for detailed database logging with shared log file
+    const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
+    sessionLogger.logHeader('💬 DATABASE OPERATION - CREATE MESSAGE');
     
     try {
       const insertData = ChatMessageMapper.toInsert(message);
       
-      logEntry('📤 SQL INSERT OPERATION:');
-      logEntry('🔗 Table: chat_messages');
-      logEntry('📋 Insert Data:');
-      logEntry(JSON.stringify(insertData, null, 2));
+      sessionLogger.logStep('Preparing SQL INSERT operation');
+      sessionLogger.logMessage(`Table: chat_messages`);
+      sessionLogger.logRaw(JSON.stringify(insertData, null, 2));
       
       const startTime = Date.now();
-      logEntry(`⏱️  Database Call Started: ${new Date().toISOString()}`);
+      logger.start({ messageId: message.id, sessionId: message.sessionId });
 
       const { data, error } = await this.supabase
         .from('chat_messages')
@@ -212,28 +221,24 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
         .single();
 
       const duration = Date.now() - startTime;
-      logEntry(`✅ Database Call Completed: ${new Date().toISOString()}`);
-      logEntry(`⚡ Duration: ${duration}ms`);
+      sessionLogger.logStep(`Database call completed in ${duration}ms`);
 
       if (error) {
-        logEntry('❌ DATABASE ERROR:');
-        logEntry(JSON.stringify({
+        sessionLogger.logError(new DatabaseError(`Failed to create chat message: ${error.message}`), {
           code: error.code,
           message: error.message,
           details: error.details,
-          hint: error.hint,
-          timestamp: new Date().toISOString()
-        }, null, 2));
+          hint: error.hint
+        });
+        logger.fail(new DatabaseError(`Failed to create chat message: ${error.message}`), error);
         throw new DatabaseError(`Failed to create chat message: ${error.message}`);
       }
 
-      logEntry('📥 DATABASE RESPONSE:');
-      logEntry(JSON.stringify(data, null, 2));
+      sessionLogger.logRaw(JSON.stringify(data, null, 2));
 
       const createdMessage = ChatMessageMapper.toDomain(data);
       
-      logEntry('✨ MAPPED DOMAIN ENTITY:');
-      logEntry(JSON.stringify({
+      sessionLogger.logRaw(JSON.stringify({
         id: createdMessage.id,
         messageType: createdMessage.messageType,
         content: createdMessage.content.substring(0, 100) + (createdMessage.content.length > 100 ? '...' : ''),
@@ -241,24 +246,16 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
         timestamp: createdMessage.timestamp.toISOString()
       }, null, 2));
 
-      logEntry('💬 =================================');
-      logEntry('💬 MESSAGE CREATED SUCCESSFULLY');
-      logEntry('💬 =================================\n');
-
+      sessionLogger.logStep('Message created successfully');
+      logger.complete(createdMessage, { duration });
       return createdMessage;
     } catch (error) {
-      logEntry('\n❌ =================================');
-      logEntry('❌ DATABASE MESSAGE CREATE FAILED');
-      logEntry('❌ =================================');
-      logEntry('🚨 Error Details:');
-      logEntry(JSON.stringify({
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        timestamp: new Date().toISOString()
-      }, null, 2));
-      logEntry('❌ =================================\n');
-      
+      sessionLogger.logError(error as Error, {
+        operation: 'createMessage',
+        messageId: message.id,
+        sessionId: message.sessionId
+      });
+      logger.fail(error as Error);
       throw error;
     }
   }

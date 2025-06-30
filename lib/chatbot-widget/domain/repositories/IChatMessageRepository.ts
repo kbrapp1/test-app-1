@@ -34,12 +34,12 @@ export interface IChatMessageRepository {
   /**
    * Save a new message
    */
-  save(message: ChatMessage, sharedLogFile?: string): Promise<ChatMessage>;
+  save(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage>;
 
   /**
    * Update an existing message
    */
-  update(message: ChatMessage): Promise<ChatMessage>;
+  update(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage>;
 
   /**
    * Delete a message

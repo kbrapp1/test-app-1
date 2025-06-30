@@ -10,10 +10,10 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../../supabase/server';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { ChatMessageMapper, RawChatMessageDbRecord } from '../mappers/ChatMessageMapper';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../../errors/base';
 import { 
   AnalyticsCalculationService,
   ResponseTimeAnalyticsService,

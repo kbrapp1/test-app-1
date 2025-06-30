@@ -20,6 +20,7 @@ import { ConversationMetricsService } from '../conversation-management/Conversat
 import { LeadCaptureDecisionService } from '../lead-management/LeadCaptureDecisionService';
 import { SessionUpdateService } from '../configuration-management/SessionUpdateService';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
+import { ConversationFlowService } from '../../../domain/services/conversation-management/ConversationFlowService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -64,7 +65,9 @@ export class MessageProcessingWorkflowService {
     private readonly debugInformationService?: IDebugInformationService
   ) {
     this.conversationMetricsService = new ConversationMetricsService();
-    this.leadCaptureDecisionService = new LeadCaptureDecisionService();
+    // Create ConversationFlowService for LeadCaptureDecisionService
+    const conversationFlowService = new ConversationFlowService();
+    this.leadCaptureDecisionService = new LeadCaptureDecisionService(conversationFlowService);
     this.sessionUpdateService = new SessionUpdateService(sessionRepository);
   }
 
@@ -102,15 +105,11 @@ export class MessageProcessingWorkflowService {
     const finalSession = await this.sessionUpdateService.saveSession(session, sharedLogFile);
 
     // Calculate metrics and determine actions
-    const aiFlowContext = enhancedContext?.conversationFlow ? { aiFlowDecision: enhancedContext.conversationFlow } : undefined;
+    // Create AI flow context from available enhanced context data
+    const aiFlowContext = this.createAIFlowContext(enhancedContext);
     const shouldCaptureLeadInfo = this.leadCaptureDecisionService.shouldTriggerLeadCapture(finalSession, config, aiFlowContext);
     const conversationMetrics = await this.conversationMetricsService.calculateConversationMetrics(finalSession, allMessages);
-    const suggestedNextActions = this.leadCaptureDecisionService.generateSuggestedActions(
-      finalSession,
-      config,
-      shouldCaptureLeadInfo,
-      aiFlowContext
-    );
+    // Removed suggestedNextActions - using log file tracking only
 
     // Update debug session with processing time
     const totalProcessingTime = Date.now() - startTime;
@@ -121,7 +120,7 @@ export class MessageProcessingWorkflowService {
       userMessage,
       botMessage,
       shouldCaptureLeadInfo,
-      suggestedNextActions,
+      suggestedNextActions: [], // Empty array - using log file tracking only
       conversationMetrics,
       intentAnalysis: this.buildIntentAnalysis(enhancedContext),
       journeyState: this.buildJourneyState(enhancedContext),
@@ -238,5 +237,28 @@ export class MessageProcessingWorkflowService {
     if (totalScore >= 50) return 'interested';
     if (totalScore >= 30) return 'engaged';
     return 'initial';
+  }
+
+  /**
+   * Create AI flow context from enhanced context data
+   * Maps available enhanced context to AI flow decision format
+   */
+  private createAIFlowContext(enhancedContext: any): { aiFlowDecision: any } {
+    // Use the LeadCaptureDecisionService's createAIFlowContext method
+    // This ensures consistency and proper mapping
+    return this.leadCaptureDecisionService.createAIFlowContext(enhancedContext);
+  }
+
+  private determineConversationPhase(enhancedContext: any): string {
+    if (enhancedContext.leadScore?.totalScore >= 70) return 'qualification';
+    if (enhancedContext.leadScore?.totalScore >= 40) return 'discovery';
+    return 'introduction';
+  }
+
+  private determineEngagementLevel(enhancedContext: any): string {
+    const confidence = enhancedContext.unifiedAnalysis?.primaryConfidence || 0;
+    if (confidence >= 0.8) return 'high';
+    if (confidence >= 0.5) return 'medium';
+    return 'low';
   }
 } 

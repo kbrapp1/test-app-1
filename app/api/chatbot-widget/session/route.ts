@@ -3,11 +3,12 @@ import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { ChatSession } from '@/lib/chatbot-widget/domain/entities/ChatSession';
+import { InitializeChatSessionUseCase } from '@/lib/chatbot-widget/application/use-cases/InitializeChatSessionUseCase';
+import { BusinessRuleViolationError, ResourceNotFoundError } from '@/lib/errors/base';
 
 /**
  * POST /api/chatbot-widget/session
- * Initialize a new chat session
+ * Initialize a new chat session with knowledge cache warming
  */
 async function postHandler(
   request: NextRequest,
@@ -18,51 +19,75 @@ async function postHandler(
   const { 
     chatbotConfigId,
     visitorId,
-    initialContext
+    initialContext,
+    warmKnowledgeCache = true
   } = body;
 
-  // Validate required fields
-  if (!chatbotConfigId) {
-    return NextResponse.json(
-      { error: 'Missing required field: chatbotConfigId' },
-      { status: 400 }
+  try {
+    // Get repositories and config first
+    const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
+    const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
+    
+    // Get chatbot config to initialize knowledge retrieval service with proper context
+    const chatbotConfig = await configRepository.findById(chatbotConfigId);
+    if (!chatbotConfig) {
+      return NextResponse.json(
+        { error: 'Chatbot configuration not found', code: 'RESOURCE_NOT_FOUND' },
+        { status: 404 }
+      );
+    }
+
+    // Get knowledge retrieval service with chatbot config for cache warming
+    const knowledgeRetrievalService = ChatbotWidgetCompositionRoot.getKnowledgeRetrievalService(chatbotConfig);
+
+    // Create use case with dependencies
+    const initializeSessionUseCase = new InitializeChatSessionUseCase(
+      sessionRepository,
+      configRepository,
+      knowledgeRetrievalService
     );
+
+    // Execute session initialization with cache warming
+    const result = await initializeSessionUseCase.execute({
+      chatbotConfigId,
+      visitorId,
+      initialContext,
+      warmKnowledgeCache
+    });
+
+    return NextResponse.json({
+      sessionId: result.session.id,
+      chatbotConfig: {
+        id: result.chatbotConfig.id,
+        name: result.chatbotConfig.name,
+        description: result.chatbotConfig.description,
+        isActive: result.chatbotConfig.isActive
+      },
+      visitorId: result.session.visitorId,
+      startedAt: result.session.startedAt,
+      cacheWarmed: result.cacheWarmed,
+      cacheWarmingTimeMs: result.cacheWarmingTimeMs
+    });
+
+  } catch (error) {
+    // Handle domain-specific errors
+    if (error instanceof BusinessRuleViolationError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof ResourceNotFoundError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: 404 }
+      );
+    }
+
+    // Re-throw unexpected errors for error middleware
+    throw error;
   }
-
-  // Get repositories from composition root
-  const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
-  const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
-
-  // Verify chatbot config exists and is active
-  const config = await configRepository.findById(chatbotConfigId);
-  if (!config || !config.isActive) {
-    return NextResponse.json(
-      { error: 'Chatbot configuration not found or inactive' },
-      { status: 404 }
-    );
-  }
-
-  // Create new session using domain entity
-  const session = ChatSession.create(
-    chatbotConfigId,
-    visitorId || `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    initialContext
-  );
-
-  // Save to repository
-  const savedSession = await sessionRepository.save(session);
-
-  return NextResponse.json({
-    sessionId: savedSession.id,
-    chatbotConfig: {
-      id: config.id,
-      name: config.name,
-      description: config.description,
-      isActive: config.isActive
-    },
-    visitorId: savedSession.visitorId,
-    startedAt: savedSession.startedAt
-  });
 }
 
 /**

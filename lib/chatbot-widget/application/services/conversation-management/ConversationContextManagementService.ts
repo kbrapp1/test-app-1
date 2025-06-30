@@ -36,7 +36,8 @@ export class ConversationContextManagementService {
     sessionId: string, 
     newUserMessage: ChatMessage,
     contextWindow: ConversationContextWindow,
-    loggingContext?: { logEntry: (message: string) => void }
+    loggingContext?: { logEntry: (message: string) => void },
+    sharedLogFile?: string
   ): Promise<TokenAwareContextResult> {
     // Get all messages for this session
     const allMessages = await this.messageRepository.findBySessionId(sessionId);
@@ -75,7 +76,13 @@ export class ConversationContextManagementService {
       // Update session with new summary
       if (session) {
         const updatedSession = session.updateConversationSummary(summary);
-        await this.sessionRepository.update(updatedSession);
+        if (sharedLogFile) {
+          await this.sessionRepository.update(updatedSession, sharedLogFile);
+        } else {
+          // Create context-specific log file if no shared log file provided
+          const contextLogFile = `context-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+          await this.sessionRepository.update(updatedSession, contextLogFile);
+        }
       }
 
       return {

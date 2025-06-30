@@ -100,8 +100,6 @@ export async function addWebsiteSource(
     }
     
     // Log the actual error for debugging
-    console.error('Unexpected error in addWebsiteSource:', error);
-    
     return {
       success: false,
       error: {
@@ -120,6 +118,7 @@ export async function removeWebsiteSource(
 ): Promise<ActionResult> {
   try {
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
+    const knowledgeRetrievalService = ChatbotWidgetCompositionRoot.getVectorKnowledgeApplicationService();
     
     // Get existing config
     const existingConfig = await configRepository.findById(configId);
@@ -134,7 +133,29 @@ export async function removeWebsiteSource(
       };
     }
 
-    // Remove from knowledge base
+    // Find the website source to get its URL for cleanup
+    const websiteSource = existingConfig.knowledgeBase.websiteSources.find(ws => ws.id === sourceId);
+    
+    if (!websiteSource) {
+      return {
+        success: false,
+        error: {
+          code: 'SOURCE_NOT_FOUND',
+          message: 'Website source not found',
+          severity: 'HIGH'
+        }
+      };
+    }
+
+    // Clean up knowledge items and vectors for this website source
+    await knowledgeRetrievalService.deleteKnowledgeItemsBySource(
+      organizationId,
+      configId,
+      'website_crawled',
+      websiteSource.url
+    );
+
+    // Remove from knowledge base configuration
     const updatedKnowledgeBase = existingConfig.knowledgeBase.removeWebsiteSource(sourceId);
     const updatedConfig = existingConfig.updateKnowledgeBase(updatedKnowledgeBase);
     
@@ -227,7 +248,7 @@ export async function crawlWebsiteSource(
     return { 
       success: true, 
       data: { 
-        itemsProcessed: result.knowledgeItems?.length || 0,
+        itemsProcessed: result.crawledPages?.filter(page => page.status === 'success').length || 0,
         crawledPages: result.crawledPages || []
       }
     };
@@ -391,9 +412,8 @@ export async function debugCleanupWebsiteSources(
   organizationId: string
 ): Promise<ActionResult> {
   try {
-    console.log('🧹 Starting website sources cleanup...');
-    
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
+    const knowledgeRetrievalService = ChatbotWidgetCompositionRoot.getVectorKnowledgeApplicationService();
     
     // Get existing config
     const existingConfig = await configRepository.findById(configId);
@@ -408,7 +428,12 @@ export async function debugCleanupWebsiteSources(
       };
     }
 
-    console.log('📋 Current website sources:', existingConfig.knowledgeBase.websiteSources);
+    // Clean up ALL website-crawled knowledge items and vectors
+    const deletedItemsCount = await knowledgeRetrievalService.deleteKnowledgeItemsBySource(
+      organizationId,
+      configId,
+      'website_crawled'
+    );
 
     // Create a new knowledge base with empty website sources
     const cleanedKnowledgeBase = KnowledgeBase.create({
@@ -423,18 +448,17 @@ export async function debugCleanupWebsiteSources(
     const updatedConfig = existingConfig.updateKnowledgeBase(cleanedKnowledgeBase);
     await configRepository.update(updatedConfig);
     
-    console.log('✅ Website sources cleared from database');
-    
     revalidatePath('/ai-playground/chatbot-widget/website-sources');
     revalidatePath('/ai-playground/chatbot-widget/knowledge');
     
     return { 
       success: true,
-      data: { message: 'Website sources cleared successfully' }
+      data: { 
+        message: 'Website sources cleared successfully',
+        deletedItems: deletedItemsCount
+      }
     };
   } catch (error) {
-    console.error('💥 Error during cleanup:', error);
-    
     if (error instanceof DomainError) {
       return {
         success: false,

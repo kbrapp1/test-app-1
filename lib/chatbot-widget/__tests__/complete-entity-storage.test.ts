@@ -138,8 +138,8 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      // Generate AI response (this triggers entity extraction) - no log file for tests
-      const result = await processingService.generateAIResponse(analysisResult);
+      // Generate AI response (this triggers entity extraction) - test log file for tests
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify the intent service was called
       expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalled();
@@ -189,7 +189,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
       // Override the mock to return specific test data
       mockIntentService.processChatbotInteractionComplete.mockResolvedValueOnce(mockUnifiedResult);
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
              // Verify the service processed the combined data
        expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalledWith(
@@ -213,7 +213,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // The actual entity storage verification would need to check the session's
       // contextData.accumulatedEntities structure. Since this is a complex integration
@@ -232,7 +232,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      await processingService.generateAIResponse(analysisResult);
+      await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify the service processed sentiment data
       expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalled();
@@ -253,7 +253,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify conversation flow processing
       expect(result.enhancedContext.unifiedAnalysis).toHaveProperty('entities');
@@ -273,7 +273,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
              // Verify response data processing
        expect(result.enhancedContext).toHaveProperty('callToAction');
@@ -338,7 +338,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify boolean processing completed
       expect(result).toBeDefined();
@@ -357,7 +357,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify processing completed with entity counting
       expect(result.session).toBeDefined();
@@ -378,7 +378,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify 2025 best practice compliance:
       // 1. Single API call processed successfully
@@ -405,7 +405,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify functionality preservation
       expect(result).toHaveProperty('session');
@@ -450,7 +450,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      const result = await processingService.generateAIResponse(analysisResult);
+      const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify graceful handling of missing data
       expect(result).toBeDefined();

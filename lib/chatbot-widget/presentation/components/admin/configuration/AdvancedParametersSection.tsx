@@ -37,7 +37,7 @@ import { IntentEntitiesSection } from '../parameter-sections/IntentEntitiesSecti
 import { ConversationFlowSection } from '../parameter-sections/ConversationFlowSection';
 import { PerformanceSection } from '../parameter-sections/PerformanceSection';
 import { DomainConstantsSection } from '../parameter-sections/DomainConstantsSection';
-import { BusinessRulesSection } from '../parameter-sections/BusinessRulesSection';
+// Removed BusinessRulesSection import - component deleted per user requirements
 
 const TAB_CONFIGS: TabConfig[] = [
   { id: 'ai-config', label: 'AI Config', icon: Brain },
@@ -171,15 +171,14 @@ export function AdvancedParametersSection() {
           <DomainConstantsSection />
         </TabsContent>
 
-        {/* Business Rules Tab */}
+        {/* Business Rules Tab - Removed per user requirements */}
         <TabsContent value="business-rules" className="space-y-4">
-          <BusinessRulesSection 
-            config={existingConfig} 
-            onUpdate={(updates) => {
-              // AI-driven business rules don't need parameter updates
-              // This is just for interface compatibility
-            }} 
-          />
+          <div className="p-4 border rounded-lg bg-muted/50">
+            <p className="text-sm text-muted-foreground">
+              Business rules are now handled purely through API-driven decisions and log file tracking.
+              No manual business rule configuration is available.
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
 

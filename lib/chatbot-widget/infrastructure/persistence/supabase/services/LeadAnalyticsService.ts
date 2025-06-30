@@ -11,7 +11,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError } from '../../../../../errors/base';
 import { Lead } from '../../../../domain/entities/Lead';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';

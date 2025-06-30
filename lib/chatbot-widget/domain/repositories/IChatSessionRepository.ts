@@ -45,12 +45,12 @@ export interface IChatSessionRepository {
   /**
    * Save a new chat session
    */
-  save(session: ChatSession): Promise<ChatSession>;
+  save(session: ChatSession, sharedLogFile?: string): Promise<ChatSession>;
 
   /**
    * Update an existing chat session
    */
-  update(session: ChatSession): Promise<ChatSession>;
+  update(session: ChatSession, sharedLogFile?: string): Promise<ChatSession>;
 
   /**
    * Delete a chat session and related data

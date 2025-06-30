@@ -32,9 +32,9 @@ import { ConversationMetrics } from '../services/conversation-management/Convers
 import { ConversationContextManagementService } from '../services/conversation-management/ConversationContextManagementService';
 import { SessionUpdateService } from '../services/configuration-management/SessionUpdateService';
 import { ConversationContextWindow } from '../../domain/value-objects/session-management/ConversationContextWindow';
-import fs from 'fs';
-import path from 'path';
 import { DomainServiceCompositionService } from '../../infrastructure/composition/DomainServiceCompositionService';
+import { IChatbotLoggingService, ISessionLogger } from '../../domain/services/interfaces/IChatbotLoggingService';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -80,6 +80,7 @@ export class ProcessChatMessageUseCase {
   private readonly processingService: ChatMessageProcessingService;
   private readonly sessionUpdateService: SessionUpdateService;
   private readonly contextWindow: ConversationContextWindow;
+  private readonly loggingService: IChatbotLoggingService;
   private sharedLogFile?: string;
 
   constructor(
@@ -127,52 +128,21 @@ export class ProcessChatMessageUseCase {
       summaryTokens: 300 // Better conversation summarization
     });
 
-    // Logs directory will be created only when needed (when CHATBOT_FILE_LOGGING !== 'false')
+    // Initialize centralized logging service
+    this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
   }
 
-  private writeLog(message: string): void {
-    if (!this.sharedLogFile) return;
-    
-    // Optimized logging: Check environment variable once and return appropriate function
-    const createLogFunction = () => {
-      const fileLoggingEnabled = process.env.CHATBOT_FILE_LOGGING !== 'false';
-      
-      if (!fileLoggingEnabled) {
-        // Return no-op function when logging disabled - zero overhead
-        return () => {};
-      }
-      
-      // Return active logging function when enabled
-      return (logMessage: string) => {
-        const timestamp = new Date().toISOString();
-        const logEntry = `[${timestamp}] ${logMessage}\n`;
-        const logDir = path.join(process.cwd(), 'logs');
-        const logFilePath = path.join(logDir, this.sharedLogFile!);
-        
-        try {
-          fs.appendFileSync(logFilePath, logEntry);
-        } catch (error) {
-          console.error('Failed to write to log file:', error);
-        }
-      };
-    };
-    
-    const logFunction = createLogFunction();
-    logFunction(message);
-  }
 
-  private logObject(label: string, obj: any): void {
-    this.writeLog(`${label}:`);
-    this.writeLog(JSON.stringify(obj, null, 2));
-    this.writeLog('-'.repeat(40));
-  }
 
-  private async analyzeConversationContext(messageContext: any): Promise<any> {
+  private async analyzeConversationContext(
+    messageContext: any,
+    logger: ISessionLogger
+  ): Promise<any> {
     const { session, config, userMessage } = messageContext;
 
     // Create logging context for advanced context intelligence
     const loggingContext = {
-      logEntry: (message: string) => this.writeLog(message)
+      logEntry: (message: string) => logger.logMessage(message)
     };
 
     // Get token-aware messages for context with advanced logging
@@ -180,7 +150,8 @@ export class ProcessChatMessageUseCase {
       session.id, 
       userMessage, 
       this.contextWindow,
-      loggingContext
+      loggingContext,
+      this.sharedLogFile
     );
 
     // AI INSTRUCTIONS: Get enhanced orchestrator with chatbot config to trigger vector embeddings pipeline
@@ -214,13 +185,21 @@ export class ProcessChatMessageUseCase {
     // Create shared log file for this entire user prompt processing
     this.sharedLogFile = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
     
-    // Initialize the shared log file
-    this.writeLog('='.repeat(80));
-    this.writeLog(`CHATBOT PROCESSING LOG - ${new Date().toISOString()}`);
-    this.writeLog('='.repeat(80));
+    // Create session logger with context
+    const logger = this.loggingService.createSessionLogger(
+      request.sessionId,
+      this.sharedLogFile,
+      {
+        sessionId: request.sessionId,
+        operation: 'process-chat-message',
+        organizationId: request.organizationId
+      }
+    );
     
-    this.writeLog(`\n🚀 STARTING CHAT MESSAGE PROCESSING`);
-    this.logObject('📥 INCOMING REQUEST', {
+    logger.logHeader(`CHATBOT PROCESSING LOG - ${new Date().toISOString()}`);
+    
+    logger.logMessage('🚀 STARTING CHAT MESSAGE PROCESSING');
+    logger.logMessage('📥 INCOMING REQUEST', {
       sessionId: request.sessionId,
       userMessage: request.userMessage,
       timestamp: new Date().toISOString()
@@ -228,10 +207,11 @@ export class ProcessChatMessageUseCase {
     
     try {
       // 1. Initialize workflow and validate prerequisites
-      this.writeLog('\n\n📋 STEP 1: Initialize workflow and validate prerequisites');
+      logger.logRaw('');
+      logger.logRaw('📋 STEP 1: Initialize workflow and validate prerequisites');
       const workflowContext = await this.workflowService.initializeWorkflow(request, this.sharedLogFile);
       
-      this.logObject('🔧 WORKFLOW CONTEXT', {
+      logger.logMessage('🔧 WORKFLOW CONTEXT', {
         sessionId: workflowContext.session.id,
         sessionStatus: workflowContext.session.status,
         configId: workflowContext.config.id,
@@ -240,13 +220,14 @@ export class ProcessChatMessageUseCase {
       });
 
       // 2. Process user message and update session
-      this.writeLog('\n\n📝 STEP 2: Process user message and update session');
+      logger.logRaw('');
+      logger.logRaw('📝 STEP 2: Process user message and update session');
       const messageContext = await this.processingService.processUserMessage(
         workflowContext,
         request
       );
       
-      this.logObject('💬 MESSAGE CONTEXT', {
+      logger.logMessage('💬 MESSAGE CONTEXT', {
         sessionId: messageContext.session.id,
         configId: messageContext.config.id,
         userMessageId: messageContext.userMessage.id,
@@ -254,10 +235,11 @@ export class ProcessChatMessageUseCase {
       });
 
       // 3. Analyze conversation context and generate enhanced context
-      this.writeLog('\n\n🔍 STEP 3: Analyze conversation context');
-      const analysisResult = await this.analyzeConversationContext(messageContext);
+      logger.logRaw('');
+      logger.logRaw('🔍 STEP 3: Analyze conversation context');
+      const analysisResult = await this.analyzeConversationContext(messageContext, logger);
       
-      this.logObject('📊 ANALYSIS RESULT', {
+      logger.logMessage('📊 ANALYSIS RESULT', {
         sessionId: analysisResult.session.id,
         contextWindowUsed: analysisResult.contextResult?.contextWindow || 'unknown',
         messagesInContext: analysisResult.contextResult?.messages?.length || 0,
@@ -266,13 +248,14 @@ export class ProcessChatMessageUseCase {
       });
 
       // 4. Generate AI response with enhanced context
-      this.writeLog('\n\n🤖 STEP 4: Generate AI response');
+      logger.logRaw('');
+      logger.logRaw('🤖 STEP 4: Generate AI response');
       const responseResult = await this.processingService.generateAIResponse(
         analysisResult,
         this.sharedLogFile
       );
       
-      this.logObject('🎯 AI RESPONSE RESULT', {
+      logger.logMessage('🎯 AI RESPONSE RESULT', {
         sessionId: responseResult.session.id,
         botMessageId: responseResult.botMessage.id,
         botMessageContent: responseResult.botMessage.content,
@@ -288,8 +271,8 @@ export class ProcessChatMessageUseCase {
 
       // Log API call details if available
       if (responseResult.enhancedContext?.unifiedAnalysis) {
-        this.writeLog('\n📡 UNIFIED API CALL DETAILS:');
-        this.logObject('🔄 UNIFIED PROCESSING', {
+        logger.logMessage('📡 UNIFIED API CALL DETAILS');
+        logger.logMessage('🔄 UNIFIED PROCESSING', {
           analysis: responseResult.enhancedContext.unifiedAnalysis,
           apiCallType: 'unified-single-call'
           // REMOVED: leadScore - now calculated by domain service only
@@ -297,7 +280,8 @@ export class ProcessChatMessageUseCase {
       }
 
       // 5. Finalize workflow and calculate metrics
-      this.writeLog('\n\n✅ STEP 5: Finalize workflow and calculate metrics');
+      logger.logRaw('');
+      logger.logRaw('✅ STEP 5: Finalize workflow and calculate metrics');
       const finalResult = await this.workflowService.finalizeWorkflow(
         responseResult,
         startTime,
@@ -306,7 +290,7 @@ export class ProcessChatMessageUseCase {
 
       const totalProcessingTime = Date.now() - startTime;
       
-      this.logObject('🏁 FINAL RESULT', {
+      logger.logMessage('🏁 FINAL RESULT', {
         sessionId: finalResult.session.id,
         userMessageId: finalResult.userMessage.id,
         botMessageId: finalResult.botMessage.id,
@@ -320,26 +304,23 @@ export class ProcessChatMessageUseCase {
         finalTimestamp: new Date().toISOString()
       });
 
-      this.writeLog('\n✨ CHAT MESSAGE PROCESSING COMPLETED SUCCESSFULLY');
-      this.writeLog(`⏱️  Total Processing Time: ${totalProcessingTime}ms`);
-      this.writeLog('='.repeat(80));
+      logger.logMessage('✨ CHAT MESSAGE PROCESSING COMPLETED SUCCESSFULLY');
+      logger.logMetrics('Total Processing Time', { duration: totalProcessingTime });
+      logger.logSeparator();
 
       return this.buildProcessMessageResult(finalResult);
       
     } catch (error) {
       const totalProcessingTime = Date.now() - startTime;
       
-      this.writeLog('\n❌ ERROR IN CHAT MESSAGE PROCESSING');
-      this.logObject('🚨 ERROR DETAILS', {
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : error,
-        processingTimeMs: totalProcessingTime,
-        errorTimestamp: new Date().toISOString()
-      });
-      this.writeLog('='.repeat(80));
+      logger.logMessage('❌ ERROR IN CHAT MESSAGE PROCESSING');
+      logger.logError(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          processingTimeMs: totalProcessingTime,
+          errorTimestamp: new Date().toISOString()
+        }
+      );
       
       throw error;
     }

@@ -1,154 +1,263 @@
+/**
+ * ChatSimulator Component
+ * 
+ * AI INSTRUCTIONS:
+ * - Real chatbot simulation using actual API pipeline
+ * - All detailed results logged to file for QA analysis
+ * - Keep under 250 lines following @golden-rule patterns
+ * - Single responsibility: Execute real chatbot pipeline and log results
+ * - Use organization context for session creation
+ */
+
 'use client';
 
-import React from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { XCircle } from 'lucide-react';
-import { ChatApiDebugPanel } from './ChatApiDebugPanel';
-import { ChatConfigurationPanel } from './ChatConfigurationPanel';
-import { ChatInterface } from './ChatInterface';
-import { useChatSimulation } from '../../../hooks/useChatSimulation';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Re-export the results panel that was already extracted
-function ChatSimulationResultsPanel({ simulationResults }: { simulationResults: any }) {
-  if (!simulationResults) return null;
-  
-  const { Card, CardContent, CardHeader, CardTitle } = require('@/components/ui/card');
-  const { Badge } = require('@/components/ui/badge');
-  const { Separator } = require('@/components/ui/separator');
-  const { BarChart3 } = require('lucide-react');
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { MessageSquare, Play, Square } from 'lucide-react';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
+import { createSimulationSession, sendSimulationMessage, endSimulationSession, SimulationSession } from '../../../actions/simulationActions';
 
-  return (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Simulation Results
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">{simulationResults.totalMessages}</div>
-                        <div className="text-sm text-muted-foreground">Total Messages</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">
-                          {simulationResults.performanceMetrics.averageResponseTime}ms
-                        </div>
-                        <div className="text-sm text-muted-foreground">Avg Response Time</div>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Lead Captured</span>
-                        <Badge variant={simulationResults.leadCaptured ? 'default' : 'secondary'}>
-                          {simulationResults.leadCaptured ? 'Yes' : 'No'}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Accuracy Score</span>
-                        <span>{simulationResults.qualityAssessment.accuracyScore}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>User Satisfaction</span>
-                        <span>{simulationResults.qualityAssessment.userSatisfactionScore}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-  );
+interface ChatMessage {
+  id: string;
+  messageType: 'user' | 'bot' | 'system';
+  content: string;
+  timestamp: Date;
+  responseTime?: number;
 }
 
-interface ChatSimulatorProps {
-  chatbotConfigId: string;
-  onComplete?: (results: any) => void;
-}
+export function ChatSimulator() {
+  const { activeOrganizationId } = useOrganization();
 
-export function ChatSimulator({ chatbotConfigId, onComplete }: ChatSimulatorProps) {
-  const {
-    // State
-    isActive,
-    messages,
-    currentMessage,
-    isLoading,
-    userProfile,
-    simulationResults,
-    error,
-    apiDebugInfo,
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isActive, setIsActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentSession, setCurrentSession] = useState<SimulationSession | null>(null);
+
+  const handleStartSimulation = async () => {
+    if (!activeOrganizationId) {
+      setMessages([{
+        id: '1',
+        messageType: 'system',
+        content: 'Error: No active organization found. Please select an organization.',
+        timestamp: new Date()
+      }]);
+      return;
+    }
+
+    setIsLoading(true);
     
-    // Actions
-    setCurrentMessage,
-    setUserProfile,
-    startSimulation,
-    stopSimulation,
-    sendMessage,
-  } = useChatSimulation(chatbotConfigId, onComplete);
+    try {
+      // Create real chat session using actual domain logic
+      const result = await createSimulationSession(activeOrganizationId);
+      
+      if (result.success && result.session) {
+        setCurrentSession(result.session);
+        setIsActive(true);
+        setMessages([{
+          id: '1',
+          messageType: 'system',
+          content: `✅ Real simulation session created - All pipeline results logged to file\nSession ID: ${result.session.sessionId}\nChatbot Config: ${result.session.chatbotConfigId}`,
+          timestamp: new Date()
+        }]);
+      } else {
+        setMessages([{
+          id: '1',
+          messageType: 'system',
+          content: `❌ Failed to create session: ${result.error}`,
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      setMessages([{
+        id: '1',
+        messageType: 'system',
+        content: `❌ Error creating session: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleStopSimulation = async () => {
+    if (currentSession) {
+      try {
+        await endSimulationSession(currentSession.sessionId);
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          messageType: 'system',
+          content: '✅ Simulation session ended - All data logged to file',
+          timestamp: new Date()
+        }]);
+      } catch (error) {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          messageType: 'system',
+          content: `❌ Error ending session: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          timestamp: new Date()
+        }]);
+      }
+    }
+    
+    setIsActive(false);
+    setCurrentSession(null);
+  };
 
+  const handleSendMessage = async () => {
+    if (!currentMessage.trim() || !isActive || !currentSession) return;
+
+    setIsLoading(true);
+    
+    // Add user message
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      messageType: 'user',
+      content: currentMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    const messageContent = currentMessage;
+    setCurrentMessage('');
+
+    try {
+      // Send message through real API pipeline
+      const result = await sendSimulationMessage(currentSession.sessionId, messageContent);
+      
+      if (result.success) {
+        // Add bot response with timing information
+        const botMessage: ChatMessage = {
+          id: result.botMessageId,
+          messageType: 'bot',
+          content: result.botResponse,
+          timestamp: new Date(),
+          responseTime: result.totalPromptTimeSeconds
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        const errorMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          messageType: 'system',
+          content: `❌ Pipeline error: ${result.error}`,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        messageType: 'system',
+        content: `❌ API Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Configuration Panel */}
-      <ChatConfigurationPanel
-        userProfile={userProfile}
-        isActive={isActive}
-        isLoading={isLoading}
-        onUserProfileChange={setUserProfile}
-        onStartSimulation={startSimulation}
-        onStopSimulation={stopSimulation}
-      />
-
-      {/* Error Display */}
-      {error && (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Vertical Layout: Chat Interface Above Debug Panel */}
-      {(isActive || messages.length > 0) && (
-        <div className="flex flex-col space-y-6">
-          {/* Chat Interface - Top */}
-          <div className="w-full">
-            <ChatInterface
-              messages={messages}
-              currentMessage={currentMessage}
-              isActive={isActive}
-              isLoading={isLoading}
-              onCurrentMessageChange={setCurrentMessage}
-              onSendMessage={sendMessage}
-              onKeyPress={handleKeyPress}
-            />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Chat Interface
+            </CardTitle>
+            <CardDescription>
+              Simulate user prompts as if using chatbot widget on website
+            </CardDescription>
           </div>
-
-          {/* Debug Panel - Below Chat */}
-          <div className="w-full">
-            {apiDebugInfo ? (
-              <ChatApiDebugPanel apiDebugInfo={apiDebugInfo} />
+          <div className="flex gap-2">
+            {!isActive ? (
+              <Button onClick={handleStartSimulation} disabled={isLoading}>
+                <Play className="h-4 w-4 mr-2" />
+                Start Simulation
+              </Button>
             ) : (
-              <div className="bg-gray-50 dark:bg-gray-900 border rounded-lg p-4">
-                <p className="text-sm text-gray-500">No debug information available yet. Send a message to see API debug details.</p>
+              <Button onClick={handleStopSimulation} variant="destructive" disabled={isLoading}>
+                <Square className="h-4 w-4 mr-2" />
+                Stop Simulation
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Messages */}
+            <div className="h-96 border rounded-lg p-4 overflow-y-auto space-y-3">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.messageType === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                      message.messageType === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : message.messageType === 'system'
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    <div className="text-sm">{message.content}</div>
+                    <div className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString()}
+                      {message.responseTime && ` (${message.responseTime}s)`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%]">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-sm">Processing...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Message Input */}
+            {isActive && currentSession && (
+              <div className="flex gap-2">
+                <Input
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!currentMessage.trim() || isLoading}
+                  size="sm"
+                >
+                  Send
+                </Button>
               </div>
             )}
           </div>
-
-          {/* Simulation Results - Bottom */}
-          <div className="w-full">
-            <ChatSimulationResultsPanel simulationResults={simulationResults} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                 </CardContent>
+       </Card>
+   );
 } 

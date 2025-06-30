@@ -24,8 +24,10 @@ import { IDebugInformationService } from '../../domain/services/interfaces/IDebu
 // Infrastructure services for interfaces
 import { OpenAITokenCountingService } from '../providers/openai/OpenAITokenCountingService';
 import { OpenAIIntentClassificationService } from '../providers/openai/OpenAIIntentClassificationService';
-import { SimpleKnowledgeRetrievalService } from '../providers/SimpleKnowledgeRetrievalService';
+// SimpleKnowledgeRetrievalService removed - using vector-based service instead
 import { DebugInformationService } from '../services/DebugInformationService';
+import { VectorKnowledgeRetrievalService } from '../../domain/services/VectorKnowledgeRetrievalService';
+import { ChatbotWidgetCompositionRoot } from './ChatbotWidgetCompositionRoot';
 
 /**
  * Domain Service Composition Service
@@ -97,13 +99,23 @@ export class DomainServiceCompositionService {
   static getKnowledgeRetrievalService(chatbotConfig: any): IKnowledgeRetrievalService {
     // Create cache key based on chatbot config and knowledge base version
     const configId = chatbotConfig?.id || 'default';
+    const organizationId = chatbotConfig?.organizationId || 'default';
     const lastUpdated = chatbotConfig?.lastUpdated?.getTime() || 'default';
-    const configKey = `${configId}_${lastUpdated}`;
+    const configKey = `${organizationId}_${configId}_${lastUpdated}`;
     
     // Check if we have a cached service for this configuration
     if (!this.knowledgeRetrievalServiceCache.has(configKey)) {
-      // Cache miss - create new service (embeddings will be generated once)
-      const service = new SimpleKnowledgeRetrievalService(chatbotConfig);
+      // Create new vector-based knowledge retrieval service
+      const vectorRepository = ChatbotWidgetCompositionRoot.getVectorKnowledgeRepository();
+      const embeddingService = ChatbotWidgetCompositionRoot.getEmbeddingService();
+      
+      const service = new VectorKnowledgeRetrievalService(
+        vectorRepository,
+        embeddingService,
+        organizationId,
+        configId
+      );
+      
       this.knowledgeRetrievalServiceCache.set(configKey, service);
       
       // Optional: Clean up old cache entries to prevent memory leaks

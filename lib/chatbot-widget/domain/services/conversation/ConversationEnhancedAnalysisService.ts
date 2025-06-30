@@ -14,7 +14,7 @@ import { ContextAnalysis } from '../../value-objects/message-processing/ContextA
 import { ChatMessage } from '../../entities/ChatMessage';
 import { ChatbotConfig } from '../../entities/ChatbotConfig';
 import { ChatSession } from '../../entities/ChatSession';
-import { UserJourneyState } from '../../value-objects/session-management/UserJourneyState';
+// Removed UserJourneyState import - using pure API-driven approach
 import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 import { IIntentClassificationService } from '../interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService, KnowledgeRetrievalContext } from '../interfaces/IKnowledgeRetrievalService';
@@ -47,8 +47,8 @@ export class ConversationEnhancedAnalysisService {
     }
 
     let intentResult: IntentResult | undefined;
-    let journeyState: UserJourneyState | undefined;
-    let relevantKnowledge: Array<{ title: string; content: string; relevanceScore: number; }> | undefined;
+    // Removed journeyState - using pure API-driven approach
+    let relevantKnowledge: Array<{ id: string; title: string; content: string; relevanceScore: number; }> | undefined;
 
     const lastUserMessage = userMessages[userMessages.length - 1];
     
@@ -62,10 +62,7 @@ export class ConversationEnhancedAnalysisService {
       );
     }
 
-    // Step 2: Update journey state if we have intent result
-    if (intentResult && session) {
-      journeyState = this.updateJourneyState(session, intentResult, baseAnalysis);
-    }
+    // Step 2: Journey state removed - using pure API-driven approach
 
     // Step 3: Retrieve relevant knowledge if service is available
     // AI INSTRUCTIONS: This step triggers the vector embeddings pipeline
@@ -82,8 +79,9 @@ export class ConversationEnhancedAnalysisService {
     return {
       ...baseAnalysis,
       intentResult,
-      journeyState,
-      relevantKnowledge
+      // Removed journeyState - using pure API-driven approach
+      relevantKnowledge,
+      knowledgeRetrievalThreshold: 0.15 // Pass the threshold used for knowledge retrieval
     };
   }
 
@@ -133,7 +131,7 @@ export class ConversationEnhancedAnalysisService {
     userMessages: ChatMessage[],
     intentResult?: IntentResult,
     sharedLogFile?: string
-  ): Promise<Array<{ title: string; content: string; relevanceScore: number; }> | undefined> {
+  ): Promise<Array<{ id: string; title: string; content: string; relevanceScore: number; }> | undefined> {
     if (!this.knowledgeRetrievalService) {
       return undefined;
     }
@@ -156,6 +154,7 @@ export class ConversationEnhancedAnalysisService {
       const knowledgeResult = await this.knowledgeRetrievalService.searchKnowledge(knowledgeContext);
       
       return knowledgeResult.items.map(item => ({
+        id: item.id,
         title: item.title,
         content: item.content,
         relevanceScore: item.relevanceScore
@@ -166,49 +165,6 @@ export class ConversationEnhancedAnalysisService {
     }
   }
 
-  /**
-   * Update journey state based on intent result
-   * AI INSTRUCTIONS: Simple journey state coordination following DDD patterns
-   */
-  private updateJourneyState(
-    session: ChatSession,
-    intentResult: IntentResult,
-    baseAnalysis: ContextAnalysis
-  ): UserJourneyState | undefined {
-    try {
-      // Get current journey state or create new one
-      const currentJourneyState = session.contextData.journeyState 
-        ? UserJourneyState.create(
-            session.contextData.journeyState.stage as any,
-            session.contextData.journeyState.confidence,
-            session.contextData.journeyState.metadata
-          )
-        : UserJourneyState.create();
-
-      // Check if we should transition to a new stage based on intent
-      const transitionResult = currentJourneyState.shouldTransitionBasedOnIntent(intentResult);
-      
-      if (transitionResult.shouldTransition && transitionResult.newStage) {
-        // Transition to new stage
-        const trigger = {
-          type: 'intent' as const,
-          value: intentResult.intent,
-          confidence: intentResult.confidence
-        };
-        
-        return currentJourneyState.transitionTo(
-          transitionResult.newStage,
-          trigger,
-          intentResult.confidence * 100 // Convert to 0-100 scale for engagement score
-        );
-      } else {
-        // Update engagement score based on intent confidence
-        const engagementScore = intentResult.confidence * 100; // Convert to 0-100 scale
-        return currentJourneyState.updateEngagement(engagementScore);
-      }
-    } catch (error) {
-      // Journey state update failed - return undefined
-      return undefined;
-    }
-  }
+  // Removed updateJourneyState method - using pure API-driven approach
+  // Journey state tracking removed per user requirements
 } 

@@ -15,7 +15,7 @@ export * from './configuration';
 export * from './simulation';
 
 // Testing Components
-export * from './testing';
+// Removed testing exports - components were deleted per user requirements
 
 // Knowledge Base Management
 export * from './knowledge-base';
@@ -26,6 +26,14 @@ export * from './lead-management';
 // Widget Management
 export * from './widget-management';
 
-// Legacy subdirectories (to be reorganized over time)
-// These exist for backward compatibility during gradual refactoring
-// TODO: Organize these into logical categories above 
+// Analytics & Reporting
+// Components for performance metrics, usage analytics, conversation insights, 
+// lead conversion tracking, and AI behavior analysis
+
+// Communication & Messaging  
+// Components for email notifications, message templates, automated responses,
+// and multi-channel chat interfaces
+
+// System Administration
+// Components for organization management, user permissions, role-based access,
+// and system configuration settings 

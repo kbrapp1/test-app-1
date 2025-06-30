@@ -14,10 +14,9 @@
 
 import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { KnowledgeVector } from '../../domain/entities/KnowledgeVector';
+// KnowledgeVector entity removed - using vector repository interface directly
 import { WebsiteCrawlerService } from '../../infrastructure/providers/knowledge-services/WebsiteCrawlerService';
 import { BusinessRuleViolationError } from '../../domain/errors/ContextManagementErrors';
-import { VectorManagementService } from './VectorManagementService';
 
 export interface WebsiteCrawlRequest {
   organizationId: string;
@@ -69,8 +68,7 @@ export interface WebsiteKnowledgeUpdateResponse {
 export class WebsiteKnowledgeApplicationService {
   
   constructor(
-    private websiteCrawlerService: WebsiteCrawlerService,
-    private vectorManagementService: VectorManagementService
+    private websiteCrawlerService: WebsiteCrawlerService
   ) {}
 
   /**
@@ -78,8 +76,8 @@ export class WebsiteKnowledgeApplicationService {
    * 
    * AI INSTRUCTIONS:
    * - Orchestrate single website crawling process
-   * - Delegate crawling to infrastructure service
-   * - Convert infrastructure results to domain knowledge items
+   * - Delegate crawling AND storage to infrastructure service
+   * - Ensure knowledge items are persisted with embeddings
    * - Handle errors gracefully with proper error types
    * - Maintain transaction boundaries
    */
@@ -87,7 +85,7 @@ export class WebsiteKnowledgeApplicationService {
     try {
       this.validateCrawlRequest(request);
 
-      // Delegate crawling to infrastructure service with default settings
+      // Delegate crawling and storage to infrastructure service with default settings
       const crawlSettings = {
         maxPages: request.websiteSource.crawlSettings?.maxPages || 50,
         maxDepth: request.websiteSource.crawlSettings?.maxDepth || 3,
@@ -99,31 +97,17 @@ export class WebsiteKnowledgeApplicationService {
         includePDFs: request.websiteSource.crawlSettings?.includePDFs ?? true
       };
 
-      const crawlResult = await this.websiteCrawlerService.crawlWebsite(
+      // Use crawlAndStoreWebsite which handles both crawling AND persistence
+      const crawlResult = await this.websiteCrawlerService.crawlAndStoreWebsite(
+        request.organizationId,
+        request.chatbotConfigId,
         request.websiteSource,
         crawlSettings
-      );
-      
-      const knowledgeItems = crawlResult.knowledgeItems;
-
-      // Clean up vectors for pages that no longer exist
-      await this.cleanupDeletedPageVectors(
-        request.organizationId,
-        request.chatbotConfigId,
-        request.websiteSource,
-        knowledgeItems
-      );
-
-      // Immediately vectorize the crawled content
-      await this.vectorManagementService.ensureVectorsUpToDate(
-        request.organizationId,
-        request.chatbotConfigId,
-        knowledgeItems
       );
 
       return {
         success: true,
-        knowledgeItems,
+        knowledgeItems: undefined, // Data is now persisted, items not returned in memory
         crawledPages: crawlResult.crawledPages
       };
 
@@ -191,11 +175,13 @@ export class WebsiteKnowledgeApplicationService {
             websiteSource
           });
 
-          if (crawlResponse.success && crawlResponse.knowledgeItems) {
+          if (crawlResponse.success) {
             results.successfulSources++;
-            results.totalKnowledgeItems += crawlResponse.knowledgeItems.length;
+            // knowledgeItems is undefined since data is persisted directly
+            // Use crawled pages count as proxy for stored items
+            results.totalKnowledgeItems += crawlResponse.crawledPages?.filter(page => page.status === 'success').length || 0;
 
-            // Knowledge items are already vectorized in crawlWebsiteSource()
+            // Knowledge items are already stored and vectorized in crawlAndStoreWebsite()
             // No additional processing needed here
 
           } else {
@@ -277,13 +263,17 @@ export class WebsiteKnowledgeApplicationService {
         warnings.push('Deep crawling may include less relevant content');
       }
 
-      // TODO: Add connectivity check
-      // if (websiteSource.url && this.isValidUrl(websiteSource.url)) {
-      //   const isAccessible = await this.checkWebsiteAccessibility(websiteSource.url);
-      //   if (!isAccessible) {
-      //     errors.push('Website is not accessible or blocks crawlers');
-      //   }
-      // }
+      // Connectivity check
+      if (websiteSource.url && this.isValidUrl(websiteSource.url)) {
+        try {
+          const isAccessible = await this.checkWebsiteAccessibility(websiteSource.url);
+          if (!isAccessible) {
+            errors.push('Website is not accessible or blocks crawlers');
+          }
+        } catch (error) {
+          warnings.push('Could not verify website accessibility - proceeding with caution');
+        }
+      }
 
       return {
         isValid: errors.length === 0,
@@ -378,6 +368,39 @@ export class WebsiteKnowledgeApplicationService {
   }
 
   /**
+   * Check website accessibility for crawling
+   * 
+   * AI INSTRUCTIONS:
+   * - Quick HEAD request to check if website is accessible
+   * - Return boolean for accessibility status
+   * - Handle timeouts and errors gracefully
+   * - Follow @golden-rule patterns for error handling
+   */
+  private async checkWebsiteAccessibility(url: string): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Website-Crawler-Bot/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Consider 2xx and 3xx status codes as accessible
+      return response.ok || (response.status >= 300 && response.status < 400);
+      
+    } catch (error) {
+      // If fetch fails (network error, timeout, etc.), consider not accessible
+      return false;
+    }
+  }
+
+  /**
    * Helper method for URL validation
    * 
    * AI INSTRUCTIONS:
@@ -391,60 +414,6 @@ export class WebsiteKnowledgeApplicationService {
       return true;
     } catch {
       return false;
-    }
-  }
-
-  /**
-   * Clean up vectors for pages that no longer exist on the website
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare current crawl results with existing vectors
-   * - Remove vectors for pages that are no longer found
-   * - Maintain data consistency in vector cache
-   * - Log cleanup operations for monitoring
-   */
-  private async cleanupDeletedPageVectors(
-    organizationId: string,
-    chatbotConfigId: string,
-    websiteSource: WebsiteSource,
-    currentKnowledgeItems: KnowledgeItem[]
-  ): Promise<void> {
-    try {
-      // Get all existing vectors for this website source
-      const allVectors = await this.vectorManagementService.getAllVectors(
-        organizationId,
-        chatbotConfigId
-      );
-
-      // Filter to only vectors from this website source
-      const websiteVectors = allVectors.filter((vector: KnowledgeVector) => 
-        vector.knowledgeItemId.startsWith(`${websiteSource.id}-page-`)
-      );
-
-      // Get current knowledge item IDs
-      const currentItemIds = new Set(currentKnowledgeItems.map(item => item.id));
-
-      // Find vectors for deleted pages
-      const deletedVectors = websiteVectors.filter((vector: KnowledgeVector) => 
-        !currentItemIds.has(vector.knowledgeItemId)
-      );
-
-      // Delete vectors for pages that no longer exist
-      for (const vector of deletedVectors) {
-        await this.vectorManagementService.deleteVector(
-          organizationId,
-          chatbotConfigId,
-          vector.knowledgeItemId
-        );
-      }
-
-      if (deletedVectors.length > 0) {
-        console.log(`🗑️ Cleaned up ${deletedVectors.length} vectors for deleted pages from ${websiteSource.name}`);
-      }
-
-    } catch (error) {
-      // Log error but don't fail the entire crawl process
-      console.error('Error cleaning up deleted page vectors:', error);
     }
   }
 } 

@@ -6,7 +6,7 @@
  */
 
 import { ChatSession } from '../../../domain/entities/ChatSession';
-import { UserJourneyState } from '../../../domain/value-objects/session-management/UserJourneyState';
+// Removed UserJourneyState import - using pure API-driven approach
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
 
 export class SessionUpdateService {
@@ -15,32 +15,15 @@ export class SessionUpdateService {
   ) {}
 
   /**
-   * Update session with journey state information
+   * Update session with journey state information - REMOVED
+   * Using pure API-driven approach per user requirements
    */
-  updateSessionWithJourneyState(
-    session: ChatSession,
-    journeyState: UserJourneyState
-  ): ChatSession {
-    const updatedContextData = {
-      ...session.contextData,
-      journeyState: {
-        stage: journeyState.stage,
-        confidence: journeyState.confidence,
-        metadata: journeyState.metadata
-      }
-    };
-
-    // Use the domain entity's updateContextData method to ensure proper state management
-    return session.updateContextData(updatedContextData);
-  }
+  // updateSessionWithJourneyState method removed - using pure API-driven approach
 
   /**
    * Save updated session
    */
-  async saveSession(session: ChatSession, sharedLogFile?: string): Promise<ChatSession> {
-    if (sharedLogFile && 'update' in this.sessionRepository && typeof this.sessionRepository.update === 'function') {
-      return await (this.sessionRepository as any).update(session, sharedLogFile);
-    }
-    return await this.sessionRepository.update(session);
+  async saveSession(session: ChatSession, sharedLogFile: string): Promise<ChatSession> {
+    return await this.sessionRepository.update(session, sharedLogFile);
   }
 } 

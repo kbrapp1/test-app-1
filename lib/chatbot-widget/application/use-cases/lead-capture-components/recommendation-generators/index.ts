@@ -2,24 +2,11 @@
  * Recommendation Generators Index
  * 
  * AI INSTRUCTIONS:
- * - Export all specialized recommendation generator components
- * - Provide clean interface for importing recommendation utilities
- * - Follow @golden-rule patterns exactly
+ * - All recommendation generator components have been removed per user requirements
+ * - System now uses pure API-driven approach with log file tracking only
+ * - No hardcoded business rules or recommendation logic
  */
 
-export { ScoreBasedRecommendationGenerator } from './ScoreBasedRecommendationGenerator';
-
-export { ContactInfoRecommendationGenerator } from './ContactInfoRecommendationGenerator';
-
-export { EngagementRecommendationGenerator } from './EngagementRecommendationGenerator';
-
-export { InterestBasedRecommendationGenerator } from './InterestBasedRecommendationGenerator';
-
-export { CompanyBasedRecommendationGenerator } from './CompanyBasedRecommendationGenerator';
-
-export { RecommendationPrioritizer } from './RecommendationPrioritizer';
-
-export { 
-  RecommendationSummaryGenerator,
-  type RecommendationSummary 
-} from './RecommendationSummaryGenerator'; 
+// All recommendation generators have been removed - using pure API-driven approach
+// System now relies purely on log file tracking for pipeline analysis
+// No hardcoded recommendation engines remain 

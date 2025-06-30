@@ -1,14 +1,19 @@
 /**
- * Simulation & Testing Components
+ * Simulation Components Index
  * 
  * AI INSTRUCTIONS:
- * - Components for chatbot simulation, testing, and real-time debugging
- * - Handle chat simulation, API debugging, and interface testing
- * - Single responsibility per component - focused simulation concerns
- * - Maintain clean separation between simulation logic and presentation
+ * - Export only simplified simulation components
+ * - Removed complex debug panels and UI visualization per user requirements
+ * - Focus on basic chatbot simulation with log file tracking
  */
 
+// Main simulator component - simplified for log file tracking only
 export { ChatSimulator } from './ChatSimulator';
-export { ChatConfigurationPanel } from './ChatConfigurationPanel';
+
+// Individual components (kept for potential future use)
 export { ChatInterface } from './ChatInterface';
-export { ChatApiDebugPanel } from './ChatApiDebugPanel'; 
+export { ChatConfigurationPanel } from './ChatConfigurationPanel';
+
+// Removed exports:
+// - ChatApiDebugPanel (deleted - using log file tracking only)
+// - Complex debug and visualization components 
