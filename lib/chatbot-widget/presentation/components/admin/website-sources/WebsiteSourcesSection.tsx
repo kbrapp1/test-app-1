@@ -89,7 +89,12 @@ export function WebsiteSourcesSection() {
     updateFormData,
     resetForm,
     toggleCrawledPagesVisibility
-  } = useWebsiteSourcesState(existingConfig, activeOrganizationId);
+  } = useWebsiteSourcesState(
+    activeOrganizationId || '', 
+    existingConfig?.id || '', 
+    existingConfig, 
+    activeOrganizationId
+  );
 
   if (isLoading) {
     return (

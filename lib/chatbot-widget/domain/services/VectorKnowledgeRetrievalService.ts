@@ -7,6 +7,13 @@ import {
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
 import { BusinessRuleViolationError } from '../../../errors/base';
+import { 
+  KnowledgeRetrievalError, 
+  VectorSearchError, 
+  EmbeddingGenerationError,
+  KnowledgeCacheError,
+  PerformanceThresholdError 
+} from '../errors/ChatbotWidgetDomainErrors';
 import { IEmbeddingService } from './interfaces/IEmbeddingService';
 import { IChatbotLoggingService, ISessionLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -118,7 +125,18 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       const embeddingStartTime = Date.now();
       
       // Generate embedding for search query (with cache logging)
-      const queryEmbedding = await this.embeddingService.generateEmbedding(context.userQuery);
+      let queryEmbedding: number[];
+      try {
+        queryEmbedding = await this.embeddingService.generateEmbedding(context.userQuery);
+      } catch (error) {
+        // Track embedding generation error
+        throw new EmbeddingGenerationError('user_query', {
+          query: context.userQuery,
+          error: error instanceof Error ? error.message : String(error),
+          organizationId: this.organizationId,
+          chatbotConfigId: this.chatbotConfigId
+        });
+      }
       
       const embeddingTimeMs = Date.now() - embeddingStartTime;
       
@@ -145,17 +163,41 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       const searchStartTime = Date.now();
 
       // Search knowledge using in-memory vector cache
-      const searchResults = await this.vectorCache.searchVectors(
-        queryEmbedding,
-        {
+      let searchResults;
+      try {
+        searchResults = await this.vectorCache.searchVectors(
+          queryEmbedding,
+          {
+            threshold: context.minRelevanceScore || 0.15,
+            limit: context.maxResults || 5
+          },
+          context.sharedLogFile
+        );
+      } catch (error) {
+        // Track vector search error
+        throw new VectorSearchError('in_memory_cache', {
+          query: context.userQuery,
           threshold: context.minRelevanceScore || 0.15,
-          limit: context.maxResults || 5
-        },
-        context.sharedLogFile
-      );
+          limit: context.maxResults || 5,
+          error: error instanceof Error ? error.message : String(error),
+          organizationId: this.organizationId,
+          chatbotConfigId: this.chatbotConfigId
+        });
+      }
 
       const searchTimeMs = Date.now() - searchStartTime;
       const totalTimeMs = Date.now() - startTime;
+
+      // Track performance threshold violations
+      if (totalTimeMs > 5000) { // 5 second threshold
+        throw new PerformanceThresholdError('knowledge_search_duration', 5000, totalTimeMs, {
+          query: context.userQuery,
+          embeddingTimeMs,
+          searchTimeMs,
+          organizationId: this.organizationId,
+          chatbotConfigId: this.chatbotConfigId
+        });
+      }
 
       // Log search results with cache information
       logger.logMessage(`✅ Search completed in ${searchTimeMs}ms`);

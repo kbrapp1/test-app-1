@@ -136,6 +136,13 @@ export class VectorKnowledgeApplicationService {
     sourceUrl?: string
   ): Promise<number> {
     try {
+      console.log('🧹 VectorKnowledgeApplicationService: Starting knowledge cleanup', {
+        organizationId,
+        chatbotConfigId,
+        sourceType,
+        sourceUrl
+      });
+
       const deletedCount = await this.vectorKnowledgeRepository.deleteKnowledgeItemsBySource(
         organizationId,
         chatbotConfigId,
@@ -143,8 +150,16 @@ export class VectorKnowledgeApplicationService {
         sourceUrl
       );
 
+      console.log(`🧹 VectorKnowledgeApplicationService: Cleanup completed, deleted ${deletedCount} items`);
       return deletedCount;
     } catch (error) {
+      console.error('💥 VectorKnowledgeApplicationService: Knowledge cleanup failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        organizationId,
+        chatbotConfigId,
+        sourceType,
+        sourceUrl
+      });
       throw new BusinessRuleViolationError(
         `Failed to delete knowledge items by source: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { organizationId, chatbotConfigId, sourceType, sourceUrl }

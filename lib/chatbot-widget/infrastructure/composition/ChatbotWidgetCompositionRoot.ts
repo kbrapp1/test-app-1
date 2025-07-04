@@ -25,7 +25,11 @@ import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureCh
 // Infrastructure services
 import { SupabaseVectorKnowledgeRepository } from '../persistence/supabase/SupabaseVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';
-import { WebsiteCrawlerService } from '../providers/knowledge-services/WebsiteCrawlerService';
+import { CrawlAndStoreWebsiteUseCase } from '../../application/use-cases/CrawlAndStoreWebsiteUseCase';
+import { WebsiteCrawlingCompositionRoot } from './WebsiteCrawlingCompositionRoot';
+import { DeduplicateWebsiteContentUseCase } from '../../application/use-cases/DeduplicateWebsiteContentUseCase';
+import { UrlNormalizationService } from '../../domain/services/UrlNormalizationService';
+import { ContentDeduplicationService } from '../../domain/services/ContentDeduplicationService';
 
 // Infrastructure providers
 import { OpenAIProvider } from '../providers/openai/OpenAIProvider';
@@ -39,6 +43,9 @@ import { UseCaseCompositionService } from './UseCaseCompositionService';
 // Import centralized logging service
 import { IChatbotLoggingService } from '../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotFileLoggingService } from '../providers/logging/ChatbotFileLoggingService';
+
+// Import error tracking service
+import { ChatbotErrorTrackingService } from '../../application/services/ChatbotErrorTrackingService';
 
 /**
  * Main Composition Root for Chatbot Widget Domain
@@ -55,12 +62,16 @@ export class ChatbotWidgetCompositionRoot {
   private static vectorKnowledgeRepository: IVectorKnowledgeRepository | null = null;
   private static embeddingService: OpenAIEmbeddingService | null = null;
   private static openAIProvider: OpenAIProvider | null = null;
-  private static websiteCrawlerService: WebsiteCrawlerService | null = null;
+  private static crawlAndStoreWebsiteUseCase: CrawlAndStoreWebsiteUseCase | null = null;
   private static vectorKnowledgeApplicationService: VectorKnowledgeApplicationService | null = null;
   private static websiteKnowledgeApplicationService: WebsiteKnowledgeApplicationService | null = null;
+  private static deduplicateWebsiteContentUseCase: DeduplicateWebsiteContentUseCase | null = null;
+  private static urlNormalizationService: UrlNormalizationService | null = null;
+  private static contentDeduplicationService: ContentDeduplicationService | null = null;
 
   // Singleton instances
   private static loggingService: IChatbotLoggingService | null = null;
+  private static errorTrackingService: ChatbotErrorTrackingService | null = null;
 
   // Repository access methods
   static getChatbotConfigRepository(): IChatbotConfigRepository {
@@ -121,18 +132,15 @@ export class ChatbotWidgetCompositionRoot {
     return this.embeddingService;
   }
 
-  static getWebsiteCrawlerService(): WebsiteCrawlerService {
-    if (!this.websiteCrawlerService) {
-      const openAIProvider = this.getOpenAIProvider();
+  static getCrawlAndStoreWebsiteUseCase(): CrawlAndStoreWebsiteUseCase {
+    if (!this.crawlAndStoreWebsiteUseCase) {
       const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
-      const embeddingService = this.getEmbeddingService();
-      this.websiteCrawlerService = new WebsiteCrawlerService(
-        openAIProvider,
-        vectorKnowledgeRepository,
-        embeddingService
+      const websiteCrawlingCompositionRoot = WebsiteCrawlingCompositionRoot.getInstance();
+      this.crawlAndStoreWebsiteUseCase = websiteCrawlingCompositionRoot.getCrawlAndStoreWebsiteUseCase(
+        vectorKnowledgeRepository
       );
     }
-    return this.websiteCrawlerService;
+    return this.crawlAndStoreWebsiteUseCase;
   }
 
   static getVectorKnowledgeApplicationService(): VectorKnowledgeApplicationService {
@@ -149,12 +157,44 @@ export class ChatbotWidgetCompositionRoot {
 
   static getWebsiteKnowledgeApplicationService(): WebsiteKnowledgeApplicationService {
     if (!this.websiteKnowledgeApplicationService) {
-      const websiteCrawlerService = this.getWebsiteCrawlerService();
+      const crawlAndStoreUseCase = this.getCrawlAndStoreWebsiteUseCase();
+      const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
       this.websiteKnowledgeApplicationService = new WebsiteKnowledgeApplicationService(
-        websiteCrawlerService
+        crawlAndStoreUseCase,
+        vectorKnowledgeRepository
       );
     }
     return this.websiteKnowledgeApplicationService;
+  }
+
+  static getUrlNormalizationService(): UrlNormalizationService {
+    if (!this.urlNormalizationService) {
+      this.urlNormalizationService = new UrlNormalizationService();
+    }
+    return this.urlNormalizationService;
+  }
+
+  static getContentDeduplicationService(): ContentDeduplicationService {
+    if (!this.contentDeduplicationService) {
+      const urlNormalizationService = this.getUrlNormalizationService();
+      this.contentDeduplicationService = new ContentDeduplicationService(urlNormalizationService);
+    }
+    return this.contentDeduplicationService;
+  }
+
+  static getDeduplicateWebsiteContentUseCase(): DeduplicateWebsiteContentUseCase {
+    if (!this.deduplicateWebsiteContentUseCase) {
+      const urlNormalizationService = this.getUrlNormalizationService();
+      const contentDeduplicationService = this.getContentDeduplicationService();
+      const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
+      
+      this.deduplicateWebsiteContentUseCase = new DeduplicateWebsiteContentUseCase(
+        urlNormalizationService,
+        contentDeduplicationService,
+        vectorKnowledgeRepository
+      );
+    }
+    return this.deduplicateWebsiteContentUseCase;
   }
 
   // Domain service access methods - API-driven services only
@@ -230,9 +270,14 @@ export class ChatbotWidgetCompositionRoot {
     this.vectorKnowledgeRepository = null;
     this.embeddingService = null;
     this.openAIProvider = null;
-    this.websiteCrawlerService = null;
+    this.crawlAndStoreWebsiteUseCase = null;
     this.vectorKnowledgeApplicationService = null;
     this.websiteKnowledgeApplicationService = null;
+    this.deduplicateWebsiteContentUseCase = null;
+    this.urlNormalizationService = null;
+    this.contentDeduplicationService = null;
+    this.loggingService = null;
+    this.errorTrackingService = null;
     
     // Reset composition services
     RepositoryCompositionService.reset();
@@ -263,5 +308,13 @@ export class ChatbotWidgetCompositionRoot {
       this.loggingService = new ChatbotFileLoggingService();
     }
     return this.loggingService;
+  }
+
+  static getErrorTrackingService(): ChatbotErrorTrackingService {
+    if (!this.errorTrackingService) {
+      const supabase = createClient();
+      this.errorTrackingService = new ChatbotErrorTrackingService(supabase);
+    }
+    return this.errorTrackingService;
   }
 } 

@@ -17,6 +17,7 @@ export interface IVectorKnowledgeRepository {
    * - Stores content, metadata, and vector embeddings in single table
    * - Upserts based on knowledge_item_id to handle updates
    * - Enables both semantic search and content injection
+   * - Supports crawl metadata for UI display
    */
   storeKnowledgeItems(
     organizationId: string,
@@ -30,6 +31,7 @@ export interface IVectorKnowledgeRepository {
       sourceUrl?: string;
       embedding: number[];
       contentHash: string;
+      metadata?: Record<string, any>;
     }>
   ): Promise<void>;
 
@@ -104,4 +106,29 @@ export interface IVectorKnowledgeRepository {
     lastUpdated: Date | null;
     storageSize: number;
   }>;
+
+  /**
+   * Get crawled pages data for UI display
+   * 
+   * AI INSTRUCTIONS:
+   * - Retrieves crawled pages metadata from vector table
+   * - Returns data needed for crawled pages UI display
+   * - Filters by source_type = 'website_crawled'
+   * - Includes crawl metadata (status, response time, depth, etc.)
+   */
+  getCrawledPages(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceUrl?: string
+  ): Promise<Array<{
+    url: string;
+    title: string;
+    content: string;
+    status: 'success' | 'failed' | 'skipped';
+    statusCode?: number;
+    responseTime?: number;
+    depth: number;
+    crawledAt: Date;
+    errorMessage?: string;
+  }>>;
 } 

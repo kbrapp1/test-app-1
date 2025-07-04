@@ -28,6 +28,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
       sourceUrl?: string;
       embedding: number[];
       contentHash: string;
+      metadata?: Record<string, any>;
     }>
   ): Promise<void> {
     try {
@@ -61,7 +62,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
         source_url: item.sourceUrl,
         vector: item.embedding,
         content_hash: item.contentHash,
-        metadata: {},
+        metadata: item.metadata || {},
         updated_at: new Date().toISOString()
       }));
 
@@ -210,7 +211,54 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     sourceUrl?: string
   ): Promise<number> {
     try {
-      let query = this.supabase
+      console.log('🗑️ SupabaseVectorKnowledgeRepository: Starting deleteKnowledgeItemsBySource', {
+        organizationId,
+        chatbotConfigId,
+        sourceType,
+        sourceUrl
+      });
+
+      // First, let's see what exists matching these criteria
+      let countQuery = this.supabase
+        .from('chatbot_knowledge_vectors')
+        .select('id, source_url, source_type', { count: 'exact' })
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId)
+        .eq('source_type', sourceType);
+
+      if (sourceUrl) {
+        // Use pattern matching to catch all URLs from this domain
+        // This handles cases where individual pages are stored (e.g., /about, /contact)
+        countQuery = countQuery.like('source_url', `${sourceUrl}%`);
+      }
+
+      const { data: existingItems, count: existingCount, error: countError } = await countQuery;
+
+      // ENHANCED DEBUGGING: Also check all items for this config to see URL patterns
+      const { data: allItems, error: allItemsError } = await this.supabase
+        .from('chatbot_knowledge_vectors')
+        .select('id, source_url, source_type')
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId);
+
+      console.log('🔍 ALL items in this chatbot config:', allItems);
+      console.log('🎯 SEARCH criteria:', { organizationId, chatbotConfigId, sourceType, sourceUrl });
+      console.log('📊 MATCHED items:', existingItems);
+
+      if (countError) {
+        console.error('❌ Error checking existing items:', countError);
+        throw new Error(`Failed to check existing knowledge vectors: ${countError.message}`);
+      }
+
+      console.log(`🔍 Found ${existingCount || 0} existing items to delete:`, existingItems);
+
+      if (!existingCount || existingCount === 0) {
+        console.log('ℹ️ No items found to delete, returning 0');
+        return 0;
+      }
+
+      // Now perform the actual deletion
+      let deleteQuery = this.supabase
         .from('chatbot_knowledge_vectors')
         .delete()
         .eq('organization_id', organizationId)
@@ -218,17 +266,28 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
         .eq('source_type', sourceType);
 
       if (sourceUrl) {
-        query = query.eq('source_url', sourceUrl);
+        // Use pattern matching to delete all URLs from this domain
+        deleteQuery = deleteQuery.like('source_url', `${sourceUrl}%`);
       }
 
-      const { error, count } = await query;
+      console.log('🗑️ Executing delete query...');
+      const { error: deleteError, count: deletedCount } = await deleteQuery;
 
-      if (error) {
-        throw new Error(`Failed to delete knowledge vectors by source: ${error.message}`);
+      if (deleteError) {
+        console.error('❌ Delete operation failed:', deleteError);
+        throw new Error(`Failed to delete knowledge vectors by source: ${deleteError.message}`);
       }
 
-      return count || 0;
+      console.log(`✅ Successfully deleted ${deletedCount || 0} knowledge vectors`);
+      return deletedCount || 0;
     } catch (error) {
+      console.error('💥 deleteKnowledgeItemsBySource failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        organizationId,
+        chatbotConfigId,
+        sourceType,
+        sourceUrl
+      });
       throw new BusinessRuleViolationError(
         `Failed to delete knowledge vectors by source: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { organizationId, chatbotConfigId, sourceType, sourceUrl }
@@ -303,6 +362,64 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
       throw new BusinessRuleViolationError(
         `Failed to get knowledge vector statistics: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { organizationId, chatbotConfigId }
+      );
+    }
+  }
+
+  async getCrawledPages(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceUrl?: string
+  ): Promise<Array<{
+    url: string;
+    title: string;
+    content: string;
+    status: 'success' | 'failed' | 'skipped';
+    statusCode?: number;
+    responseTime?: number;
+    depth: number;
+    crawledAt: Date;
+    errorMessage?: string;
+  }>> {
+    try {
+      let query = this.supabase
+        .from('chatbot_knowledge_vectors')
+        .select('source_url, title, content, metadata, created_at')
+        .eq('organization_id', organizationId)
+        .eq('chatbot_config_id', chatbotConfigId)
+        .eq('source_type', 'website_crawled')
+        .order('created_at', { ascending: false });
+
+      // Filter by source URL if provided
+      if (sourceUrl) {
+        query = query.like('source_url', `${sourceUrl}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(`Failed to get crawled pages: ${error.message}`);
+      }
+
+      return data.map((row: any) => {
+        const crawlMetadata = row.metadata?.crawl || {};
+        
+        return {
+          url: row.source_url,
+          title: row.title,
+          content: row.content,
+          status: crawlMetadata.status || 'success',
+          statusCode: crawlMetadata.statusCode,
+          responseTime: crawlMetadata.responseTime,
+          depth: crawlMetadata.depth || 0,
+          crawledAt: crawlMetadata.crawledAt ? new Date(crawlMetadata.crawledAt) : new Date(row.created_at),
+          errorMessage: crawlMetadata.errorMessage
+        };
+      });
+    } catch (error) {
+      throw new BusinessRuleViolationError(
+        `Failed to retrieve crawled pages: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { organizationId, chatbotConfigId, sourceUrl }
       );
     }
   }

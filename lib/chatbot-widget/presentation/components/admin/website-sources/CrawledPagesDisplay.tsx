@@ -76,6 +76,8 @@ export function CrawledPagesDisplay({
     ? Math.round(successfulPages.reduce((sum, p) => sum + p.contentLength, 0) / successfulPages.length)
     : 0;
 
+  const hasContentLengthData = successfulPages.some(p => p.contentLength > 0);
+
   const pagesByDepth = pages.reduce((acc, page) => {
     const depth = page.depth;
     if (!acc[depth]) acc[depth] = [];
@@ -138,7 +140,7 @@ export function CrawledPagesDisplay({
             <div className="text-sm text-muted-foreground">Depth Levels</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold">{averageContentLength.toLocaleString()}</div>
+            <div className="text-2xl font-semibold">{hasContentLengthData ? averageContentLength.toLocaleString() : 'N/A'}</div>
             <div className="text-sm text-muted-foreground">Avg Content Length</div>
           </div>
           <div className="text-center">
@@ -155,7 +157,7 @@ export function CrawledPagesDisplay({
             .sort(([a], [b]) => parseInt(a) - parseInt(b))
             .map(([depth, depthPages]) => (
               <div key={depth} className="space-y-2">
-                <h4 className="font-medium text-sm flex items-center">
+                <h4 className="font-semibold text-sm flex items-center text-foreground/90 pb-1 border-b border-border/30">
                   <Hash className="w-4 h-4 mr-1" />
                   Depth {depth} ({depthPages.length} pages)
                 </h4>
@@ -166,11 +168,11 @@ export function CrawledPagesDisplay({
                       <CollapsibleTrigger asChild>
                         <Button
                           variant="ghost"
-                          className="w-full justify-start p-3 h-auto"
+                          className="w-full justify-start p-3 h-auto hover:bg-muted/50 border border-transparent hover:border-border/50 rounded-lg transition-colors"
                           onClick={() => togglePageExpansion(page.id)}
                         >
                           <div className="flex items-start justify-between w-full">
-                            <div className="flex items-start space-x-3 flex-1 text-left">
+                            <div className="flex items-start space-x-3 flex-1 min-w-0 pr-4">
                               {expandedPages.has(page.id) ? (
                                 <ChevronDown className="w-4 h-4 mt-0.5 flex-shrink-0" />
                               ) : (
@@ -179,28 +181,42 @@ export function CrawledPagesDisplay({
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2 mb-1">
-                                  <span className="font-medium truncate">{page.title}</span>
-                                  <Badge variant={
-                                    page.status === 'success' ? 'default' :
-                                    page.status === 'failed' ? 'destructive' : 'secondary'
-                                  } className="text-xs">
-                                    {page.status}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    {page.category}
-                                  </Badge>
+                                  <span className="font-semibold text-foreground truncate flex-1 min-w-0 max-w-[60%]">{page.title}</span>
+                                  <div className="flex items-center space-x-1 flex-shrink-0">
+                                    <Badge variant={
+                                      page.status === 'success' ? 'default' :
+                                      page.status === 'failed' ? 'destructive' : 'secondary'
+                                    } className="text-xs">
+                                      {page.status}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {page.category}
+                                    </Badge>
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground truncate">
-                                  {page.url}
+                                <div 
+                                  className="text-xs text-muted-foreground/80 truncate w-full"
+                                >
+                                  {(() => {
+                                    try {
+                                      const url = new URL(page.url);
+                                      const path = url.pathname === '/' ? '' : url.pathname;
+                                      return `${url.hostname}${path}`;
+                                    } catch {
+                                      return page.url;
+                                    }
+                                  })()}
                                 </div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center space-x-2 ml-4">
-                              <div className="text-xs text-muted-foreground">
-                                {page.contentLength.toLocaleString()} chars
-                              </div>
-                              <ExternalLink className="w-3 h-3" />
+                            <div className="flex items-center space-x-2 ml-2 flex-shrink-0">
+                              {/* Only show content length if it's meaningful */}
+                              {page.contentLength > 0 && (
+                                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {page.contentLength.toLocaleString()} chars
+                                </div>
+                              )}
                             </div>
                           </div>
                         </Button>
@@ -239,18 +255,32 @@ export function CrawledPagesDisplay({
                           </div>
 
                           {/* Content Preview */}
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <FileText className="w-4 h-4" />
-                              <span className="text-sm font-medium">Content Preview</span>
+                          {page.content && page.content.trim().length > 0 ? (
+                            <div>
+                              <div className="flex items-center space-x-2 mb-2">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm font-medium">Content Preview</span>
+                              </div>
+                              <div className="bg-background rounded border p-3 text-sm">
+                                <p className="text-muted-foreground line-clamp-3">
+                                  {page.content.substring(0, 300)}
+                                  {page.content.length > 300 && '...'}
+                                </p>
+                              </div>
                             </div>
-                            <div className="bg-background rounded border p-3 text-sm">
-                              <p className="text-muted-foreground line-clamp-3">
-                                {page.content.substring(0, 300)}
-                                {page.content.length > 300 && '...'}
-                              </p>
+                          ) : (
+                            <div>
+                              <div className="flex items-center space-x-2 mb-2">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm font-medium">Content Preview</span>
+                              </div>
+                              <div className="bg-muted/10 rounded border border-dashed p-3 text-sm">
+                                <p className="text-muted-foreground italic">
+                                  No content preview available
+                                </p>
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           {/* Error Message (if failed) */}
                           {page.status === 'failed' && page.errorMessage && (
@@ -263,12 +293,12 @@ export function CrawledPagesDisplay({
                           )}
 
                           {/* External Link */}
-                          <div className="pt-2">
+                          <div className="pt-2 border-t border-border/30">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(page.url, '_blank')}
-                              className="text-xs"
+                              className="text-xs hover:bg-primary/5"
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
                               View Original Page

@@ -9,24 +9,116 @@
  * - Handle UI state coordination only
  */
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   addWebsiteSource, 
   removeWebsiteSource, 
   crawlWebsiteSource,
   debugCleanupWebsiteSources,
-  WebsiteSourceFormData 
+  WebsiteSourceFormData,
+  getCrawledPages
 } from '../actions/websiteSourcesActions';
 import { WebsiteSourceDto } from '../../application/dto/ChatbotConfigDto';
 import { CrawlProgress, CrawledPageInfo } from '../components/admin/website-sources/WebsiteSourcesSection';
 
 export function useWebsiteSourcesState(
+  organizationId: string,
+  chatbotConfigId: string,
   existingConfig: any,
   activeOrganizationId: string | null
 ) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  
+
+  // Query for crawled pages data from database
+  const {
+    data: crawledPagesData = {},
+    isLoading: crawledPagesLoading,
+    error: crawledPagesError,
+    refetch: refetchCrawledPages
+  } = useQuery({
+    queryKey: ['crawled-pages', organizationId, chatbotConfigId],
+    queryFn: async () => {
+      const result = await getCrawledPages(organizationId, chatbotConfigId);
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to load crawled pages');
+      }
+
+      // Group crawled pages by source URL for easy lookup by component
+      const groupedData: Record<string, CrawledPageInfo[]> = {};
+      
+      if (result.crawledPages) {
+        result.crawledPages.forEach(page => {
+          // Transform database format to CrawledPageInfo format
+          const crawledPageInfo: CrawledPageInfo = {
+            id: `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            url: page.url,
+            title: page.title,
+            content: '', // Content is not available in the current data structure
+            category: 'general',
+            tags: ['website', 'crawled'],
+            depth: page.depth,
+            contentLength: 0, // Content length unknown without content
+            crawledAt: page.crawledAt,
+            status: page.status,
+            errorMessage: page.errorMessage,
+            responseTime: page.responseTime,
+            statusCode: page.statusCode
+          };
+
+          // Group by base URL to match with website sources
+          try {
+            const url = new URL(page.url);
+            const baseUrl = `${url.protocol}//${url.hostname}`;
+            
+            if (!groupedData[baseUrl]) {
+              groupedData[baseUrl] = [];
+            }
+            groupedData[baseUrl].push(crawledPageInfo);
+          } catch (error) {
+            // If URL parsing fails, use the full URL as key
+            const pageUrl = page.url || 'unknown';
+            if (!groupedData[pageUrl]) {
+              groupedData[pageUrl] = [];
+            }
+            groupedData[pageUrl].push(crawledPageInfo);
+          }
+        });
+
+        // Now map the base URL groups to source IDs for component compatibility
+        const sourceIdMappedData: Record<string, CrawledPageInfo[]> = {};
+        
+        // Get website sources to map URLs to source IDs
+        const sources = existingConfig?.knowledgeBase?.websiteSources || [];
+        
+        sources.forEach((source: any) => {
+          try {
+            const sourceUrl = new URL(source.url);
+            const sourceBaseUrl = `${sourceUrl.protocol}//${sourceUrl.hostname}`;
+            
+            // If we have crawled pages for this source's base URL, map them to the source ID
+            if (groupedData[sourceBaseUrl]) {
+              sourceIdMappedData[source.id] = groupedData[sourceBaseUrl];
+            }
+          } catch (error) {
+            // If source URL parsing fails, try exact match
+            if (groupedData[source.url]) {
+              sourceIdMappedData[source.id] = groupedData[source.url];
+            }
+          }
+        });
+
+        return sourceIdMappedData;
+      }
+    },
+    enabled: !!organizationId && !!chatbotConfigId,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: false
+  });
+
   // Form state
   const [formData, setFormData] = useState<WebsiteSourceFormData>({
     url: '',
@@ -45,7 +137,6 @@ export function useWebsiteSourcesState(
   const [crawlProgress, setCrawlProgress] = useState<CrawlProgress | null>(null);
   
   // Crawled pages state
-  const [crawledPagesData, setCrawledPagesData] = useState<Record<string, CrawledPageInfo[]>>({});
   const [showCrawledPages, setShowCrawledPages] = useState<Record<string, boolean>>({});
   
   // Feedback state
@@ -58,6 +149,8 @@ export function useWebsiteSourcesState(
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['chatbot-config', activeOrganizationId] });
+    // Also refetch crawled pages when config changes
+    refetchCrawledPages();
   };
 
   const resetForm = () => {
@@ -148,12 +241,8 @@ export function useWebsiteSourcesState(
         setFormErrors([]);
         setSuccessMessage('Website source deleted successfully');
         
-        // Clean up crawled pages data for deleted source
-        setCrawledPagesData(prev => {
-          const updated = { ...prev };
-          delete updated[sourceId];
-          return updated;
-        });
+        // Refetch crawled pages data to reflect deletion
+        refetchCrawledPages();
         setShowCrawledPages(prev => {
           const updated = { ...prev };
           delete updated[sourceId];
@@ -201,30 +290,8 @@ export function useWebsiteSourcesState(
           message: 'Crawl completed successfully!'
         } : null);
         
-        // Store crawled pages data if available
-        if (result.data?.crawledPages) {
-          const source = websiteSources.find(s => s.id === sourceId);
-          const crawledPages: CrawledPageInfo[] = result.data.crawledPages.map((page: any) => ({
-            id: `${sourceId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            url: page.url,
-            title: page.title,
-            content: page.content,
-            category: 'general', // This would come from AI categorization
-            tags: ['website', 'crawled'],
-            depth: page.depth,
-            contentLength: page.content.length,
-            crawledAt: new Date(page.crawledAt),
-            status: page.status,
-            errorMessage: page.errorMessage,
-            responseTime: page.responseTime,
-            statusCode: page.statusCode
-          }));
-          
-          setCrawledPagesData(prev => ({
-            ...prev,
-            [sourceId]: crawledPages
-          }));
-        }
+        // Refetch crawled pages data from database
+        refetchCrawledPages();
         
         setTimeout(() => setCrawlProgress(null), 3000);
         invalidateQueries();
@@ -286,8 +353,8 @@ export function useWebsiteSourcesState(
         invalidateQueries();
         setFormErrors([]);
         
-        // Clear all crawled pages data
-        setCrawledPagesData({});
+        // Refetch crawled pages data to reflect cleanup
+        refetchCrawledPages();
         setShowCrawledPages({});
       } else {
         setFormErrors([result.error?.message || 'Failed to cleanup website sources']);

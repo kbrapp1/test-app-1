@@ -14,14 +14,16 @@
 
 import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 // KnowledgeVector entity removed - using vector repository interface directly
-import { WebsiteCrawlerService } from '../../infrastructure/providers/knowledge-services/WebsiteCrawlerService';
+import { CrawlAndStoreWebsiteUseCase } from '../use-cases/CrawlAndStoreWebsiteUseCase';
 import { BusinessRuleViolationError } from '../../domain/errors/ContextManagementErrors';
 
 export interface WebsiteCrawlRequest {
   organizationId: string;
   chatbotConfigId: string;
   websiteSource: WebsiteSource;
+  forceRefresh?: boolean;
   progressCallback?: (progress: { current: number; total: number; status: string }) => void;
 }
 
@@ -68,7 +70,8 @@ export interface WebsiteKnowledgeUpdateResponse {
 export class WebsiteKnowledgeApplicationService {
   
   constructor(
-    private websiteCrawlerService: WebsiteCrawlerService
+    private crawlAndStoreUseCase: CrawlAndStoreWebsiteUseCase,
+    private vectorKnowledgeRepository: IVectorKnowledgeRepository
   ) {}
 
   /**
@@ -98,7 +101,7 @@ export class WebsiteKnowledgeApplicationService {
       };
 
       // Use crawlAndStoreWebsite which handles both crawling AND persistence
-      const crawlResult = await this.websiteCrawlerService.crawlAndStoreWebsite(
+      const crawlResult = await this.crawlAndStoreUseCase.execute(
         request.organizationId,
         request.chatbotConfigId,
         request.websiteSource,
@@ -172,7 +175,8 @@ export class WebsiteKnowledgeApplicationService {
           const crawlResponse = await this.crawlWebsiteSource({
             organizationId: request.organizationId,
             chatbotConfigId: request.chatbotConfigId,
-            websiteSource
+            websiteSource,
+            forceRefresh: request.forceRefresh
           });
 
           if (crawlResponse.success) {
@@ -321,7 +325,8 @@ export class WebsiteKnowledgeApplicationService {
       );
     }
 
-    if (!request.websiteSource.isActive) {
+    // Only check if source is active when not forcing refresh
+    if (!request.websiteSource.isActive && !request.forceRefresh) {
       throw new BusinessRuleViolationError(
         'Cannot crawl inactive website source',
         { sourceId: request.websiteSource.id }
@@ -414,6 +419,90 @@ export class WebsiteKnowledgeApplicationService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Get crawled pages data for UI display
+   * 
+   * AI INSTRUCTIONS:
+   * - Retrieves crawled pages from vector table
+   * - Returns data needed for crawled pages UI display
+   * - Handles request validation and error handling
+   */
+  async getCrawledPages(
+    organizationId: string,
+    chatbotConfigId: string,
+    sourceUrl?: string
+  ): Promise<{
+    success: boolean;
+    crawledPages?: Array<{
+      url: string;
+      title: string;
+      content: string;
+      status: 'success' | 'failed' | 'skipped';
+      statusCode?: number;
+      responseTime?: number;
+      depth: number;
+      crawledAt: Date;
+      errorMessage?: string;
+    }>;
+    error?: {
+      code: string;
+      message: string;
+      context?: Record<string, any>;
+    };
+  }> {
+    try {
+      // Validate request
+      if (!organizationId?.trim()) {
+        throw new BusinessRuleViolationError(
+          'Organization ID is required',
+          { organizationId }
+        );
+      }
+
+      if (!chatbotConfigId?.trim()) {
+        throw new BusinessRuleViolationError(
+          'Chatbot config ID is required',
+          { chatbotConfigId }
+        );
+      }
+
+      // Get crawled pages from vector table
+      const crawledPages = await this.vectorKnowledgeRepository.getCrawledPages(
+        organizationId,
+        chatbotConfigId,
+        sourceUrl
+      );
+
+      return {
+        success: true,
+        crawledPages
+      };
+
+    } catch (error) {
+      console.error('❌ WebsiteKnowledgeApplicationService: Get crawled pages failed:', error);
+      
+      if (error instanceof BusinessRuleViolationError) {
+        return {
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+            context: error.context
+          }
+        };
+      }
+
+      return {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve crawled pages',
+          context: { organizationId, chatbotConfigId, sourceUrl }
+        }
+      };
     }
   }
 } 
