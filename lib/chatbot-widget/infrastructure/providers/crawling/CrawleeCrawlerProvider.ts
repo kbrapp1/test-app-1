@@ -18,7 +18,7 @@ import { WebsiteSource, WebsiteCrawlSettings } from '../../../domain/value-objec
 import { IWebCrawlerProvider } from '../../../application/use-cases/CrawlWebsiteUseCase';
 import { CrawledPageData, IRobotsTxtChecker } from '../../../domain/services/WebsiteCrawlingDomainService';
 import { IHtmlParser } from '../../../domain/services/ContentExtractionService';
-import { WebsiteCrawlError } from '../../../domain/errors/WebsiteCrawlingErrors';
+import { WebsiteCrawlingError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { CheerioHtmlParserAdapter } from '../adapters/CheerioHtmlParserAdapter';
 import { UrlNormalizationService } from '../../../domain/services/UrlNormalizationService';
 
@@ -191,10 +191,11 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('❌ CrawleeCrawlerProvider: Crawl execution failed:', errorMessage);
-      throw new WebsiteCrawlError(
-        `Website crawling failed: ${errorMessage}`,
-        { url: source.url, originalError: error }
-      );
+                      throw new WebsiteCrawlingError(
+          source.url,
+          errorMessage,
+          { originalError: error }
+        );
     }
   }
 }

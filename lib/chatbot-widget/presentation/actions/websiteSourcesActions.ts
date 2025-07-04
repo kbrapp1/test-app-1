@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { WebsiteSource, WebsiteCrawlSettings, KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
-import { DomainError, BusinessRuleViolationError } from '../../domain/errors/BusinessRuleViolationError';
+import { DomainError, BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 /**
  * Website Sources Server Actions

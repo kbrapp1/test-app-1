@@ -19,7 +19,7 @@ import {
   WebsiteAccessibilityError, 
   CrawlLimitExceededError,
   RobotsTxtViolationError 
-} from '../errors/WebsiteCrawlingErrors';
+} from '../errors/ChatbotWidgetDomainErrors';
 import { 
   WebsiteCrawlingError, 
   ContentExtractionError, 
@@ -231,15 +231,16 @@ export class WebsiteCrawlingDomainService {
       
       if (!['http:', 'https:'].includes(urlObj.protocol)) {
         throw new InvalidUrlError(
+          url,
           `Only HTTP and HTTPS protocols are supported`,
-          { url, protocol: urlObj.protocol }
+          { protocol: urlObj.protocol }
         );
       }
       
       if (!urlObj.hostname) {
         throw new InvalidUrlError(
-          `URL must have a valid hostname`,
-          { url }
+          url,
+          `URL must have a valid hostname`
         );
       }
       
@@ -297,9 +298,9 @@ export class WebsiteCrawlingDomainService {
 
       if (!response.ok) {
         throw new WebsiteAccessibilityError(
+          url,
           `Website returned ${response.status} ${response.statusText}`,
           {
-            url,
             status: response.status,
             statusText: response.statusText,
           }
@@ -329,16 +330,17 @@ export class WebsiteCrawlingDomainService {
       const canLoad = await robotsChecker.canLoad(url);
       if (!canLoad) {
         throw new RobotsTxtViolationError(
-          'Unable to load robots.txt for compliance checking',
-          { url }
+          url,
+          'Unable to load robots.txt for compliance checking'
         );
       }
       
       const isAllowed = await robotsChecker.isAllowed(url, this.userAgent);
       if (!isAllowed) {
         throw new RobotsTxtViolationError(
+          url,
           'URL is blocked by robots.txt',
-          { url, userAgent: this.userAgent }
+          { userAgent: this.userAgent }
         );
       }
     } catch (error) {
@@ -347,9 +349,9 @@ export class WebsiteCrawlingDomainService {
       }
       
       throw new RobotsTxtViolationError(
+        url,
         'Failed to check robots.txt compliance',
         { 
-          url, 
           error: error instanceof Error ? error.message : String(error) 
         }
       );
