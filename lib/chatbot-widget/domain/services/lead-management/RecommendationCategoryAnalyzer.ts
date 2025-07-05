@@ -10,7 +10,7 @@
  */
 
 import { LeadRecommendation } from '../../value-objects/lead-management/LeadRecommendation';
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface CategoryBreakdown {
   salesActions: number;

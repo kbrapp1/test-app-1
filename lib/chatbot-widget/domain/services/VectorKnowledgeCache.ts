@@ -2,64 +2,41 @@
  * Vector Knowledge Cache Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: In-memory vector storage and similarity search with memory management
- * - Domain service focused on vector mathematics and caching
- * - Keep business logic pure, no external dependencies
+ * - Single responsibility: Manage vector cache state and provide simple API
+ * - Domain service focused on cache state management and coordination
+ * - Keep business logic pure, no external dependencies beyond domain services
  * - Never exceed 250 lines per @golden-rule
- * - Use structured logging for cache operations
+ * - Delegate complex workflows to VectorCacheOrchestrationService
  * - Handle domain errors with specific error types
  * - Cache vectors per chatbot configuration for performance
- * - Implement memory limits and LRU eviction for production safety
+ * - Maintain clean separation between state management and orchestration
  */
 
 import { KnowledgeItem } from './interfaces/IKnowledgeRetrievalService';
-import { BusinessRuleViolationError } from '../../../errors/base';
-import { IChatbotLoggingService, ISessionLogger } from './interfaces/IChatbotLoggingService';
-
-export interface CachedKnowledgeVector {
-  item: KnowledgeItem;
-  vector: number[];
-  similarity?: number;
-  lastAccessed: Date;
-  accessCount: number;
-}
-
-export interface VectorCacheStats {
-  totalVectors: number;
-  memoryUsageKB: number;
-  memoryLimitKB: number;
-  memoryUtilization: number;
-  cacheHitRate: number;
-  searchesPerformed: number;
-  cacheHits: number;
-  evictionsPerformed: number;
-  lastUpdated: Date;
-}
-
-export interface VectorSearchOptions {
-  threshold?: number;
-  limit?: number;
-  categoryFilter?: string;
-  sourceTypeFilter?: string;
-}
-
-export interface VectorCacheConfig {
-  maxMemoryKB?: number; // Default: 50MB
-  maxVectors?: number; // Default: 10000
-  enableLRUEviction?: boolean; // Default: true
-  evictionBatchSize?: number; // Default: 100
-}
+import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
+import { IChatbotLoggingService } from './interfaces/IChatbotLoggingService';
+import { VectorMemoryManagementService } from './VectorMemoryManagementService';
+import { VectorCacheStatisticsService } from './VectorCacheStatisticsService';
+import { VectorCacheOrchestrationService } from './VectorCacheOrchestrationService';
+import {
+  CachedKnowledgeVector,
+  VectorCacheStats,
+  VectorSearchOptions,
+  VectorCacheConfig,
+  VectorCacheInitializationResult,
+  VectorSearchResult
+} from '../types/VectorCacheTypes';
 
 /**
- * In-Memory Vector Knowledge Cache Service with Memory Management
+ * In-Memory Vector Knowledge Cache Service with State Management Focus
  * 
  * AI INSTRUCTIONS:
- * - Loads all knowledge vectors into memory during initialization
- * - Performs cosine similarity search in-memory for maximum performance
- * - Implements LRU eviction when memory limits are exceeded
- * - Tracks cache hit/miss statistics for monitoring
- * - Provides logging for cache operations and search performance
- * - Single responsibility: vector caching, similarity mathematics, and memory management
+ * - Manages cache state: vectors, statistics, and configuration
+ * - Delegates complex workflows to VectorCacheOrchestrationService
+ * - Provides simple API for initialization, search, and monitoring
+ * - Maintains cache lifecycle and statistics tracking
+ * - Handles error conditions and validation
+ * - Focuses on state management rather than complex orchestration
  */
 export class VectorKnowledgeCache {
   private cachedVectors: Map<string, CachedKnowledgeVector> = new Map();
@@ -78,110 +55,50 @@ export class VectorKnowledgeCache {
     config: VectorCacheConfig = {}
   ) {
     this.loggingService = loggingService;
-    
-    // Set default configuration with memory limits
-    this.config = {
-      maxMemoryKB: config.maxMemoryKB || 50 * 1024, // 50MB default
-      maxVectors: config.maxVectors || 10000,
-      enableLRUEviction: config.enableLRUEviction ?? true,
-      evictionBatchSize: config.evictionBatchSize || 100
-    };
+    this.config = VectorMemoryManagementService.createConfig(config);
   }
 
   /**
    * Initialize cache with knowledge vectors
    * 
    * AI INSTRUCTIONS:
-   * - Load vectors into memory map for fast access
-   * - Apply memory limits and evict if necessary
-   * - Log cache initialization performance metrics
+   * - Delegate complex initialization workflow to orchestration service
+   * - Update cache state based on orchestration results
    * - Handle initialization errors gracefully
-   * - Track memory usage and vector count
+   * - Maintain initialization tracking
    */
   async initialize(
     vectors: Array<{ item: KnowledgeItem; vector: number[] }>,
     sharedLogFile: string
-  ): Promise<{ success: boolean; vectorsLoaded: number; vectorsEvicted: number; memoryUsageKB: number; timeMs: number }> {
-    const startTime = Date.now();
-
+  ): Promise<VectorCacheInitializationResult> {
     try {
-      const logger = this.loggingService.createSessionLogger(
-        'vector-cache',
-        sharedLogFile,
-        {
-          operation: 'cache-initialization',
-          organizationId: this.organizationId
-        }
+      const logger = this.createLogger('vector-cache', sharedLogFile, 'cache-initialization');
+
+      const result = await VectorCacheOrchestrationService.orchestrateInitialization(
+        vectors,
+        this.cachedVectors,
+        this.config,
+        logger,
+        this.organizationId,
+        this.chatbotConfigId,
+        (vectors) => this.loadVectorsIntoCache(vectors),
+        () => this.clearCacheState()
       );
 
-      logger.logStep('Vector Cache Initialization with Memory Management');
-      logger.logMessage(`Loading ${vectors.length} knowledge vectors into memory`);
-      logger.logMessage(`📊 Memory limit: ${this.config.maxMemoryKB} KB, Vector limit: ${this.config.maxVectors}`);
-
-      // Clear existing cache
-      this.cachedVectors.clear();
-      this.searchCount = 0;
-      this.cacheHits = 0;
-      this.evictionsPerformed = 0;
-
-      // Load vectors into memory with access tracking
-      const now = new Date();
-      vectors.forEach(({ item, vector }) => {
-        const cacheKey = this.generateCacheKey(item.id);
-        this.cachedVectors.set(cacheKey, {
-          item,
-          vector: [...vector], // Create copy to prevent external mutations
-          lastAccessed: now,
-          accessCount: 0
-        });
-      });
-
-      // Check memory limits and evict if necessary
-      const vectorsEvicted = await this.enforceMemoryLimits(logger);
-
-      // Calculate final memory usage
-      const memoryUsageKB = this.calculateMemoryUsage();
-      const timeMs = Date.now() - startTime;
-
+      // Update cache state based on orchestration results
+      this.evictionsPerformed += result.vectorsEvicted;
       this.isInitialized = true;
       this.initializationTime = new Date();
 
-      logger.logMessage(`✅ Cache initialized successfully`);
-      logger.logMessage(`📊 Vectors loaded: ${this.cachedVectors.size}`);
-      logger.logMessage(`📊 Vectors evicted: ${vectorsEvicted}`);
-      logger.logMessage(`📊 Memory usage: ${memoryUsageKB} KB (${((memoryUsageKB / this.config.maxMemoryKB) * 100).toFixed(1)}% of limit)`);
-      logger.logMessage(`📊 Data Source: In-memory vector cache (no database queries)`);
-      
-      logger.logMetrics('vector-cache-init', {
-        duration: timeMs,
-        customMetrics: {
-          vectorsLoaded: this.cachedVectors.size,
-          vectorsEvicted,
-          memoryUsageKB,
-          memoryUtilization: (memoryUsageKB / this.config.maxMemoryKB) * 100,
-          averageVectorSize: vectors.length > 0 ? vectors[0].vector.length : 0
-        }
-      });
-
-      return {
-        success: true,
-        vectorsLoaded: this.cachedVectors.size,
-        vectorsEvicted,
-        memoryUsageKB,
-        timeMs
-      };
+      return result;
 
     } catch (error) {
-      const timeMs = Date.now() - startTime;
-      
       throw new BusinessRuleViolationError(
         'Vector cache initialization failed',
         {
           error: error instanceof Error ? error.message : 'Unknown error',
           organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId,
-          vectorCount: vectors.length,
-          timeMs
+          chatbotConfigId: this.chatbotConfigId
         }
       );
     }
@@ -191,19 +108,16 @@ export class VectorKnowledgeCache {
    * Search cached vectors using cosine similarity
    * 
    * AI INSTRUCTIONS:
-   * - Perform in-memory cosine similarity calculations
-   * - Update access tracking for LRU eviction
-   * - Log cache hit statistics and performance metrics
-   * - Return results sorted by similarity score
-   * - Track search statistics for monitoring
+   * - Validate cache state before search
+   * - Delegate complex search workflow to orchestration service
+   * - Update search statistics
+   * - Handle search errors gracefully
    */
   async searchVectors(
     queryEmbedding: number[],
     options: VectorSearchOptions = {},
     sharedLogFile: string
-  ): Promise<Array<{ item: KnowledgeItem; similarity: number }>> {
-    const startTime = Date.now();
-
+  ): Promise<VectorSearchResult[]> {
     if (!this.isInitialized) {
       throw new BusinessRuleViolationError(
         'Vector cache not initialized - call initialize() first',
@@ -216,194 +130,48 @@ export class VectorKnowledgeCache {
     }
 
     try {
-      const logger = this.loggingService.createSessionLogger(
-        'vector-search',
-        sharedLogFile,
-        {
-          operation: 'cached-vector-search',
-          organizationId: this.organizationId
-        }
+      const logger = this.createLogger('vector-search', sharedLogFile, 'cached-vector-search');
+
+      return await VectorCacheOrchestrationService.orchestrateSearch(
+        queryEmbedding,
+        options,
+        this.cachedVectors,
+        logger,
+        this.organizationId,
+        this.chatbotConfigId,
+        () => this.incrementSearchStats(),
+        () => this.getCacheStats()
       );
 
-      this.searchCount++;
-      this.cacheHits++; // All searches are cache hits since we search in-memory
-
-      const threshold = options.threshold || 0.15; // Restored normal threshold
-      const limit = options.limit || 5;
-
-      logger.logMessage(`🔍 Searching ${this.cachedVectors.size} cached vectors`);
-      logger.logMessage(`📊 Data Source: In-memory vector cache (cache hit)`);
-      logger.logMessage(`Search threshold: ${threshold}, limit: ${limit}`);
-      logger.logMessage(`🔍 Query embedding dimensions: ${queryEmbedding.length}`);
-
-      const searchResults: Array<{ item: KnowledgeItem; similarity: number }> = [];
-      const allSimilarities: Array<{ id: string; similarity: number }> = [];
-      const now = new Date();
-
-      // Perform cosine similarity search in memory with access tracking
-      for (const [key, cachedVector] of this.cachedVectors.entries()) {
-        // Update access tracking for LRU
-        cachedVector.lastAccessed = now;
-        cachedVector.accessCount++;
-
-        // Apply filters
-        if (options.categoryFilter && cachedVector.item.category !== options.categoryFilter) {
-          continue;
-        }
-        if (options.sourceTypeFilter && cachedVector.item.source !== options.sourceTypeFilter) {
-          continue;
-        }
-
-        // Calculate cosine similarity
-        const similarity = this.calculateCosineSimilarity(queryEmbedding, cachedVector.vector);
-
-        // Track all similarities for debugging
-        allSimilarities.push({
-          id: cachedVector.item.id,
-          similarity
-        });
-
-        // Add to results if above threshold
-        if (similarity >= threshold) {
-          searchResults.push({
-            item: cachedVector.item,
-            similarity
-          });
-        }
-      }
-
-      // Log summary statistics
-      logger.logMessage(`🔍 Total similarities calculated: ${allSimilarities.length}`);
-      
-      if (allSimilarities.length > 0) {
-        allSimilarities
-          .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, 5)
-          .forEach((item, index) => {
-            const passedThreshold = item.similarity >= threshold ? '✅' : '❌';
-            logger.logMessage(`  ${index + 1}. ${item.id}: ${(item.similarity * 100).toFixed(1)}% ${passedThreshold}`);
-          });
-      }
-
-      // Sort by similarity (highest first) and limit results
-      searchResults.sort((a, b) => b.similarity - a.similarity);
-      const limitedResults = searchResults.slice(0, limit);
-
-      const timeMs = Date.now() - startTime;
-      const stats = this.getCacheStats();
-
-      logger.logMessage(`✅ Search completed in ${timeMs}ms`);
-      logger.logMessage(`Found ${limitedResults.length} relevant items`);
-      logger.logMessage(`📊 Cache Hit Rate: ${(stats.cacheHitRate * 100).toFixed(1)}%`);
-      logger.logMessage(`📊 Memory Usage: ${stats.memoryUsageKB} KB (${stats.memoryUtilization.toFixed(1)}% of limit)`);
-
-      if (limitedResults.length > 0) {
-        logger.logMessage(`Best match similarity: ${limitedResults[0].similarity.toFixed(3)}`);
-        logger.logMessage(`Worst match similarity: ${limitedResults[limitedResults.length - 1].similarity.toFixed(3)}`);
-      }
-
-      logger.logMetrics('cached-vector-search', {
-        duration: timeMs,
-        customMetrics: {
-          vectorsSearched: this.cachedVectors.size,
-          resultsFound: limitedResults.length,
-          cacheHitRate: stats.cacheHitRate,
-          memoryUtilization: stats.memoryUtilization,
-          searchThreshold: threshold
-        }
-      });
-
-      return limitedResults;
-
     } catch (error) {
-      const timeMs = Date.now() - startTime;
-      
       throw new BusinessRuleViolationError(
         'Cached vector search failed',
         {
           error: error instanceof Error ? error.message : 'Unknown error',
           organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId,
-          searchTimeMs: timeMs,
-          cacheSize: this.cachedVectors.size
+          chatbotConfigId: this.chatbotConfigId
         }
       );
     }
   }
 
   /**
-   * Enforce memory limits using LRU eviction
+   * Get cache statistics for monitoring
    * 
    * AI INSTRUCTIONS:
-   * - Check if memory usage exceeds configured limits
-   * - Evict least recently used vectors in batches
-   * - Log eviction operations for monitoring
-   * - Return count of evicted vectors
-   */
-  private async enforceMemoryLimits(logger: ISessionLogger): Promise<number> {
-    if (!this.config.enableLRUEviction) {
-      return 0;
-    }
-
-    const currentMemoryKB = this.calculateMemoryUsage();
-    const currentVectorCount = this.cachedVectors.size;
-    let evictedCount = 0;
-
-    // Check memory limit
-    if (currentMemoryKB > this.config.maxMemoryKB) {
-      logger.logMessage(`⚠️ Memory limit exceeded: ${currentMemoryKB} KB > ${this.config.maxMemoryKB} KB`);
-      evictedCount = this.evictLRUVectors(logger, 'memory');
-    }
-    // Check vector count limit
-    else if (currentVectorCount > this.config.maxVectors) {
-      logger.logMessage(`⚠️ Vector count limit exceeded: ${currentVectorCount} > ${this.config.maxVectors}`);
-      evictedCount = this.evictLRUVectors(logger, 'count');
-    }
-
-    return evictedCount;
-  }
-
-  /**
-   * Evict least recently used vectors
-   */
-  private evictLRUVectors(logger: ISessionLogger, reason: 'memory' | 'count'): number {
-    // Sort vectors by last accessed time (oldest first)
-    const sortedEntries = Array.from(this.cachedVectors.entries())
-      .sort(([, a], [, b]) => a.lastAccessed.getTime() - b.lastAccessed.getTime());
-
-    const toEvict = Math.min(this.config.evictionBatchSize, sortedEntries.length);
-    let evicted = 0;
-
-    for (let i = 0; i < toEvict; i++) {
-      const [key] = sortedEntries[i];
-      this.cachedVectors.delete(key);
-      evicted++;
-    }
-
-    this.evictionsPerformed += evicted;
-    
-    logger.logMessage(`🗑️ Evicted ${evicted} vectors (reason: ${reason} limit exceeded)`);
-    logger.logMessage(`📊 Cache size after eviction: ${this.cachedVectors.size} vectors`);
-
-    return evicted;
-  }
-
-  /**
-   * Get cache statistics for monitoring
+   * - Use VectorCacheStatisticsService for comprehensive statistics
+   * - Provide current cache state and performance metrics
+   * - Support monitoring and optimization decisions
    */
   getCacheStats(): VectorCacheStats {
-    const memoryUsageKB = this.calculateMemoryUsage();
-    return {
-      totalVectors: this.cachedVectors.size,
-      memoryUsageKB,
-      memoryLimitKB: this.config.maxMemoryKB,
-      memoryUtilization: (memoryUsageKB / this.config.maxMemoryKB) * 100,
-      cacheHitRate: this.getCacheHitRate(),
-      searchesPerformed: this.searchCount,
-      cacheHits: this.cacheHits,
-      evictionsPerformed: this.evictionsPerformed,
-      lastUpdated: this.initializationTime || new Date()
-    };
+    return VectorCacheStatisticsService.calculateCacheStats(
+      this.cachedVectors,
+      this.config,
+      this.searchCount,
+      this.cacheHits,
+      this.evictionsPerformed,
+      this.initializationTime
+    );
   }
 
   /**
@@ -415,47 +183,77 @@ export class VectorKnowledgeCache {
 
   /**
    * Clear cache and reset statistics
+   * 
+   * AI INSTRUCTIONS:
+   * - Clear cache state and reset counters
+   * - Use orchestration service for logging if needed
+   * - Reset initialization state
    */
   clear(): void {
+    const previousSize = this.cachedVectors.size;
+    
+    if (this.loggingService && previousSize > 0) {
+      const logger = this.createLogger('vector-cache-clear', 'cache-operations.log', 'cache-clear');
+      
+      VectorCacheOrchestrationService.orchestrateCacheClear(
+        previousSize,
+        this.organizationId,
+        this.chatbotConfigId,
+        logger,
+        () => this.performCacheClear()
+      );
+    } else {
+      this.performCacheClear();
+    }
+  }
+
+  /**
+   * Load vectors into cache with access tracking
+   * 
+   * AI INSTRUCTIONS:
+   * - Create cached vector entries with metadata
+   * - Initialize access tracking for LRU
+   * - Generate unique cache keys
+   */
+  private loadVectorsIntoCache(vectors: Array<{ item: KnowledgeItem; vector: number[] }>): void {
+    const now = new Date();
+    
+    vectors.forEach(({ item, vector }) => {
+      const cacheKey = this.generateCacheKey(item.id);
+      this.cachedVectors.set(cacheKey, {
+        item,
+        vector: [...vector], // Create copy to prevent external mutations
+        lastAccessed: now,
+        accessCount: 0
+      });
+    });
+  }
+
+  /**
+   * Clear cache state and reset counters
+   */
+  private clearCacheState(): void {
     this.cachedVectors.clear();
-    this.isInitialized = false;
-    this.initializationTime = null;
     this.searchCount = 0;
     this.cacheHits = 0;
     this.evictionsPerformed = 0;
   }
 
   /**
-   * Calculate cosine similarity between two vectors
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure mathematical function for vector similarity
-   * - Handle edge cases (zero vectors, different dimensions)
-   * - Optimize for performance with minimal allocations
+   * Perform complete cache clearing
    */
-  private calculateCosineSimilarity(vectorA: number[], vectorB: number[]): number {
-    if (vectorA.length !== vectorB.length) {
-      throw new BusinessRuleViolationError(
-        'Vector dimensions must match for similarity calculation',
-        { dimA: vectorA.length, dimB: vectorB.length }
-      );
-    }
+  private performCacheClear(): void {
+    this.clearCacheState();
+    this.isInitialized = false;
+    this.initializationTime = null;
+  }
 
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < vectorA.length; i++) {
-      dotProduct += vectorA[i] * vectorB[i];
-      normA += vectorA[i] * vectorA[i];
-      normB += vectorB[i] * vectorB[i];
-    }
-
-    if (normA === 0 || normB === 0) {
-      return 0; // Handle zero vectors
-    }
-
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  /**
+   * Increment search statistics
+   */
+  private incrementSearchStats(): void {
+    this.searchCount++;
+    this.cacheHits++; // All searches are cache hits since we search in-memory
   }
 
   /**
@@ -466,20 +264,27 @@ export class VectorKnowledgeCache {
   }
 
   /**
-   * Calculate approximate memory usage in KB
+   * Create session logger with consistent context
    */
-  private calculateMemoryUsage(): number {
-    const vectorCount = this.cachedVectors.size;
-    if (vectorCount === 0) return 0;
-
-    // Estimate: ~7KB per vector (1536 dimensions * 4 bytes + metadata + tracking)
-    return Math.round(vectorCount * 7);
+  private createLogger(sessionId: string, logFile: string, operation: string) {
+    return this.loggingService.createSessionLogger(
+      sessionId,
+      logFile,
+      {
+        operation,
+        organizationId: this.organizationId,
+        metadata: { chatbotConfigId: this.chatbotConfigId }
+      }
+    );
   }
+}
 
-  /**
-   * Calculate cache hit rate percentage
-   */
-  private getCacheHitRate(): number {
-    return this.searchCount > 0 ? this.cacheHits / this.searchCount : 1.0;
-  }
-} 
+// Re-export types for backward compatibility
+export type { 
+  CachedKnowledgeVector,
+  VectorCacheStats,
+  VectorSearchOptions,
+  VectorCacheConfig,
+  VectorCacheInitializationResult,
+  VectorSearchResult
+} from '../types/VectorCacheTypes'; 

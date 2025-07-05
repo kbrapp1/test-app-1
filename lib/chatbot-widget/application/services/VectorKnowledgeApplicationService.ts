@@ -1,7 +1,7 @@
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 /**
  * Vector Knowledge Application Service
@@ -136,13 +136,6 @@ export class VectorKnowledgeApplicationService {
     sourceUrl?: string
   ): Promise<number> {
     try {
-      console.log('🧹 VectorKnowledgeApplicationService: Starting knowledge cleanup', {
-        organizationId,
-        chatbotConfigId,
-        sourceType,
-        sourceUrl
-      });
-
       const deletedCount = await this.vectorKnowledgeRepository.deleteKnowledgeItemsBySource(
         organizationId,
         chatbotConfigId,
@@ -150,7 +143,6 @@ export class VectorKnowledgeApplicationService {
         sourceUrl
       );
 
-      console.log(`🧹 VectorKnowledgeApplicationService: Cleanup completed, deleted ${deletedCount} items`);
       return deletedCount;
     } catch (error) {
       console.error('💥 VectorKnowledgeApplicationService: Knowledge cleanup failed:', {

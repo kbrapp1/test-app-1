@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { DebugInfoMapper } from '@/lib/chatbot-widget/application/mappers/DebugInfoMapper';
 
@@ -30,14 +31,25 @@ async function postHandler(
     );
   }
 
+  // Get organization context for proper error logging and permissions
+  const organizationId = await getActiveOrganizationId();
+  
+  if (!organizationId) {
+    return NextResponse.json(
+      { error: 'Organization context required' },
+      { status: 400 }
+    );
+  }
+
   // Get use case from composition root
   const processChatMessageUseCase = await ChatbotWidgetCompositionRoot.getProcessChatMessageUseCase();
 
-  // Process the chat message
+  // Process the chat message with organization context
   const startTime = Date.now();
   const result = await processChatMessageUseCase.execute({
     sessionId,
     userMessage: message,
+    organizationId, // Include organization context for proper error logging
     metadata: { clientInfo }
   });
 

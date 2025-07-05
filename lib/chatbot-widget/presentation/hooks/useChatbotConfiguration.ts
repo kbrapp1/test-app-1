@@ -34,6 +34,7 @@ import {
   BotConfigurationActions,
   DEFAULT_FORM_DATA,
 } from '../types/BotConfigurationTypes';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 // Hook Options Interface
 export interface UseChatbotConfigurationOptions {
@@ -218,6 +219,24 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
       
       if (!validation.isValid) {
         console.error('Validation errors:', validation.errors);
+        
+        // Track chatbot configuration error to database
+        const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+        errorTrackingService.trackChatbotConfigurationError(
+          'form_validation_failed',
+          {
+            organizationId: activeOrganizationId,
+            metadata: {
+              validationErrors: validation.errors,
+              formData: {
+                name: formData.name,
+                description: formData.description,
+                personality: formData.personality
+              }
+            }
+          }
+        ).catch(err => console.error('Failed to track validation error:', err));
+        
         return;
       }
 

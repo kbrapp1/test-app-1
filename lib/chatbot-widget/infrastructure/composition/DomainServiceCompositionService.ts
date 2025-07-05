@@ -9,6 +9,7 @@ import { SessionLeadQualificationService } from '../../domain/services/session-m
 import { ContextWindowService } from '../../domain/services/utilities/ContextWindowService';
 import { EntityAccumulationService } from '../../domain/services/context/EntityAccumulationService';
 import { DynamicPromptService } from '../../domain/services/ai-configuration/DynamicPromptService';
+import { AIConfigurationCompositionService } from './AIConfigurationCompositionService';
 import { LeadExtractionService } from '../../domain/services/lead-management/LeadExtractionService';
 import { ConversationFlowService, AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
 import { ConversationMetricsService } from '../../application/services/conversation-management/ConversationMetricsService';
@@ -49,7 +50,6 @@ export class DomainServiceCompositionService {
   private static sessionContextService: SessionContextService | null = null;
   private static sessionStateService: SessionStateService | null = null;
   private static contextWindowService: ContextWindowService | null = null;
-  private static dynamicPromptService: DynamicPromptService | null = null;
   private static leadExtractionService: LeadExtractionService | null = null;
 
   // Infrastructure service singletons for interfaces
@@ -144,10 +144,8 @@ export class DomainServiceCompositionService {
    * Get Dynamic Prompt Service
    */
   static getDynamicPromptService(): DynamicPromptService {
-    if (!this.dynamicPromptService) {
-      this.dynamicPromptService = new DynamicPromptService();
-    }
-    return this.dynamicPromptService;
+    // Delegate to AIConfigurationCompositionService for proper dependency injection
+    return AIConfigurationCompositionService.getDynamicPromptService();
   }
 
   /**

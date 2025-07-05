@@ -13,9 +13,8 @@
 import { UrlNormalizationService } from '../../domain/services/UrlNormalizationService';
 import { ContentDeduplicationService, DeduplicatableContent, DeduplicationResult } from '../../domain/services/ContentDeduplicationService';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
-import { IWebsiteKnowledgeRepository } from '../../domain/repositories/IWebsiteKnowledgeRepository';
-import { VectorKnowledge } from '../../domain/entities/VectorKnowledge';
 import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 /**
  * Represents existing knowledge entry for deduplication
@@ -51,8 +50,7 @@ export class ContentDeduplicationApplicationService {
   constructor(
     private urlNormalizationService: UrlNormalizationService,
     private contentDeduplicationService: ContentDeduplicationService,
-    private vectorKnowledgeRepository: IVectorKnowledgeRepository,
-    private websiteKnowledgeRepository: IWebsiteKnowledgeRepository
+    private vectorKnowledgeRepository: IVectorKnowledgeRepository
   ) {}
   
   /**
@@ -64,23 +62,22 @@ export class ContentDeduplicationApplicationService {
    */
   async checkForExistingDuplicates(
     newContent: DeduplicatableContent,
+    organizationId: string,
     configId: string
   ): Promise<ExistingKnowledgeEntry[]> {
     try {
-      console.log(`🔍 Checking for existing duplicates: ${newContent.url}`);
-      
-      // Get all existing knowledge for this config
-      const existingKnowledge = await this.websiteKnowledgeRepository.getByConfigId(configId);
+      // Get all existing knowledge vectors for this config
+      const existingKnowledgeVectors = await this.vectorKnowledgeRepository.getAllKnowledgeVectors(
+        organizationId,
+        configId
+      );
       
       // Convert to deduplicatable format
-      const existingContent: DeduplicatableContent[] = existingKnowledge.map(kb => ({
-        url: kb.source.url,
-        content: '', // We don't have the full content here, so we'll do URL-based dedup only
-        title: kb.source.url
+      const existingContent: DeduplicatableContent[] = existingKnowledgeVectors.map((kv: { item: KnowledgeItem; vector: number[] }) => ({
+        url: kv.item.source || '',
+        content: kv.item.content,
+        title: kv.item.title
       }));
-      
-      // Add the new content to check against existing
-      const allContent = [...existingContent, newContent];
       
       // Find duplicates for the new URL
       const duplicates = this.contentDeduplicationService.findDuplicatesForUrl(
@@ -88,17 +85,17 @@ export class ContentDeduplicationApplicationService {
         existingContent
       );
       
-      console.log(`📊 Found ${duplicates.length} existing duplicates for ${newContent.url}`);
-      
       // Convert back to ExistingKnowledgeEntry format
       const existingDuplicates: ExistingKnowledgeEntry[] = [];
       
       for (const duplicate of duplicates) {
-        const existingEntry = existingKnowledge.find(kb => kb.source.url === duplicate.url);
-        if (existingEntry) {
+        const existingVector = existingKnowledgeVectors.find((kv: { item: KnowledgeItem; vector: number[] }) => 
+          kv.item.source === duplicate.url
+        );
+        if (existingVector) {
           existingDuplicates.push({
-            id: existingEntry.id,
-            url: existingEntry.source.url,
+            id: existingVector.item.id,
+            url: existingVector.item.source || '',
             content: duplicate.content,
             title: duplicate.title,
             configId: configId
@@ -117,10 +114,14 @@ export class ContentDeduplicationApplicationService {
   /**
    * Perform comprehensive deduplication cleanup for a configuration
    * 
+   * @param organizationId - Organization ID
    * @param configId - Configuration ID to clean up
    * @returns Cleanup results with statistics
    */
-  async performDeduplicationCleanup(configId: string): Promise<DeduplicationCleanupResult> {
+  async performDeduplicationCleanup(
+    organizationId: string,
+    configId: string
+  ): Promise<DeduplicationCleanupResult> {
     const result: DeduplicationCleanupResult = {
       duplicatesRemoved: 0,
       vectorsRemoved: 0,
@@ -129,62 +130,64 @@ export class ContentDeduplicationApplicationService {
     };
     
     try {
-      console.log(`🧹 Starting deduplication cleanup for config: ${configId}`);
+      // Get all knowledge vectors for this config
+      const allKnowledgeVectors = await this.vectorKnowledgeRepository.getAllKnowledgeVectors(
+        organizationId,
+        configId
+      );
       
-      // Get all knowledge entries for this config
-      const allKnowledge = await this.websiteKnowledgeRepository.getByConfigId(configId);
-      console.log(`📊 Found ${allKnowledge.length} knowledge entries to analyze`);
-      
-      if (allKnowledge.length <= 1) {
-        console.log('ℹ️ Only one or no entries found, no deduplication needed');
-        result.entriesKept = allKnowledge.length;
+      if (allKnowledgeVectors.length <= 1) {
+        result.entriesKept = allKnowledgeVectors.length;
         return result;
       }
       
-      // For this cleanup, we'll focus on URL-based deduplication since we don't have content
-      const urlGroups = new Map<string, typeof allKnowledge>();
+      // Group by normalized URL
+      const urlGroups = new Map<string, Array<{ item: KnowledgeItem; vector: number[] }>>();
       
-      for (const knowledge of allKnowledge) {
-        const normalizedUrl = this.urlNormalizationService.normalizeUrl(knowledge.source.url);
+      for (const knowledgeVector of allKnowledgeVectors) {
+        const sourceUrl = knowledgeVector.item.source || '';
+        if (!sourceUrl) continue;
+        
+        const normalizedUrl = this.urlNormalizationService.normalizeUrl(sourceUrl);
         
         if (!urlGroups.has(normalizedUrl)) {
           urlGroups.set(normalizedUrl, []);
         }
-        urlGroups.get(normalizedUrl)!.push(knowledge);
+        urlGroups.get(normalizedUrl)!.push(knowledgeVector);
       }
-      
-      console.log(`📊 Found ${urlGroups.size} unique normalized URLs from ${allKnowledge.length} entries`);
       
       // Process each URL group
       for (const [normalizedUrl, groupEntries] of urlGroups) {
         if (groupEntries.length > 1) {
-          console.log(`🔄 Processing ${groupEntries.length} duplicates for: ${normalizedUrl}`);
           
           // Choose canonical entry (prefer HTTPS, shorter URLs)
           const canonicalUrl = this.urlNormalizationService.getCanonicalUrl(
-            groupEntries.map(entry => entry.source.url)
+            groupEntries.map((entry: { item: KnowledgeItem; vector: number[] }) => entry.item.source || '')
           );
           
-          const canonicalEntry = groupEntries.find(entry => entry.source.url === canonicalUrl);
-          const duplicateEntries = groupEntries.filter(entry => entry.source.url !== canonicalUrl);
+          const canonicalEntry = groupEntries.find((entry: { item: KnowledgeItem; vector: number[] }) => 
+            entry.item.source === canonicalUrl
+          );
+          const duplicateEntries = groupEntries.filter((entry: { item: KnowledgeItem; vector: number[] }) => 
+            entry.item.source !== canonicalUrl
+          );
           
-          console.log(`📌 Keeping canonical: ${canonicalUrl}`);
-          console.log(`🗑️ Removing ${duplicateEntries.length} duplicates`);
-          
-          // Remove duplicate knowledge entries and their vectors
+          // Remove duplicate knowledge entries
           for (const duplicate of duplicateEntries) {
             try {
-              // Remove vectors first
-              await this.vectorKnowledgeRepository.deleteByUrl(duplicate.source.url, configId);
-              
-              // Remove knowledge entry
-              await this.websiteKnowledgeRepository.delete(duplicate.id);
+              // Remove by source URL and type
+              const removedCount = await this.vectorKnowledgeRepository.deleteKnowledgeItemsBySource(
+                organizationId,
+                configId,
+                'website_crawled',
+                duplicate.item.source
+              );
               
               result.duplicatesRemoved++;
-              console.log(`✅ Removed duplicate: ${duplicate.source.url}`);
+              result.vectorsRemoved += removedCount;
               
             } catch (error) {
-              const errorMsg = `Failed to remove duplicate ${duplicate.source.url}: ${error instanceof Error ? error.message : String(error)}`;
+              const errorMsg = `Failed to remove duplicate ${duplicate.item.source}: ${error instanceof Error ? error.message : String(error)}`;
               console.error(`❌ ${errorMsg}`);
               result.errors.push(errorMsg);
             }
@@ -198,12 +201,6 @@ export class ContentDeduplicationApplicationService {
         }
       }
       
-      console.log(`🎉 Deduplication cleanup completed:`, {
-        duplicatesRemoved: result.duplicatesRemoved,
-        entriesKept: result.entriesKept,
-        errors: result.errors.length
-      });
-      
       return result;
       
     } catch (error) {
@@ -215,15 +212,17 @@ export class ContentDeduplicationApplicationService {
   }
   
   /**
-   * Remove specific duplicate entries by ID
+   * Remove specific duplicate entries by URL
    * 
-   * @param duplicateIds - Array of knowledge entry IDs to remove
+   * @param organizationId - Organization ID
    * @param configId - Configuration ID for vector cleanup
+   * @param duplicateUrls - Array of URLs to remove
    * @returns Cleanup results
    */
   async removeDuplicateEntries(
-    duplicateIds: string[],
-    configId: string
+    organizationId: string,
+    configId: string,
+    duplicateUrls: string[]
   ): Promise<DeduplicationCleanupResult> {
     const result: DeduplicationCleanupResult = {
       duplicatesRemoved: 0,
@@ -233,30 +232,21 @@ export class ContentDeduplicationApplicationService {
     };
     
     try {
-      console.log(`🗑️ Removing ${duplicateIds.length} specific duplicate entries`);
-      
-      for (const duplicateId of duplicateIds) {
+      for (const duplicateUrl of duplicateUrls) {
         try {
-          // Get the entry first to get its URL for vector cleanup
-          const knowledgeEntry = await this.websiteKnowledgeRepository.getById(duplicateId);
+          // Remove vectors for this URL
+          const vectorsRemoved = await this.vectorKnowledgeRepository.deleteKnowledgeItemsBySource(
+            organizationId,
+            configId,
+            'website_crawled',
+            duplicateUrl
+          );
           
-          if (knowledgeEntry) {
-            // Remove vectors for this URL
-            const vectorsRemoved = await this.vectorKnowledgeRepository.deleteByUrl(
-              knowledgeEntry.source.url,
-              configId
-            );
-            result.vectorsRemoved += vectorsRemoved;
-            
-            // Remove knowledge entry
-            await this.websiteKnowledgeRepository.delete(duplicateId);
-            result.duplicatesRemoved++;
-            
-            console.log(`✅ Removed duplicate entry: ${knowledgeEntry.source.url}`);
-          }
+          result.vectorsRemoved += vectorsRemoved;
+          result.duplicatesRemoved++;
           
         } catch (error) {
-          const errorMsg = `Failed to remove duplicate ${duplicateId}: ${error instanceof Error ? error.message : String(error)}`;
+          const errorMsg = `Failed to remove duplicate ${duplicateUrl}: ${error instanceof Error ? error.message : String(error)}`;
           console.error(`❌ ${errorMsg}`);
           result.errors.push(errorMsg);
         }

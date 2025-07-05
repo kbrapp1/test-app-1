@@ -16,7 +16,7 @@ import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 import { LeadCaptureService } from '../services/lead-management/LeadCaptureService';
 import { LeadDto } from '../dto/LeadDto';
 import { LeadMapper } from '../mappers/LeadMapper';
-import { BusinessRuleViolationError } from '../../domain/errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { ContactInfo } from '../../domain/value-objects/lead-management/ContactInfo';
 import { LeadSource } from '../../domain/value-objects/lead-management/LeadSource';
 import { QualificationData } from '../../domain/value-objects/lead-management/QualificationData';

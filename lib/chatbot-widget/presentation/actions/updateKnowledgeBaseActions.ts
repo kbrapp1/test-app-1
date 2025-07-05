@@ -14,7 +14,7 @@
 
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 
 

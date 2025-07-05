@@ -1,445 +1,370 @@
 /**
- * Website Knowledge Application Service Integration Tests
+ * Website Knowledge Application Service Tests
  * 
  * AI INSTRUCTIONS:
- * - Test complete crawl workflow integration
- * - Verify request validation and error handling
- * - Test batch website knowledge updates
+ * - Test orchestration service with mocked dependencies
+ * - Verify proper delegation to specialized services
+ * - Test error handling and validation
  * - Follow @golden-rule testing patterns
- * - Mock external dependencies appropriately
+ * - Mock all external dependencies appropriately
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { WebsiteKnowledgeApplicationService, WebsiteCrawlRequest, WebsiteKnowledgeUpdateRequest } from '../WebsiteKnowledgeApplicationService';
-import { CrawlAndStoreWebsiteUseCase } from '../../use-cases/CrawlAndStoreWebsiteUseCase';
+import { WebsiteKnowledgeApplicationService } from '../WebsiteKnowledgeApplicationService';
+import { CrawlOrchestrationService } from '../CrawlOrchestrationService';
+import { BatchProcessingService } from '../BatchProcessingService';
+import { CrawledPagesQueryService } from '../CrawledPagesQueryService';
+import { WebsiteValidationService } from '../WebsiteValidationService';
 import { TestDataFactory } from '../../../__tests__/test-utilities/TestDataFactory';
-import { BusinessRuleViolationError } from '../../../domain/errors/ContextManagementErrors';
+import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
-// Mock the use case
-vi.mock('../../use-cases/CrawlAndStoreWebsiteUseCase');
+// Mock all specialized services
+vi.mock('../CrawlOrchestrationService');
+vi.mock('../BatchProcessingService');
+vi.mock('../CrawledPagesQueryService');
+vi.mock('../WebsiteValidationService');
 
-describe('WebsiteKnowledgeApplicationService Integration Tests', () => {
+describe('WebsiteKnowledgeApplicationService', () => {
   let service: WebsiteKnowledgeApplicationService;
-  let mockCrawlUseCase: any;
+  let mockCrawlOrchestrationService: any;
+  let mockBatchProcessingService: any;
+  let mockCrawledPagesQueryService: any;
+  let mockValidationService: any;
 
   beforeEach(() => {
-    // Reset mocks
+    // Reset all mocks
     vi.clearAllMocks();
 
-    // Create mock use case
-    mockCrawlUseCase = {
-      execute: vi.fn()
+    // Create mock services
+    mockCrawlOrchestrationService = {
+      crawlWebsiteSource: vi.fn()
     };
 
-    // Create service with mock
-    service = new WebsiteKnowledgeApplicationService(mockCrawlUseCase);
+    mockBatchProcessingService = {
+      updateWebsiteKnowledge: vi.fn()
+    };
+
+    mockCrawledPagesQueryService = {
+      getCrawledPages: vi.fn()
+    };
+
+    mockValidationService = {
+      validateWebsiteSource: vi.fn()
+    };
+
+    // Create service with mocked dependencies
+    service = new WebsiteKnowledgeApplicationService(
+      mockCrawlOrchestrationService,
+      mockBatchProcessingService,
+      mockCrawledPagesQueryService,
+      mockValidationService
+    );
   });
 
   describe('crawlWebsiteSource', () => {
-    describe('Successful Crawl Scenarios', () => {
-      it('should successfully crawl website and return crawled pages', async () => {
-        // Arrange
-        const websiteSource = TestDataFactory.createWebsiteSource({
-          id: 'source-123',
-          url: 'https://example.com',
-          name: 'Example Site',
-          status: 'pending'
-        });
-
-        const request: WebsiteCrawlRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSource
-        };
-
-        const mockCrawlResult = {
-          success: true,
-          crawledPages: [
-            {
-              url: 'https://example.com',
-              title: 'Home Page',
-              content: 'Welcome to our website',
-              depth: 0,
-              crawledAt: new Date(),
-              status: 'success' as const,
-              responseTime: 200,
-              statusCode: 200
-            },
-            {
-              url: 'https://example.com/about',
-              title: 'About Us',
-              content: 'Learn about our company',
-              depth: 1,
-              crawledAt: new Date(),
-              status: 'success' as const,
-              responseTime: 150,
-              statusCode: 200
-            }
-          ]
-        };
-
-        mockCrawlUseCase.execute.mockResolvedValue(mockCrawlResult);
-
-        // Act
-        const result = await service.crawlWebsiteSource(request);
-
-        // Assert
-        expect(result.success).toBe(true);
-        expect(result.crawledPages).toHaveLength(2);
-        expect(result.crawledPages?.[0].url).toBe('https://example.com');
-        expect(result.crawledPages?.[1].url).toBe('https://example.com/about');
-
-        // Verify use case was called with correct parameters
-        expect(mockCrawlUseCase.execute).toHaveBeenCalledWith(
-          'org-123',
-          'config-123',
-          websiteSource,
-          expect.objectContaining({
-            maxPages: 50,
-            maxDepth: 3,
-            respectRobotsTxt: true,
-            crawlFrequency: 'manual'
-          })
-        );
+    it('should delegate to crawl orchestration service', async () => {
+      // Arrange
+      const websiteSource = TestDataFactory.createWebsiteSource({
+        id: 'source-123',
+        url: 'https://example.com',
+        name: 'Example Site'
       });
 
-      it('should use custom crawl settings when provided', async () => {
-        // Arrange
-        const websiteSource = TestDataFactory.createWebsiteSource({
-          id: 'source-123',
-          url: 'https://example.com',
-          crawlSettings: {
-            maxPages: 100,
-            maxDepth: 5,
-            includePatterns: ['/blog/*'],
-            excludePatterns: ['/private/*'],
-            respectRobotsTxt: false,
-            crawlFrequency: 'weekly',
-            includeImages: true,
-            includePDFs: false
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSource
+      };
+
+      const expectedResult = {
+        success: true,
+        crawledPages: [
+          {
+            url: 'https://example.com',
+            title: 'Home Page',
+            content: 'Welcome to our website',
+            depth: 0,
+            crawledAt: new Date(),
+            status: 'success' as const,
+            responseTime: 200,
+            statusCode: 200
           }
-        });
+        ]
+      };
 
-        const request: WebsiteCrawlRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSource
-        };
+      mockCrawlOrchestrationService.crawlWebsiteSource.mockResolvedValue(expectedResult);
 
-        mockCrawlUseCase.execute.mockResolvedValue({
-          success: true,
-          crawledPages: []
-        });
+      // Act
+      const result = await service.crawlWebsiteSource(request);
 
-        // Act
-        await service.crawlWebsiteSource(request);
-
-        // Assert
-        expect(mockCrawlUseCase.execute).toHaveBeenCalledWith(
-          'org-123',
-          'config-123',
-          websiteSource,
-          expect.objectContaining({
-            maxPages: 100,
-            maxDepth: 5,
-            includePatterns: ['/blog/*'],
-            excludePatterns: ['/private/*'],
-            respectRobotsTxt: false,
-            crawlFrequency: 'weekly',
-            includeImages: true,
-            includePDFs: false
-          })
-        );
-      });
-
-      it('should handle progress callback when provided', async () => {
-        // Arrange
-        const websiteSource = TestDataFactory.createWebsiteSource();
-        const progressCallback = vi.fn();
-
-        const request: WebsiteCrawlRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSource,
-          progressCallback
-        };
-
-        mockCrawlUseCase.execute.mockResolvedValue({
-          success: true,
-          crawledPages: []
-        });
-
-        // Act
-        await service.crawlWebsiteSource(request);
-
-        // Assert
-        expect(mockCrawlUseCase.execute).toHaveBeenCalled();
-        // Progress callback handling would be tested in the use case layer
-      });
+      // Assert
+      expect(mockCrawlOrchestrationService.crawlWebsiteSource).toHaveBeenCalledWith(request);
+      expect(result).toEqual(expectedResult);
     });
 
-    describe('Error Scenarios', () => {
-      it('should handle business rule violation errors', async () => {
-        // Arrange
-        const websiteSource = TestDataFactory.createWebsiteSource({
-          url: 'invalid-url'
-        });
+    it('should handle errors from crawl orchestration service', async () => {
+      // Arrange
+      const websiteSource = TestDataFactory.createWebsiteSource();
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSource
+      };
 
-        const request: WebsiteCrawlRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSource
-        };
+      const error = new BusinessRuleViolationError('Invalid URL format', {});
+      mockCrawlOrchestrationService.crawlWebsiteSource.mockRejectedValue(error);
 
-        const businessError = new BusinessRuleViolationError(
-          'Invalid URL format',
-          { url: 'invalid-url' }
-        );
-
-        mockCrawlUseCase.execute.mockRejectedValue(businessError);
-
-        // Act
-        const result = await service.crawlWebsiteSource(request);
-
-        // Assert
-        expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('BUSINESS_RULE_VIOLATION');
-        expect(result.error?.message).toBe('Business rule violated: Invalid URL format');
-        expect(result.error?.context).toEqual({ url: 'invalid-url' });
-      });
-
-      it('should handle unexpected errors gracefully', async () => {
-        // Arrange
-        const websiteSource = TestDataFactory.createWebsiteSource();
-
-        const request: WebsiteCrawlRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSource
-        };
-
-        mockCrawlUseCase.execute.mockRejectedValue(new Error('Network timeout'));
-
-        // Act
-        const result = await service.crawlWebsiteSource(request);
-
-        // Assert
-        expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('WEBSITE_CRAWL_ERROR');
-        expect(result.error?.message).toContain('Network timeout');
-        expect(result.error?.context?.sourceId).toBe(websiteSource.id);
-        expect(result.error?.context?.url).toBe(websiteSource.url);
-      });
-
-      it('should validate crawl request parameters', async () => {
-        // Arrange
-        const invalidRequest: WebsiteCrawlRequest = {
-          organizationId: '', // Invalid empty organization ID
-          chatbotConfigId: 'config-123',
-          websiteSource: TestDataFactory.createWebsiteSource()
-        };
-
-        // Act
-        const result = await service.crawlWebsiteSource(invalidRequest);
-
-        // Assert
-        expect(result.success).toBe(false);
-        expect(result.error?.message).toContain('Organization ID is required');
-
-        // Verify use case was not called
-        expect(mockCrawlUseCase.execute).not.toHaveBeenCalled();
-      });
+      // Act & Assert
+      await expect(service.crawlWebsiteSource(request)).rejects.toThrow(BusinessRuleViolationError);
+      expect(mockCrawlOrchestrationService.crawlWebsiteSource).toHaveBeenCalledWith(request);
     });
   });
 
   describe('updateWebsiteKnowledge', () => {
-    describe('Batch Processing', () => {
-      it('should successfully process multiple website sources', async () => {
-        // Arrange
-        const websiteSources = [
-          TestDataFactory.createWebsiteSource({
-            id: 'source-1',
-            url: 'https://example1.com',
-            isActive: true
-          }),
-          TestDataFactory.createWebsiteSource({
-            id: 'source-2',
-            url: 'https://example2.com',
-            isActive: true
-          }),
-          TestDataFactory.createWebsiteSource({
-            id: 'source-3',
-            url: 'https://example3.com',
-            isActive: false // Inactive source
-          })
-        ];
+    it('should delegate to batch processing service', async () => {
+      // Arrange
+      const websiteSources = [
+        TestDataFactory.createWebsiteSource({
+          id: 'source-1',
+          url: 'https://example1.com'
+        }),
+        TestDataFactory.createWebsiteSource({
+          id: 'source-2',
+          url: 'https://example2.com'
+        })
+      ];
 
-        const request: WebsiteKnowledgeUpdateRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSources
-        };
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSources
+      };
 
-        // Mock successful crawls for active sources
-        mockCrawlUseCase.execute
-          .mockResolvedValueOnce({
-            success: true,
-            crawledPages: [
-              { url: 'https://example1.com', status: 'success' as const, title: 'Page 1', content: 'Content 1', depth: 0, crawledAt: new Date() }
-            ]
-          })
-          .mockResolvedValueOnce({
-            success: true,
-            crawledPages: [
-              { url: 'https://example2.com', status: 'success' as const, title: 'Page 2', content: 'Content 2', depth: 0, crawledAt: new Date() }
-            ]
-          });
+      const expectedResult = {
+        success: true,
+        totalSources: 2,
+        successfulSources: 2,
+        failedSources: 0,
+        totalKnowledgeItems: 5,
+        errors: []
+      };
 
-        // Act
-        const result = await service.updateWebsiteKnowledge(request);
+      mockBatchProcessingService.updateWebsiteKnowledge.mockResolvedValue(expectedResult);
 
-        // Assert
-        expect(result.success).toBe(true);
-        expect(result.totalSources).toBe(3);
-        expect(result.successfulSources).toBe(2);
-        expect(result.failedSources).toBe(0);
-        expect(result.totalKnowledgeItems).toBe(2);
-        expect(result.errors).toHaveLength(0);
+      // Act
+      const result = await service.updateWebsiteKnowledge(request);
 
-        // Verify only active sources were crawled
-        expect(mockCrawlUseCase.execute).toHaveBeenCalledTimes(2);
-      });
-
-      it('should handle partial failures in batch processing', async () => {
-        // Arrange
-        const websiteSources = [
-          TestDataFactory.createWebsiteSource({
-            id: 'source-1',
-            url: 'https://example1.com',
-            isActive: true
-          }),
-          TestDataFactory.createWebsiteSource({
-            id: 'source-2',
-            url: 'https://invalid-url',
-            isActive: true
-          })
-        ];
-
-        const request: WebsiteKnowledgeUpdateRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSources
-        };
-
-        // Mock one success, one failure
-        mockCrawlUseCase.execute
-          .mockResolvedValueOnce({
-            success: true,
-            crawledPages: [
-              { url: 'https://example1.com', status: 'success' as const, title: 'Page 1', content: 'Content 1', depth: 0, crawledAt: new Date() }
-            ]
-          })
-          .mockRejectedValueOnce(new Error('Invalid URL'));
-
-        // Act
-        const result = await service.updateWebsiteKnowledge(request);
-
-        // Assert
-        expect(result.success).toBe(false);
-        expect(result.totalSources).toBe(2);
-        expect(result.successfulSources).toBe(1);
-        expect(result.failedSources).toBe(1);
-        expect(result.totalKnowledgeItems).toBe(1);
-        expect(result.errors).toHaveLength(1);
-        expect(result.errors[0].sourceId).toBe('source-2');
-        expect(result.errors[0].error).toContain('Invalid URL');
-      });
-
-      it('should process inactive sources when forceRefresh is true', async () => {
-        // Arrange
-        const websiteSources = [
-          TestDataFactory.createWebsiteSource({
-            id: 'source-1',
-            url: 'https://example.com',
-            isActive: false
-          })
-        ];
-
-        const request: WebsiteKnowledgeUpdateRequest = {
-          organizationId: 'org-123',
-          chatbotConfigId: 'config-123',
-          websiteSources,
-          forceRefresh: true
-        };
-
-        mockCrawlUseCase.execute.mockResolvedValue({
-          success: true,
-          crawledPages: [
-            { url: 'https://example.com', status: 'success' as const, title: 'Page 1', content: 'Content 1', depth: 0, crawledAt: new Date() }
-          ]
-        });
-
-        // Act
-        const result = await service.updateWebsiteKnowledge(request);
-
-        // Assert
-        expect(result.successfulSources).toBe(1);
-        expect(mockCrawlUseCase.execute).toHaveBeenCalledTimes(1);
-      });
+      // Assert
+      expect(mockBatchProcessingService.updateWebsiteKnowledge).toHaveBeenCalledWith(request);
+      expect(result).toEqual(expectedResult);
     });
 
-    describe('Request Validation', () => {
-      it('should validate update request parameters', async () => {
-        // Arrange - create an invalid request that will trigger validation error
-        const invalidRequest: WebsiteKnowledgeUpdateRequest = {
-          organizationId: '', // Empty org ID should trigger validation error
-          chatbotConfigId: 'config-123',
-          websiteSources: [TestDataFactory.createWebsiteSource()] // Add at least one source
-        };
+    it('should handle errors from batch processing service', async () => {
+      // Arrange
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSources: [TestDataFactory.createWebsiteSource()]
+      };
 
-        // Act & Assert
-        await expect(service.updateWebsiteKnowledge(invalidRequest)).rejects.toThrow(BusinessRuleViolationError);
+      const error = new BusinessRuleViolationError('Invalid batch request', {});
+      mockBatchProcessingService.updateWebsiteKnowledge.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(service.updateWebsiteKnowledge(request)).rejects.toThrow(BusinessRuleViolationError);
+      expect(mockBatchProcessingService.updateWebsiteKnowledge).toHaveBeenCalledWith(request);
+    });
+  });
+
+  describe('getCrawledPages', () => {
+    it('should delegate to crawled pages query service', async () => {
+      // Arrange
+      const organizationId = 'org-123';
+      const chatbotConfigId = 'config-123';
+      const sourceUrl = 'https://example.com';
+
+      const expectedResult = {
+        success: true,
+        pages: [
+          {
+            url: 'https://example.com',
+            title: 'Home Page',
+            content: 'Welcome to our website',
+            depth: 0,
+            crawledAt: new Date(),
+            status: 'success' as const,
+            responseTime: 200,
+            statusCode: 200
+          }
+        ],
+        totalCount: 1,
+        hasMore: false,
+        statistics: {
+          totalPages: 1,
+          successfulPages: 1,
+          failedPages: 0,
+          averageResponseTime: 200
+        }
+      };
+
+      mockCrawledPagesQueryService.getCrawledPages.mockResolvedValue(expectedResult);
+
+      // Act
+      const result = await service.getCrawledPages(organizationId, chatbotConfigId, sourceUrl);
+
+      // Assert
+      expect(mockCrawledPagesQueryService.getCrawledPages).toHaveBeenCalledWith({
+        organizationId,
+        chatbotConfigId,
+        sourceUrl
+      });
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('should handle errors from crawled pages query service', async () => {
+      // Arrange
+      const organizationId = 'org-123';
+      const chatbotConfigId = 'config-123';
+      const sourceUrl = 'https://example.com';
+
+      const error = new BusinessRuleViolationError('Invalid query parameters', {});
+      mockCrawledPagesQueryService.getCrawledPages.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(service.getCrawledPages(organizationId, chatbotConfigId, sourceUrl)).rejects.toThrow(BusinessRuleViolationError);
+      expect(mockCrawledPagesQueryService.getCrawledPages).toHaveBeenCalledWith({
+        organizationId,
+        chatbotConfigId,
+        sourceUrl
       });
     });
   });
 
   describe('validateWebsiteSource', () => {
-    it('should validate website source correctly', async () => {
+    it('should delegate to validation service', async () => {
       // Arrange
-      const validSource = TestDataFactory.createWebsiteSource({
-        url: 'https://httpbin.org/get', // Use a reliable test endpoint
-        name: 'Test Site'
+      const websiteSource = TestDataFactory.createWebsiteSource({
+        url: 'https://example.com',
+        name: 'Example Site'
       });
 
+      const expectedResult = {
+        isValid: true,
+        errors: [],
+        warnings: ['Consider adding more specific include patterns']
+      };
+
+      mockValidationService.validateWebsiteSource.mockResolvedValue(expectedResult);
+
       // Act
-      const result = await service.validateWebsiteSource(validSource);
+      const result = await service.validateWebsiteSource(websiteSource);
 
       // Assert
-      // The validation might fail due to network issues, so we check for either success or specific failure
-      if (result.isValid) {
-        expect(result.errors).toHaveLength(0);
-      } else {
-        // If validation fails, it should be due to accessibility issues
-        expect(result.errors.some(error => error.includes('accessible'))).toBe(true);
-      }
-      expect(result.warnings).toBeDefined();
+      expect(mockValidationService.validateWebsiteSource).toHaveBeenCalledWith(websiteSource);
+      expect(result).toEqual(expectedResult);
     });
 
-    it('should detect invalid website sources', async () => {
+    it('should handle validation errors', async () => {
       // Arrange
-      const invalidSource = TestDataFactory.createWebsiteSource({
+      const websiteSource = TestDataFactory.createWebsiteSource({
         url: 'invalid-url',
         name: ''
       });
 
+      const expectedResult = {
+        isValid: false,
+        errors: ['Invalid URL format', 'Name is required'],
+        warnings: []
+      };
+
+      mockValidationService.validateWebsiteSource.mockResolvedValue(expectedResult);
+
       // Act
-      const result = await service.validateWebsiteSource(invalidSource);
+      const result = await service.validateWebsiteSource(websiteSource);
 
       // Assert
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors.some(error => error.includes('URL'))).toBe(true);
-      expect(result.errors.some(error => error.includes('name'))).toBe(true);
+      expect(mockValidationService.validateWebsiteSource).toHaveBeenCalledWith(websiteSource);
+      expect(result).toEqual(expectedResult);
+    });
+  });
+
+  describe('Service Integration', () => {
+    it('should maintain proper service dependencies', () => {
+      // Arrange & Act
+      const serviceInstance = new WebsiteKnowledgeApplicationService(
+        mockCrawlOrchestrationService,
+        mockBatchProcessingService,
+        mockCrawledPagesQueryService,
+        mockValidationService
+      );
+
+      // Assert
+      expect(serviceInstance).toBeInstanceOf(WebsiteKnowledgeApplicationService);
+      // Verify the service is properly constructed with all dependencies
+      expect(serviceInstance.crawlWebsiteSource).toBeDefined();
+      expect(serviceInstance.updateWebsiteKnowledge).toBeDefined();
+      expect(serviceInstance.getCrawledPages).toBeDefined();
+      expect(serviceInstance.validateWebsiteSource).toBeDefined();
+    });
+
+         it('should handle service initialization with null dependencies', async () => {
+       // Arrange & Act
+       const serviceWithNullDep = new WebsiteKnowledgeApplicationService(
+         null as any,
+         mockBatchProcessingService,
+         mockCrawledPagesQueryService,
+         mockValidationService
+       );
+
+       // Assert - service should be created but will fail when methods are called
+       expect(serviceWithNullDep).toBeInstanceOf(WebsiteKnowledgeApplicationService);
+       
+       // Verify that calling a method with null dependency would fail
+       await expect(async () => {
+         await serviceWithNullDep.crawlWebsiteSource({
+           organizationId: 'test',
+           chatbotConfigId: 'test',
+           websiteSource: TestDataFactory.createWebsiteSource()
+         });
+       }).rejects.toThrow();
+     });
+  });
+
+  describe('Error Handling', () => {
+    it('should propagate domain errors from services', async () => {
+      // Arrange
+      const websiteSource = TestDataFactory.createWebsiteSource();
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSource
+      };
+
+      const domainError = new BusinessRuleViolationError(
+        'Website source validation failed',
+        { sourceId: websiteSource.id }
+      );
+
+      mockCrawlOrchestrationService.crawlWebsiteSource.mockRejectedValue(domainError);
+
+             // Act & Assert
+       await expect(service.crawlWebsiteSource(request)).rejects.toThrow(BusinessRuleViolationError);
+       await expect(service.crawlWebsiteSource(request)).rejects.toThrow('Website source validation failed');
+    });
+
+    it('should handle unexpected service errors gracefully', async () => {
+      // Arrange
+      const request = {
+        organizationId: 'org-123',
+        chatbotConfigId: 'config-123',
+        websiteSources: [TestDataFactory.createWebsiteSource()]
+      };
+
+      const unexpectedError = new Error('Unexpected service error');
+      mockBatchProcessingService.updateWebsiteKnowledge.mockRejectedValue(unexpectedError);
+
+      // Act & Assert
+      await expect(service.updateWebsiteKnowledge(request)).rejects.toThrow('Unexpected service error');
     });
   });
 }); 

@@ -10,7 +10,7 @@
  * - Single responsibility: Represent lead recommendation concepts
  */
 
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface LeadRecommendation {
   readonly type: RecommendationType;

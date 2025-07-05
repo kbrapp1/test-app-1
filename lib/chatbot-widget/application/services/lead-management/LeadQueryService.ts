@@ -18,9 +18,9 @@ import { LeadMapper } from '../../mappers/LeadMapper';
 import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 
 import { 
-  LeadNotFoundError,
-  LeadAccessDeniedError 
-} from '../../../domain/errors/LeadManagementErrors';
+  ResourceNotFoundError,
+  AuthorizationError 
+} from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
@@ -63,8 +63,10 @@ export class LeadQueryService {
 
     // Validate access if organization context provided
     if (organizationId && lead.organizationId !== organizationId) {
-      throw new LeadAccessDeniedError(id, organizationId, { 
+      throw new AuthorizationError('Lead', 'access', { 
         operation: 'getLeadById',
+        leadId: id,
+        requestedOrganizationId: organizationId,
         leadOrganizationId: lead.organizationId 
       });
     }

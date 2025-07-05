@@ -84,7 +84,7 @@ export function WebsiteSourcesSection() {
     setIsAddingSource,
     setIsConfirmingAdd,
     setIsDeletingSource,
-    setCrawlProgress,
+    clearCrawlProgress,
     setCrawlingSourceId,
     updateFormData,
     resetForm,
@@ -149,7 +149,7 @@ export function WebsiteSourcesSection() {
           sourceId={crawlProgress.sourceId}
           progress={crawlProgress}
           onCancel={() => {
-            setCrawlProgress(null);
+            clearCrawlProgress();
             setCrawlingSourceId(null);
           }}
         />

@@ -13,12 +13,12 @@ import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ChatMessageFactoryService } from '../../../domain/services/utilities/ChatMessageFactoryService';
 import { MessageCostCalculationService } from '../../../domain/services/utilities/MessageCostCalculationService';
-import { ChatbotErrorTrackingService } from '../ChatbotErrorTrackingService';
+import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
 
 export class UnifiedResponseProcessorService {
   constructor(
     private readonly messageRepository: IChatMessageRepository,
-    private readonly chatbotErrorTracking: ChatbotErrorTrackingService
+    private readonly errorTrackingFacade: ErrorTrackingFacade
   ) {}
 
   /**
@@ -29,22 +29,24 @@ export class UnifiedResponseProcessorService {
    * - Include token usage and cost tracking
    * - Handle entity extraction and validation
    * - Save message to repository with logging context
+   * - Pass proper context for error tracking RLS compliance
    */
   async createBotMessageFromUnifiedResult(
     session: any,
     unifiedResult: any,
-    logFileName: string
+    logFileName: string,
+    config: any
   ): Promise<ChatMessage> {
     // Safely extract response content with fallback
-    let responseContent = unifiedResult?.analysis?.response?.content;
+    let responseContent = unifiedResult?.response?.content;
     
     // Track fallback error if response content is missing
     if (!responseContent) {
-      await this.chatbotErrorTracking.trackResponseExtractionFallback(
+      await this.errorTrackingFacade.trackResponseExtractionFallback(
         unifiedResult,
         session.id,
-        session.userId,
-        session.organizationId
+        null, // Chatbot widget visitors are not authenticated users, so user_id should be null
+        config.organizationId // Use organizationId from chatbot config (always available)
       );
       
       responseContent = "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";

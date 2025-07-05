@@ -6,8 +6,8 @@ import { ChatMessageCrudService } from './services/ChatMessageCrudService';
 import { ChatMessageAnalyticsService } from './services/ChatMessageAnalyticsService';
 import { ChatMessageQueryService } from './services/ChatMessageQueryService';
 import { ChatMessageMapper } from './mappers/ChatMessageMapper';
-import { DatabaseError } from '../../../../errors/base';
-import { IChatbotLoggingService, IOperationLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
+import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
+import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCompositionRoot';
 
 /**
@@ -78,25 +78,17 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   }
 
   async update(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
-    // Create operation logger for database operations
-    const logger = this.loggingService.createOperationLogger(
-      'db-update-message',
-      sharedLogFile,
-      {
-        operation: 'updateMessage',
-        messageId: message.id
-      }
-    );
-
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
     sessionLogger.logHeader('💬 DATABASE OPERATION - UPDATE MESSAGE');
     
     try {
-      logger.start({ messageId: message.id, sessionId: message.sessionId });
+      const startTime = Date.now();
       const result = await this.crudService.update(message);
-      logger.complete(result);
+      const duration = Date.now() - startTime;
+      
       sessionLogger.logStep('Message updated successfully');
+      sessionLogger.logMetrics('updateMessage', { duration });
       return result;
     } catch (error) {
       sessionLogger.logError(error as Error, {
@@ -104,7 +96,6 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
         messageId: message.id,
         sessionId: message.sessionId
       });
-      logger.fail(error as Error);
       throw error;
     }
   }
@@ -190,16 +181,6 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   }
 
   async create(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
-    // Create operation logger for database operations
-    const logger = this.loggingService.createOperationLogger(
-      'db-create-message',
-      sharedLogFile,
-      {
-        operation: 'createMessage',
-        messageId: message.id
-      }
-    );
-
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
     sessionLogger.logHeader('💬 DATABASE OPERATION - CREATE MESSAGE');
@@ -209,10 +190,9 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
       
       sessionLogger.logStep('Preparing SQL INSERT operation');
       sessionLogger.logMessage(`Table: chat_messages`);
-      sessionLogger.logRaw(JSON.stringify(insertData, null, 2));
+      sessionLogger.logMessage('Insert Data:', insertData);
       
       const startTime = Date.now();
-      logger.start({ messageId: message.id, sessionId: message.sessionId });
 
       const { data, error } = await this.supabase
         .from('chat_messages')
@@ -230,24 +210,23 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
           details: error.details,
           hint: error.hint
         });
-        logger.fail(new DatabaseError(`Failed to create chat message: ${error.message}`), error);
         throw new DatabaseError(`Failed to create chat message: ${error.message}`);
       }
 
-      sessionLogger.logRaw(JSON.stringify(data, null, 2));
+      sessionLogger.logMessage('Database Response:', data);
 
       const createdMessage = ChatMessageMapper.toDomain(data);
       
-      sessionLogger.logRaw(JSON.stringify({
+      sessionLogger.logMessage('Domain Entity:', {
         id: createdMessage.id,
         messageType: createdMessage.messageType,
         content: createdMessage.content.substring(0, 100) + (createdMessage.content.length > 100 ? '...' : ''),
         sessionId: createdMessage.sessionId,
         timestamp: createdMessage.timestamp.toISOString()
-      }, null, 2));
+      });
 
       sessionLogger.logStep('Message created successfully');
-      logger.complete(createdMessage, { duration });
+      sessionLogger.logMetrics('createMessage', { duration });
       return createdMessage;
     } catch (error) {
       sessionLogger.logError(error as Error, {
@@ -255,7 +234,6 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
         messageId: message.id,
         sessionId: message.sessionId
       });
-      logger.fail(error as Error);
       throw error;
     }
   }

@@ -13,7 +13,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '../../../../../supabase/server';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { ChatMessageMapper, RawChatMessageDbRecord } from '../mappers/ChatMessageMapper';
-import { DatabaseError } from '../../../../../errors/base';
+import { DatabaseError } from '../../../../domain/errors/ChatbotWidgetDomainErrors';
 import { 
   AnalyticsCalculationService,
   ResponseTimeAnalyticsService,

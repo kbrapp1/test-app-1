@@ -3,7 +3,7 @@ import {
   KnowledgeRetrievalContext 
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { IChatbotLoggingService, IOperationLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 

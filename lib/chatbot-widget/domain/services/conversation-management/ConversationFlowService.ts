@@ -11,7 +11,7 @@
  * - UPDATED: Replaced rule-based flow with AI-driven decisions
  */
 
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 import { 
   ReadinessIndicatorDomainService, 
   ReadinessIndicators, 

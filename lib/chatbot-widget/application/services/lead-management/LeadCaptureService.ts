@@ -23,9 +23,9 @@ import { LeadDto } from '../../dto/LeadDto';
 import { LeadMapper } from '../../mappers/LeadMapper';
 
 import { 
-  LeadAlreadyExistsError, 
-  ChatSessionNotFoundError 
-} from '../../../domain/errors/LeadManagementErrors';
+  LeadCaptureError,
+  ResourceNotFoundError 
+} from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
 export interface LeadCaptureRequest {
   sessionId: string;
@@ -54,7 +54,7 @@ export class LeadCaptureService {
     // Validate session exists
     const session = await this.sessionRepository.findById(request.sessionId);
     if (!session) {
-      throw new ChatSessionNotFoundError(request.sessionId, {
+      throw new ResourceNotFoundError('ChatSession', request.sessionId, {
         operation: 'captureLead',
         organizationId: request.organizationId
       });
@@ -63,8 +63,9 @@ export class LeadCaptureService {
     // Check for duplicate leads in this session
     const existingLead = await this.leadRepository.findBySessionId(request.sessionId);
     if (existingLead) {
-      throw new LeadAlreadyExistsError(request.sessionId, {
+      throw new LeadCaptureError('duplicate lead in session', {
         operation: 'captureLead',
+        sessionId: request.sessionId,
         existingLeadId: existingLead.id,
         organizationId: request.organizationId
       });

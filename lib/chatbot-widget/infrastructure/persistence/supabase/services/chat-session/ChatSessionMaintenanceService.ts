@@ -12,7 +12,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ChatSession } from '../../../../../domain/entities/ChatSession';
 import { ChatSessionMapper, RawChatSessionDbRecord } from '../../mappers/ChatSessionMapper';
-import { DatabaseError } from '../../../../../../errors/base';
+import { DatabaseError } from '../../../../../domain/errors/ChatbotWidgetDomainErrors';
 
 export class ChatSessionMaintenanceService {
   private readonly tableName = 'chat_sessions';
@@ -30,7 +30,7 @@ export class ChatSessionMaintenanceService {
       .order('last_activity_at', { ascending: true });
 
     if (error) {
-      throw new DatabaseError('Failed to find expired sessions', error.message);
+      throw new DatabaseError('Failed to find expired sessions', { error: error.message });
     }
 
     return (data || []).map(record => ChatSessionMapper.toDomain(record as RawChatSessionDbRecord));
@@ -52,7 +52,7 @@ export class ChatSessionMaintenanceService {
       .select('id');
 
     if (error) {
-      throw new DatabaseError('Failed to mark expired sessions as abandoned', error.message);
+      throw new DatabaseError('Failed to mark expired sessions as abandoned', { error: error.message });
     }
 
     return data?.length || 0;
@@ -70,7 +70,7 @@ export class ChatSessionMaintenanceService {
       .select('id');
 
     if (error) {
-      throw new DatabaseError('Failed to cleanup old sessions', error.message);
+      throw new DatabaseError('Failed to cleanup old sessions', { error: error.message });
     }
 
     return data?.length || 0;
@@ -91,7 +91,7 @@ export class ChatSessionMaintenanceService {
       .select('id');
 
     if (error) {
-      throw new DatabaseError('Failed to archive completed sessions', error.message);
+      throw new DatabaseError('Failed to archive completed sessions', { error: error.message });
     }
 
     return data?.length || 0;
@@ -109,7 +109,7 @@ export class ChatSessionMaintenanceService {
       .select('status');
 
     if (error) {
-      throw new DatabaseError('Failed to get maintenance stats', error.message);
+      throw new DatabaseError('Failed to get maintenance stats', { error: error.message });
     }
 
     const stats = {

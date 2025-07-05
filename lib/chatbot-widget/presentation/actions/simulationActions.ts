@@ -162,6 +162,27 @@ export async function sendSimulationMessage(
       debugInfo: domainDebugInfo
     };
   } catch (error) {
+    // Log pipeline error to database for analysis
+    try {
+      const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+      await errorTrackingService.trackMessageProcessingError(
+        `Pipeline initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        {
+          sessionId,
+          metadata: {
+            userMessage: message,
+            source: 'simulation',
+            errorType: 'pipeline_initialization',
+            timestamp: new Date().toISOString(),
+            errorDetails: error instanceof Error ? error.stack : undefined
+          }
+        }
+      );
+    } catch (trackingError) {
+      // If error tracking fails, log to console but don't throw
+      console.error('Failed to track pipeline error:', trackingError);
+    }
+
     // Error logged to file for debugging
     return {
       success: false,

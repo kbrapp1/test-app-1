@@ -10,7 +10,7 @@
  * - Use specific domain errors for validation failures
  */
 
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface ReadinessIndicators {
   hasContactInfo: boolean;

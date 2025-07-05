@@ -6,7 +6,7 @@ import {
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { 
   KnowledgeRetrievalError, 
   VectorSearchError, 

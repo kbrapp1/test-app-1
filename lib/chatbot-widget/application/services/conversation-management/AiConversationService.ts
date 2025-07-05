@@ -23,8 +23,11 @@ import { OpenAIProvider } from '../../../infrastructure/providers/openai/OpenAIP
 import OpenAI from 'openai';
 import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
 
 export class AiConversationService implements IAIConversationService {
+  private readonly errorTrackingService: ErrorTrackingFacade;
 
   constructor(
     private readonly openAIProvider: OpenAIProvider,
@@ -32,7 +35,9 @@ export class AiConversationService implements IAIConversationService {
     private readonly intentClassificationService: IIntentClassificationService,
     private readonly knowledgeRetrievalService: IKnowledgeRetrievalService,
     private readonly leadExtractionService: LeadExtractionService
-  ) {}
+  ) {
+    this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+  }
 
   /**
    * Generate AI response - coordinates domain services and infrastructure
@@ -131,6 +136,19 @@ Respond with only: low, medium, or high`;
       return 'low'; // Default fallback
     } catch (error) {
       console.error('Error analyzing engagement:', error);
+      
+      // Track critical chatbot error to database
+      await this.errorTrackingService.trackConversationAnalysisError(
+        'engagement_analysis',
+        {
+          metadata: {
+            userMessage: userMessage.substring(0, 100), // Limit for privacy
+            conversationHistoryLength: conversationHistory.length,
+            error: error instanceof Error ? error.message : String(error)
+          }
+        }
+      );
+      
       return 'low'; // Safe fallback
     }
   }
@@ -169,6 +187,18 @@ Respond with only: low, medium, or high`;
       return 'low'; // Default fallback
     } catch (error) {
       console.error('Error analyzing urgency:', error);
+      
+      // Track critical chatbot error to database
+      await this.errorTrackingService.trackConversationAnalysisError(
+        'urgency_analysis',
+        {
+          metadata: {
+            userMessage: userMessage.substring(0, 100), // Limit for privacy
+            error: error instanceof Error ? error.message : String(error)
+          }
+        }
+      );
+      
       return 'low'; // Safe fallback
     }
   }

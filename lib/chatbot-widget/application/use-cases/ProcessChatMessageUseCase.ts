@@ -33,8 +33,8 @@ import { ConversationContextManagementService } from '../services/conversation-m
 import { SessionUpdateService } from '../services/configuration-management/SessionUpdateService';
 import { ConversationContextWindow } from '../../domain/value-objects/session-management/ConversationContextWindow';
 import { DomainServiceCompositionService } from '../../infrastructure/composition/DomainServiceCompositionService';
-import { IChatbotLoggingService, ISessionLogger } from '../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { IChatbotLoggingService, ISessionLogger } from '../../domain/services/interfaces/IChatbotLoggingService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -102,10 +102,14 @@ export class ProcessChatMessageUseCase {
       debugInformationService
     );
 
+    // Get error tracking service from composition root
+    const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+    
     this.processingService = new ChatMessageProcessingService(
       aiConversationService,
       messageRepository,
       conversationContextOrchestrator,
+      errorTrackingService,
       intentClassificationService,
       knowledgeRetrievalService
     );
@@ -321,6 +325,32 @@ export class ProcessChatMessageUseCase {
           errorTimestamp: new Date().toISOString()
         }
       );
+      
+      // Track error using ErrorTrackingFacade for proper database persistence
+      try {
+        const errorTrackingFacade = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+        await errorTrackingFacade.trackMessageProcessingError(
+          error instanceof Error ? error.message : String(error),
+          {
+            sessionId: request.sessionId,
+            organizationId: request.organizationId,
+            userId: request.metadata?.userId,
+            conversationId: request.sessionId,
+            performanceMetrics: {
+              responseTime: totalProcessingTime,
+              memoryUsage: 0,
+              cpuUsage: 0
+            },
+            metadata: {
+              userMessage: request.userMessage,
+              ...request.metadata
+            }
+          }
+        );
+      } catch (trackingError) {
+        // Don't fail the main request if error tracking fails
+        logger.logMessage('⚠️  Error tracking failed', { trackingError: trackingError instanceof Error ? trackingError.message : String(trackingError) });
+      }
       
       throw error;
     }

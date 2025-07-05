@@ -14,13 +14,13 @@ import { createClient } from '../../../../supabase/server';
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatSessionMapper, RawChatSessionDbRecord } from './mappers/ChatSessionMapper';
-import { DatabaseError } from '../../../../errors/base';
+import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { 
   ChatSessionQueryService,
   ChatSessionAnalyticsService,
   ChatSessionMaintenanceService
 } from './services/chat-session';
-import { IChatbotLoggingService, IOperationLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCompositionRoot';
 
 /**
@@ -92,32 +92,23 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       return this.queryService.save(session);
     }
 
-    // Create operation logger for database operations
-    const logger = this.loggingService.createOperationLogger(
-      'db-save-session',
-      sharedLogFile,
-      {
-        operation: 'saveSession',
-        sessionId: session.id
-      }
-    );
-
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
     sessionLogger.logHeader('🗄️ DATABASE OPERATION - SAVE SESSION');
     
     try {
-      logger.start({ sessionId: session.id });
+      const startTime = Date.now();
       const result = await this.queryService.save(session);
-      logger.complete(result);
+      const duration = Date.now() - startTime;
+      
       sessionLogger.logStep('Session saved successfully');
+      sessionLogger.logMetrics('saveSession', { duration });
       return result;
     } catch (error) {
       sessionLogger.logError(error as Error, {
         operation: 'saveSession',
         sessionId: session.id
       });
-      logger.fail(error as Error);
       throw error;
     }
   }
@@ -140,16 +131,6 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       return ChatSessionMapper.toDomain(data);
     }
 
-    // Create operation logger for database operations
-    const logger = this.loggingService.createOperationLogger(
-      'db-update-session',
-      sharedLogFile,
-      {
-        operation: 'updateSession',
-        sessionId: session.id
-      }
-    );
-
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
     sessionLogger.logHeader('🗄️ DATABASE OPERATION - UPDATE SESSION');
@@ -160,10 +141,9 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       sessionLogger.logStep('Preparing SQL UPDATE operation');
       sessionLogger.logMessage(`Table: chat_sessions`);
       sessionLogger.logMessage(`Session ID: ${session.id}`);
-      sessionLogger.logRaw(JSON.stringify(updateData, null, 2));
+      sessionLogger.logMessage('Update Data:', updateData);
       
       const startTime = Date.now();
-      logger.start({ sessionId: session.id });
 
       const { data, error } = await this.supabase
         .from('chat_sessions')
@@ -182,30 +162,28 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
           details: error.details,
           hint: error.hint
         });
-        logger.fail(new DatabaseError(`Failed to update chat session: ${error.message}`), error);
         throw new Error(`Failed to update chat session: ${error.message}`);
       }
 
-      sessionLogger.logRaw(JSON.stringify(data, null, 2));
+      sessionLogger.logMessage('Database Response:', data);
 
       const updatedSession = ChatSessionMapper.toDomain(data);
       
-      sessionLogger.logRaw(JSON.stringify({
+      sessionLogger.logMessage('Domain Entity:', {
         id: updatedSession.id,
         status: updatedSession.status,
         lastActivityAt: updatedSession.lastActivityAt.toISOString(),
         contextData: updatedSession.contextData || {}
-      }, null, 2));
+      });
 
       sessionLogger.logStep('Session updated successfully');
-      logger.complete(updatedSession, { duration });
+      sessionLogger.logMetrics('updateSession', { duration });
       return updatedSession;
     } catch (error) {
       sessionLogger.logError(error as Error, {
         operation: 'updateSession',
         sessionId: session.id
       });
-      logger.fail(error as Error);
       throw error;
     }
   }
@@ -249,16 +227,6 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
   }
 
   async create(session: ChatSession, sharedLogFile: string): Promise<ChatSession> {
-    // Create operation logger for database operations
-    const logger = this.loggingService.createOperationLogger(
-      'db-create-session',
-      sharedLogFile,
-      {
-        operation: 'createSession',
-        sessionId: session.id
-      }
-    );
-
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
     sessionLogger.logHeader('🗄️ DATABASE OPERATION - CREATE SESSION');
@@ -268,10 +236,9 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
       
       sessionLogger.logStep('Preparing SQL INSERT operation');
       sessionLogger.logMessage(`Table: chat_sessions`);
-      sessionLogger.logRaw(JSON.stringify(insertData, null, 2));
+      sessionLogger.logMessage('Insert Data:', insertData);
       
       const startTime = Date.now();
-      logger.start({ sessionId: session.id });
 
       const { data, error } = await this.supabase
         .from('chat_sessions')
@@ -289,30 +256,28 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
           details: error.details,
           hint: error.hint
         });
-        logger.fail(new DatabaseError(`Failed to create chat session: ${error.message}`), error);
         throw new Error(`Failed to create chat session: ${error.message}`);
       }
 
-      sessionLogger.logRaw(JSON.stringify(data, null, 2));
+      sessionLogger.logMessage('Database Response:', data);
 
       const createdSession = ChatSessionMapper.toDomain(data);
       
-      sessionLogger.logRaw(JSON.stringify({
+      sessionLogger.logMessage('Domain Entity:', {
         id: createdSession.id,
         status: createdSession.status,
         startedAt: createdSession.startedAt.toISOString(),
         lastActivityAt: createdSession.lastActivityAt.toISOString()
-      }, null, 2));
+      });
 
       sessionLogger.logStep('Session created successfully');
-      logger.complete(createdSession, { duration });
+      sessionLogger.logMetrics('createSession', { duration });
       return createdSession;
     } catch (error) {
       sessionLogger.logError(error as Error, {
         operation: 'createSession',
         sessionId: session.id
       });
-      logger.fail(error as Error);
       throw error;
     }
   }

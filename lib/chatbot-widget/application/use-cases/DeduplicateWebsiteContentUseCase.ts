@@ -13,7 +13,7 @@
 import { UrlNormalizationService } from '../../domain/services/UrlNormalizationService';
 import { ContentDeduplicationService, DeduplicatableContent } from '../../domain/services/ContentDeduplicationService';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 /**
  * Result of deduplication operation
@@ -63,8 +63,6 @@ export class DeduplicateWebsiteContentUseCase {
     };
     
     try {
-      console.log(`🧹 Starting website content deduplication for config: ${chatbotConfigId}`);
-      
       // Get all knowledge vectors for website-crawled content
       const allVectors = await this.vectorKnowledgeRepository.getAllKnowledgeVectors(
         organizationId,
@@ -77,10 +75,8 @@ export class DeduplicateWebsiteContentUseCase {
       );
       
       result.totalItemsAnalyzed = websiteVectors.length;
-      console.log(`📊 Found ${websiteVectors.length} website-crawled items to analyze`);
       
       if (websiteVectors.length <= 1) {
-        console.log('ℹ️ Not enough items for deduplication');
         result.uniqueItemsKept = websiteVectors.length;
         return result;
       }
@@ -95,12 +91,9 @@ export class DeduplicateWebsiteContentUseCase {
       // Perform deduplication analysis
       const deduplicationResults = this.contentDeduplicationService.deduplicateContent(deduplicatableContent);
       
-      console.log(`🔍 Deduplication analysis complete: ${deduplicationResults.length} unique content groups found`);
-      
       // Process each group and remove duplicates
       for (const group of deduplicationResults) {
         if (group.duplicates.length > 0) {
-          console.log(`🔄 Processing ${group.duplicates.length} duplicates for canonical: ${group.canonical.url}`);
           
           result.duplicatesFound += group.duplicates.length;
           
@@ -117,7 +110,6 @@ export class DeduplicateWebsiteContentUseCase {
               
               if (deletedCount > 0) {
                 result.duplicatesRemoved += deletedCount;
-                console.log(`✅ Removed ${deletedCount} vectors for duplicate: ${duplicate.url}`);
               }
               
             } catch (error) {
@@ -134,14 +126,6 @@ export class DeduplicateWebsiteContentUseCase {
           result.uniqueItemsKept++;
         }
       }
-      
-      console.log(`🎉 Deduplication completed:`, {
-        totalAnalyzed: result.totalItemsAnalyzed,
-        duplicatesFound: result.duplicatesFound,
-        duplicatesRemoved: result.duplicatesRemoved,
-        uniqueItemsKept: result.uniqueItemsKept,
-        errorCount: result.errors.length
-      });
       
       return result;
       
@@ -182,8 +166,6 @@ export class DeduplicateWebsiteContentUseCase {
   }> {
     
     try {
-      console.log(`🔍 Previewing deduplication for config: ${chatbotConfigId}`);
-      
       // Get all knowledge vectors for website-crawled content
       const allVectors = await this.vectorKnowledgeRepository.getAllKnowledgeVectors(
         organizationId,
@@ -216,8 +198,6 @@ export class DeduplicateWebsiteContentUseCase {
             group.duplicates[0]?.content || ''
           )
         }));
-      
-      console.log(`📊 Preview found ${duplicateGroups.length} groups with duplicates`);
       
       return {
         totalItems: websiteVectors.length,

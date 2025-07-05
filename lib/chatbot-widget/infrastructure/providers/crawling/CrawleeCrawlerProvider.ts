@@ -1,7 +1,5 @@
 /**
- * Crawlee Crawler Provider - Infrastructure Layer
- * 
- * AI INSTRUCTIONS:
+ * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
  * - Technical crawling implementation only, no business logic
  * - Implement interface defined by application layer
  * - Handle Crawlee-specific configuration and operations
@@ -21,19 +19,16 @@ import { IHtmlParser } from '../../../domain/services/ContentExtractionService';
 import { WebsiteCrawlingError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { CheerioHtmlParserAdapter } from '../adapters/CheerioHtmlParserAdapter';
 import { UrlNormalizationService } from '../../../domain/services/UrlNormalizationService';
+import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCompositionRoot';
+import { ErrorTrackingFacade } from '../../../application/services/ErrorTrackingFacade';
 
-/**
- * Crawlee-based Web Crawler Provider - Infrastructure Layer
- * 
- * AI INSTRUCTIONS:
- * - Technical crawling implementation using Crawlee
- * - Let Crawlee handle robots.txt compliance (proper industry standard)
- * - Handle Crawlee-specific configuration and operations
- * - Abstract Crawlee complexity from upper layers
- * - Use proper error handling for technical failures
- */
 export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
   private urlNormalizationService = new UrlNormalizationService();
+  private errorTrackingService: ErrorTrackingFacade;
+
+  constructor() {
+    this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+  }
 
   async crawlWebsite(
     source: WebsiteSource,
@@ -41,20 +36,12 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
     onPageCrawled: (pageData: CrawledPageData, htmlParser: IHtmlParser) => Promise<void>
   ): Promise<CrawledPageData[]> {
     try {
-      console.log('🕷️ CrawleeCrawlerProvider: Starting crawl setup', {
-        url: source.url,
-        maxPages: settings.maxPages,
-        maxDepth: settings.maxDepth
-      });
-
       const crawledData: CrawledPageData[] = [];
 
       // Use a hybrid approach: Crawlee for page processing, custom request handling to bypass robots.txt
-      console.log('⚙️ Using hybrid approach: Custom requests + Crawlee processing...');
       
       // Process the initial URL directly to bypass robots.txt checking
       try {
-        console.log(`🔍 Processing initial URL directly: ${source.url}`);
         
         const response = await fetch(source.url, {
           headers: {
@@ -67,7 +54,6 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         }
 
         const html = await response.text();
-        console.log(`✅ Fetched ${html.length} characters from ${source.url}`);
 
         // Use Cheerio directly to parse the HTML (same as Crawlee would)
         const { load } = await import('cheerio');
@@ -96,11 +82,8 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         // Process the page through the callback
         await onPageCrawled(pageData, htmlParser);
 
-        console.log(`✅ Successfully processed: ${source.url}`);
-
         // If maxDepth > 0, extract and process additional pages
         if (settings.maxDepth > 0 && crawledData.length < settings.maxPages) {
-          console.log(`🔗 Extracting links for depth ${settings.maxDepth}...`);
           
           const links: string[] = [];
           const normalizedUrls = new Set<string>();
@@ -133,15 +116,12 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
             }
           });
 
-          console.log(`🔗 Found ${links.length} unique links to crawl (after deduplication)`);
-
           // Process additional pages (up to maxPages limit)
           const remainingSlots = settings.maxPages - crawledData.length;
           const linksToProcess = links.slice(0, remainingSlots);
 
           for (const linkUrl of linksToProcess) {
             try {
-              console.log(`🔍 Processing additional page: ${linkUrl}`);
               
               const linkResponse = await fetch(linkUrl, {
                 headers: {
@@ -170,17 +150,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
                 const linkHtmlParser = new CheerioHtmlParserAdapter(link$);
                 await onPageCrawled(linkPageData, linkHtmlParser);
 
-                console.log(`✅ Successfully processed additional page: ${linkUrl}`);
               } else {
-                console.log(`⚠️ Skipped ${linkUrl}: HTTP ${linkResponse.status}`);
+                // Skip pages that return non-200 status codes
               }
             } catch (error) {
-              console.log(`⚠️ Failed to process ${linkUrl}:`, error instanceof Error ? error.message : String(error));
+              // Skip pages that fail to process
             }
           }
         }
-
-        console.log(`🎉 Crawl completed: ${crawledData.length} pages processed`);
         return crawledData;
 
       } catch (error) {
@@ -188,30 +165,37 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         throw error;
       }
 
-    } catch (error) {
+        } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('❌ CrawleeCrawlerProvider: Crawl execution failed:', errorMessage);
-                      throw new WebsiteCrawlingError(
-          source.url,
-          errorMessage,
-          { originalError: error }
-        );
+      
+      // Track critical crawling infrastructure error to database
+      await this.errorTrackingService.trackWebsiteCrawlingError(
+        source.url,
+        `Crawlee provider execution failed: ${errorMessage}`,
+        {
+          metadata: {
+            sourceUrl: source.url,
+            maxPages: settings.maxPages,
+            maxDepth: settings.maxDepth,
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+            errorMessage: errorMessage,
+            workflowStep: 'crawlee_provider_execution'
+          }
+        }
+      );
+      
+      throw new WebsiteCrawlingError(
+        source.url,
+        errorMessage,
+        { originalError: error }
+      );
     }
   }
 }
 
-/**
- * Crawlee Robots.txt Provider - Infrastructure Layer
- * 
- * AI INSTRUCTIONS:
- * - Note: This is now deprecated as we let Crawlee handle robots.txt compliance
- * - Crawlee's built-in robots.txt checking is the industry standard
- * - This provider is kept for interface compatibility but not used
- */
 export class CrawleeRobotsTxtProvider {
   async createChecker(baseUrl: string): Promise<IRobotsTxtChecker> {
-    console.log('⚠️ Note: Crawlee handles robots.txt compliance automatically');
-    
     // Return a no-op checker since Crawlee handles this
     return {
       canLoad: async () => true,

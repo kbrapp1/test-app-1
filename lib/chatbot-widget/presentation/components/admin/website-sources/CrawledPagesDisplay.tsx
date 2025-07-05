@@ -181,7 +181,7 @@ export function CrawledPagesDisplay({
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2 mb-1">
-                                  <span className="font-semibold text-foreground truncate flex-1 min-w-0 max-w-[60%]">{page.title}</span>
+                                  <span className="font-semibold text-foreground truncate flex-1 min-w-0 max-w-[60%] text-left">{page.title}</span>
                                   <div className="flex items-center space-x-1 flex-shrink-0">
                                     <Badge variant={
                                       page.status === 'success' ? 'default' :
@@ -195,7 +195,7 @@ export function CrawledPagesDisplay({
                                   </div>
                                 </div>
                                 <div 
-                                  className="text-xs text-muted-foreground/80 truncate w-full"
+                                  className="text-xs text-muted-foreground/80 truncate w-full text-left"
                                 >
                                   {(() => {
                                     try {

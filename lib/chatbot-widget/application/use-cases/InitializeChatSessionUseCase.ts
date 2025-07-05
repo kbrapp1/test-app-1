@@ -15,7 +15,7 @@ import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
 import { IChatbotConfigRepository } from '../../domain/repositories/IChatbotConfigRepository';
 import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { BusinessRuleViolationError, ResourceNotFoundError } from '../../../errors/base';
+import { BusinessRuleViolationError, ResourceNotFoundError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { SessionInitializedEvent } from '../../domain/events/SessionInitializedEvent';
 
 export interface InitializeSessionRequest {
@@ -176,7 +176,6 @@ export class InitializeChatSessionUseCase {
           });
         } catch (error) {
           // Expected to fail, but should initialize cache
-          console.log('Vector cache initialization completed');
         }
       }
       
@@ -248,14 +247,7 @@ export class InitializeChatSessionUseCase {
    */
   private handleSessionInitializedEvent(event: SessionInitializedEvent): void {
     // Log the domain event for monitoring
-    console.log('Domain Event: SessionInitialized', {
-      sessionId: event.sessionId,
-      chatbotConfigId: event.chatbotConfigId,
-      visitorId: event.visitorId,
-      configName: event.context.configName,
-      cacheWarmed: event.context.cacheWarmed,
-      timestamp: event.occurredAt
-    });
+    // Domain event logged for session initialization tracking
 
     // In a full implementation, this would:
     // 1. Publish to event bus for async processing

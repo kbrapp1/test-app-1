@@ -20,10 +20,12 @@ import {
 import { ContentExtractionService, IHtmlParser } from '../../domain/services/ContentExtractionService';
 import { ContentCategorizationService } from '../../domain/services/ContentCategorizationService';
 import { 
-  WebsiteCrawlError, 
+  WebsiteCrawlingError, 
   ContentExtractionError,
   ContentCategorizationError 
-} from '../../domain/errors/WebsiteCrawlingErrors';
+} from '../../domain/errors/ChatbotWidgetDomainErrors';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
 /**
  * Web Crawler Provider Interface
@@ -52,12 +54,16 @@ export interface IWebCrawlerProvider {
  * - Return complete crawl results
  */
 export class CrawlWebsiteUseCase {
+  private readonly errorTrackingService: ErrorTrackingFacade;
+
   constructor(
     private readonly websiteCrawlingService: WebsiteCrawlingDomainService,
     private readonly webCrawlerProvider: IWebCrawlerProvider,
     private readonly contentExtractionService: ContentExtractionService,
     private readonly contentCategorizationService: ContentCategorizationService
-  ) {}
+  ) {
+    this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+  }
 
   /**
    * Execute website crawling workflow
@@ -74,36 +80,22 @@ export class CrawlWebsiteUseCase {
     settings: WebsiteCrawlSettings
   ): Promise<CrawlResult> {
     try {
-      console.log('🚀 CrawlWebsiteUseCase: Starting crawl workflow', {
-        url: source.url,
-        maxPages: settings.maxPages,
-        maxDepth: settings.maxDepth
-      });
-
       // Step 1: Validate crawl parameters (domain validation)
-      console.log('✅ Step 1: Validating crawl parameters...');
       await this.websiteCrawlingService.validateCrawlRequest(source, settings);
-      console.log('✅ Crawl parameters validated successfully');
 
       // Step 2: Calculate crawl budget (domain calculation)
-      console.log('💰 Step 2: Calculating crawl budget...');
       const budget = this.websiteCrawlingService.calculateCrawlBudget(settings);
-      console.log(`💰 Crawl budget calculated: ${budget.maxPages} pages, ${budget.maxDepth} depth`);
 
       // Step 3: Execute crawling (infrastructure delegation)
-      console.log('🕷️ Step 3: Executing website crawl...');
       const crawledPages: CrawledPageData[] = [];
 
       // Note: Crawlee handles robots.txt compliance automatically
-      console.log('🤖 Robots.txt compliance: Handled by Crawlee (industry standard)');
 
       await this.webCrawlerProvider.crawlWebsite(
         source,
         settings,
         async (pageData: CrawledPageData, htmlParser: IHtmlParser) => {
           try {
-            console.log(`📄 Processing page: ${pageData.url}`);
-
             // Extract content using domain service
             const extractedContent = this.contentExtractionService.extractMainContent(htmlParser);
 
@@ -121,7 +113,6 @@ export class CrawlWebsiteUseCase {
             };
 
             crawledPages.push(processedPageData);
-            console.log(`✅ Page processed: ${pageData.url} (${category})`);
 
           } catch (error) {
             if (error instanceof ContentExtractionError || error instanceof ContentCategorizationError) {
@@ -130,15 +121,14 @@ export class CrawlWebsiteUseCase {
             
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error(`❌ Page processing failed for ${pageData.url}:`, errorMessage);
-            throw new WebsiteCrawlError(
+            throw new WebsiteCrawlingError(
+              pageData.url,
               `Page processing failed: ${errorMessage}`,
               { url: pageData.url, originalError: error }
             );
           }
         }
       );
-
-      console.log(`🎉 Crawl completed successfully: ${crawledPages.length} pages processed`);
 
       // Process results through domain service
       const result = this.websiteCrawlingService.processCrawlResult(crawledPages);
@@ -149,13 +139,28 @@ export class CrawlWebsiteUseCase {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('❌ CrawlWebsiteUseCase: Workflow failed:', errorMessage);
 
-      if (error instanceof WebsiteCrawlError || 
+      // Track critical crawling error to database
+      await this.errorTrackingService.trackWebsiteCrawlingError(
+        source.url,
+        `Crawl workflow failed: ${errorMessage}`,
+        {
+          metadata: {
+            sourceUrl: source.url,
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+            errorMessage: errorMessage,
+            workflowStep: 'crawl_execution'
+          }
+        }
+      );
+
+      if (error instanceof WebsiteCrawlingError || 
           error instanceof ContentExtractionError || 
           error instanceof ContentCategorizationError) {
         throw error;
       }
 
-      throw new WebsiteCrawlError(
+      throw new WebsiteCrawlingError(
+        source.url,
         `Crawl workflow failed: ${errorMessage}`,
         { url: source.url, originalError: error }
       );

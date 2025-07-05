@@ -9,7 +9,7 @@
  * - Validate inputs using domain-specific business rules
  */
 
-import { InvalidConversationPhaseError, ConversationFlowViolationError } from '../../errors/ContextManagementErrors';
+import { InvalidConversationPhaseError, ConversationFlowViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export type ConversationPhase = 'discovery' | 'qualification' | 'demo' | 'objection_handling' | 'closing';
 

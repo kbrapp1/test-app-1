@@ -17,7 +17,7 @@ import {
   ContextWindowExceededError, 
   MessageRelevanceCalculationError,
   ContextCompressionError 
-} from '../../errors/ContextManagementErrors';
+} from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface MessageRelevanceScore {
   readonly messageId: string;

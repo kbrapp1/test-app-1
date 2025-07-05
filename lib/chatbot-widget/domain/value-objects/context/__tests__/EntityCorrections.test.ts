@@ -11,7 +11,7 @@
  */
 
 import { EntityCorrections, EntityCorrectionsProps, RemovalOperation, CorrectionOperation } from '../EntityCorrections';
-import { BusinessRuleViolationError } from '../../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../../errors/ChatbotWidgetDomainErrors';
 
 describe('EntityCorrections', () => {
   const mockSessionId = 'session-123';

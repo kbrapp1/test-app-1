@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 /**
  * Knowledge Base Value Object

@@ -13,7 +13,7 @@
  * - No infrastructure concerns (Cheerio abstracted via interface)
  */
 
-import { ContentExtractionError } from '../errors/WebsiteCrawlingErrors';
+import { ContentExtractionError } from '../errors/ChatbotWidgetDomainErrors';
 
 /**
  * Interface for HTML parser abstraction

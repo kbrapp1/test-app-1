@@ -11,7 +11,7 @@
  * - Never expose mutable state
  */
 
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface CorrectionMetadata {
   timestamp: Date;

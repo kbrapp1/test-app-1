@@ -1,0 +1,218 @@
+/**
+ * Website Sources Helper Functions
+ * 
+ * AI INSTRUCTIONS:
+ * - Pure utility functions for website sources actions
+ * - Single responsibility per function
+ * - No external dependencies except domain objects
+ * - Follow @golden-rule patterns exactly
+ * - Keep functions under 30 lines each
+ */
+
+import { revalidatePath } from 'next/cache';
+import { WebsiteSource, WebsiteCrawlSettings } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { DomainError } from '../../domain/errors/ChatbotWidgetDomainErrors';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+
+// Type definitions
+export interface WebsiteSourceFormData {
+  url: string;
+  name: string;
+  description?: string;
+  maxPages?: number;
+  maxDepth?: number;
+  respectRobotsTxt?: boolean;
+}
+
+export interface ActionResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    severity: string;
+  };
+}
+
+/**
+ * Generate Website Source ID Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Generate unique identifiers for website sources
+ * - Use timestamp and random string for uniqueness
+ * - Follow consistent naming pattern
+ */
+function generateWebsiteSourceId(): string {
+  return `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Create Crawl Settings Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Transform form data to domain value object
+ * - Apply sensible defaults and constraints
+ * - Validate settings within business rules
+ */
+function createCrawlSettings(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
+  return {
+    maxPages: Math.min(formData.maxPages || 50, 1000), // Cap at 1000 pages
+    maxDepth: Math.min(formData.maxDepth || 3, 10), // Cap at 10 levels
+    includePatterns: [],
+    excludePatterns: [],
+    respectRobotsTxt: formData.respectRobotsTxt ?? true,
+    crawlFrequency: 'manual',
+    includeImages: false,
+    includePDFs: true
+  };
+}
+
+/**
+ * Create Crawl Settings from Form Data (Public)
+ * 
+ * AI INSTRUCTIONS:
+ * - Transform form data to domain value object
+ * - Apply sensible defaults and constraints
+ * - Validate settings within business rules
+ */
+export function createCrawlSettingsFromFormData(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
+  return createCrawlSettings(formData);
+}
+
+/**
+ * Create Website Source from Form Data
+ * 
+ * AI INSTRUCTIONS:
+ * - Transform form data to domain entity
+ * - Generate unique ID and set initial state
+ * - Apply business rules and defaults
+ */
+export function createWebsiteSourceFromFormData(formData: WebsiteSourceFormData): WebsiteSource {
+  return {
+    id: generateWebsiteSourceId(),
+    url: formData.url,
+    name: formData.name,
+    description: formData.description,
+    isActive: true,
+    status: 'pending',
+    crawlSettings: createCrawlSettings(formData)
+  };
+}
+
+/**
+ * Update Website Source Status Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Update source status after operations
+ * - Handle status transitions properly
+ * - Provide detailed error context
+ */
+export async function updateWebsiteSourceStatus(
+  configId: string,
+  sourceId: string,
+  status: WebsiteSource['status'],
+  pageCount?: number,
+  errorMessage?: string
+): Promise<void> {
+  try {
+    const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
+    
+    const config = await configRepository.findById(configId);
+    if (!config) return;
+    
+    const updatedKnowledgeBase = config.knowledgeBase.updateWebsiteSource(sourceId, {
+      status,
+      pageCount,
+      errorMessage,
+      lastCrawled: status === 'completed' ? new Date() : undefined
+    });
+    
+    const updatedConfig = config.updateKnowledgeBase(updatedKnowledgeBase);
+    await configRepository.update(updatedConfig);
+  } catch (error) {
+    console.error('❌ Failed to update website source status:', error);
+  }
+}
+
+/**
+ * Create Error Result Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Standardize error result creation
+ * - Provide consistent error structure
+ * - Handle error severity levels
+ */
+export function createErrorResult(code: string, message: string, severity: string): ActionResult {
+  return {
+    success: false,
+    error: {
+      code,
+      message,
+      severity
+    }
+  };
+}
+
+/**
+ * Handle Action Error Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Standardize error handling across all actions
+ * - Preserve domain error context
+ * - Provide user-friendly error messages
+ */
+export function handleActionError(error: unknown, operation: string): ActionResult {
+  if (error instanceof DomainError) {
+    return {
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+        severity: error.severity
+      }
+    };
+  }
+  
+  console.error(`❌ Error ${operation}:`, error);
+  return {
+    success: false,
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: `An unexpected error occurred while ${operation}`,
+      severity: 'HIGH'
+    }
+  };
+}
+
+/**
+ * Revalidate Website Sources Paths Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Centralize path revalidation logic
+ * - Ensure UI consistency after mutations
+ * - Handle Next.js cache invalidation
+ */
+export function revalidateWebsiteSourcesPaths(): void {
+  revalidatePath('/ai-playground/chatbot-widget/website-sources');
+  revalidatePath('/ai-playground/chatbot-widget/knowledge');
+}
+
+/**
+ * Create Cleaned Knowledge Base Helper
+ * 
+ * AI INSTRUCTIONS:
+ * - Create new knowledge base without website sources
+ * - Preserve all other knowledge base data
+ * - Use for cleanup operations
+ */
+export function createCleanedKnowledgeBase(existingKnowledgeBase: any): any {
+  const { KnowledgeBase } = require('../../domain/value-objects/ai-configuration/KnowledgeBase');
+  return KnowledgeBase.create({
+    companyInfo: existingKnowledgeBase.companyInfo,
+    productCatalog: existingKnowledgeBase.productCatalog,
+    faqs: existingKnowledgeBase.faqs,
+    supportDocs: existingKnowledgeBase.supportDocs,
+    complianceGuidelines: existingKnowledgeBase.complianceGuidelines,
+    websiteSources: [] // Clear all website sources
+  });
+} 

@@ -230,9 +230,7 @@ export class KnowledgeRelevanceService {
     return this.isInitialized;
   }
 
-  /**
-   * Clear embedding cache
-   */
+  // Clear embedding cache
   clearCache(): void {
     this.embeddingService.clearCache();
     this.isInitialized = false;

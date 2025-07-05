@@ -18,10 +18,15 @@ import { EntityAccumulationService } from '../../../domain/services/context/Enti
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
 
 export class ConversationContextBuilderService {
   private readonly systemPromptBuilderService: SystemPromptBuilderService;
   private readonly loggingService: IChatbotLoggingService;
+  private readonly errorTrackingService: ErrorTrackingFacade;
+  private sessionId?: string;
+  private organizationId?: string;
+  private conversationId?: string;
 
   constructor(
     private readonly aiConversationService: IAIConversationService
@@ -30,10 +35,12 @@ export class ConversationContextBuilderService {
      * AI INSTRUCTIONS:
      * - Initialize system prompt builder for enhanced prompts
      * - Initialize centralized logging service
+     * - Initialize error tracking service for database persistence
      * - Follow composition over inheritance patterns
      */
     this.systemPromptBuilderService = new SystemPromptBuilderService(aiConversationService);
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
+    this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
   /**
@@ -54,6 +61,11 @@ export class ConversationContextBuilderService {
     enhancedContext: any,
     logFileName?: string
   ): Promise<ConversationContext> {
+    // Store context for error tracking
+    this.sessionId = session.id;
+    this.organizationId = config.organizationId;
+    this.conversationId = session.conversationId;
+    
     // Create session logger with context - shared log file is required
     if (!logFileName) {
       throw new Error('LogFileName is required for conversation context building - all logging must be conversation-specific');
@@ -271,6 +283,21 @@ Provide a concise but comprehensive summary focusing on business-critical inform
         return result.content || 'Conversation summary unavailable';
       } catch (error) {
         console.error('Failed to generate conversation summary:', error);
+        
+        // Track critical chatbot error to database
+        await this.errorTrackingService.trackConversationAnalysisError(
+          'conversation_summary_generation',
+          {
+            sessionId: this.sessionId,
+            organizationId: this.organizationId,
+            conversationId: this.conversationId,
+            metadata: {
+              messageCount: messages.length,
+              error: error instanceof Error ? error.message : String(error)
+            }
+          }
+        );
+        
         return 'Previous conversation context available but summary generation failed';
       }
     };

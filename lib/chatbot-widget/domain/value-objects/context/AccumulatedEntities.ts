@@ -3,45 +3,29 @@
  * 
  * AI INSTRUCTIONS:
  * - Immutable value object for accumulated conversation entities
- * - Supports three accumulation strategies (additive, replaceable, confidence-based)
- * - Maintains entity metadata including confidence and source tracking
- * - Provides deduplication and normalization for entity values
+ * - Delegates complex operations to specialized domain services
+ * - Maintains state management and provides clean API
  * - Follow @golden-rule patterns exactly
  * - Keep under 250 lines with focused responsibility
  * - Pure domain logic with no external dependencies
  */
 
-export interface EntityWithMetadata<T> {
-  value: T;
-  extractedAt: Date;
-  confidence: number;
-  sourceMessageId: string;
-}
+import {
+  EntityWithMetadata,
+  AccumulatedEntitiesProps,
+  AdditiveEntityType,
+  ReplaceableEntityType,
+  ConfidenceBasedEntityType,
+  EntityOperationContext,
+  EntityCounts,
+  EntitySummary
+} from '../../types/AccumulatedEntityTypes';
+import { EntityAccumulationStrategies } from '../../services/EntityAccumulationStrategies';
+import { EntitySerializationService } from '../../services/EntitySerializationService';
+import { EntityUtilityService } from '../../services/EntityUtilityService';
 
-export interface AccumulatedEntitiesProps {
-  // Additive array entities (accumulate over time)
-  decisionMakers: EntityWithMetadata<string>[];
-  painPoints: EntityWithMetadata<string>[];
-  integrationNeeds: EntityWithMetadata<string>[];
-  evaluationCriteria: EntityWithMetadata<string>[];
-  
-  // Latest value entities (replace with newest)
-  budget: EntityWithMetadata<string> | null;
-  timeline: EntityWithMetadata<string> | null;
-  urgency: EntityWithMetadata<'low'|'medium'|'high'> | null;
-  contactMethod: EntityWithMetadata<'email'|'phone'|'meeting'> | null;
-  
-  // Confidence-based entities (keep highest confidence)
-  visitorName: EntityWithMetadata<string> | null;
-  role: EntityWithMetadata<string> | null;
-  industry: EntityWithMetadata<string> | null;
-  company: EntityWithMetadata<string> | null;
-  teamSize: EntityWithMetadata<string> | null;
-  
-  // Metadata
-  lastUpdated: Date;
-  totalExtractions: number;
-}
+// Re-export types for backward compatibility with tests
+export type { EntityWithMetadata } from '../../types/AccumulatedEntityTypes';
 
 export class AccumulatedEntities {
   private constructor(private readonly props: AccumulatedEntitiesProps) {
@@ -49,22 +33,9 @@ export class AccumulatedEntities {
   }
 
   static create(props?: Partial<AccumulatedEntitiesProps>): AccumulatedEntities {
+    const defaultProps = EntitySerializationService.createDefaultProps();
     return new AccumulatedEntities({
-      decisionMakers: [],
-      painPoints: [],
-      integrationNeeds: [],
-      evaluationCriteria: [],
-      budget: null,
-      timeline: null,
-      urgency: null,
-      contactMethod: null,
-      visitorName: null,
-      role: null,
-      industry: null,
-      company: null,
-      teamSize: null,
-      lastUpdated: new Date(),
-      totalExtractions: 0,
+      ...defaultProps,
       ...props
     });
   }
@@ -72,89 +43,14 @@ export class AccumulatedEntities {
   /**
    * Create AccumulatedEntities from stored object (deserialization)
    * AI INSTRUCTIONS:
+   * - Delegate deserialization to specialized service
    * - Handle deserialization from SessionContext storage
-   * - Validate structure and provide defaults for missing fields
-   * - Convert string dates back to Date objects
+   * - Provide error recovery for malformed data
    * - Follow @golden-rule error handling patterns
    */
   static fromObject(storedData: any): AccumulatedEntities {
-    if (!storedData || typeof storedData !== 'object') {
-      return AccumulatedEntities.create();
-    }
-
-    try {
-      // Helper function to convert stored entity metadata back to proper format
-      const parseEntityWithMetadata = (entity: any): EntityWithMetadata<any> | null => {
-        if (!entity || typeof entity !== 'object') return null;
-        
-        // Ensure extractedAt is a valid Date object
-        let extractedAt: Date;
-        try {
-          const dateValue = entity.extractedAt || entity.lastUpdated || new Date();
-          extractedAt = dateValue instanceof Date ? dateValue : new Date(dateValue);
-          
-          // If the date is invalid, use current time
-          if (isNaN(extractedAt.getTime())) {
-            extractedAt = new Date();
-          }
-        } catch (error) {
-          extractedAt = new Date();
-        }
-        
-        return {
-          value: entity.value,
-          extractedAt,
-          confidence: entity.confidence || 0.5,
-          sourceMessageId: entity.sourceMessageId || 'unknown',
-        };
-      };
-
-      // Helper function to parse array of entities
-      const parseEntityArray = (array: any[]): EntityWithMetadata<string>[] => {
-        if (!Array.isArray(array)) return [];
-        return array.map(item => {
-          if (typeof item === 'string') {
-            // Handle legacy string arrays
-            return {
-              value: item,
-              extractedAt: new Date(),
-              confidence: 0.5,
-              sourceMessageId: 'legacy'
-            };
-          }
-          return parseEntityWithMetadata(item);
-        }).filter(Boolean) as EntityWithMetadata<string>[];
-      };
-
-      const props: AccumulatedEntitiesProps = {
-        // Parse array entities
-        decisionMakers: parseEntityArray(storedData.decisionMakers),
-        painPoints: parseEntityArray(storedData.painPoints),
-        integrationNeeds: parseEntityArray(storedData.integrationNeeds),
-        evaluationCriteria: parseEntityArray(storedData.evaluationCriteria),
-        
-        // Parse single-value entities
-        budget: parseEntityWithMetadata(storedData.budget),
-        timeline: parseEntityWithMetadata(storedData.timeline),
-        urgency: parseEntityWithMetadata(storedData.urgency),
-        contactMethod: parseEntityWithMetadata(storedData.contactMethod),
-        visitorName: parseEntityWithMetadata(storedData.visitorName),
-        role: parseEntityWithMetadata(storedData.role),
-        industry: parseEntityWithMetadata(storedData.industry),
-        company: parseEntityWithMetadata(storedData.company),
-        teamSize: parseEntityWithMetadata(storedData.teamSize),
-        
-        // Parse metadata
-        lastUpdated: new Date(storedData.lastUpdated || storedData.lastEntityUpdate || new Date()),
-        totalExtractions: storedData.totalExtractions || storedData.entityMetadata?.totalEntitiesExtracted || 0
-      };
-
-      return new AccumulatedEntities(props);
-      
-    } catch (error) {
-      // Deserialization failed - return empty entities without logging to console
-      return AccumulatedEntities.create();
-    }
+    const props = EntitySerializationService.deserializeAccumulatedEntities(storedData);
+    return new AccumulatedEntities(props);
   }
 
   // Getters for immutable access
@@ -178,24 +74,27 @@ export class AccumulatedEntities {
    * Strategy 1: Additive entities - accumulate unique values over time
    */
   withAdditiveEntity(
-    entityType: 'decisionMakers'|'painPoints'|'integrationNeeds'|'evaluationCriteria',
+    entityType: AdditiveEntityType,
     newValues: string[],
     messageId: string,
     confidence: number = 0.9
   ): AccumulatedEntities {
-    const existingEntities = this.props[entityType];
-    const newEntities = newValues.map(value => ({
-      value,
-      extractedAt: new Date(),
+    const context: EntityOperationContext = {
+      messageId,
       confidence,
-      sourceMessageId: messageId
-    }));
+      extractedAt: new Date()
+    };
     
-    const mergedEntities = this.deduplicateArray([...existingEntities, ...newEntities]);
+    const existingEntities = this.props[entityType];
+    const updatedEntities = EntityAccumulationStrategies.applyAdditiveStrategy(
+      existingEntities,
+      newValues,
+      context
+    );
     
     return new AccumulatedEntities({
       ...this.props,
-      [entityType]: mergedEntities,
+      [entityType]: updatedEntities,
       lastUpdated: new Date(),
       totalExtractions: this.props.totalExtractions + newValues.length
     });
@@ -205,21 +104,25 @@ export class AccumulatedEntities {
    * Strategy 2: Replaceable entities - keep latest value
    */
   withReplaceableEntity(
-    entityType: 'budget'|'timeline'|'urgency'|'contactMethod',
+    entityType: ReplaceableEntityType,
     value: string,
     messageId: string,
     confidence: number = 0.9
   ): AccumulatedEntities {
-    const entityWithMetadata = {
-      value,
-      extractedAt: new Date(),
+    const context: EntityOperationContext = {
+      messageId,
       confidence,
-      sourceMessageId: messageId
+      extractedAt: new Date()
     };
+    
+    const updatedEntity = EntityAccumulationStrategies.applyReplaceableStrategy(
+      value,
+      context
+    );
     
     return new AccumulatedEntities({
       ...this.props,
-      [entityType]: entityWithMetadata,
+      [entityType]: updatedEntity,
       lastUpdated: new Date(),
       totalExtractions: this.props.totalExtractions + 1
     });
@@ -229,30 +132,29 @@ export class AccumulatedEntities {
    * Strategy 3: Confidence-based entities - keep highest confidence value
    */
   withConfidenceBasedEntity(
-    entityType: 'visitorName'|'role'|'industry'|'company'|'teamSize',
+    entityType: ConfidenceBasedEntityType,
     value: string,
     messageId: string,
     confidence: number = 0.9,
     confidenceThreshold: number = 0.7
   ): AccumulatedEntities {
-    const existing = this.props[entityType];
-    const newEntity = {
-      value,
-      extractedAt: new Date(),
+    const context: EntityOperationContext = {
+      messageId,
       confidence,
-      sourceMessageId: messageId
+      extractedAt: new Date()
     };
     
-    // Keep existing if it has higher confidence and exceeds threshold
-    const entityToKeep = existing && 
-      existing.confidence > confidence && 
-      existing.confidence > confidenceThreshold
-      ? existing
-      : newEntity;
+    const existingEntity = this.props[entityType];
+    const updatedEntity = EntityAccumulationStrategies.applyConfidenceBasedStrategy(
+      existingEntity,
+      value,
+      context,
+      confidenceThreshold
+    );
     
     return new AccumulatedEntities({
       ...this.props,
-      [entityType]: entityToKeep,
+      [entityType]: updatedEntity,
       lastUpdated: new Date(),
       totalExtractions: this.props.totalExtractions + 1
     });
@@ -262,21 +164,19 @@ export class AccumulatedEntities {
    * Remove specific values from additive arrays
    */
   withRemovedEntity(
-    entityType: 'decisionMakers'|'painPoints'|'integrationNeeds'|'evaluationCriteria',
+    entityType: AdditiveEntityType,
     valueToRemove: string,
     messageId: string
   ): AccumulatedEntities {
     const existingEntities = this.props[entityType];
-    const normalizedRemoval = this.normalizeEntityValue(valueToRemove);
-    
-    const filteredEntities = existingEntities.filter(entity => {
-      const normalizedExisting = this.normalizeEntityValue(entity.value);
-      return normalizedExisting !== normalizedRemoval;
-    });
+    const updatedEntities = EntityAccumulationStrategies.removeFromAdditiveArray(
+      existingEntities,
+      valueToRemove
+    );
     
     return new AccumulatedEntities({
       ...this.props,
-      [entityType]: filteredEntities,
+      [entityType]: updatedEntities,
       lastUpdated: new Date(),
       totalExtractions: this.props.totalExtractions + 1
     });
@@ -286,21 +186,25 @@ export class AccumulatedEntities {
    * Correct/replace any entity type
    */
   withCorrectedEntity(
-    entityType: 'budget'|'timeline'|'urgency'|'contactMethod'|'visitorName'|'role'|'industry'|'company'|'teamSize',
+    entityType: ReplaceableEntityType | ConfidenceBasedEntityType,
     value: string,
     messageId: string,
     confidence: number = 0.9
   ): AccumulatedEntities {
-    const entityWithMetadata = {
-      value,
-      extractedAt: new Date(),
+    const context: EntityOperationContext = {
+      messageId,
       confidence,
-      sourceMessageId: messageId
+      extractedAt: new Date()
     };
+    
+    const correctedEntity = EntityAccumulationStrategies.applyCorrection(
+      value,
+      context
+    );
     
     return new AccumulatedEntities({
       ...this.props,
-      [entityType]: entityWithMetadata,
+      [entityType]: correctedEntity,
       lastUpdated: new Date(),
       totalExtractions: this.props.totalExtractions + 1
     });
@@ -309,138 +213,43 @@ export class AccumulatedEntities {
   /**
    * Get all entities as a summary object
    */
-  getAllEntitiesSummary(): Record<string, any> {
-    return {
-      decisionMakers: this.decisionMakers.map(e => e.value),
-      painPoints: this.painPoints.map(e => e.value),
-      integrationNeeds: this.integrationNeeds.map(e => e.value),
-      evaluationCriteria: this.evaluationCriteria.map(e => e.value),
-      budget: this.budget?.value || null,
-      timeline: this.timeline?.value || null,
-      urgency: this.urgency?.value || null,
-      contactMethod: this.contactMethod?.value || null,
-      visitorName: this.visitorName?.value || null,
-      role: this.role?.value || null,
-      industry: this.industry?.value || null,
-      company: this.company?.value || null,
-      teamSize: this.teamSize?.value || null
-    };
+  getAllEntitiesSummary(): EntitySummary {
+    return EntityUtilityService.generateEntitySummary(this.props);
   }
 
   /**
    * Check if accumulated entities are empty
    */
   isEmpty(): boolean {
-    return this.props.totalExtractions === 0;
+    return EntityUtilityService.isEntityCollectionEmpty(this.props);
   }
 
   /**
    * Get entity count by category
    */
-  getEntityCountByCategory(): { additive: number; replaceable: number; confidenceBased: number } {
-    return {
-      additive: this.decisionMakers.length + this.painPoints.length + 
-                this.integrationNeeds.length + this.evaluationCriteria.length,
-      replaceable: [this.budget, this.timeline, this.urgency, this.contactMethod]
-                  .filter(entity => entity !== null).length,
-      confidenceBased: [this.visitorName, this.role, this.industry, this.company, this.teamSize]
-                      .filter(entity => entity !== null).length
-    };
+  getEntityCountByCategory(): EntityCounts {
+    return EntityUtilityService.countEntitiesByCategory(this.props);
   }
 
   /**
    * Convert to plain object for serialization
    * AI INSTRUCTIONS:
+   * - Delegate serialization to specialized service
    * - Serialize for storage in SessionContext
-   * - Convert dates to ISO strings for JSON compatibility
    * - Maintain all metadata for proper round-trip deserialization
    * - Follow @golden-rule immutability patterns
    */
   toPlainObject(): any {
-    const serializeEntity = (entity: EntityWithMetadata<any> | null) => {
-      if (!entity) return null;
-      return {
-        value: entity.value,
-        extractedAt: entity.extractedAt.toISOString(),
-        confidence: entity.confidence,
-        sourceMessageId: entity.sourceMessageId
-      };
-    };
-
-    const serializeEntityArray = (entities: EntityWithMetadata<string>[]) => {
-      return entities.map(serializeEntity);
-    };
-
-    return {
-      decisionMakers: serializeEntityArray(this.props.decisionMakers),
-      painPoints: serializeEntityArray(this.props.painPoints),
-      integrationNeeds: serializeEntityArray(this.props.integrationNeeds),
-      evaluationCriteria: serializeEntityArray(this.props.evaluationCriteria),
-      budget: serializeEntity(this.props.budget),
-      timeline: serializeEntity(this.props.timeline),
-      urgency: serializeEntity(this.props.urgency),
-      contactMethod: serializeEntity(this.props.contactMethod),
-      visitorName: serializeEntity(this.props.visitorName),
-      role: serializeEntity(this.props.role),
-      industry: serializeEntity(this.props.industry),
-      company: serializeEntity(this.props.company),
-      teamSize: serializeEntity(this.props.teamSize),
-      lastUpdated: this.props.lastUpdated.toISOString(),
-      totalExtractions: this.props.totalExtractions
-    };
-  }
-
-  /**
-   * Deduplicate array entities by normalized value
-   */
-  private deduplicateArray(entities: EntityWithMetadata<string>[]): EntityWithMetadata<string>[] {
-    const seen = new Set<string>();
-    return entities.filter(entity => {
-      const normalized = this.normalizeEntityValue(entity.value);
-      if (seen.has(normalized)) {
-        return false;
-      }
-      seen.add(normalized);
-      return true;
-    });
-  }
-
-  /**
-   * Normalize entity values for comparison
-   */
-  private normalizeEntityValue(value: string): string {
-    return value.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    return EntitySerializationService.serializeAccumulatedEntities(this.props);
   }
 
   /**
    * Validate domain invariants
    */
   private validateInvariants(): void {
-    if (this.props.totalExtractions < 0) {
-      throw new Error('Total extractions cannot be negative');
-    }
-
-    // Validate confidence scores
-    const allEntities = [
-      ...this.props.decisionMakers,
-      ...this.props.painPoints,
-      ...this.props.integrationNeeds,
-      ...this.props.evaluationCriteria,
-      this.props.budget,
-      this.props.timeline,
-      this.props.urgency,
-      this.props.contactMethod,
-      this.props.visitorName,
-      this.props.role,
-      this.props.industry,
-      this.props.company,
-      this.props.teamSize
-    ].filter(entity => entity !== null);
-
-    for (const entity of allEntities) {
-      if (entity.confidence < 0 || entity.confidence > 1) {
-        throw new Error(`Invalid confidence score: ${entity.confidence}. Must be between 0 and 1`);
-      }
+    const validation = EntityUtilityService.validateEntityCollection(this.props);
+    if (!validation.isValid) {
+      throw new Error(`Entity validation failed: ${validation.errors.join(', ')}`);
     }
   }
 } 

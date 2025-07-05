@@ -4,7 +4,7 @@ import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotC
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { FAQ } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { ChatbotConfigMapper, RawChatbotConfigDbRecord } from './mappers/ChatbotConfigMapper';
-import { DatabaseError } from '../../../../errors/base';
+import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
 /**
  * Supabase ChatbotConfig Repository Implementation

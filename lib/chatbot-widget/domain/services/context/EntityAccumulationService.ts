@@ -15,7 +15,7 @@
 import { AccumulatedEntities } from '../../value-objects/context/AccumulatedEntities';
 import { EntityCorrections } from '../../value-objects/context/EntityCorrections';
 import { ExtractedEntities } from '../../value-objects/message-processing/IntentResult';
-import { BusinessRuleViolationError } from '../../errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export interface EntityMergeContext {
   messageId: string;

@@ -45,6 +45,25 @@ const nextConfig = {
     'openai',
     'replicate',
     'tiktoken',
+    // Node.js built-in modules
+    'fs',
+    'path',
+    'crypto',
+    'os',
+    'stream',
+    'util',
+    'events',
+    'buffer',
+    'url',
+    'querystring',
+    'http',
+    'https',
+    'net',
+    'tls',
+    'child_process',
+    'cluster',
+    'worker_threads',
+    'zlib',
   ],
   experimental: {
     serverActions: {
@@ -91,6 +110,19 @@ const nextConfig = {
       return config;
     }
 
+    // Enable WebAssembly support for tiktoken
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    // Handle WebAssembly modules
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
+
     if (isServer) {
       // Handle keyv dynamic imports on server side
       config.resolve.fallback = {
@@ -119,6 +151,29 @@ const nextConfig = {
       ];
     } else {
       // Client-side webpack configuration
+      // Exclude Node.js built-in modules from client bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+        os: false,
+        stream: false,
+        util: false,
+        events: false,
+        buffer: false,
+        url: false,
+        querystring: false,
+        http: false,
+        https: false,
+        net: false,
+        tls: false,
+        child_process: false,
+        cluster: false,
+        worker_threads: false,
+        zlib: false,
+      };
+      
       // Optimize chunk splitting for production
       if (process.env.NODE_ENV === 'production') {
         config.optimization.splitChunks = {

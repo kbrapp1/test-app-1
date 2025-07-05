@@ -13,7 +13,7 @@
  */
 
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
-import { ContentCategorizationError } from '../errors/WebsiteCrawlingErrors';
+import { ContentCategorizationError } from '../errors/ChatbotWidgetDomainErrors';
 
 /**
  * Interface for AI provider abstraction

@@ -99,33 +99,19 @@ export class WebsiteCrawlingDomainService {
     settings: WebsiteCrawlSettings,
     robotsChecker?: IRobotsTxtChecker
   ): Promise<void> {
-    console.log(`📋 Domain Service: Validating crawl request for ${source.url}`);
-    
     // Domain rule: Validate URL format and protocol
-    console.log('🔍 Validating URL format...');
     this.validateUrlFormat(source.url);
-    console.log('✅ URL format validation passed');
     
     // Domain rule: Validate crawl settings
-    console.log('⚙️ Validating crawl settings...');
     this.validateCrawlSettings(settings);
-    console.log('✅ Crawl settings validation passed');
     
     // Domain rule: Check URL accessibility
-    console.log('🌐 Checking URL accessibility...');
     await this.validateUrlAccessibility(source.url);
-    console.log('✅ URL accessibility check passed');
     
     // Domain rule: Check robots.txt compliance if required
     if (settings.respectRobotsTxt && robotsChecker) {
-      console.log('🤖 Checking robots.txt compliance...');
       await this.validateRobotsTxtCompliance(source.url, robotsChecker);
-      console.log('✅ Robots.txt compliance check passed');
-    } else {
-      console.log('⏭️ Robots.txt compliance check skipped');
     }
-    
-    console.log('✅ Domain Service: All validations passed');
   }
 
   /**

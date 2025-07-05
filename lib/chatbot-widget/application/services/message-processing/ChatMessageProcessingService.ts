@@ -22,6 +22,7 @@ import { SessionContextUpdateService } from './SessionContextUpdateService';
 import { EntityMergeProcessorService } from './EntityMergeProcessorService';
 import { LeadScoreCalculatorService } from './LeadScoreCalculatorService';
 import { ConversationFlowAnalyzerService } from './ConversationFlowAnalyzerService';
+import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -62,6 +63,7 @@ export class ChatMessageProcessingService {
     private readonly aiConversationService: IAIConversationService,
     private readonly messageRepository: IChatMessageRepository,
     private readonly conversationContextOrchestrator: ConversationContextOrchestrator,
+    private readonly errorTrackingFacade: ErrorTrackingFacade,
     private readonly intentClassificationService?: IIntentClassificationService,
     private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService
   ) {
@@ -72,7 +74,7 @@ export class ChatMessageProcessingService {
      * - Delegate complex operations to domain services
      */
     this.conversationContextBuilder = new ConversationContextBuilderService(aiConversationService);
-    this.unifiedResponseProcessor = new UnifiedResponseProcessorService(messageRepository);
+    this.unifiedResponseProcessor = new UnifiedResponseProcessorService(messageRepository, errorTrackingFacade);
     
     // Initialize specialized services for SessionContextUpdateService
     const entityMergeProcessor = new EntityMergeProcessorService();
@@ -158,7 +160,8 @@ export class ChatMessageProcessingService {
     const botMessage = await this.unifiedResponseProcessor.createBotMessageFromUnifiedResult(
       session,
       unifiedResult,
-      logFileName
+      logFileName,
+      config
     );
 
     // Update session context with unified results

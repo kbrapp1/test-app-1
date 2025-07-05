@@ -15,8 +15,10 @@ import { WebsiteSource, WebsiteCrawlSettings } from '../../domain/value-objects/
 import { CrawlWebsiteUseCase } from './CrawlWebsiteUseCase';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 import { IEmbeddingService } from '../../domain/services/interfaces/IEmbeddingService';
-import { WebsiteCrawlError } from '../../domain/errors/WebsiteCrawlingErrors';
+import { WebsiteCrawlingError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { createHash } from 'crypto';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
 /**
  * Storage result for crawl and store operation
@@ -50,11 +52,15 @@ export interface CrawlAndStoreResult {
  * - No business logic - delegate everything to domain layer
  */
 export class CrawlAndStoreWebsiteUseCase {
+  private readonly errorTrackingService: ErrorTrackingFacade;
+
   constructor(
     private readonly crawlWebsiteUseCase: CrawlWebsiteUseCase,
     private readonly vectorKnowledgeRepository: IVectorKnowledgeRepository,
     private readonly embeddingService: IEmbeddingService
-  ) {}
+  ) {
+    this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+  }
 
   /**
    * Execute crawl and store workflow
@@ -71,33 +77,23 @@ export class CrawlAndStoreWebsiteUseCase {
     source: WebsiteSource,
     settings: WebsiteCrawlSettings
   ): Promise<CrawlAndStoreResult> {
-    console.log(`🚀 CrawlAndStoreWebsiteUseCase: Starting crawl for ${source.url}`);
-    
     try {
       // Step 1: Crawl website using existing use case
-      console.log('🔍 Step 1: Executing website crawl...');
       const crawlResult = await this.crawlWebsiteUseCase.execute(source, settings);
-      console.log(`✅ Crawl completed: ${crawlResult.knowledgeItems.length} knowledge items extracted`);
 
       // Step 2: Prepare knowledge items for storage
-      console.log('📦 Step 2: Preparing knowledge items for storage...');
       const itemsToStore = await this.prepareKnowledgeItemsForStorage(
         crawlResult.knowledgeItems,
         crawlResult.crawledPages
       );
-      console.log(`✅ Prepared ${itemsToStore.length} items for storage`);
 
       // Step 3: Store knowledge items with embeddings
       if (itemsToStore.length > 0) {
-        console.log('💾 Step 3: Storing knowledge items...');
         await this.vectorKnowledgeRepository.storeKnowledgeItems(
           organizationId,
           chatbotConfigId,
           itemsToStore
         );
-        console.log(`✅ Successfully stored ${itemsToStore.length} knowledge items`);
-      } else {
-        console.log('⚠️ No items to store - skipping storage step');
       }
 
       // Step 4: Return storage result
@@ -120,7 +116,6 @@ export class CrawlAndStoreWebsiteUseCase {
         }))
       };
       
-      console.log(`🎉 CrawlAndStoreWebsiteUseCase: Completed successfully - ${result.storedItems} items stored`);
       return result;
 
     } catch (error) {
@@ -134,11 +129,28 @@ export class CrawlAndStoreWebsiteUseCase {
         sourceUrl: source.url
       });
       
-      if (error instanceof WebsiteCrawlError) {
+      // Track critical crawling error to database
+      await this.errorTrackingService.trackWebsiteCrawlingError(
+        source.url,
+        `Crawl and store workflow failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        {
+          organizationId,
+          metadata: {
+            chatbotConfigId,
+            sourceUrl: source.url,
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+            errorMessage: error instanceof Error ? error.message : String(error),
+            workflowStep: 'crawl_and_store_execution'
+          }
+        }
+      );
+      
+      if (error instanceof WebsiteCrawlingError) {
         throw error;
       }
 
-      throw new WebsiteCrawlError(
+      throw new WebsiteCrawlingError(
+        source.url,
         `Failed to crawl and store website content: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { 
           organizationId,
@@ -165,7 +177,6 @@ export class CrawlAndStoreWebsiteUseCase {
     crawledPages: any[]
   ): Promise<any[]> {
     const itemsToStore = [];
-    console.log(`🔧 Processing ${knowledgeItems.length} knowledge items for storage`);
 
     // Create a map of URLs to crawled page data for metadata lookup
     const crawledPagesMap = new Map();
@@ -177,8 +188,6 @@ export class CrawlAndStoreWebsiteUseCase {
       const knowledgeItem = knowledgeItems[i];
       
       try {
-        console.log(`🔧 Processing item ${i + 1}/${knowledgeItems.length}: ${knowledgeItem.title?.substring(0, 50)}...`);
-        
         // Validate content before embedding generation
         if (!knowledgeItem.content || typeof knowledgeItem.content !== 'string') {
           console.error(`❌ Item ${i + 1} has invalid content:`, {
@@ -197,18 +206,8 @@ export class CrawlAndStoreWebsiteUseCase {
           continue;
         }
         
-        if (content.length > 8000) {
-          console.warn(`⚠️ Item ${i + 1} content very long (${content.length} chars), may cause issues:`, {
-            title: knowledgeItem.title
-          });
-        }
-        
         // Generate embedding for content
-        console.log(`🤖 Generating embedding (content length: ${content.length})`);
-        console.log(`📄 Content preview: "${content.substring(0, 200)}${content.length > 200 ? '...' : ''}"`);
-        
         const embedding = await this.embeddingService.generateEmbedding(content);
-        console.log(`✅ Embedding generated (dimensions: ${embedding.length})`);
         
         // Generate content hash for change detection
         const contentHash = createHash('sha256')
@@ -251,7 +250,6 @@ export class CrawlAndStoreWebsiteUseCase {
         };
         
         itemsToStore.push(itemToStore);
-        console.log(`✅ Item ${i + 1} prepared successfully with crawl metadata`);
         
       } catch (error) {
         // Skip items that fail embedding generation
@@ -267,7 +265,6 @@ export class CrawlAndStoreWebsiteUseCase {
       }
     }
 
-    console.log(`🔧 Preparation completed: ${itemsToStore.length}/${knowledgeItems.length} items ready for storage`);
     return itemsToStore;
   }
 } 

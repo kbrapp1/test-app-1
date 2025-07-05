@@ -1,7 +1,5 @@
 /**
- * PDF Knowledge Processor - Advanced Document Chunking
- * 
- * AI INSTRUCTIONS:
+ * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
  * - Implements 2025 RAG best practices for large document processing
  * - Handles PDF content with intelligent semantic chunking
  * - Maintains document context and relationships between chunks
@@ -10,33 +8,12 @@
  */
 
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
-
-export interface PDFChunkingConfig {
-  maxChunkSize: number;        // Max characters per chunk (default: 1000)
-  overlapSize: number;         // Character overlap between chunks (default: 200)
-  preserveStructure: boolean;  // Maintain document structure (default: true)
-  includeMetadata: boolean;    // Include document metadata (default: true)
-}
-
-export interface PDFDocumentMetadata {
-  filename: string;
-  pageCount?: number;
-  author?: string;
-  title?: string;
-  subject?: string;
-  uploadDate: Date;
-  fileSize: number;
-}
-
-export interface PDFChunk {
-  chunkId: string;
-  content: string;
-  pageNumbers: number[];
-  chunkIndex: number;
-  totalChunks: number;
-  metadata: PDFDocumentMetadata;
-  tags: string[];
-}
+import { 
+  PDFChunkingService, 
+  PDFChunkingConfig, 
+  PDFDocumentMetadata, 
+  PDFChunk 
+} from './processing/PDFChunkingService';
 
 export class PDFKnowledgeProcessor {
   private readonly defaultConfig: PDFChunkingConfig = {
@@ -52,15 +29,6 @@ export class PDFKnowledgeProcessor {
     this.config = { ...this.defaultConfig, ...config };
   }
 
-  /**
-   * Process PDF content into knowledge items with intelligent chunking
-   * 
-   * AI INSTRUCTIONS:
-   * - Splits large PDFs into semantically coherent chunks
-   * - Maintains document context and relationships
-   * - Optimizes chunk sizes for embedding performance
-   * - Preserves document structure and metadata
-   */
   async processPDFContent(
     pdfContent: string,
     metadata: PDFDocumentMetadata,
@@ -69,10 +37,10 @@ export class PDFKnowledgeProcessor {
   ): Promise<KnowledgeItem[]> {
     try {
       // Step 1: Clean and normalize PDF content
-      const cleanedContent = this.cleanPDFContent(pdfContent);
+      const cleanedContent = PDFChunkingService.cleanPDFContent(pdfContent);
       
       // Step 2: Intelligent semantic chunking
-      const chunks = this.createSemanticChunks(cleanedContent, metadata);
+      const chunks = PDFChunkingService.createSemanticChunks(cleanedContent, metadata, this.config);
       
       // Step 3: Convert chunks to knowledge items
       const knowledgeItems = chunks.map(chunk => this.convertChunkToKnowledgeItem(chunk));
@@ -88,154 +56,11 @@ export class PDFKnowledgeProcessor {
     }
   }
 
-  /**
-   * Clean PDF content - Remove artifacts and normalize text
-   * 
-   * AI INSTRUCTIONS:
-   * - Removes PDF extraction artifacts (extra whitespace, broken lines)
-   * - Normalizes text formatting for better embedding quality
-   * - Preserves semantic structure while cleaning technical artifacts
-   */
-  private cleanPDFContent(rawContent: string): string {
-    return rawContent
-      // Remove excessive whitespace
-      .replace(/\s+/g, ' ')
-      // Fix broken line endings
-      .replace(/(\w)-\s+(\w)/g, '$1$2')
-      // Normalize paragraph breaks
-      .replace(/\n\s*\n/g, '\n\n')
-      // Remove page headers/footers (common patterns)
-      .replace(/^Page \d+.*$/gm, '')
-      .replace(/^\d+\s*$/gm, '')
-      // Clean up special characters
-      .replace(/[^\w\s\n.,!?;:()\-"']/g, ' ')
-      .trim();
-  }
+  // Content processing methods delegated to PDFChunkingService
 
-  /**
-   * Create semantic chunks with intelligent boundaries
-   * 
-   * AI INSTRUCTIONS:
-   * - Prioritizes semantic boundaries (paragraphs, sections)
-   * - Maintains context with overlapping content
-   * - Optimizes chunk sizes for embedding model performance
-   * - Preserves document structure and relationships
-   */
-  private createSemanticChunks(content: string, metadata: PDFDocumentMetadata): PDFChunk[] {
-    const chunks: PDFChunk[] = [];
-    const sentences = this.splitIntoSentences(content);
-    
-    let currentChunk = '';
-    let chunkIndex = 0;
-    let sentenceIndex = 0;
-    
-    while (sentenceIndex < sentences.length) {
-      const sentence = sentences[sentenceIndex];
-      
-      // Check if adding this sentence would exceed chunk size
-      if (currentChunk.length + sentence.length > this.config.maxChunkSize && currentChunk.length > 0) {
-        // Create chunk with current content
-        chunks.push(this.createChunk(
-          currentChunk.trim(),
-          chunkIndex,
-          metadata,
-          this.estimatePageNumbers(chunkIndex, chunks.length)
-        ));
-        
-        // Start new chunk with overlap
-        currentChunk = this.createOverlapContent(chunks[chunks.length - 1]?.content || '', sentence);
-        chunkIndex++;
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + sentence;
-      }
-      
-      sentenceIndex++;
-    }
-    
-    // Add final chunk if there's remaining content
-    if (currentChunk.trim()) {
-      chunks.push(this.createChunk(
-        currentChunk.trim(),
-        chunkIndex,
-        metadata,
-        this.estimatePageNumbers(chunkIndex, chunks.length)
-      ));
-    }
-    
-    // Update total chunks count
-    const totalChunks = chunks.length;
-    chunks.forEach(chunk => {
-      chunk.totalChunks = totalChunks;
-    });
-    
-    return chunks;
-  }
-
-  /**
-   * Split content into sentences for better chunk boundaries
-   */
-  private splitIntoSentences(content: string): string[] {
-    // Simple sentence splitting (can be enhanced with NLP libraries)
-    return content
-      .split(/(?<=[.!?])\s+/)
-      .filter(sentence => sentence.trim().length > 10);
-  }
-
-  /**
-   * Create overlap content for chunk continuity
-   */
-  private createOverlapContent(previousContent: string, newSentence: string): string {
-    if (!this.config.overlapSize || !previousContent) {
-      return newSentence;
-    }
-    
-    const overlapText = previousContent.slice(-this.config.overlapSize);
-    const lastSentenceStart = overlapText.lastIndexOf('.');
-    
-    if (lastSentenceStart > 0) {
-      return overlapText.slice(lastSentenceStart + 1).trim() + ' ' + newSentence;
-    }
-    
-    return overlapText + ' ' + newSentence;
-  }
-
-  /**
-   * Create a PDF chunk with metadata
-   */
-  private createChunk(
-    content: string,
-    chunkIndex: number,
-    metadata: PDFDocumentMetadata,
-    pageNumbers: number[]
-  ): PDFChunk {
-    return {
-      chunkId: `${this.sanitizeFilename(metadata.filename)}-chunk-${chunkIndex + 1}`,
-      content,
-      pageNumbers,
-      chunkIndex,
-      totalChunks: 0, // Will be updated after all chunks are created
-      metadata,
-      tags: this.extractChunkTags(content, metadata)
-    };
-  }
-
-  /**
-   * Estimate page numbers for chunk (rough approximation)
-   */
-  private estimatePageNumbers(chunkIndex: number, totalChunks: number): number[] {
-    const pageCount = this.config.includeMetadata && this.config.preserveStructure 
-      ? (totalChunks > 0 ? Math.ceil(totalChunks / 3) : 1) // Rough estimate: 3 chunks per page
-      : 1;
-    
-    const startPage = Math.floor((chunkIndex / totalChunks) * pageCount) + 1;
-    return [startPage];
-  }
-
-  /**
-   * Extract tags from chunk content
-   */
+  // Extract tags from chunk content (simplified version for document overview)
   private extractChunkTags(content: string, metadata: PDFDocumentMetadata): string[] {
-    const tags: string[] = ['pdf', 'document'];
+    const tags: string[] = [];
     
     // Add filename-based tags
     const filenameTags = this.sanitizeFilename(metadata.filename)
@@ -257,9 +82,7 @@ export class PDFKnowledgeProcessor {
     return [...new Set(tags)]; // Remove duplicates
   }
 
-  /**
-   * Convert PDF chunk to knowledge item
-   */
+  // Convert PDF chunk to knowledge item
   private convertChunkToKnowledgeItem(chunk: PDFChunk): KnowledgeItem {
     const contextualContent = this.buildContextualContent(chunk);
     
@@ -275,9 +98,7 @@ export class PDFKnowledgeProcessor {
     };
   }
 
-  /**
-   * Build contextual content with document metadata
-   */
+  // Build contextual content with document metadata
   private buildContextualContent(chunk: PDFChunk): string {
     let content = '';
     
@@ -296,9 +117,7 @@ export class PDFKnowledgeProcessor {
     return content;
   }
 
-  /**
-   * Create document overview knowledge item
-   */
+  // Create document overview knowledge item
   private createDocumentOverview(
     content: string,
     metadata: PDFDocumentMetadata,
@@ -320,9 +139,7 @@ export class PDFKnowledgeProcessor {
     };
   }
 
-  /**
-   * Sanitize filename for use in IDs
-   */
+  // Sanitize filename for use in IDs
   private sanitizeFilename(filename: string): string {
     return filename
       .replace(/\.[^/.]+$/, '') // Remove extension
@@ -331,25 +148,13 @@ export class PDFKnowledgeProcessor {
       .toLowerCase();
   }
 
-  /**
-   * Get processing statistics
-   */
+  // Get processing statistics - Delegate to chunking service
   getProcessingStats(chunks: PDFChunk[]): {
     totalChunks: number;
     averageChunkSize: number;
     totalVectors: number;
     estimatedMemoryUsage: string;
   } {
-    const totalChunks = chunks.length;
-    const averageChunkSize = chunks.reduce((sum, chunk) => sum + chunk.content.length, 0) / totalChunks;
-    const totalVectors = totalChunks + 1; // +1 for overview
-    const estimatedMemoryUsage = `${Math.round(totalVectors * 7)} KB`; // ~7KB per vector
-    
-    return {
-      totalChunks,
-      averageChunkSize: Math.round(averageChunkSize),
-      totalVectors,
-      estimatedMemoryUsage
-    };
+    return PDFChunkingService.getChunkingStats(chunks);
   }
 } 

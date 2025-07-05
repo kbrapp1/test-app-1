@@ -63,7 +63,7 @@ describe('AccumulatedEntities Value Object', () => {
             sourceMessageId: 'msg-1'
           }]
         });
-      }).toThrow('Invalid confidence score: 1.5. Must be between 0 and 1');
+      }).toThrow('Entity validation failed: Invalid confidence scores detected. All confidence scores must be between 0 and 1');
     });
 
     it('should throw error for negative total extractions', () => {

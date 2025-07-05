@@ -11,7 +11,7 @@
  */
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { BusinessRuleViolationError } from '../../../domain/errors/ContextManagementErrors';
+import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
 export interface CompressionConfig {
   tokenThresholdPercentage: number;  // Default: 85%

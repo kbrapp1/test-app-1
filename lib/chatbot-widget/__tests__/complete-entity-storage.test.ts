@@ -3,6 +3,31 @@ import { ChatMessageProcessingService } from '../application/services/message-pr
 import { ChatSession } from '../domain/entities/ChatSession';
 import { ChatMessage } from '../domain/entities/ChatMessage';
 
+// Mock the composition root to prevent Supabase initialization during tests
+vi.mock('../infrastructure/composition/ChatbotWidgetCompositionRoot', () => ({
+  ChatbotWidgetCompositionRoot: {
+    getErrorTrackingFacade: vi.fn(() => ({
+      trackResponseExtractionFallback: vi.fn(),
+      trackMessageProcessingError: vi.fn(),
+      trackAIResponseGenerationError: vi.fn(),
+      trackConversationAnalysisError: vi.fn(),
+      trackKnowledgeIndexingError: vi.fn(),
+      trackWebsiteCrawlingError: vi.fn(),
+      trackChatbotConfigurationError: vi.fn()
+    })),
+
+    getLoggingService: vi.fn(() => ({
+      createSessionLogger: vi.fn(() => ({
+        logStep: vi.fn(),
+        logError: vi.fn(),
+        logDebug: vi.fn(),
+        logRaw: vi.fn(),
+        logMessage: vi.fn()
+      }))
+    }))
+  }
+}));
+
 /**
  * Complete Entity Storage Test Suite
  * 
@@ -12,10 +37,12 @@ import { ChatMessage } from '../domain/entities/ChatMessage';
 describe('Complete Entity Storage (2025 Best Practice)', () => {
   let processingService: ChatMessageProcessingService;
   let mockIntentService: any;
+  let mockAiConversationService: any;
+  let mockMessageRepository: any;
+  let mockConversationOrchestrator: any;
+  let mockErrorTrackingService: any;
   let testSession: ChatSession;
   let testMessage: ChatMessage;
-
-
 
   beforeEach(() => {
     // Mock the intent classification service with complete API response
@@ -67,29 +94,30 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
       })
     };
 
-    // Create test session using factory method
+    // Create test session using correct factory method
     testSession = ChatSession.create(
       'test-chatbot-config',
       'visitor-789'
     );
 
-    // Create test message using factory method  
+    // Create test message using correct factory method  
     testMessage = ChatMessage.createUserMessage(
       testSession.id,
       'I\'m interested in marketing automation for my tech company'
     );
 
-    // Mock other dependencies
-    const mockConversationOrchestrator = {
-      updateSessionContext: vi.fn().mockReturnValue(testSession),
-      getMessagesForContextWindow: vi.fn().mockReturnValue({
-        messages: [testMessage],
-        summary: null,
-        compressionApplied: false
-      })
+    // Mock AI conversation service
+    mockAiConversationService = {
+      generateResponse: vi.fn(),
+      buildSystemPrompt: vi.fn(),
+      analyzeSentiment: vi.fn(),
+      analyzeUrgency: vi.fn(),
+      analyzeEngagement: vi.fn(),
+      extractLeadInformation: vi.fn()
     };
 
-    const mockMessageRepository = {
+    // Mock message repository
+    mockMessageRepository = {
       save: vi.fn(),
       findById: vi.fn(),
       findBySessionId: vi.fn().mockResolvedValue([testMessage]),
@@ -106,27 +134,36 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
       bulkUpdate: vi.fn()
     };
 
-    const mockAiConversationService = {
-      generateResponse: vi.fn(),
-      buildSystemPrompt: vi.fn(),
-      analyzeSentiment: vi.fn(),
-      analyzeUrgency: vi.fn(),
-      analyzeEngagement: vi.fn(),
-      extractLeadInformation: vi.fn()
+    // Mock conversation orchestrator
+    mockConversationOrchestrator = {
+      updateSessionContext: vi.fn().mockReturnValue(testSession),
+      getMessagesForContextWindow: vi.fn().mockReturnValue({
+        messages: [testMessage],
+        summary: null,
+        compressionApplied: false
+      })
     };
 
-    // Create processing service with mocked dependencies
+    // Mock error tracking service
+    mockErrorTrackingService = {
+      trackResponseExtractionFallback: vi.fn(),
+      trackMessageProcessingError: vi.fn(),
+      trackAIResponseGenerationError: vi.fn()
+    };
+
+    // Create processing service with correct constructor signature
     processingService = new ChatMessageProcessingService(
-      mockAiConversationService as any,
-      mockMessageRepository as any,
-      mockConversationOrchestrator as any,
+      mockAiConversationService,
+      mockMessageRepository,
+      mockConversationOrchestrator,
+      mockErrorTrackingService,
       mockIntentService
     );
   });
 
   describe('API Data Extraction', () => {
     it('should extract ALL entities from combined API response sections', async () => {
-      // Create analysis result
+      // Create analysis result with correct structure
       const analysisResult = {
         session: testSession,
         userMessage: testMessage,
@@ -138,7 +175,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         enhancedContext: {}
       };
 
-      // Generate AI response (this triggers entity extraction) - test log file for tests
+      // Generate AI response (this triggers entity extraction)
       const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
       // Verify the intent service was called
@@ -191,15 +228,15 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
 
       const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
-             // Verify the service processed the combined data
-       expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalledWith(
-         testMessage.content,
-         expect.objectContaining({
-           messageHistory: expect.any(Array),
-           session: expect.any(Object),
-           chatbotConfig: expect.any(Object)
-         })
-       );
+      // Verify the service processed the combined data
+      expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalledWith(
+        testMessage.content,
+        expect.objectContaining({
+          messageHistory: expect.any(Array),
+          session: expect.any(Object),
+          chatbotConfig: expect.any(Object)
+        })
+      );
     });
   });
 
@@ -237,10 +274,10 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
       // Verify the service processed sentiment data
       expect(mockIntentService.processChatbotInteractionComplete).toHaveBeenCalled();
       
-             const callArgs = mockIntentService.processChatbotInteractionComplete.mock.calls[0];
-       expect(callArgs[0]).toBe(testMessage.content);
-       expect(callArgs[1]).toHaveProperty('session');
-       expect(callArgs[1].session.id).toBe(testSession.id);
+      const callArgs = mockIntentService.processChatbotInteractionComplete.mock.calls[0];
+      expect(callArgs[0]).toBe(testMessage.content);
+      expect(callArgs[1]).toHaveProperty('session');
+      expect(callArgs[1].session.id).toBe(testSession.id);
     });
 
     it('should store conversation flow entities', async () => {
@@ -275,9 +312,9 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
 
       const result = await processingService.generateAIResponse(analysisResult, 'test-log-file.log');
 
-             // Verify response data processing
-       expect(result.enhancedContext).toHaveProperty('callToAction');
-       expect(result.enhancedContext.callToAction).toBe('demo_request'); // Actual value from mock
+      // Verify response data processing
+      expect(result.enhancedContext).toHaveProperty('callToAction');
+      expect(result.enhancedContext.callToAction).toBe('demo_request'); // Actual value from mock
     });
 
     it('should handle boolean entity types correctly', async () => {

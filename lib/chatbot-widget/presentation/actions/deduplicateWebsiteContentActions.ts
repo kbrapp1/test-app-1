@@ -13,7 +13,7 @@
 'use server';
 
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 /**
  * Preview website content deduplication
@@ -42,8 +42,6 @@ export async function previewWebsiteContentDeduplication(
   };
 }> {
   try {
-    console.log(`🔍 Preview deduplication request for config: ${chatbotConfigId}`);
-    
     if (!organizationId) {
       throw new BusinessRuleViolationError(
         'Organization ID is required for deduplication preview',
@@ -61,11 +59,6 @@ export async function previewWebsiteContentDeduplication(
     const deduplicateUseCase = ChatbotWidgetCompositionRoot.getDeduplicateWebsiteContentUseCase();
     
     const previewResult = await deduplicateUseCase.preview(organizationId, chatbotConfigId);
-    
-    console.log(`✅ Deduplication preview completed:`, {
-      totalItems: previewResult.totalItems,
-      duplicateGroups: previewResult.duplicateGroups.length
-    });
     
     return {
       success: true,
@@ -123,8 +116,6 @@ export async function executeWebsiteContentDeduplication(
   };
 }> {
   try {
-    console.log(`🧹 Execute deduplication request for config: ${chatbotConfigId}`);
-    
     if (!organizationId) {
       throw new BusinessRuleViolationError(
         'Organization ID is required for deduplication execution',
@@ -142,13 +133,6 @@ export async function executeWebsiteContentDeduplication(
     const deduplicateUseCase = ChatbotWidgetCompositionRoot.getDeduplicateWebsiteContentUseCase();
     
     const deduplicationResult = await deduplicateUseCase.execute(organizationId, chatbotConfigId);
-    
-    console.log(`✅ Deduplication execution completed:`, {
-      totalAnalyzed: deduplicationResult.totalItemsAnalyzed,
-      duplicatesRemoved: deduplicationResult.duplicatesRemoved,
-      uniqueItemsKept: deduplicationResult.uniqueItemsKept,
-      errorCount: deduplicationResult.errors.length
-    });
     
     return {
       success: true,
@@ -200,8 +184,6 @@ export async function normalizeUrl(url: string): Promise<{
   };
 }> {
   try {
-    console.log(`🔧 Normalize URL request: ${url}`);
-    
     if (!url) {
       throw new BusinessRuleViolationError(
         'URL is required for normalization',
@@ -213,12 +195,6 @@ export async function normalizeUrl(url: string): Promise<{
     
     const normalizedUrl = urlNormalizationService.normalizeUrl(url);
     const wasChanged = url !== normalizedUrl;
-    
-    console.log(`✅ URL normalization completed:`, {
-      originalUrl: url,
-      normalizedUrl,
-      wasChanged
-    });
     
     return {
       success: true,

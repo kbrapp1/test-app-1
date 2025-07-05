@@ -11,7 +11,7 @@
 import { OpenAICompositionRoot } from '../../../openai/infrastructure/composition/OpenAICompositionRoot';
 import { OpenAIApplicationService } from '../../../openai/application/services/OpenAIApplicationService';
 import { logger } from '../../../logging';
-import { BusinessRuleViolationError } from '../../../errors/base';
+import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 const SERVICE_NAME = 'EmbeddingBatchApplicationService';
 

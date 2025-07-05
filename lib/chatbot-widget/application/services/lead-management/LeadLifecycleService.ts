@@ -13,7 +13,7 @@
 import { Lead } from '../../../domain/entities/Lead';
 import { LeadLifecycleManager, FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
-import { BusinessRuleViolationError } from '../../../domain/errors/BusinessRuleViolationError';
+import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 
 export class LeadLifecycleService {
   constructor(
