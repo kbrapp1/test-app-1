@@ -116,7 +116,7 @@ export class ContentDeduplicationService {
     // Step 2: Within each URL group, check for content duplicates across groups
     const contentGroups = new Map<string, DeduplicatableContent[]>();
     
-    for (const [normalizedUrl, urlGroupItems] of urlGroups) {
+    for (const [normalizedUrl, urlGroupItems] of Array.from(urlGroups)) {
       // For URL groups with multiple items, pick the canonical URL
       if (urlGroupItems.length > 1) {
         const canonicalUrl = this.urlNormalizationService.getCanonicalUrl(
@@ -146,7 +146,7 @@ export class ContentDeduplicationService {
     // Step 3: Create deduplication results
     const results: DeduplicationResult[] = [];
     
-    for (const [contentHash, items] of contentGroups) {
+    for (const [contentHash, items] of Array.from(contentGroups)) {
       if (items.length > 1) {
         // Multiple items with same content - need deduplication
         const canonicalUrl = this.urlNormalizationService.getCanonicalUrl(

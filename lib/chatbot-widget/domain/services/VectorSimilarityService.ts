@@ -59,7 +59,7 @@ export class VectorSimilarityService {
     const debugInfo: SimilarityDebugInfo[] = [];
 
     // Perform cosine similarity search in memory with access tracking
-    for (const [key, cachedVector] of vectorCache.entries()) {
+    for (const [key, cachedVector] of Array.from(vectorCache.entries())) {
       // Update access tracking for LRU
       VectorMemoryManagementService.updateVectorAccess(cachedVector, now);
 

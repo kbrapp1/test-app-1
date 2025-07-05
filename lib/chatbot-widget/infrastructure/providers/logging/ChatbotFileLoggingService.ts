@@ -138,7 +138,7 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     const timestamp = new Date(entry.timestamp).toISOString();
     
     // Check if message already has emojis (preserve existing emojis)
-    const hasExistingEmoji = /[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(entry.message);
+    const hasExistingEmoji = /[\uD83C-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u26FF]|[\u2700-\u27BF]/.test(entry.message);
     
     let formattedMessage = entry.message;
     

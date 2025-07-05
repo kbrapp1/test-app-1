@@ -8,6 +8,7 @@
  * - Keep tests focused and simple
  */
 
+import { describe, it, expect } from 'vitest';
 import { SessionContext } from '../domain/value-objects/session-management/ChatSessionTypes';
 
 describe('Phase 1 Context Management Optimization Validation', () => {
