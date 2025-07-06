@@ -1,0 +1,352 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>MicroStrategy Library</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="msapplication-tap-highlight" content="no" />
+        <link rel="shortcut icon" href="/style/mstr/images/favicon.ico?v=1701983211268" type="image/x-icon" />
+
+        
+            <link rel="stylesheet" type="text/css" href="/DossierReact/dist/assets/styles/default-theme/dossier-common.f74546a98ebb70820b6d.css">
+            <link rel="stylesheet" type="text/css" href="/DossierReact/dist/assets/styles/default-theme/dossier-auth.9666ae1ee2999045767f.css">
+        
+
+        
+        
+        <script nonce="Tjt-xFhYef5SovgOA9dyUg==">
+            window.dossierConfig = {
+                locale: 'en',
+                displayLocale: 'en',
+                features: {"auth":{"default":{"autoLogin":true},"oidc":{"autoLogin":true}}}
+            };
+            window.loadingPageConfig = {
+                previousLoginMode: -10,
+                error: false,
+                loginError: {
+                    iServerErrorCode: 0,
+                    errorCode: '0',
+                    statusCode: 0,
+                },
+                uName: '',
+                isChanged: false,
+                contextPath: "",
+                redirectURL: 'https:\/\/microstrategy.thejoint.com\/favicon.ico',
+                applicationId: 'C2B2023642F6753A2EF159A75E0CFF29',
+                isIServerConnected: true
+
+            };
+        </script>
+        
+        <script nonce="Tjt-xFhYef5SovgOA9dyUg==" src="/DossierReact/dist/messages/en.js"></script>
+
+        
+        <script nonce="Tjt-xFhYef5SovgOA9dyUg==" src="/javascript/customization.js?v=1701983211268"></script>
+    </head>
+    <body class="mstrd-theme-default">
+      <div class="mstrd-SmartBanner" aria-label="Open in app smart banner" style="display:none;">
+        <div class="mstrd-SmartBanner-close" role="button" aria-label="Close Banner" tabindex="0">✕</div>
+        
+        <div class="mstrd-SmartBanner-content" aria-label="Click or tap to download the MicroStrategy Library app">
+          <div class="mstrd-SmartBanner-appIcon" aria-label="MicroStrategy Library app icon"></div>
+          <div class="mstrd-SmartBanner-title" style="display:none;">MicroStrategy Library</div>
+          <div class="mstrd-SmartBanner-desc">MicroStrategy Inc.</div>
+        </div>
+        <div class="mstrd-SmartBanner-links">
+          <a class="mstrd-SmartBanner-link" rel="noreferrer" href="https://itunes.apple.com/us/app/microstrategy-dossier-for/id1333261570?mt=8"
+               aria-label="Click or tap to download the MicroStrategy Library app">
+            <div class="mstrd-SmartBanner-openLink">Download</div>
+          </a>
+          <div class="mstrd-SmartBanner-openLink" role="button" tabindex="0">Open</div>
+        </div>
+      </div>
+
+        <div class="AppContainer">
+        <div tabindex="-1"> </div>
+        <div class="LoginViewContainer">
+            <div class="CredentialsLoginContainer"
+                
+            >
+                <div class="credsLoginView" style="display: none;">
+                    <div class="iServerErrContainer" style="display:none;">
+                        <div class="icon-er_server"></div>
+                        <div class="iServerErr_title">Configuration Error</div>
+                        <div class="iServerErr_msg">
+                                The Intelligence Server is not connected. To connect, go to Library Admin page.
+                        </div>
+                        <div class="iServerErr_choice">
+                            <form action="/admin" method="post" autocomplete="off">
+                            <input class="mstrd-Button mstrd-Button--primary mstrd-Button--lg admin-page" type="submit" value="Library Admin page" tabindex="0"/>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="credsLogin">
+                        
+                        <div class="credsLoginContainer">
+                            <header>
+                                <div class="logo-container"  aria-hidden="true">
+
+                                    
+                                        <div class="credsBadge">
+                                            <div class="icon-lib-login"> </div>
+                                        </div>
+                                    
+
+                                </div>
+                                <div class="title" role="heading" aria-level="1"
+                                
+                                >MicroStrategy Library</div>
+                            </header>
+                            
+                            <div class="mstr-CredsLogin-form-section one-mode" role="main">
+                                <h2 id="changePwdHeader" class="changePwdHeader" style="display: none">Set a new password</h2>
+
+                                <form id="loginForm" action="/auth/login" method="post" autocomplete="off">
+                                    <input type="hidden" name="applicationId" value="C2B2023642F6753A2EF159A75E0CFF29"/>
+                                    <div class="mstr-CredsLogin-auth-mode">
+                                        <fieldset id="loginModeRadio">
+                                            <legend>Select an authentication mode</legend>
+                                            <div id="login-row-modes" class="login-modes-row" role='tablist'>
+                                                <input type="radio" value="1" name="loginMode" id="Standard" checked="checked">
+                                                <div class="mode-label" id="StandardModeLabel" style="display: none" tabindex="0" role="tab" aria-selected="true" aria-posinset="1" aria-setsize="2">Standard</div>
+                                                <input type="radio" value="16" name="loginMode" id ="LDAP">
+                                                <div class="mode-label" id="LDAPModeLabel" style="display: none" tabindex="0" role="tab" aria-selected="false" aria-posinset="2" aria-setsize="2">LDAP</div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <section class="inputContainer">
+                                        <span id="placeholderUsername" class="placeholder">
+                                            <span class="username-span" id="userNameText">User Name</span>
+                                        </span>
+                                        <input type="text"  id="username" name="username" class="form-control" tabindex="0" aria-labelledby="userNameText" required>
+                                    </section>
+                                    <section class="inputContainer">
+                                        <span id="placeholderPassword" class="placeholder">
+                                            <span class="password-span" id="passwordText">Password</span>
+                                        </span>
+                                        <input type="password"  id="password" name="password" class="form-control" tabindex="0" aria-labelledby="passwordText">
+                                    </section>
+				     <!-- CUSTOMIZATION -->
+                                    <div class="forgot-password-link" style="margin-top: -50px; margin-bottom: 50px; text-align: left;">
+                                        <a href="/mstrsdk/forgotpassword.html">Forgot Password?</a>
+                                    </div>
+                                    <!-- CUSTOMIZATION -->
+                                    <input id="loginButton" class="login-button" type="submit" value="Log in" tabindex="0"/>
+                                    <input type="hidden" name="forwardOnError" value="true">
+                                </form>
+
+                                <div id="iconOnlyMessages" style="display: none"></div>
+                                <form id="miscLoginForm" action="/auth/login" method="post" autocomplete="off">
+                                    <input type="hidden" name="applicationId" value="C2B2023642F6753A2EF159A75E0CFF29"/>
+                                    <div class="extra-modes-label"><span class="or-span" id="orText">Or</span></div>
+                                    <div id="icons-row-container" class="icon-row-container">
+                                        <input type="text" name="username" style="display: none"/>
+                                        <input type="password" name="password" style="display: none"/>
+
+                                        <div class="icon-container trusted" id="TrustedModeDiv" style="display: none" tabindex="0" aria-labelledby="trustedText" role="button">
+                                            <div class="login-icons icon-trusted" aria-hidden="true"></div>
+                                            <div class="icon-name trusted-name" id="trustedText">Trusted</div>
+                                        </div>
+                                        <input type="radio" value="64" name="loginMode" style="display: none"/>
+                                        <div class="icon-container saml" id="SAMLModeDiv" style="display: none" tabindex="0" aria-labelledby="samlText" role="button">
+                                            <div class="login-icons icon-saml" aria-hidden="true"></div>
+                                            <div class="icon-name saml-name" id="samlText">Log in with Identity</div>
+                                        </div>
+                                        <input type="radio" value="1048576" name="loginMode" style="display: none"/>
+                                        <div class="icon-container oidc" id="OIDCModeDiv" style="display: none" tabindex="0" aria-labelledby="oidcText" role="button">
+                                            <div class="login-icons icon-saml" aria-hidden="true"></div>
+                                            <div class="icon-name oidc-name" id="oidcText">Log in with OIDC</div>
+                                        </div>
+                                        <input type="radio" value="4194304" name="loginMode" style="display: none"/>
+                                        <div class="icon-container integrated" id="IntegratedModeDiv" style="display: none" tabindex="0" aria-labelledby="integratedText" role="button">
+                                            <div class="login-icons icon-integrated" aria-hidden="true"></div>
+                                            <div class="icon-name integrated-name" id="integratedText">Integrated</div>
+                                        </div>
+                                        <input type="radio" value="128" name="loginMode" style="display: none"/>
+                                        <div class="icon-container guest" id="GuestModeDiv" style="display: none" tabindex="0" aria-labelledby="guestText" role="button">
+                                            <div class="login-icons icon-guest" aria-hidden="true"></div>
+                                            <div class="icon-name guest-name" id="guestText">Guest</div>
+                                        </div>
+                                        <input type="radio" value="8" name="loginMode" style="display: none"/>
+                                    </div>
+                                </form>
+                                <form id="changePwdForm" action="/auth/login" method="post"  style="display: none" autocomplete="off">
+                                    <input type="hidden" name="applicationId" value="C2B2023642F6753A2EF159A75E0CFF29"/>
+                                        <section class="inputContainer">
+                                            <span id="placeholderOldPassword" class="placeholder" aria-hidden="true">
+                                                <span class="oldPassword-span" id="oldPasswordText">Old Password</span>
+                                            </span>
+                                            <input type="password"  id="oldPassword" name="password" aria-labelledby="oldPasswordText" class="form-control"  autocomplete="current-password">
+                                        </section>
+
+                                        <section class="inputContainer">
+                                            <span id="placeholderNewPassword" class="placeholder" aria-hidden="true">
+                                                <span class="newPassword-span" id="newPasswordText">New Password</span>
+                                            </span>
+                                            <input type="password"  id="newPassword" name="newPassword" aria-labelledby="newPasswordText" class="form-control" autocomplete="new-password">
+                                        </section>
+
+                                    <section class="inputContainer">
+                                        <span id="placeholderConfirmNewPassword" class="placeholder" aria-hidden="true">
+                                            <span class="confirmNewPassword-span" id="confirmNewPasswordText">Confirm New Password</span>
+                                        </span>
+                                        <input type="password"  id="confirmNewPassword" name="confirmNewPassword" aria-labelledby="confirmNewPasswordText" class="form-control">
+                                    </section>
+
+                                    <input type="hidden" value="" name="username">
+                                    <input type="hidden" value="1" name="loginMode">
+                                    <input type="hidden" value=true name="changePassword">
+                                    <input id="changePwdButton" class="login-button" type="submit" value="Submit" style = "display: none; margin-top:24px" />
+                                    <input type="hidden" name="forwardOnError" value="true">
+                                </form>
+                                <span role="alert" id="changePwdFooter" class="changePwdFooter" aria-label="" style="display: none"></span>
+                            </div>
+                            <div class="mstr-oidc-loader">
+                                <p class="mstr-oidc-redirect-msg">You are being redirected to your authentication provider.</p>
+                                <img class="mstr-loader-image" src="/static/oidc/images/loading_Platform_blue3.gif" alt="loading"/>
+                                <div class="mstr-loader-btn-container">
+                                    <div class="mstr-loader-btn cancel">
+                                        Cancel
+                                    </div>
+                                    <div class="mstr-loader-btn okay">
+                                        Okay
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id ="MessageBoxContainer" class="mstrd-MessageBox" role="alertdialog" aria-modal="true" aria-labelledby="ariaErrorTitle" aria-describedby="ariaErrorText" style = "display: none">
+            <div class="mstrd-MessageBox-main mstrd-MessageBox-main--modal">
+                <div class="mstrd-MessageBox-content">
+                    <img class="mstrd-MessageBox-errorImg" alt="Error" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="/>
+                </div>
+                <div class="mstrd-MessageBox-text" role="document">
+                    <div class="mstrd-MessageBox-title">
+                        <span class="mstrd-MessageBox-titleSpan" id="ariaErrorTitle" role="heading" aria-level="2">title</span>
+                    </div>
+                    <div class="mstrd-MessageBox-msg">
+                        <span class="mstrd-MessageBox-descSpan" id="ariaErrorText">desc</span>
+                    </div>
+                </div>
+                <div class="mstrd-MessageBox-actionBar">
+                    <div class="mstrd-MessageBox-actionContainer">
+                        <div id="ActionLinkContainer" class="mstrd-ActionLinkContainer highlight" tabindex="0" role="button" aria-describedby="ariaErrorTitle ariaErrorText">
+                            <span class="ok-span">OK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="overlay" class="mstrd-MessageBox-overlay"></div>
+        </div>
+
+        
+            
+            <script nonce="Tjt-xFhYef5SovgOA9dyUg==" src="/DossierReact/dist/assets/default-theme/dossier-common.f74546a98ebb70820b6d.js"></script>
+            <script nonce="Tjt-xFhYef5SovgOA9dyUg==" src="/DossierReact/dist/assets/default-theme/teams-auth-detection.ef1c6e4c2b8693ad1e18.js"></script>
+            <script nonce="Tjt-xFhYef5SovgOA9dyUg==" src="/DossierReact/dist/assets/default-theme/dossier-auth.9666ae1ee2999045767f.js"></script>
+        
+
+        
+
+
+
+
+<script nonce="Tjt-xFhYef5SovgOA9dyUg==">
+    // Preload Dossier App resources to improve loading performance
+    function mstrPreloadResources() {
+
+        // This set of resources include Dossier APP and Mojo related JS resources;
+        //  May consider add CSS resources.
+        var res = [
+            //Mojo- VI App
+            "/DossierReact/dist/assets/default-theme/dossier-main.bf145f5171700cdfe2f6.js",
+            "/DossierReact/dist/assets/styles/default-theme/dossier-main.bf145f5171700cdfe2f6.css",
+            "/javascript/bundles/mojo-dossier.js?v=1701983211268",
+            "/javascript/bundles/mstr-vi-react-main.js?v=1701983211268",
+            // "/javascript/bundles/mojo-map.js?v=1701983211268",
+            // "/javascript/bundles/vi-gm.js?v=1701983211268",
+            // "/javascript/bundles/vi-heatmap.js?v=1701983211268",
+            // "/javascript/bundles/vi-network.js?v=1701983211268",
+            // "/javascript/bundles/vi-ngm.js?v=1701983211268",
+            // '/VisFramework/ngm/dist/bundle/ngm.js?v=1701983211268',
+
+            //JUIL- Prompt Editor
+            // "/javascript/microstrategy.js?v=1701983211268",
+            // "/javascript/mstr/core.js?v=1701983211268",
+            // "/javascript/mstr/common.js?v=1701983211268",
+            // "/javascript/mstr/trees.js?v=1701983211268",
+            // "/javascript/mstr/expressions.js?v=1701983211268",
+            // "/javascript/mstr/prompts.js?v=1701983211268",
+
+            // CSS
+            "/javascript/mojo/css/library-vi-consumption.css?v=1701983211268",
+            "/javascript/mojo/css/library-vi-authoring.css?v=1701983211268",
+            "/javascript/mojo/css/html5-vi-editor-all.css?v=1701983211268",
+            "/javascript/mojo/css/core-ws.css?v=1701983211268",
+            "/javascript/react/css/mstr-vi-react-main.css?v=1701983211268",
+            "/javascript/react/css/dossier-format-react.css?v=1701983211268",
+            "/javascript/mojo/css/mojo-report-editor.css?v=1701983211268"
+        ];
+        for (var i =0; i < res.length; i ++) { 
+            var link = document.createElement('link');
+            link.rel = 'prefetch';
+            // link.as = 'script';  // Removed to support both script and css links; browser converts to correct resource type when actual resource link is created.
+            link.href = res[i];
+
+            document.head.appendChild(link);
+        }
+    }
+
+    // Preload only when DOMContentLoaded so it will not impact host page loading / rendering performance 
+    document.addEventListener('DOMContentLoaded', mstrPreloadResources);
+</script>
+
+
+        </div>
+    </body>
+</html>

@@ -1,0 +1,82 @@
+<!-- SiteMinder Encoding=ISO-8859-1; -->
+
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+	<title>SiteMinder Password Services</title>
+</head>
+
+<body BGCOLOR="#ffffff" TEXT="#000000" onLoad = "resetCredFields(); autoLogin();">
+
+<form NAME="AutoLogin" METHOD="POST">
+	<INPUT TYPE=HIDDEN NAME="SMENC" VALUE="ISO-8859-1">
+	<INPUT type=HIDDEN name="SMLOCALE" value="US-EN">
+	<input type=hidden name="USER" size="30">
+	<input type=HIDDEN name="PASSWORD" size="30">
+	<input type=hidden name=target value="https://pa-selfservice-prod-auth.travelers.com/favicon.ico">
+	<input type=hidden name=smquerydata value="">
+	<input type=hidden name=smauthreason value="0">
+	<input type=hidden name=smagentname value="Yb8ZgtGVeKEPBX9GQIgJnZ6hmgmceq1UFatglh8zLZ6Z1GKCEOxuyEzSdQ7gW+da+tI2TYzBEWVNnk0hcX6s61ufRmkedEqD">
+	<input type=hidden name=postpreservationdata value="">
+</form>
+
+<form NAME="Login" METHOD="POST">
+
+	<INPUT TYPE=HIDDEN NAME="SMENC" VALUE="ISO-8859-1">
+	<INPUT type=HIDDEN name="SMLOCALE" value="US-EN">
+
+	<input type=hidden name="USER" size="30">
+	<input type=hidden name="PASSWORD" size="30">
+
+	<input type=hidden name=target value="https://pa-selfservice-prod-auth.travelers.com/favicon.ico">
+	<input type=hidden name=smquerydata value="">
+	<input type=hidden name=smauthreason value="0">
+	<input type=hidden name=smagentname value="Yb8ZgtGVeKEPBX9GQIgJnZ6hmgmceq1UFatglh8zLZ6Z1GKCEOxuyEzSdQ7gW+da+tI2TYzBEWVNnk0hcX6s61ufRmkedEqD">
+	<input type=hidden name=postpreservationdata value="">
+
+	<input type=hidden value="Login" onClick="submitForm();">
+
+</form>
+
+<SCRIPT LANGUAGE="JavaScript">
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
+}
+
+function resetCredFields()
+{
+	document.AutoLogin.PASSWORD.value = "";
+	document.Login.PASSWORD.value = "";
+}
+
+function submitForm()
+{
+	document.Login.submit();
+}
+
+function autoLogin() {
+	// TODO: Make cookie name configurable through siteminder properties
+	var travAuth = readCookie("TravAuthE");
+	if(travAuth == null || travAuth == "") {
+		// No TravAuth Cookie
+		window.location = 'https://signin.travelers.com?ru=https%3A%2F%2Fpa-selfservice-prod-auth.travelers.com%2Ffavicon.ico';
+		return;
+	}
+
+	// TravAuth Cookie
+	document.AutoLogin.USER.value = "Cookie:TravAuth";
+	document.AutoLogin.PASSWORD.value = travAuth;
+	document.AutoLogin.submit();
+}
+</SCRIPT>
+
+</body>
+</html>

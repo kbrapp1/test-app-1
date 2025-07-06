@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" /><link rel="stylesheet" media="screen, print" type="text/css" href="/css/styles/import.css" /><link rel="stylesheet" media="screen" type="text/css" href="css/responsive.css" /><link rel="stylesheet" media="screen, print" type="text/css" href="/css/alerts_.css" /><link rel="stylesheet" media="print" type="text/css" href="/css/print.css" /><title>
+	bswift - Error Page
+</title>
+    <script src="../jsinc/jquery.min.js"></script>
+</head>
+<body class="fixed-width alert-page">
+ <form name="form1" method="post" action="./favicon.ico?errorCode=404&amp;404%3bhttps%3a%2f%2fsecure.bswift.com%3a443%2ffavicon.ico" id="form1" target="_new">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwULLTE3Njc4ODc0MDkPZBYGAgUPFgIeBFRleHQFAzQwNGQCBw8WAh8ABRxGaWxlIG9yIGRpcmVjdG9yeSBub3QgZm91bmQuZAIJDxYCHwAFblRoZSByZXNvdXJjZSB5b3UgYXJlIGxvb2tpbmcgZm9yIG1pZ2h0IGhhdmUgYmVlbiByZW1vdmVkLCBoYWQgaXRzIG5hbWUgY2hhbmdlZCwgb3IgaXMgdGVtcG9yYXJpbHkgdW5hdmFpbGFibGUuZGRG6CRFgwpwu1aRaZ/f2QSXf7ODjQ==" />
+</div>
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="DD8DAFA9" />
+</div></form>
+    <div id="container">
+        <div id="wrapper">
+            <div id="content">
+                <div id="alert-page-left" class="error"></div> 
+                <div id="alert-page-right">
+                    <h1 id="errorNumber">404</h1>
+                    <p id="errorHead">File or directory not found.</p>
+                    <p id="errorBody">The resource you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="https://scalar.com/favicon.svg" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://scalar.com/favicon.png" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src *; script-src 'self' https://cdn.usefathom.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://scalar.com https://www.scalar.com https://cdn.usefathom.com; media-src 'self' data: blob:; object-src 'self' blob:; frame-src 'self' blob:; font-src https://fonts.scalar.com" />
+    <title>Scalar API Client</title>
+    <script
+      src="https://cdn.usefathom.com/script.js"
+      data-spa="auto"
+      data-site="RSYAEMNM"
+      defer></script>
+    <!-- / Fathom -->
+    <script type="module" crossorigin src="/assets/index-s4Sd1eVj.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BbCP2ZUl.css">
+  </head>
+  <body>
+    <div
+      id="scalar-client"
+      class="scalar-app scalar-client"></div>
+  </body>
+</html>

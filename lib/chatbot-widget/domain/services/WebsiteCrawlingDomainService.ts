@@ -11,21 +11,12 @@
  * - Coordinate other domain services for complex operations
  */
 
-import { createHash } from 'crypto';
 import { WebsiteSource, WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
-import { 
-  InvalidUrlError, 
-  WebsiteAccessibilityError, 
-  CrawlLimitExceededError,
-  RobotsTxtViolationError 
-} from '../errors/ChatbotWidgetDomainErrors';
-import { 
-  WebsiteCrawlingError, 
-  ContentExtractionError, 
-  UrlNormalizationError,
-  DataValidationError 
-} from '../errors/ChatbotWidgetDomainErrors';
+import { CrawlValidationService } from './CrawlValidationService';
+import { CrawlBudgetCalculatorService } from './CrawlBudgetCalculatorService';
+import { CrawlResultProcessorService } from './CrawlResultProcessorService';
+import { CrawlPolicyService } from './CrawlPolicyService';
 
 /**
  * Interface for robots.txt checking abstraction
@@ -83,44 +74,48 @@ export interface CrawlResult {
  * - Use domain-specific error handling
  */
 export class WebsiteCrawlingDomainService {
-  private readonly userAgent = 'Mozilla/5.0 (compatible; ChatbotCrawler/1.0)';
+  private readonly crawlValidation: CrawlValidationService;
+  private readonly budgetCalculator: CrawlBudgetCalculatorService;
+  private readonly resultProcessor: CrawlResultProcessorService;
+  private readonly crawlPolicy: CrawlPolicyService;
+
+  constructor() {
+    this.crawlValidation = new CrawlValidationService();
+    this.budgetCalculator = new CrawlBudgetCalculatorService();
+    this.resultProcessor = new CrawlResultProcessorService();
+    this.crawlPolicy = new CrawlPolicyService();
+  }
 
   /**
    * Validate crawl request according to business rules
    * 
    * AI INSTRUCTIONS:
-   * - Apply all business validation rules
-   * - Check URL accessibility and format
-   * - Validate crawl settings constraints
-   * - Ensure robots.txt compliance if required
+   * - Delegate validation to specialized service
+   * - Coordinate comprehensive validation workflow
+   * - Handle validation orchestration and error propagation
+   * - Maintain clean separation between coordination and implementation
    */
   async validateCrawlRequest(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
     robotsChecker?: IRobotsTxtChecker
   ): Promise<void> {
-    // Domain rule: Validate URL format and protocol
-    this.validateUrlFormat(source.url);
-    
-    // Domain rule: Validate crawl settings
-    this.validateCrawlSettings(settings);
-    
-    // Domain rule: Check URL accessibility
-    await this.validateUrlAccessibility(source.url);
-    
-    // Domain rule: Check robots.txt compliance if required
-    if (settings.respectRobotsTxt && robotsChecker) {
-      await this.validateRobotsTxtCompliance(source.url, robotsChecker);
-    }
+    // Delegate comprehensive validation to specialized service
+    await this.crawlValidation.validateComprehensively(
+      source,
+      settings,
+      robotsChecker
+    );
   }
 
   /**
    * Calculate crawl budget based on settings and business rules
    * 
    * AI INSTRUCTIONS:
-   * - Apply business rules for crawl limits
-   * - Consider depth and page count constraints
-   * - Provide guidance for efficient crawling
+   * - Delegate budget calculation to specialized service
+   * - Coordinate budget planning workflow
+   * - Handle budget constraints and optimization
+   * - Provide clean interface for budget calculation
    */
   calculateCrawlBudget(settings: WebsiteCrawlSettings): {
     maxPages: number;
@@ -128,52 +123,22 @@ export class WebsiteCrawlingDomainService {
     estimatedTime: number;
     recommendedConcurrency: number;
   } {
-    // Domain rule: Enforce maximum page limits
-    const maxPages = Math.min(settings.maxPages, this.getMaxAllowedPages());
-    
-    // Domain rule: Enforce maximum depth limits
-    const maxDepth = Math.min(settings.maxDepth, this.getMaxAllowedDepth());
-    
-    // Domain rule: Estimate crawl time based on page count
-    const estimatedTime = this.estimateCrawlTime(maxPages, maxDepth);
-    
-    // Domain rule: Recommend conservative concurrency
-    const recommendedConcurrency = this.calculateOptimalConcurrency(maxPages);
-
-    return {
-      maxPages,
-      maxDepth,
-      estimatedTime,
-      recommendedConcurrency
-    };
+    // Delegate budget calculation to specialized service
+    return this.budgetCalculator.calculateOptimalBudget(settings);
   }
 
   /**
    * Process crawl result and apply business validation
    * 
    * AI INSTRUCTIONS:
-   * - Validate crawl results meet business requirements
-   * - Apply content quality rules
-   * - Generate business metrics and insights
+   * - Delegate result processing to specialized service
+   * - Coordinate result transformation workflow
+   * - Handle quality filtering and knowledge item generation
+   * - Provide clean interface for result processing
    */
   processCrawlResult(crawledPages: CrawledPageData[]): CrawlResult {
-    // Domain rule: Filter out low-quality content
-    const qualityFilteredPages = this.filterQualityContent(crawledPages);
-    
-    // Domain rule: Calculate business metrics
-    const metrics = this.calculateCrawlMetrics(crawledPages);
-    
-    // Domain rule: Generate knowledge items from quality content
-    const knowledgeItems = this.generateKnowledgeItems(qualityFilteredPages);
-
-    return {
-      knowledgeItems,
-      crawledPages: qualityFilteredPages,
-      totalPagesAttempted: metrics.totalPages,
-      successfulPages: metrics.successfulPages,
-      failedPages: metrics.failedPages,
-      skippedPages: metrics.skippedPages
-    };
+    // Delegate result processing to specialized service
+    return this.resultProcessor.processComprehensively(crawledPages);
   }
 
   /**
@@ -196,12 +161,12 @@ export class WebsiteCrawlingDomainService {
     }
     
     // Domain rule: Only crawl same-domain URLs
-    if (!this.isSameDomain(url, baseUrl)) {
+    if (!this.crawlPolicy.isSameDomain(url, baseUrl)) {
       return false;
     }
     
     // Domain rule: Skip URLs that won't provide valuable content
-    if (!this.isValueableContent(url)) {
+    if (!this.crawlPolicy.isValuableContent(url)) {
       return false;
     }
 
@@ -209,212 +174,26 @@ export class WebsiteCrawlingDomainService {
   }
 
   /**
-   * Validate URL format and protocol
+   * Get the crawl validation service for advanced validation scenarios
+   * 
+   * AI INSTRUCTIONS:
+   * - Provide access to specialized validation service
+   * - Support advanced validation workflows
+   * - Enable external orchestration of validation logic
    */
-  private validateUrlFormat(url: string): void {
-    try {
-      const urlObj = new URL(url);
-      
-      if (!['http:', 'https:'].includes(urlObj.protocol)) {
-        throw new InvalidUrlError(
-          url,
-          `Only HTTP and HTTPS protocols are supported`,
-          { protocol: urlObj.protocol }
-        );
-      }
-      
-      if (!urlObj.hostname) {
-        throw new InvalidUrlError(
-          url,
-          `URL must have a valid hostname`
-        );
-      }
-      
-    } catch (error) {
-      if (error instanceof InvalidUrlError) {
-        throw error;
-      }
-      
-      // Track URL normalization error
-      throw new UrlNormalizationError(url, {
-        originalError: error instanceof Error ? error.message : String(error),
-        operation: 'url_format_validation'
-      });
-    }
+  getCrawlValidationService(): CrawlValidationService {
+    return this.crawlValidation;
   }
 
   /**
-   * Validate crawl settings according to business rules
+   * Get the crawl policy service for advanced policy decisions
+   * 
+   * AI INSTRUCTIONS:
+   * - Provide access to specialized policy service
+   * - Support advanced policy evaluation workflows
+   * - Enable external orchestration of policy logic
    */
-  private validateCrawlSettings(settings: WebsiteCrawlSettings): void {
-    if (settings.maxPages <= 0) {
-      throw new DataValidationError(
-        'maxPages',
-        'must be greater than 0',
-        { maxPages: settings.maxPages }
-      );
-    }
-    
-    if (settings.maxPages > this.getMaxAllowedPages()) {
-      throw new DataValidationError(
-        'maxPages',
-        `cannot exceed ${this.getMaxAllowedPages()}`,
-        { maxPages: settings.maxPages, limit: this.getMaxAllowedPages() }
-      );
-    }
-    
-    if (settings.maxDepth <= 0 || settings.maxDepth > this.getMaxAllowedDepth()) {
-      throw new DataValidationError(
-        'maxDepth',
-        `must be between 1 and ${this.getMaxAllowedDepth()}`,
-        { maxDepth: settings.maxDepth, limit: this.getMaxAllowedDepth() }
-      );
-    }
-  }
-
-  /**
-   * Validate URL accessibility
-   */
-  private async validateUrlAccessibility(url: string): Promise<void> {
-    try {
-      const response = await fetch(url, {
-        method: 'HEAD',
-        headers: { 'User-Agent': this.userAgent },
-      });
-
-      if (!response.ok) {
-        throw new WebsiteAccessibilityError(
-          url,
-          `Website returned ${response.status} ${response.statusText}`,
-          {
-            status: response.status,
-            statusText: response.statusText,
-          }
-        );
-      }
-    } catch (fetchError) {
-      // Track website crawling error
-      throw new WebsiteCrawlingError(
-        url,
-        fetchError instanceof Error ? fetchError.message : String(fetchError),
-        {
-          operation: 'url_accessibility_check',
-          userAgent: this.userAgent
-        }
-      );
-    }
-  }
-
-  /**
-   * Validate robots.txt compliance
-   */
-  private async validateRobotsTxtCompliance(
-    url: string,
-    robotsChecker: IRobotsTxtChecker
-  ): Promise<void> {
-    try {
-      const canLoad = await robotsChecker.canLoad(url);
-      if (!canLoad) {
-        throw new RobotsTxtViolationError(
-          url,
-          'Unable to load robots.txt for compliance checking'
-        );
-      }
-      
-      const isAllowed = await robotsChecker.isAllowed(url, this.userAgent);
-      if (!isAllowed) {
-        throw new RobotsTxtViolationError(
-          url,
-          'URL is blocked by robots.txt',
-          { userAgent: this.userAgent }
-        );
-      }
-    } catch (error) {
-      if (error instanceof RobotsTxtViolationError) {
-        throw error;
-      }
-      
-      throw new RobotsTxtViolationError(
-        url,
-        'Failed to check robots.txt compliance',
-        { 
-          error: error instanceof Error ? error.message : String(error) 
-        }
-      );
-    }
-  }
-
-  private getMaxAllowedPages(): number {
-    return 100; // Domain rule: Maximum 100 pages per crawl
-  }
-
-  private getMaxAllowedDepth(): number {
-    return 5; // Domain rule: Maximum depth of 5 levels
-  }
-
-  private estimateCrawlTime(maxPages: number, maxDepth: number): number {
-    // Domain rule: Estimate 2-3 seconds per page on average
-    return maxPages * 2.5;
-  }
-
-  private calculateOptimalConcurrency(maxPages: number): number {
-    // Domain rule: Conservative concurrency to avoid overwhelming servers
-    return Math.min(2, Math.ceil(maxPages / 20));
-  }
-
-  private filterQualityContent(pages: CrawledPageData[]): CrawledPageData[] {
-    return pages.filter(page => 
-      page.status === 'success' && 
-      page.content.length >= 100 && // Minimum content length
-      page.title.trim().length > 0
-    );
-  }
-
-  private calculateCrawlMetrics(pages: CrawledPageData[]) {
-    return {
-      totalPages: pages.length,
-      successfulPages: pages.filter(p => p.status === 'success').length,
-      failedPages: pages.filter(p => p.status === 'failed').length,
-      skippedPages: pages.filter(p => p.status === 'skipped').length
-    };
-  }
-
-  private generateKnowledgeItems(pages: CrawledPageData[]): KnowledgeItem[] {
-    return pages.map(page => {
-      // Generate deterministic ID based on URL to prevent duplicates on recrawl
-      // Use URL hash for consistent, unique identification
-      const urlForId = page.url.replace(/[#?].*$/, ''); // Remove query params and fragments
-      const urlHash = createHash('sha256').update(urlForId).digest('hex').substring(0, 16);
-      
-      return {
-        id: `website_${urlHash}`,
-        title: `${page.title} | ${new URL(page.url).pathname}`,
-        content: page.content,
-        category: 'general' as const, // Will be categorized by ContentCategorizationService
-        tags: ['website', 'crawled'],
-        relevanceScore: 0.8,
-        source: page.url,
-        lastUpdated: page.crawledAt
-      };
-    });
-  }
-
-  private isSameDomain(url: string, baseUrl: string): boolean {
-    try {
-      return new URL(url).hostname === new URL(baseUrl).hostname;
-    } catch {
-      return false;
-    }
-  }
-
-  private isValueableContent(url: string): boolean {
-    // Reuse content URL validation logic
-    const excludedPatterns = [
-      /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|pdf|doc|zip)$/i,
-      /\/(admin|login|api|feed)/i,
-      /#/, /\?.*utm_/i
-    ];
-
-    return !excludedPatterns.some(pattern => pattern.test(url));
+  getCrawlPolicyService(): CrawlPolicyService {
+    return this.crawlPolicy;
   }
 } 
