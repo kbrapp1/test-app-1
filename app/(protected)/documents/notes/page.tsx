@@ -1,11 +1,8 @@
 import React from 'react';
-import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic';
-import { Button } from '@/components/ui/button';
 import { PlusCircleIcon } from 'lucide-react'; // Icon for Add button
 
 // Components required for the Dialog and new structure
@@ -54,19 +51,7 @@ interface Note {
 }
 
 // Props for dependency injection of organization ID fetcher
-interface NotesPageProps {
-  params?: Promise<any>;
-  searchParams?: Promise<any>;
-  getOrgId?: () => Promise<string | null>;
-}
-
-export default async function NotesPage({
-  params,
-  searchParams
-}: {
-  params?: Promise<any>;
-  searchParams?: Promise<any>;
-}) {
+export default async function NotesPage() {
   const getOrgId = getActiveOrganizationId;
   const supabase = createClient();
 

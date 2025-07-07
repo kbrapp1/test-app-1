@@ -65,7 +65,8 @@ export interface IAIConversationService {
   buildSystemPrompt(
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
-    messageHistory: ChatMessage[]
+    messageHistory: ChatMessage[],
+    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): string;
 
   /**
@@ -76,12 +77,12 @@ export interface IAIConversationService {
   /**
    * Analyze urgency of user message
    */
-  analyzeUrgency(userMessage: string): Promise<'low' | 'medium' | 'high'>;
+  analyzeUrgency(userMessage: string, organizationId?: string): Promise<'low' | 'medium' | 'high'>;
 
   /**
    * Analyze engagement level of user message
    */
-  analyzeEngagement(userMessage: string, conversationHistory?: ChatMessage[]): Promise<'low' | 'medium' | 'high'>;
+  analyzeEngagement(userMessage: string, conversationHistory?: ChatMessage[], organizationId?: string): Promise<'low' | 'medium' | 'high'>;
 
   /**
    * Extract lead information from conversation

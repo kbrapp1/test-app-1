@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
-import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -11,9 +10,7 @@ import { DebugInfoMapper } from '@/lib/chatbot-widget/application/mappers/DebugI
  * Process user chat message and return AI response
  */
 async function postHandler(
-  request: NextRequest,
-  user: User,
-  supabase: SupabaseClient
+  request: NextRequest
 ) {
   // Parse request body
   const body = await request.json();
@@ -55,10 +52,8 @@ async function postHandler(
 
   const processingTime = Date.now() - startTime;
 
-  // Get the system prompt and config for debug info (if available)
+  // Get the system prompt for debug info (if available)
   let systemPrompt = 'System prompt not available';
-  let fullPrompt = 'Full prompt not available';
-  let chatbotConfig = null;
   
   try {
     // Try to get the chatbot config to build the system prompt
@@ -70,13 +65,12 @@ async function postHandler(
       const config = await chatbotConfigRepository.findById(session.chatbotConfigId);
       
       if (config) {
-        chatbotConfig = config;
-        systemPrompt = config.generateSystemPrompt();
-        // Build a representation of what was sent to the API
-        fullPrompt = `System: ${systemPrompt}\n\nUser: ${message}`;
+        // Use the new DynamicPromptService instead of the obsolete method
+        const dynamicPromptService = ChatbotWidgetCompositionRoot.getDynamicPromptService();
+        systemPrompt = dynamicPromptService.generateSystemPrompt(config, session);
       }
     }
-  } catch (error) {
+  } catch {
     // If we can't get the system prompt, that's okay for debug purposes
   }
 

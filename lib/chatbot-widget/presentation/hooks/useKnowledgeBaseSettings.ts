@@ -1,6 +1,9 @@
 /**
- * AI INSTRUCTIONS: Hook for knowledge base form state coordination.
- * Delegate to application services. @golden-rule: presentation layer only.
+ * AI INSTRUCTIONS:
+ * - Hook for knowledge base form state coordination
+ * - Delegate to application services via server actions
+ * - Handle React state and cache invalidation
+ * - @golden-rule: presentation layer only, no business logic
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,9 +25,7 @@ export interface KnowledgeBaseFormData {
   faqs: FaqDto[];
 }
 
-/**
- * Map legacy FAQ DTO to form DTO
- */
+// Map legacy FAQ DTO to form DTO
 function mapFaqToFormDto(faq: FaqDto): FaqFormDto {
   return {
     id: faq.id,
@@ -37,9 +38,7 @@ function mapFaqToFormDto(faq: FaqDto): FaqFormDto {
   };
 }
 
-/**
- * Map form data to knowledge base DTO
- */
+// Map form data to knowledge base DTO
 function mapFormDataToDto(formData: KnowledgeBaseFormData): KnowledgeBaseFormDto {
   return {
     companyInfo: formData.companyInfo,
@@ -64,7 +63,7 @@ export function useKnowledgeBaseSettings(
     faqs: [],
   });
 
-  // Use a ref to always have access to the latest formData
+  // Ref for accessing latest formData in callbacks
   const formDataRef = useRef(formData);
   formDataRef.current = formData;
 

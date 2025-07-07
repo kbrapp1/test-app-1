@@ -1,8 +1,12 @@
 /**
  * Context Injection Application Service
  * 
- * Simple orchestration service for context injection workflow.
- * Delegates to domain services and uses helper functions.
+ * AI Instructions:
+ * - Orchestrate context selection workflow using domain services
+ * - Validate inputs and delegate to appropriate domain services
+ * - Keep this service under 250 lines - pure orchestration only
+ * - Use helper functions for complex logic
+ * - Always validate inputs before processing
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
@@ -23,7 +27,6 @@ import {
   ConversationPhase
 } from '../../domain/services/interfaces/ContextInjectionTypes';
 
-// Import helper functions
 import { buildSelectionCriteria, getUseCaseOptions, adjustTokensForUseCase } from './ContextInjectionHelpers';
 import { validateInputs, validateCriteria, validateUseCase, validateAnalysisInputs } from './ContextInjectionValidation';
 
@@ -45,11 +48,6 @@ export interface TokenBudgetRecommendation {
   adjustmentFactors: string[];
 }
 
-/**
- * Context Injection Application Service
- * 
- * Pure orchestration service - coordinates domain services for context selection.
- */
 export class ContextInjectionApplicationService {
   
   constructor(
@@ -57,7 +55,7 @@ export class ContextInjectionApplicationService {
     private readonly contextRecommendationService: ContextRecommendationDomainService
   ) {}
   
-  /** Select optimal context for conversation */
+  // Select optimal context for conversation
   async selectOptimalContext(
     session: ChatSession,
     chatbotConfig: ChatbotConfig,
@@ -136,7 +134,7 @@ export class ContextInjectionApplicationService {
     };
   }
 
-  /** Get recommended token budget */
+  // Get recommended token budget
   async getRecommendedTokenBudget(
     criteria: ContextSelectionCriteria
   ): Promise<TokenBudgetRecommendation> {
@@ -151,7 +149,7 @@ export class ContextInjectionApplicationService {
     };
   }
 
-  /** Optimize context for specific use case */
+  // Optimize context for specific use case
   async optimizeForUseCase(
     session: ChatSession,
     chatbotConfig: ChatbotConfig,
@@ -179,7 +177,7 @@ export class ContextInjectionApplicationService {
     );
   }
 
-  /** Analyze context effectiveness */
+  // Analyze context effectiveness
   async analyzeContextEffectiveness(
     result: ContextInjectionResult,
     criteria: ContextSelectionCriteria

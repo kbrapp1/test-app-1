@@ -17,6 +17,7 @@ import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
 export class OpenAIChatbotProcessingService {
   private readonly config: OpenAIIntentConfig;
   private readonly client: OpenAI;
+  private static readonly LOGGING_CACHE_KEY = 'OpenAIChatbotProcessingService_loggingServiceCache';
 
   constructor(config: OpenAIIntentConfig) {
     this.config = config;
@@ -85,7 +86,11 @@ export class OpenAIChatbotProcessingService {
     model: string;
   }> {
     // Use the main chatbot logging service instead of OpenAI's separate logging
-    const loggingService = new (await import('../../../providers/logging/ChatbotFileLoggingService')).ChatbotFileLoggingService();
+    // Cache the logging service import to avoid repeated dynamic imports
+    if (!(globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]) {
+      (globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] = await import('../../../providers/logging/ChatbotFileLoggingService');
+    }
+    const loggingService = new ((globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]).ChatbotFileLoggingService();
     
     const sessionLogger = loggingService.createSessionLogger(
       context.sessionId,

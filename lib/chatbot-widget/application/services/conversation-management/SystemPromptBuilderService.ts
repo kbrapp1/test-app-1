@@ -12,6 +12,7 @@ import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { DynamicPromptService } from '../../../domain/services/ai-configuration/DynamicPromptService';
 
 export interface EnhancedContext {
   intentResult?: {
@@ -43,7 +44,8 @@ export class SystemPromptBuilderService {
   private readonly loggingService: IChatbotLoggingService;
 
   constructor(
-    private readonly aiConversationService: IAIConversationService
+    private readonly aiConversationService: IAIConversationService,
+    private readonly dynamicPromptService: DynamicPromptService
   ) {
     // Initialize centralized logging service
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
@@ -79,7 +81,7 @@ export class SystemPromptBuilderService {
     
     // Start with base system prompt
     const basePromptStart = Date.now();
-    let systemPrompt = this.aiConversationService.buildSystemPrompt(config, session, messageHistory) || '';
+    let systemPrompt = this.aiConversationService.buildSystemPrompt(config, session, messageHistory, logger) || '';
     const basePromptDuration = Date.now() - basePromptStart;
     
     logger.logMessage(`Base system prompt generated in ${basePromptDuration}ms`);
@@ -90,7 +92,6 @@ export class SystemPromptBuilderService {
 
     // Add journey state context if available (journey is based on conversation state, not preliminary intent)
     if (enhancedContext.journeyState) {
-      logger.logRaw('');
       logger.logHeader('🗺️  JOURNEY STATE INTEGRATION:');
       const journey = enhancedContext.journeyState;
       systemPrompt += `\n\nUSER JOURNEY STAGE: ${journey.stage} (confidence: ${journey.confidence.toFixed(2)})`;
@@ -109,13 +110,11 @@ export class SystemPromptBuilderService {
         logger.logMessage(`Recommended actions: ${recommendedActions.join(', ')}`);
       }
     } else {
-      logger.logRaw('');
       logger.logMessage('🗺️  No journey state available');
     }
 
     // Add accumulated entity context if available
     if (enhancedContext.entityContextPrompt) {
-      logger.logRaw('');
       logger.logHeader('🏷️  ENTITY CONTEXT INTEGRATION:');
       const entityPromptLength = enhancedContext.entityContextPrompt.length;
       systemPrompt += `\n\n${enhancedContext.entityContextPrompt}`;
@@ -125,27 +124,20 @@ export class SystemPromptBuilderService {
       logger.logMessage(`Entity context injected: ${entityPromptLength} characters`);
       logger.logMessage('Entity-aware responses enabled');
     } else {
-      logger.logRaw('');
       logger.logMessage('🏷️  No entity context available');
     }
 
     // Add relevant knowledge context if available
     if (enhancedContext.relevantKnowledge && enhancedContext.relevantKnowledge.length > 0) {
-      logger.logRaw('');
       logger.logHeader('🧠 SEMANTIC KNOWLEDGE INTEGRATION:');
       logger.logMessage(`Retrieved knowledge items: ${enhancedContext.relevantKnowledge.length}`);
       
       const threshold = enhancedContext.knowledgeRetrievalThreshold ?? 0.15;
       logger.logMessage(`Minimum relevance score required: ${threshold} (threshold for injection)`);
       
-      systemPrompt += `\n\nRELEVANT KNOWLEDGE:`;
-      
+      // Log knowledge details for debugging
       let totalKnowledgeCharacters = 0;
       enhancedContext.relevantKnowledge.forEach((knowledge, index) => {
-        const knowledgeContent = `\n${index + 1}. ${knowledge.title} (relevance: ${knowledge.relevanceScore.toFixed(2)})`;
-        const truncatedContent = `\n   ${knowledge.content.substring(0, 200)}${knowledge.content.length > 200 ? '...' : ''}`;
-        
-        systemPrompt += knowledgeContent + truncatedContent;
         totalKnowledgeCharacters += knowledge.content.length;
         
         logger.logMessage(`${index + 1}. "${knowledge.title}"`);
@@ -155,21 +147,26 @@ export class SystemPromptBuilderService {
         logger.logMessage(`    Preview: ${knowledge.content.substring(0, 100)}...`);
       });
       
-      systemPrompt += `\n\nUse this knowledge to provide accurate, helpful responses. Reference specific information when relevant.`;
-      
       logger.logMessage('📊 KNOWLEDGE INTEGRATION SUMMARY:');
       logger.logMessage(`Total knowledge items: ${enhancedContext.relevantKnowledge.length}`);
       logger.logMessage(`Total knowledge content: ${totalKnowledgeCharacters} characters`);
       logger.logMessage(`Average relevance score: ${(enhancedContext.relevantKnowledge.reduce((sum, item) => sum + item.relevanceScore, 0) / enhancedContext.relevantKnowledge.length).toFixed(3)}`);
-      logger.logMessage('✅ Semantic knowledge successfully integrated into system prompt');
+      
+      // Use DynamicPromptService coordination to integrate knowledge with deduplication
+      logger.logMessage('🔧 Coordinating system prompt with knowledge integration...');
+      systemPrompt = this.dynamicPromptService.coordinateFinalSystemPrompt(
+        systemPrompt,
+        enhancedContext.relevantKnowledge,
+        logger
+      );
+      
+      logger.logMessage('✅ Semantic knowledge successfully integrated and coordinated');
     } else {
-      logger.logRaw('');
       logger.logMessage('🧠 KNOWLEDGE INTEGRATION: No relevant knowledge found');
       logger.logMessage('Proceeding with base system prompt only');
     }
 
     const finalPromptLength = systemPrompt.length;
-    logger.logRaw('');
     logger.logMessage('📊 FINAL SYSTEM PROMPT STATS:');
     logger.logMessage(`Total prompt length: ${finalPromptLength} characters`);
     logger.logMessage(`Estimated tokens: ~${Math.ceil(finalPromptLength / 4)}`);
@@ -177,9 +174,21 @@ export class SystemPromptBuilderService {
     logger.logMessage(`Entity context: ${enhancedContext.entityContextPrompt ? 'YES' : 'NO'}`);
     logger.logMessage(`Journey context: ${enhancedContext.journeyState ? 'YES' : 'NO'}`);
     
+    // Log the complete system prompt in human-readable format
+    logger.logRaw('📜 =====================================');
+    logger.logRaw('📜 COMPLETE SYSTEM PROMPT (HUMAN READABLE)');
+    logger.logRaw('📜 =====================================');
+    
+    // Split the prompt into readable sections and log each line
+    const promptLines = systemPrompt.split('\n');
+    promptLines.forEach((line) => {
+      // Log all lines to preserve knowledge item spacing
+      logger.logRaw(line);
+    });
+    
+    logger.logRaw('📜 ===== END OF SYSTEM PROMPT =====');
     logger.logMessage('✅ SYSTEM PROMPT BUILDING COMPLETED');
     logger.logRaw('📝 =====================================');
-    logger.logRaw('');
 
     return systemPrompt;
   }

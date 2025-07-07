@@ -1,15 +1,10 @@
 /**
- * AI Conversation Application Service
- * 
- * Coordinates AI-powered conversation capabilities following DDD principles.
- * Application services orchestrate domain objects without containing business logic.
- * Following @golden-rule.mdc: Single responsibility, coordination only, under 250 lines.
- * 
  * AI INSTRUCTIONS:
- * - REFACTORED: Removed secondary processing path to prevent duplicate messages
- * - Uses only unified processing approach for consistency
- * - Throws errors instead of creating fallback responses
- * - Keep under 250 lines following @golden-rule patterns
+ * - Orchestrate AI conversation capabilities within DDD application layer
+ * - Coordinate domain services without containing business logic
+ * - Handle AI provider responses, lead extraction, and sentiment analysis
+ * - Maintain single responsibility and stay under 250 lines
+ * - Use unified processing approach for consistency
  */
 
 import { IAIConversationService, ConversationContext, AIResponse, LeadCaptureRequest } from '../../../domain/services/interfaces/IAIConversationService';
@@ -39,10 +34,7 @@ export class AiConversationService implements IAIConversationService {
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
-  /**
-   * Generate AI response - coordinates domain services and infrastructure
-   * REFACTORED: Removed secondary processing to prevent duplicate messages
-   */
+  // Generate AI response - coordinates domain services and infrastructure
   async generateResponse(userMessage: string, context: ConversationContext): Promise<AIResponse> {
     // 1. Validate context using domain rules
     const isValidContext = await this.validateContext(context);
@@ -78,21 +70,18 @@ export class AiConversationService implements IAIConversationService {
     return this.processAIResponse(response, context.chatbotConfig.aiConfiguration);
   }
 
-  /**
-   * Build system prompt - delegates to domain service
-   */
+  // Build system prompt - delegates to domain service
   buildSystemPrompt(
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
-    messageHistory: ChatMessage[]
+    messageHistory: ChatMessage[],
+    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): string {
-    return this.dynamicPromptService.generateSystemPrompt(chatbotConfig, session);
+    return this.dynamicPromptService.generateSystemPrompt(chatbotConfig, session, messageHistory, undefined, undefined, undefined, undefined, logger);
   }
 
-  /**
-   * Analyze engagement - uses OpenAI API for accurate engagement analysis
-   */
-  async analyzeEngagement(userMessage: string, conversationHistory: ChatMessage[] = []): Promise<'low' | 'medium' | 'high'> {
+  // Analyze engagement - uses OpenAI API for accurate engagement analysis
+  async analyzeEngagement(userMessage: string, conversationHistory: ChatMessage[] = [], organizationId?: string): Promise<'low' | 'medium' | 'high'> {
     try {
       const systemPrompt = `You are an engagement analysis expert. Analyze the engagement level of user messages and conversation patterns as low, medium, or high.
 
@@ -137,26 +126,27 @@ Respond with only: low, medium, or high`;
     } catch (error) {
       console.error('Error analyzing engagement:', error);
       
-      // Track critical chatbot error to database
-      await this.errorTrackingService.trackConversationAnalysisError(
-        'engagement_analysis',
-        {
-          metadata: {
-            userMessage: userMessage.substring(0, 100), // Limit for privacy
-            conversationHistoryLength: conversationHistory.length,
-            error: error instanceof Error ? error.message : String(error)
+      // Track critical chatbot error to database (only if organizationId is available)
+      if (organizationId) {
+        await this.errorTrackingService.trackConversationAnalysisError(
+          'engagement_analysis',
+          {
+            organizationId,
+            metadata: {
+              userMessage: userMessage.substring(0, 100), // Limit for privacy
+              conversationHistoryLength: conversationHistory.length,
+              error: error instanceof Error ? error.message : String(error)
+            }
           }
-        }
-      );
+        );
+      }
       
       return 'low'; // Safe fallback
     }
   }
 
-  /**
-   * Analyze urgency - uses OpenAI API for accurate urgency analysis
-   */
-  async analyzeUrgency(userMessage: string): Promise<'low' | 'medium' | 'high'> {
+  // Analyze urgency - uses OpenAI API for accurate urgency analysis
+  async analyzeUrgency(userMessage: string, organizationId?: string): Promise<'low' | 'medium' | 'high'> {
     try {
       const systemPrompt = `You are an urgency analysis expert. Analyze the urgency level of user messages as low, medium, or high.
 
@@ -188,24 +178,25 @@ Respond with only: low, medium, or high`;
     } catch (error) {
       console.error('Error analyzing urgency:', error);
       
-      // Track critical chatbot error to database
-      await this.errorTrackingService.trackConversationAnalysisError(
-        'urgency_analysis',
-        {
-          metadata: {
-            userMessage: userMessage.substring(0, 100), // Limit for privacy
-            error: error instanceof Error ? error.message : String(error)
+      // Track critical chatbot error to database (only if organizationId is available)
+      if (organizationId) {
+        await this.errorTrackingService.trackConversationAnalysisError(
+          'urgency_analysis',
+          {
+            organizationId,
+            metadata: {
+              userMessage: userMessage.substring(0, 100), // Limit for privacy
+              error: error instanceof Error ? error.message : String(error)
+            }
           }
-        }
-      );
+        );
+      }
       
       return 'low'; // Safe fallback
     }
   }
 
-  /**
-   * Analyze sentiment - uses OpenAI API for accurate sentiment analysis
-   */
+  // Analyze sentiment - uses OpenAI API for accurate sentiment analysis
   async analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'> {
     try {
       const systemPrompt = `You are a sentiment analysis expert. Analyze the sentiment of user messages as positive, neutral, or negative.
@@ -236,9 +227,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     }
   }
 
-  /**
-   * Extract lead information - delegates to domain service
-   */
+  // Extract lead information - delegates to domain service
   async extractLeadInformation(
     messageHistory: ChatMessage[],
     context: ConversationContext
@@ -260,9 +249,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     };
   }
 
-  /**
-   * Validate context - delegates to domain rules
-   */
+  // Validate context - delegates to domain rules
   async validateContext(context: ConversationContext): Promise<boolean> {
     if (!context.chatbotConfig.isActive) return false;
     if (!context.chatbotConfig.isWithinOperatingHours()) return false;
@@ -270,9 +257,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     return true;
   }
 
-  /**
-   * Build conversation messages for AI provider
-   */
+  // Build conversation messages for AI provider
   private buildConversationMessages(
     systemPrompt: string,
     messageHistory: ChatMessage[],
@@ -293,9 +278,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     ];
   }
 
-  /**
-   * Configure provider for this specific request
-   */
+  // Configure provider for this specific request
   private async configureProviderForRequest(aiConfig: any): Promise<void> {
     if (this.openAIProvider && aiConfig) {
       (this.openAIProvider as any).config = {
@@ -307,9 +290,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     }
   }
 
-  /**
-   * Create lead capture function definition for OpenAI
-   */
+  // Create lead capture function definition for OpenAI
   private createLeadCaptureFunction(): OpenAI.Chat.Completions.ChatCompletionCreateParams.Function {
     return {
       name: 'capture_lead',
@@ -336,9 +317,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     };
   }
 
-  /**
-   * Process AI provider response into domain format
-   */
+  // Process AI provider response into domain format
   private processAIResponse(response: any, aiConfig: any): AIResponse {
     const choice = response.choices[0];
     const usage = response.usage;
@@ -379,9 +358,7 @@ Respond with only one word: "positive", "neutral", or "negative"`;
     };
   }
 
-  /**
-   * Extract sentiment from OpenAI response (when function calling includes sentiment)
-   */
+  // Extract sentiment from OpenAI response (when function calling includes sentiment)
   private extractSentimentFromResponse(response: any): 'positive' | 'neutral' | 'negative' | undefined {
     try {
       // Check if response includes function call with sentiment analysis

@@ -25,7 +25,7 @@ import { ConversationFlowService } from '../../../domain/services/conversation-m
 export interface ProcessMessageRequest {
   userMessage: string;
   sessionId: string;
-  organizationId?: string;
+  organizationId: string; // AI: Required - should never be undefined
   metadata?: any;
 }
 
@@ -168,8 +168,8 @@ export class MessageProcessingWorkflowService {
       
       const [detectedSentiment, detectedUrgency, detectedEngagement] = await Promise.all([
         this.aiConversationService.analyzeSentiment(request.userMessage),
-        this.aiConversationService.analyzeUrgency(request.userMessage),
-        this.aiConversationService.analyzeEngagement(request.userMessage, allMessages)
+        this.aiConversationService.analyzeUrgency(request.userMessage, request.organizationId),
+        this.aiConversationService.analyzeEngagement(request.userMessage, allMessages, request.organizationId)
       ]);
       
       // Update the message with the analyzed sentiment, urgency, and engagement

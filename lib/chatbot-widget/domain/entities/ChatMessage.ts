@@ -1,8 +1,12 @@
 /**
  * Chat Message Entity
  * 
- * Core domain entity representing a chat message with rich metadata
- * through composed value objects following DDD principles.
+ * AI INSTRUCTIONS:
+ * - Core domain entity representing chat message with rich metadata through composed value objects
+ * - Manages message lifecycle, AI processing metadata, cost tracking, and business analytics
+ * - Immutable entity following @golden-rule patterns with collision-resistant ID generation
+ * - Coordinates AI metadata, context metadata, processing metrics, and cost tracking value objects
+ * - Supports user/bot/system message types with specialized factory methods and business logic
  */
 
 import { MessageAIMetadata } from '../value-objects/message-processing/MessageAIMetadata';
@@ -24,10 +28,7 @@ export interface ChatMessageProps {
   costTracking: MessageCostTracking;
 }
 
-/**
- * Collision-resistant ID generator for chat messages
- * Uses crypto.randomUUID() with timestamp-based uniqueness guarantee
- */
+// Collision-resistant ID generator with timestamp-based uniqueness guarantee
 class ChatMessageIdGenerator {
   private static lastTimestamp = 0;
   private static counter = 0;
@@ -48,8 +49,6 @@ class ChatMessageIdGenerator {
     const counterHex = this.counter.toString(16).padStart(3, '0').substring(0, 3);
     
     // Replace last 3 characters before final hyphen with counter
-    // Original: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    // Modified: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx<counter>
     const parts = baseUuid.split('-');
     const lastPart = parts[4];
     parts[4] = lastPart.substring(0, 9) + counterHex;
@@ -69,10 +68,7 @@ export class ChatMessage {
     return new ChatMessage(props);
   }
 
-  /**
-   * Generate collision-resistant ID for chat messages
-   * Static method to expose the ID generator for external use
-   */
+  // Generate collision-resistant ID for chat messages
   static generateId(): string {
     return ChatMessageIdGenerator.generate();
   }

@@ -1,12 +1,11 @@
 /**
  * Knowledge Base Form DTOs
  * 
- * AI INSTRUCTIONS:
+ * AI Instructions:
  * - Data transfer objects for knowledge base form operations
  * - Clean boundaries between presentation and application layers
  * - Immutable data structures for predictable behavior
  * - Validation-ready structures for business rule enforcement
- * - Follow @golden-rule DTO patterns exactly
  */
 
 export interface KnowledgeBaseFormDto {

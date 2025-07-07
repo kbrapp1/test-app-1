@@ -1,13 +1,10 @@
 /**
- * Content Validation Hook
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Real-time content validation for knowledge base forms
- * - Coordinate with application services only, no business logic
- * - Keep under 250 lines following @golden-rule patterns
+ * AI Instructions: Real-time content validation hook
+ * - Coordinate with application services for validation
  * - Use React Query for validation caching and debouncing
  * - Return validation results with user-friendly messages
- * - Handle all content types: company info, compliance, FAQs, etc.
+ * - Handle all content types with proper error handling
+ * - Follow single responsibility principle
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

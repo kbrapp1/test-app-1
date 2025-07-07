@@ -52,7 +52,7 @@ import {
 export interface ChatbotErrorContext {
   sessionId?: string;
   userId?: string;
-  organizationId?: string;
+  organizationId: string; // AI: Required for RLS policies - should never be undefined
   conversationId?: string;
   messageId?: string;
   modelName?: string;

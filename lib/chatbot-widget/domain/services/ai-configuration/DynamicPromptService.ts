@@ -16,18 +16,13 @@ import { ContentType } from '../../value-objects/content/ContentType';
 import { PromptTemplateEngine, TemplateVariable, TemplateContext } from '../../../infrastructure/providers/templating/PromptTemplateEngine';
 
 /**
- * Dynamic Prompt Application Service - 2025 RAG-Optimized with Template Engine
- * 
  * AI INSTRUCTIONS:
  * - Orchestrate domain services and template engine for prompt generation
  * - Maintain single responsibility for prompt coordination
- * - No business logic - delegate to domain services and templates
- * - Follow @golden-rule patterns exactly
  * - Use template engine instead of hardcoded string concatenation
- * - Maintains business context even during casual conversation
- * - Implements conversation-aware context prediction
- * - Maintains 500-800 token target through RAG optimization (60% reduction)
- * - Vector search handles FAQs, product catalogs, and detailed content
+ * - Follow golden-rule patterns - no methods over 250 lines
+ * - Maintain 500-800 token target through RAG optimization
+ * - Preserve business context during casual conversation
  */
 export class DynamicPromptService {
   
@@ -44,7 +39,7 @@ export class DynamicPromptService {
   ) {}
 
 
-  // Generate system prompt with 2025 semantic intent classification using templates
+  // Generate system prompt with semantic intent classification using templates
   generateSystemPrompt(
     chatbotConfig: ChatbotConfig, 
     session: ChatSession,
@@ -52,9 +47,10 @@ export class DynamicPromptService {
     entityData?: any,
     leadScore?: number,
     qualificationStatus?: string,
-    intentData?: any
+    intentData?: any,
+    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): string {
-    // AI: Analyze conversation using extracted entities and intent (no re-processing)
+    // Analyze conversation using extracted entities and intent
     const analysis = this.conversationAnalysisService.analyzeConversationContext(
       session, 
       conversationHistory, 
@@ -63,7 +59,7 @@ export class DynamicPromptService {
       leadScore
     );
 
-    // AI: Generate prompt sections from all services
+    // Generate prompt sections from all services
     const promptSections = this.generatePromptSections(
       chatbotConfig,
       session,
@@ -72,13 +68,13 @@ export class DynamicPromptService {
       leadScore
     );
 
-    // AI: Use coordination services to optimize and deduplicate
-    const coordinatedResult = this.coordinatePromptSections(promptSections);
+    // IMPORTANT: Skip coordination here - it will happen later in SystemPromptBuilderService
+    // after semantic knowledge is integrated. This ensures all content is deduplicated together.
+    
+    // Convert sections to template variables (without coordination)
+    const templateVariables = this.convertSectionsToTemplateVariables(promptSections);
 
-    // AI: Convert coordinated sections back to template variables
-    const templateVariables = this.convertSectionsToTemplateVariables(coordinatedResult.sections);
-
-    // AI: Use template engine to generate complete system prompt
+    // Use template engine to generate complete system prompt
     const systemPromptTemplate = this.getSystemPromptTemplate();
     const templateContext = this.buildTemplateContext(templateVariables);
     
@@ -91,7 +87,7 @@ export class DynamicPromptService {
     return processedTemplate.content;
   }
 
-  // AI: Generate prompt sections from all services (new coordination approach)
+  // Generate prompt sections from all services (new coordination approach)
   private generatePromptSections(
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
@@ -101,7 +97,7 @@ export class DynamicPromptService {
   ): PromptSection[] {
     const sections: PromptSection[] = [];
 
-    // AI: Generate persona section
+    // Generate persona section
     const personaVariables = this.personaGenerationService.generateContextAwarePersona(chatbotConfig, analysis);
     const businessPersonaTemplate = this.getBusinessPersonaTemplate();
     const personaContext = this.buildTemplateContext(personaVariables);
@@ -122,7 +118,7 @@ export class DynamicPromptService {
       true
     ));
 
-    // AI: Generate knowledge base section
+    // Generate knowledge base section
     const knowledgeBaseContent = this.knowledgeBaseService.buildMinimalKnowledgeBase(chatbotConfig.knowledgeBase);
     if (knowledgeBaseContent) {
       sections.push(PromptSection.create(
@@ -137,7 +133,7 @@ export class DynamicPromptService {
       ));
     }
 
-    // AI: Generate business guidance section
+    // Generate business guidance section
     const businessGuidance = this.businessGuidanceService.generateBusinessGuidance(analysis, leadScore);
     if (businessGuidance) {
       sections.push(PromptSection.create(
@@ -152,7 +148,7 @@ export class DynamicPromptService {
       ));
     }
 
-    // AI: Generate adaptive context section
+    // Generate adaptive context section
     const adaptiveContext = this.adaptiveContextService.generateAdaptiveContext(session, analysis, chatbotConfig);
     if (adaptiveContext) {
       sections.push(PromptSection.create(
@@ -167,7 +163,7 @@ export class DynamicPromptService {
       ));
     }
 
-    // AI: Add entity context if available
+    // Add entity context if available
     if (entityData) {
       sections.push(PromptSection.create(
         'entity-context',
@@ -184,9 +180,9 @@ export class DynamicPromptService {
     return sections;
   }
 
-  // AI: Coordinate prompt sections using coordination services
-  private coordinatePromptSections(sections: PromptSection[]): CoordinatedPromptResult {
-    // AI: Group sections by service for coordination
+  // Coordinate prompt sections using coordination services
+  private coordinatePromptSections(sections: PromptSection[], logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }): CoordinatedPromptResult {
+    // Group sections by service for coordination
     const sectionsByService = new Map<ServiceIdentifier, PromptSection[]>();
     
     for (const section of sections) {
@@ -195,21 +191,83 @@ export class DynamicPromptService {
       sectionsByService.set(section.serviceId, existing);
     }
 
-    // AI: Apply prompt coordination with deduplication
+    // Apply prompt coordination with deduplication
     return this.promptCoordinationService.coordinatePromptSections(sectionsByService, {
       enableDeduplication: true,
       conflictResolutionStrategy: 'highest_priority' as any,
       maxSectionsPerService: 5,
       preserveOriginalOrder: false
-    });
+    }, logger);
   }
 
-  // AI: Convert coordinated sections back to template variables
+  // Coordinate final system prompt content (called after knowledge integration)
+  coordinateFinalSystemPrompt(
+    baseSystemPrompt: string,
+    knowledgeItems: Array<{ id: string; title: string; content: string; relevanceScore: number }>,
+    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
+  ): string {
+    // Create prompt sections from base prompt and knowledge items
+    const sections: PromptSection[] = [];
+    
+    // Add base system prompt as a section
+    sections.push(PromptSection.create(
+      'base-system-prompt',
+      ServiceIdentifier.forDynamicPrompt(),
+      'base',
+      'Base System Prompt',
+      baseSystemPrompt,
+      ContentType.CUSTOM,
+      PromptPriority.critical(),
+      true
+    ));
+
+    // Add knowledge items as sections
+    knowledgeItems.forEach((knowledge, index) => {
+      sections.push(PromptSection.create(
+        `knowledge-${index}`,
+        ServiceIdentifier.forKnowledgeBase(),
+        'knowledge',
+        knowledge.title,
+        knowledge.content,
+        ContentType.COMPANY_INFO,
+        PromptPriority.fromNumeric(Math.round(knowledge.relevanceScore * 1000)),
+        false
+      ));
+    });
+
+    // Now coordinate everything together
+    const coordinatedResult = this.coordinatePromptSections(sections, logger);
+    
+    // Reconstruct the final system prompt from coordinated sections
+    let finalPrompt = '';
+    const knowledgeSections: PromptSection[] = [];
+    
+    for (const section of coordinatedResult.sections) {
+      if (section.sectionType === 'base') {
+        finalPrompt = section.content; // Base prompt first
+      } else if (section.sectionType === 'knowledge') {
+        knowledgeSections.push(section);
+      }
+    }
+    
+    // Add all knowledge sections under a single header
+    if (knowledgeSections.length > 0) {
+      finalPrompt += '\n\nRELEVANT KNOWLEDGE:';
+      for (const section of knowledgeSections) {
+        // Only add content since it already includes the title as a header
+        finalPrompt += `\n${section.content}\n`;
+      }
+    }
+
+    return finalPrompt;
+  }
+
+  // Convert coordinated sections back to template variables
   private convertSectionsToTemplateVariables(sections: readonly PromptSection[]): TemplateVariable[] {
     const variables: TemplateVariable[] = [];
 
     for (const section of sections) {
-      // AI: Map section types to template variable names
+      // Map section types to template variable names
       const variableName = this.mapSectionTypeToVariableName(section.sectionType);
       
       variables.push({
@@ -222,7 +280,7 @@ export class DynamicPromptService {
     return variables;
   }
 
-  // AI: Map section types to template variable names for backward compatibility
+  // Map section types to template variable names for backward compatibility
   private mapSectionTypeToVariableName(sectionType: string): string {
     switch (sectionType) {
       case 'persona': return 'personaContent';
@@ -234,7 +292,7 @@ export class DynamicPromptService {
     }
   }
 
-  // AI: Build all template variables for system prompt generation (legacy method - kept for compatibility)
+  // Build all template variables for system prompt generation (legacy method)
   private buildTemplateVariables(
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
@@ -244,10 +302,10 @@ export class DynamicPromptService {
   ): TemplateVariable[] {
     const variables: TemplateVariable[] = [];
 
-    // AI: Get persona variables from PersonaGenerationService
+    // Get persona variables from PersonaGenerationService
     const personaVariables = this.personaGenerationService.generateContextAwarePersona(chatbotConfig, analysis);
     
-    // AI: Generate persona content using business persona template
+    // Generate persona content using business persona template
     const businessPersonaTemplate = this.getBusinessPersonaTemplate();
     const personaContext = this.buildTemplateContext(personaVariables);
     
@@ -257,14 +315,14 @@ export class DynamicPromptService {
       personaContext
     );
 
-    // AI: Add persona content as main variable
+    // Add persona content as main variable
     variables.push({
       name: 'personaContent',
       value: processedPersonaTemplate.content,
       isRequired: true
     });
 
-    // AI: Add knowledge base content
+    // Add knowledge base content
     const knowledgeBaseContent = this.knowledgeBaseService.buildMinimalKnowledgeBase(chatbotConfig.knowledgeBase);
     if (knowledgeBaseContent) {
       variables.push({
@@ -274,7 +332,7 @@ export class DynamicPromptService {
       });
     }
 
-    // AI: Add business guidance
+    // Add business guidance
     const businessGuidance = this.businessGuidanceService.generateBusinessGuidance(analysis, leadScore);
     if (businessGuidance) {
       variables.push({
@@ -284,7 +342,7 @@ export class DynamicPromptService {
       });
     }
 
-    // AI: Add adaptive context
+    // Add adaptive context
     const adaptiveContext = this.adaptiveContextService.generateAdaptiveContext(session, analysis, chatbotConfig);
     if (adaptiveContext) {
       variables.push({
@@ -294,7 +352,7 @@ export class DynamicPromptService {
       });
     }
 
-    // AI: Add entity context if available
+    // Add entity context if available
     if (entityData) {
       variables.push({
         name: 'entityContext',
@@ -306,9 +364,9 @@ export class DynamicPromptService {
     return variables;
   }
 
-  // AI: Get system prompt template content
+  // Get system prompt template content
   private getSystemPromptTemplate(): string {
-    // AI: Load template from attached file
+    // Load template from attached file
     return `{{personaContent}}
 
 {{#if knowledgeBaseContent}}
@@ -332,9 +390,9 @@ export class DynamicPromptService {
 {{/if}}`;
   }
 
-  // AI: Get business persona template content
+  // Get business persona template content
   private getBusinessPersonaTemplate(): string {
-    // AI: Load template from attached file
+    // Load template from attached file
     return `## Role & Identity
 You are {{roleTitle}}, a {{roleDescription}}.
 
@@ -359,12 +417,12 @@ You are {{roleTitle}}, a {{roleDescription}}.
 {{/if}}`;
   }
 
-  // AI: Convert TemplateVariable array to TemplateContext
+  // Convert TemplateVariable array to TemplateContext
   private buildTemplateContext(variables: TemplateVariable[]): TemplateContext {
     const variableMap: Record<string, string> = {};
     const conditionals: Record<string, boolean> = {};
 
-    // AI: Build variables map and conditionals
+    // Build variables map and conditionals
     variables.forEach(variable => {
       variableMap[variable.name] = variable.value;
       conditionals[variable.name] = Boolean(variable.value);

@@ -1,6 +1,10 @@
 /**
- * AI INSTRUCTIONS: Use case for chat message processing workflow.
- * Orchestrates services for message handling. @golden-rule: <250 lines.
+ * AI INSTRUCTIONS:
+ * - Orchestrate complete chat message processing workflow
+ * - Handle user input, context analysis, AI response generation
+ * - Maintain session state and conversation metrics
+ * - Apply proper error handling and logging throughout
+ * - Keep orchestration clean - delegate complex logic to services
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
@@ -28,11 +32,12 @@ import { ConversationContextWindow } from '../../domain/value-objects/session-ma
 import { DomainServiceCompositionService } from '../../infrastructure/composition/DomainServiceCompositionService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { IChatbotLoggingService, ISessionLogger } from '../../domain/services/interfaces/IChatbotLoggingService';
+import { PerformanceProfiler, perf } from '../../../performance-profiler';
 
 export interface ProcessMessageRequest {
   userMessage: string;
   sessionId: string;
-  organizationId?: string;
+  organizationId: string; // Required - should never be undefined
   metadata?: any;
 }
 
@@ -117,9 +122,9 @@ export class ProcessChatMessageUseCase {
 
     this.sessionUpdateService = new SessionUpdateService(sessionRepository);
 
-    // Initialize context window with 2025 optimization defaults
+    // Initialize context window with enhanced defaults
     this.contextWindow = ConversationContextWindow.create({
-      maxTokens: 16000, // 2025 optimization: Enhanced context retention
+      maxTokens: 16000, // Enhanced context retention
       systemPromptTokens: 800,  // More room for business context injection
       responseReservedTokens: 3500, // Enhanced response capacity
       summaryTokens: 300 // Better conversation summarization
@@ -137,26 +142,29 @@ export class ProcessChatMessageUseCase {
   ): Promise<any> {
     const { session, config, userMessage } = messageContext;
 
-    // Create logging context for advanced context intelligence
+    // Create logging context for context intelligence
     const loggingContext = {
       logEntry: (message: string) => logger.logMessage(message)
     };
 
-    // Get token-aware messages for context with advanced logging
-    const contextResult = await this.contextManagementService.getTokenAwareContext(
-      session.id, 
-      userMessage, 
-      this.contextWindow,
-      loggingContext,
-      this.sharedLogFile
+    // Get token-aware messages for context with logging
+    const { result: contextResult, duration: contextDuration } = await perf.measureAsync(
+      'GetTokenAwareContext',
+      () => this.contextManagementService.getTokenAwareContext(
+        session.id, 
+        userMessage, 
+        this.contextWindow,
+        loggingContext,
+        this.sharedLogFile!
+      ),
+      { substep: '3.1' }
     );
 
-    // AI INSTRUCTIONS: Create enhanced orchestrator with proper dependency injection
-    // This enables ConversationEnhancedAnalysisService with knowledge retrieval
+    // Create enhanced orchestrator with proper dependency injection
     const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
     const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
     
-    // Create knowledge retrieval service if not provided in constructor (per-request pattern)
+    // Create knowledge retrieval service if not provided in constructor
     const knowledgeRetrievalService: IKnowledgeRetrievalService | undefined = 
       this.knowledgeRetrievalService || 
       DomainServiceCompositionService.getKnowledgeRetrievalService(
@@ -172,19 +180,18 @@ export class ProcessChatMessageUseCase {
     );
     
     // Use enhanced context analysis to trigger vector embeddings pipeline
-    // This calls ConversationContextOrchestrator.analyzeContextEnhanced which:
-    // 1. Calls ConversationEnhancedAnalysisService.enhanceAnalysis
-    // 2. Triggers knowledge retrieval via SimpleKnowledgeRetrievalService
-    // 3. Executes vector embeddings pipeline with comprehensive logging
-    const enhancedContext = await enhancedOrchestrator.analyzeContextEnhanced(
-      [...contextResult.messages, userMessage],
-      config,
-      session,
-      this.sharedLogFile
+    const { result: enhancedContext, duration: enhancedDuration } = await perf.measureAsync(
+      'AnalyzeContextEnhanced',
+      () => enhancedOrchestrator.analyzeContextEnhanced(
+        [...contextResult.messages, userMessage],
+        config,
+        session,
+        this.sharedLogFile!
+      ),
+      { substep: '3.2' }
     );
 
-    // FIXED: Ensure all internal logging operations complete before returning
-    // Add a small delay to allow any async logging operations to complete
+    // Ensure all internal logging operations complete before returning
     await new Promise(resolve => setTimeout(resolve, 10));
 
     return {
@@ -199,8 +206,22 @@ export class ProcessChatMessageUseCase {
   async execute(request: ProcessMessageRequest): Promise<ProcessMessageResult> {
     const startTime = Date.now();
     
-    // Create shared log file for this entire user prompt processing
-    this.sharedLogFile = `chatbot-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+    // Clear performance profiler for fresh metrics per request
+    PerformanceProfiler.clear();
+    
+    const mainTimerId = perf.start('ProcessChatMessage', { 
+      sessionId: request.sessionId, 
+      organizationId: request.organizationId 
+    });
+    
+    // Validate required parameters upfront
+    if (!request.organizationId?.trim()) {
+      throw new Error('Organization ID is required and cannot be empty');
+    }
+    
+    // Create shared log file for this session (reuse same file for all messages in session)
+    const sessionTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    this.sharedLogFile = `chatbot-${sessionTimestamp}.log`;
     
     // Create session logger with context
     const logger = this.loggingService.createSessionLogger(
@@ -226,7 +247,11 @@ export class ProcessChatMessageUseCase {
       // 1. Initialize workflow and validate prerequisites
       logger.logRaw('');
       logger.logRaw('📋 STEP 1: Initialize workflow and validate prerequisites');
-      const workflowContext = await this.workflowService.initializeWorkflow(request, this.sharedLogFile);
+      const { result: workflowContext, duration: step1Duration } = await perf.measureAsync(
+        'InitializeWorkflow',
+        () => this.workflowService.initializeWorkflow(request, this.sharedLogFile!),
+        { step: 1 }
+      );
       
       logger.logMessage('🔧 WORKFLOW CONTEXT', {
         sessionId: workflowContext.session.id,
@@ -239,12 +264,13 @@ export class ProcessChatMessageUseCase {
       // 2. Process user message and update session
       logger.logRaw('');
       logger.logRaw('📝 STEP 2: Process user message and update session');
-      const messageContext = await this.processingService.processUserMessage(
-        workflowContext,
-        request
+      const { result: messageContext, duration: step2Duration } = await perf.measureAsync(
+        'ProcessUserMessage',
+        () => this.processingService.processUserMessage(workflowContext, request),
+        { step: 2 }
       );
       
-      // FIXED: Log MESSAGE CONTEXT immediately after STEP 2 completes
+      // Log MESSAGE CONTEXT immediately after STEP 2 completes
       logger.logMessage('💬 MESSAGE CONTEXT', {
         sessionId: messageContext.session.id,
         configId: messageContext.config.id,
@@ -256,9 +282,13 @@ export class ProcessChatMessageUseCase {
       logger.logRaw('');
       logger.logRaw('🔍 STEP 3: Analyze conversation context');
       
-      const analysisResult = await this.analyzeConversationContext(messageContext, logger);
+      const { result: analysisResult, duration: step3Duration } = await perf.measureAsync(
+        'AnalyzeConversationContext',
+        () => this.analyzeConversationContext(messageContext, logger),
+        { step: 3 }
+      );
       
-      // FIXED: Log ANALYSIS RESULT immediately after context analysis completes
+      // Log ANALYSIS RESULT immediately after context analysis completes
       if (typeof (logger as any).logMessageSync === 'function') {
         (logger as any).logMessageSync('📊 ANALYSIS RESULT', {
           sessionId: analysisResult.session.id,
@@ -277,15 +307,16 @@ export class ProcessChatMessageUseCase {
         });
       }
 
-      // FIXED: Ensure all pending logging operations complete before proceeding to STEP 4
+      // Ensure all pending logging operations complete before proceeding to STEP 4
       await logger.flush();
 
       // 4. Generate AI response with enhanced context
       logger.logRaw('');
       logger.logRaw('🤖 STEP 4: Generate AI response');
-      const responseResult = await this.processingService.generateAIResponse(
-        analysisResult,
-        this.sharedLogFile
+      const { result: responseResult, duration: step4Duration } = await perf.measureAsync(
+        'GenerateAIResponse',
+        () => this.processingService.generateAIResponse(analysisResult, this.sharedLogFile!),
+        { step: 4 }
       );
       
       logger.logMessage('🎯 AI RESPONSE RESULT', {
@@ -299,7 +330,7 @@ export class ProcessChatMessageUseCase {
         fallbackReason: responseResult.enhancedContext?.fallbackReason,
         callToAction: responseResult.enhancedContext?.callToAction,
         responseTimestamp: new Date().toISOString()
-        // REMOVED: leadScore - now calculated by domain service only
+        // leadScore now calculated by domain service only
       });
 
       // Log API call details if available
@@ -308,17 +339,17 @@ export class ProcessChatMessageUseCase {
         logger.logMessage('🔄 UNIFIED PROCESSING', {
           analysis: responseResult.enhancedContext.unifiedAnalysis,
           apiCallType: 'unified-single-call'
-          // REMOVED: leadScore - now calculated by domain service only
+          // leadScore now calculated by domain service only
         });
       }
 
       // 5. Finalize workflow and calculate metrics
       logger.logRaw('');
       logger.logRaw('✅ STEP 5: Finalize workflow and calculate metrics');
-      const finalResult = await this.workflowService.finalizeWorkflow(
-        responseResult,
-        startTime,
-        this.sharedLogFile
+      const { result: finalResult, duration: step5Duration } = await perf.measureAsync(
+        'FinalizeWorkflow',
+        () => this.workflowService.finalizeWorkflow(responseResult, startTime, this.sharedLogFile!),
+        { step: 5 }
       );
 
       const totalProcessingTime = Date.now() - startTime;
@@ -341,10 +372,21 @@ export class ProcessChatMessageUseCase {
       logger.logMetrics('Total Processing Time', { duration: totalProcessingTime });
       logger.logSeparator();
 
+      // Complete performance profiling
+      perf.end(mainTimerId);
+      
+      // Print performance report if enabled
+      if (process.env.CHATBOT_PERFORMANCE_PROFILING === 'true') {
+        perf.report();
+      }
+
       return this.buildProcessMessageResult(finalResult);
       
     } catch (error) {
       const totalProcessingTime = Date.now() - startTime;
+      
+      // Complete performance profiling even on error
+      perf.end(mainTimerId);
       
       logger.logMessage('❌ ERROR IN CHAT MESSAGE PROCESSING');
       logger.logError(
@@ -357,6 +399,7 @@ export class ProcessChatMessageUseCase {
       
       // Track error using ErrorTrackingFacade for proper database persistence
       try {
+        // organizationId is now required, so we can use it directly
         const errorTrackingFacade = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
         await errorTrackingFacade.trackMessageProcessingError(
           error instanceof Error ? error.message : String(error),

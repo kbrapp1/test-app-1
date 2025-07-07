@@ -20,9 +20,6 @@ export default function TestingPage() {
 
   const existingConfig = configResult?.success ? configResult.data : null;
 
-  const handleSimulationComplete = (results: any) => {
-    console.log('Simulation completed:', results);
-  };
 
   if (isLoading) {
     return (

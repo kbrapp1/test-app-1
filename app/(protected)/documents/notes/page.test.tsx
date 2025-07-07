@@ -82,7 +82,7 @@ describe('NotesPage', () => {
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: mockNotes, error: null });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByRole('heading', { name: /my notes/i })).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('NotesPage', () => {
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: [], error: null });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('NotesPage', () => {
     mockGetActiveOrganizationId.mockResolvedValueOnce(null);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByText(/active organization context is missing/i)).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('NotesPage', () => {
     mockGetActiveOrganizationId.mockRejectedValueOnce(new Error('fail'));
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByText(/could not determine active organization/i)).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('NotesPage', () => {
     mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('fail') });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByText(/could not fetch user data/i)).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('NotesPage', () => {
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: null, error: new Error('db') });
 
-    const Page = await NotesPage({});
+    const Page = await NotesPage();
     render(Page);
 
     expect(screen.getByText(/could not fetch notes/i)).toBeInTheDocument();

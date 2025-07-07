@@ -7,7 +7,6 @@
 
 // Domain imports
 import { DamWorkspaceView } from '@/lib/dam/presentation/components/workspace';
-import type { BreadcrumbItemData } from '@/lib/dam/presentation/components/navigation';
 import { getFolderNavigation } from '@/lib/dam/application/actions/navigation.actions';
 import { getActiveOrganizationWithFlags } from '@/lib/organization/application/services/getActiveOrganizationWithFlags';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';

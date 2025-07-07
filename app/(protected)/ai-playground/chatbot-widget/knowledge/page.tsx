@@ -9,7 +9,7 @@ export default function KnowledgeBasePage() {
       <div>
         <h2 className="text-2xl font-semibold">Knowledge Base</h2>
         <p className="text-muted-foreground">
-          Manage your chatbot's knowledge base including company information, FAQs, and support documentation.
+          Manage your chatbot&apos;s knowledge base including company information, FAQs, and support documentation.
         </p>
       </div>
       

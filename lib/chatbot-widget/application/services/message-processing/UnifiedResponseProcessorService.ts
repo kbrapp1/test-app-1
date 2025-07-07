@@ -21,23 +21,14 @@ export class UnifiedResponseProcessorService {
     private readonly errorTrackingFacade: ErrorTrackingFacade
   ) {}
 
-  /**
-   * Create bot message from unified processing result
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract response content and metadata from unified result
-   * - Include token usage and cost tracking
-   * - Handle entity extraction and validation
-   * - Save message to repository with logging context
-   * - Pass proper context for error tracking RLS compliance
-   */
+  // Create bot message from unified processing result
   async createBotMessageFromUnifiedResult(
     session: any,
     unifiedResult: any,
     logFileName: string,
     config: any
   ): Promise<ChatMessage> {
-    // Safely extract response content with multiple fallback paths
+    // Extract response content with fallback paths
     let responseContent = unifiedResult?.response?.content || 
                          unifiedResult?.analysis?.response?.content ||
                          unifiedResult?.choices?.[0]?.message?.function_call?.arguments?.response?.content;
@@ -48,23 +39,23 @@ export class UnifiedResponseProcessorService {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         responseContent = functionArgs?.response?.content;
       } catch (parseError) {
-        // Continue to fallback if parsing fails
+        // Continue to fallback
       }
     }
     
-    // Track fallback error if response content is missing
+    // Track fallback error if response content missing
     if (!responseContent) {
       await this.errorTrackingFacade.trackResponseExtractionFallback(
         unifiedResult,
         session.id,
-        null, // Chatbot widget visitors are not authenticated users, so user_id should be null
-        config.organizationId // Use organizationId from chatbot config (always available)
+        null, // Chatbot visitors are not authenticated users
+        config.organizationId // Use organizationId from chatbot config
       );
       
       responseContent = "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";
     }
     
-    // Safely extract confidence with fallback from multiple paths
+    // Extract confidence with fallback from multiple paths
     let confidence = unifiedResult?.analysis?.primaryConfidence || 0;
     
     // Try parsing from function call if not in direct path
@@ -73,7 +64,7 @@ export class UnifiedResponseProcessorService {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         confidence = functionArgs?.analysis?.primaryConfidence || 0;
       } catch (parseError) {
-        // Use default confidence
+        // Use default
       }
     }
 
@@ -87,7 +78,7 @@ export class UnifiedResponseProcessorService {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         entities = functionArgs?.analysis?.entities || {};
       } catch (parseError) {
-        // Use empty entities
+        // Use empty
       }
     }
     const entitiesExtracted = this.extractEntitiesFromUnified(entities);
@@ -99,7 +90,7 @@ export class UnifiedResponseProcessorService {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         primaryIntent = functionArgs?.analysis?.primaryIntent || 'unified_processing';
       } catch (parseError) {
-        // Use default intent
+        // Use default
       }
     }
     
@@ -113,7 +104,7 @@ export class UnifiedResponseProcessorService {
       confidence,
       primaryIntent,
       entitiesExtracted,
-      0 // processingTime - will be calculated by provider
+      0 // processingTime calculated by provider
     );
 
     // Add cost tracking using domain service
@@ -128,19 +119,12 @@ export class UnifiedResponseProcessorService {
       botMessage = botMessage.addCostTracking(costBreakdown.totalCents, costBreakdown);
     }
 
-    // Save bot message to database with shared log file context
+    // Save bot message with shared log file context
     await this.messageRepository.save(botMessage, logFileName);
     return botMessage;
   }
 
-  /**
-   * Extract token usage from unified API response
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract prompt and completion tokens safely
-   * - Provide fallback values if usage data missing
-   * - Return structured token usage object
-   */
+  // Extract token usage from unified API response
   private extractTokenUsage(unifiedResult: any): {
     promptTokens: number;
     completionTokens: number;
@@ -157,15 +141,7 @@ export class UnifiedResponseProcessorService {
     };
   }
 
-  /**
-   * Extract entities from unified API response into factory service format
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform unified API entity structure to factory service format
-   * - Handle missing or malformed entity data gracefully
-   * - Follow @golden-rule patterns for data transformation
-   * - Use the format expected by ChatMessageFactoryService
-   */
+  // Extract entities from unified API response into factory service format
   private extractEntitiesFromUnified(entities: any): Array<{
     type: string;
     value: string;
@@ -190,7 +166,7 @@ export class UnifiedResponseProcessorService {
         type: type.trim(),
         value: String(value).trim(),
         confidence: 0.9, // Unified API doesn't provide per-entity confidence
-        start: undefined, // Position data not available from unified API
+        start: undefined, // Position data not available
         end: undefined
       }));
   }

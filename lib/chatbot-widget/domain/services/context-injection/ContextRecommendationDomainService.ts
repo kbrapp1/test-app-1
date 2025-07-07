@@ -2,24 +2,15 @@
  * Context Recommendation Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Pure business logic for generating context recommendations
- * - Apply domain rules for recommendation generation
+ * - Pure business logic for generating context recommendations with domain rules
  * - Keep under 200 lines by focusing on single responsibility
- * - Follow @golden-rule patterns exactly
- * - Use domain criteria for recommendation logic
+ * - Follow @golden-rule patterns exactly - use domain criteria for recommendation logic
  */
 
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 import { ContextModule, ContextSelectionCriteria, TokenBudgetAllocation } from '../interfaces/ContextInjectionTypes';
 
-/**
- * Configuration constants for recommendation generation
- * 
- * AI INSTRUCTIONS:
- * - Define business thresholds for recommendations
- * - Keep constants focused on domain logic
- * - Use meaningful names that reflect business rules
- */
+// Configuration constants for recommendation generation
 export const RECOMMENDATION_CONFIG = {
   THRESHOLDS: {
     LOW_UTILIZATION: 0.6,
@@ -34,25 +25,10 @@ export const RECOMMENDATION_CONFIG = {
   }
 } as const;
 
-/**
- * Context Recommendation Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Encapsulates business rules for context recommendations
- * - Generates actionable suggestions based on domain criteria
- * - Analyzes utilization patterns and conversation context
- * - Provides domain-specific adjustment factors
- */
+// Context Recommendation Domain Service - generates actionable suggestions based on domain criteria
 export class ContextRecommendationDomainService {
   
-  /**
-   * Generate recommendations based on context selection and allocation
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business rules for recommendation generation
-   * - Consider multiple factors: utilization, diversity, lead quality
-   * - Return actionable recommendations for optimization
-   */
+  // Generate recommendations based on context selection and allocation
   generateRecommendations(
     selectedModules: ContextModule[],
     allocation: TokenBudgetAllocation,
@@ -77,14 +53,7 @@ export class ContextRecommendationDomainService {
     return recommendations;
   }
   
-  /**
-   * Calculate adjustment factors for token budget recommendations
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply domain rules for budget adjustments
-   * - Consider conversation stage and lead quality
-   * - Return business-meaningful adjustment factors
-   */
+  // Calculate adjustment factors for token budget recommendations
   calculateAdjustmentFactors(criteria: ContextSelectionCriteria): string[] {
     this.validateCriteria(criteria);
     
@@ -105,14 +74,7 @@ export class ContextRecommendationDomainService {
     return factors;
   }
   
-  /**
-   * Private methods for generating specific recommendation types
-   * 
-   * AI INSTRUCTIONS:
-   * - Keep each method focused on single recommendation type
-   * - Apply consistent business rules
-   * - Return meaningful, actionable recommendations
-   */
+  // Private methods for generating specific recommendation types
   private generateUtilizationRecommendations(allocation: TokenBudgetAllocation): string[] {
     const recommendations: string[] = [];
     const utilizationPercent = allocation.totalUsed / allocation.totalAvailable;

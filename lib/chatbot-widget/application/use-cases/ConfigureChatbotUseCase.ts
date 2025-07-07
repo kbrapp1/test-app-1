@@ -1,10 +1,12 @@
 /**
  * Configure Chatbot Use Case
  * 
- * Application-specific business rules for chatbot configuration scenarios.
- * Orchestrates domain objects for bot setup workflow and knowledge base management.
- * 
- * Single Responsibility: Handles the complete chatbot configuration process
+ * AI INSTRUCTIONS:
+ * - Orchestrates complete chatbot configuration workflow using domain entities and services
+ * - Coordinates validation, entity creation, and persistence following DDD use case patterns
+ * - Implements business rules for configuration completeness scoring and recommendations
+ * - Handles both initial configuration creation and incremental updates with proper validation
+ * - Returns structured results with configuration metrics and actionable recommendations
  */
 
 import { ChatbotConfig, LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
@@ -28,8 +30,8 @@ export interface ConfigureChatbotRequest {
 export interface ConfigureChatbotResult {
   chatbotConfig: ChatbotConfig;
   validationResults: {
-    knowledgeBaseScore: number; // 0-100, completeness of knowledge base
-    configurationCompleteness: number; // 0-100, overall setup completeness
+    knowledgeBaseScore: number; // 0-100
+    configurationCompleteness: number; // 0-100
     recommendations: string[];
     warnings: string[];
   };
@@ -40,9 +42,7 @@ export class ConfigureChatbotUseCase {
     private readonly chatbotConfigRepository: IChatbotConfigRepository
   ) {}
 
-  /**
-   * Execute the complete chatbot configuration process
-   */
+  // Execute the complete chatbot configuration process
   async execute(request: ConfigureChatbotRequest): Promise<ConfigureChatbotResult> {
     // 1. Validate configuration requirements
     this.validateConfigurationRequest(request);
@@ -78,9 +78,7 @@ export class ConfigureChatbotUseCase {
     };
   }
 
-  /**
-   * Update existing chatbot configuration
-   */
+  // Update existing chatbot configuration
   async updateConfiguration(
     configId: string,
     updates: Partial<ConfigureChatbotRequest>
@@ -108,9 +106,6 @@ export class ConfigureChatbotUseCase {
 
     if (updates.leadQualificationQuestions) {
       // Replace all questions with the new set
-      // First, remove all existing questions (if possible)
-      // Then add new ones
-      // Note: For simplicity, we'll create a new config with updated questions
       updatedConfig = ChatbotConfig.fromPersistence({
         ...updatedConfig.toPlainObject(),
         leadQualificationQuestions: updates.leadQualificationQuestions,
@@ -143,9 +138,7 @@ export class ConfigureChatbotUseCase {
     };
   }
 
-  /**
-   * Validate configuration request
-   */
+  // Validate configuration request
   private validateConfigurationRequest(request: ConfigureChatbotRequest): void {
     if (!request.organizationId?.trim()) {
       throw new Error('Organization ID is required');
@@ -176,9 +169,7 @@ export class ConfigureChatbotUseCase {
     }
   }
 
-  /**
-   * Validate knowledge base completeness
-   */
+  // Validate knowledge base completeness
   private validateKnowledgeBase(knowledgeBase: KnowledgeBase): {
     score: number;
     recommendations: string[];
@@ -230,9 +221,7 @@ export class ConfigureChatbotUseCase {
     return { score, recommendations, warnings };
   }
 
-  /**
-   * Calculate configuration completeness metrics
-   */
+  // Calculate configuration completeness metrics
   private calculateConfigurationMetrics(
     config: ChatbotConfig,
     knowledgeBaseValidation: { score: number; recommendations: string[]; warnings: string[] }

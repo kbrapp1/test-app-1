@@ -33,6 +33,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
   async crawlWebsite(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
+    organizationId: string,
     onPageCrawled: (pageData: CrawledPageData, htmlParser: IHtmlParser) => Promise<void>
   ): Promise<CrawledPageData[]> {
     try {
@@ -174,6 +175,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         source.url,
         `Crawlee provider execution failed: ${errorMessage}`,
         {
+          organizationId,
           metadata: {
             sourceUrl: source.url,
             maxPages: settings.maxPages,

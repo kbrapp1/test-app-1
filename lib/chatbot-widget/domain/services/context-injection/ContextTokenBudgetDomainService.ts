@@ -2,12 +2,10 @@
  * Context Token Budget Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Pure domain logic for token budget management
- * - Optimize context selection within token constraints
- * - Apply business rules for token allocation
+ * - Pure domain logic for token budget management and context selection optimization
+ * - Apply business rules for token allocation within constraints
+ * - Follow @golden-rule patterns exactly - single responsibility for token budget optimization
  * - Keep business logic isolated from external concerns
- * - Follow @golden-rule patterns exactly
- * - Single responsibility: token budget optimization
  */
 
 import { ChatMessage } from '../../entities/ChatMessage';
@@ -22,15 +20,7 @@ import {
 
 export class ContextTokenBudgetDomainService {
   
-  /**
-   * Select modules that fit within token budget using priority-based allocation
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply greedy algorithm for optimal selection
-   * - Prioritize high-value modules first
-   * - Respect token constraints strictly
-   * - Return selected modules with allocation details
-   */
+  // Select modules that fit within token budget using priority-based allocation
   static selectModulesWithinBudget(
     modules: ContextModule[],
     availableTokens: number,
@@ -62,14 +52,7 @@ export class ContextTokenBudgetDomainService {
     return { selectedModules, allocation };
   }
 
-  /**
-   * Calculate priority scores with enhanced token efficiency
-   * 
-   * AI INSTRUCTIONS:
-   * - Adjust priorities based on conversation context
-   * - Optimize for early vs. extended conversations
-   * - Apply business rules for priority weighting
-   */
+  // Calculate priority scores with enhanced token efficiency
   static calculatePriorityScores(
     conversationHistory: ChatMessage[],
     entityData?: EntityData,
@@ -98,14 +81,7 @@ export class ContextTokenBudgetDomainService {
     };
   }
 
-  /**
-   * Select modules based on token budget with early conversation optimization
-   * 
-   * AI INSTRUCTIONS:
-   * - Optimize for conversation stage
-   * - Balance comprehensiveness with token efficiency
-   * - Apply business rules for module selection
-   */
+  // Select modules based on token budget with early conversation optimization
   static selectModulesForBudget(
     priorities: ModulePriority,
     tokenBudget: number,
@@ -154,14 +130,7 @@ export class ContextTokenBudgetDomainService {
     return selected;
   }
 
-  /**
-   * Optimize token allocation for maximum value
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate value-to-token ratio for modules
-   * - Prioritize high-value, low-token modules
-   * - Apply diminishing returns for similar module types
-   */
+  // Optimize token allocation for maximum value
   static optimizeTokenAllocation(
     modules: ContextModule[],
     availableTokens: number,
@@ -192,14 +161,7 @@ export class ContextTokenBudgetDomainService {
     return selectedModules;
   }
 
-  /**
-   * Calculate token allocation breakdown
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide detailed token usage analysis
-   * - Track allocation by module category
-   * - Support budget monitoring and optimization
-   */
+  // Calculate token allocation breakdown
   static calculateTokenAllocation(
     selectedModules: ContextModule[],
     totalAvailable: number
@@ -241,14 +203,7 @@ export class ContextTokenBudgetDomainService {
     return allocation;
   }
 
-  /**
-   * Validate token budget constraints
-   * 
-   * AI INSTRUCTIONS:
-   * - Ensure selected modules fit within budget
-   * - Apply business rules for minimum requirements
-   * - Validate token estimates are reasonable
-   */
+  // Validate token budget constraints
   static validateTokenBudget(
     selectedModules: ContextModule[],
     availableTokens: number,
@@ -286,14 +241,7 @@ export class ContextTokenBudgetDomainService {
     };
   }
 
-  /**
-   * Helper methods for token budget calculations
-   * 
-   * AI INSTRUCTIONS:
-   * - Support methods for budget optimization
-   * - Encapsulate business rules
-   * - Keep methods focused and testable
-   */
+  // Helper methods for token budget calculations
   private static isEarlyConversation(messageCount: number): boolean {
     return messageCount <= 2;
   }
@@ -346,14 +294,7 @@ export class ContextTokenBudgetDomainService {
     return baseValue / tokenCost;
   }
 
-  /**
-   * Get recommended token budget based on conversation context
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide intelligent budget recommendations
-   * - Consider conversation complexity and lead value
-   * - Apply business rules for budget sizing
-   */
+  // Get recommended token budget based on conversation context
   static getRecommendedTokenBudget(
     criteria: ContextSelectionCriteria
   ): { recommended: number; minimum: number; maximum: number; reasoning: string[] } {

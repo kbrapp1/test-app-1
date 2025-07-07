@@ -52,6 +52,10 @@ export class ContentTypeValidationService {
     if (lowerContent.length < 50) {
       warnings.push('Company information is quite brief. Consider adding more details about services or expertise.');
     }
+    
+    if (content.length > 2000) {
+      warnings.push('Company information is quite long. Consider breaking it into smaller sections.');
+    }
   }
 
   // AI: Validate compliance guidelines define clear scope and restrictions
@@ -64,6 +68,10 @@ export class ContentTypeValidationService {
     if (!hasKeywords) {
       warnings.push('Compliance guidelines should clearly define scope and usage restrictions.');
     }
+    
+    if (content.length > 1500) {
+      warnings.push('Compliance guidelines are quite long. Consider focusing on key restrictions.');
+    }
   }
 
   // AI: Validate product catalog contains sufficient service information
@@ -71,12 +79,20 @@ export class ContentTypeValidationService {
     if (content.length < 100) {
       warnings.push('Product catalog information is brief. Consider adding more service details.');
     }
+    
+    if (content.length > 3000) {
+      warnings.push('Product catalog is quite extensive. Consider organizing into categories or sections.');
+    }
   }
 
   // AI: Validate support documentation indicates helpful nature
   private validateSupportDocs(content: string, issues: string[], warnings: string[]): void {
     if (!content.toLowerCase().includes('help') && !content.toLowerCase().includes('support')) {
       warnings.push('Support documentation should clearly indicate its helpful nature.');
+    }
+    
+    if (content.length > 2500) {
+      warnings.push('Support documentation is quite long. Consider breaking into smaller guides.');
     }
   }
 
@@ -90,7 +106,7 @@ export class ContentTypeValidationService {
 
   // AI: Apply general validation rules for custom content types
   private validateCustomContent(content: string, issues: string[], warnings: string[]): void {
-    if (content.length > 500) {
+    if (content.length > 3000) {
       warnings.push('Custom content is quite long. Consider if it\'s all necessary for the chatbot.');
     }
   }

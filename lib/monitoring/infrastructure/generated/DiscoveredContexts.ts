@@ -1,5 +1,5 @@
 // Auto-generated contexts from build-time discovery - DO NOT EDIT MANUALLY
-// Generated: 2025-07-06T21:59:44.130Z
+// Generated: 2025-07-07T04:22:08.103Z
 // Run 'npm run generate:contexts' to update
 
 import { PageContext } from '../../domain/repositories/PageContextRepository';
@@ -12,6 +12,7 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
       "BotIdentityForm",
       "OperatingHoursForm",
       "CompanyInformationCard",
+      "ContentGuidelines",
       "FaqManagementCard",
       "KnowledgeBaseActions",
       "KnowledgeBaseSection",
@@ -87,6 +88,7 @@ export const DISCOVERED_CONTEXTS: PageContext[] = [
     "queryKeys": [
       "chatbot-config",
       "chatbot-configs",
+      "content-validation",
       "crawled-pages"
     ],
     "endpoints": [

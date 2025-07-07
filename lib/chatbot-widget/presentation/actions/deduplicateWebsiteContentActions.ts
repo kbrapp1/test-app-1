@@ -1,13 +1,9 @@
 /**
- * Website Content Deduplication Server Actions - Presentation Layer
- * 
- * AI INSTRUCTIONS:
- * - Server action entry points for website content deduplication
+ * AI Instructions: Server actions for website content deduplication
  * - Handle user requests and delegate to application services
- * - Only export async functions (Next.js requirement)
- * - Follow @golden-rule patterns exactly
- * - Keep under 250 lines - focus on request/response handling
- * - Use domain-specific error types for proper error handling
+ * - Use domain-specific error types with proper error handling
+ * - Maintain single responsibility per action
+ * - Follow DDD presentation layer patterns
  */
 
 'use server';
@@ -15,13 +11,7 @@
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
-/**
- * Preview website content deduplication
- * 
- * @param organizationId - Organization ID
- * @param chatbotConfigId - Chatbot configuration ID
- * @returns Preview of duplicates that would be removed
- */
+// Preview website content deduplication
 export async function previewWebsiteContentDeduplication(
   organizationId: string,
   chatbotConfigId: string
@@ -90,13 +80,7 @@ export async function previewWebsiteContentDeduplication(
   }
 }
 
-/**
- * Execute website content deduplication
- * 
- * @param organizationId - Organization ID
- * @param chatbotConfigId - Chatbot configuration ID
- * @returns Deduplication results with statistics
- */
+// Execute website content deduplication
 export async function executeWebsiteContentDeduplication(
   organizationId: string,
   chatbotConfigId: string
@@ -164,12 +148,7 @@ export async function executeWebsiteContentDeduplication(
   }
 }
 
-/**
- * Normalize a URL for comparison
- * 
- * @param url - URL to normalize
- * @returns Normalized URL
- */
+// Normalize URL for comparison
 export async function normalizeUrl(url: string): Promise<{
   success: boolean;
   data?: {

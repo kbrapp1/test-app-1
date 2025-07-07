@@ -22,7 +22,13 @@ import { ChatSessionFactory } from '../services/session-management/ChatSessionFa
 
 /**
  * Chat Session Entity
- * Following DDD principles: Pure entity with business logic delegated to domain services
+ * 
+ * AI INSTRUCTIONS:
+ * - Core domain entity representing chat session with rich conversational context
+ * - Pure entity following DDD principles with business logic delegated to domain services
+ * - Manages session state, context accumulation, and lead qualification workflow
+ * - Handles activity tracking, page views, engagement metrics, and session lifecycle
+ * - Immutable entity with state transitions through dedicated domain services
  */
 export class ChatSession {
   private constructor(private readonly props: ChatSessionProps) {
@@ -82,10 +88,7 @@ export class ChatSession {
     });
   }
 
-  /**
-   * Update conversation summary with enhanced format
-   * AI INSTRUCTIONS: Phase 2 integration - accept ConversationSummary object
-   */
+  // Update conversation summary with enhanced format - Phase 2 integration
   updateConversationSummaryEnhanced(summary: {
     fullSummary: string;
     phaseSummaries?: Array<{
@@ -210,14 +213,7 @@ export class ChatSession {
     });
   }
 
-  /**
-   * Update session context data with new values
-   * AI INSTRUCTIONS:
-   * - Pure entity method following @golden-rule immutability
-   * - Always return new instance, never mutate existing
-   * - Update lastActivityAt timestamp
-   * - Delegate validation to domain services
-   */
+  // Update session context data with new values - pure immutable method
   updateContextData(newContextData: Partial<SessionContext>): ChatSession {
     const updatedContext = SessionContextService.mergeContextData(
       this.props.contextData, 
@@ -249,8 +245,7 @@ export class ChatSession {
   isExpired(timeoutMinutes: number = 30): boolean {
     ChatSessionValidationService.validateTimeout(timeoutMinutes);
     
-    // AI INSTRUCTIONS: Inline session expiration logic following @golden-rule pure function pattern
-    // Domain logic: Session expires when lastActivityAt exceeds timeout threshold
+    // Session expires when lastActivityAt exceeds timeout threshold
     const timeoutMs = timeoutMinutes * 60 * 1000;
     const now = new Date().getTime();
     return now - this.props.lastActivityAt.getTime() > timeoutMs;
@@ -262,12 +257,11 @@ export class ChatSession {
   }
 
   getSessionMetrics(): SessionMetrics {
-    // AI INSTRUCTIONS: Inline session metrics calculation following @golden-rule domain patterns
     // Pure business logic for calculating session analytics
     const endTime = this.props.endedAt || new Date();
     const duration = endTime.getTime() - this.props.startedAt.getTime();
 
-    // MODERN: Contact info is captured via accumulated entities system
+    // Contact info is captured via accumulated entities system
     const hasContactInfo = this.props.contextData.accumulatedEntities?.visitorName?.value;
 
     return {
@@ -280,7 +274,7 @@ export class ChatSession {
   }
 
   hasContactInfo(): boolean {
-    // MODERN: Check if we have visitor identification in accumulated entities
+    // Check if we have visitor identification in accumulated entities
     return !!this.props.contextData.accumulatedEntities?.visitorName?.value;
   }
 

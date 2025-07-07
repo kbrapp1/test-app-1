@@ -1,12 +1,9 @@
 /**
- * ChatbotConfigSupabaseRepository Infrastructure Implementation
- * 
- * AI INSTRUCTIONS:
- * - Implement domain repository interface in infrastructure layer
- * - Delegate to focused services for specific operations
- * - Keep focused on repository concerns only
- * - Follow @golden-rule infrastructure layer patterns exactly
- * - Use composition over inheritance for clean separation
+ * AI Instructions: ChatbotConfigSupabaseRepository infrastructure implementation
+ * - Implement domain repository interface with Supabase persistence
+ * - Delegate to KnowledgeContentService for structured content operations
+ * - Use ChatbotConfigMapper for domain/database entity conversion
+ * - Follow @golden-rule patterns with proper error handling and separation
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -38,7 +35,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     );
   }
 
-  // AI: Find chatbot config by ID
+  /** Find chatbot config by ID */
   async findById(id: string): Promise<ChatbotConfig | null> {
     try {
       const { data, error } = await this.supabase
@@ -49,7 +46,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
 
       if (error) {
         if (error.code === 'PGRST116') {
-          return null; // No config found
+          return null;
         }
         throw new DatabaseError('Failed to fetch chatbot config by ID', { error, id });
       }
@@ -63,7 +60,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Find chatbot config by organization ID
+  /** Find chatbot config by organization ID */
   async findByOrganizationId(organizationId: string): Promise<ChatbotConfig | null> {
     try {
       const { data, error } = await this.supabase
@@ -74,7 +71,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
 
       if (error) {
         if (error.code === 'PGRST116') {
-          return null; // No config found
+          return null;
         }
         throw new DatabaseError('Failed to fetch chatbot config', { error, organizationId });
       }
@@ -88,12 +85,12 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Get structured knowledge content with sanitization
+  /** Get structured knowledge content with sanitization */
   async getStructuredKnowledgeContent(organizationId: string): Promise<StructuredKnowledgeContent> {
     return this.knowledgeContentService.getStructuredKnowledgeContent(organizationId);
   }
 
-  // AI: Find all active configs for organization
+  /** Find all active configs for organization */
   async findActiveByOrganizationId(organizationId: string): Promise<ChatbotConfig[]> {
     try {
       const { data, error } = await this.supabase
@@ -115,13 +112,13 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Save new chatbot config
+  /** Save new chatbot config */
   async save(config: ChatbotConfig): Promise<ChatbotConfig> {
     try {
-      const dbRecord = ChatbotConfigMapper.toDbRecord(config);
+      const insertData = ChatbotConfigMapper.toInsert(config);
       const { data, error } = await this.supabase
         .from(this.tableName)
-        .insert(dbRecord)
+        .insert(insertData)
         .select()
         .single();
 
@@ -138,13 +135,13 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Update existing chatbot config
+  /** Update existing chatbot config */
   async update(config: ChatbotConfig): Promise<ChatbotConfig> {
     try {
-      const dbRecord = ChatbotConfigMapper.toDbRecord(config);
+      const updateData = ChatbotConfigMapper.toUpdate(config);
       const { data, error } = await this.supabase
         .from(this.tableName)
-        .update({ ...dbRecord, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', config.id)
         .select()
         .single();
@@ -162,7 +159,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Delete chatbot config
+  /** Delete chatbot config */
   async delete(id: string): Promise<void> {
     try {
       const { error } = await this.supabase
@@ -181,7 +178,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Check if config exists for organization
+  /** Check if config exists for organization */
   async existsByOrganizationId(organizationId: string): Promise<boolean> {
     try {
       const { data, error } = await this.supabase
@@ -203,7 +200,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Find configs by name pattern
+  /** Find configs by name pattern */
   async findByNamePattern(pattern: string, organizationId?: string): Promise<ChatbotConfig[]> {
     try {
       let query = this.supabase
@@ -230,7 +227,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     }
   }
 
-  // AI: Get configuration statistics
+  /** Get configuration statistics */
   async getStatistics(organizationId: string): Promise<{
     totalConfigs: number;
     activeConfigs: number;
@@ -258,7 +255,7 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
         totalConfigs,
         activeConfigs,
         totalFaqs: 0, // TODO: Implement FAQ counting
-        avgLeadQuestions: 0, // TODO: Implement lead question counting
+        avgLeadQuestions: 0, // TODO: Implement lead questions
         lastUpdated
       };
     } catch (error) {

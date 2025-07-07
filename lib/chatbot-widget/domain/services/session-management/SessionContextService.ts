@@ -5,23 +5,19 @@ import { SessionContext, PageView, ContactInfo } from '../../value-objects/sessi
  * 
  * AI INSTRUCTIONS:
  * - Domain Service: Pure business logic for managing session context data
- * - Following @golden-rule DDD principles: Single responsibility for context management
- * - All utility functions inlined following pure function patterns
+ * - Following @golden-rule DDD principles: Single responsibility for context management with pure function patterns
  * - No external service dependencies, maintaining domain layer purity
  */
 export class SessionContextService {
   
-  /**
-   * Add page view to context
-   * AI INSTRUCTIONS: Inline page view creation following @golden-rule immutability patterns
-   */
+  // Add page view to context
   static addPageView(
     context: SessionContext,
     url: string,
     title: string,
     timeOnPage: number = 0
   ): SessionContext {
-    // Inline PageView creation - pure value object pattern
+    // Create PageView - pure value object pattern
     const pageView: PageView = {
       url,
       title,
@@ -35,10 +31,7 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Update conversation summary with enhanced format
-   * AI INSTRUCTIONS: Use enhanced object format only, following @golden-rule patterns
-   */
+  // Update conversation summary with enhanced format
   static updateConversationSummary(
     context: SessionContext, 
     fullSummary: string,
@@ -66,12 +59,9 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Add topic to context
-   * AI INSTRUCTIONS: Inline topic existence check following @golden-rule pure function pattern
-   */
+  // Add topic to context
   static addTopic(context: SessionContext, topic: string): SessionContext {
-    // Inline topic existence check - simple array includes
+    // Check topic existence
     if (context.topics.includes(topic)) {
       return context;
     }
@@ -82,12 +72,9 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Add interest to context
-   * AI INSTRUCTIONS: Inline interest existence check following @golden-rule pure function pattern
-   */
+  // Add interest to context
   static addInterest(context: SessionContext, interest: string): SessionContext {
-    // Inline interest existence check - simple array includes
+    // Check interest existence
     if (context.interests.includes(interest)) {
       return context;
     }
@@ -98,12 +85,9 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Update engagement score
-   * AI INSTRUCTIONS: Inline score clamping following @golden-rule value object validation pattern
-   */
+  // Update engagement score
   static updateEngagementScore(context: SessionContext, score: number): SessionContext {
-    // Inline engagement score clamping - ensures valid range 0-100
+    // Clamp engagement score to valid range 0-100
     const clampedScore = Math.max(0, Math.min(100, score));
     
     return {
@@ -112,9 +96,7 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Update journey state
-   */
+  // Update journey state
   static updateJourneyState(
     context: SessionContext,
     stage: string,
@@ -131,9 +113,7 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Increment previous visits count
-   */
+  // Increment previous visits count
   static incrementPreviousVisits(context: SessionContext): SessionContext {
     return {
       ...context,
@@ -141,31 +121,23 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Get latest page view
-   */
+  // Get latest page view
   static getLatestPageView(context: SessionContext): PageView | undefined {
     return context.pageViews[context.pageViews.length - 1];
   }
 
-  /**
-   * Get total time on site
-   */
+  // Get total time on site
   static getTotalTimeOnSite(context: SessionContext): number {
     return context.pageViews.reduce((total, pageView) => total + pageView.timeOnPage, 0);
   }
 
-  /**
-   * Check if context has contact information - MODERN: Check accumulated entities
-   */
+  // Check if context has contact information
   static hasContactInfo(context: SessionContext): boolean {
-    // MODERN: Check for visitor identification in accumulated entities
+    // Check for visitor identification in accumulated entities
     return !!context.accumulatedEntities?.visitorName?.value;
   }
 
-  /**
-   * Get context summary for analytics
-   */
+  // Get context summary for analytics
   static getContextSummary(context: SessionContext): {
     pageViewCount: number;
     topicCount: number;
@@ -183,14 +155,7 @@ export class SessionContextService {
     };
   }
 
-  /**
-   * Merge new context data with existing context
-   * AI INSTRUCTIONS:
-   * - Pure function following @golden-rule immutability
-   * - Complete replacement for accumulated entities when provided
-   * - Always return new object, never mutate input
-   * - Simplified logic following @golden-rule patterns
-   */
+  // Merge new context data with existing context
   static mergeContextData(
     existingContext: SessionContext, 
     newContextData: Partial<SessionContext>
@@ -199,7 +164,6 @@ export class SessionContextService {
       ...existingContext,
       ...newContextData,
       // Ensure accumulated entities are completely replaced when provided
-      // (EntityAccumulationService provides complete entity state)
       accumulatedEntities: newContextData.accumulatedEntities || existingContext.accumulatedEntities,
     };
   }

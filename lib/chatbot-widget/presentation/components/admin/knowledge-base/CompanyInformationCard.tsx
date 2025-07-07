@@ -2,11 +2,11 @@
  * Company Information Card Component
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Company information form section
- * - Handle form state for company details
- * - Keep under 200-250 lines
- * - Use controlled components pattern
- * - Follow @golden-rule patterns exactly
+ * - React component for company information form section with validation and editing capabilities
+ * - Manages controlled form state for company details, product catalog, support docs, and compliance
+ * - Implements real-time content validation with visual feedback and character count tracking
+ * - Provides collapsible content guidelines and field-specific tooltips for user guidance
+ * - Follows @golden-rule patterns with single responsibility and clean component composition
  */
 
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export function CompanyInformationCard({
 }: CompanyInformationCardProps) {
   const [showGuidelines, setShowGuidelines] = useState(false);
 
-  // AI: Multi-field content validation for real-time feedback
+  // Multi-field content validation for real-time feedback
   const validation = useMultiContentValidation({
     companyInfo: {
       content: formData.companyInfo,
@@ -46,29 +46,29 @@ export function CompanyInformationCard({
     },
     productCatalog: {
       content: formData.productCatalog,
-      type: ContentType.COMPANY_INFO,
+      type: ContentType.PRODUCT_CATALOG,
       maxLength: 3000
     },
     supportDocs: {
       content: formData.supportDocs,
-      type: ContentType.CUSTOM,
+      type: ContentType.SUPPORT_DOCS,
       maxLength: 2500
     },
     complianceGuidelines: {
       content: formData.complianceGuidelines,
-      type: ContentType.CUSTOM,
+      type: ContentType.COMPLIANCE_GUIDELINES,
       maxLength: 1500
     }
   });
 
   const hasCompanyInfo = Boolean(
     formData.companyInfo || 
-    formData.productCatalog || 
+    formData.productCatalog ||
     formData.supportDocs || 
     formData.complianceGuidelines
   );
 
-  // AI: Get validation status icon and color
+  // Get validation status icon and color
   const getValidationIcon = () => {
     switch (validation.overallStatus) {
       case 'valid': return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -119,7 +119,7 @@ export function CompanyInformationCard({
           </div>
         </div>
 
-        {/* AI: Content Guidelines */}
+        {/* Content Guidelines */}
         {showGuidelines && (
           <ContentGuidelines 
             contentType={ContentType.COMPANY_INFO}
@@ -152,7 +152,7 @@ export function CompanyInformationCard({
             onChange={(value) => onUpdateFormData?.({ productCatalog: value })}
             validation={validation.validations.productCatalog}
             showValidation={isEditing}
-            tooltip={<ContentTypeTooltip contentType={ContentType.COMPANY_INFO} />}
+            tooltip={<ContentTypeTooltip contentType={ContentType.PRODUCT_CATALOG} />}
           />
 
           <CompanyInfoField
@@ -165,7 +165,7 @@ export function CompanyInformationCard({
             onChange={(value) => onUpdateFormData?.({ supportDocs: value })}
             validation={validation.validations.supportDocs}
             showValidation={isEditing}
-            tooltip={<ContentTypeTooltip contentType={ContentType.CUSTOM} />}
+            tooltip={<ContentTypeTooltip contentType={ContentType.SUPPORT_DOCS} />}
           />
 
           <CompanyInfoField
@@ -178,11 +178,11 @@ export function CompanyInformationCard({
             onChange={(value) => onUpdateFormData?.({ complianceGuidelines: value })}
             validation={validation.validations.complianceGuidelines}
             showValidation={isEditing}
-            tooltip={<ContentTypeTooltip contentType={ContentType.CUSTOM} />}
+            tooltip={<ContentTypeTooltip contentType={ContentType.COMPLIANCE_GUIDELINES} />}
           />
         </div>
 
-        {/* AI: Show validation feedback when editing */}
+        {/* Show validation feedback when editing */}
         {isEditing && (validation.getAllErrors().length > 0 || validation.getAllWarnings().length > 0) && (
           <div className="space-y-2">
             {validation.getAllErrors().length > 0 && (
@@ -251,7 +251,7 @@ function CompanyInfoField({
   showValidation = false,
   tooltip,
 }: CompanyInfoFieldProps) {
-  // AI: Get validation status for field styling
+  // Get validation status for field styling
   const getFieldValidationClass = () => {
     if (!showValidation || !validation) return '';
     

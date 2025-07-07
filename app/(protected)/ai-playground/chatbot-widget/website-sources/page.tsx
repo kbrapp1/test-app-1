@@ -17,7 +17,7 @@ export default function WebsiteSourcesPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Website Sources</h1>
           <p className="text-muted-foreground">
-            Add websites to crawl and include their content in your chatbot's knowledge base.
+            Add websites to crawl and include their content in your chatbot&apos;s knowledge base.
           </p>
         </div>
         

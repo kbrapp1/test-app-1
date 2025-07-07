@@ -7,9 +7,13 @@ import {
   SimulationResults 
   } from '../types/ChatSimulationTypes';
 
-// Types imported from presentation types file
-
-// Using DebugInfoDto from application layer instead of duplicating interface
+/**
+ * AI Instructions: Custom hook for managing chatbot simulation state
+ * - Handle live simulation testing with real AI responses
+ * - Manage simulation lifecycle and conversation flow
+ * - Provide quality assessment metrics and debug information
+ * - Support user profile customization for testing scenarios
+ */
 
 const defaultUserProfile: SimulatedUserProfile = {
   name: 'Test User',
@@ -45,7 +49,6 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
   const [error, setError] = useState<string | null>(null);
   const [apiDebugInfo, setApiDebugInfo] = useState<DebugInfoDto | null>(null);
 
-  // Mock response generation removed - using live AI only
 
   const startSimulation = async () => {
     try {
@@ -97,18 +100,15 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
     try {
       setIsLoading(true);
       
-      // Calculate real simulation results from actual data using domain logic
       const userMessages = messages.filter(m => m.messageType === 'user');
       const botMessages = messages.filter(m => m.messageType === 'bot');
       
-      // Detect lead capture from actual conversation analysis
       const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
       const phonePattern = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/;
       const leadCaptured = userMessages.some(msg => 
         emailPattern.test(msg.content) || phonePattern.test(msg.content)
       );
       
-      // Analyze actual conversation against goals
       const goalsAchieved = testingGoals.map(goal => {
         let achieved = false;
         switch (goal.type) {
@@ -135,7 +135,6 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
         };
       });
       
-      // Calculate quality assessment from actual AI responses and conversation flow
       const qualityAssessment = {
         relevanceScore: botMessages.length > 0 ? Math.min(75 + (botMessages.filter(msg => msg.content.length > 50).length / botMessages.length) * 25, 100) : 0,
         accuracyScore: botMessages.length > 0 ? (botMessages.filter(msg => !msg.content.toLowerCase().includes('error')).length / botMessages.length) * 100 : 0,
@@ -211,11 +210,9 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
         botResponse = data.botResponse;
         processingTime = Date.now() - startTime;
         
-        // Use real debug data from API (already transformed by mapper)
         if (data.debugInfo) {
           setApiDebugInfo(data.debugInfo);
         } else {
-          // Fallback when debug info is not available
           setApiDebugInfo({
             sessionId: data.sessionId,
             userMessageId: data.userMessageId,
@@ -230,7 +227,6 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
           });
         }
       } else {
-        // Mock mode removed - redirecting to live AI
         throw new Error('Mock mode has been disabled. Please use Live AI mode only.');
       }
       
@@ -258,7 +254,6 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
   };
 
   return {
-    // State
     isActive,
     messages,
     currentMessage,
@@ -268,7 +263,6 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
     error,
     apiDebugInfo,
     
-    // Actions
     setCurrentMessage,
     setUserProfile,
     startSimulation,

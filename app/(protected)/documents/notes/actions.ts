@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Note } from '@/types/notes';
 import { ErrorCodes } from '@/lib/errors/constants';
 
 // Import helpers from the new file

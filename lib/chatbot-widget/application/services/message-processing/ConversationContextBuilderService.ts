@@ -38,7 +38,10 @@ export class ConversationContextBuilderService {
      * - Initialize error tracking service for database persistence
      * - Follow composition over inheritance patterns
      */
-    this.systemPromptBuilderService = new SystemPromptBuilderService(aiConversationService);
+    this.systemPromptBuilderService = new SystemPromptBuilderService(
+      aiConversationService,
+      ChatbotWidgetCompositionRoot.getDynamicPromptService()
+    );
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
@@ -65,6 +68,11 @@ export class ConversationContextBuilderService {
     this.sessionId = session.id;
     this.organizationId = config.organizationId;
     this.conversationId = session.conversationId;
+    
+    // AI: Validate organization ID is available for error tracking
+    if (!this.organizationId) {
+      throw new Error('Organization ID is required for conversation context building');
+    }
     
     // Create session logger with context - shared log file is required
     if (!logFileName) {
@@ -284,19 +292,21 @@ Provide a concise but comprehensive summary focusing on business-critical inform
       } catch (error) {
         console.error('Failed to generate conversation summary:', error);
         
-        // Track critical chatbot error to database
-        await this.errorTrackingService.trackConversationAnalysisError(
-          'conversation_summary_generation',
-          {
-            sessionId: this.sessionId,
-            organizationId: this.organizationId,
-            conversationId: this.conversationId,
-            metadata: {
-              messageCount: messages.length,
-              error: error instanceof Error ? error.message : String(error)
+        // Track critical chatbot error to database (organizationId is validated to be non-null)
+        if (this.organizationId) {
+          await this.errorTrackingService.trackConversationAnalysisError(
+            'conversation_summary_generation',
+            {
+              sessionId: this.sessionId,
+              organizationId: this.organizationId,
+              conversationId: this.conversationId,
+              metadata: {
+                messageCount: messages.length,
+                error: error instanceof Error ? error.message : String(error)
+              }
             }
-          }
-        );
+          );
+        }
         
         return 'Previous conversation context available but summary generation failed';
       }

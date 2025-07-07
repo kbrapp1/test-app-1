@@ -1,12 +1,11 @@
 /**
  * Initialize Chat Session Use Case
  * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Initialize chat session with knowledge cache warming
- * - Follow @golden-rule DDD patterns exactly
+ * AI Instructions:
+ * - Initialize chat session with knowledge cache warming
+ * - Validate chatbot config exists and is active
  * - Coordinate domain services without business logic
  * - Handle cache warming as part of session initialization
- * - Use composition root for all dependencies
  * - Publish domain events for session lifecycle
  */
 
@@ -39,33 +38,24 @@ export class InitializeChatSessionUseCase {
     private readonly knowledgeRetrievalService: IKnowledgeRetrievalService
   ) {}
 
-  /**
-   * Initialize new chat session with knowledge cache warming
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate session creation and cache warming
-   * - Validate chatbot config exists and is active
-   * - Warm knowledge cache for optimal performance
-   * - Handle errors gracefully with domain-specific errors
-   * - Publish session initialization event
-   */
+  // Initialize new chat session with knowledge cache warming
   async execute(request: InitializeSessionRequest): Promise<InitializeSessionResponse> {
     const { chatbotConfigId, visitorId, initialContext, warmKnowledgeCache = true } = request;
 
-    // Step 1: Validate and retrieve chatbot configuration
+    // 1. Validate and retrieve chatbot configuration
     const chatbotConfig = await this.validateChatbotConfig(chatbotConfigId);
 
-    // Step 2: Generate visitor ID if not provided
+    // 2. Generate visitor ID if not provided
     const sessionVisitorId = visitorId || this.generateVisitorId();
 
-    // Step 3: Create new chat session using domain entity
+    // 3. Create new chat session using domain entity
     const session = ChatSession.create(
       chatbotConfigId,
       sessionVisitorId,
       initialContext
     );
 
-    // Step 4: Warm knowledge cache if requested
+    // 4. Warm knowledge cache if requested
     let cacheWarmed = false;
     let cacheWarmingTimeMs: number | undefined;
     
@@ -75,12 +65,11 @@ export class InitializeChatSessionUseCase {
       cacheWarmingTimeMs = cacheResult.timeMs;
     }
 
-    // Step 5: Save session to repository
-    // Create initialization-specific log file for session creation
+    // 5. Save session to repository
     const initLogFile = `session-init-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
     const savedSession = await this.sessionRepository.save(session, initLogFile);
 
-    // Step 6: Publish domain event for session initialization
+    // 6. Publish domain event for session initialization
     this.publishSessionInitializedEvent(savedSession, chatbotConfig, cacheWarmed);
 
     return {
@@ -91,14 +80,7 @@ export class InitializeChatSessionUseCase {
     };
   }
 
-  /**
-   * Validate chatbot configuration exists and is active
-   * 
-   * AI INSTRUCTIONS:
-   * - Use domain-specific error types
-   * - Follow single responsibility principle
-   * - Validate business rules (config must be active)
-   */
+  // Validate chatbot configuration exists and is active
   private async validateChatbotConfig(chatbotConfigId: string): Promise<ChatbotConfig> {
     if (!chatbotConfigId?.trim()) {
       throw new BusinessRuleViolationError(
@@ -127,36 +109,21 @@ export class InitializeChatSessionUseCase {
     return config;
   }
 
-  /**
-   * Generate unique visitor ID
-   * 
-   * AI INSTRUCTIONS:
-   * - Create unique, traceable visitor identifiers
-   * - Use timestamp and random components for uniqueness
-   * - Follow consistent naming patterns
-   */
+  // Generate unique visitor ID
   private generateVisitorId(): string {
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substr(2, 9);
     return `visitor_${timestamp}_${randomSuffix}`;
   }
 
-  /**
-   * Warm knowledge cache for optimal performance
-   * 
-   * AI INSTRUCTIONS:
-   * - Initialize in-memory vector cache for fast similarity search
-   * - Handle cache warming errors gracefully
-   * - Measure performance for monitoring
-   * - Don't fail session creation if cache warming fails
-   */
+  // Warm knowledge cache for optimal performance
   private async warmKnowledgeCache(
     chatbotConfig: ChatbotConfig
   ): Promise<{ success: boolean; timeMs: number }> {
     const startTime = Date.now();
     
     try {
-      // Create cache warming specific log file for session initialization
+      // Create cache warming specific log file
       const cacheWarmingLogFile = `cache-warming-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
       
       // Check if vector cache is already initialized
@@ -166,7 +133,6 @@ export class InitializeChatSessionUseCase {
 
       if (!vectorCacheReady) {
         // Initialize vector cache by triggering a dummy search
-        // This will load all vectors into memory during the first search
         try {
           await this.knowledgeRetrievalService.searchKnowledge({
             userQuery: 'initialization dummy query',
@@ -179,7 +145,7 @@ export class InitializeChatSessionUseCase {
         }
       }
       
-      // Trigger embedding cache warming with proper shared log file
+      // Trigger embedding cache warming
       if ('warmCache' in this.knowledgeRetrievalService) {
         await (this.knowledgeRetrievalService as any).warmCache(cacheWarmingLogFile);
       }
@@ -206,15 +172,7 @@ export class InitializeChatSessionUseCase {
     }
   }
 
-  /**
-   * Publish session initialized domain event
-   * 
-   * AI INSTRUCTIONS:
-   * - Create and publish domain events for session lifecycle
-   * - Include relevant context for event handlers
-   * - Follow domain event patterns
-   * - Handle events at use case level when entity doesn't support domain events
-   */
+  // Publish session initialized domain event
   private publishSessionInitializedEvent(
     session: ChatSession,
     chatbotConfig: ChatbotConfig,
@@ -231,31 +189,13 @@ export class InitializeChatSessionUseCase {
       }
     );
 
-    // Handle domain event at use case level since ChatSession entity 
-    // doesn't extend AggregateRoot in current architecture
-    // In a full DDD implementation, this would go through an event bus
+    // Handle domain event at use case level
     this.handleSessionInitializedEvent(event);
   }
 
-  /**
-   * Handle session initialized domain event
-   * 
-   * AI INSTRUCTIONS:
-   * - Process domain events synchronously at use case level
-   * - Log event for monitoring and debugging
-   * - In production, this would publish to event bus for async handlers
-   */
+  // Handle session initialized domain event
   private handleSessionInitializedEvent(event: SessionInitializedEvent): void {
     // Log the domain event for monitoring
-    // Domain event logged for session initialization tracking
-
-    // In a full implementation, this would:
-    // 1. Publish to event bus for async processing
-    // 2. Trigger event handlers (analytics, notifications, etc.)
-    // 3. Update read models or projections
-    // 4. Send events to external systems
-    
-    // For now, we handle it synchronously for immediate needs
     // Future: Replace with proper event bus integration
   }
 } 

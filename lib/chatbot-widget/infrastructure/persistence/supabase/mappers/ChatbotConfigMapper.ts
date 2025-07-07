@@ -4,9 +4,7 @@ import { KnowledgeBase } from '../../../../domain/value-objects/ai-configuration
 import { OperatingHours } from '../../../../domain/value-objects/session-management/OperatingHours';
 import { AIConfiguration } from '../../../../domain/value-objects/ai-configuration/AIConfiguration';
 
-/**
- * Raw database record structure from Supabase
- */
+// Raw database record structure from Supabase
 export interface RawChatbotConfigDbRecord {
   id: string;
   organization_id: string;
@@ -23,9 +21,7 @@ export interface RawChatbotConfigDbRecord {
   updated_at: string;
 }
 
-/**
- * Insert data structure for database operations
- */
+// Insert data structure for database operations
 export interface InsertChatbotConfigData {
   id: string;
   organization_id: string;
@@ -40,9 +36,7 @@ export interface InsertChatbotConfigData {
   is_active: boolean;
 }
 
-/**
- * Update data structure for database operations
- */
+// Update data structure for database operations
 export interface UpdateChatbotConfigData {
   name?: string;
   avatar_url?: string;
@@ -57,19 +51,15 @@ export interface UpdateChatbotConfigData {
 }
 
 /**
- * ChatbotConfigMapper Infrastructure Mapper
- * 
- * AI INSTRUCTIONS:
- * - Transform between database records and domain entities
- * - Keep focused on data transformation only
- * - Follow @golden-rule infrastructure mapper patterns
+ * AI Instructions: ChatbotConfigMapper for database/domain transformation
+ * - Transform between Supabase JSONB records and domain entities
+ * - Handle complex value object mapping with proper defaults
  * - Use domain entity factory methods for construction
+ * - Follow @golden-rule infrastructure mapper patterns
  */
 
 export class ChatbotConfigMapper {
-  /**
-   * Transform database record to domain entity using factory method
-   */
+  /** Transform database record to domain entity using factory method */
   static toDomainEntity(data: any): ChatbotConfig {
     return ChatbotConfig.fromPersistence({
       id: data.id,
@@ -79,7 +69,7 @@ export class ChatbotConfigMapper {
       description: data.description,
       personalitySettings: this.mapPersonalitySettings(data.personality_settings),
       knowledgeBase: this.mapKnowledgeBase(data.knowledge_base),
-      operatingHours: this.mapOperatingHours(data.operating_hours || { timezone: 'UTC' }),
+      operatingHours: this.mapOperatingHours(data.operating_hours),
       leadQualificationQuestions: this.mapLeadQuestions(data.lead_qualification_questions),
       aiConfiguration: this.mapAIConfiguration(data.ai_configuration),
       isActive: data.is_active,
@@ -88,9 +78,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Transform domain entity to database record
-   */
+  /** Transform domain entity to database record */
   static toDbRecord(config: ChatbotConfig): any {
     return {
       id: config.id,
@@ -109,9 +97,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  /**
-   * Transform domain entity to insert data
-   */
+  /** Transform domain entity to insert data */
   static toInsert(config: ChatbotConfig): InsertChatbotConfigData {
     return {
       id: config.id,
@@ -128,9 +114,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  /**
-   * Transform domain entity to update data
-   */
+  /** Transform domain entity to update data */
   static toUpdate(config: ChatbotConfig): UpdateChatbotConfigData {
     return {
       name: config.name,
@@ -146,9 +130,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  /**
-   * Map JSONB personality settings to domain value object
-   */
+  /** Map JSONB personality settings to domain value object */
   private static mapPersonalitySettings(data: any): PersonalitySettings {
     return PersonalitySettings.create({
       tone: data?.tone || 'professional',
@@ -175,9 +157,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Map JSONB knowledge base to domain value object
-   */
+  /** Map JSONB knowledge base to domain value object */
   private static mapKnowledgeBase(data: any): KnowledgeBase {
     return KnowledgeBase.create({
       companyInfo: data?.companyInfo || '',
@@ -215,9 +195,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Map JSONB operating hours to domain value object
-   */
+  /** Map JSONB operating hours to domain value object */
   private static mapOperatingHours(data: any): OperatingHours {
     return OperatingHours.create({
       timezone: data?.timezone || 'UTC',
@@ -236,50 +214,35 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Map JSONB AI configuration to domain value object
-   */
+  /** Map JSONB AI configuration to domain value object */
   private static mapAIConfiguration(data: any): AIConfiguration {
     if (!data) {
       return AIConfiguration.createDefault();
     }
     
     return AIConfiguration.create({
-      // OpenAI Configuration
       openaiModel: data?.openaiModel || 'gpt-4o-mini',
       openaiTemperature: data?.openaiTemperature || 0.3,
       openaiMaxTokens: data?.openaiMaxTokens || 1000,
-      
-      // Context Window Configuration
       contextMaxTokens: data?.contextMaxTokens || 12000,
       contextSystemPromptTokens: data?.contextSystemPromptTokens || 500,
       contextResponseReservedTokens: data?.contextResponseReservedTokens || 3000,
       contextSummaryTokens: data?.contextSummaryTokens || 200,
-      
-      // Intent Classification
       intentConfidenceThreshold: data?.intentConfidenceThreshold || 0.7,
       intentAmbiguityThreshold: data?.intentAmbiguityThreshold || 0.2,
       enableMultiIntentDetection: data?.enableMultiIntentDetection !== undefined ? data.enableMultiIntentDetection : true,
       enablePersonaInference: data?.enablePersonaInference !== undefined ? data.enablePersonaInference : true,
-      
-      // Entity Extraction
       enableAdvancedEntities: data?.enableAdvancedEntities !== undefined ? data.enableAdvancedEntities : true,
       entityExtractionMode: data?.entityExtractionMode || 'comprehensive',
       customEntityTypes: data?.customEntityTypes || [],
-      
-      // Conversation Flow
       maxConversationTurns: data?.maxConversationTurns || 20,
       inactivityTimeoutSeconds: data?.inactivityTimeoutSeconds || 300,
       enableJourneyRegression: data?.enableJourneyRegression !== undefined ? data.enableJourneyRegression : true,
       enableContextSwitchDetection: data?.enableContextSwitchDetection !== undefined ? data.enableContextSwitchDetection : true,
-      
-      // Lead Scoring
       enableAdvancedScoring: data?.enableAdvancedScoring !== undefined ? data.enableAdvancedScoring : true,
       entityCompletenessWeight: data?.entityCompletenessWeight || 0.3,
       personaConfidenceWeight: data?.personaConfidenceWeight || 0.2,
       journeyProgressionWeight: data?.journeyProgressionWeight || 0.25,
-      
-      // Performance & Monitoring
       enablePerformanceLogging: data?.enablePerformanceLogging !== undefined ? data.enablePerformanceLogging : true,
       enableIntentAnalytics: data?.enableIntentAnalytics !== undefined ? data.enableIntentAnalytics : true,
       enablePersonaAnalytics: data?.enablePersonaAnalytics !== undefined ? data.enablePersonaAnalytics : true,
@@ -287,9 +250,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Map JSONB lead qualification questions to domain objects
-   */
+  /** Map JSONB lead qualification questions to domain objects */
   private static mapLeadQuestions(data: any): LeadQualificationQuestion[] {
     if (!Array.isArray(data)) {
       return [];
@@ -298,9 +259,7 @@ export class ChatbotConfigMapper {
     return data.map((question: any) => this.mapLeadQuestion(question));
   }
 
-  /**
-   * Map lead qualification question object
-   */
+  /** Map lead qualification question object */
   private static mapLeadQuestion(question: any): LeadQualificationQuestion {
     return {
       id: question?.id || crypto.randomUUID(),

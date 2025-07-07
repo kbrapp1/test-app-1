@@ -1,10 +1,12 @@
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ITokenCountingService, TokenUsage } from '../../../domain/services/interfaces/ITokenCountingService';
+import { perf } from '../../../../performance-profiler';
 
 type SupportedOpenAIModel = 'gpt-4o' | 'gpt-4o-mini';
 
 export class OpenAITokenCountingService implements ITokenCountingService {
   private readonly DEFAULT_MODEL: SupportedOpenAIModel = 'gpt-4o-mini';
+  private static readonly CACHE_KEY = 'OpenAITokenCountingService_tiktokenCache';
 
   // Simple pricing data (per 1K tokens)
   private readonly MODEL_PRICING = {
@@ -46,8 +48,17 @@ export class OpenAITokenCountingService implements ITokenCountingService {
    */
   async countTextTokens(text: string): Promise<number> {
     try {
-      // Try to use tiktoken if available
-      const tiktoken = await import('tiktoken');
+      // Cache the tiktoken import to avoid repeated dynamic imports
+      if (!(globalThis as any)[OpenAITokenCountingService.CACHE_KEY]) {
+        const { result: tiktokenModule } = await perf.measureAsync(
+          'ImportTiktoken',
+          () => import('tiktoken'),
+          { library: 'tiktoken', operation: 'dynamic-import' }
+        );
+        (globalThis as any)[OpenAITokenCountingService.CACHE_KEY] = tiktokenModule;
+      }
+      
+      const tiktoken = (globalThis as any)[OpenAITokenCountingService.CACHE_KEY];
       const encoding = tiktoken.encoding_for_model(this.DEFAULT_MODEL as any);
       const tokens = encoding.encode(text);
       encoding.free();

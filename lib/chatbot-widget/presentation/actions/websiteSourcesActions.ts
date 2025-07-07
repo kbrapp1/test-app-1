@@ -17,24 +17,16 @@ import {
 } from '../utils/websiteSourcesHelpers';
 
 /**
- * Website Sources Server Actions
- * 
- * AI INSTRUCTIONS:
+ * AI Instructions: Server actions for website source management
  * - Handle user requests and delegate to appropriate services
- * - Configuration changes go through ChatbotConfigRepository
- * - Crawling operations go through WebsiteKnowledgeApplicationService
- * - Data cleanup goes through VectorKnowledgeApplicationService
- * - Proper error handling with domain-specific errors
- * - Only export async functions, keep functions under 50 lines each
- * - Single responsibility per function
+ * - Maintain single responsibility per function
+ * - Use composition root for dependencies
+ * - Follow DDD principles with proper error handling
  */
 
-// Re-export types for components to use
 export type { WebsiteSourceFormData, ActionResult } from '../utils/websiteSourcesHelpers';
 
-/**
- * Add Website Source Action - Delegate to configuration repository
- */
+// Add Website Source Action
 export async function addWebsiteSource(
   configId: string,
   organizationId: string,
@@ -59,9 +51,7 @@ export async function addWebsiteSource(
   }
 }
 
-/**
- * Remove Website Source Action - Clean up vector data first, then remove from configuration
- */
+// Remove Website Source Action
 export async function removeWebsiteSource(
   configId: string,
   organizationId: string,
@@ -92,9 +82,7 @@ export async function removeWebsiteSource(
   }
 }
 
-/**
- * Crawl Website Source Action - Delegate to application service and update status
- */
+// Crawl Website Source Action
 export async function crawlWebsiteSource(
   configId: string,
   organizationId: string,
@@ -144,9 +132,7 @@ export async function crawlWebsiteSource(
   }
 }
 
-/**
- * Update Website Source Action - Use domain methods for immutable updates
- */
+// Update Website Source Action
 export async function updateWebsiteSource(
   configId: string,
   organizationId: string,
@@ -178,9 +164,7 @@ export async function updateWebsiteSource(
   }
 }
 
-/**
- * Get Crawled Pages Action - Delegate to application service
- */
+// Get Crawled Pages Action
 export async function getCrawledPages(
   organizationId: string,
   chatbotConfigId: string,
@@ -218,9 +202,7 @@ export async function getCrawledPages(
   }
 }
 
-/**
- * Cleanup Website Sources Action - Clean up vector data and configuration
- */
+// Cleanup Website Sources Action
 export async function cleanupWebsiteSources(
   configId: string,
   organizationId: string

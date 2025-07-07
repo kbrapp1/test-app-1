@@ -79,7 +79,7 @@ export class CrawlAndStoreWebsiteUseCase {
   ): Promise<CrawlAndStoreResult> {
     try {
       // Step 1: Crawl website using existing use case
-      const crawlResult = await this.crawlWebsiteUseCase.execute(source, settings);
+      const crawlResult = await this.crawlWebsiteUseCase.execute(source, settings, organizationId);
 
       // Step 2: Prepare knowledge items for storage
       const itemsToStore = await this.prepareKnowledgeItemsForStorage(

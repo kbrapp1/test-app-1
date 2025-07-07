@@ -11,8 +11,11 @@ export interface OpenAIConfig extends ProviderConfig {
 }
 
 /**
- * OpenAI provider for chatbot widget
- * Handles GPT-4o conversation generation with function calling for lead capture
+ * AI INSTRUCTIONS:
+ * - OpenAI provider for chatbot widget conversation generation
+ * - Manage GPT-4o client lifecycle (connect/disconnect/health checks)
+ * - Handle chat completions with function calling for lead capture
+ * - Estimate costs using current GPT-4o pricing
  */
 export class OpenAIProvider implements BaseProvider {
   readonly type = ProviderType.OPENAI;
@@ -56,7 +59,6 @@ export class OpenAIProvider implements BaseProvider {
     }
 
     try {
-      // Simple health check - list models
       await this.client.models.list();
       return true;
     } catch (error) {
@@ -64,9 +66,7 @@ export class OpenAIProvider implements BaseProvider {
     }
   }
 
-  /**
-   * Capture API call for debugging (if debug service available)
-   */
+  /** Capture API call for debugging when debug service available */
   private captureApiCall(
     sessionId: string | null,
     callType: 'first' | 'second',
@@ -85,9 +85,7 @@ export class OpenAIProvider implements BaseProvider {
     }
   }
 
-  /**
-   * Generate chat completion with optional function calling
-   */
+  /** Generate chat completion with optional function calling */
   async createChatCompletion(
     messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
     functions?: OpenAI.Chat.Completions.ChatCompletionCreateParams.Function[],
@@ -114,7 +112,6 @@ export class OpenAIProvider implements BaseProvider {
     try {
       const startTime = Date.now();
       
-      // Prepare request data for debug capture
       const requestData = {
         endpoint: 'https://api.openai.com/v1/chat/completions',
         method: 'POST',
@@ -122,15 +119,13 @@ export class OpenAIProvider implements BaseProvider {
         payload: params,
         payloadSize: `${JSON.stringify(params).length} characters`,
         messageCount: params.messages.length,
-        conversationHistoryLength: params.messages.length - 1, // Exclude current user message
+        conversationHistoryLength: params.messages.length - 1,
         userMessage: params.messages[params.messages.length - 1]?.content || ''
       };
 
       const response = await this.client.chat.completions.create(params);
       
       const processingTime = Date.now() - startTime;
-      
-      // Prepare response data for debug capture
       const responseData = {
         timestamp: new Date().toISOString(),
         processingTime: `${processingTime}ms`,
@@ -138,27 +133,19 @@ export class OpenAIProvider implements BaseProvider {
         responseSize: `${JSON.stringify(response).length} characters`
       };
 
-
-
-      // Capture API call for debugging
       if (sessionId && callType) {
         this.captureApiCall(sessionId, callType, requestData, responseData, processingTime);
       }
 
-      // Calculate and log actual costs
       if (response.usage) {
         const costEstimate = this.estimateCost(
           response.usage.prompt_tokens,
           response.usage.completion_tokens
         );
-        
-
       }
 
       return response;
     } catch (error) {
-      // OpenAI API Error - handled by error boundary
-      
       if (error instanceof Error) {
         if (error.message.includes('API key')) {
           throw new Error('OpenAI API key is invalid or missing');
@@ -175,16 +162,13 @@ export class OpenAIProvider implements BaseProvider {
     }
   }
 
-  /**
-   * Get token usage tracking
-   */
+  /** Get token usage tracking */
   async getUsageStats(): Promise<{
     tokensUsed: number;
     requestsCount: number;
     estimatedCost: number;
   }> {
-    // For MVP, return placeholder stats
-    // In production, implement proper usage tracking
+    // MVP placeholder - implement proper usage tracking in production
     return {
       tokensUsed: 0,
       requestsCount: 0,
@@ -192,13 +176,11 @@ export class OpenAIProvider implements BaseProvider {
     };
   }
 
-  /**
-   * Calculate estimated cost for a request
-   */
+  /** Calculate estimated cost for a request */
   estimateCost(promptTokens: number, completionTokens: number): number {
-    // GPT-4o pricing (as of 2024)
-    const promptCostPer1K = 0.005; // $5.00 per 1M tokens = $0.005 per 1K tokens
-    const completionCostPer1K = 0.020; // $20.00 per 1M tokens = $0.020 per 1K tokens
+    // GPT-4o pricing (as of 2024): $5.00/$20.00 per 1M tokens
+    const promptCostPer1K = 0.005;
+    const completionCostPer1K = 0.020;
     
     const promptCost = (promptTokens / 1000) * promptCostPer1K;
     const completionCost = (completionTokens / 1000) * completionCostPer1K;

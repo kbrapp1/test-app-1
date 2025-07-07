@@ -1,10 +1,9 @@
 /**
- * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
- * - Infrastructure implementation of IChatbotLoggingService
- * - Single responsibility: Handle file-based logging coordination
- * - Follow @golden-rule patterns: under 250 lines, clean separation
- * - Delegate logger creation to separate implementations
- * - Server-side only: Use dynamic imports for Node.js modules
+ * AI Instructions: Infrastructure implementation of IChatbotLoggingService
+ * - Handle file-based logging coordination with async write management
+ * - Create session and operation loggers with proper context
+ * - Server-side only with dynamic imports for Node.js modules
+ * - Follow @golden-rule patterns under 250 lines
  */
 
 import { 
@@ -61,7 +60,6 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
 
   addRawLogEntry(message: string, logFile?: string): void {
     if (!this.shouldLog(logFile)) return;
-    // Add newline only if message doesn't already end with one
     const content = message.endsWith('\n') ? message : `${message}\n`;
     this.writeAsync(content, logFile!);
   }
@@ -129,8 +127,8 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     if (!this.isServerSide()) return;
 
     try {
-      const fs = require('fs');
-      const path = require('path');
+      const fs = eval('require("fs")');
+      const path = eval('require("path")');
       const logPath = path.join(this.config.logDirectory, logFile);
       
       this.ensureLogDirectorySync();
@@ -161,7 +159,7 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     if (!this.isServerSide()) return;
 
     try {
-      const fs = require('fs');
+      const fs = eval('require("fs")');
       if (!fs.existsSync(this.config.logDirectory)) {
         fs.mkdirSync(this.config.logDirectory, { recursive: true });
       }
@@ -238,7 +236,6 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     
     if (entry.data !== undefined && entry.data !== null) {
       if (typeof entry.data === 'object') {
-        // FIXED: Remove timestamps from JSON data lines for cleaner formatting
         const jsonString = JSON.stringify(entry.data, null, 2);
         result += '\n' + jsonString;
       } else {
@@ -247,13 +244,11 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     }
     
     if (entry.error) {
-      // FIXED: Remove timestamps from error JSON lines for cleaner formatting
       const errorString = JSON.stringify(entry.error, null, 2);
       result += '\n' + errorString;
     }
     
     if (entry.metrics) {
-      // FIXED: Remove timestamps from metrics JSON lines for cleaner formatting
       const metricsString = JSON.stringify(entry.metrics, null, 2);
       result += '\n' + metricsString;
     }

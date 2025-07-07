@@ -62,14 +62,57 @@ export class PromptCoordinationService {
    */
   coordinatePromptSections(
     sectionsByService: Map<ServiceIdentifier, PromptSection[]>,
-    options: Partial<PromptCoordinationOptions> = {}
+    options: Partial<PromptCoordinationOptions> = {},
+    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): CoordinatedPromptResult {
     const coordinationOptions = { ...PromptCoordinationService.DEFAULT_OPTIONS, ...options };
     
     this.validateCoordinationInputs(sectionsByService, coordinationOptions);
     
+    // AI: Log initial state before coordination
+    if (logger) {
+      logger.logRaw('');
+      logger.logRaw('🔧 STEP 3.5: Coordinate and optimize system prompt sections');
+      logger.logRaw('🔧 =====================================');
+      logger.logRaw('🔧 PROMPT COORDINATION & DEDUPLICATION');
+      logger.logRaw('🔧 =====================================');
+    }
+    
+    const originalSectionCount = Array.from(sectionsByService.values()).reduce((sum, sections) => sum + sections.length, 0);
+    const originalTotalLength = this.calculateTotalContentLength(sectionsByService);
+    
+    if (logger) {
+      logger.logMessage(`📊 STEP 3.5.1: Analyze initial prompt sections`);
+      logger.logMessage(`   Services: ${sectionsByService.size}`);
+      logger.logMessage(`   Total sections: ${originalSectionCount}`);
+      logger.logMessage(`   Total content length: ${originalTotalLength} characters`);
+      
+      // Log each service's contribution with section details
+      let globalSectionCounter = 1;
+      for (const [serviceId, sections] of sectionsByService) {
+        const serviceLength = sections.reduce((sum, s) => sum + s.content.length, 0);
+        logger.logMessage(`   ${serviceId.value}: ${sections.length} sections (${serviceLength} chars)`);
+        
+        // Show individual section details with global numbering
+        sections.forEach((section) => {
+          const preview = section.content.substring(0, 60).replace(/\n/g, ' ').trim();
+          logger.logMessage(`     ${globalSectionCounter}. "${section.title}" [${section.sectionType}] (${section.content.length} chars)`);
+          logger.logMessage(`        Preview: ${preview}${section.content.length > 60 ? '...' : ''}`);
+          globalSectionCounter++;
+        });
+      }
+    }
+    
     // AI: Apply service limits first
     const limitedSections = this.applyServiceLimits(sectionsByService, coordinationOptions);
+    const limitedSectionCount = Array.from(limitedSections.values()).reduce((sum, sections) => sum + sections.length, 0);
+    const sectionsLimited = originalSectionCount - limitedSectionCount;
+    
+    if (sectionsLimited > 0 && logger) {
+      logger.logMessage(`📉 STEP 3.5.2: Apply service section limits`);
+      logger.logMessage(`   Sections removed: ${sectionsLimited}`);
+      logger.logMessage(`   Sections remaining: ${limitedSectionCount}`);
+    }
     
     // AI: Build service priority mappings
     const servicePriorities = this.buildServicePriorityMappings(limitedSections);
@@ -77,18 +120,82 @@ export class PromptCoordinationService {
     // AI: Apply deduplication if enabled
     let processedSections = this.flattenSections(limitedSections);
     let duplicatesRemoved = 0;
+    const beforeDeduplicationCount = processedSections.length;
     
     if (coordinationOptions.enableDeduplication) {
       const deduplicationResult = this.deduplicateSections(processedSections);
       processedSections = deduplicationResult.sections;
       duplicatesRemoved = deduplicationResult.duplicatesRemoved;
+      
+      if (duplicatesRemoved > 0 && logger) {
+        logger.logMessage(`🔄 STEP 3.5.3: Remove duplicate content`);
+        logger.logMessage(`   Duplicate sections removed: ${duplicatesRemoved}`);
+        logger.logMessage(`   Sections after deduplication: ${processedSections.length}`);
+        
+        // Log what was deduplicated with more detail
+        const duplicateDetails = this.getDeduplicationDetails(this.flattenSections(limitedSections));
+        if (duplicateDetails.length > 0) {
+          logger.logMessage(`   📝 DEDUPLICATION DETAILS:`);
+          for (const detail of duplicateDetails) {
+            logger.logMessage(`   Removed duplicate: "${detail.contentPreview}" (${detail.duplicateCount} copies)`);
+            logger.logMessage(`     Section type: ${detail.sectionType}`);
+          }
+        }
+      }
     }
     
     // AI: Resolve conflicts using strategy
     const conflictResult = this.resolveConflicts(processedSections, coordinationOptions);
     
+    if (conflictResult.conflictsResolved > 0 && logger) {
+      logger.logMessage(`⚖️  STEP 3.5.4: Resolve section conflicts`);
+      logger.logMessage(`   Conflicts resolved: ${conflictResult.conflictsResolved}`);
+      logger.logMessage(`   Strategy used: ${coordinationOptions.conflictResolutionStrategy}`);
+    }
+    
     // AI: Apply final ordering
     const finalSections = this.applyOrdering(conflictResult.sections, coordinationOptions);
+    const finalTotalLength = finalSections.reduce((sum, s) => sum + s.content.length, 0);
+    
+    // AI: Log final coordination summary
+    if (logger) {
+      logger.logMessage(`✅ STEP 3.5.5: Coordination complete`);
+      logger.logMessage(`   Final sections: ${finalSections.length}`);
+      logger.logMessage(`   Final content length: ${finalTotalLength} characters`);
+      logger.logMessage(`   Content reduction: ${originalTotalLength - finalTotalLength} characters (${Math.round((1 - finalTotalLength/originalTotalLength) * 100)}%)`);
+      logger.logMessage(`   Sections reduction: ${originalSectionCount - finalSections.length} sections`);
+      
+      if (finalSections.length > 0) {
+        logger.logMessage(`📋 FINAL SECTION BREAKDOWN:`);
+        const sectionsByType = this.groupSectionsByType(finalSections);
+        let globalFinalCounter = 1;
+        for (const [type, sections] of sectionsByType) {
+          const typeLength = sections.reduce((sum, s) => sum + s.content.length, 0);
+          logger.logMessage(`   ${type}: ${sections.length} sections (${typeLength} chars)`);
+          
+          // Show detailed breakdown of each final section with global numbering
+          sections.forEach((section) => {
+            const preview = section.content.substring(0, 80).replace(/\n/g, ' ').trim();
+            const serviceName = section.serviceId.value;
+            const priority = section.priority.toString();
+            logger.logMessage(`     ${globalFinalCounter}. "${section.title}" from ${serviceName} [${priority}] (${section.content.length} chars)`);
+            logger.logMessage(`        Preview: ${preview}${section.content.length > 80 ? '...' : ''}`);
+            globalFinalCounter++;
+          });
+        }
+        
+        // Show final sections in execution order
+        logger.logMessage(`🔄 FINAL EXECUTION ORDER:`);
+        finalSections.forEach((section, index) => {
+          const serviceName = section.serviceId.value;
+          const preview = section.content.substring(0, 50).replace(/\n/g, ' ').trim();
+          logger.logMessage(`   ${index + 1}. [${section.sectionType}] "${section.title}" (${serviceName}) - ${section.content.length} chars`);
+          logger.logMessage(`      ${preview}${section.content.length > 50 ? '...' : ''}`);
+        });
+      }
+      
+      logger.logRaw('🔧 =====================================');
+    }
     
     return {
       sections: Object.freeze(finalSections),
@@ -391,5 +498,45 @@ export class PromptCoordinationService {
   ): { sections: PromptSection[]; conflictsResolved: number; } {
     // AI: Implementation for content merging resolution
     return { sections, conflictsResolved: conflicts.length };
+  }
+
+  // AI: Calculate total content length across all services
+  private calculateTotalContentLength(sectionsByService: Map<ServiceIdentifier, PromptSection[]>): number {
+    let totalLength = 0;
+    for (const sections of sectionsByService.values()) {
+      totalLength += sections.reduce((sum, section) => sum + section.content.length, 0);
+    }
+    return totalLength;
+  }
+
+  // AI: Get detailed information about what was deduplicated
+  private getDeduplicationDetails(sections: PromptSection[]): Array<{
+    contentPreview: string;
+    duplicateCount: number;
+    sectionType: string;
+  }> {
+    const contentGroups = this.groupSectionsByContent(sections);
+    const duplicateDetails: Array<{
+      contentPreview: string;
+      duplicateCount: number;
+      sectionType: string;
+    }> = [];
+
+    for (const [contentKey, sectionsWithSameContent] of contentGroups) {
+      if (sectionsWithSameContent.length > 1) {
+        const firstSection = sectionsWithSameContent[0];
+        const contentPreview = firstSection.content.length > 50 
+          ? firstSection.content.substring(0, 50) + '...'
+          : firstSection.content;
+        
+        duplicateDetails.push({
+          contentPreview: contentPreview.trim(),
+          duplicateCount: sectionsWithSameContent.length,
+          sectionType: firstSection.sectionType
+        });
+      }
+    }
+
+    return duplicateDetails;
   }
 } 

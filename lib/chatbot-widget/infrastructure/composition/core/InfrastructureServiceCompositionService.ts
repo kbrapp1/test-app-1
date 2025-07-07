@@ -128,6 +128,48 @@ export class InfrastructureServiceCompositionService {
   static clearCache(): void {
     this.tokenCountingService = null;
     this.debugInformationService = null;
+    
+    // Clear dynamic import caches to prevent memory leaks
+    this.clearDynamicImportCaches();
+  }
+
+  /**
+   * Clear dynamic import caches
+   * 
+   * AI INSTRUCTIONS:
+   * - Clear all cached dynamic imports to prevent memory leaks
+   * - Essential for testing and production memory management
+   * - Coordinates with existing cache management patterns
+   * - Uses safe module access to avoid Next.js build issues
+   */
+  private static clearDynamicImportCaches(): void {
+    try {
+      // Clear OpenAI service caches using globalThis to avoid module resolution issues
+      if (typeof globalThis !== 'undefined') {
+        // Clear tiktoken cache
+        const tiktokenCacheKey = 'OpenAITokenCountingService_tiktokenCache';
+        if ((globalThis as any)[tiktokenCacheKey]) {
+          (globalThis as any)[tiktokenCacheKey] = null;
+        }
+
+        // Clear logging service cache
+        const loggingCacheKey = 'OpenAIChatbotProcessingService_loggingServiceCache';
+        if ((globalThis as any)[loggingCacheKey]) {
+          (globalThis as any)[loggingCacheKey] = null;
+        }
+
+        // Clear conversation context orchestrator cache
+        const contextCacheKey = 'UseCaseCompositionService_conversationContextOrchestratorCache';
+        if ((globalThis as any)[contextCacheKey]) {
+          (globalThis as any)[contextCacheKey] = null;
+        }
+      }
+    } catch (error) {
+      // Silently handle any cache clearing errors to prevent breaking the main flow
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Failed to clear dynamic import caches:', error);
+      }
+    }
   }
 
   /**

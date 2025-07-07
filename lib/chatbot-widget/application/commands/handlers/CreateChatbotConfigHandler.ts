@@ -1,10 +1,12 @@
 /**
  * Create Chatbot Config Command Handler
  * 
- * CQRS Command Handler that processes chatbot configuration creation commands.
- * Delegates to the Configure Chatbot Use Case for business logic execution.
- * 
- * Single Responsibility: Handle CreateChatbotConfigCommand processing
+ * AI INSTRUCTIONS:
+ * - CQRS Command Handler processing chatbot configuration creation commands with clean delegation
+ * - Coordinates between command layer and use case layer following hexagonal architecture patterns
+ * - Handles command validation, use case orchestration, and structured result transformation
+ * - Implements proper error handling with contextual information for debugging and monitoring
+ * - Maintains separation of concerns between command processing and business logic execution
  */
 
 import { CreateChatbotConfigCommand, CreateChatbotConfigResult } from '../CreateChatbotConfigCommand';
@@ -15,9 +17,7 @@ export class CreateChatbotConfigHandler {
     private readonly configureChatbotUseCase: ConfigureChatbotUseCase
   ) {}
 
-  /**
-   * Handle the create chatbot config command
-   */
+  // Handle the create chatbot config command
   async handle(command: CreateChatbotConfigCommand): Promise<CreateChatbotConfigResult> {
     try {
       // Delegate to Use Case for business logic
@@ -39,7 +39,7 @@ export class CreateChatbotConfigHandler {
         validationResults: result.validationResults
       };
     } catch (error) {
-      // Re-throw with context for upper layers to handle
+      // Re-throw with context
       throw new Error(`Failed to create chatbot config: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

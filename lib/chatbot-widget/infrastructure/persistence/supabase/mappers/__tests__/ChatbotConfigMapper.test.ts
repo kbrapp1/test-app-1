@@ -61,7 +61,7 @@ describe('ChatbotConfigMapper', () => {
 
         expect(websiteSource.status).toBe('completed');
         expect(websiteSource.pageCount).toBe(5);
-        expect(websiteSource.lastCrawled).toEqual(new Date('2024-01-01T00:00:00.000Z'));
+        expect(websiteSource.lastCrawled?.toISOString()).toBe('2024-01-01T00:00:00.000Z');
         
         // Critical: Ensure no crawlStatus field exists
         expect((websiteSource as any).crawlStatus).toBeUndefined();

@@ -15,6 +15,7 @@ import { IAIConversationService } from '../../domain/services/interfaces/IAIConv
 import { RepositoryCompositionService } from './RepositoryCompositionService';
 import { DomainServiceCompositionService } from './DomainServiceCompositionService';
 import { ApplicationServiceCompositionService } from './ApplicationServiceCompositionService';
+import { perf } from '../../../performance-profiler';
 
 /**
  * Use Case Composition Service
@@ -28,6 +29,7 @@ export class UseCaseCompositionService {
   private static captureLeadUseCase: CaptureLeadUseCase | null = null;
   private static validateContentUseCase: ValidateContentUseCase | null = null;
   private static sanitizeUserContentUseCase: SanitizeUserContentUseCase | null = null;
+  private static readonly CONTEXT_CACHE_KEY = 'UseCaseCompositionService_conversationContextOrchestratorCache';
 
   /**
    * Get Configure Chatbot Use Case
@@ -54,7 +56,16 @@ export class UseCaseCompositionService {
       const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
       // Create ConversationContextOrchestrator with explicit dependency injection (following @golden-rule patterns)
-      const { ConversationContextOrchestrator } = await import('../../domain/services/conversation/ConversationContextOrchestrator');
+      // Cache the import to avoid repeated dynamic imports
+      if (!(globalThis as any)[this.CONTEXT_CACHE_KEY]) {
+        const { result: orchestratorModule } = await perf.measureAsync(
+          'ImportConversationContextOrchestrator',
+          () => import('../../domain/services/conversation/ConversationContextOrchestrator'),
+          { library: 'ConversationContextOrchestrator', operation: 'dynamic-import' }
+        );
+        (globalThis as any)[this.CONTEXT_CACHE_KEY] = orchestratorModule;
+      }
+      const { ConversationContextOrchestrator } = (globalThis as any)[this.CONTEXT_CACHE_KEY];
       const conversationContextOrchestrator = new ConversationContextOrchestrator(
         tokenCountingService,
         intentClassificationService,

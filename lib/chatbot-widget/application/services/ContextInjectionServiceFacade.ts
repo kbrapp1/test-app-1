@@ -7,7 +7,6 @@
  * - Keep under 250 lines by focusing on coordination
  * - Follow @golden-rule patterns exactly
  * - Single responsibility: unified context injection interface
- * - REFACTORED: Uses helper modules to stay under line limit
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';

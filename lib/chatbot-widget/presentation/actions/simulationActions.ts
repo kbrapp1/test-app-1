@@ -1,11 +1,9 @@
 /**
- * Simulation Actions
- * 
- * AI INSTRUCTIONS:
- * - Server actions for chatbot simulation testing
+ * AI Instructions: Server actions for chatbot simulation testing
  * - Use real API pipeline for authentic testing
- * - Handle session creation and message processing
- * - All results logged to file, minimal UI feedback
+ * - Maintain proper session management for simulations
+ * - Follow DDD principles with composition root
+ * - Include debug information for QA analysis
  */
 
 'use server';
@@ -38,12 +36,9 @@ export interface SimulationMessageResult {
   error?: string;
 }
 
-/**
- * Create a new chat session for simulation
- */
+// Create new chat session for simulation
 export async function createSimulationSession(organizationId: string): Promise<{ success: boolean; session?: SimulationSession; error?: string }> {
   try {
-    // Get chatbot config for organization
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
     const chatbotConfig = await configRepository.findByOrganizationId(organizationId);
     
@@ -61,7 +56,6 @@ export async function createSimulationSession(organizationId: string): Promise<{
       };
     }
 
-    // Create new simulation session
     const visitorId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const session = ChatSession.create(
       chatbotConfig.id,
@@ -85,11 +79,9 @@ export async function createSimulationSession(organizationId: string): Promise<{
       }
     );
 
-    // Save session without logging for simulation
     const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
     const savedSession = await sessionRepository.save(session);
 
-    // Session creation logged to file for QA analysis
 
     return {
       success: true,
@@ -101,7 +93,6 @@ export async function createSimulationSession(organizationId: string): Promise<{
       }
     };
   } catch (error) {
-    // Error logged to file for debugging
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -109,24 +100,21 @@ export async function createSimulationSession(organizationId: string): Promise<{
   }
 }
 
-/**
- * Send a message through the real chatbot pipeline
- */
+// Send message through real chatbot pipeline
 export async function sendSimulationMessage(
   sessionId: string,
-  message: string
+  message: string,
+  organizationId: string
 ): Promise<SimulationMessageResult> {
   try {
-    // Message processing logged to file for QA analysis
 
-    // Get use case from composition root
     const processChatMessageUseCase = await ChatbotWidgetCompositionRoot.getProcessChatMessageUseCase();
 
-    // Process the chat message using real pipeline
     const startTime = Date.now();
     const result = await processChatMessageUseCase.execute({
       sessionId,
       userMessage: message,
+      organizationId,
       metadata: { 
         clientInfo: {
           source: 'simulation',
@@ -139,11 +127,9 @@ export async function sendSimulationMessage(
     const processingTime = Date.now() - startTime;
     const totalPromptTimeSeconds = Number((processingTime / 1000).toFixed(1));
 
-    // Get debug information
     const debugService = ChatbotWidgetCompositionRoot.getDebugInformationService();
     const domainDebugInfo = debugService.getProcessingDebugInfo(result.chatSession.id);
 
-    // Complete pipeline results logged to file for QA analysis
 
     return {
       success: true,
@@ -162,13 +148,13 @@ export async function sendSimulationMessage(
       debugInfo: domainDebugInfo
     };
   } catch (error) {
-    // Log pipeline error to database for analysis
     try {
       const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
       await errorTrackingService.trackMessageProcessingError(
         `Pipeline initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         {
           sessionId,
+          organizationId,
           metadata: {
             userMessage: message,
             source: 'simulation',
@@ -179,11 +165,9 @@ export async function sendSimulationMessage(
         }
       );
     } catch (trackingError) {
-      // If error tracking fails, log to console but don't throw
-      console.error('Failed to track pipeline error:', trackingError);
+        console.error('Failed to track pipeline error:', trackingError);
     }
 
-    // Error logged to file for debugging
     return {
       success: false,
       sessionId,
@@ -200,9 +184,7 @@ export async function sendSimulationMessage(
   }
 }
 
-/**
- * End a simulation session
- */
+// End simulation session
 export async function endSimulationSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
@@ -215,17 +197,13 @@ export async function endSimulationSession(sessionId: string): Promise<{ success
       };
     }
 
-    // End the session  
     const endedSession = session.end();
     
-    // Update session without logging for simulation
     await sessionRepository.update(endedSession);
 
-    // Session end logged to file for QA analysis
 
     return { success: true };
   } catch (error) {
-    // Error logged to file for debugging
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

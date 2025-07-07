@@ -124,14 +124,12 @@ describe('ChatbotConfig Entity', () => {
         name: 'Enterprise Support Bot'
       });
 
-      const systemPrompt1 = config.generateSystemPrompt();
-      const systemPrompt2 = config.generateSystemPrompt();
-
-      expect(systemPrompt1).toBe(systemPrompt2);
-      expect(systemPrompt1).toContain('professional');
-      expect(systemPrompt1).toContain('helpful');
-      expect(systemPrompt1).toContain('24/7 support');
-      expect(systemPrompt1).toContain('Enterprise Support Bot');
+      // Note: System prompt generation is now handled by DynamicPromptService
+      // This test verifies the configuration is properly created
+      expect(config.personalitySettings.tone).toBe('professional');
+      expect(config.personalitySettings.communicationStyle).toBe('consultative');
+      expect(config.personalitySettings.customInstructions).toContain('24/7 support');
+      expect(config.name).toBe('Enterprise Support Bot');
     });
 
     test('should handle personality settings updates', async () => {
@@ -385,7 +383,7 @@ describe('ChatbotConfig Entity', () => {
       expect(duration).toBeLessThan(100);
     });
 
-    test('should generate system prompt efficiently', () => {
+    test('should handle large knowledge base efficiently', () => {
       const { factory } = getEnv();
       
       const config = factory.createValidConfig({
@@ -403,11 +401,12 @@ describe('ChatbotConfig Entity', () => {
       });
 
       const startTime = performance.now();
-      const systemPrompt = config.generateSystemPrompt();
+      const activeFAQs = config.knowledgeBase.getActiveFAQs();
       const endTime = performance.now();
       
-      expect(systemPrompt).toBeTruthy();
-      expect(endTime - startTime).toBeLessThan(50); // Should generate in under 50ms
+      // Test that some FAQs are returned and operation is efficient
+      expect(activeFAQs.length).toBeGreaterThan(0);
+      expect(endTime - startTime).toBeLessThan(50); // Should retrieve FAQs in under 50ms
     });
   });
 });

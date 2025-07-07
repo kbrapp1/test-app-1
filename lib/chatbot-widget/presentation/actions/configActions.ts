@@ -1,9 +1,9 @@
 /**
- * Chatbot Configuration Server Actions
- * 
- * Server actions for chatbot configuration management.
- * Following DDD principles: Server actions are presentation layer entry points
- * that handle user requests and delegate to application services.
+ * AI INSTRUCTIONS:
+ * - Next.js server actions for chatbot configuration management
+ * - Handle CRUD operations for chatbot configurations
+ * - Delegate to application services with proper error handling
+ * - Follow DDD presentation layer patterns with cache revalidation
  */
 
 'use server';
@@ -22,9 +22,7 @@ import {
   KnowledgeBaseUpdateResponseDto,
 } from '../../application/dto/KnowledgeBaseFormDto';
 
-/**
- * Create a new chatbot configuration
- */
+// Create new chatbot configuration
 export async function createChatbotConfig(
   data: CreateChatbotConfigDto
 ): Promise<{ success: boolean; data?: ChatbotConfigDto; error?: string }> {
@@ -32,7 +30,6 @@ export async function createChatbotConfig(
     const service = new ChatbotConfigService();
     const result = await service.createChatbotConfig(data);
     
-    // Revalidate chatbot settings pages
     revalidatePath('/ai-playground/chatbot-widget');
     
     return { success: true, data: result };
@@ -44,9 +41,7 @@ export async function createChatbotConfig(
   }
 }
 
-/**
- * Update an existing chatbot configuration
- */
+// Update existing chatbot configuration
 export async function updateChatbotConfig(
   id: string,
   data: UpdateChatbotConfigDto,
@@ -56,7 +51,6 @@ export async function updateChatbotConfig(
     const service = new ChatbotConfigService();
     const result = await service.updateChatbotConfig(id, data, organizationId);
     
-    // Revalidate chatbot settings pages
     revalidatePath('/ai-playground/chatbot-widget');
     revalidatePath(`/ai-playground/chatbot-widget/config`);
     
@@ -69,9 +63,7 @@ export async function updateChatbotConfig(
   }
 }
 
-/**
- * Get chatbot configuration by organization ID
- */
+// Get chatbot configuration by organization
 export async function getChatbotConfigByOrganization(
   organizationId: string
 ): Promise<{ success: boolean; data?: ChatbotConfigDto | null; error?: string }> {
@@ -88,9 +80,7 @@ export async function getChatbotConfigByOrganization(
   }
 }
 
-/**
- * Get chatbot configuration by ID
- */
+// Get chatbot configuration by ID
 export async function getChatbotConfigById(
   id: string,
   organizationId?: string
@@ -108,9 +98,7 @@ export async function getChatbotConfigById(
   }
 }
 
-/**
- * Get all active chatbot configurations for an organization
- */
+// Get all active chatbot configurations
 export async function getActiveChatbotConfigs(
   organizationId: string
 ): Promise<{ success: boolean; data?: ChatbotConfigDto[]; error?: string }> {
@@ -127,9 +115,7 @@ export async function getActiveChatbotConfigs(
   }
 }
 
-/**
- * Delete a chatbot configuration
- */
+// Delete chatbot configuration
 export async function deleteChatbotConfig(
   id: string,
   organizationId: string
@@ -138,7 +124,6 @@ export async function deleteChatbotConfig(
     const service = new ChatbotConfigService();
     await service.deleteChatbotConfig(id, organizationId);
     
-    // Revalidate and redirect
     revalidatePath('/ai-playground/chatbot-widget');
     redirect('/ai-playground/chatbot-widget');
     
@@ -150,9 +135,7 @@ export async function deleteChatbotConfig(
   }
 }
 
-/**
- * Check if organization can create a new chatbot
- */
+// Check if organization can create new chatbot
 export async function canCreateChatbot(
   organizationId: string
 ): Promise<{ success: boolean; data?: boolean; error?: string }> {
@@ -169,9 +152,7 @@ export async function canCreateChatbot(
   }
 }
 
-/**
- * Get chatbot configuration statistics
- */
+// Get chatbot configuration statistics
 export async function getChatbotConfigStats(
   organizationId: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
@@ -188,9 +169,7 @@ export async function getChatbotConfigStats(
   }
 }
 
-/**
- * Update knowledge base configuration
- */
+// Update knowledge base configuration
 export async function updateKnowledgeBase(
   request: KnowledgeBaseUpdateRequestDto
 ): Promise<{ success: boolean; data?: KnowledgeBaseUpdateResponseDto; error?: string }> {
@@ -198,7 +177,6 @@ export async function updateKnowledgeBase(
     const knowledgeFormService = ChatbotWidgetCompositionRoot.getKnowledgeBaseFormApplicationService();
     const result = await knowledgeFormService.updateKnowledgeBase(request);
     
-    // Revalidate chatbot settings pages
     revalidatePath('/ai-playground/chatbot-widget');
     revalidatePath(`/ai-playground/chatbot-widget/config`);
     

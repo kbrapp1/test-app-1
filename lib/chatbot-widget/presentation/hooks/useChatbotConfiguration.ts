@@ -1,13 +1,10 @@
 /**
- * Consolidated Chatbot Configuration Hook
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Complete chatbot configuration management
- * - Handles both form state and CRUD operations
- * - Encapsulates React Query logic and state management
- * - Provides clean interface for components
- * - Follows @golden-rule DDD patterns exactly
- * - Under 250 lines - focused and maintainable
+ * AI Instructions: Consolidated chatbot configuration management hook
+ * - Handle both form state and CRUD operations
+ * - Encapsulate React Query logic and state management
+ * - Provide clean interface for components
+ * - Follow DDD patterns with proper validation
+ * - Support multiple use cases with flexible options
  */
 
 'use client';
@@ -36,32 +33,25 @@ import {
 } from '../types/BotConfigurationTypes';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
-// Hook Options Interface
 export interface UseChatbotConfigurationOptions {
   configId?: string;
   enableFormState?: boolean;
   autoLoad?: boolean;
 }
 
-// Validation Interface
 export interface ConfigValidationResult {
   isValid: boolean;
   errors: Record<string, string>;
 }
 
-/**
- * Main chatbot configuration hook
- */
 export function useChatbotConfiguration(options: UseChatbotConfigurationOptions = {}) {
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
   const { configId, enableFormState = true, autoLoad = true } = options;
   
-  // Form state (only when needed)
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<BotConfigurationFormData>(DEFAULT_FORM_DATA);
 
-  // Query for organization's chatbot config
   const { data: configResult, isLoading, error } = useQuery({
     queryKey: ['chatbot-config', activeOrganizationId],
     queryFn: () => activeOrganizationId ? getChatbotConfigByOrganization(activeOrganizationId) : null,
@@ -71,7 +61,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
 
   const existingConfig = configResult?.success ? configResult.data : null;
 
-  // Update form data when existingConfig changes (only if form state enabled)
   useEffect(() => {
     if (existingConfig && enableFormState) {
       setFormData({
@@ -87,7 +76,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     }
   }, [existingConfig, enableFormState]);
 
-  // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateChatbotConfigDto) => createChatbotConfig(data),
     onSuccess: (result) => {
@@ -99,7 +87,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateChatbotConfigDto }) =>
       updateChatbotConfig(id, data, activeOrganizationId || ''),
@@ -115,7 +102,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     },
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: ({ configId }: { configId: string }) => 
       deleteChatbotConfig(configId, activeOrganizationId || ''),
@@ -127,7 +113,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     },
   });
 
-  // Transform form data to DTOs
   const transformToDto = (formData: BotConfigurationFormData) => ({
     personalitySettings: {
       tone: formData.personality,
@@ -160,7 +145,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     },
   });
 
-  // Configuration validation
   const validateConfig = (config: Partial<CreateChatbotConfigDto | UpdateChatbotConfigDto>): ConfigValidationResult => {
     const errors: Record<string, string> = {};
 
@@ -192,12 +176,10 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     };
   };
 
-  // Actions (only when form state enabled)
   const actions: BotConfigurationActions = {
     startEditing: () => setIsEditing(true),
     cancelEditing: () => {
       setIsEditing(false);
-      // Reset form data to existing config
       if (existingConfig) {
         setFormData({
           name: existingConfig.name || DEFAULT_FORM_DATA.name,
@@ -220,7 +202,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
       if (!validation.isValid) {
         console.error('Validation errors:', validation.errors);
         
-        // Track chatbot configuration error to database
         const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
         errorTrackingService.trackChatbotConfigurationError(
           'form_validation_failed',
@@ -241,7 +222,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
       }
 
       if (existingConfig) {
-        // Update existing config
         updateMutation.mutate({
           id: existingConfig.id,
           data: {
@@ -252,7 +232,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
           },
         });
       } else {
-        // Create new config
         createMutation.mutate({
           organizationId: activeOrganizationId,
           name: formData.name,
@@ -275,7 +254,6 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     },
   };
 
-  // View state (only when form state enabled)
   const viewState: BotConfigurationViewState = {
     isEditing,
     isLoading,
@@ -286,12 +264,10 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
   const isSaving = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return {
-    // Core data
     config: existingConfig,
     isLoading,
     error,
     
-    // Form state (when enabled)
     ...(enableFormState && {
       formData,
       viewState,
@@ -299,25 +275,19 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
       isSaving,
     }),
     
-    // CRUD operations
     createConfig: createMutation.mutateAsync,
     updateConfig: updateMutation.mutateAsync,
     deleteConfig: deleteMutation.mutateAsync,
     
-    // Utilities
     validateConfig,
     transformToDto,
     
-    // Status
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };
 }
 
-/**
- * Hook for fetching multiple configs (admin use)
- */
 export function useChatbotConfigs(organizationId?: string) {
   return useQuery({
     queryKey: ['chatbot-configs', organizationId],
@@ -330,9 +300,6 @@ export function useChatbotConfigs(organizationId?: string) {
   });
 }
 
-/**
- * Hook for fetching specific config by ID
- */
 export function useChatbotConfigById(configId?: string, organizationId?: string) {
   return useQuery({
     queryKey: ['chatbot-config', configId],

@@ -1,9 +1,12 @@
 /**
  * Chatbot Configuration Mapper
  * 
- * Maps between ChatbotConfig domain entities and DTOs.
- * Following DDD principle: Application layer handles transformations
- * between domain entities and external contracts (DTOs).
+ * AI INSTRUCTIONS:
+ * - Maps between ChatbotConfig domain entities and DTOs for clean architecture boundaries
+ * - Handles bidirectional transformation preserving business rules and value object integrity
+ * - Maintains DDD principle: Application layer coordinates domain-external contract mapping
+ * - Ensures type safety and proper validation during entity-DTO conversions
+ * - Supports CQRS patterns with separate creation, update, and query DTO mappings
  */
 
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
@@ -23,9 +26,7 @@ import {
 } from '../dto/ChatbotConfigDto';
 
 export class ChatbotConfigMapper {
-  /**
-   * Convert domain entity to DTO
-   */
+  // Convert domain entity to DTO
   static toDto(entity: ChatbotConfig): ChatbotConfigDto {
     const props = entity.toPlainObject();
     
@@ -54,9 +55,7 @@ export class ChatbotConfigMapper {
     };
   }
 
-  /**
-   * Convert DTO to domain entity
-   */
+  // Convert DTO to domain entity
   static toDomain(dto: ChatbotConfigDto): ChatbotConfig {
     return ChatbotConfig.fromPersistence({
       id: dto.id,
@@ -74,7 +73,7 @@ export class ChatbotConfigMapper {
         options: q.options,
         isRequired: q.isRequired,
         order: q.order,
-        scoringWeight: q.scoringWeight ?? 1, // Default scoring weight from DTO
+        scoringWeight: q.scoringWeight ?? 1,
       })),
       aiConfiguration: this.aiConfigurationFromDto(dto.aiConfiguration),
       isActive: dto.isActive,
@@ -83,9 +82,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  /**
-   * Convert create DTO to domain entity
-   */
+  // Convert create DTO to domain entity
   static createDtoToDomain(dto: CreateChatbotConfigDto): ChatbotConfig {
     return ChatbotConfig.create({
       organizationId: dto.organizationId,
@@ -102,7 +99,7 @@ export class ChatbotConfigMapper {
         options: q.options,
         isRequired: q.isRequired,
         order: q.order,
-        scoringWeight: q.scoringWeight ?? 1, // Default scoring weight from DTO
+        scoringWeight: q.scoringWeight ?? 1,
       })),
       aiConfiguration: dto.aiConfiguration ? this.aiConfigurationFromDto(dto.aiConfiguration) : undefined,
       isActive: true,
@@ -194,7 +191,7 @@ export class ChatbotConfigMapper {
         question: faq.question,
         answer: faq.answer,
         category: faq.category,
-        isActive: true, // Default to active for DTOs
+        isActive: true,
       })),
       supportDocs: dto.supportDocs,
       complianceGuidelines: dto.complianceGuidelines,
@@ -247,7 +244,7 @@ export class ChatbotConfigMapper {
         dayOfWeek: bh.dayOfWeek,
         startTime: bh.startTime,
         endTime: bh.endTime,
-        isActive: bh.isOpen, // Map isOpen to isActive
+        isActive: bh.isOpen,
       })),
       holidaySchedule: dto.holidaySchedule,
       outsideHoursMessage: dto.outsideHoursMessage,

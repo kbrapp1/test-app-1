@@ -10,6 +10,7 @@
 export interface SendMessageCommand {
   sessionId: string;
   userMessage: string;
+  organizationId: string; // AI: Required for error tracking and RLS policies
   clientInfo?: {
     userAgent?: string;
     ipAddress?: string;

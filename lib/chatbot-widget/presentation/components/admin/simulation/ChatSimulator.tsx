@@ -126,7 +126,7 @@ export function ChatSimulator() {
 
     try {
       // Send message through real API pipeline
-      const result = await sendSimulationMessage(currentSession.sessionId, messageContent);
+      const result = await sendSimulationMessage(currentSession.sessionId, messageContent, activeOrganizationId!);
       
       if (result.success) {
         // Add bot response with timing information

@@ -6,29 +6,23 @@ import { TemplateVariable } from '../../../infrastructure/providers/templating/P
  * Persona Generation Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Generate context-aware personas using template engine
- * - Maintain single responsibility for persona creation
- * - Keep business logic pure, no external dependencies
- * - Follow @golden-rule patterns exactly
- * - Use template variables instead of hardcoded strings
- * - Always use business persona with full knowledge base
+ * - Generate context-aware personas using template engine - maintain single responsibility
+ * - Keep business logic pure with no external dependencies
+ * - Follow @golden-rule patterns exactly - use template variables instead of hardcoded strings
+ * - Always use business persona with full knowledge base for consistent brand representation
  */
 export class PersonaGenerationService {
 
-  /**
-   * Context-aware persona generation (2025 standard)
-   */
+  // Context-aware persona generation
   generateContextAwarePersona(
     config: ChatbotConfig, 
     analysis: ConversationAnalysis
   ): TemplateVariable[] {
-    // AI: Generate template variables for business persona
+    // Generate template variables for business persona
     return this.generateBusinessPersonaVariables(config, analysis);
   }
 
-  /**
-   * Business persona variables for template generation (2025 approach)
-   */
+  // Business persona variables for template generation
   private generateBusinessPersonaVariables(
     config: ChatbotConfig, 
     analysis: ConversationAnalysis
@@ -42,13 +36,18 @@ export class PersonaGenerationService {
         isRequired: true
       },
       {
+        name: 'roleDescription',
+        value: 'professional marketing consultant specializing in lead generation and business development',
+        isRequired: true
+      },
+      {
         name: 'companyName',
         value: companyName,
         isRequired: true
       },
       {
-        name: 'primaryObjective',
-        value: 'identifying qualified prospects',
+        name: 'objectives',
+        value: 'identifying qualified prospects and nurturing them through strategic conversations',
         isRequired: true
       },
       {
@@ -65,21 +64,29 @@ export class PersonaGenerationService {
         name: 'communicationStyle',
         value: 'Professional, value-focused, outcome-oriented',
         isRequired: true
+      },
+      {
+        name: 'businessContext',
+        value: `Operating as a lead capture specialist for ${companyName}, focusing on qualifying prospects and building relationships through strategic conversations.`,
+        isRequired: true
+      },
+      {
+        name: 'constraints',
+        value: 'Always maintain professionalism, respect privacy, and focus on providing value before asking for information.',
+        isRequired: true
       }
     ];
   }
 
-  /**
-   * Extract company name from knowledge base content
-   */
+  // Extract company name from knowledge base content
   private extractCompanyName(companyInfo: string): string {
     if (!companyInfo.trim()) return 'the company';
     
-    // Try to extract company name from first line or sentence
+    // Extract company name from first line or sentence
     const firstLine = companyInfo.split('\n')[0].trim();
     const firstSentence = firstLine.split('.')[0].trim();
     
-    // Look for common patterns like "CompanyName is...", "We are CompanyName", etc.
+    // Look for common patterns
     const patterns = [
       // Handle "For nearly X years, CompanyName has been..." pattern
       /^For\s+(?:nearly\s+)?\d+\s+years?,\s+([A-Z][a-zA-Z\s&]+(?:Inc|LLC|Corp|Ltd|Co)?)\s+(?:has|have)/i,

@@ -6,7 +6,6 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { MoveAssetUseCase } from '@/lib/dam/application/use-cases/assets/MoveAssetUseCase';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { revalidateTag } from 'next/cache';
 
 interface RouteContext {
   params: Promise<{

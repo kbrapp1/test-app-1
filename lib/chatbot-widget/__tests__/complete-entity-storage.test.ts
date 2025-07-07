@@ -24,6 +24,11 @@ vi.mock('../infrastructure/composition/ChatbotWidgetCompositionRoot', () => ({
         logRaw: vi.fn(),
         logMessage: vi.fn()
       }))
+    })),
+
+    getDynamicPromptService: vi.fn(() => ({
+      generateSystemPrompt: vi.fn().mockReturnValue('Generated system prompt'),
+      coordinateFinalSystemPrompt: vi.fn().mockReturnValue('Final coordinated prompt')
     }))
   }
 }));
@@ -163,7 +168,7 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
 
   describe('API Data Extraction', () => {
     it('should extract ALL entities from combined API response sections', async () => {
-      // Create analysis result with correct structure
+      // Create analysis result with correct structure including organization ID
       const analysisResult = {
         session: testSession,
         userMessage: testMessage,
@@ -171,7 +176,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
           messages: [testMessage],
           summary: null
         },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -219,7 +228,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -246,7 +259,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -265,7 +282,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -286,7 +307,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -306,7 +331,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -371,7 +400,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -390,7 +423,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -411,7 +448,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -438,7 +479,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 
@@ -483,7 +528,11 @@ describe('Complete Entity Storage (2025 Best Practice)', () => {
         session: testSession,
         userMessage: testMessage,
         contextResult: { messages: [testMessage], summary: null },
-        config: { model: 'gpt-4o-mini' },
+        config: { 
+          id: 'test-config-id',
+          organizationId: 'test-org-id',
+          model: 'gpt-4o-mini' 
+        },
         enhancedContext: {}
       };
 

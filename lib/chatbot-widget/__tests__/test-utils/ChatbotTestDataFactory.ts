@@ -1,7 +1,12 @@
 /**
  * Test Data Factory for Chatbot Widget Testing
  * 
- * Provides consistent test data following DDD patterns and business rules
+ * AI INSTRUCTIONS:
+ * - Provides consistent test data generation following DDD entity patterns and business rules
+ * - Creates valid domain objects with realistic data for comprehensive testing scenarios
+ * - Supports test isolation with configurable overrides and deterministic data generation
+ * - Implements factory methods for complex conversation flows and lead qualification scenarios
+ * - Maintains test data integrity across domain boundaries and value object constraints
  */
 
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
@@ -81,10 +86,10 @@ export class ChatbotTestDataFactory {
       ...overrides
     };
 
-    // Apply overrides first, then force string conversion for required fields
+    // Apply overrides then ensure string types
     const mergedProps = { ...defaultProps, ...overrides };
     
-    // Ensure all string fields are actually strings after overrides
+    // Ensure string fields after overrides
     const finalProps = {
       ...mergedProps,
       id: String(mergedProps.id || 'session-123'),
@@ -97,7 +102,7 @@ export class ChatbotTestDataFactory {
   }
 
   static createChatMessage(sessionId?: string, overrides?: Partial<any>): ChatMessage {
-    // Use the static factory methods from ChatMessage entity
+    // Use static factory methods from ChatMessage entity
     const messageSessionId = sessionId || 'session-123';
     const content = overrides?.content || 'Hello, I need help with pricing';
     const messageType = overrides?.messageType || 'user';
@@ -114,7 +119,7 @@ export class ChatbotTestDataFactory {
     } else if (messageType === 'user') {
       return ChatMessage.createUserMessage(messageSessionId, content, 'text');
     } else {
-      // For system or other message types, use manual creation
+      // For system or other message types
       return ChatMessage.create({
         id: ChatMessage.generateId(),
         sessionId: messageSessionId,
@@ -305,21 +310,8 @@ export class ChatbotTestDataFactory {
   }
 
   static createOperatingHours(overrides?: Partial<any>) {
-    return OperatingHours.create({
-      timezone: 'America/New_York',
-      businessHours: [
-        { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isActive: true }, // Monday
-        { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isActive: true }, // Tuesday
-        { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isActive: true }, // Wednesday
-        { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isActive: true }, // Thursday
-        { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isActive: true }, // Friday
-        { dayOfWeek: 6, startTime: '10:00', endTime: '14:00', isActive: false }, // Saturday
-        { dayOfWeek: 0, startTime: '10:00', endTime: '14:00', isActive: false } // Sunday
-      ],
-      holidaySchedule: [],
-      outsideHoursMessage: 'We\'re currently closed. Our team will respond during business hours.',
-      ...overrides
-    });
+    // Default to 24x7 for chatbot availability
+    return OperatingHours.create24x7('UTC');
   }
 
   static createLeadQualificationQuestions() {
@@ -362,7 +354,7 @@ export class ChatbotTestDataFactory {
     });
   }
 
-  // Helper methods for test scenarios
+  // Helper methods for specific test scenarios
   static createHighValueLead(): Lead {
     return Lead.create(
       'session-high-value',
@@ -445,7 +437,7 @@ export class ChatbotTestDataFactory {
     };
   }
 
-  // Helper methods for creating value objects
+  // Helper methods for value objects
   static createAIMetadata(overrides?: Partial<any>) {
     return MessageAIMetadata.createEmpty();
   }

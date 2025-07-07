@@ -2,25 +2,16 @@
  * Context Effectiveness Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Pure business logic for analyzing context effectiveness
- * - No application or infrastructure concerns
+ * - Pure business logic for analyzing context effectiveness with no application concerns
  * - Keep under 200 lines by focusing on single responsibility
- * - Follow @golden-rule patterns exactly
- * - Use domain errors for business rule violations
- * - Calculate effectiveness scores using domain rules
+ * - Follow @golden-rule patterns exactly - use domain errors for business rule violations
+ * - Calculate effectiveness scores using domain rules for quality measurement
  */
 
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 import { ContextModule, ContextRelevanceFactors } from '../interfaces/ContextInjectionTypes';
 
-/**
- * Configuration constants for context effectiveness calculations
- * 
- * AI INSTRUCTIONS:
- * - Define business thresholds and scoring rules
- * - Keep constants focused on domain calculations
- * - Use meaningful names that reflect business concepts
- */
+// Configuration constants for context effectiveness calculations
 export const EFFECTIVENESS_CONFIG = {
   SCORING: {
     BASE_EFFECTIVENESS: 70,
@@ -54,25 +45,10 @@ export interface TokenUtilizationMetrics {
   isEfficient: boolean;
 }
 
-/**
- * Context Effectiveness Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Encapsulates business rules for measuring context quality
- * - Calculates effectiveness scores based on domain criteria
- * - Identifies strengths and improvement areas
- * - Provides optimization suggestions based on business rules
- */
+// Context Effectiveness Domain Service - encapsulates business rules for measuring context quality
 export class ContextEffectivenessDomainService {
   
-  /**
-   * Calculate overall effectiveness score for context selection
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business scoring rules consistently
-   * - Consider multiple factors: utilization, diversity, confidence
-   * - Return score between 0-100 based on domain rules
-   */
+  // Calculate overall effectiveness score for context selection
   calculateEffectivenessScore(
     modules: ContextModule[],
     utilization: TokenUtilizationMetrics,
@@ -99,14 +75,7 @@ export class ContextEffectivenessDomainService {
     return Math.min(score, EFFECTIVENESS_CONFIG.SCORING.MAX_EFFECTIVENESS);
   }
   
-  /**
-   * Identify strengths in current context selection
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business criteria to identify positive aspects
-   * - Return actionable insights for stakeholders
-   * - Focus on domain-relevant strengths
-   */
+  // Identify strengths in current context selection
   identifyStrengths(
     modules: ContextModule[],
     utilization: TokenUtilizationMetrics,
@@ -130,14 +99,7 @@ export class ContextEffectivenessDomainService {
     return strengths;
   }
   
-  /**
-   * Identify weaknesses in current context selection
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business criteria to identify improvement areas
-   * - Return actionable insights for optimization
-   * - Focus on domain-relevant weaknesses
-   */
+  // Identify weaknesses in current context selection
   identifyWeaknesses(
     modules: ContextModule[],
     utilization: TokenUtilizationMetrics,
@@ -163,14 +125,7 @@ export class ContextEffectivenessDomainService {
     return weaknesses;
   }
   
-  /**
-   * Generate optimization suggestions based on analysis
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide actionable business recommendations
-   * - Focus on specific, measurable improvements
-   * - Base suggestions on domain expertise
-   */
+  // Generate optimization suggestions based on analysis
   generateOptimizationSuggestions(
     modules: ContextModule[],
     utilization: TokenUtilizationMetrics,
@@ -200,14 +155,7 @@ export class ContextEffectivenessDomainService {
     return suggestions;
   }
   
-  /**
-   * Private helper methods for business calculations
-   * 
-   * AI INSTRUCTIONS:
-   * - Keep calculation logic pure and focused
-   * - Apply consistent business rules
-   * - Avoid complex nested logic
-   */
+  // Private helper methods for business calculations
   private isUtilizationEfficient(utilization: TokenUtilizationMetrics): boolean {
     return utilization.utilizationRate > EFFECTIVENESS_CONFIG.THRESHOLDS.EFFICIENCY_MIN && 
            utilization.utilizationRate < EFFECTIVENESS_CONFIG.THRESHOLDS.EFFICIENCY_MAX;

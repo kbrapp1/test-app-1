@@ -2,20 +2,16 @@ import { LeadQualificationState, AnsweredQuestion, SessionContext } from '../../
 
 /**
  * Session Lead Qualification Service
- * Domain Service: Pure business logic for lead qualification
- * Following DDD principles: Single responsibility for qualification logic
  * 
  * AI INSTRUCTIONS:
- * - UPDATED: Removed domain lead score calculation - using API-only approach
- * - Focus on qualification process management only
- * - Keep under 200 lines following @golden-rule patterns
+ * - Pure business logic for lead qualification process management
+ * - Focus on qualification process management only - using API-only approach for scoring
+ * - Keep under 200 lines following @golden-rule patterns with single responsibility
  */
 export class SessionLeadQualificationService {
   private static readonly QUALIFICATION_THRESHOLD = 60;
 
-  /**
-   * Score individual answer based on content quality
-   */
+  // Score individual answer based on content quality
   private static scoreAnswer(answer: AnsweredQuestion): number {
     if (Array.isArray(answer.answer)) {
       // Multiple choice answers
@@ -30,16 +26,12 @@ export class SessionLeadQualificationService {
     }
   }
 
-  /**
-   * Determine if lead is qualified based on external score (from API)
-   */
+  // Determine if lead is qualified based on external score (from API)
   static isLeadQualified(leadScore: number): boolean {
     return leadScore >= this.QUALIFICATION_THRESHOLD;
   }
 
-  /**
-   * Create answered question for qualification tracking
-   */
+  // Create answered question for qualification tracking
   static createAnsweredQuestion(
     questionId: string,
     question: string,
@@ -55,9 +47,7 @@ export class SessionLeadQualificationService {
     };
   }
 
-  /**
-   * Add answer to qualification state
-   */
+  // Add answer to qualification state
   static addAnswer(
     currentState: LeadQualificationState,
     answer: AnsweredQuestion
@@ -69,9 +59,7 @@ export class SessionLeadQualificationService {
     };
   }
 
-  /**
-   * Start qualification process
-   */
+  // Start qualification process
   static startQualification(currentState: LeadQualificationState): LeadQualificationState {
     return {
       ...currentState,
@@ -80,10 +68,7 @@ export class SessionLeadQualificationService {
     };
   }
 
-  /**
-   * Complete qualification process
-   * Note: Lead score is now provided by API, not calculated here
-   */
+  // Complete qualification process
   static completeQualification(
     currentState: LeadQualificationState,
     contextData: SessionContext,
@@ -97,9 +82,7 @@ export class SessionLeadQualificationService {
     };
   }
 
-  /**
-   * Skip qualification process
-   */
+  // Skip qualification process
   static skipQualification(currentState: LeadQualificationState): LeadQualificationState {
     return {
       ...currentState,
@@ -107,9 +90,7 @@ export class SessionLeadQualificationService {
     };
   }
 
-  /**
-   * Get qualification progress percentage
-   */
+  // Get qualification progress percentage
   static getQualificationProgress(
     currentState: LeadQualificationState,
     totalQuestions: number
@@ -118,16 +99,12 @@ export class SessionLeadQualificationService {
     return Math.round((currentState.answeredQuestions.length / totalQuestions) * 100);
   }
 
-  /**
-   * Check if qualification is in progress
-   */
+  // Check if qualification is in progress
   static isQualificationInProgress(state: LeadQualificationState): boolean {
     return state.qualificationStatus === 'in_progress';
   }
 
-  /**
-   * Check if qualification is completed
-   */
+  // Check if qualification is completed
   static isQualificationCompleted(state: LeadQualificationState): boolean {
     return state.qualificationStatus === 'completed';
   }

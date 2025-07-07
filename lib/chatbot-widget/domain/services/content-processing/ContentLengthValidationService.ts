@@ -45,24 +45,24 @@ export class ContentLengthValidationService {
   // AI: Define business rules for maximum content length by type
   getContentLengthLimits(): Record<ContentType, number> {
     return {
-      [ContentType.COMPANY_INFO]: 200,
-      [ContentType.COMPLIANCE_GUIDELINES]: 300,
-      [ContentType.PRODUCT_CATALOG]: 250,
-      [ContentType.SUPPORT_DOCS]: 200,
-      [ContentType.FAQ]: 150,
-      [ContentType.CUSTOM]: 200
+      [ContentType.COMPANY_INFO]: 500,
+      [ContentType.COMPLIANCE_GUIDELINES]: 3000,
+      [ContentType.PRODUCT_CATALOG]: 3000,
+      [ContentType.SUPPORT_DOCS]: 3000,
+      [ContentType.FAQ]: 3000,
+      [ContentType.CUSTOM]: 3000
     };
   }
 
   // AI: Define recommended length limits for optimal prompt efficiency
   getRecommendedLengthLimits(): Record<ContentType, number> {
     return {
-      [ContentType.COMPANY_INFO]: 150,
-      [ContentType.COMPLIANCE_GUIDELINES]: 250,
-      [ContentType.PRODUCT_CATALOG]: 200,
-      [ContentType.SUPPORT_DOCS]: 150,
-      [ContentType.FAQ]: 100,
-      [ContentType.CUSTOM]: 150
+      [ContentType.COMPANY_INFO]: 500,
+      [ContentType.COMPLIANCE_GUIDELINES]: 3000,
+      [ContentType.PRODUCT_CATALOG]: 3000,
+      [ContentType.SUPPORT_DOCS]: 3000,
+      [ContentType.FAQ]: 3000,
+      [ContentType.CUSTOM]: 3000
     };
   }
 } 

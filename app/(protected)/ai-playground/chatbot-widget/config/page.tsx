@@ -9,7 +9,7 @@ export default function ChatbotConfigPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Chatbot Configuration</h1>
         <p className="text-muted-foreground">
-          Configure your chatbot's basic settings including name, description, personality, and status.
+          Configure your chatbot&apos;s basic settings including name, description, personality, and status.
         </p>
       </div>
       

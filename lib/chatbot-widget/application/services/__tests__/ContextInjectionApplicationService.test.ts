@@ -19,6 +19,7 @@ import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { 
   ContextModule, 
+  ContextModuleType,
   ContextSelectionCriteria,
   EntityData,
   TokenBudgetAllocation,
@@ -167,7 +168,7 @@ describe('ContextInjectionApplicationService', () => {
         allocation: mockAllocation
       });
       vi.mocked(ContextModulePriorityDomainService.determineConversationPhase).mockReturnValue({
-        phase: 'qualification',
+        phase: 'qualification' as const,
         confidence: 0.8,
         indicators: ['lead score', 'qualification questions']
       });
@@ -207,7 +208,7 @@ describe('ContextInjectionApplicationService', () => {
         selectedModules: mockModules,
         allocation: mockAllocation,
         relevanceFactors: mockRelevanceFactors,
-        conversationPhase: { phase: 'qualification', confidence: 0.8, indicators: ['lead score', 'qualification questions'] },
+        conversationPhase: { phase: 'qualification' as const, confidence: 0.8, indicators: ['lead score', 'qualification questions'] },
         recommendations: ['Budget used efficiently', 'Optimize for lead scoring']
       });
     });
@@ -243,7 +244,7 @@ describe('ContextInjectionApplicationService', () => {
         allocation: { corePersona: 200, highPriorityContext: 0, progressionModules: 0, realTimeContext: 0, totalAvailable: 1000, totalUsed: 200 }
       });
       vi.mocked(ContextModulePriorityDomainService.determineConversationPhase).mockReturnValue({
-        phase: 'discovery',
+        phase: 'discovery' as const,
         confidence: 0.9,
         indicators: ['greeting', 'initial contact']
       });
@@ -336,12 +337,19 @@ describe('ContextInjectionApplicationService', () => {
   describe('optimizeForUseCase', () => {
     it('should optimize context for greeting use case', async () => {
       // Arrange
+      vi.mocked(validateInputs).mockImplementation(() => {}); // Reset mock
       const useCase = 'greeting';
       const availableTokens = 1000;
       const mockOptions = {
         includeUserProfile: true,
+        includeCompanyContext: false,
+        includeConversationPhase: false,
         includeLeadScoring: false,
-        includeConversationHistory: false
+        includeKnowledgeBase: false,
+        includeIndustrySpecific: false,
+        includeConversationHistory: false,
+        includeBusinessHours: false,
+        includeEngagementOptimization: false
       };
       const adjustedTokens = 800;
 
@@ -350,15 +358,15 @@ describe('ContextInjectionApplicationService', () => {
 
       // Setup selectOptimalContext mock response
       const mockResult = {
-        selectedModules: [{ moduleId: 'greeting', content: () => 'Hello!', estimatedTokens: 200, priority: 1000 }],
-        allocation: { totalAvailable: adjustedTokens, totalUsed: 200, allocations: [] },
-        relevanceFactors: { leadScoreInfluence: 0, conversationDepth: 0, entityContext: 0, businessHours: 1.0 },
-        conversationPhase: { phase: 'discovery', confidence: 0.9, indicators: ['greeting', 'initial contact'] },
+        selectedModules: [{ type: 'userProfile' as ContextModuleType, content: () => 'Hello!', estimatedTokens: 200, priority: 1000, relevanceScore: 1.0 }],
+        allocation: { totalAvailable: adjustedTokens, totalUsed: 200, corePersona: 200, highPriorityContext: 0, progressionModules: 0, realTimeContext: 0 },
+        relevanceFactors: { userProfileRelevance: 0, companyContextRelevance: 0, phaseRelevance: 0, knowledgeBaseRelevance: 0, industryRelevance: 0, historyRelevance: 0, businessHoursRelevance: 1.0, engagementRelevance: 0 },
+        conversationPhase: { phase: 'discovery' as const, confidence: 0.9, indicators: ['greeting', 'initial contact'] },
         recommendations: []
       };
 
       // Mock all the dependent services that selectOptimalContext calls
-      buildSelectionCriteria.mockReturnValue({
+      vi.mocked(buildSelectionCriteria).mockReturnValue({
         availableTokens: adjustedTokens,
         messageCount: 0
       });
@@ -400,6 +408,7 @@ describe('ContextInjectionApplicationService', () => {
 
     it('should optimize context for qualification use case with entity data', async () => {
       // Arrange
+      vi.mocked(validateInputs).mockImplementation(() => {}); // Reset mock
       const useCase = 'qualification';
       const availableTokens = 2000;
       const leadScore = 65;
@@ -407,8 +416,14 @@ describe('ContextInjectionApplicationService', () => {
 
       const mockOptions = {
         includeUserProfile: true,
+        includeCompanyContext: true,
+        includeConversationPhase: true,
         includeLeadScoring: true,
-        includeIndustrySpecific: true
+        includeKnowledgeBase: false,
+        includeIndustrySpecific: true,
+        includeConversationHistory: false,
+        includeBusinessHours: false,
+        includeEngagementOptimization: false
       };
 
       vi.mocked(getUseCaseOptions).mockReturnValue(mockOptions);
@@ -417,16 +432,16 @@ describe('ContextInjectionApplicationService', () => {
       // Setup mocks for selectOptimalContext
       const mockResult = {
         selectedModules: [
-          { moduleId: 'user-profile', content: () => 'Profile context', estimatedTokens: 400, priority: 850 },
-          { moduleId: 'industry-context', content: () => 'Industry-specific context', estimatedTokens: 600, priority: 800 }
+          { type: 'userProfile' as ContextModuleType, content: () => 'Profile context', estimatedTokens: 400, priority: 850, relevanceScore: 0.9 },
+          { type: 'industrySpecific' as ContextModuleType, content: () => 'Industry-specific context', estimatedTokens: 600, priority: 800, relevanceScore: 0.8 }
         ],
-        allocation: { totalAvailable: availableTokens, totalUsed: 1000, allocations: [] },
-        relevanceFactors: { leadScoreInfluence: 0.65, conversationDepth: 0.3, entityContext: 0.8, businessHours: 0.9 },
-        conversationPhase: { phase: 'qualification', confidence: 0.8, indicators: ['lead score', 'qualification questions'] },
+        allocation: { totalAvailable: availableTokens, totalUsed: 1000, corePersona: 400, highPriorityContext: 600, progressionModules: 0, realTimeContext: 0 },
+        relevanceFactors: { userProfileRelevance: 0.65, companyContextRelevance: 0.8, phaseRelevance: 0.3, knowledgeBaseRelevance: 0.7, industryRelevance: 0.6, historyRelevance: 0.4, businessHoursRelevance: 0.9, engagementRelevance: 0.5 },
+        conversationPhase: { phase: 'qualification' as const, confidence: 0.8, indicators: ['lead score', 'qualification questions'] },
         recommendations: ['Focus on qualification questions']
       };
 
-      buildSelectionCriteria.mockReturnValue({
+      vi.mocked(buildSelectionCriteria).mockReturnValue({
         availableTokens,
         messageCount: 0,
         leadScore,
@@ -461,12 +476,13 @@ describe('ContextInjectionApplicationService', () => {
       // Assert
       expect(adjustTokensForUseCase).toHaveBeenCalledWith(useCase, availableTokens, leadScore);
       expect(result.conversationPhase.phase).toBe('qualification');
-      expect(result.relevanceFactors.leadScoreInfluence).toBe(0.65);
+      expect(result.relevanceFactors.userProfileRelevance).toBe(0.65);
       expect(result.recommendations).toContain('Focus on qualification questions');
     });
 
     it('should handle invalid use case', async () => {
       // Arrange
+      vi.mocked(validateInputs).mockImplementation(() => {}); // Reset mock
       const invalidUseCase = 'invalid' as any;
       const validationError = new Error('Invalid use case');
       vi.mocked(validateUseCase).mockImplementation(() => {
@@ -488,11 +504,11 @@ describe('ContextInjectionApplicationService', () => {
       // Arrange
       const mockResult = {
         selectedModules: [
-          { moduleId: 'mod-1', content: () => 'Context 1', estimatedTokens: 500, priority: 900 }
+          { type: 'companyContext' as ContextModuleType, content: () => 'Context 1', estimatedTokens: 500, priority: 900, relevanceScore: 0.9 }
         ],
-        allocation: { totalAvailable: 2000, totalUsed: 500, allocations: [] },
-        relevanceFactors: { leadScoreInfluence: 0.8, conversationDepth: 0.6, entityContext: 0.7, businessHours: 0.9 },
-        conversationPhase: { phase: 'demonstration', confidence: 0.7, indicators: ['demo request', 'feature interest'] },
+        allocation: { totalAvailable: 2000, totalUsed: 500, corePersona: 500, highPriorityContext: 0, progressionModules: 0, realTimeContext: 0 },
+        relevanceFactors: { userProfileRelevance: 0.8, companyContextRelevance: 0.7, phaseRelevance: 0.6, knowledgeBaseRelevance: 0.75, industryRelevance: 0.65, historyRelevance: 0.5, businessHoursRelevance: 0.9, engagementRelevance: 0.7 },
+        conversationPhase: { phase: 'demonstration' as const, confidence: 0.7, indicators: ['demo request', 'feature interest'] },
         recommendations: []
       };
 
@@ -561,12 +577,12 @@ describe('ContextInjectionApplicationService', () => {
       // Arrange
       const mockResult = {
         selectedModules: [
-          { moduleId: 'mod-1', content: () => 'Context 1', estimatedTokens: 1000, priority: 900 },
-          { moduleId: 'mod-2', content: () => 'Context 2', estimatedTokens: 500, priority: 850 }
+          { type: 'userProfile' as ContextModuleType, content: () => 'Context 1', estimatedTokens: 1000, priority: 900, relevanceScore: 0.95 },
+          { type: 'companyContext' as ContextModuleType, content: () => 'Context 2', estimatedTokens: 500, priority: 850, relevanceScore: 0.9 }
         ],
-        allocation: { totalAvailable: 1500, totalUsed: 1500, allocations: [] },
-        relevanceFactors: { leadScoreInfluence: 0.9, conversationDepth: 0.8, entityContext: 0.9, businessHours: 1.0 },
-        conversationPhase: { phase: 'closing', confidence: 0.9, indicators: ['purchase intent', 'pricing questions'] },
+        allocation: { totalAvailable: 1500, totalUsed: 1500, corePersona: 750, highPriorityContext: 750, progressionModules: 0, realTimeContext: 0 },
+        relevanceFactors: { userProfileRelevance: 0.9, companyContextRelevance: 0.9, phaseRelevance: 0.8, knowledgeBaseRelevance: 0.85, industryRelevance: 0.8, historyRelevance: 0.7, businessHoursRelevance: 1.0, engagementRelevance: 0.9 },
+        conversationPhase: { phase: 'closing' as const, confidence: 0.9, indicators: ['purchase intent', 'pricing questions'] },
         recommendations: []
       };
 
@@ -622,24 +638,37 @@ describe('ContextInjectionApplicationService', () => {
   describe('Integration Scenarios', () => {
     it('should handle complete workflow from greeting to closing', async () => {
       // Arrange - Simulate a conversation progressing through phases
+      vi.mocked(validateInputs).mockImplementation(() => {}); // Reset mock
+      vi.mocked(validateUseCase).mockImplementation(() => {}); // Reset mock
       const availableTokens = 2000;
       
       // Mock different phases
       const greetingModules = [
-        { moduleId: 'greeting', content: () => 'Welcome!', estimatedTokens: 300, priority: 1000 }
+        { type: 'userProfile' as ContextModuleType, content: () => 'Welcome!', estimatedTokens: 300, priority: 1000, relevanceScore: 1.0 }
       ];
       
       const qualificationModules = [
-        { moduleId: 'user-profile', content: () => 'Profile context', estimatedTokens: 500, priority: 900 },
-        { moduleId: 'qualification', content: () => 'Qualification questions', estimatedTokens: 400, priority: 850 }
+        { type: 'userProfile' as ContextModuleType, content: () => 'Profile context', estimatedTokens: 500, priority: 900, relevanceScore: 0.9 },
+        { type: 'leadScoring' as ContextModuleType, content: () => 'Qualification questions', estimatedTokens: 400, priority: 850, relevanceScore: 0.85 }
       ];
 
       // Setup mocks for different use cases
       vi.mocked(getUseCaseOptions).mockImplementation((useCase) => {
+        const baseOptions = {
+          includeUserProfile: true,
+          includeCompanyContext: false,
+          includeConversationPhase: false,
+          includeLeadScoring: false,
+          includeKnowledgeBase: false,
+          includeIndustrySpecific: false,
+          includeConversationHistory: false,
+          includeBusinessHours: false,
+          includeEngagementOptimization: false
+        };
         switch (useCase) {
-          case 'greeting': return { includeLeadScoring: false, includeConversationHistory: false };
-          case 'qualification': return { includeLeadScoring: true, includeIndustrySpecific: true };
-          default: return {};
+          case 'greeting': return baseOptions;
+          case 'qualification': return { ...baseOptions, includeLeadScoring: true, includeIndustrySpecific: true };
+          default: return baseOptions;
         }
       });
 
@@ -652,18 +681,18 @@ describe('ContextInjectionApplicationService', () => {
       });
 
       // Test greeting phase
-      buildSelectionCriteria.mockReturnValue({ availableTokens: 800, messageCount: 0 });
+      vi.mocked(buildSelectionCriteria).mockReturnValue({ availableTokens: 800, messageCount: 0 });
       vi.mocked(ContextModuleGeneratorDomainService.generateCandidateModules).mockReturnValue(greetingModules);
       vi.mocked(ContextModulePriorityDomainService.calculateRelevanceFactors).mockReturnValue({
-        leadScoreInfluence: 0, conversationDepth: 0, entityContext: 0, businessHours: 1.0
+        userProfileRelevance: 0, companyContextRelevance: 0, phaseRelevance: 0, knowledgeBaseRelevance: 0, industryRelevance: 0, historyRelevance: 0, businessHoursRelevance: 1.0, engagementRelevance: 0
       });
       vi.mocked(ContextModulePriorityDomainService.applySessionMultipliers).mockReturnValue(greetingModules);
       vi.mocked(ContextTokenBudgetDomainService.selectModulesWithinBudget).mockReturnValue({
         selectedModules: greetingModules,
-        allocation: { totalAvailable: 800, totalUsed: 300, allocations: [] }
+        allocation: { totalAvailable: 800, totalUsed: 300, corePersona: 300, highPriorityContext: 0, progressionModules: 0, realTimeContext: 0 }
       });
       vi.mocked(ContextModulePriorityDomainService.determineConversationPhase).mockReturnValue({
-        phase: 'discovery',
+        phase: 'discovery' as const,
         confidence: 0.9,
         indicators: ['greeting', 'initial contact']
       });
@@ -681,26 +710,26 @@ describe('ContextInjectionApplicationService', () => {
       );
 
       // Assert greeting
-      expect(greetingResult.conversationPhase).toBe(ConversationPhase.GREETING);
+      expect(greetingResult.conversationPhase.phase).toBe('discovery');
       expect(greetingResult.allocation.totalAvailable).toBe(800); // Token adjustment for greeting
 
       // Update mocks for qualification phase
-      buildSelectionCriteria.mockReturnValue({ 
+      vi.mocked(buildSelectionCriteria).mockReturnValue({ 
         availableTokens: 2000, 
         messageCount: 2, 
         leadScore: 60 
       });
       vi.mocked(ContextModuleGeneratorDomainService.generateCandidateModules).mockReturnValue(qualificationModules);
       vi.mocked(ContextModulePriorityDomainService.calculateRelevanceFactors).mockReturnValue({
-        leadScoreInfluence: 0.6, conversationDepth: 0.4, entityContext: 0.5, businessHours: 0.9
+        userProfileRelevance: 0.6, companyContextRelevance: 0.5, phaseRelevance: 0.4, knowledgeBaseRelevance: 0.55, industryRelevance: 0.5, historyRelevance: 0.3, businessHoursRelevance: 0.9, engagementRelevance: 0.4
       });
       vi.mocked(ContextModulePriorityDomainService.applySessionMultipliers).mockReturnValue(qualificationModules);
       vi.mocked(ContextTokenBudgetDomainService.selectModulesWithinBudget).mockReturnValue({
         selectedModules: qualificationModules,
-        allocation: { totalAvailable: 2000, totalUsed: 900, allocations: [] }
+        allocation: { totalAvailable: 2000, totalUsed: 900, corePersona: 500, highPriorityContext: 400, progressionModules: 0, realTimeContext: 0 }
       });
       vi.mocked(ContextModulePriorityDomainService.determineConversationPhase).mockReturnValue({
-        phase: 'qualification',
+        phase: 'qualification' as const,
         confidence: 0.8,
         indicators: ['lead score', 'qualification questions']
       });
@@ -718,13 +747,14 @@ describe('ContextInjectionApplicationService', () => {
       );
 
       // Assert qualification
-      expect(qualificationResult.conversationPhase).toBe(ConversationPhase.QUALIFICATION);
-      expect(qualificationResult.relevanceFactors.leadScoreInfluence).toBe(0.6);
+      expect(qualificationResult.conversationPhase.phase).toBe('qualification');
+      expect(qualificationResult.relevanceFactors.userProfileRelevance).toBe(0.6);
       expect(qualificationResult.recommendations).toContain('Focus on qualification');
     });
 
     it('should handle low token budget scenarios', async () => {
       // Arrange
+      vi.mocked(validateInputs).mockImplementation(() => {}); // Reset mock
       const lowTokenBudget = 200;
       const mockCriteria: ContextSelectionCriteria = {
         availableTokens: lowTokenBudget,
@@ -732,22 +762,22 @@ describe('ContextInjectionApplicationService', () => {
       };
 
       const minimalModules = [
-        { moduleId: 'minimal', content: () => 'Hi', estimatedTokens: 150, priority: 1000 }
+        { type: 'userProfile' as ContextModuleType, content: () => 'Hi', estimatedTokens: 150, priority: 1000, relevanceScore: 1.0 }
       ];
 
       // Setup mocks for low budget scenario
       vi.mocked(buildSelectionCriteria).mockReturnValue(mockCriteria);
       vi.mocked(ContextModuleGeneratorDomainService.generateCandidateModules).mockReturnValue(minimalModules);
       vi.mocked(ContextModulePriorityDomainService.calculateRelevanceFactors).mockReturnValue({
-        leadScoreInfluence: 0, conversationDepth: 0.2, entityContext: 0, businessHours: 1.0
+        userProfileRelevance: 0, companyContextRelevance: 0, phaseRelevance: 0.2, knowledgeBaseRelevance: 0, industryRelevance: 0, historyRelevance: 0.1, businessHoursRelevance: 1.0, engagementRelevance: 0
       });
       vi.mocked(ContextModulePriorityDomainService.applySessionMultipliers).mockReturnValue(minimalModules);
       vi.mocked(ContextTokenBudgetDomainService.selectModulesWithinBudget).mockReturnValue({
         selectedModules: minimalModules,
-        allocation: { totalAvailable: lowTokenBudget, totalUsed: 150, allocations: [] }
+        allocation: { totalAvailable: lowTokenBudget, totalUsed: 150, corePersona: 150, highPriorityContext: 0, progressionModules: 0, realTimeContext: 0 }
       });
       vi.mocked(ContextModulePriorityDomainService.determineConversationPhase).mockReturnValue({
-        phase: 'discovery',
+        phase: 'discovery' as const,
         confidence: 0.9,
         indicators: ['greeting', 'initial contact']
       });

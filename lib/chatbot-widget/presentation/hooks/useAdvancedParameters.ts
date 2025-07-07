@@ -1,8 +1,9 @@
 /**
- * Advanced Parameters Hook
- * 
- * Custom hook for managing advanced chatbot parameters state and operations.
- * Encapsulates state management logic following single responsibility principle.
+ * AI Instructions: Custom hook for managing advanced chatbot parameters
+ * - Encapsulate state management logic for advanced parameters
+ * - Handle parameter updates and synchronization with backend
+ * - Follow single responsibility principle for focused functionality
+ * - Use React Query for optimistic updates and cache management
  */
 
 import { useState, useEffect } from 'react';
@@ -26,41 +27,34 @@ interface UseAdvancedParametersReturn {
 }
 
 const DEFAULT_PARAMETERS: AdvancedParameters = {
-  // OpenAI Configuration
   openaiModel: 'gpt-4o-mini',
   openaiTemperature: 0.3,
   openaiMaxTokens: 1000,
   
-  // Context Window Configuration
   contextMaxTokens: 12000,
   contextSystemPromptTokens: 500,
   contextResponseReservedTokens: 3000,
   contextSummaryTokens: 200,
   
-  // Intent Classification
   intentConfidenceThreshold: 0.7,
   intentAmbiguityThreshold: 0.2,
   enableMultiIntentDetection: true,
   enablePersonaInference: true,
   
-  // Entity Extraction
   enableAdvancedEntities: true,
   entityExtractionMode: 'comprehensive',
   customEntityTypes: [],
   
-  // Conversation Flow
   maxConversationTurns: 20,
   inactivityTimeoutSeconds: 300,
   enableJourneyRegression: true,
   enableContextSwitchDetection: true,
   
-  // Lead Scoring
   enableAdvancedScoring: true,
   entityCompletenessWeight: 0.3,
   personaConfidenceWeight: 0.2,
   journeyProgressionWeight: 0.25,
   
-  // Performance & Monitoring
   enablePerformanceLogging: true,
   enableIntentAnalytics: true,
   enablePersonaAnalytics: true,
@@ -75,7 +69,6 @@ export function useAdvancedParameters({
   const [isEditing, setIsEditing] = useState(false);
   const [parameters, setParameters] = useState<AdvancedParameters>(DEFAULT_PARAMETERS);
 
-  // Update parameters when config loads
   useEffect(() => {
     if (existingConfig) {
       setParameters(prev => ({
@@ -86,7 +79,6 @@ export function useAdvancedParameters({
     }
   }, [existingConfig]);
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateChatbotConfigDto }) =>
       updateChatbotConfig(id, data, activeOrganizationId || ''),
@@ -106,7 +98,6 @@ export function useAdvancedParameters({
   const handleSave = () => {
     if (!activeOrganizationId || !existingConfig) return;
 
-    // Map advanced parameters back to config structure
     const updateData: UpdateChatbotConfigDto = {
       personalitySettings: {
         ...existingConfig.personalitySettings,

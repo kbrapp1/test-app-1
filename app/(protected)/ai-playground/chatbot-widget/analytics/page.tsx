@@ -10,7 +10,7 @@ export default function AnalyticsPage() {
       <div>
         <h2 className="text-2xl font-semibold">Analytics & Reports</h2>
         <p className="text-muted-foreground">
-          Monitor your chatbot's performance, visitor engagement, and lead generation metrics.
+          Monitor your chatbot&apos;s performance, visitor engagement, and lead generation metrics.
         </p>
       </div>
       
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-4 w-4" />
             <AlertDescription>
               Report export functionality will be available in the next implementation phase.
-              You'll be able to export conversation logs, lead data, and performance metrics in CSV and PDF formats.
+              You&apos;ll be able to export conversation logs, lead data, and performance metrics in CSV and PDF formats.
             </AlertDescription>
           </Alert>
         </CardContent>

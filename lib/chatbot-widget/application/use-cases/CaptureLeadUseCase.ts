@@ -1,14 +1,12 @@
 /**
- * Capture Lead Use Case (Application)
+ * Capture Lead Use Case
  * 
- * AI INSTRUCTIONS:
+ * AI Instructions:
  * - Single responsibility: Lead capture orchestration only
  * - Orchestrate domain services without business logic
  * - Handle workflow coordination, delegate all business logic
  * - Use domain-specific errors with proper context
- * - Stay under 200-250 lines
- * - UPDATED: Uses domain-calculated lead scores from session context
- * - Lead scores calculated via DomainConstants.calculateLeadScore()
+ * - Uses domain-calculated lead scores from session context
  */
 
 import { Lead } from '../../domain/entities/Lead';
@@ -36,8 +34,8 @@ export interface CaptureLeadRequest {
     page?: string;
     referrer?: string;
   };
-  // REMOVED: leadScore - Domain calculates this from session entities
-  // REMOVED: qualificationStatus - Domain determines this from score
+  // leadScore - Domain calculates this from session entities
+  // qualificationStatus - Domain determines this from score
   engagementScore?: number;
   tags?: string[];
 }
@@ -49,9 +47,7 @@ export class CaptureLeadUseCase {
     private leadMapper: LeadMapper
   ) {}
 
-  /**
-   * Execute lead capture use case
-   */
+  // Execute lead capture use case
   async execute(request: CaptureLeadRequest): Promise<LeadDto> {
     try {
       // Check if lead already exists for this session
@@ -86,16 +82,15 @@ export class CaptureLeadUseCase {
       });
 
       // Use LeadCaptureService to capture the lead
-      // Domain will calculate score from session entities and determine qualification status
       const savedLead = await this.leadCaptureService.captureLead({
         sessionId: request.sessionId,
         organizationId: request.organizationId,
-        chatbotConfigId: 'default', // Would need to get this from session
+        chatbotConfigId: 'default', // Would need to get from session
         contactInfo,
         qualificationData,
         conversationSummary: request.conversationSummary,
         source
-        // REMOVED: leadScore and qualificationStatus - Domain handles these
+        // leadScore and qualificationStatus - Domain handles these
       });
 
       return savedLead;

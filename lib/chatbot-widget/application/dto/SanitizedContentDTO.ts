@@ -1,12 +1,11 @@
 /**
  * SanitizedContentDTO Data Transfer Object
  * 
- * AI INSTRUCTIONS:
+ * AI Instructions:
  * - Define clean data contracts for layer boundaries
  * - Immutable structures for data transfer
  * - Never expose domain entities directly
  * - Support serialization and API responses
- * - Follow @golden-rule DTO patterns exactly
  */
 
 export interface SanitizedContentDTO {

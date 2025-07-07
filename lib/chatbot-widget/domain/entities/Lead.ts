@@ -1,14 +1,13 @@
 /**
  * Lead Domain Entity
  * 
- * Domain Entity: Core lead business object with identity
- * Single Responsibility: Lead coordination and core business logic
- * Following DDD entity patterns with value objects and domain services
- * 
  * AI INSTRUCTIONS:
- * - UPDATED: Removed domain lead scoring - using API-only approach
- * - Lead score is now provided externally (from API) not calculated internally
- * - Keep under 250 lines following @golden-rule patterns
+ * - Core lead business object with identity following DDD entity patterns
+ * - Lead coordination and core business logic with value objects and domain services
+ * - UPDATED: Removed domain lead scoring - using API-only approach with external scores
+ * - Manages contact info, qualification data, lead source, and metadata coordination
+ * - Handles lead lifecycle, follow-up status, assignment, and business state transitions
+ * - Keep under 250 lines following @golden-rule patterns with immutable entity design
  */
 
 import { ContactInfo, ContactInfoProps } from '../value-objects/lead-management/ContactInfo';

@@ -25,6 +25,7 @@ export class SendMessageHandler {
       const result = await this.processChatMessageUseCase.execute({
         sessionId: command.sessionId,
         userMessage: command.userMessage,
+        organizationId: command.organizationId,
         metadata: { clientInfo: command.clientInfo }
       });
 

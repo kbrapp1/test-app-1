@@ -1,14 +1,9 @@
 /**
- * Vector Query Service
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Handle vector search and retrieval operations
- * - Infrastructure service focused on Supabase vector queries
- * - Keep business logic pure, handle database-specific concerns
- * - Never exceed 250 lines per @golden-rule
- * - Support semantic search with filtering and validation
- * - Handle vector dimension validation and error recovery
- * - Provide efficient query optimization and caching
+ * AI Instructions: Vector Query Service for semantic search operations
+ * - Handle vector search and retrieval with Supabase RPC functions
+ * - Validate vector dimensions and handle database-specific concerns
+ * - Support semantic search with filtering and error recovery
+ * - Follow @golden-rule patterns with single responsibility focus
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -44,7 +39,6 @@ export class VectorQueryService {
     options: VectorSearchOptions = {}
   ): Promise<VectorSearchResult[]> {
     try {
-      // Validate search parameters
       this.validateSearchParameters(queryEmbedding, options);
 
       const searchConfig = { ...VectorQueryService.DEFAULT_SEARCH_CONFIG, ...options };
@@ -114,7 +108,6 @@ export class VectorQueryService {
         .eq('source_type', 'website_crawled')
         .order('created_at', { ascending: false });
 
-      // Filter by source URL if provided
       if (sourceUrl) {
         query = query.like('source_url', `${sourceUrl}%`);
       }
@@ -140,11 +133,9 @@ export class VectorQueryService {
   ): VectorSearchResult[] {
     return data
       .filter((row: VectorSimilarityRow) => {
-        // Apply category filter if specified
         if (options.categoryFilter && row.category !== options.categoryFilter) {
           return false;
         }
-        // Apply source type filter if specified
         if (options.sourceTypeFilter && row.source_type !== options.sourceTypeFilter) {
           return false;
         }
@@ -201,14 +192,13 @@ export class VectorQueryService {
       content: row.content,
       category: this.mapDatabaseCategoryToDomain(row.category),
       tags: [],
-      relevanceScore: (row as VectorSimilarityRow).similarity || 0.0, // FIXED: Show actual similarity scores instead of normalized 1.0
+      relevanceScore: (row as VectorSimilarityRow).similarity || 0.0,
       source: row.source_url || 'stored',
       lastUpdated: new Date(row.updated_at)
     };
   }
 
   private mapDatabaseCategoryToDomain(dbCategory: string): KnowledgeItem['category'] {
-    // Map database categories to domain categories
     const categoryMap: Record<string, KnowledgeItem['category']> = {
       'faq': 'faq',
       'product_info': 'product_info',
@@ -230,7 +220,6 @@ export class VectorQueryService {
     if (Array.isArray(vectorData)) {
       processedVector = vectorData as number[];
     } else if (typeof vectorData === 'string') {
-      // Handle case where Supabase returns vector as string
       try {
         processedVector = JSON.parse(vectorData) as number[];
       } catch (e) {
@@ -240,7 +229,6 @@ export class VectorQueryService {
       throw new Error(`Unexpected vector type for ${itemId}: ${typeof vectorData}`);
     }
     
-    // Validate vector dimensions (critical for preventing dimension mismatch errors)
     if (processedVector.length !== VectorQueryService.EXPECTED_VECTOR_DIMENSIONS) {
       throw new Error(
         `Vector dimension mismatch for ${itemId}: ${processedVector.length} dimensions (expected ${VectorQueryService.EXPECTED_VECTOR_DIMENSIONS})`

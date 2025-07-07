@@ -1,14 +1,11 @@
 'use client';
 
 /**
- * Knowledge Base Section Component
- * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Knowledge base management UI coordination
+ * - React component for knowledge base management UI coordination
  * - Delegate business logic to hooks and services
- * - Keep under 200-250 lines by extracting sub-components
  * - Use composition pattern for complex UI sections
- * - Follow @golden-rule patterns exactly
+ * - Follow @golden-rule patterns - stay under 250 lines
  */
 
 import { useState, useRef } from 'react';
@@ -18,7 +15,6 @@ import { useKnowledgeBaseSettings } from '../../../hooks/useKnowledgeBaseSetting
 import { CompanyInformationCard } from './CompanyInformationCard';
 import { FaqManagementCard, FaqManagementCardRef } from './FaqManagementCard';
 import { KnowledgeBaseActions } from './KnowledgeBaseActions';
-import { WebsiteSourcesSection } from '../website-sources/WebsiteSourcesSection';
 
 export function KnowledgeBaseSection() {
   const [isEditing, setIsEditing] = useState(false);
@@ -96,8 +92,6 @@ export function KnowledgeBaseSection() {
         onAddFaq={addFaq}
         onRemoveFaq={removeFaq}
       />
-
-      <WebsiteSourcesSection />
 
       {isEditing && (
         <KnowledgeBaseActions

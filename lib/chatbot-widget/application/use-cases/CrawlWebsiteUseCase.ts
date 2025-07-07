@@ -39,6 +39,7 @@ export interface IWebCrawlerProvider {
   crawlWebsite(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
+    organizationId: string,
     onPageCrawled: (pageData: CrawledPageData, htmlParser: IHtmlParser) => Promise<void>
   ): Promise<CrawledPageData[]>;
 }
@@ -77,7 +78,8 @@ export class CrawlWebsiteUseCase {
    */
   async execute(
     source: WebsiteSource,
-    settings: WebsiteCrawlSettings
+    settings: WebsiteCrawlSettings,
+    organizationId: string
   ): Promise<CrawlResult> {
     try {
       // Step 1: Validate crawl parameters (domain validation)
@@ -94,6 +96,7 @@ export class CrawlWebsiteUseCase {
       await this.webCrawlerProvider.crawlWebsite(
         source,
         settings,
+        organizationId,
         async (pageData: CrawledPageData, htmlParser: IHtmlParser) => {
           try {
             // Extract content using domain service
@@ -144,6 +147,7 @@ export class CrawlWebsiteUseCase {
         source.url,
         `Crawl workflow failed: ${errorMessage}`,
         {
+          organizationId,
           metadata: {
             sourceUrl: source.url,
             errorType: error instanceof Error ? error.constructor.name : 'Unknown',

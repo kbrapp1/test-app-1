@@ -32,7 +32,7 @@ import {
  * - Orchestrates domain services and repositories
  * - No business logic - delegate to domain services and helpers
  * - Single responsibility: Knowledge base form workflow coordination
- * - REFACTORED: Uses helper modules to stay under 250 lines per @golden-rule
+ * - Follow @golden-rule patterns - stay under 250 lines
  */
 
 export class KnowledgeBaseFormApplicationService {
@@ -42,10 +42,7 @@ export class KnowledgeBaseFormApplicationService {
     private readonly vectorRepository: IVectorKnowledgeRepository
   ) {}
 
-  /**
-   * Process and validate knowledge base form data
-   * AI INSTRUCTIONS: Orchestrates form processing using domain services and helpers
-   */
+  // Process and validate knowledge base form data
   async processKnowledgeBaseForm(formData: KnowledgeBaseFormDto): Promise<KnowledgeBaseProcessingResultDto> {
     const startTime = Date.now();
     
@@ -78,10 +75,7 @@ export class KnowledgeBaseFormApplicationService {
     }
   }
 
-  /**
-   * Update knowledge base configuration
-   * AI INSTRUCTIONS: Coordinate configuration update with repository and domain services
-   */
+  // Update knowledge base configuration
   async updateKnowledgeBase(request: KnowledgeBaseUpdateRequestDto): Promise<KnowledgeBaseUpdateResponseDto> {
     try {
       const existingConfig = await this.configRepository.findById(request.configId);

@@ -50,19 +50,16 @@ import { InfrastructureCompositionService } from './InfrastructureCompositionSer
 import { ErrorTrackingCompositionService } from './ErrorTrackingCompositionService';
 
 /**
- * Main Composition Root for Chatbot Widget Domain
- * 
- * AI INSTRUCTIONS:
+ * AI Instructions: Main Composition Root for Chatbot Widget Domain
  * - Central orchestration point for all chatbot widget dependencies
  * - Delegates to specialized composition services following DDD patterns
  * - Maintains clean separation between infrastructure and domain layers
- * - Provides unified interface for dependency access
- * - Supports testing through configurable client injection
- * - Keep under 250 lines by delegating to specialized services
+ * - Provides unified interface for dependency access and testing support
  */
 export class ChatbotWidgetCompositionRoot {
+  private static isInitialized = false;
 
-  // ===== REPOSITORY ACCESS METHODS =====
+  // Repository access
   
   static getChatbotConfigRepository(): IChatbotConfigRepository {
     return RepositoryCompositionService.getChatbotConfigRepository();
@@ -84,7 +81,7 @@ export class ChatbotWidgetCompositionRoot {
     return InfrastructureCompositionService.getVectorKnowledgeRepository();
   }
 
-  // ===== INFRASTRUCTURE SERVICE ACCESS METHODS =====
+  // Infrastructure services
   
   static getOpenAIProvider(): OpenAIProvider {
     return InfrastructureCompositionService.getOpenAIProvider();
@@ -122,7 +119,7 @@ export class ChatbotWidgetCompositionRoot {
     return InfrastructureCompositionService.getLoggingService();
   }
 
-  // ===== DOMAIN SERVICE ACCESS METHODS =====
+  // Domain services
   
   static getSessionContextService() {
     return DomainServiceCompositionService.getSessionContextService();
@@ -188,33 +185,53 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getKnowledgeBaseFormService();
   }
 
-  // ===== APPLICATION SERVICE ACCESS METHODS =====
+  // Application services
   
   static getLeadManagementService(): LeadManagementService {
     return ApplicationServiceCompositionService.getLeadManagementService();
   }
 
-  // ===== USE CASE ACCESS METHODS =====
+  // Use cases
   
   static getConfigureChatbotUseCase(): ConfigureChatbotUseCase {
     return UseCaseCompositionService.getConfigureChatbotUseCase();
   }
 
   static async getProcessChatMessageUseCase(): Promise<ProcessChatMessageUseCase> {
+    // Pre-initialize critical services to avoid cold starts
+    if (!this.isInitialized) {
+      await this.preInitializeServices();
+      this.isInitialized = true;
+    }
     return UseCaseCompositionService.getProcessChatMessageUseCase();
+  }
+
+  /**
+   * Pre-initialize critical services to avoid cold start delays
+   */
+  private static async preInitializeServices(): Promise<void> {
+    // Pre-cache the most expensive dynamic imports
+    await Promise.all([
+      // Pre-load tiktoken
+      import('tiktoken').catch(() => {}),
+      // Pre-load ConversationContextOrchestrator  
+      import('../../domain/services/conversation/ConversationContextOrchestrator').catch(() => {}),
+      // Pre-load logging service
+      import('../providers/logging/ChatbotFileLoggingService').catch(() => {})
+    ]);
   }
 
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     return UseCaseCompositionService.getCaptureLeadUseCase();
   }
 
-  // ===== KNOWLEDGE BASE FORM SERVICE ACCESS METHODS =====
+  // Knowledge base services
   
   static getKnowledgeBaseFormApplicationService() {
     return ApplicationServiceCompositionService.getKnowledgeBaseFormApplicationService();
   }
 
-  // ===== ERROR TRACKING SERVICE ACCESS METHODS =====
+  // Error tracking
   
   static getErrorCategorizationService(): ErrorCategorizationDomainService {
     return ErrorTrackingCompositionService.getErrorCategorizationService();
@@ -224,7 +241,7 @@ export class ChatbotWidgetCompositionRoot {
     return ErrorTrackingCompositionService.getErrorTrackingFacade();
   }
 
-  // ===== AI CONFIGURATION SERVICE ACCESS METHODS =====
+  // AI configuration
   
   static getConversationAnalysisService(): ConversationAnalysisService {
     return AIConfigurationCompositionService.getConversationAnalysisService();
@@ -250,14 +267,13 @@ export class ChatbotWidgetCompositionRoot {
     return AIConfigurationCompositionService.getDynamicPromptService();
   }
 
-  // ===== CONFIGURATION AND TESTING METHODS =====
+  // Configuration and testing
   
   static configureWithSupabaseClient(client: SupabaseClient): void {
     RepositoryCompositionService.configureWithSupabaseClient(client);
   }
 
   static resetForTesting(): void {
-    // Reset all specialized composition services
     RepositoryCompositionService.reset();
     DomainServiceCompositionService.clearCache();
     ApplicationServiceCompositionService.reset();
@@ -265,9 +281,12 @@ export class ChatbotWidgetCompositionRoot {
     AIConfigurationCompositionService.reset();
     InfrastructureCompositionService.reset();
     ErrorTrackingCompositionService.reset();
+    
+    // Reset initialization flag to allow fresh pre-initialization
+    this.isInitialized = false;
   }
 
-  // ===== HEALTH CHECKS AND MONITORING =====
+  // Health checks and monitoring
 
   static async healthCheck() {
     return DomainServiceCompositionService.healthCheck();

@@ -1,15 +1,11 @@
 'use server';
 
 /**
- * Knowledge Base Update Actions
- * 
- * AI INSTRUCTIONS:
- * - Handle user requests, delegate to application services
- * - Follow single responsibility principle  
+ * AI Instructions: Server actions for knowledge base operations
+ * - Delegate to application services with proper error handling
  * - Use composition root for dependencies
- * - Validate inputs with domain-specific errors
- * - Keep actions focused and under 250 lines
- * - No redundant code - use websiteSourcesActions.crawlWebsiteSource for website crawling
+ * - Maintain single responsibility per action
+ * - Handle domain errors appropriately
  */
 
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -18,14 +14,7 @@ import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDom
 
 
 
-/**
- * Search Knowledge Base Action
- * 
- * AI INSTRUCTIONS:
- * - Perform semantic search using vector similarity
- * - Delegate to application service
- * - Return ranked results with similarity scores
- */
+// Search Knowledge Base Action
 export async function searchKnowledgeBase(
   organizationId: string,
   chatbotConfigId: string,
@@ -75,14 +64,7 @@ export async function searchKnowledgeBase(
   }
 }
 
-/**
- * Store Knowledge Items Action
- * 
- * AI INSTRUCTIONS:
- * - Store knowledge items with vector embeddings
- * - Delegate to application service
- * - Handle batch processing efficiently
- */
+// Store Knowledge Items Action
 export async function storeKnowledgeItems(
   organizationId: string,
   chatbotConfigId: string,
@@ -124,14 +106,7 @@ export async function storeKnowledgeItems(
   }
 }
 
-/**
- * Delete Knowledge Items By Source Action
- * 
- * AI INSTRUCTIONS:
- * - Delete knowledge items by source type and URL
- * - Delegate to application service
- * - Return deletion count for confirmation
- */
+// Delete Knowledge Items By Source Action
 export async function deleteKnowledgeItemsBySource(
   organizationId: string,
   chatbotConfigId: string,
@@ -171,14 +146,7 @@ export async function deleteKnowledgeItemsBySource(
   }
 }
 
-/**
- * Get Knowledge Base Stats Action
- * 
- * AI INSTRUCTIONS:
- * - Retrieve statistics about knowledge base
- * - Delegate to application service
- * - Return comprehensive metrics for dashboard
- */
+// Get Knowledge Base Stats Action
 export async function getKnowledgeBaseStats(
   organizationId: string,
   chatbotConfigId: string

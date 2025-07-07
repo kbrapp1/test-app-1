@@ -1,15 +1,18 @@
 /**
  * Chatbot Configuration Entity
  * 
- * Domain entity representing a complete chatbot configuration.
- * Coordinates value objects and delegates complex operations to domain services.
+ * AI INSTRUCTIONS:
+ * - Core domain entity representing complete chatbot configuration with business logic
+ * - Coordinates value objects and delegates complex operations to domain services
+ * - Immutable entity following @golden-rule patterns with business method delegation
+ * - Manages personality, knowledge base, operating hours, and lead qualification settings
+ * - Handles validation, state transitions, and configuration lifecycle management
  */
 
 import { PersonalitySettings } from '../value-objects/ai-configuration/PersonalitySettings';
 import { KnowledgeBase } from '../value-objects/ai-configuration/KnowledgeBase';
 import { OperatingHours } from '../value-objects/session-management/OperatingHours';
 import { AIConfiguration } from '../value-objects/ai-configuration/AIConfiguration';
-import { ChatbotSystemPromptService } from '../services/ai-configuration/ChatbotSystemPromptService';
 
 export interface ChatbotConfigProps {
   id: string;
@@ -72,8 +75,7 @@ export class ChatbotConfig {
     if (props.name.length > 100) {
       throw new Error('Chatbot name must be 100 characters or less');
     }
-    // Note: Lead qualification questions are optional during initial config creation
-    // They can be added later through the admin interface
+    // Lead qualification questions are optional during initial config creation
     
     // Validate operating hours
     if (!props.operatingHours.timezone) {
@@ -173,14 +175,6 @@ export class ChatbotConfig {
 
   isWithinOperatingHours(timestamp: Date = new Date()): boolean {
     return this.props.operatingHours.isWithinOperatingHours(timestamp);
-  }
-
-  generateSystemPrompt(): string {
-    return ChatbotSystemPromptService.generateSystemPrompt(
-      this.props.name,
-      this.props.personalitySettings,
-      this.props.knowledgeBase
-    );
   }
 
   toPlainObject(): ChatbotConfigProps {
