@@ -54,6 +54,12 @@ export interface ISessionLogger {
   logMessage(message: string, data?: any, level?: LogLevel): void;
 
   /**
+   * Log a direct message synchronously to ensure proper ordering
+   * FIXED: Added for critical step ordering in chatbot processing
+   */
+  logMessageSync?(message: string, data?: any, level?: LogLevel): void;
+
+  /**
    * Log a processing step with structured data
    */
   logStep(step: string, data?: any, level?: LogLevel): void;

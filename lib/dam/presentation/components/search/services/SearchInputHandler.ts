@@ -20,7 +20,7 @@ export class SearchInputHandler {
   /**
    * Clear search input element focus
    */
-  static clearInputFocus(containerRef: React.RefObject<HTMLDivElement | null>): void {
+  static clearInputFocus(containerRef: React.RefObject<HTMLElement | null>): void {
     const inputElement = containerRef.current?.querySelector('input[type="search"]');
     if (inputElement) {
       (inputElement as HTMLInputElement).blur();

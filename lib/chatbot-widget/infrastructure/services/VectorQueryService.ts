@@ -201,7 +201,7 @@ export class VectorQueryService {
       content: row.content,
       category: this.mapDatabaseCategoryToDomain(row.category),
       tags: [],
-      relevanceScore: (row as VectorSimilarityRow).similarity || 1.0,
+      relevanceScore: (row as VectorSimilarityRow).similarity || 0.0, // FIXED: Show actual similarity scores instead of normalized 1.0
       source: row.source_url || 'stored',
       lastUpdated: new Date(row.updated_at)
     };

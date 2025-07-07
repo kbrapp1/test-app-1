@@ -46,8 +46,16 @@ vi.mock('@/components/ui/empty-state', () => ({
 }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 
-// Import the page after mocks
+// Mock the getActiveOrganizationId function
+vi.mock('@/lib/auth/server-action', () => ({
+  getActiveOrganizationId: vi.fn(),
+}));
+
+// Import the page and the mocked function after mocks
 import NotesPage from './page';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+
+const mockGetActiveOrganizationId = vi.mocked(getActiveOrganizationId);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -57,6 +65,8 @@ beforeEach(() => {
   mockSupabaseServer.select = vi.fn().mockReturnThis();
   mockSupabaseServer.eq = vi.fn().mockReturnThis();
   mockSupabaseServer.order = vi.fn().mockReturnThis();
+  // Reset getActiveOrganizationId mock
+  mockGetActiveOrganizationId.mockClear();
 });
 
 describe('NotesPage', () => {
@@ -68,10 +78,11 @@ describe('NotesPage', () => {
   ];
 
   it('renders list when notes exist', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: mockNotes, error: null });
 
-    const Page = await NotesPage({ getOrgId: async () => mockOrg });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByRole('heading', { name: /my notes/i })).toBeInTheDocument();
@@ -82,10 +93,11 @@ describe('NotesPage', () => {
   });
 
   it('renders empty state when no notes', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: [], error: null });
 
-    const Page = await NotesPage({ getOrgId: async () => mockOrg });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
@@ -93,37 +105,41 @@ describe('NotesPage', () => {
   });
 
   it('shows error if getOrgId returns null', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(null);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
-    const Page = await NotesPage({ getOrgId: async () => null });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByText(/active organization context is missing/i)).toBeInTheDocument();
   });
 
   it('shows error if getOrgId throws', async () => {
+    mockGetActiveOrganizationId.mockRejectedValueOnce(new Error('fail'));
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
-    const Page = await NotesPage({ getOrgId: async () => { throw new Error('fail'); } });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByText(/could not determine active organization/i)).toBeInTheDocument();
   });
 
   it('shows error if user fetch fails', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('fail') });
 
-    const Page = await NotesPage({ getOrgId: async () => mockOrg });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByText(/could not fetch user data/i)).toBeInTheDocument();
   });
 
   it('shows error if fetching notes fails', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
     mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
     mockSupabaseServer.order.mockResolvedValueOnce({ data: null, error: new Error('db') });
 
-    const Page = await NotesPage({ getOrgId: async () => mockOrg });
+    const Page = await NotesPage({});
     render(Page);
 
     expect(screen.getByText(/could not fetch notes/i)).toBeInTheDocument();

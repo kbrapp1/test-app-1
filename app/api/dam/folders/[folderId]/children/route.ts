@@ -10,9 +10,9 @@ import { Folder } from '@/lib/dam/domain/entities/Folder';
 import { Asset } from '@/lib/dam/domain/entities/Asset';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     folderId?: string; // Make optional to check for presence
-  };
+  }>;
 }
 
 // This is the actual handler that withAuth will call
@@ -43,7 +43,7 @@ const createListFolderChildrenHandler = (folderId: string, activeOrgId: string):
 // Export the wrapped handler for the GET method
 export const GET = async (request: NextRequest, context: RouteContext) => {
   const { params } = context;
-  const folderId = params.folderId;
+  const folderId = (await params).folderId;
 
   if (!folderId) {
     return NextResponse.json({ message: 'Folder ID is required in the path.' }, { status: 400 });

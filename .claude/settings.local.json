@@ -11,8 +11,32 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx next build:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(tsc --version)",
+      "Bash(npx:*)",
+      "Bash(tsc:*)",
+      "Bash(timeout 10s npm run test -- --run lib/chatbot-widget/domain/value-objects/conversation-management/__tests__/ConversationFlow.test.ts)",
+      "Bash(timeout 5s npm run test -- --run lib/chatbot-widget/domain/value-objects/conversation-management/__tests__/ConversationObjectives.test.ts)",
+      "Bash(mv:*)",
+      "Bash(tree:*)",
+      "Bash(powershell:*)",
+      "Bash(rg:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(pnpm run test:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase",
+    "context7",
+    "playwright"
+  ]
 }

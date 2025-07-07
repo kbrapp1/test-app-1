@@ -1,4 +1,4 @@
-import { PageContext } from '../services/OptimizationDetectionService';
+import { PageContext } from '../services/optimization/OptimizationDetectionService';
 
 /**
  * Repository interface for context discovery operations

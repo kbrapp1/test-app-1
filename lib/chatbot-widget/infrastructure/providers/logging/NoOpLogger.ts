@@ -19,6 +19,7 @@ export class NoOpLogger implements ISessionLogger, IOperationLogger {
   logSeparator(): void {}
   logRaw(): void {}
   logMessage(): void {}
+  logMessageSync(): void {}
   logStep(): void {}
   logError(): void {}
   logMetrics(): void {}

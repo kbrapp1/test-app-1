@@ -4,6 +4,10 @@ import { PersonaGenerationService } from '../../domain/services/ai-configuration
 import { KnowledgeBaseService } from '../../domain/services/ai-configuration/KnowledgeBaseService';
 import { BusinessGuidanceService } from '../../domain/services/ai-configuration/BusinessGuidanceService';
 import { AdaptiveContextService } from '../../domain/services/ai-configuration/AdaptiveContextService';
+import { PromptCoordinationService } from '../../domain/services/ai-configuration/PromptCoordinationService';
+import { IdentityResolutionService } from '../../domain/services/ai-configuration/IdentityResolutionService';
+import { ContentDeduplicationService } from '../../domain/services/ai-configuration/ContentDeduplicationService';
+import { PromptTemplateEngine } from '../providers/templating/PromptTemplateEngine';
 
 /**
  * AI Configuration Composition Service
@@ -24,10 +28,12 @@ export class AIConfigurationCompositionService {
   private static knowledgeBaseService: KnowledgeBaseService | null = null;
   private static businessGuidanceService: BusinessGuidanceService | null = null;
   private static adaptiveContextService: AdaptiveContextService | null = null;
+  private static promptCoordinationService: PromptCoordinationService | null = null;
+  private static identityResolutionService: IdentityResolutionService | null = null;
+  private static contentDeduplicationService: ContentDeduplicationService | null = null;
+  private static promptTemplateEngine: PromptTemplateEngine | null = null;
 
-  /**
-   * Get conversation analysis service singleton
-   */
+  // Get conversation analysis service singleton
   static getConversationAnalysisService(): ConversationAnalysisService {
     if (!this.conversationAnalysisService) {
       this.conversationAnalysisService = new ConversationAnalysisService();
@@ -35,9 +41,7 @@ export class AIConfigurationCompositionService {
     return this.conversationAnalysisService;
   }
 
-  /**
-   * Get persona generation service singleton
-   */
+  // Get persona generation service singleton
   static getPersonaGenerationService(): PersonaGenerationService {
     if (!this.personaGenerationService) {
       this.personaGenerationService = new PersonaGenerationService();
@@ -45,9 +49,7 @@ export class AIConfigurationCompositionService {
     return this.personaGenerationService;
   }
 
-  /**
-   * Get knowledge base service singleton
-   */
+  // Get knowledge base service singleton
   static getKnowledgeBaseService(): KnowledgeBaseService {
     if (!this.knowledgeBaseService) {
       this.knowledgeBaseService = new KnowledgeBaseService();
@@ -55,9 +57,7 @@ export class AIConfigurationCompositionService {
     return this.knowledgeBaseService;
   }
 
-  /**
-   * Get business guidance service singleton
-   */
+  // Get business guidance service singleton
   static getBusinessGuidanceService(): BusinessGuidanceService {
     if (!this.businessGuidanceService) {
       this.businessGuidanceService = new BusinessGuidanceService();
@@ -65,9 +65,7 @@ export class AIConfigurationCompositionService {
     return this.businessGuidanceService;
   }
 
-  /**
-   * Get adaptive context service singleton
-   */
+  // Get adaptive context service singleton
   static getAdaptiveContextService(): AdaptiveContextService {
     if (!this.adaptiveContextService) {
       this.adaptiveContextService = new AdaptiveContextService();
@@ -75,9 +73,39 @@ export class AIConfigurationCompositionService {
     return this.adaptiveContextService;
   }
 
-  /**
-   * Get dynamic prompt service with all dependencies wired
-   */
+  // Get prompt coordination service singleton
+  static getPromptCoordinationService(): PromptCoordinationService {
+    if (!this.promptCoordinationService) {
+      this.promptCoordinationService = new PromptCoordinationService();
+    }
+    return this.promptCoordinationService;
+  }
+
+  // Get identity resolution service singleton
+  static getIdentityResolutionService(): IdentityResolutionService {
+    if (!this.identityResolutionService) {
+      this.identityResolutionService = new IdentityResolutionService();
+    }
+    return this.identityResolutionService;
+  }
+
+  // Get content deduplication service singleton
+  static getContentDeduplicationService(): ContentDeduplicationService {
+    if (!this.contentDeduplicationService) {
+      this.contentDeduplicationService = new ContentDeduplicationService();
+    }
+    return this.contentDeduplicationService;
+  }
+
+  // Get prompt template engine singleton
+  static getPromptTemplateEngine(): PromptTemplateEngine {
+    if (!this.promptTemplateEngine) {
+      this.promptTemplateEngine = new PromptTemplateEngine();
+    }
+    return this.promptTemplateEngine;
+  }
+
+  // Get dynamic prompt service with all dependencies wired
   static getDynamicPromptService(): DynamicPromptService {
     if (!this.dynamicPromptService) {
       this.dynamicPromptService = this.createDynamicPromptService();
@@ -85,28 +113,32 @@ export class AIConfigurationCompositionService {
     return this.dynamicPromptService;
   }
 
-  /**
-   * Create dynamic prompt service with proper dependency injection
-   */
+  // Create dynamic prompt service with proper dependency injection
   private static createDynamicPromptService(): DynamicPromptService {
     const conversationAnalysisService = this.getConversationAnalysisService();
     const personaGenerationService = this.getPersonaGenerationService();
     const knowledgeBaseService = this.getKnowledgeBaseService();
     const businessGuidanceService = this.getBusinessGuidanceService();
     const adaptiveContextService = this.getAdaptiveContextService();
+    const promptTemplateEngine = this.getPromptTemplateEngine();
+    const promptCoordinationService = this.getPromptCoordinationService();
+    const identityResolutionService = this.getIdentityResolutionService();
+    const contentDeduplicationService = this.getContentDeduplicationService();
     
     return new DynamicPromptService(
       conversationAnalysisService,
       personaGenerationService,
       knowledgeBaseService,
       businessGuidanceService,
-      adaptiveContextService
+      adaptiveContextService,
+      promptTemplateEngine,
+      promptCoordinationService,
+      identityResolutionService,
+      contentDeduplicationService
     );
   }
 
-  /**
-   * Reset all AI configuration services for testing
-   */
+  // Reset all AI configuration services for testing
   static reset(): void {
     this.dynamicPromptService = null;
     this.conversationAnalysisService = null;
@@ -114,5 +146,9 @@ export class AIConfigurationCompositionService {
     this.knowledgeBaseService = null;
     this.businessGuidanceService = null;
     this.adaptiveContextService = null;
+    this.promptCoordinationService = null;
+    this.identityResolutionService = null;
+    this.contentDeduplicationService = null;
+    this.promptTemplateEngine = null;
   }
 } 

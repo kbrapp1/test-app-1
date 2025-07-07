@@ -1,55 +1,37 @@
 /**
- * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
- * - Single responsibility: Basic health scoring
- * - Keep under 100 lines per @golden-rule patterns
- * - Use static methods for efficiency
- * - Simple health checks, no complex analysis
- * - Just calculate health scores, nothing more
+ * AI INSTRUCTIONS: Utility service for knowledge item health scoring.
+ * Static methods for simple health checks. @golden-rule: <100 lines.
  */
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 export class KnowledgeHealthService {
-  // Scoring weights (must sum to 100)
-  private static readonly TITLE_WEIGHT = 25;
-  private static readonly CONTENT_WEIGHT = 40;
-  private static readonly TAGS_WEIGHT = 15;
-  private static readonly FRESHNESS_WEIGHT = 20;
-
-  // Content thresholds
-  private static readonly MIN_TITLE_LENGTH = 5;
-  private static readonly MIN_CONTENT_LENGTH = 50;
-
-  // Freshness thresholds (in days)
-  private static readonly FRESH_THRESHOLD_DAYS = 30;
-  private static readonly MODERATE_THRESHOLD_DAYS = 90;
 
   static calculateHealthScore(item: KnowledgeItem): number {
     let score = 0;
     
     // Title check (25%)
-    if (item.title && item.title.length > this.MIN_TITLE_LENGTH) {
-      score += this.TITLE_WEIGHT;
+    if (item.title && item.title.length > 5) {
+      score += 25;
     }
     
     // Content check (40%)
-    if (item.content && item.content.length > this.MIN_CONTENT_LENGTH) {
-      score += this.CONTENT_WEIGHT;
+    if (item.content && item.content.length > 50) {
+      score += 40;
     }
     
     // Tags check (15%)
     if (item.tags && item.tags.length > 0) {
-      score += this.TAGS_WEIGHT;
+      score += 15;
     }
     
     // Freshness check (20%)
     if (item.lastUpdated) {
-      const daysSinceUpdate =
-        (Date.now() - item.lastUpdated.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSinceUpdate < this.FRESH_THRESHOLD_DAYS) {
-        score += this.FRESHNESS_WEIGHT;
-      } else if (daysSinceUpdate < this.MODERATE_THRESHOLD_DAYS) {
-        score += this.FRESHNESS_WEIGHT / 2;
+      const daysSinceUpdate = (Date.now() - item.lastUpdated.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceUpdate < 30) {
+        score += 20;
+      } else if (daysSinceUpdate < 90) {
+        score += 10;
       }
     }
     
@@ -84,7 +66,7 @@ export class KnowledgeHealthService {
     const staleCount = items.filter(item => {
       if (!item.lastUpdated) return true;
       const daysSinceUpdate = (Date.now() - item.lastUpdated.getTime()) / (1000 * 60 * 60 * 24);
-      return daysSinceUpdate > this.MODERATE_THRESHOLD_DAYS;
+      return daysSinceUpdate > 90;
     }).length;
     
     return {

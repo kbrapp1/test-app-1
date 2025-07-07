@@ -59,7 +59,7 @@ export class CostEstimationService {
   /**
    * Estimate cost for a specific generation request
    */
-  estimateGenerationCost(request: GenerationRequest): CostEstimate {
+  async estimateGenerationCost(request: GenerationRequest): Promise<CostEstimate> {
     const cacheKey = this.getCacheKey(request);
     const cached = this.cache.get(cacheKey);
     
@@ -79,7 +79,7 @@ export class CostEstimationService {
       };
     }
 
-    const model = provider.getModel(request.modelId);
+    const model = await provider.getModel(request.modelId);
     if (!model) {
       return {
         estimatedCents: 0,
@@ -131,12 +131,13 @@ export class CostEstimationService {
   /**
    * Compare costs across all available providers for a given request
    */
-  compareProviderCosts(baseRequest: Omit<GenerationRequest, 'providerId' | 'modelId'>): ProviderComparison[] {
+  async compareProviderCosts(baseRequest: Omit<GenerationRequest, 'providerId' | 'modelId'>): Promise<ProviderComparison[]> {
     const providers = this.providerService.getAvailableProviders();
     const comparisons: ProviderComparison[] = [];
 
     for (const provider of providers) {
-      for (const model of provider.getSupportedModels()) {
+      const models = await provider.getSupportedModels();
+      for (const model of models) {
         // Skip if provider doesn't support the requested features
         if (baseRequest.hasBaseImage && !model.capabilities.supportsImageEditing) {
           continue;
@@ -148,7 +149,7 @@ export class CostEstimationService {
           modelId: model.id,
         };
 
-        const estimate = this.estimateGenerationCost(request);
+        const estimate = await this.estimateGenerationCost(request);
         
                  comparisons.push({
            providerId: provider.providerId,

@@ -76,7 +76,7 @@ function parseRequestParameters(searchParams: URLSearchParams) {
   };
 }
 
-export async function getHandler(
+async function getHandler(
   request: NextRequest,
   user: User,
   supabase: SupabaseClient

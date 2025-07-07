@@ -1,15 +1,16 @@
 import { ChatbotConfig } from '../../entities/ChatbotConfig';
 import { ConversationAnalysis } from './ConversationAnalysisService';
+import { TemplateVariable } from '../../../infrastructure/providers/templating/PromptTemplateEngine';
 
 /**
  * Persona Generation Domain Service
  * 
  * AI INSTRUCTIONS:
- * - Generate context-aware personas for AI conversations
+ * - Generate context-aware personas using template engine
  * - Maintain single responsibility for persona creation
  * - Keep business logic pure, no external dependencies
  * - Follow @golden-rule patterns exactly
- * - Delegate complex string operations to separate methods
+ * - Use template variables instead of hardcoded strings
  * - Always use business persona with full knowledge base
  */
 export class PersonaGenerationService {
@@ -20,38 +21,52 @@ export class PersonaGenerationService {
   generateContextAwarePersona(
     config: ChatbotConfig, 
     analysis: ConversationAnalysis
-  ): string {
-    // Always use business persona with full knowledge base - no greeting phase bypass
-    return this.generateBusinessPersona(config);
+  ): TemplateVariable[] {
+    // AI: Generate template variables for business persona
+    return this.generateBusinessPersonaVariables(config, analysis);
   }
 
   /**
-   * Business persona for business inquiries (2025 approach)
+   * Business persona variables for template generation (2025 approach)
    */
-  private generateBusinessPersona(config: ChatbotConfig): string {
+  private generateBusinessPersonaVariables(
+    config: ChatbotConfig, 
+    analysis: ConversationAnalysis
+  ): TemplateVariable[] {
     const companyName = this.extractCompanyName(config.knowledgeBase.companyInfo || '');
     
-    return `# AI Business Intelligence Specialist
-
-## Core Identity
-Expert business consultant for ${companyName}, combining industry insights with strategic conversation management.
-
-## Communication Standards
-- **Tone**: ${config.personalitySettings.tone || 'Consultative with authority'}
-- **Approach**: Lead with business insights, assess needs strategically
-- **Style**: Professional, value-focused, outcome-oriented
-
-## Primary Objectives
-1. **Business Intelligence**: Provide relevant industry insights and context
-2. **Strategic Assessment**: Understand business challenges and decision criteria
-3. **Value Alignment**: Connect capabilities with business outcomes
-
-## Response Framework
-- Listen to business context before suggesting solutions
-- Ask clarifying questions about objectives and constraints
-- Position recommendations in business impact terms
-
-`;
+    return [
+      {
+        name: 'roleTitle',
+        value: 'Lead Capture Specialist',
+        isRequired: true
+      },
+      {
+        name: 'companyName',
+        value: companyName,
+        isRequired: true
+      },
+      {
+        name: 'primaryObjective',
+        value: 'identifying qualified prospects',
+        isRequired: true
+      },
+      {
+        name: 'tone',
+        value: config.personalitySettings.tone || 'Consultative with authority',
+        isRequired: true
+      },
+      {
+        name: 'approach',
+        value: 'Lead with business insights, assess needs strategically',
+        isRequired: true
+      },
+      {
+        name: 'communicationStyle',
+        value: 'Professional, value-focused, outcome-oriented',
+        isRequired: true
+      }
+    ];
   }
 
   /**

@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export default async function DamUploadPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // Await the dynamic searchParams API before using its properties
   const { folderId: folderParam } = await searchParams;

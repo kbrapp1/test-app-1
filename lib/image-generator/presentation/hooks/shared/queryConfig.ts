@@ -41,7 +41,7 @@ export function withQueryDefaults<
 }
 
 // Default options for useInfiniteQuery hooks
-export const defaultInfiniteQueryOptions: Partial<UseInfiniteQueryOptions<any, any, any, any, QueryKey, any>> = {
+export const defaultInfiniteQueryOptions: Partial<UseInfiniteQueryOptions<any, any, any, any, any>> = {
   staleTime: 2 * 60 * 1000,    // 2 minutes
   gcTime: 5 * 60 * 1000,        // 5 minutes
   refetchOnWindowFocus: false,
@@ -57,7 +57,6 @@ export function withInfiniteQueryDefaults<
   TQueryFnData = unknown,
   TError = unknown,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown
 >(
@@ -65,7 +64,6 @@ export function withInfiniteQueryDefaults<
     TQueryFnData,
     TError,
     TData,
-    TQueryData,
     TQueryKey,
     TPageParam
   >
@@ -73,7 +71,6 @@ export function withInfiniteQueryDefaults<
   TQueryFnData,
   TError,
   TData,
-  TQueryData,
   TQueryKey,
   TPageParam
 > {
@@ -82,7 +79,6 @@ export function withInfiniteQueryDefaults<
     TQueryFnData,
     TError,
     TData,
-    TQueryData,
     TQueryKey,
     TPageParam
   >;

@@ -16,7 +16,7 @@ import {
 
 export class ChatSessionService {
   private readonly chatSessionRepository;
-  private readonly conversationContextService;
+  private readonly conversationContextService: any;
   
   // Simple token counting service for basic operations
   private readonly basicTokenCountingService = {
@@ -46,8 +46,9 @@ export class ChatSessionService {
 
   constructor() {
     this.chatSessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
-    // AI INSTRUCTIONS: Follow @golden-rule dependency injection - orchestrator now manages its own dependencies
-    this.conversationContextService = ChatbotWidgetCompositionRoot.getConversationContextOrchestrator();
+    // AI INSTRUCTIONS: Following @golden-rule patterns - this service doesn't need ConversationContextOrchestrator
+    // Session management is separate from conversation context processing
+    this.conversationContextService = null;
   }
 
   /**

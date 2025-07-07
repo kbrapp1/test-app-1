@@ -277,7 +277,7 @@ export class CrawlPolicyService {
    * - Default to conservative same-domain only
    */
   private shouldAllowSubdomains(): boolean {
-    return false; // Conservative default - same domain only
+    return false; // Conservative default - same domain only to prevent scope creep and ensure focused crawling
   }
 
   /**

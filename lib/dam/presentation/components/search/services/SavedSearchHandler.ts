@@ -1,4 +1,4 @@
-import { CurrentSearchCriteria } from '../../../hooks/useSavedSearches';
+import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
 
 /**
  * SavedSearchHandler Service
@@ -27,7 +27,7 @@ export class SavedSearchHandler {
     if (searchCriteria.filters) {
       Object.entries(searchCriteria.filters).forEach(([key, value]) => {
         if (value && value !== 'any') {
-          params.set(key, value);
+          params.set(key, String(value));
         }
       });
     }

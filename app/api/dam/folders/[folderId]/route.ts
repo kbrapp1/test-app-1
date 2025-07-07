@@ -14,9 +14,9 @@ interface PatchRequestBody {
 }
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     folderId?: string;
-  };
+  }>;
 }
 
 const createUpdateFolderHandler = (folderId: string, activeOrgId: string, updates: PatchRequestBody): AuthenticatedHandler => {
@@ -47,7 +47,7 @@ const createUpdateFolderHandler = (folderId: string, activeOrgId: string, update
 
 export const PATCH = async (request: NextRequest, context: RouteContext) => {
   const { params } = context;
-  const folderId = params.folderId;
+  const folderId = (await params).folderId;
 
   if (!folderId) {
     return NextResponse.json({ message: 'Folder ID is required in the path.' }, { status: 400 });
@@ -103,7 +103,7 @@ const createDeleteFolderHandler = (folderId: string, activeOrgId: string): Authe
 
 export const DELETE = async (request: NextRequest, context: RouteContext) => {
   const { params } = context;
-  const folderId = params.folderId;
+  const folderId = (await params).folderId;
   if (!folderId) {
     return NextResponse.json({ message: 'Folder ID is required in the path.' }, { status: 400 });
   }

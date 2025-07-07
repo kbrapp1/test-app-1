@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '../../../supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 // Repository implementations
 import { ChatbotConfigSupabaseRepository } from '../persistence/supabase/ChatbotConfigSupabaseRepository';
@@ -29,6 +29,7 @@ export class RepositoryCompositionService {
 
   /**
    * Get or create Supabase client
+   * Uses server client for authentication (called from server actions)
    */
   private static getSupabaseClient(): SupabaseClient {
     if (!this.supabaseClient) {

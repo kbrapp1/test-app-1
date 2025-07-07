@@ -11,10 +11,8 @@
  */
 export class KnowledgeBaseService {
 
-  /**
-   * Minimal knowledge base injection (2025 RAG best practice - vector-first)
-   * Uses only essential context, relies on vector search for specific content
-   */
+  // Minimal knowledge base injection (2025 RAG best practice - vector-first)
+  // Uses only essential context, relies on vector search for specific content
   buildMinimalKnowledgeBase(knowledgeBase: any): string {
     const companyName = this.extractCompanyName(knowledgeBase.companyInfo || '');
     const hasContent = this.hasKnowledgeBaseContent(knowledgeBase);
@@ -45,9 +43,7 @@ export class KnowledgeBaseService {
     return knowledgeContent;
   }
 
-  /**
-   * Check if knowledge base has any content
-   */
+  // Check if knowledge base has any content
   private hasKnowledgeBaseContent(knowledgeBase: any): boolean {
     return knowledgeBase.companyInfo?.trim() || 
            knowledgeBase.productCatalog?.trim() || 
@@ -56,9 +52,7 @@ export class KnowledgeBaseService {
            (knowledgeBase.faqs && knowledgeBase.faqs.length > 0);
   }
 
-  /**
-   * Build empty knowledge base message
-   */
+  // Build empty knowledge base message
   private buildEmptyKnowledgeBaseMessage(): string {
     return `
 ## Knowledge Base Status
@@ -73,9 +67,7 @@ export class KnowledgeBaseService {
 `;
   }
 
-  /**
-   * Extract company name from knowledge base content
-   */
+  // Extract company name from knowledge base content
   private extractCompanyName(companyInfo: string): string {
     if (!companyInfo.trim()) return 'the company';
     
@@ -110,18 +102,14 @@ export class KnowledgeBaseService {
     return 'the company';
   }
 
-  /**
-   * Extract brief company overview
-   */
+  // Extract brief company overview
   private extractCompanyOverview(companyInfo?: string): string {
     if (!companyInfo) return '';
     
     return companyInfo.substring(0, 200).trim() + (companyInfo.length > 200 ? '...' : '');
   }
 
-  /**
-   * Build core business context section
-   */
+  // Build core business context section
   private buildCoreBusinessContext(companyName: string): string {
     return `
 ## Core Business Context
@@ -131,9 +119,7 @@ export class KnowledgeBaseService {
 `;
   }
 
-  /**
-   * Build company overview section
-   */
+  // Build company overview section
   private buildCompanyOverviewSection(companyOverview: string): string {
     return `### Company Overview
 ${companyOverview}
@@ -141,35 +127,26 @@ ${companyOverview}
 `;
   }
 
-  /**
-   * Build compliance section if applicable
-   */
+  // Build compliance section if applicable
   private buildComplianceSection(complianceGuidelines?: string): string | null {
     if (!complianceGuidelines?.trim()) return null;
     
-    const compliancePreview = complianceGuidelines.substring(0, 150).trim();
-    if (compliancePreview.toLowerCase().includes('legal') || 
-        compliancePreview.toLowerCase().includes('compliance') ||
-        compliancePreview.toLowerCase().includes('regulation')) {
-      return `### Critical Compliance
-${compliancePreview}${complianceGuidelines.length > 150 ? '... (full guidelines available via search)' : ''}
+    // FIXED: Always include compliance guidelines when they exist, regardless of content
+    // This ensures they appear in system prompts and logs for QA purposes
+    const compliancePreview = complianceGuidelines.substring(0, 300).trim();
+    return `### Service Scope & Compliance Guidelines
+${compliancePreview}${complianceGuidelines.length > 300 ? '... (full guidelines available via search)' : ''}
 
 `;
-    }
-    
-    return null;
   }
 
-  /**
-   * Build capabilities section
-   */
+  // Build capabilities section
   private buildCapabilitiesSection(): string {
     return `### My Capabilities
-- Access to comprehensive product and service information
+- Access to comprehensive product, service and FAQ information
 - Real-time knowledge base search for specific questions  
 - Lead qualification and business consultation
 - Technical support and documentation access
-- Detailed FAQ and pricing information
 
 ### Approach
 - I will search my knowledge base when you ask specific questions
@@ -177,14 +154,12 @@ ${compliancePreview}${complianceGuidelines.length > 150 ? '... (full guidelines 
 - I provide relevant, accurate information based on your interests
 - I can connect you with specialists for detailed discussions
 
-*I have access to detailed product catalogs, pricing, FAQs, and technical documentation. I'll retrieve specific information when relevant to your questions.*
+*I have access to detailed product catalogs, FAQs, and technical documentation. I'll retrieve specific information when relevant to your questions.*
 
 `;
   }
 
-  /**
-   * Build conversation guidelines section
-   */
+  // Build conversation guidelines section
   private buildConversationGuidelines(): string {
     return `### Conversation Guidelines
 - Maintain professional tone aligned with company values

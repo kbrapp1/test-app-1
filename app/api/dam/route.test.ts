@@ -97,7 +97,7 @@ vi.mock('@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository')
 vi.mock('@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository');
 
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { GET, getHandler } from './route';
+import { GET } from './route';
 
 describe('DAM API Route', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };

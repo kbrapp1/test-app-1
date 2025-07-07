@@ -55,12 +55,19 @@ interface Note {
 
 // Props for dependency injection of organization ID fetcher
 interface NotesPageProps {
+  params?: Promise<any>;
+  searchParams?: Promise<any>;
   getOrgId?: () => Promise<string | null>;
 }
 
-export default async function NotesPage(
-  { getOrgId = getActiveOrganizationId }: NotesPageProps = {}
-) {
+export default async function NotesPage({
+  params,
+  searchParams
+}: {
+  params?: Promise<any>;
+  searchParams?: Promise<any>;
+}) {
+  const getOrgId = getActiveOrganizationId;
   const supabase = createClient();
 
   // Fetch user first (unchanged)

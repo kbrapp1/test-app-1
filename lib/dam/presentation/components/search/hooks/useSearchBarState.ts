@@ -49,7 +49,7 @@ interface UseSearchBarStateReturn {
   
   // Refs
   mainSearchedTermRef: React.MutableRefObject<string | null>;
-  searchContainerRef: React.RefObject<HTMLDivElement | null>;
+  searchContainerRef: React.RefObject<HTMLElement | null>;
   
   // Handlers
   handleMainSearch: (searchTermToUse?: string) => void;
@@ -83,7 +83,7 @@ export const useSearchBarState = ({
   } = useDamSearchInput({ initialValue: gallerySearchTerm });
 
   const mainSearchedTermRef = useRef<string | null>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLElement | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const [dropdownDisabled, setDropdownDisabled] = useState(false);
 
@@ -107,8 +107,8 @@ export const useSearchBarState = ({
     setIsDropdownOpen,
   } = useDamSearchDropdown({
     debouncedSearchTerm,
-    currentFolderId,
-    mainSearchedTerm: mainSearchedTermRef.current,
+    currentFolderId: currentFolderId || undefined,
+    mainSearchedTerm: mainSearchedTermRef.current || undefined,
     gallerySearchTerm,
     inputFocused,
     searchContainerRef,

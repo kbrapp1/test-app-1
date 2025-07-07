@@ -8,7 +8,7 @@ interface UseDamSearchDropdownProps {
   mainSearchedTerm?: string;
   gallerySearchTerm?: string;
   inputFocused: boolean;
-  searchContainerRef?: React.RefObject<HTMLElement>;
+  searchContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
 interface UseDamSearchDropdownReturn {

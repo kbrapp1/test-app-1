@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Sparkles, Timer } from 'lucide-react';
-import { GenerationDto } from '../../application/dto';
+import { GenerationDto } from '../../../../application/dto/GenerationDto';
 
 interface GenerationInfoProps {
   generation: GenerationDto;

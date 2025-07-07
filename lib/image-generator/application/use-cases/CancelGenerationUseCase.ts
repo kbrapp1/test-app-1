@@ -39,9 +39,10 @@ export class CancelGenerationUseCase {
       }
 
       // 3. Cancel with provider if there's a prediction ID
-      if (generation.externalProviderId) {
+      const generationData = generation.toData();
+      if (generationData.externalProviderId) {
         try {
-          await this.provider.cancelGeneration(generation.externalProviderId);
+          await this.provider.cancelGeneration(generationData.externalProviderId);
         } catch (providerError) {
           console.warn('Failed to cancel with provider:', providerError);
           // Continue with local cancellation even if provider fails
@@ -68,11 +69,16 @@ export class CancelGenerationUseCase {
   private async cleanupAutoSavedImage(generation: Generation): Promise<void> {
     try {
       // Check if this generation has an auto-saved image (storage URL instead of provider URL)
-      const resultUrl = generation.resultImageUrl;
+      const generationData = generation.toData();
+      const resultUrl = generationData.resultImageUrl;
       if (resultUrl && resultUrl.includes('/storage/v1/object/public/assets/')) {
         // This is an auto-saved image, delete it from storage
-        const storagePath = generation.getAutoSaveStoragePath();
-        await this.storageService.removeFile(storagePath);
+        // Extract the storage path from the URL
+        const urlParts = resultUrl.split('/storage/v1/object/public/assets/');
+        if (urlParts.length > 1) {
+          const storagePath = urlParts[1];
+          await this.storageService.removeFile(storagePath);
+        }
       }
     } catch (err) {
       console.warn('Failed to cleanup auto-saved image:', err);

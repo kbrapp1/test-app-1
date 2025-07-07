@@ -1,35 +1,38 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { PerformanceIssueSummary } from '@/lib/monitoring/presentation/components/business-impact/PerformanceIssueSummary';
+import { PerformanceIssueSummary } from './PerformanceIssueSummary';
+import { OptimizationGap } from '../../../domain/value-objects/OptimizationGap';
+import { NetworkIssue } from '../../../domain/network-efficiency/value-objects/NetworkIssue';
+import { CrossDomainInsight } from '../../../domain/cross-domain/services/PerformanceCorrelationService';
 
 // Mock data for testing
-const mockFrontendIssues = [
-  {
-    impactArea: 'Component Re-renders',
-    description: 'Excessive re-renders detected in UserProfile component',
-    severity: 'high' as const,
-    recommendation: 'Use React.memo() or useMemo for optimization',
-    businessImpact: 'Poor user experience, increased CPU usage',
-  }
+const mockFrontendIssues: OptimizationGap[] = [
+  new OptimizationGap(
+    'memoization',
+    'Component Re-renders',
+    'Excessive re-renders detected in UserProfile component',
+    'high',
+    true
+  )
 ];
 
-const mockNetworkIssues = [
-  {
-    requestPath: '/api/users',
-    issue: 'Multiple duplicate requests',
-    severity: 'medium' as const,
-    recommendation: 'Implement request deduplication',
-    businessImpact: 'Increased server load and slower response times',
-  }
+const mockNetworkIssues: NetworkIssue[] = [
+  new NetworkIssue(
+    'redundancy',
+    'Multiple duplicate requests',
+    'API endpoint /api/users called multiple times unnecessarily',
+    'medium',
+    3,
+    true
+  )
 ];
 
-const mockCrossDomainInsights = [
+const mockCrossDomainInsights: CrossDomainInsight[] = [
   {
+    type: 'correlation',
     title: 'Database Query Optimization',
     description: 'Multiple N+1 queries detected affecting frontend performance',
-    severity: 'high' as const,
-    category: 'Backend Impact' as const,
-    recommendation: 'Implement batch loading for related data',
-    businessImpact: 'Slow page loads affecting user engagement',
+    severity: 'high',
+    domains: ['frontend', 'network'],
   }
 ];
 
@@ -84,12 +87,11 @@ export const NoIssues: Story = {
     frontendIssues: [],
     networkIssues: [],
     crossDomainInsights: [{
+      type: 'optimization',
       title: 'Optimal Performance',
       description: 'All systems are running efficiently with no detected issues',
-      severity: 'low' as const,
-      category: 'Positive Insight' as const,
-      recommendation: 'Maintain current optimization strategies',
-      businessImpact: 'Excellent user experience and system performance',
+      severity: 'low',
+      domains: ['frontend', 'network'],
     }],
   },
   parameters: {

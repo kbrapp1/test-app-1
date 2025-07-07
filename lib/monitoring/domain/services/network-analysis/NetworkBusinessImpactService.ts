@@ -1,4 +1,4 @@
-import { NetworkStats } from '../network-efficiency/entities/NetworkCall';
+import { NetworkStats } from '../../network-efficiency/entities/NetworkCall';
 
 export class NetworkBusinessImpactService {
   static calculateBusinessImpact(stats: NetworkStats): string {

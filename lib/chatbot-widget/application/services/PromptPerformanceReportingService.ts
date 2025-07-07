@@ -1,12 +1,6 @@
 /**
- * Prompt Performance Reporting Service
- * 
- * AI INSTRUCTIONS:
- * - Application service for report generation and trend analysis
- * - Orchestrates domain services for comprehensive reporting
- * - Keep under 250 lines by focusing on coordination
- * - Follow @golden-rule patterns exactly
- * - Single responsibility: performance reporting and trend analysis
+ * AI INSTRUCTIONS: Application service for prompt performance reporting and trend analysis.
+ * Orchestrates domain services for comprehensive reporting. @golden-rule: <250 lines.
  */
 
 import { PromptTokenAnalysisDomainService } from '../../domain/services/ai-configuration/PromptTokenAnalysisDomainService';
@@ -27,14 +21,7 @@ import {
 
 export class PromptPerformanceReportingService {
   
-  /**
-   * Generate comprehensive performance report
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate all analysis services for complete report
-   * - Include current performance, trends, and recommendations
-   * - Provide actionable insights for optimization
-   */
+  /** Generate comprehensive performance report */
   static generatePerformanceReport(analyses: PromptPerformanceAnalysis[]): PromptPerformanceReport {
     if (analyses.length === 0) {
       throw new Error('Cannot generate report without performance analyses');
@@ -51,9 +38,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Calculate performance trends across analyses
-   */
+  /** Calculate performance trends */
   private static calculateTrends(analyses: PromptPerformanceAnalysis[]): PerformanceTrends {
     if (analyses.length < 2) {
       return {
@@ -73,9 +58,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Calculate individual trend data
-   */
+  /** Calculate trend data */
   private static calculateTrend(current: number, previous: number): TrendData {
     const change = current - previous;
     const changePercent = previous === 0 ? 0 : (change / previous) * 100;
@@ -92,9 +75,7 @@ export class PromptPerformanceReportingService {
     return { trend, change: changePercent };
   }
 
-  /**
-   * Get benchmark comparisons for current performance
-   */
+  /** Get benchmark comparisons */
   private static getBenchmarkComparisons(analysis: PromptPerformanceAnalysis): BenchmarkComparisons {
     return {
       tokenEfficiency: this.createBenchmarkComparison(
@@ -112,9 +93,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Create individual benchmark comparison
-   */
+  /** Create benchmark comparison */
   private static createBenchmarkComparison(current: number, benchmark: number): BenchmarkComparison {
     return {
       current,
@@ -123,9 +102,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Consolidate recommendations across multiple analyses
-   */
+  /** Consolidate recommendations */
   private static consolidateRecommendations(analyses: PromptPerformanceAnalysis[]): ConsolidatedRecommendations {
     const allRecommendations = analyses.flatMap(analysis => analysis.optimizationRecommendations);
     
@@ -143,9 +120,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Group recommendations by type
-   */
+  /** Group by type */
   private static groupRecommendationsByType(recommendations: OptimizationRecommendation[]): Record<string, OptimizationRecommendation[]> {
     return recommendations.reduce((acc, rec) => {
       if (!acc[rec.type]) acc[rec.type] = [];
@@ -154,9 +129,7 @@ export class PromptPerformanceReportingService {
     }, {} as Record<string, OptimizationRecommendation[]>);
   }
 
-  /**
-   * Create recommendation summaries from grouped recommendations
-   */
+  /** Create summaries */
   private static createRecommendationSummaries(grouped: Record<string, OptimizationRecommendation[]>): RecommendationSummary[] {
     return Object.entries(grouped).map(([type, recommendations]) => ({
       type,
@@ -166,22 +139,13 @@ export class PromptPerformanceReportingService {
     }));
   }
 
-  /**
-   * Calculate overall performance score
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine token efficiency and effectiveness scores
-   * - Weight effectiveness higher than token efficiency
-   * - Return normalized score between 0 and 1
-   */
+  /** Calculate overall score (70% effectiveness, 30% efficiency) */
   static calculateOverallScore(tokenEfficiency: number, effectivenessScore: number): number {
     // Weighted average: 30% token efficiency, 70% effectiveness
     return (tokenEfficiency * 0.3) + (effectivenessScore * 0.7);
   }
 
-  /**
-   * Generate performance summary text
-   */
+  /** Generate summary text */
   static generatePerformanceSummary(report: PromptPerformanceReport): string {
     const current = report.currentPerformance;
     const benchmarks = report.benchmarks;
@@ -194,9 +158,7 @@ export class PromptPerformanceReportingService {
     return `Performance is ${tokenStatus} for token efficiency (${(current.tokenAnalysis.efficiency * 100).toFixed(1)}%) and ${effectivenessStatus} for effectiveness (${(current.effectivenessAnalysis.responseRelevance * 100).toFixed(1)}%). Overall score: ${(current.overallScore * 100).toFixed(1)}% with ${trendDescription} trend.`;
   }
 
-  /**
-   * Describe trend in human-readable format
-   */
+  /** Describe trend */
   private static describeTrend(trend: TrendData): string {
     const changeText = Math.abs(trend.change).toFixed(1);
     
@@ -212,9 +174,7 @@ export class PromptPerformanceReportingService {
     }
   }
 
-  /**
-   * Get priority recommendations for immediate action
-   */
+  /** Get priority recommendations */
   static getPriorityRecommendations(report: PromptPerformanceReport): OptimizationRecommendation[] {
     return report.recommendations.immediate
       .map(summary => summary.latestRecommendation)
@@ -229,9 +189,7 @@ export class PromptPerformanceReportingService {
       });
   }
 
-  /**
-   * Generate actionable improvement plan
-   */
+  /** Generate improvement plan */
   static generateImprovementPlan(report: PromptPerformanceReport): ImprovementPlan {
     const priorityRecommendations = this.getPriorityRecommendations(report);
     
@@ -244,9 +202,7 @@ export class PromptPerformanceReportingService {
     };
   }
 
-  /**
-   * Estimate overall effort for recommendations
-   */
+  /** Estimate effort */
   private static estimateOverallEffort(recommendations: OptimizationRecommendation[]): 'high' | 'medium' | 'low' {
     const effortScores = recommendations.map(r => {
       switch (r.effort) {
@@ -264,9 +220,7 @@ export class PromptPerformanceReportingService {
     return 'low';
   }
 
-  /**
-   * Estimate overall impact for recommendations
-   */
+  /** Estimate impact */
   private static estimateOverallImpact(recommendations: OptimizationRecommendation[]): 'high' | 'medium' | 'low' {
     const impactScores = recommendations.map(r => {
       switch (r.impact) {

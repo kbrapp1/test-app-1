@@ -48,7 +48,7 @@ describe('ChatbotConfigMapper', () => {
               }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -56,7 +56,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const websiteSource = domainConfig.knowledgeBase.websiteSources[0];
 
         expect(websiteSource.status).toBe('completed');
@@ -91,7 +91,7 @@ describe('ChatbotConfigMapper', () => {
                 }
               ]
             },
-            operating_hours: {},
+            operating_hours: { timezone: 'UTC' },
             lead_qualification_questions: [],
             ai_configuration: {},
             is_active: true,
@@ -99,7 +99,7 @@ describe('ChatbotConfigMapper', () => {
             updated_at: '2024-01-01T00:00:00.000Z'
           };
 
-          const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+          const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
           expect(domainConfig.knowledgeBase.websiteSources[0].status).toBe(status);
         });
       });
@@ -124,7 +124,7 @@ describe('ChatbotConfigMapper', () => {
               }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -132,7 +132,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const websiteSource = domainConfig.knowledgeBase.websiteSources[0];
 
         expect(websiteSource.status).toBe('pending');
@@ -161,7 +161,7 @@ describe('ChatbotConfigMapper', () => {
               }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -169,7 +169,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const websiteSource = domainConfig.knowledgeBase.websiteSources[0];
 
         expect(websiteSource.status).toBe('error');
@@ -207,7 +207,7 @@ describe('ChatbotConfigMapper', () => {
               }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -215,7 +215,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const crawlSettings = domainConfig.knowledgeBase.websiteSources[0].crawlSettings;
 
         expect(crawlSettings.maxPages).toBe(100);
@@ -248,7 +248,7 @@ describe('ChatbotConfigMapper', () => {
               }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -256,7 +256,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const crawlSettings = domainConfig.knowledgeBase.websiteSources[0].crawlSettings;
 
         expect(crawlSettings.maxPages).toBe(50);
@@ -280,7 +280,7 @@ describe('ChatbotConfigMapper', () => {
           description: null,
           personality_settings: {},
           knowledge_base: {},
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -288,7 +288,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         
         expect(domainConfig.knowledgeBase.websiteSources).toEqual([]);
         expect(domainConfig.knowledgeBase.faqs).toEqual([]);
@@ -309,7 +309,7 @@ describe('ChatbotConfigMapper', () => {
               { url: 'https://example2.com', name: 'Site 2' }
             ]
           },
-          operating_hours: {},
+          operating_hours: { timezone: 'UTC' },
           lead_qualification_questions: [],
           ai_configuration: {},
           is_active: true,
@@ -317,7 +317,7 @@ describe('ChatbotConfigMapper', () => {
           updated_at: '2024-01-01T00:00:00.000Z'
         };
 
-        const domainConfig = ChatbotConfigMapper.toDomain(dbRecord);
+        const domainConfig = ChatbotConfigMapper.toDomainEntity(dbRecord);
         const sources = domainConfig.knowledgeBase.websiteSources;
         
         expect(sources[0].id).toBeTruthy();
@@ -395,7 +395,7 @@ describe('ChatbotConfigMapper', () => {
             }
           ]
         },
-        operating_hours: {},
+        operating_hours: { timezone: 'UTC' },
         lead_qualification_questions: [],
         ai_configuration: {},
         is_active: true,
@@ -404,7 +404,7 @@ describe('ChatbotConfigMapper', () => {
       };
 
       // Convert to domain
-      const domainConfig = ChatbotConfigMapper.toDomain(originalDbRecord);
+      const domainConfig = ChatbotConfigMapper.toDomainEntity(originalDbRecord);
       
       // Verify domain model has correct status
       const websiteSource = domainConfig.knowledgeBase.websiteSources[0];

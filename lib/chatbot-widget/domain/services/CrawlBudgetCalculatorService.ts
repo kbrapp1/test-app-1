@@ -1,13 +1,6 @@
 /**
- * Crawl Budget Calculator Service
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Calculate optimal crawl budgets and estimates
- * - Keep calculation logic pure and deterministic
- * - Never exceed 250 lines per @golden-rule
- * - Handle business rules for crawl optimization
- * - Provide actionable crawl planning insights
- * - Support capacity planning and resource estimation
+ * AI INSTRUCTIONS: Service for crawl budget calculation.
+ * Pure calculation logic for crawl optimization. @golden-rule: <250 lines.
  */
 
 import { WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
@@ -25,27 +18,10 @@ export interface CrawlBudget {
   readonly recommendations: string[];
 }
 
-/**
- * Specialized Service for Crawl Budget Calculation
- * 
- * AI INSTRUCTIONS:
- * - Handle optimal crawl budget calculation
- * - Apply business rules for resource planning
- * - Calculate time and cost estimates
- * - Provide optimization recommendations
- * - Support different crawl scenarios and constraints
- */
+/** Specialized Service for Crawl Budget Calculation */
 export class CrawlBudgetCalculatorService {
 
-  /**
-   * Calculate optimal crawl budget based on settings
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business rules for crawl limits and optimization
-   * - Calculate comprehensive budget including time and resources
-   * - Provide risk assessment and recommendations
-   * - Support efficient crawl planning
-   */
+  /** Calculate optimal crawl budget based on settings */
   calculateOptimalBudget(settings: WebsiteCrawlSettings): CrawlBudget {
     // Apply business constraints
     const maxPages = Math.min(settings.maxPages, this.getMaxAllowedPages());
@@ -78,15 +54,7 @@ export class CrawlBudgetCalculatorService {
     };
   }
 
-  /**
-   * Calculate detailed crawl time estimates
-   * 
-   * AI INSTRUCTIONS:
-   * - Estimate crawl duration based on page count and depth
-   * - Consider network latency and processing time
-   * - Account for depth-based complexity increase
-   * - Provide realistic time projections
-   */
+  /** Calculate detailed crawl time estimates */
   estimateCrawlTime(maxPages: number, maxDepth: number): number {
     // Base time per page (including processing)
     const baseTimePerPage = 2.5; // seconds
@@ -101,15 +69,7 @@ export class CrawlBudgetCalculatorService {
     return Math.ceil(estimatedSeconds * 1.2);
   }
 
-  /**
-   * Calculate optimal concurrency for crawl performance
-   * 
-   * AI INSTRUCTIONS:
-   * - Balance crawl speed with server respect
-   * - Avoid overwhelming target servers
-   * - Scale concurrency based on crawl size
-   * - Provide conservative but efficient recommendations
-   */
+  /** Calculate optimal concurrency for crawl performance */
   calculateOptimalConcurrency(maxPages: number): number {
     if (maxPages <= 10) {
       return 1; // Very small crawls - single threaded
@@ -122,15 +82,7 @@ export class CrawlBudgetCalculatorService {
     }
   }
 
-  /**
-   * Estimate crawl cost based on resource usage
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate resource costs for crawl operation
-   * - Consider processing time and storage costs
-   * - Provide budget planning information
-   * - Support cost optimization decisions
-   */
+  /** Estimate crawl cost based on resource usage */
   estimateCrawlCost(maxPages: number, estimatedTime: number): number {
     // Cost factors (in arbitrary units for planning)
     const processingCostPerSecond = 0.001; // Processing cost
@@ -144,15 +96,7 @@ export class CrawlBudgetCalculatorService {
     return Number((processingCost + storageCost + networkCost).toFixed(3));
   }
 
-  /**
-   * Assess risk level of crawl operation
-   * 
-   * AI INSTRUCTIONS:
-   * - Evaluate potential risks of crawl configuration
-   * - Consider server load and rate limiting risks
-   * - Assess complexity and failure probability
-   * - Provide risk-based recommendations
-   */
+  /** Assess risk level of crawl operation */
   assessCrawlRisk(
     maxPages: number, 
     maxDepth: number, 
@@ -176,15 +120,7 @@ export class CrawlBudgetCalculatorService {
     return 'low';
   }
 
-  /**
-   * Generate budget optimization recommendations
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide actionable recommendations for crawl optimization
-   * - Consider risk level and resource constraints
-   * - Suggest improvements for efficiency and success
-   * - Support informed decision making
-   */
+  /** Generate budget optimization recommendations */
   generateBudgetRecommendations(
     maxPages: number,
     maxDepth: number,
@@ -228,16 +164,12 @@ export class CrawlBudgetCalculatorService {
     return recommendations;
   }
 
-  /**
-   * Get maximum allowed pages per crawl
-   */
+  /** Get maximum allowed pages per crawl */
   private getMaxAllowedPages(): number {
     return 100; // Domain rule: Maximum 100 pages per crawl
   }
 
-  /**
-   * Get maximum allowed crawl depth
-   */
+  /** Get maximum allowed crawl depth */
   private getMaxAllowedDepth(): number {
     return 5; // Domain rule: Maximum depth of 5 levels
   }

@@ -1,15 +1,9 @@
 /**
- * FAQ Management Card Component
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: FAQ display and management
- * - Handle FAQ list display and editing
- * - Keep under 200-250 lines by extracting sub-components
- * - Use composition for FAQ items
- * - Follow @golden-rule patterns exactly
+ * AI INSTRUCTIONS: Component for FAQ display and management.
+ * Handle FAQ editing with composition. @golden-rule: <250 lines.
  */
 
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,12 +21,16 @@ interface FaqManagementCardProps {
   onRemoveFaq?: (faqId: string) => void;
 }
 
-export function FaqManagementCard({
+export interface FaqManagementCardRef {
+  addPendingFaq: () => boolean;
+}
+
+export const FaqManagementCard = forwardRef<FaqManagementCardRef, FaqManagementCardProps>(({
   formData,
   isEditing,
   onAddFaq,
   onRemoveFaq,
-}: FaqManagementCardProps) {
+}, ref) => {
   const [newFaq, setNewFaq] = useState({
     question: '',
     answer: '',
@@ -52,6 +50,21 @@ export function FaqManagementCard({
 
     setNewFaq({ question: '', answer: '', category: 'general' });
   };
+
+  // Check if there's a pending FAQ that should be added before save
+  const handleBeforeSave = () => {
+    // If there's a filled-out FAQ form that hasn't been added yet, add it now
+    if (newFaq.question.trim() && newFaq.answer.trim()) {
+      handleAddFaq();
+      return true; // Indicate that we added a FAQ
+    }
+    return false; // No pending FAQ
+  };
+
+  // Expose the handleBeforeSave function through ref
+  useImperativeHandle(ref, () => ({
+    addPendingFaq: handleBeforeSave
+  }), [newFaq]);
 
   return (
     <Card>
@@ -96,7 +109,9 @@ export function FaqManagementCard({
       </CardContent>
     </Card>
   );
-}
+});
+
+FaqManagementCard.displayName = 'FaqManagementCard';
 
 interface FaqItemProps {
   faq: FaqDto;
@@ -185,4 +200,4 @@ function AddFaqForm({ newFaq, onUpdateNewFaq, onAddFaq }: AddFaqFormProps) {
       </div>
     </div>
   );
-} 
+}

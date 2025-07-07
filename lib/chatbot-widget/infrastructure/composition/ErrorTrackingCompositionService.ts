@@ -1,4 +1,4 @@
-import { createClient } from '../../../supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { ErrorCategorizationDomainService } from '../../domain/services/ErrorCategorizationDomainService';
 import { ErrorPersistenceService } from '../persistence/supabase/ErrorPersistenceService';
 import { ErrorAnalyticsService } from '../../application/services/ErrorAnalyticsService';

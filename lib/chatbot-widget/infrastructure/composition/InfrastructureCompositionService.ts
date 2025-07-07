@@ -1,4 +1,4 @@
-import { createClient } from '../../../supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 import { SupabaseVectorKnowledgeRepository } from '../persistence/supabase/SupabaseVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';

@@ -35,7 +35,10 @@ export const useGalleryData = (props: GalleryDataProps) => {
   const [optimisticallyHiddenItemIds, setOptimisticallyHiddenItemIds] = useState<Set<string>>(new Set());
   
   // Core gallery data management
-  const galleryData = useDamGalleryData(props);
+  const galleryData = useDamGalleryData({
+    ...props,
+    currentFolderId: props.currentFolderId || undefined,
+  });
 
   // Reset optimistic hiding when context changes
   useEffect(() => {

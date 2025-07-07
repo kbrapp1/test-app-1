@@ -1,4 +1,4 @@
-import { CrossDomainInsight } from '../cross-domain/services/PerformanceCorrelationService';
+import { CrossDomainInsight } from '../../cross-domain/services/PerformanceCorrelationService';
 
 export interface CrossDomainAnalysis {
   issue: string;

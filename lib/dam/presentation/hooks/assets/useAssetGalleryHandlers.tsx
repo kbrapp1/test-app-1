@@ -25,7 +25,6 @@ interface UseAssetGalleryHandlersProps {
   openMoveDialog: ReturnType<typeof useAssetItemDialogs>['openMoveDialog'];
   setSelectedAssetId: (id: string | null) => void;
   addOptimisticallyHiddenItem: (id: string) => void;
-  updateItems: (items: GalleryItemDto[]) => void;
   refreshGalleryData: (force?: boolean) => Promise<void>;
   onFolderNavigate?: (folderId: string | null) => void;
 }
@@ -41,7 +40,6 @@ export const useAssetGalleryHandlers = ({
   openMoveDialog,
   setSelectedAssetId,
   addOptimisticallyHiddenItem,
-  updateItems,
   refreshGalleryData,
   onFolderNavigate,
 }: UseAssetGalleryHandlersProps) => {
@@ -128,10 +126,8 @@ export const useAssetGalleryHandlers = ({
   }, [refreshGalleryData]);
   
   const handleAssetDeleted = useCallback((assetId: string) => {
-    const updatedItems = items.filter(item => item.id !== assetId);
-    updateItems(updatedItems);
     refreshGalleryData(true);
-  }, [items, updateItems, refreshGalleryData]);
+  }, [refreshGalleryData]);
 
   // Create minimal asset for operations
   const createMinimalAssetForMove = useCallback((galleryAsset: GalleryItemDto & { type: 'asset' }): DomainAsset => {

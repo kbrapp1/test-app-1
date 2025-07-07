@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { handleFormError } from './error-handling';
 import type { FormErrorHandlerConfig } from './error-handling-types';
 
-export interface UseFormWithValidationProps<T extends FieldValues> extends UseFormProps<T> {
+export interface UseFormWithValidationProps<T extends FieldValues> extends Omit<UseFormProps<T>, 'resolver'> {
   /**
    * Zod schema for form validation
    */
@@ -69,6 +69,7 @@ export function useFormWithValidation<T extends FieldValues>({
   // Initialize form with zod resolver
   const form = useForm<T>({
     ...formProps,
+    // @ts-ignore - Type compatibility issue between react-hook-form@7.57.0 and @hookform/resolvers@5.1.0
     resolver: zodResolver(schema),
   });
   

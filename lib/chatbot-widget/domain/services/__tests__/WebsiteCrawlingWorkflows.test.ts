@@ -180,7 +180,7 @@ describe('Website Crawling Domain Workflows - Behavior Tests', () => {
       const homePageItem = result.knowledgeItems.find(item => item.source === 'https://smallbusiness.com');
       const aboutPageItem = result.knowledgeItems.find(item => item.source === 'https://smallbusiness.com/about');
       
-      expect(homePageItem?.relevanceScore).toBeGreaterThan(aboutPageItem?.relevanceScore ?? 0); // Home page typically more relevant
+      expect(homePageItem?.relevanceScore ?? 0).toBeGreaterThan(aboutPageItem?.relevanceScore ?? 0); // Home page typically more relevant
     });
   });
 
@@ -395,7 +395,7 @@ describe('Website Crawling Domain Workflows - Behavior Tests', () => {
       const aboutItem = result.knowledgeItems.find(item => item.source.includes('/about'));
       const newsItem = result.knowledgeItems.find(item => item.source.includes('/news'));
       
-      expect(aboutItem?.relevanceScore).toBeGreaterThan(newsItem?.relevanceScore ?? 0);
+      expect(aboutItem?.relevanceScore ?? 0).toBeGreaterThan(newsItem?.relevanceScore ?? 0);
     });
   });
 

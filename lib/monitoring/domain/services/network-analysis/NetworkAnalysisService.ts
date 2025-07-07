@@ -1,4 +1,4 @@
-import { NetworkIssue } from '../network-efficiency/value-objects/NetworkIssue';
+import { NetworkIssue } from '../../network-efficiency/value-objects/NetworkIssue';
 
 /**
  * Network Issue Analysis Result (Domain DTO)

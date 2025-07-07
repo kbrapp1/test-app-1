@@ -53,7 +53,8 @@ export class InMemoryPageContextRepository implements PageContextRepository {
       if (isServerSide) {
         // Server-side: Use actual discovery
         const { DomainDiscoveryService } = await import('../discovery/DomainDiscoveryService');
-        const discoveredContexts = await DomainDiscoveryService.discoverDomains();
+        const domainDiscoveryService = new DomainDiscoveryService();
+        const discoveredContexts = await domainDiscoveryService.discoverDomains();
         
         for (const context of discoveredContexts) {
           this.contexts.set(context.domain, context);

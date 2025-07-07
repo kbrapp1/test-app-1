@@ -46,7 +46,7 @@ export function useInfiniteGenerations(
       queryFn,
       enabled,
       initialPageParam: 0,
-      getNextPageParam: (lastPage, allPages) => {
+      getNextPageParam: (lastPage: GenerationDto[], allPages: GenerationDto[][]) => {
         const hasMore = lastPage.length === GENERATIONS_PER_PAGE;
         return hasMore ? allPages.length : undefined;
       }

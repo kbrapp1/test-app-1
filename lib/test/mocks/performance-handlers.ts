@@ -15,6 +15,7 @@ const generateMockGeneration = (id: number, overrides: Partial<GenerationDto> = 
   costCents: Math.floor(Math.random() * 100),
   editType: 'text-to-image',
   savedToDAM: Math.random() > 0.7,
+  modelName: 'flux-dev',
   ...overrides,
 });
 

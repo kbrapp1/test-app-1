@@ -11,9 +11,9 @@ import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/su
 import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     assetId?: string; // Make assetId optional to check for its presence
-  };
+  }>;
 }
 
 // Enhanced GET handler with support for detailed asset information
@@ -127,7 +127,7 @@ const createUpdateAssetHandler = (assetId: string): AuthenticatedHandler => {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { assetId: string } }
+  { params }: { params: Promise<{ assetId: string }> }
 ) {
   const assetId = (await params).assetId;
   
@@ -211,7 +211,7 @@ const createDeleteAssetHandler = (assetId: string): AuthenticatedHandler => {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { assetId: string } }
+  { params }: { params: Promise<{ assetId: string }> }
 ) {
   const assetId = (await params).assetId;
   

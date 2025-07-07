@@ -147,7 +147,7 @@ export class OpenAIEmbeddingProviderService {
    * - Visual separation for log clarity
    */
   private logApiCallStart(callType: 'SINGLE' | 'BATCH'): void {
-    this.log('\n🔗 =====================================');
+    this.log('🔗 =====================================');
     this.log(`🔗 OPENAI EMBEDDINGS API CALL - ${callType}`);
     this.log('🔗 =====================================');
   }
@@ -161,7 +161,7 @@ export class OpenAIEmbeddingProviderService {
    * - Consistent format across all calls
    */
   private logApiCallEnd(): void {
-    this.log('🔗 =====================================\n');
+    this.log('🔗 =====================================');
   }
 
   /**

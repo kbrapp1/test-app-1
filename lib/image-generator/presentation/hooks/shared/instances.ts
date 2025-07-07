@@ -8,10 +8,16 @@ import {
 } from '../../../application/use-cases';
 import { SupabaseGenerationRepository } from '../../../infrastructure/persistence/supabase/SupabaseGenerationRepository';
 import { ReplicateProvider } from '../../../infrastructure/providers/replicate/ReplicateProvider';
+import { DAMIntegrationApplicationService } from '../../../application/services/DAMIntegrationService';
+import { DAMStorageAdapter } from '../../../infrastructure/adapters/DAMStorageAdapter';
+import { DAMAssetAdapter } from '../../../infrastructure/adapters/DAMAssetAdapter';
 
 // Repository and Use Case Instances (Lazy initialization for performance and to avoid client-side env access)
 let _repository: SupabaseGenerationRepository | null = null;
 let _provider: ReplicateProvider | null = null;
+let _damStorageAdapter: DAMStorageAdapter | null = null;
+let _damAssetAdapter: DAMAssetAdapter | null = null;
+let _damIntegrationService: DAMIntegrationApplicationService | null = null;
 let _getGenerationsUseCase: GetGenerationsUseCase | null = null;
 let _getGenerationStatsUseCase: GetGenerationStatsUseCase | null = null;
 let _cancelGenerationUseCase: CancelGenerationUseCase | null = null;
@@ -31,6 +37,30 @@ function getProvider(): ReplicateProvider {
     _provider = new ReplicateProvider();
   }
   return _provider;
+}
+
+function getDAMStorageAdapter(): DAMStorageAdapter {
+  if (!_damStorageAdapter) {
+    _damStorageAdapter = new DAMStorageAdapter();
+  }
+  return _damStorageAdapter;
+}
+
+function getDAMAssetAdapter(): DAMAssetAdapter {
+  if (!_damAssetAdapter) {
+    _damAssetAdapter = new DAMAssetAdapter();
+  }
+  return _damAssetAdapter;
+}
+
+function getDAMIntegrationService(): DAMIntegrationApplicationService {
+  if (!_damIntegrationService) {
+    _damIntegrationService = new DAMIntegrationApplicationService(
+      getDAMStorageAdapter(),
+      getDAMAssetAdapter()
+    );
+  }
+  return _damIntegrationService;
 }
 
 export function getGenerateImageUseCase(): GenerateImageUseCase {
@@ -63,7 +93,7 @@ export function getCancelGenerationUseCase(): CancelGenerationUseCase {
 
 export function getSaveGenerationToDAMUseCase(): SaveGenerationToDAMUseCase {
   if (!_saveGenerationToDAMUseCase) {
-    _saveGenerationToDAMUseCase = new SaveGenerationToDAMUseCase(getRepository());
+    _saveGenerationToDAMUseCase = new SaveGenerationToDAMUseCase(getRepository(), getDAMIntegrationService());
   }
   return _saveGenerationToDAMUseCase;
 }

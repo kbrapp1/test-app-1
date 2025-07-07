@@ -11,17 +11,18 @@
  * - Follow @golden-rule patterns exactly
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useKnowledgeBaseSettings } from '../../../hooks/useKnowledgeBaseSettings';
 import { CompanyInformationCard } from './CompanyInformationCard';
-import { FaqManagementCard } from './FaqManagementCard';
+import { FaqManagementCard, FaqManagementCardRef } from './FaqManagementCard';
 import { KnowledgeBaseActions } from './KnowledgeBaseActions';
 import { WebsiteSourcesSection } from '../website-sources/WebsiteSourcesSection';
 
 export function KnowledgeBaseSection() {
   const [isEditing, setIsEditing] = useState(false);
+  const faqManagementCardRef = useRef<FaqManagementCardRef>(null);
 
   const { config: existingConfig, isLoading, error } = useChatbotConfiguration({ 
     enableFormState: false 
@@ -38,6 +39,14 @@ export function KnowledgeBaseSection() {
   } = useKnowledgeBaseSettings(existingConfig || null, existingConfig?.organizationId || null);
 
   const handleSave = async () => {
+    // Check if there's a pending FAQ that needs to be added first
+    const addedPendingFaq = faqManagementCardRef.current?.addPendingFaq();
+    
+    // Ensure state updates are processed if FAQ was added
+    if (addedPendingFaq) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     await saveSettings();
     setIsEditing(false);
   };
@@ -81,6 +90,7 @@ export function KnowledgeBaseSection() {
       />
 
       <FaqManagementCard
+        ref={faqManagementCardRef}
         formData={formData}
         isEditing={isEditing}
         onAddFaq={addFaq}

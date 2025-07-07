@@ -20,7 +20,8 @@ import { NoOpLogger } from './NoOpLogger';
 import { LoggingConfig, LogEntry } from './LoggingTypes';
 
 export class ChatbotFileLoggingService implements IChatbotLoggingService {
-  private readonly config: LoggingConfig;
+  private config: LoggingConfig;
+  private pendingWrites: Map<string, Promise<void>> = new Map();
 
   constructor() {
     this.config = this.initializeConfig();
@@ -85,11 +86,64 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     this.writeAsync(formatted, logFile);
   }
 
+  addLogEntrySync(level: LogLevel, message: string, logFile: string, data?: any, error?: Error, metrics?: LogMetrics): void {
+    if (!this.shouldLog(logFile)) return;
+    
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      data,
+      error: error ? { 
+        name: error.name, 
+        message: error.message, 
+        stack: error.stack 
+      } : undefined,
+      metrics
+    };
+    
+    const formatted = this.formatLogEntry(entry);
+    this.writeSync(formatted, logFile);
+  }
+
   private async writeAsync(content: string, logFile: string): Promise<void> {
     if (!this.isServerSide()) return;
 
+    const existingWrite = this.pendingWrites.get(logFile);
+    const writePromise = existingWrite 
+      ? existingWrite.then(() => this.performWrite(content, logFile))
+      : this.performWrite(content, logFile);
+    
+    this.pendingWrites.set(logFile, writePromise);
+    
     try {
-      // Use eval to prevent webpack from analyzing the import
+      await writePromise;
+    } finally {
+      if (this.pendingWrites.get(logFile) === writePromise) {
+        this.pendingWrites.delete(logFile);
+      }
+    }
+  }
+
+  private writeSync(content: string, logFile: string): void {
+    if (!this.isServerSide()) return;
+
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = path.join(this.config.logDirectory, logFile);
+      
+      this.ensureLogDirectorySync();
+      fs.appendFileSync(logPath, content, 'utf8');
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Synchronous logging error:', error);
+      }
+    }
+  }
+
+  private async performWrite(content: string, logFile: string): Promise<void> {
+    try {
       const fs = await eval('import("fs")').then((m: any) => m.promises);
       const path = await eval('import("path")');
       const logPath = path.join(this.config.logDirectory, logFile);
@@ -99,6 +153,40 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Logging error:', error);
+      }
+    }
+  }
+
+  private ensureLogDirectorySync(): void {
+    if (!this.isServerSide()) return;
+
+    try {
+      const fs = require('fs');
+      if (!fs.existsSync(this.config.logDirectory)) {
+        fs.mkdirSync(this.config.logDirectory, { recursive: true });
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to create log directory:', error);
+      }
+    }
+  }
+
+  private async ensureLogDirectory(): Promise<void> {
+    if (!this.isServerSide()) return;
+
+    try {
+      const fs = await eval('import("fs")').then((m: any) => m.promises);
+      const path = await eval('import("path")');
+      
+      try {
+        await fs.access(this.config.logDirectory);
+      } catch {
+        await fs.mkdir(this.config.logDirectory, { recursive: true });
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to create log directory:', error);
       }
     }
   }
@@ -137,12 +225,10 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
   private formatLogEntry(entry: LogEntry): string {
     const timestamp = new Date(entry.timestamp).toISOString();
     
-    // Check if message already has emojis (preserve existing emojis)
     const hasExistingEmoji = /[\uD83C-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u26FF]|[\u2700-\u27BF]/.test(entry.message);
     
     let formattedMessage = entry.message;
     
-    // Only add emojis for ERROR and WARN levels if message doesn't already have emojis
     if (!hasExistingEmoji && (entry.level === LogLevel.ERROR || entry.level === LogLevel.WARN)) {
       const emoji = entry.level === LogLevel.ERROR ? '❌' : '⚠️';
       formattedMessage = `${emoji} ${entry.message}`;
@@ -150,25 +236,26 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     
     let result = `[${timestamp}] ${formattedMessage}`;
     
-    // Add structured data if present - format exactly like original
     if (entry.data !== undefined && entry.data !== null) {
       if (typeof entry.data === 'object') {
-        // For objects, format as JSON with proper indentation and add newline before
-        result += '\n' + JSON.stringify(entry.data, null, 2);
+        // FIXED: Remove timestamps from JSON data lines for cleaner formatting
+        const jsonString = JSON.stringify(entry.data, null, 2);
+        result += '\n' + jsonString;
       } else {
-        // For primitives, add on new line
         result += '\n' + String(entry.data);
       }
     }
     
-    // Add error details if present
     if (entry.error) {
-      result += '\n' + JSON.stringify(entry.error, null, 2);
+      // FIXED: Remove timestamps from error JSON lines for cleaner formatting
+      const errorString = JSON.stringify(entry.error, null, 2);
+      result += '\n' + errorString;
     }
     
-    // Add metrics if present
     if (entry.metrics) {
-      result += '\n' + JSON.stringify(entry.metrics, null, 2);
+      // FIXED: Remove timestamps from metrics JSON lines for cleaner formatting
+      const metricsString = JSON.stringify(entry.metrics, null, 2);
+      result += '\n' + metricsString;
     }
     
     return result + '\n';
@@ -178,15 +265,8 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     return typeof window === 'undefined';
   }
 
-  private async ensureLogDirectory(): Promise<void> {
-    if (!this.isServerSide()) return;
-    
-    try {
-      // Use eval to prevent webpack from analyzing the import
-      const fs = await eval('import("fs")').then((m: any) => m.promises);
-      await fs.mkdir(this.config.logDirectory, { recursive: true });
-    } catch (error) {
-      // Directory might already exist - not critical
-    }
+  async flushPendingWrites(): Promise<void> {
+    const pendingPromises = Array.from(this.pendingWrites.values());
+    await Promise.all(pendingPromises);
   }
 } 

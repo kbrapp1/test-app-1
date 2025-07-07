@@ -1,4 +1,16 @@
-import { FluxGenerationInput, ModelCapabilities } from './FluxModelService';
+export interface FluxGenerationInput {
+  prompt: string;
+  width?: number;
+  height?: number;
+  num_inference_steps?: number;
+  guidance_scale?: number;
+  output_quality?: number;
+}
+
+export interface ModelCapabilities {
+  maxPromptLength: number;
+  supportedSizes: Array<{ width: number; height: number }>;
+}
 
 export interface ValidationResult {
   isValid: boolean;
@@ -44,7 +56,7 @@ export class GenerationValidator {
     };
 
     const isSupportedSize = this.capabilities.supportedSizes.some(
-      size => size.width === requestedSize.width && size.height === requestedSize.height
+      (size: { width: number; height: number }) => size.width === requestedSize.width && size.height === requestedSize.height
     );
 
     if (!isSupportedSize) {

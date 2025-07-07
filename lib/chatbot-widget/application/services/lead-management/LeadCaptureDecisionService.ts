@@ -51,7 +51,7 @@ export class LeadCaptureDecisionService {
 
     return {
       aiFlowDecision: {
-        shouldCaptureLeadNow: leadScore >= 40, // Based on domain-calculated score
+        shouldCaptureLeadNow: leadScore >= 60, // FIXED: Aligned with AI recommendation threshold (60+)
         shouldAskQualificationQuestions: leadScore >= 30 && leadScore < 70,
         shouldEscalateToHuman: leadScore >= 80 || callToAction.priority === 'high',
         nextBestAction: this.mapCallToActionToNextAction(callToAction),

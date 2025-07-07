@@ -9,9 +9,9 @@ import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/s
 import { revalidateTag } from 'next/cache';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     assetId: string;
-  };
+  }>;
 }
 
 // POST route handler for moving assets

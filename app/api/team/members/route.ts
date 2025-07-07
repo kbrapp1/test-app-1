@@ -21,7 +21,7 @@ interface Member {
   name: string;
 }
 
-export async function getHandler(
+async function getHandler(
   request: NextRequest,
   user: User,
   supabase: SupabaseClient

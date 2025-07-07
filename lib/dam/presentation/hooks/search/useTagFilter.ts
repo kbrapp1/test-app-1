@@ -73,6 +73,7 @@ export function useTagFilter({
             .map((tag: any) => ({
               id: tag.id,
               name: tag.name,
+              color: tag.color || tag.colorName || 'blue', // Handle different color property names
               userId: tag.userId,
               organizationId: tag.organizationId,
               createdAt: tag.createdAt,

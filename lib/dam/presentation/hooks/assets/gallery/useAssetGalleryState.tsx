@@ -111,7 +111,6 @@ export const useAssetGalleryState = (props: AssetGalleryStateProps) => {
     
     // Data operations
     refreshGalleryData: galleryData.fetchData,
-    updateItems: galleryData.updateItems,
     
     // Selection and bulk operations
     multiSelect: enhancedMultiSelect,

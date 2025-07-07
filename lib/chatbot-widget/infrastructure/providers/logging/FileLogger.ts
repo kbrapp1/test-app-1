@@ -34,7 +34,7 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
   }
 
   logSeparator(): void {
-    this.addEntry(LogLevel.INFO, '================================================================================');
+    this.service.addRawLogEntry('================================================================================', this.logFile);
   }
 
   logRaw(message: string): void {
@@ -51,28 +51,41 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
     }
   }
 
+  // FIXED: Add synchronous logging method for critical step ordering
+  logMessageSync(message: string, data?: any, level: LogLevel = LogLevel.INFO): void {
+    if (data !== undefined && data !== null) {
+      // For structured data, use the synchronous addEntry method
+      this.addEntrySync(level, message, data);
+    } else {
+      // For simple messages, just log the message synchronously
+      this.addEntrySync(level, message);
+    }
+  }
+
   logStep(step: string, data?: any, level: LogLevel = LogLevel.INFO): void {
-    // Extract step number if present in the step string
-    const stepMatch = step.match(/^(\d+)[:.]?\s*(.+)$/);
-    const stepNumber = stepMatch ? parseInt(stepMatch[1]) : null;
+    // Extract step number if present in the step string (supports both integer and decimal format)
+    const stepMatch = step.match(/^(\d+(?:\.\d+)?)[:.]?\s*(.+)$/);
+    const stepNumber = stepMatch ? stepMatch[1] : null;
     const description = stepMatch ? stepMatch[2] : step;
     
-    // Add step separator for better readability (except for first step)
-    if (stepNumber && stepNumber > 1) {
-      this.service.addRawLogEntry('', this.logFile); // Empty line separator
-    }
+    // Check if this is a sub-step (has decimal point)
+    const isSubStep = stepNumber && stepNumber.includes('.');
     
-    // Log step header with clear formatting
-    const stepHeader = stepNumber ? `🔄 STEP ${stepNumber}: ${description}` : `🔄 ${step}`;
-    this.addEntry(level, stepHeader);
+    if (isSubStep) {
+      // For sub-steps: add line space before and log without timestamp
+      this.service.addRawLogEntry('', this.logFile);
+      const stepHeader = `🔄 STEP ${stepNumber}: ${description}`;
+      this.service.addRawLogEntry(stepHeader, this.logFile);
+    } else {
+      // For main steps: log with timestamp as before
+      const stepHeader = stepNumber ? `🔄 STEP ${stepNumber}: ${description}` : `🔄 ${step}`;
+      this.addEntry(level, stepHeader);
+    }
     
     // Log step data if provided
     if (data !== undefined && data !== null) {
       this.addEntry(level, 'Step Data:', data);
     }
-    
-    // Add separator line after step
-    this.service.addRawLogEntry('────────────────────────────────────────────────────────────────────────────────', this.logFile);
   }
 
   logError(error: Error, context?: any): void {
@@ -88,47 +101,57 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
   }
 
   logApiCall(endpoint: string, request: any, response: any, duration: number): void {
-    // Log API call header with clear separation
-    this.service.addRawLogEntry('🔵 =================================', this.logFile);
-    this.addEntry(LogLevel.INFO, `🔵 OPENAI API CALL - UNIFIED PROCESSING`);
-    this.service.addRawLogEntry('🔵 =================================', this.logFile);
+    this.addEntry(LogLevel.INFO, `API_CALL: ${endpoint}`, {
+      request: this.sanitizeApiDataForCompleteLogging(request),
+      response: this.sanitizeApiData(response),
+      duration
+    });
+  }
+
+  private sanitizeApiDataForCompleteLogging(data: any): any {
+    if (!data) return data;
     
-    // Log complete API request details
-    this.addEntry(LogLevel.INFO, '📤 COMPLETE API REQUEST:');
-    this.addEntry(LogLevel.INFO, `🔗 Endpoint: ${endpoint}`);
+    // Create a copy to avoid modifying original
+    const sanitized = JSON.parse(JSON.stringify(data));
     
-    // Log request headers if present
-    if (request?.headers) {
-      this.addEntry(LogLevel.INFO, '📋 Request Headers:', request.headers);
+    // FIXED: Keep complete message content for QA purposes
+    // Don't truncate system prompts or user messages - log them in full
+    if (sanitized.messages) {
+      sanitized.messages = sanitized.messages.map((msg: any) => ({
+        ...msg,
+        content: msg.content // Keep full content for QA review
+      }));
     }
     
-    // Log complete request body
-    if (request?.body || request) {
-      this.addEntry(LogLevel.INFO, '📋 Request Body:', request.body || request);
+    return sanitized;
+  }
+
+  private sanitizeApiData(data: any): any {
+    if (!data) return data;
+    
+    // Create a copy to avoid modifying original
+    const sanitized = JSON.parse(JSON.stringify(data));
+    
+    // Remove sensitive information and truncate for brevity
+    if (sanitized.messages) {
+      sanitized.messages = sanitized.messages.map((msg: any) => ({
+        ...msg,
+        content: msg.content ? msg.content.substring(0, 100) + '...' : msg.content
+      }));
     }
     
-    // Log API call timing
-    this.addEntry(LogLevel.INFO, `⏱️  API Call Started: ${new Date().toISOString()}`);
-    
-    // Log response details
-    if (response !== undefined && response !== null) {
-      this.addEntry(LogLevel.INFO, `✅ API Call Completed: ${new Date().toISOString()}`);
-      this.addEntry(LogLevel.INFO, `⏱️  Duration: ${duration}ms`);
-      this.addEntry(LogLevel.INFO, '📥 COMPLETE API RESPONSE:');
-      
-      // Log response headers if present
-      if (response.headers) {
-        this.addEntry(LogLevel.INFO, '📋 Response Headers:', response.headers);
-      }
-      
-      // Log response body
-      this.addEntry(LogLevel.INFO, '📋 Response Body:', response);
+    return sanitized;
+  }
+
+  async flush(): Promise<void> {
+    // Delegate to service flush method
+    if (this.service.flushPendingWrites) {
+      await this.service.flushPendingWrites();
     }
-    
-    // Add closing separator
-    this.service.addRawLogEntry('🔵 =================================', this.logFile);
-    this.addEntry(LogLevel.INFO, '🔵 UNIFIED PROCESSING COMPLETED');
-    this.service.addRawLogEntry('🔵 =================================', this.logFile);
+  }
+
+  getCorrelationId(): string {
+    return this.context.correlationId || 'unknown';
   }
 
   logCache(operation: 'hit' | 'miss' | 'warm' | 'evict', key: string, details?: any): void {
@@ -139,12 +162,18 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
     this.addEntry(LogLevel.INFO, `DOMAIN_EVENT: ${eventName}`, eventData);
   }
 
-  async flush(): Promise<void> {
-    // No-op: immediate writes mean no buffering to flush
+  private addEntry(level: LogLevel, message: string, data?: any, error?: any, metrics?: LogMetrics): void {
+    this.service.addLogEntry(level, message, this.logFile, data, error, metrics);
   }
 
-  getCorrelationId(): string {
-    return this.context.correlationId || 'unknown';
+  // FIXED: Add synchronous entry method for critical step ordering
+  private addEntrySync(level: LogLevel, message: string, data?: any, error?: any, metrics?: LogMetrics): void {
+    if (this.service.addLogEntrySync) {
+      this.service.addLogEntrySync(level, message, this.logFile, data, error, metrics);
+    } else {
+      // Fallback to async method if sync method not available
+      this.service.addLogEntry(level, message, this.logFile, data, error, metrics);
+    }
   }
 
   // IOperationLogger methods
@@ -176,27 +205,5 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
 
   getDuration(): number {
     return Date.now() - this.startTime;
-  }
-
-  /**
-   * Unified entry creation method
-   * 
-   * AI INSTRUCTIONS:
-   * - Consolidates all log entry creation logic
-   * - Reduces code duplication across methods
-   * - Maintains consistent formatting and context
-   */
-  private addEntry(
-    level: LogLevel, 
-    message: string, 
-    data?: any, 
-    error?: { name: string; message: string; stack?: string },
-    metrics?: LogMetrics
-  ): void {
-    // Create Error object if error details provided
-    const errorObj = error ? Object.assign(new Error(error.message), error) : undefined;
-    
-    // Call service method with correct parameter order
-    this.service.addLogEntry(level, message, this.logFile, data, errorObj, metrics);
   }
 } 

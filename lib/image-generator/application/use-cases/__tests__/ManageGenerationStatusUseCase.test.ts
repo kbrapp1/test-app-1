@@ -405,6 +405,7 @@ function createMockGeneration(
     status: GenerationStatus.create(status),
     resultImageUrl: status === 'completed' ? 'https://example.com/image.jpg' : null,
     baseImageUrl: null,
+    secondImageUrl: null,
     externalProviderId: `external-${id}`,
     costCents: 100,
     generationTimeSeconds: status === 'completed' ? 25 : null,

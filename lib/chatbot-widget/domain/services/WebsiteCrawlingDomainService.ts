@@ -1,14 +1,6 @@
 /**
- * Website Crawling Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Keep business logic pure, no external dependencies
- * - Maintain single responsibility principle  
- * - Never exceed 250 lines - refactor into smaller services
- * - Follow @golden-rule patterns exactly
- * - Focus on domain rules and business validation
- * - Handle domain errors with specific error types
- * - Coordinate other domain services for complex operations
+ * AI INSTRUCTIONS: Domain service for website crawling orchestration.
+ * Pure business logic with no external dependencies. @golden-rule: <250 lines.
  */
 
 import { WebsiteSource, WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
@@ -18,27 +10,13 @@ import { CrawlBudgetCalculatorService } from './CrawlBudgetCalculatorService';
 import { CrawlResultProcessorService } from './CrawlResultProcessorService';
 import { CrawlPolicyService } from './CrawlPolicyService';
 
-/**
- * Interface for robots.txt checking abstraction
- * 
- * AI INSTRUCTIONS:
- * - Abstract external robots.txt library from domain logic
- * - Enable testing with mock implementations
- * - Keep domain layer pure from infrastructure dependencies
- */
+/** Interface for robots.txt checking abstraction */
 export interface IRobotsTxtChecker {
   isAllowed(url: string, userAgent: string): Promise<boolean>;
   canLoad(url: string): Promise<boolean>;
 }
 
-/**
- * Domain model for crawled page data
- * 
- * AI INSTRUCTIONS:
- * - Represent crawled page in domain terms
- * - Include business-relevant metadata
- * - Support domain operations and validation
- */
+/** Domain model for crawled page data */
 export interface CrawledPageData {
   readonly url: string;
   readonly title: string;
@@ -51,9 +29,7 @@ export interface CrawledPageData {
   readonly statusCode?: number;
 }
 
-/**
- * Domain model for crawl result
- */
+/** Domain model for crawl result */
 export interface CrawlResult {
   readonly knowledgeItems: KnowledgeItem[];
   readonly crawledPages: CrawledPageData[];
@@ -63,16 +39,7 @@ export interface CrawlResult {
   readonly skippedPages: number;
 }
 
-/**
- * Website Crawling Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Pure business logic for website crawling orchestration
- * - No external dependencies on crawling libraries
- * - Focus on domain rules and business validation
- * - Coordinate with other domain services
- * - Use domain-specific error handling
- */
+/** Website Crawling Domain Service */
 export class WebsiteCrawlingDomainService {
   private readonly crawlValidation: CrawlValidationService;
   private readonly budgetCalculator: CrawlBudgetCalculatorService;
@@ -86,15 +53,7 @@ export class WebsiteCrawlingDomainService {
     this.crawlPolicy = new CrawlPolicyService();
   }
 
-  /**
-   * Validate crawl request according to business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate validation to specialized service
-   * - Coordinate comprehensive validation workflow
-   * - Handle validation orchestration and error propagation
-   * - Maintain clean separation between coordination and implementation
-   */
+  /** Validate crawl request according to business rules */
   async validateCrawlRequest(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
@@ -108,15 +67,7 @@ export class WebsiteCrawlingDomainService {
     );
   }
 
-  /**
-   * Calculate crawl budget based on settings and business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate budget calculation to specialized service
-   * - Coordinate budget planning workflow
-   * - Handle budget constraints and optimization
-   * - Provide clean interface for budget calculation
-   */
+  /** Calculate crawl budget based on settings and business rules */
   calculateCrawlBudget(settings: WebsiteCrawlSettings): {
     maxPages: number;
     maxDepth: number;
@@ -127,28 +78,13 @@ export class WebsiteCrawlingDomainService {
     return this.budgetCalculator.calculateOptimalBudget(settings);
   }
 
-  /**
-   * Process crawl result and apply business validation
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate result processing to specialized service
-   * - Coordinate result transformation workflow
-   * - Handle quality filtering and knowledge item generation
-   * - Provide clean interface for result processing
-   */
+  /** Process crawl result and apply business validation */
   processCrawlResult(crawledPages: CrawledPageData[]): CrawlResult {
     // Delegate result processing to specialized service
     return this.resultProcessor.processComprehensively(crawledPages);
   }
 
-  /**
-   * Check if URL should be crawled based on business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business rules for URL selection
-   * - Consider content value and relevance
-   * - Respect crawl depth and limits
-   */
+  /** Check if URL should be crawled based on business rules */
   shouldCrawlUrl(
     url: string,
     baseUrl: string,
@@ -173,26 +109,12 @@ export class WebsiteCrawlingDomainService {
     return true;
   }
 
-  /**
-   * Get the crawl validation service for advanced validation scenarios
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide access to specialized validation service
-   * - Support advanced validation workflows
-   * - Enable external orchestration of validation logic
-   */
+  /** Get the crawl validation service */
   getCrawlValidationService(): CrawlValidationService {
     return this.crawlValidation;
   }
 
-  /**
-   * Get the crawl policy service for advanced policy decisions
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide access to specialized policy service
-   * - Support advanced policy evaluation workflows
-   * - Enable external orchestration of policy logic
-   */
+  /** Get the crawl policy service */
   getCrawlPolicyService(): CrawlPolicyService {
     return this.crawlPolicy;
   }

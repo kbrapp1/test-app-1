@@ -80,7 +80,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   async update(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
-    sessionLogger.logHeader('💬 DATABASE OPERATION - UPDATE MESSAGE');
+            sessionLogger.logMessage('💬 DATABASE OPERATION - UPDATE MESSAGE');
     
     try {
       const startTime = Date.now();
@@ -183,7 +183,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   async create(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(message.sessionId, sharedLogFile);
-    sessionLogger.logHeader('💬 DATABASE OPERATION - CREATE MESSAGE');
+            sessionLogger.logMessage('💬 DATABASE OPERATION - CREATE MESSAGE');
     
     try {
       const insertData = ChatMessageMapper.toInsert(message);

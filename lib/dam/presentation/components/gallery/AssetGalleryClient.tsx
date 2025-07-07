@@ -128,7 +128,6 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     openMoveDialog: state.assetItemDialogs.openMoveDialog,
     setSelectedAssetId: state.setSelectedAssetId,
     addOptimisticallyHiddenItem: state.addOptimisticallyHiddenItem,
-    updateItems: state.updateItems,
     refreshGalleryData: state.refreshGalleryData,
     onFolderNavigate,
   });

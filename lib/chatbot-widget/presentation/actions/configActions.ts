@@ -11,11 +11,16 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { ChatbotConfigService } from '../../application/services/configuration-management/ChatbotConfigService';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,
   UpdateChatbotConfigDto,
 } from '../../application/dto/ChatbotConfigDto';
+import {
+  KnowledgeBaseUpdateRequestDto,
+  KnowledgeBaseUpdateResponseDto,
+} from '../../application/dto/KnowledgeBaseFormDto';
 
 /**
  * Create a new chatbot configuration
@@ -179,6 +184,31 @@ export async function getChatbotConfigStats(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get chatbot statistics',
+    };
+  }
+}
+
+/**
+ * Update knowledge base configuration
+ */
+export async function updateKnowledgeBase(
+  request: KnowledgeBaseUpdateRequestDto
+): Promise<{ success: boolean; data?: KnowledgeBaseUpdateResponseDto; error?: string }> {
+  try {
+    const knowledgeFormService = ChatbotWidgetCompositionRoot.getKnowledgeBaseFormApplicationService();
+    const result = await knowledgeFormService.updateKnowledgeBase(request);
+    
+    // Revalidate chatbot settings pages
+    revalidatePath('/ai-playground/chatbot-widget');
+    revalidatePath(`/ai-playground/chatbot-widget/config`);
+    
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Knowledge base update error:', error instanceof Error ? error.message : error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update knowledge base',
     };
   }
 } 

@@ -81,7 +81,7 @@ export function DamSearchBar({
 
   return (
     <>
-      <div ref={searchContainerRef} className="relative flex items-center gap-2 grow max-w-2xl">
+      <div ref={searchContainerRef as React.RefObject<HTMLDivElement>} className="relative flex items-center gap-2 grow max-w-2xl">
         <SearchForm
           searchInputTerm={searchInputTerm}
           onSearchInputChange={setSearchInputTerm}

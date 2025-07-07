@@ -23,10 +23,8 @@ import {
 import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCompositionRoot';
 
-/**
- * Supabase ChatSession Repository Implementation
- * Follows DDD principles with clean separation of concerns
- */
+// Supabase ChatSession Repository Implementation
+// Follows DDD principles with clean separation of concerns
 export class ChatSessionSupabaseRepository implements IChatSessionRepository {
   private readonly queryService: ChatSessionQueryService;
   private readonly analyticsService: ChatSessionAnalyticsService;
@@ -94,7 +92,7 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
 
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
-    sessionLogger.logHeader('🗄️ DATABASE OPERATION - SAVE SESSION');
+    sessionLogger.logMessage('🗄️ DATABASE OPERATION - SAVE SESSION');
     
     try {
       const startTime = Date.now();
@@ -133,7 +131,7 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
 
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
-    sessionLogger.logHeader('🗄️ DATABASE OPERATION - UPDATE SESSION');
+    sessionLogger.logMessage('🗄️ DATABASE OPERATION - UPDATE SESSION');
     
     try {
       const updateData = ChatSessionMapper.toUpdate(session);
@@ -229,7 +227,7 @@ export class ChatSessionSupabaseRepository implements IChatSessionRepository {
   async create(session: ChatSession, sharedLogFile: string): Promise<ChatSession> {
     // Create session logger for detailed database logging with shared log file
     const sessionLogger = this.loggingService.createSessionLogger(session.id, sharedLogFile);
-    sessionLogger.logHeader('🗄️ DATABASE OPERATION - CREATE SESSION');
+    sessionLogger.logMessage('🗄️ DATABASE OPERATION - CREATE SESSION');
     
     try {
       const insertData = ChatSessionMapper.toInsert(session);

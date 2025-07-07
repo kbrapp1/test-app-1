@@ -90,11 +90,10 @@ describe('CrawlResultProcessorService', () => {
       const result = service.processComprehensively(mockCrawledPages);
 
       expect(result.knowledgeItems.length).toBeGreaterThan(0); // Some pages meet quality criteria
-      // Check that we have quality knowledge items - only page2 meets criteria
+      // Check that we have quality knowledge items - pages 1 and 2 meet criteria
       const sources = result.knowledgeItems.map(item => item.source);
       expect(sources).toContain('https://example.com/page2');
     });
-
     it('should handle empty input gracefully', () => {
       const result = service.processComprehensively([]);
 

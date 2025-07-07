@@ -1,75 +1,79 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CopyReportButtons } from '@/lib/monitoring/presentation/components/optimization/CopyReportButtons';
+import { CopyReportButtons } from './CopyReportButtons';
 import { useState } from 'react';
+import { OptimizationGap } from '../../../domain/value-objects/OptimizationGap';
+import { NetworkIssue } from '../../../domain/network-efficiency/value-objects/NetworkIssue';
 
 // Mock data for different types of issues
-const mockFrontendIssues = [
-  {
-    impactArea: 'Component Re-renders',
-    description: 'Excessive re-renders detected in UserProfile component',
-    severity: 'high' as const,
-    recommendation: 'Use React.memo() or useMemo for optimization',
-    businessImpact: 'Poor user experience, increased CPU usage',
-  },
-  {
-    impactArea: 'Bundle Size',
-    description: 'Large bundle detected for user dashboard',
-    severity: 'medium' as const,
-    recommendation: 'Implement code splitting and lazy loading',
-    businessImpact: 'Slower initial page load times',
-  }
+const mockFrontendIssues: OptimizationGap[] = [
+  new OptimizationGap(
+    'memoization',
+    'Component Re-renders',
+    'Excessive re-renders detected in UserProfile component',
+    'high',
+    false
+  ),
+  new OptimizationGap(
+    'lazy-loading',
+    'Bundle Size',
+    'Large bundle detected for user dashboard',
+    'medium',
+    true
+  )
 ];
 
-const mockNetworkIssues = [
-  {
-    requestPath: '/api/users',
-    issue: 'Multiple duplicate requests',
-    severity: 'medium' as const,
-    recommendation: 'Implement request deduplication',
-    businessImpact: 'Increased server load and slower response times',
-  },
-  {
-    requestPath: '/api/assets',
-    issue: 'Large payload without compression',
-    severity: 'high' as const,
-    recommendation: 'Enable gzip compression',
-    businessImpact: 'Slow data transfer and increased bandwidth costs',
-  }
+const mockNetworkIssues: NetworkIssue[] = [
+  NetworkIssue.createRedundancyIssue(5),
+  NetworkIssue.createSlowResponseIssue(2500)
 ];
 
 const mockCrossDomainInsights = [
   {
+    type: 'correlation' as const,
     title: 'Database Query Optimization',
     description: 'Multiple N+1 queries detected affecting frontend performance',
     severity: 'high' as const,
-    category: 'Backend Impact' as const,
-    recommendation: 'Implement batch loading for related data',
-    businessImpact: 'Slow page loads affecting user engagement',
+    domains: ['frontend', 'network'] as ('frontend' | 'network')[],
   },
   {
+    type: 'cascade' as const,
     title: 'Cache Miss Rate High',
     description: 'Frontend components fetching uncached backend data',
     severity: 'medium' as const,
-    category: 'Cross-Domain' as const,
-    recommendation: 'Implement better cache strategy',
-    businessImpact: 'Increased server load and response times',
+    domains: ['frontend', 'network'] as ('frontend' | 'network')[],
   }
 ];
 
 const mockMetrics = {
-  firstContentfulPaint: 1.2,
-  largestContentfulPaint: 2.3,
-  cumulativeLayoutShift: 0.1,
-  firstInputDelay: 8,
-  totalBlockingTime: 150,
-  timeToInteractive: 2.8,
+  cacheSize: 150,
+  activeMutations: 3,
+  isOptimized: false,
+  lastUpdate: new Date().toISOString(),
+  webVitals: {
+    CLS: 0.1,
+    LCP: 2.3,
+    FCP: 1.2,
+    INP: 8,
+    TTFB: 150,
+  },
 };
 
 const mockTrackingState = {
+  renderMetrics: {
+    count: 25,
+    rapidCount: 8,
+    lastReset: Date.now() - 30000,
+  },
+  cacheHitRate: 0.75,
+  avgResponseTime: 1200,
+  webVitals: {
+    CLS: 0.1,
+    LCP: 2.3,
+    FCP: 1.2,
+    INP: 8,
+    TTFB: 150,
+  },
   pageContext: 'dam' as const,
-  isTracking: true,
-  startTime: Date.now() - 30000, // 30 seconds ago
-  metrics: mockMetrics,
 };
 
 // Component wrapper to handle state

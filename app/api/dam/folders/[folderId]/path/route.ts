@@ -10,9 +10,9 @@ import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/s
 import { ValidationError, NotFoundError, AppError } from '@/lib/errors/base';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     folderId?: string;
-  };
+  }>;
 }
 
 const createGetFolderPathHandler = (folderId: string): AuthenticatedHandler => {
@@ -44,7 +44,7 @@ const createGetFolderPathHandler = (folderId: string): AuthenticatedHandler => {
 
 export const GET = async (request: NextRequest, context: RouteContext) => {
   const { params } = context;
-  const folderId = params.folderId;
+  const folderId = (await params).folderId;
 
   if (!folderId) {
     return NextResponse.json({ message: 'Folder ID is required in the path.' }, { status: 400 });

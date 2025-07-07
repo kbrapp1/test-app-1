@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { ProviderId, ModelId } from '../../domain/value-objects/Provider';
+import { ProviderId, ModelId } from '../../../domain/value-objects/Provider';
 
 interface ModelOption {
   providerId: ProviderId;

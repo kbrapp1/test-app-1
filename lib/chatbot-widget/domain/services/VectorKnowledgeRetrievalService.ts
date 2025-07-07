@@ -110,11 +110,11 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
         await this.initializeVectorCache(context.sharedLogFile, logger);
       }
 
-      // Log the embeddings step
-      logger.logSeparator();
-      logger.logRaw('');
+      // Log the embeddings step - use synchronous logging to ensure proper ordering
       logger.logStep('3.1: Generate embeddings for user query');
-      logger.logMessage(`User query: "${context.userQuery}"`);
+      
+      // Log user query without timestamp for cleaner format
+      logger.logRaw(`User query: "${context.userQuery}"`);
       logger.logMessage(`Query length: ${context.userQuery.length} characters`);
 
       // Set embedding service log context to capture cache hit/miss info
@@ -140,16 +140,22 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       
       const embeddingTimeMs = Date.now() - embeddingStartTime;
       
-      logger.logMessage('✅ Embeddings generated successfully');
-      logger.logMessage(`Vector dimensions: ${queryEmbedding.length}`);
-      logger.logMessage(`Embedding time: ${embeddingTimeMs}ms`);
+      // Use synchronous logging for embedding completion to maintain order
+      if (typeof (logger as any).logMessageSync === 'function') {
+        (logger as any).logMessageSync('✅ Embeddings generated successfully');
+        (logger as any).logMessageSync(`Vector dimensions: ${queryEmbedding.length}`);
+        (logger as any).logMessageSync(`Embedding time: ${embeddingTimeMs}ms`);
+      } else {
+        logger.logMessage('✅ Embeddings generated successfully');
+        logger.logMessage(`Vector dimensions: ${queryEmbedding.length}`);
+        logger.logMessage(`Embedding time: ${embeddingTimeMs}ms`);
+      }
       
       // Log cache statistics for performance monitoring
       const embeddingCacheStats = this.embeddingService.getCacheStats();
       logger.logMessage(`📊 Embedding Cache: ${embeddingCacheStats.size}/${embeddingCacheStats.maxSize} entries (${embeddingCacheStats.utilizationPercent}% full)`);
 
       // Log the search step
-      logger.logRaw('');
       logger.logStep('3.2: Search knowledge base using in-memory vector cache');
       logger.logMessage(`Organization: ${this.organizationId}`);
       logger.logMessage(`Chatbot Config: ${this.chatbotConfigId}`);
@@ -235,7 +241,10 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       });
 
       return {
-        items: searchResults.map(result => result.item),
+        items: searchResults.map(result => ({
+          ...result.item,
+          relevanceScore: result.similarity
+        })),
         totalFound: searchResults.length,
         searchQuery: context.userQuery,
         searchTimeMs: totalTimeMs

@@ -22,34 +22,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development & Build
 ```bash
 # Start development server with context generation
-npm run dev
+pnpm run dev
 
 # Fast development (skips context generation)
-npm run dev:fast
+pnpm run dev:fast
 
 # Production build
-npm run build
+pnpm run build
 
 # Build with bundle analysis
-npm run analyze
+pnpm run analyze
 
 # Clean build artifacts
-npm run clean
+pnpm run clean
 ```
 
 ### Testing
 ```bash
 # Run all unit tests
-npm run test
+pnpm run test
 
 # Run tests in watch mode
-npm run test:watch
+pnpm run test:watch
 
 # Run E2E tests
-npm run test:e2e
+pnpm run test:e2e
 
 # Run E2E tests with UI
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Run single test file
 npx vitest run path/to/test.test.ts
@@ -58,22 +58,22 @@ npx vitest run path/to/test.test.ts
 ### Code Quality
 ```bash
 # Lint code
-npm run lint
+pnpm run lint
 
 # Generate contexts (for monitoring)
-npm run generate:contexts
+pnpm run generate:contexts
 
 # Performance analysis
-npm run perf
+pnpm run perf
 ```
 
 ### Development Tools
 ```bash
 # Start Storybook
-npm run storybook
+pnpm run storybook
 
 # Run Lighthouse analysis
-npm run lighthouse
+pnpm run lighthouse
 ```
 
 ## Architecture Overview
@@ -287,12 +287,12 @@ ELEVENLABS_API_KEY=[elevenlabs-key]
 ## Common Issues & Solutions
 
 ### Build Issues
-- **Context Generation**: Run `npm run generate:contexts` if build fails
+- **Context Generation**: Run `pnpm run generate:contexts` if build fails
 - **Type Errors**: Check TypeScript configuration and imports
-- **Bundle Size**: Use `npm run analyze` to identify large bundles
+- **Bundle Size**: Use `pnpm run analyze` to identify large bundles
 
 ### Development Issues
-- **Hot Reloading**: Use `npm run dev:fast` for faster development
+- **Hot Reloading**: Use `pnpm run dev:fast` for faster development
 - **Database Sync**: Ensure Supabase migrations are applied
 - **Environment Variables**: Verify all required variables are set
 
@@ -300,19 +300,19 @@ ELEVENLABS_API_KEY=[elevenlabs-key]
 
 #### Common Error Causes
 1. **Duplicate Class Declarations**
-   - **Cause**: Copy-paste errors, merge conflicts, or AI code generation mishaps
-   - **Symptoms**: `Unexpected token. A constructor, method, accessor, or property was expected.`
-   - **Prevention**: Use TypeScript compiler frequently during development
+- **Cause**: Copy-paste errors, merge conflicts, or AI code generation mishaps
+- **Symptoms**: `Unexpected token. A constructor, method, accessor, or property was expected.`
+- **Prevention**: Use TypeScript compiler frequently during development
 
 2. **Module Resolution Errors**
-   - **Cause**: Creating exports for non-existent files, overly optimistic barrel exports
-   - **Symptoms**: `Cannot find module './ServiceName' or its corresponding type declarations`
-   - **Prevention**: Always verify file existence before creating exports
+- **Cause**: Creating exports for non-existent files, overly optimistic barrel exports
+- **Symptoms**: `Cannot find module './ServiceName' or its corresponding type declarations`
+- **Prevention**: Always verify file existence before creating exports
 
 3. **Orphaned Methods Outside Classes**
-   - **Cause**: Incomplete refactoring, malformed class structures
-   - **Symptoms**: `Declaration or statement expected`
-   - **Prevention**: Review generated code before finalizing
+- **Cause**: Incomplete refactoring, malformed class structures
+- **Symptoms**: `Declaration or statement expected`
+- **Prevention**: Review generated code before finalizing
 
 #### Error Prevention Strategies
 ```bash
@@ -323,7 +323,7 @@ npx tsc --noEmit --project tsconfig.json
 npx tsc --noEmit --project tsconfig.json 2>&1 | grep "domain-name"
 
 # Use pre-commit hooks to catch syntax errors
-npm run lint && npx tsc --noEmit
+ npm run lint && npx tsc --noEmit
 ```
 
 #### Best Practices for AI-Assisted Development
@@ -338,7 +338,7 @@ npm run lint && npx tsc --noEmit
 // ✅ GOOD: Verify before exporting
 import { existsSync } from 'fs';
 if (existsSync('./ServiceName.ts')) {
-  export { ServiceName } from './ServiceName';
+export { ServiceName } from './ServiceName';
 }
 
 // ✅ GOOD: Incremental barrel exports

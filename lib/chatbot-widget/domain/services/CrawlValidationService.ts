@@ -1,13 +1,6 @@
 /**
- * Crawl Validation Service
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Handle all crawl request validation
- * - Keep validation logic pure and focused
- * - Never exceed 250 lines per @golden-rule
- * - Handle domain-specific validation rules
- * - Use domain-specific error handling
- * - Support comprehensive validation workflows
+ * AI INSTRUCTIONS: Service for crawl request validation.
+ * Handle domain-specific validation rules. @golden-rule: <250 lines.
  */
 
 import { WebsiteSource, WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
@@ -21,28 +14,11 @@ import {
 } from '../errors/ChatbotWidgetDomainErrors';
 import { IRobotsTxtChecker } from './WebsiteCrawlingDomainService';
 
-/**
- * Specialized Service for Crawl Request Validation
- * 
- * AI INSTRUCTIONS:
- * - Handle comprehensive validation of crawl requests
- * - Apply all business validation rules systematically
- * - Provide clear validation error messages
- * - Support both basic and advanced validation scenarios
- * - Maintain separation between validation types
- */
+/** Specialized Service for Crawl Request Validation */
 export class CrawlValidationService {
   private readonly userAgent = 'Mozilla/5.0 (compatible; ChatbotCrawler/1.0)';
 
-  /**
-   * Perform comprehensive validation of crawl request
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate all validation steps in logical order
-   * - Handle validation workflow systematically
-   * - Provide clear error context for failures
-   * - Support optional validation components
-   */
+  /** Perform comprehensive validation of crawl request */
   async validateComprehensively(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
@@ -63,15 +39,7 @@ export class CrawlValidationService {
     }
   }
 
-  /**
-   * Validate URL format and protocol requirements
-   * 
-   * AI INSTRUCTIONS:
-   * - Check URL syntax and format validity
-   * - Enforce protocol requirements (HTTP/HTTPS only)
-   * - Validate hostname presence and validity
-   * - Provide specific error messages for validation failures
-   */
+  /** Validate URL format and protocol requirements */
   validateUrlFormat(url: string): void {
     try {
       const urlObj = new URL(url);
@@ -103,15 +71,7 @@ export class CrawlValidationService {
     }
   }
 
-  /**
-   * Validate crawl settings according to business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business constraints on crawl parameters
-   * - Validate page count and depth limits
-   * - Ensure settings are within allowed ranges
-   * - Provide specific validation error context
-   */
+  /** Validate crawl settings according to business rules */
   validateCrawlSettings(settings: WebsiteCrawlSettings): void {
     if (settings.maxPages <= 0) {
       throw new DataValidationError(
@@ -138,21 +98,19 @@ export class CrawlValidationService {
     }
   }
 
-  /**
-   * Validate URL accessibility via network request
-   * 
-   * AI INSTRUCTIONS:
-   * - Check if URL is accessible and responds correctly
-   * - Use HEAD request for efficiency
-   * - Handle network errors appropriately
-   * - Provide detailed error context for failures
-   */
+  /** Validate URL accessibility via network request */
   async validateUrlAccessibility(url: string): Promise<void> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     try {
       const response = await fetch(url, {
         method: 'HEAD',
         headers: { 'User-Agent': this.userAgent },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new WebsiteAccessibilityError(
@@ -165,8 +123,23 @@ export class CrawlValidationService {
         );
       }
     } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
       if (fetchError instanceof WebsiteAccessibilityError) {
         throw fetchError;
+      }
+      
+      // Handle abort errors specifically
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new WebsiteCrawlingError(
+          url,
+          'Request timed out after 10 seconds',
+          {
+            operation: 'url_accessibility_check',
+            userAgent: this.userAgent,
+            timeout: true
+          }
+        );
       }
       
       throw new WebsiteCrawlingError(
@@ -180,15 +153,7 @@ export class CrawlValidationService {
     }
   }
 
-  /**
-   * Validate robots.txt compliance
-   * 
-   * AI INSTRUCTIONS:
-   * - Check robots.txt availability and compliance
-   * - Validate crawl permissions for user agent
-   * - Handle robots.txt parsing errors gracefully
-   * - Provide specific violation context
-   */
+  /** Validate robots.txt compliance */
   async validateRobotsTxtCompliance(
     url: string,
     robotsChecker: IRobotsTxtChecker
@@ -225,26 +190,12 @@ export class CrawlValidationService {
     }
   }
 
-  /**
-   * Get maximum allowed pages per crawl
-   * 
-   * AI INSTRUCTIONS:
-   * - Return business rule for maximum page limit
-   * - Support configuration through domain constants
-   * - Enable easy adjustment of business constraints
-   */
+  /** Get maximum allowed pages per crawl */
   private getMaxAllowedPages(): number {
     return 100; // Domain rule: Maximum 100 pages per crawl
   }
 
-  /**
-   * Get maximum allowed crawl depth
-   * 
-   * AI INSTRUCTIONS:
-   * - Return business rule for maximum depth limit
-   * - Support configuration through domain constants
-   * - Enable easy adjustment of business constraints
-   */
+  /** Get maximum allowed crawl depth */
   private getMaxAllowedDepth(): number {
     return 5; // Domain rule: Maximum depth of 5 levels
   }

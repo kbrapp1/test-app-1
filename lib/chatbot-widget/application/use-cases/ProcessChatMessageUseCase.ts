@@ -1,13 +1,6 @@
 /**
- * Process Chat Message Use Case
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Orchestrate chat message processing workflow
- * - Delegate specialized operations to focused services
- * - Keep under 200-250 lines by extracting workflow services
- * - Use composition pattern for complex operations
- * - Follow @golden-rule patterns exactly
- * - Log all API interactions and processing steps for debugging
+ * AI INSTRUCTIONS: Use case for chat message processing workflow.
+ * Orchestrates services for message handling. @golden-rule: <250 lines.
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
@@ -158,9 +151,25 @@ export class ProcessChatMessageUseCase {
       this.sharedLogFile
     );
 
-    // AI INSTRUCTIONS: Get enhanced orchestrator with chatbot config to trigger vector embeddings pipeline
+    // AI INSTRUCTIONS: Create enhanced orchestrator with proper dependency injection
     // This enables ConversationEnhancedAnalysisService with knowledge retrieval
-    const enhancedOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator(config);
+    const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
+    const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
+    
+    // Create knowledge retrieval service if not provided in constructor (per-request pattern)
+    const knowledgeRetrievalService: IKnowledgeRetrievalService | undefined = 
+      this.knowledgeRetrievalService || 
+      DomainServiceCompositionService.getKnowledgeRetrievalService(
+        config,
+        ChatbotWidgetCompositionRoot.getVectorKnowledgeRepository(),
+        ChatbotWidgetCompositionRoot.getEmbeddingService()
+      );
+    
+    const enhancedOrchestrator = new ConversationContextOrchestrator(
+      tokenCountingService,
+      intentClassificationService,
+      knowledgeRetrievalService
+    );
     
     // Use enhanced context analysis to trigger vector embeddings pipeline
     // This calls ConversationContextOrchestrator.analyzeContextEnhanced which:
@@ -173,6 +182,10 @@ export class ProcessChatMessageUseCase {
       session,
       this.sharedLogFile
     );
+
+    // FIXED: Ensure all internal logging operations complete before returning
+    // Add a small delay to allow any async logging operations to complete
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     return {
       session,
@@ -231,6 +244,7 @@ export class ProcessChatMessageUseCase {
         request
       );
       
+      // FIXED: Log MESSAGE CONTEXT immediately after STEP 2 completes
       logger.logMessage('💬 MESSAGE CONTEXT', {
         sessionId: messageContext.session.id,
         configId: messageContext.config.id,
@@ -241,15 +255,30 @@ export class ProcessChatMessageUseCase {
       // 3. Analyze conversation context and generate enhanced context
       logger.logRaw('');
       logger.logRaw('🔍 STEP 3: Analyze conversation context');
+      
       const analysisResult = await this.analyzeConversationContext(messageContext, logger);
       
-      logger.logMessage('📊 ANALYSIS RESULT', {
-        sessionId: analysisResult.session.id,
-        contextWindowUsed: analysisResult.contextResult?.contextWindow || 'unknown',
-        messagesInContext: analysisResult.contextResult?.messages?.length || 0,
-        enhancedContextKeys: Object.keys(analysisResult.enhancedContext || {}),
-        analysisTimestamp: new Date().toISOString()
-      });
+      // FIXED: Log ANALYSIS RESULT immediately after context analysis completes
+      if (typeof (logger as any).logMessageSync === 'function') {
+        (logger as any).logMessageSync('📊 ANALYSIS RESULT', {
+          sessionId: analysisResult.session.id,
+          contextWindowUsed: analysisResult.contextResult?.contextWindow || 'unknown',
+          messagesInContext: analysisResult.contextResult?.messages?.length || 0,
+          enhancedContextKeys: Object.keys(analysisResult.enhancedContext || {}),
+          analysisTimestamp: new Date().toISOString()
+        });
+      } else {
+        logger.logMessage('📊 ANALYSIS RESULT', {
+          sessionId: analysisResult.session.id,
+          contextWindowUsed: analysisResult.contextResult?.contextWindow || 'unknown',
+          messagesInContext: analysisResult.contextResult?.messages?.length || 0,
+          enhancedContextKeys: Object.keys(analysisResult.enhancedContext || {}),
+          analysisTimestamp: new Date().toISOString()
+        });
+      }
+
+      // FIXED: Ensure all pending logging operations complete before proceeding to STEP 4
+      await logger.flush();
 
       // 4. Generate AI response with enhanced context
       logger.logRaw('');

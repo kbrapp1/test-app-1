@@ -124,14 +124,6 @@ export class ChatbotWidgetCompositionRoot {
 
   // ===== DOMAIN SERVICE ACCESS METHODS =====
   
-  static getConversationContextOrchestrator() {
-    return DomainServiceCompositionService.getConversationContextOrchestrator();
-  }
-
-  static getConversationSessionUpdateService() {
-    return DomainServiceCompositionService.getConversationSessionUpdateService();
-  }
-
   static getSessionContextService() {
     return DomainServiceCompositionService.getSessionContextService();
   }
@@ -140,8 +132,8 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getSessionStateService();
   }
 
-  static getContextWindowService(tokenCountingService: ITokenCountingService) {
-    return DomainServiceCompositionService.getContextWindowService(tokenCountingService);
+  static getContextWindowService() {
+    return DomainServiceCompositionService.getContextWindowService();
   }
 
   static getChatSessionValidationService() {
@@ -160,8 +152,16 @@ export class ChatbotWidgetCompositionRoot {
     return DomainServiceCompositionService.getDebugInformationService();
   }
 
-  static getKnowledgeRetrievalService(chatbotConfig?: any) {
-    return DomainServiceCompositionService.getKnowledgeRetrievalService(chatbotConfig);
+  static getKnowledgeRetrievalService(
+    chatbotConfig: { id: string; organizationId: string; lastUpdated?: Date }
+  ) {
+    const vectorRepository = this.getVectorKnowledgeRepository();
+    const embeddingService = this.getEmbeddingService();
+    return DomainServiceCompositionService.getKnowledgeRetrievalService(
+      chatbotConfig, 
+      vectorRepository, 
+      embeddingService
+    );
   }
 
   static processAIFlowDecision(decision: any, currentState: any) {
@@ -170,6 +170,22 @@ export class ChatbotWidgetCompositionRoot {
 
   static shouldTriggerLeadCapture(decision: any) {
     return DomainServiceCompositionService.shouldTriggerLeadCapture(decision);
+  }
+
+  static getTokenCountingService() {
+    return DomainServiceCompositionService.getTokenCountingService();
+  }
+
+  static async getIntentClassificationService() {
+    return DomainServiceCompositionService.getIntentClassificationService();
+  }
+
+  static getLeadExtractionService() {
+    return DomainServiceCompositionService.getLeadExtractionService();
+  }
+
+  static getKnowledgeBaseFormService() {
+    return DomainServiceCompositionService.getKnowledgeBaseFormService();
   }
 
   // ===== APPLICATION SERVICE ACCESS METHODS =====
@@ -190,6 +206,12 @@ export class ChatbotWidgetCompositionRoot {
 
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     return UseCaseCompositionService.getCaptureLeadUseCase();
+  }
+
+  // ===== KNOWLEDGE BASE FORM SERVICE ACCESS METHODS =====
+  
+  static getKnowledgeBaseFormApplicationService() {
+    return ApplicationServiceCompositionService.getKnowledgeBaseFormApplicationService();
   }
 
   // ===== ERROR TRACKING SERVICE ACCESS METHODS =====
@@ -243,5 +265,31 @@ export class ChatbotWidgetCompositionRoot {
     AIConfigurationCompositionService.reset();
     InfrastructureCompositionService.reset();
     ErrorTrackingCompositionService.reset();
+  }
+
+  // ===== HEALTH CHECKS AND MONITORING =====
+
+  static async healthCheck() {
+    return DomainServiceCompositionService.healthCheck();
+  }
+
+  static getServiceStatistics() {
+    return DomainServiceCompositionService.getServiceStatistics();
+  }
+
+  static getCacheStatistics() {
+    return DomainServiceCompositionService.getCacheStatistics();
+  }
+
+  static async warmKnowledgeCache(
+    chatbotConfigs: Array<{ id: string; organizationId: string; lastUpdated?: Date }>
+  ) {
+    const vectorRepository = this.getVectorKnowledgeRepository();
+    const embeddingService = this.getEmbeddingService();
+    return DomainServiceCompositionService.warmKnowledgeCache(
+      chatbotConfigs, 
+      vectorRepository, 
+      embeddingService
+    );
   }
 } 

@@ -2,6 +2,8 @@
 import { ConfigureChatbotUseCase } from '../../application/use-cases/ConfigureChatbotUseCase';
 import { ProcessChatMessageUseCase } from '../../application/use-cases/ProcessChatMessageUseCase';
 import { CaptureLeadUseCase } from '../../application/use-cases/CaptureLeadUseCase';
+import { ValidateContentUseCase } from '../../application/use-cases/ValidateContentUseCase';
+import { SanitizeUserContentUseCase } from '../../application/use-cases/SanitizeUserContentUseCase';
 
 // Application mappers
 import { LeadMapper } from '../../application/mappers/LeadMapper';
@@ -24,6 +26,8 @@ export class UseCaseCompositionService {
   private static configureChatbotUseCase: ConfigureChatbotUseCase | null = null;
   private static processChatMessageUseCase: ProcessChatMessageUseCase | null = null;
   private static captureLeadUseCase: CaptureLeadUseCase | null = null;
+  private static validateContentUseCase: ValidateContentUseCase | null = null;
+  private static sanitizeUserContentUseCase: SanitizeUserContentUseCase | null = null;
 
   /**
    * Get Configure Chatbot Use Case
@@ -49,7 +53,13 @@ export class UseCaseCompositionService {
       const aiConversationService = await ApplicationServiceCompositionService.getAiConversationServiceInterface();
       const tokenCountingService = DomainServiceCompositionService.getTokenCountingService();
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
-      const conversationContextOrchestrator = await DomainServiceCompositionService.getConversationContextOrchestrator();
+      // Create ConversationContextOrchestrator with explicit dependency injection (following @golden-rule patterns)
+      const { ConversationContextOrchestrator } = await import('../../domain/services/conversation/ConversationContextOrchestrator');
+      const conversationContextOrchestrator = new ConversationContextOrchestrator(
+        tokenCountingService,
+        intentClassificationService,
+        undefined // knowledgeRetrievalService will be injected per-request in ProcessChatMessageUseCase
+      );
 
       this.processChatMessageUseCase = new ProcessChatMessageUseCase(
         chatSessionRepository,
@@ -81,11 +91,40 @@ export class UseCaseCompositionService {
   }
 
   /**
+   * Get Validate Content Use Case
+   */
+  static getValidateContentUseCase(): ValidateContentUseCase {
+    if (!this.validateContentUseCase) {
+      this.validateContentUseCase = new ValidateContentUseCase(
+        DomainServiceCompositionService.getContentValidationService(),
+        DomainServiceCompositionService.getContentLengthValidationService(),
+        DomainServiceCompositionService.getContentTypeValidationService()
+      );
+    }
+    return this.validateContentUseCase;
+  }
+
+  /**
+   * Get Sanitize User Content Use Case
+   */
+  static getSanitizeUserContentUseCase(): SanitizeUserContentUseCase {
+    if (!this.sanitizeUserContentUseCase) {
+      this.sanitizeUserContentUseCase = new SanitizeUserContentUseCase(
+        DomainServiceCompositionService.getUserContentSanitizationService(),
+        DomainServiceCompositionService.getContentValidationService()
+      );
+    }
+    return this.sanitizeUserContentUseCase;
+  }
+
+  /**
    * Reset all use case singletons
    */
   static reset(): void {
     this.configureChatbotUseCase = null;
     this.processChatMessageUseCase = null;
     this.captureLeadUseCase = null;
+    this.validateContentUseCase = null;
+    this.sanitizeUserContentUseCase = null;
   }
 } 

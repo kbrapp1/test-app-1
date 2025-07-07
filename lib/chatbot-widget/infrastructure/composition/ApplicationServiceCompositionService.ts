@@ -4,6 +4,7 @@ import { LeadCaptureService } from '../../application/services/lead-management/L
 import { LeadLifecycleService } from '../../application/services/lead-management/LeadLifecycleService';
 import { LeadQueryService } from '../../application/services/lead-management/LeadQueryService';
 import { AiConversationService } from '../../application/services/conversation-management/AiConversationService';
+import { KnowledgeBaseFormApplicationService } from '../../application/services/KnowledgeBaseFormApplicationService';
 
 // Application mappers
 import { LeadMapper } from '../../application/mappers/LeadMapper';
@@ -11,10 +12,13 @@ import { LeadMapper } from '../../application/mappers/LeadMapper';
 // Infrastructure services
 import { OpenAIProvider, OpenAIConfig } from '../providers/openai/OpenAIProvider';
 import { IAIConversationService } from '../../domain/services/interfaces/IAIConversationService';
+import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';
 import { DomainServiceCompositionService } from './DomainServiceCompositionService';
+import { InfrastructureCompositionService } from './InfrastructureCompositionService';
+import { AIConfigurationCompositionService } from './AIConfigurationCompositionService';
 
 /**
  * Application Service Composition Service
@@ -31,6 +35,7 @@ export class ApplicationServiceCompositionService {
   private static leadLifecycleService: LeadLifecycleService | null = null;
   private static leadQueryService: LeadQueryService | null = null;
   private static aiConversationService: AiConversationService | null = null;
+  private static knowledgeBaseFormApplicationService: KnowledgeBaseFormApplicationService | null = null;
 
   /**
    * Get OpenAI Provider
@@ -67,9 +72,15 @@ export class ApplicationServiceCompositionService {
   static async getAiConversationService(): Promise<AiConversationService> {
     if (!this.aiConversationService) {
       const openAIProvider = await this.getOpenAIProvider();
-      const dynamicPromptService = DomainServiceCompositionService.getDynamicPromptService();
+      const dynamicPromptService = AIConfigurationCompositionService.getDynamicPromptService();
       const intentService = await DomainServiceCompositionService.getIntentClassificationService();
-      const knowledgeRetrievalService = DomainServiceCompositionService.getKnowledgeRetrievalService({});
+      // AI INSTRUCTIONS: Following @golden-rule dependency injection patterns
+      // Create a default knowledge retrieval service for AI conversation service
+      const knowledgeRetrievalService = DomainServiceCompositionService.getKnowledgeRetrievalService(
+        { id: 'default', organizationId: 'default' },
+        InfrastructureCompositionService.getVectorKnowledgeRepository(),
+        InfrastructureCompositionService.getEmbeddingService()
+      );
       // ConversationSentimentService removed - using OpenAI API for sentiment analysis
       const leadExtractionService = DomainServiceCompositionService.getLeadExtractionService();
 
@@ -77,7 +88,7 @@ export class ApplicationServiceCompositionService {
         openAIProvider,
         dynamicPromptService,
         intentService,
-        knowledgeRetrievalService,
+        knowledgeRetrievalService, // Default service for AI conversation
         leadExtractionService
       );
     }
@@ -145,6 +156,24 @@ export class ApplicationServiceCompositionService {
   }
 
   /**
+   * Get Knowledge Base Form Application Service
+   */
+  static getKnowledgeBaseFormApplicationService(): KnowledgeBaseFormApplicationService {
+    if (!this.knowledgeBaseFormApplicationService) {
+      const knowledgeFormService = DomainServiceCompositionService.getKnowledgeBaseFormService();
+      const configRepository = RepositoryCompositionService.getChatbotConfigRepository();
+      const vectorRepository = InfrastructureCompositionService.getVectorKnowledgeRepository();
+      
+      this.knowledgeBaseFormApplicationService = new KnowledgeBaseFormApplicationService(
+        knowledgeFormService,
+        configRepository,
+        vectorRepository
+      );
+    }
+    return this.knowledgeBaseFormApplicationService;
+  }
+
+  /**
    * Reset all application service singletons
    */
   static reset(): void {
@@ -154,5 +183,6 @@ export class ApplicationServiceCompositionService {
     this.leadLifecycleService = null;
     this.leadQueryService = null;
     this.aiConversationService = null;
+    this.knowledgeBaseFormApplicationService = null;
   }
 } 

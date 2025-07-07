@@ -57,31 +57,56 @@ export interface UpdateChatbotConfigData {
 }
 
 /**
- * ChatbotConfig Domain-Database Mapper
- * Handles transformation between domain entities and database records
+ * ChatbotConfigMapper Infrastructure Mapper
+ * 
+ * AI INSTRUCTIONS:
+ * - Transform between database records and domain entities
+ * - Keep focused on data transformation only
+ * - Follow @golden-rule infrastructure mapper patterns
+ * - Use domain entity factory methods for construction
  */
+
 export class ChatbotConfigMapper {
   /**
-   * Transform database record to domain entity
+   * Transform database record to domain entity using factory method
    */
-  static toDomain(record: RawChatbotConfigDbRecord): ChatbotConfig {
-    const props: ChatbotConfigProps = {
-      id: record.id,
-      organizationId: record.organization_id,
-      name: record.name,
-      avatarUrl: record.avatar_url || undefined,
-      description: record.description || undefined,
-      personalitySettings: this.mapPersonalitySettings(record.personality_settings),
-      knowledgeBase: this.mapKnowledgeBase(record.knowledge_base),
-      operatingHours: this.mapOperatingHours(record.operating_hours),
-      leadQualificationQuestions: this.mapLeadQuestions(record.lead_qualification_questions),
-      aiConfiguration: this.mapAIConfiguration(record.ai_configuration),
-      isActive: record.is_active,
-      createdAt: new Date(record.created_at),
-      updatedAt: new Date(record.updated_at),
-    };
+  static toDomainEntity(data: any): ChatbotConfig {
+    return ChatbotConfig.fromPersistence({
+      id: data.id,
+      organizationId: data.organization_id,
+      name: data.name,
+      avatarUrl: data.avatar_url,
+      description: data.description,
+      personalitySettings: this.mapPersonalitySettings(data.personality_settings),
+      knowledgeBase: this.mapKnowledgeBase(data.knowledge_base),
+      operatingHours: this.mapOperatingHours(data.operating_hours || { timezone: 'UTC' }),
+      leadQualificationQuestions: this.mapLeadQuestions(data.lead_qualification_questions),
+      aiConfiguration: this.mapAIConfiguration(data.ai_configuration),
+      isActive: data.is_active,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    });
+  }
 
-    return ChatbotConfig.fromPersistence(props);
+  /**
+   * Transform domain entity to database record
+   */
+  static toDbRecord(config: ChatbotConfig): any {
+    return {
+      id: config.id,
+      organization_id: config.organizationId,
+      name: config.name,
+      avatar_url: config.avatarUrl,
+      description: config.description,
+      personality_settings: config.personalitySettings,
+      knowledge_base: config.knowledgeBase,
+      operating_hours: config.operatingHours,
+      lead_qualification_questions: config.leadQualificationQuestions,
+      ai_configuration: config.aiConfiguration,
+      is_active: config.isActive,
+      created_at: config.createdAt.toISOString(),
+      updated_at: config.updatedAt.toISOString()
+    };
   }
 
   /**

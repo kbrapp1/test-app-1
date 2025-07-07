@@ -1,2 +1,2 @@
-export { Generation, type CreateGenerationData, type GenerationSnapshot } from './Generation';
+export { Generation, type CreateGenerationData, type GenerationData } from './Generation';
 export * from './services'; 
