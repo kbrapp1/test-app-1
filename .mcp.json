@@ -8,7 +8,7 @@
               "-y",
               "@supabase/mcp-server-supabase@latest",
               "--access-token",
-              "sbp_237534d57c363c383f0ee2506a4a07e85c87e2ea"          ]
+              "{arg}"          ]
       },
       "context7": {
         "command": "npx",
