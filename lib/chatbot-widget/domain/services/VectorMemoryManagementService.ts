@@ -8,47 +8,26 @@ import {
   VectorCacheEntry
 } from '../types/VectorCacheTypes';
 
-/**
- * Vector Memory Management Service
- * 
- * AI INSTRUCTIONS:
- * - Handle all memory management logic for vector cache
- * - Implement LRU eviction strategy with configurable limits
- * - Use domain-specific error types for memory violations
- * - Keep memory management logic pure and testable
- * - Support both memory size and vector count limits
- * - Provide detailed logging for memory operations
+/** Vector Memory Management Service
  */
 export class VectorMemoryManagementService {
 
-  /**
-   * Default memory management configuration
-   * 
-   * AI INSTRUCTIONS:
-   * - Define reasonable default values for production use
-   * - Prevent excessive memory usage
-   * - Support efficient vector storage
-   */
+  /** Default memory management configuration
+ */
   static readonly DEFAULT_CONFIG: Required<VectorCacheConfig> = {
     maxMemoryKB: 50 * 1024, // 50MB default
     maxVectors: 10000,
-    enableLRUEviction: true,
+    // AI: Removed LRU eviction - let serverless platform handle memory management
     evictionBatchSize: 100
   };
 
-  /**
-   * Create normalized configuration with defaults
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply default values for undefined options
-   * - Validate and sanitize configuration parameters
-   * - Return complete configuration object
-   */
+  /** Create normalized configuration with defaults
+ */
   static createConfig(config: VectorCacheConfig = {}): Required<VectorCacheConfig> {
     const normalizedConfig = {
       maxMemoryKB: config.maxMemoryKB || this.DEFAULT_CONFIG.maxMemoryKB,
       maxVectors: config.maxVectors || this.DEFAULT_CONFIG.maxVectors,
-      enableLRUEviction: config.enableLRUEviction ?? this.DEFAULT_CONFIG.enableLRUEviction,
+      // AI: Removed LRU eviction - let serverless platform handle memory management
       evictionBatchSize: config.evictionBatchSize || this.DEFAULT_CONFIG.evictionBatchSize
     };
 
@@ -70,14 +49,13 @@ export class VectorMemoryManagementService {
     config: Required<VectorCacheConfig>,
     logger: ISessionLogger
   ): MemoryEvictionResult {
-    if (!config.enableLRUEviction) {
-      return {
-        evictedCount: 0,
-        reason: 'memory',
-        memoryUsageKB: this.calculateMemoryUsage(vectorCache),
-        vectorCount: vectorCache.size
-      };
-    }
+    // AI: Removed LRU eviction - let serverless platform handle memory management
+    return {
+      evictedCount: 0,
+      reason: 'memory',
+      memoryUsageKB: this.calculateMemoryUsage(vectorCache),
+      vectorCount: vectorCache.size
+    };
 
     const currentMemoryKB = this.calculateMemoryUsage(vectorCache);
     const currentVectorCount = vectorCache.size;
@@ -105,15 +83,8 @@ export class VectorMemoryManagementService {
     };
   }
 
-  /**
-   * Evict least recently used vectors
-   * 
-   * AI INSTRUCTIONS:
-   * - Sort vectors by last accessed time (oldest first)
-   * - Remove vectors in configured batch size
-   * - Log eviction details for monitoring
-   * - Return count of evicted vectors
-   */
+  /** Evict least recently used vectors
+ */
   static evictLRUVectors(
     vectorCache: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>,
@@ -139,14 +110,8 @@ export class VectorMemoryManagementService {
     return evicted;
   }
 
-  /**
-   * Calculate approximate memory usage in KB
-   * 
-   * AI INSTRUCTIONS:
-   * - Estimate memory usage based on vector count and dimensions
-   * - Account for vector data, metadata, and tracking overhead
-   * - Return reasonable approximation for monitoring
-   */
+  /** Calculate approximate memory usage in KB
+ */
   static calculateMemoryUsage(vectorCache: Map<string, CachedKnowledgeVector>): number {
     const vectorCount = vectorCache.size;
     if (vectorCount === 0) return 0;
@@ -155,14 +120,8 @@ export class VectorMemoryManagementService {
     return Math.round(vectorCount * 7);
   }
 
-  /**
-   * Get memory utilization percentage
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate percentage of memory limit used
-   * - Handle edge cases like zero limits
-   * - Return value between 0 and 100
-   */
+  /** Get memory utilization percentage
+ */
   static getMemoryUtilization(
     vectorCache: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>
@@ -185,22 +144,12 @@ export class VectorMemoryManagementService {
     vectorCache: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>
   ): boolean {
-    if (!config.enableLRUEviction) return false;
-
-    const currentMemoryKB = this.calculateMemoryUsage(vectorCache);
-    const currentVectorCount = vectorCache.size;
-
-    return currentMemoryKB > config.maxMemoryKB || currentVectorCount > config.maxVectors;
+    // AI: Removed LRU eviction - let serverless platform handle memory management
+    return false;
   }
 
-  /**
-   * Update vector access tracking for LRU
-   * 
-   * AI INSTRUCTIONS:
-   * - Update last accessed time and access count
-   * - Handle bulk updates efficiently
-   * - Maintain accurate LRU ordering
-   */
+  /** Update vector access tracking for LRU
+ */
   static updateVectorAccess(
     cachedVector: CachedKnowledgeVector,
     accessTime: Date = new Date()
@@ -209,14 +158,8 @@ export class VectorMemoryManagementService {
     cachedVector.accessCount++;
   }
 
-  /**
-   * Validate memory management configuration
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate configuration parameters
-   * - Use domain-specific error types
-   * - Check for reasonable limits and values
-   */
+  /** Validate memory management configuration
+ */
   private static validateConfig(config: Required<VectorCacheConfig>): void {
     if (config.maxMemoryKB <= 0) {
       throw new BusinessRuleViolationError(

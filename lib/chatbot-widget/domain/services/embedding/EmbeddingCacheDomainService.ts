@@ -23,34 +23,19 @@ export class EmbeddingCacheDomainService {
   private pdfDocumentCache = new Map<string, EmbeddingResult>();
   private config: CacheConfiguration;
 
-  constructor(config?: Partial<CacheConfiguration>) {
-    this.config = {
-      maxUserQueryCacheSize: config?.maxUserQueryCacheSize ?? EMBEDDING_CONSTANTS.DEFAULT_USER_QUERY_CACHE_SIZE,
-      maxPdfCacheSize: config?.maxPdfCacheSize ?? EMBEDDING_CONSTANTS.DEFAULT_PDF_CACHE_SIZE,
-      maxKnowledgeBaseCacheSize: config?.maxKnowledgeBaseCacheSize
-    };
+  constructor() {
+    // AI: Removed cache size limits - let serverless platform handle memory management
+    this.config = {};
   }
 
-  /**
-   * Generate cache key for text
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure function for cache key generation
-   * - Consistent hashing for same text content
-   * - Case-insensitive and whitespace-normalized
-   */
+  /** Generate cache key for text
+ */
   generateCacheKey(text: string): string {
     return Buffer.from(text.trim().toLowerCase()).toString('base64');
   }
 
-  /**
-   * Get embedding from appropriate cache
-   * 
-   * AI INSTRUCTIONS:
-   * - Check all cache types in priority order
-   * - Update LRU for user query cache only
-   * - Knowledge base cache is permanent (no LRU)
-   */
+  /** Get embedding from appropriate cache
+ */
   getEmbedding(cacheKey: string): EmbeddingResult | undefined {
     // Check knowledge base cache first (permanent, no LRU)
     const knowledgeBaseCached = this.knowledgeBaseCache.get(cacheKey);
@@ -104,53 +89,23 @@ export class EmbeddingCacheDomainService {
     return cacheType;
   }
 
-  /**
-   * Store in knowledge base cache (permanent)
-   * 
-   * AI INSTRUCTIONS:
-   * - No eviction for knowledge base cache
-   * - Permanent storage for business knowledge
-   * - No size limits for core business data
-   */
+  /** Store in knowledge base cache (permanent)
+ */
   private storeInKnowledgeBaseCache(cacheKey: string, result: EmbeddingResult): void {
     this.knowledgeBaseCache.set(cacheKey, result);
   }
 
-  /**
-   * Store in PDF cache with LRU eviction
-   * 
-   * AI INSTRUCTIONS:
-   * - LRU eviction when at capacity
-   * - Larger cache size for document processing
-   * - Remove oldest entries first
-   */
+  /** Store in PDF cache
+ */
   private storeInPdfCache(cacheKey: string, result: EmbeddingResult): void {
-    if (this.pdfDocumentCache.size >= this.config.maxPdfCacheSize) {
-      const firstKey = this.pdfDocumentCache.keys().next().value;
-      if (firstKey) {
-        this.pdfDocumentCache.delete(firstKey);
-      }
-    }
-    
+    // AI: Removed LRU eviction - let serverless platform handle memory management
     this.pdfDocumentCache.set(cacheKey, result);
   }
 
-  /**
-   * Store in user query cache with LRU eviction
-   * 
-   * AI INSTRUCTIONS:
-   * - LRU eviction for user queries
-   * - Smaller cache size for temporary data
-   * - Remove oldest queries first
-   */
+  /** Store in user query cache
+ */
   private storeInUserQueryCache(cacheKey: string, result: EmbeddingResult): void {
-    if (this.userQueryCache.size >= this.config.maxUserQueryCacheSize) {
-      const firstKey = this.userQueryCache.keys().next().value;
-      if (firstKey) {
-        this.userQueryCache.delete(firstKey);
-      }
-    }
-    
+    // AI: Removed LRU eviction - let serverless platform handle memory management
     this.userQueryCache.set(cacheKey, result);
   }
 
@@ -179,14 +134,8 @@ export class EmbeddingCacheDomainService {
     return CacheType.USER_QUERY;
   }
 
-  /**
-   * Detect PDF content characteristics
-   * 
-   * AI INSTRUCTIONS:
-   * - Heuristics for PDF document content
-   * - Look for document structure patterns
-   * - Consider content length and formatting
-   */
+  /** Detect PDF content characteristics
+ */
   private isPdfContent(text: string): boolean {
     const hasDocumentMarkers = /(?:Page \d+|Chapter \d+|Section \d+|\.pdf|document)/i.test(text);
     const hasLongParagraphs = text.split('\n').some(line => line.length > 200);
@@ -195,22 +144,15 @@ export class EmbeddingCacheDomainService {
     return hasDocumentMarkers || (hasLongParagraphs && isVeryLong);
   }
 
-  /**
-   * Get comprehensive cache statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate statistics across all cache types
-   * - Include utilization percentages
-   * - Return detailed breakdown for monitoring
-   */
+  /** Get comprehensive cache statistics
+ */
   getCacheStats(): CacheStats {
     const totalSize = this.knowledgeBaseCache.size + this.userQueryCache.size + this.pdfDocumentCache.size;
-    const totalMaxSize = this.config.maxUserQueryCacheSize + this.config.maxPdfCacheSize;
     
     return {
       size: totalSize,
-      maxSize: totalMaxSize,
-      utilizationPercent: Math.round((totalSize / totalMaxSize) * 100),
+      maxSize: -1, // AI: No max size limit in serverless
+      utilizationPercent: 0, // AI: No utilization tracking without limits
       keys: [
         ...Array.from(this.knowledgeBaseCache.keys()),
         ...Array.from(this.userQueryCache.keys()),
@@ -219,29 +161,23 @@ export class EmbeddingCacheDomainService {
     };
   }
 
-  /**
-   * Get detailed cache breakdown by type
-   * 
-   * AI INSTRUCTIONS:
-   * - Separate statistics for each cache type
-   * - Include type-specific metrics
-   * - Useful for cache optimization analysis
-   */
+  /** Get detailed cache breakdown by type
+ */
   getDetailedCacheStats(): Record<CacheType, { size: number; maxSize: number | null; keys: string[] }> {
     return {
       [CacheType.KNOWLEDGE_BASE]: {
         size: this.knowledgeBaseCache.size,
-        maxSize: null, // No limit for knowledge base
+        maxSize: null, // AI: No limit for knowledge base
         keys: Array.from(this.knowledgeBaseCache.keys())
       },
       [CacheType.USER_QUERY]: {
         size: this.userQueryCache.size,
-        maxSize: this.config.maxUserQueryCacheSize,
+        maxSize: null, // AI: No limit in serverless
         keys: Array.from(this.userQueryCache.keys())
       },
       [CacheType.PDF_DOCUMENT]: {
         size: this.pdfDocumentCache.size,
-        maxSize: this.config.maxPdfCacheSize,
+        maxSize: null, // AI: No limit in serverless
         keys: Array.from(this.pdfDocumentCache.keys())
       }
     };
@@ -261,14 +197,8 @@ export class EmbeddingCacheDomainService {
     this.pdfDocumentCache.clear();
   }
 
-  /**
-   * Clear specific cache type
-   * 
-   * AI INSTRUCTIONS:
-   * - Selective cache clearing
-   * - Preserve other cache types
-   * - Useful for targeted cache management
-   */
+  /** Clear specific cache type
+ */
   clearCache(cacheType: CacheType): void {
     switch (cacheType) {
       case CacheType.KNOWLEDGE_BASE:
@@ -283,14 +213,8 @@ export class EmbeddingCacheDomainService {
     }
   }
 
-  /**
-   * Check if cache has embedding for key
-   * 
-   * AI INSTRUCTIONS:
-   * - Fast existence check without retrieval
-   * - Check all cache types
-   * - No LRU updates on existence check
-   */
+  /** Check if cache has embedding for key
+ */
   hasEmbedding(cacheKey: string): boolean {
     return this.knowledgeBaseCache.has(cacheKey) ||
            this.userQueryCache.has(cacheKey) ||

@@ -12,9 +12,7 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class IntentPersistenceService {
 
-  /**
-   * Update session with new intent data and maintain context flags
-   */
+  /** Update session with new intent data and maintain context flags */
   static updateIntentHistory(
     sessionContext: SessionContext,
     intentData: any,
@@ -71,9 +69,7 @@ export class IntentPersistenceService {
     };
   }
 
-  /**
-   * Check if knowledge base should be injected based on intent history
-   */
+  /** Check if knowledge base should be injected based on intent history */
   static shouldInjectKnowledgeBase(sessionContext: SessionContext): boolean {
     const intentHistory = sessionContext.intentHistory;
     
@@ -93,9 +89,7 @@ export class IntentPersistenceService {
            intentHistory.currentConversationMode === 'qualification';
   }
 
-  /**
-   * Get business context strength for prompt weighting
-   */
+  /** Get business context strength for prompt weighting */
   static getBusinessContextStrength(sessionContext: SessionContext): number {
     const intentHistory = sessionContext.intentHistory;
     
@@ -117,9 +111,7 @@ export class IntentPersistenceService {
     return strength;
   }
 
-  /**
-   * Create initial intent history structure
-   */
+  /** Create initial intent history structure */
   private static createInitialIntentHistory() {
     return {
       businessContextEstablished: false,
@@ -138,9 +130,7 @@ export class IntentPersistenceService {
     };
   }
 
-  /**
-   * Update context flags based on new intent
-   */
+  /** Update context flags based on new intent */
   private static updateContextFlags(currentFlags: any, intentData: any, turnNumber: number) {
     const newFlags = { ...currentFlags };
 
@@ -168,9 +158,7 @@ export class IntentPersistenceService {
     return newFlags;
   }
 
-  /**
-   * Determine if business context should be established
-   */
+  /** Determine if business context should be established */
   private static determineBusinessContextStatus(
     intentData: any, 
     contextFlags: any, 
@@ -185,9 +173,7 @@ export class IntentPersistenceService {
            contextFlags.companyInquiryMade;
   }
 
-  /**
-   * Determine current conversation mode
-   */
+  /** Determine current conversation mode */
   private static determineConversationMode(
     intentData: any,
     contextFlags: any,
@@ -208,9 +194,7 @@ export class IntentPersistenceService {
     return businessContextEstablished ? 'casual' : 'greeting';
   }
 
-  /**
-   * Check if intent is business-related
-   */
+  /** Check if intent is business-related */
   private static isBusinessIntent(intentData: any): boolean {
     const businessIntents = [
       'company_inquiry',
@@ -227,18 +211,14 @@ export class IntentPersistenceService {
     return businessIntents.includes(intentData?.primary);
   }
 
-  /**
-   * Get turns since last business intent
-   */
+  /** Get turns since last business intent */
   private static getTurnsSinceLastBusiness(intentHistory: any): number {
     const lastSequenceEntry = intentHistory.intentSequence[intentHistory.intentSequence.length - 1];
     const currentTurn = lastSequenceEntry?.turn || 0;
     return currentTurn - intentHistory.lastBusinessTurn;
   }
 
-  /**
-   * Count business intents in history
-   */
+  /** Count business intents in history */
   private static getBusinessIntentCount(intentHistory: any): number {
     return intentHistory.intentSequence.filter((entry: any) => 
       this.isBusinessIntent({ primary: entry.intent })

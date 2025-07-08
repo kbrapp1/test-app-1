@@ -27,14 +27,7 @@ import {
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
-/**
- * Web Crawler Provider Interface
- * 
- * AI INSTRUCTIONS:
- * - Define contract for web crawling providers
- * - Focus on technical crawling capabilities
- * - Let providers handle their own compliance (robots.txt, etc.)
- */
+/** Web Crawler Provider Interface */
 export interface IWebCrawlerProvider {
   crawlWebsite(
     source: WebsiteSource,
@@ -44,16 +37,7 @@ export interface IWebCrawlerProvider {
   ): Promise<CrawledPageData[]>;
 }
 
-/**
- * Crawl Website Use Case - Application Layer
- * 
- * AI INSTRUCTIONS:
- * - Orchestrate crawling workflow without business logic
- * - Delegate validation to domain service
- * - Handle technical errors from infrastructure
- * - Process pages through domain services
- * - Return complete crawl results
- */
+/** Crawl Website Use Case - Application Layer */
 export class CrawlWebsiteUseCase {
   private readonly errorTrackingService: ErrorTrackingFacade;
 
@@ -66,16 +50,7 @@ export class CrawlWebsiteUseCase {
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
-  /**
-   * Execute website crawling workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate complete crawling process
-   * - Validate input through domain service
-   * - Execute crawling through infrastructure provider
-   * - Process content through domain services
-   * - Handle errors appropriately without business logic
-   */
+  /** Execute website crawling workflow */
   async execute(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,

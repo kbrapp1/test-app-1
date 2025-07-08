@@ -13,9 +13,7 @@ import { ChatMessage } from '../../../../domain/entities/ChatMessage';
  */
 export class ConversationAnalysisBuilder {
 
-  /**
-   * Build comprehensive conversation context analysis
-   */
+  /** Build comprehensive conversation context analysis */
   static buildConversationContextAnalysis(conversationHistory: ChatMessage[]): string {
     const recentIntents = this.extractRecentIntents(conversationHistory);
     const sentimentProgression = this.extractSentimentProgression(conversationHistory);
@@ -45,9 +43,7 @@ ${this.buildMomentumIndicators(conversationHistory)}
 ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${pattern}`).join('\n')}`;
   }
 
-  /**
-   * Extract recent intents with sophisticated pattern recognition
-   */
+  /** Extract recent intents with sophisticated pattern recognition */
   private static extractRecentIntents(conversationHistory: ChatMessage[]): string[] {
     return conversationHistory
       .filter(m => m.messageType === 'user')
@@ -55,9 +51,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
       .map(m => this.inferIntentFromMessage(m.content));
   }
 
-  /**
-   * Extract sentiment progression with emotional intelligence
-   */
+  /** Extract sentiment progression with emotional intelligence */
   private static extractSentimentProgression(conversationHistory: ChatMessage[]): string[] {
     return conversationHistory
       .filter(m => m.messageType === 'user')
@@ -68,9 +62,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
       });
   }
 
-  /**
-   * Extract engagement evolution patterns
-   */
+  /** Extract engagement evolution patterns */
   private static extractEngagementEvolution(conversationHistory: ChatMessage[]): string[] {
     return conversationHistory
       .filter(m => m.messageType === 'user')
@@ -78,9 +70,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
       .map(m => this.assessEngagementLevel(m.content));
   }
 
-  /**
-   * Assess qualification progression state
-   */
+  /** Assess qualification progression state */
   private static assessQualificationProgression(conversationHistory: ChatMessage[]): string {
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
     
@@ -111,9 +101,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     }
   }
 
-  /**
-   * Build momentum indicators analysis
-   */
+  /** Build momentum indicators analysis */
   private static buildMomentumIndicators(conversationHistory: ChatMessage[]): string {
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
     
@@ -145,9 +133,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     return indicators.length > 0 ? indicators.map(i => `- ${i}`).join('\n') : '- Building initial engagement';
   }
 
-  /**
-   * Calculate investment level in conversation
-   */
+  /** Calculate investment level in conversation */
   private static calculateInvestmentLevel(conversationHistory: ChatMessage[]): string {
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
     const totalLength = userMessages.reduce((sum, m) => sum + m.content.length, 0);
@@ -162,9 +148,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     }
   }
 
-  /**
-   * Assess conversation progression quality
-   */
+  /** Assess conversation progression quality */
   private static assessProgressionQuality(conversationHistory: ChatMessage[]): string {
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
     
@@ -181,9 +165,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     }
   }
 
-  /**
-   * Identify optimal next action
-   */
+  /** Identify optimal next action */
   private static identifyOptimalNextAction(conversationHistory: ChatMessage[]): string {
     const qualificationState = this.assessQualificationProgression(conversationHistory);
     const engagementLevel = this.calculateInvestmentLevel(conversationHistory);
@@ -199,9 +181,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     }
   }
 
-  /**
-   * Extract behavioral patterns
-   */
+  /** Extract behavioral patterns */
   private static extractBehavioralPatterns(conversationHistory: ChatMessage[]): string[] {
     const patterns = [];
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
@@ -229,9 +209,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     return patterns.length > 0 ? patterns : ['Standard information-seeking behavior'];
   }
 
-  /**
-   * Infer intent from message content using advanced pattern recognition
-   */
+  /** Infer intent from message content using advanced pattern recognition */
   private static inferIntentFromMessage(content: string): string {
     const lowerContent = content.toLowerCase();
     
@@ -248,9 +226,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     return 'discovery';
   }
 
-  /**
-   * Infer sentiment from message content
-   */
+  /** Infer sentiment from message content */
   private static inferSentiment(content: string): string {
     const positiveWords = /great|excellent|love|amazing|perfect|awesome|fantastic/i;
     const negativeWords = /problem|issue|concern|worry|frustrated|difficult|bad/i;
@@ -260,9 +236,7 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
     return 'neutral';
   }
 
-  /**
-   * Assess engagement level from message content
-   */
+  /** Assess engagement level from message content */
   private static assessEngagementLevel(content: string): string {
     if (content.length > 100 && content.includes('?')) return 'high';
     if (content.length > 50) return 'medium';

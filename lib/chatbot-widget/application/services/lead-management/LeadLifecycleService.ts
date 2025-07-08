@@ -20,9 +20,7 @@ export class LeadLifecycleService {
     private leadRepository: ILeadRepository
   ) {}
 
-  /**
-   * Update follow-up status for a lead
-   */
+  /** Update follow-up status for a lead */
   async updateFollowUpStatus(
     leadId: string,
     newStatus: FollowUpStatus,
@@ -50,9 +48,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.update(updatedLead);
   }
 
-  /**
-   * Assign lead to a team member
-   */
+  /** Assign lead to a team member */
   async assignLead(leadId: string, assignedTo: string): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
@@ -76,9 +72,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.update(updatedLead);
   }
 
-  /**
-   * Schedule follow-up for lead
-   */
+  /** Schedule follow-up for lead */
   async scheduleFollowUp(
     leadId: string,
     followUpDate: Date,
@@ -95,9 +89,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.update(lead);
   }
 
-  /**
-   * Mark lead as converted
-   */
+  /** Mark lead as converted */
   async convertLead(leadId: string, conversionNotes?: string): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
@@ -108,9 +100,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.update(updatedLead);
   }
 
-  /**
-   * Mark lead as lost
-   */
+  /** Mark lead as lost */
   async markAsLost(leadId: string, reason?: string): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
@@ -121,9 +111,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.update(updatedLead);
   }
 
-  /**
-   * Get leads requiring follow-up
-   */
+  /** Get leads requiring follow-up */
   async getLeadsRequiringFollowUp(
     organizationId: string,
     daysSinceLastContact: number = 7
@@ -131,9 +119,7 @@ export class LeadLifecycleService {
     return await this.leadRepository.findRequiringFollowUp(organizationId, daysSinceLastContact);
   }
 
-  /**
-   * Bulk update lead statuses
-   */
+  /** Bulk update lead statuses */
   async bulkUpdateStatus(
     leadIds: string[],
     newStatus: FollowUpStatus,
@@ -145,9 +131,7 @@ export class LeadLifecycleService {
     });
   }
 
-  /**
-   * Get lead lifecycle analytics
-   */
+  /** Get lead lifecycle analytics */
   async getLifecycleAnalytics(organizationId: string): Promise<{
     statusDistribution: Record<FollowUpStatus, number>;
     avgTimeToContact: number;

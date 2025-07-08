@@ -219,9 +219,10 @@ export class ProcessChatMessageUseCase {
       throw new Error('Organization ID is required and cannot be empty');
     }
     
-    // Create shared log file for this session (reuse same file for all messages in session)
-    const sessionTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    this.sharedLogFile = `chatbot-${sessionTimestamp}.log`;
+    // Create turn-based log file for easy debugging
+    // Each message turn gets its own dedicated log file
+    const turnTimestamp = new Date().toISOString().replace(/[:.]/g, '-').split('.')[0];
+    this.sharedLogFile = `chatbot-${turnTimestamp}.log`;
     
     // Create session logger with context
     const logger = this.loggingService.createSessionLogger(

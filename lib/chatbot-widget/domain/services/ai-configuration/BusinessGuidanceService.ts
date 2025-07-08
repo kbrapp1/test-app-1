@@ -13,9 +13,7 @@ import { ConversationAnalysis } from './ConversationAnalysisService';
  */
 export class BusinessGuidanceService {
 
-  /**
-   * Business guidance injection (always-on conversation management)
-   */
+  /** Business guidance injection (always-on conversation management) */
   generateBusinessGuidance(analysis: ConversationAnalysis, leadScore?: number): string {
     let guidance = '\n## Conversation Management\n';
 
@@ -37,9 +35,7 @@ export class BusinessGuidanceService {
     return guidance;
   }
 
-  /**
-   * Generate greeting phase guidance
-   */
+  /** Generate greeting phase guidance */
   private generateGreetingPhaseGuidance(): string {
     return `
 ### Greeting Phase Guidelines  
@@ -49,9 +45,7 @@ export class BusinessGuidanceService {
 `;
   }
 
-  /**
-   * Generate discovery phase guidance
-   */
+  /** Generate discovery phase guidance */
   private generateDiscoveryPhaseGuidance(): string {
     return `
 ### Discovery Phase Guidelines
@@ -61,9 +55,7 @@ export class BusinessGuidanceService {
 `;
   }
 
-  /**
-   * Generate exploration phase guidance
-   */
+  /** Generate exploration phase guidance */
   private generateExplorationPhaseGuidance(): string {
     return `
 ### Exploration Phase Guidelines
@@ -73,9 +65,7 @@ export class BusinessGuidanceService {
 `;
   }
 
-  /**
-   * Generate qualification phase guidance
-   */
+  /** Generate qualification phase guidance */
   private generateQualificationPhaseGuidance(): string {
     return `
 ### Qualification Phase Guidelines

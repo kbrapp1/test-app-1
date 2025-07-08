@@ -13,15 +13,7 @@ import { ContextEffectivenessDomainService } from '../../domain/services/context
 import { ContextRecommendationDomainService } from '../../domain/services/context-injection/ContextRecommendationDomainService';
 import { ContextInjectionApplicationService } from '../../application/services/ContextInjectionApplicationService';
 
-/**
- * Context Injection Composition Root
- * 
- * AI INSTRUCTIONS:
- * - Central dependency injection for context injection domain
- * - Manage service lifetimes and dependencies
- * - Provide clean access to all services
- * - Implement singleton pattern for performance
- */
+/** Context Injection Composition Root */
 export class ContextInjectionCompositionRoot {
   private static instance: ContextInjectionCompositionRoot;
   
@@ -36,13 +28,7 @@ export class ContextInjectionCompositionRoot {
     // AI: Private constructor for singleton pattern
   }
   
-  /**
-   * Get singleton instance of composition root
-   * 
-   * AI INSTRUCTIONS:
-   * - Implement thread-safe singleton pattern
-   * - Lazy initialization for performance
-   */
+  /** Get singleton instance of composition root */
   public static getInstance(): ContextInjectionCompositionRoot {
     if (!ContextInjectionCompositionRoot.instance) {
       ContextInjectionCompositionRoot.instance = new ContextInjectionCompositionRoot();
@@ -50,15 +36,7 @@ export class ContextInjectionCompositionRoot {
     return ContextInjectionCompositionRoot.instance;
   }
   
-  /**
-   * Domain Service Getters
-   * 
-   * AI INSTRUCTIONS:
-   * - Lazy initialization for each service
-   * - Return same instance for singleton behavior
-   * - Wire dependencies as needed
-   */
-  
+  /** Domain Service Getters */
   public getContextEffectivenessService(): ContextEffectivenessDomainService {
     if (!this._contextEffectivenessService) {
       this._contextEffectivenessService = new ContextEffectivenessDomainService();
@@ -73,14 +51,7 @@ export class ContextInjectionCompositionRoot {
     return this._contextRecommendationService;
   }
   
-  /**
-   * Application Service Getters
-   * 
-   * AI INSTRUCTIONS:
-   * - Wire application services with domain dependencies
-   * - Inject all required domain services
-   * - Maintain singleton behavior
-   */
+  /** Application Service Getters */
   public getContextInjectionApplicationService(): ContextInjectionApplicationService {
     if (!this._contextInjectionApplicationService) {
       this._contextInjectionApplicationService = new ContextInjectionApplicationService(
@@ -91,14 +62,7 @@ export class ContextInjectionCompositionRoot {
     return this._contextInjectionApplicationService;
   }
   
-  /**
-   * Reset method for testing
-   * 
-   * AI INSTRUCTIONS:
-   * - Allow clean state for unit tests
-   * - Reset all cached instances
-   * - Use only in test environments
-   */
+  /** Reset method for testing */
   public static reset(): void {
     ContextInjectionCompositionRoot.instance = new ContextInjectionCompositionRoot();
   }

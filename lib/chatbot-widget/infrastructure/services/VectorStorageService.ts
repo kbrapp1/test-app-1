@@ -23,16 +23,7 @@ import {
   VectorStorageConfig
 } from '../types/VectorRepositoryTypes';
 
-/**
- * Specialized Service for Vector Storage Operations
- * 
- * AI INSTRUCTIONS:
- * - Handle batch vector storage with transaction safety
- * - Provide efficient deletion by source patterns
- * - Support error tracking and recovery strategies
- * - Maintain data consistency and integrity
- * - Handle Supabase-specific storage patterns
- */
+/** Specialized Service for Vector Storage Operations */
 export class VectorStorageService {
   
   private static readonly DEFAULT_STORAGE_CONFIG: VectorStorageConfig = {
@@ -51,16 +42,7 @@ export class VectorStorageService {
     private errorTrackingService: ErrorTrackingFacade
   ) {}
 
-  /**
-   * Store knowledge items with vectors in batch
-   * 
-   * AI INSTRUCTIONS:
-   * - Use clean upsert strategy (delete then insert)
-   * - Handle batch operations for performance
-   * - Validate vector dimensions before storage
-   * - Provide comprehensive error tracking
-   * - Support transaction-like consistency
-   */
+  /** Store knowledge items with vectors in batch */
   async storeKnowledgeItems(
     context: VectorQueryContext,
     items: VectorKnowledgeItem[]
@@ -136,16 +118,7 @@ export class VectorStorageService {
     }
   }
 
-  /**
-   * Delete existing items by IDs
-   * 
-   * AI INSTRUCTIONS:
-   * - Clean deletion before upsert operations
-   * - Handle batch deletion efficiently
-   * - Provide error tracking for failed deletions
-   * - Support transaction-like consistency
-   * - Maintain multi-tenant isolation
-   */
+  /** Delete existing items by IDs */
   private async deleteExistingItems(
     context: VectorQueryContext,
     knowledgeItemIds: string[]
@@ -165,16 +138,7 @@ export class VectorStorageService {
     }
   }
 
-  /**
-   * Insert vector records in batch
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform domain objects to storage records
-   * - Handle batch insertion for performance
-   * - Provide comprehensive error handling
-   * - Support metadata preservation
-   * - Maintain data consistency
-   */
+  /** Insert vector records in batch */
   private async insertVectorRecords(
     context: VectorQueryContext,
     items: VectorKnowledgeItem[]
@@ -253,16 +217,7 @@ export class VectorStorageService {
     return count || 0;
   }
 
-  /**
-   * Perform actual deletion operation
-   * 
-   * AI INSTRUCTIONS:
-   * - Execute deletion with pattern matching
-   * - Handle multi-tenant isolation
-   * - Provide accurate deletion counts
-   * - Support error tracking and recovery
-   * - Maintain data consistency
-   */
+  /** Perform actual deletion operation */
   private async performDeletion(deletionContext: VectorDeletionContext): Promise<number> {
     let deleteQuery = this.supabase
       .from('chatbot_knowledge_vectors')

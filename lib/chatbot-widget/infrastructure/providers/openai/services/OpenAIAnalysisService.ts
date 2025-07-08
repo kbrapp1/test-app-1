@@ -13,7 +13,7 @@ import OpenAI from 'openai';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { OpenAIIntentConfig, OpenAIRequestData, OpenAIResponseData } from '../types/OpenAITypes';
 import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
-import { OpenAIPromptBuilder } from './OpenAIPromptBuilder';
+// AI: OpenAIPromptBuilder removed - prompt building now handled by SimplePromptService
 import { OpenAIMessageFormatter } from './OpenAIMessageFormatter';
 import { IDebugInformationService } from '../../../../domain/services/interfaces/IDebugInformationService';
 
@@ -30,16 +30,7 @@ export class OpenAIAnalysisService {
     this.debugService = debugService || null;
   }
 
-  /**
-   * Unified message analysis - Intent classification with entity extraction and corrections
-   * 
-   * AI INSTRUCTIONS:
-   * - Single method following @golden-rule no redundancy principle
-   * - Handles all message analysis in one OpenAI call
-   * - Returns structured result for both intent classification and entity extraction
-   * - Follow @golden-rule patterns exactly
-   * - Handle errors gracefully with fallback
-   */
+  /** Unified message analysis - Intent classification with entity extraction and corrections */
   async analyzeMessageComplete(
     message: string,
     sessionId: string,
@@ -63,15 +54,15 @@ export class OpenAIAnalysisService {
     try {
       const startTime = Date.now();
 
-      // Build unified function schema with context-aware entity extraction
+      // Build simplified lead qualification schema
       const functions = [OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
-        undefined,  // existingEntities - will be handled separately  
-        'discovery', // conversationPhase - default to discovery to include painPoints
-        message     // userMessage - for intent-based entity detection
+        undefined,  // existingEntities - not used in simplified schema
+        'discovery', // conversationPhase - not used in simplified schema
+        message     // userMessage - not used in simplified schema
       )];
       
-      // Build enhanced system prompt
-      const systemPrompt = OpenAIPromptBuilder.buildUnifiedProcessingPrompt(context?.messageHistory || []);
+      // Build enhanced system prompt (simplified since OpenAIPromptBuilder removed)
+      const systemPrompt = 'You are a helpful assistant that analyzes user messages and extracts relevant information.';
 
       // Build message array
       const openAIMessages = OpenAIMessageFormatter.buildMessageArray(
@@ -86,7 +77,7 @@ export class OpenAIAnalysisService {
         model: this.config.model,
         messages: openAIMessages,
         functions: functions,
-        function_call: { name: "process_chatbot_interaction_complete" },
+        function_call: { name: "lead_qualification_response" },
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens
       };

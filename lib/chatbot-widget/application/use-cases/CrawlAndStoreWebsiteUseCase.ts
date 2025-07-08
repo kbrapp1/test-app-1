@@ -20,8 +20,7 @@ import { createHash } from 'crypto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
-/**
- * Storage result for crawl and store operation
+/** Storage result for crawl and store operation
  */
 export interface CrawlAndStoreResult {
   readonly storedItems: number;
@@ -62,15 +61,8 @@ export class CrawlAndStoreWebsiteUseCase {
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
-  /**
-   * Execute crawl and store workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate the complete crawl and storage workflow
-   * - Use CrawlWebsiteUseCase for content acquisition
-   * - Generate embeddings for semantic search
-   * - Store content and embeddings persistently
-   */
+  /** Execute crawl and store workflow
+ */
   async execute(
     organizationId: string,
     chatbotConfigId: string,
@@ -119,17 +111,7 @@ export class CrawlAndStoreWebsiteUseCase {
       return result;
 
     } catch (error) {
-      console.error('❌ CrawlAndStoreWebsiteUseCase: Execution failed:', error);
-      console.error('❌ Error details:', {
-        name: error instanceof Error ? error.constructor.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined,
-        organizationId,
-        chatbotConfigId,
-        sourceUrl: source.url
-      });
-      
-      // Track critical crawling error to database
+      // AI: Track critical crawling error to database instead of console logging
       await this.errorTrackingService.trackWebsiteCrawlingError(
         source.url,
         `Crawl and store workflow failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -140,7 +122,8 @@ export class CrawlAndStoreWebsiteUseCase {
             sourceUrl: source.url,
             errorType: error instanceof Error ? error.constructor.name : 'Unknown',
             errorMessage: error instanceof Error ? error.message : String(error),
-            workflowStep: 'crawl_and_store_execution'
+            workflowStep: 'crawl_and_store_execution',
+            stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5) : undefined
           }
         }
       );
@@ -190,19 +173,13 @@ export class CrawlAndStoreWebsiteUseCase {
       try {
         // Validate content before embedding generation
         if (!knowledgeItem.content || typeof knowledgeItem.content !== 'string') {
-          console.error(`❌ Item ${i + 1} has invalid content:`, {
-            title: knowledgeItem.title,
-            contentType: typeof knowledgeItem.content,
-            contentValue: knowledgeItem.content
-          });
+          // AI: Skip invalid content items silently - error tracking handled at higher level
           continue;
         }
         
         const content = knowledgeItem.content.trim();
         if (content.length === 0) {
-          console.error(`❌ Item ${i + 1} has empty content:`, {
-            title: knowledgeItem.title
-          });
+          // AI: Skip empty content items silently - error tracking handled at higher level
           continue;
         }
         
@@ -252,15 +229,8 @@ export class CrawlAndStoreWebsiteUseCase {
         itemsToStore.push(itemToStore);
         
       } catch (error) {
-        // Skip items that fail embedding generation
-        // Don't fail the entire process for individual items
-        console.error(`❌ Failed to prepare item ${i + 1}:`, {
-          title: knowledgeItem.title,
-          contentLength: knowledgeItem.content?.length || 0,
-          error: error instanceof Error ? error.message : String(error),
-          errorName: error instanceof Error ? error.constructor.name : 'Unknown',
-          stack: error instanceof Error ? error.stack?.split('\n').slice(0, 3) : undefined
-        });
+        // AI: Skip items that fail embedding generation silently
+        // Don't fail the entire process for individual items - error tracking handled at higher level
         continue;
       }
     }

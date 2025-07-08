@@ -56,40 +56,33 @@ export async function createSimulationSession(organizationId: string): Promise<{
       };
     }
 
-    const visitorId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const session = ChatSession.create(
-      chatbotConfig.id,
-      visitorId,
-      {
-        previousVisits: 0,
-        pageViews: [{
-          url: '/simulation',
-          title: 'Chatbot Simulation',
-          timestamp: new Date(),
-          timeOnPage: 0
-        }],
-        conversationSummary: {
-          fullSummary: 'Simulation session started',
-          phaseSummaries: [],
-          criticalMoments: []
-        },
-        topics: [],
-        interests: [],
-        engagementScore: 0
-      }
+    // NEW: Use InitializeChatSessionUseCase with comprehensive background cache warming
+    const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
+    const knowledgeRetrievalService = ChatbotWidgetCompositionRoot.getKnowledgeRetrievalService(chatbotConfig);
+    
+    const initializeSessionUseCase = new (await import('../../application/use-cases/InitializeChatSessionUseCase')).InitializeChatSessionUseCase(
+      sessionRepository,
+      configRepository,
+      knowledgeRetrievalService
     );
 
-    const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
-    const savedSession = await sessionRepository.save(session);
-
+    const visitorId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Execute session initialization with comprehensive cache warming
+    const result = await initializeSessionUseCase.execute({
+      chatbotConfigId: chatbotConfig.id,
+      visitorId,
+      initialContext: {},
+      warmKnowledgeCache: true // Always warm cache for optimal performance
+    });
 
     return {
       success: true,
       session: {
-        sessionId: savedSession.id,
+        sessionId: result.session.id,
         chatbotConfigId: chatbotConfig.id,
-        visitorId: savedSession.visitorId,
-        startedAt: savedSession.startedAt.toISOString()
+        visitorId: result.session.visitorId,
+        startedAt: result.session.startedAt.toISOString()
       }
     };
   } catch (error) {

@@ -44,9 +44,7 @@ export class MessageCostCalculationService {
     }
   };
 
-  /**
-   * Calculate total cost in cents for a message (precise decimal)
-   */
+  /** Calculate total cost in cents for a message (precise decimal) */
   static calculateTotalCost(
     model: string,
     promptTokens: number,
@@ -56,9 +54,7 @@ export class MessageCostCalculationService {
     return breakdown.totalCents;
   }
 
-  /**
-   * Calculate detailed cost breakdown for a message
-   */
+  /** Calculate detailed cost breakdown for a message */
   static calculateCostBreakdown(
     model: string,
     promptTokens: number,
@@ -98,9 +94,7 @@ export class MessageCostCalculationService {
     };
   }
 
-  /**
-   * Get pricing for a specific model
-   */
+  /** Get pricing for a specific model */
   private static getModelPricing(model: string): ModelPricing {
     // Normalize model name (remove version suffixes for lookup)
     const normalizedModel = this.normalizeModelName(model);
@@ -114,9 +108,7 @@ export class MessageCostCalculationService {
     return pricing;
   }
 
-  /**
-   * Normalize model name for pricing lookup
-   */
+  /** Normalize model name for pricing lookup */
   private static normalizeModelName(model: string): string {
     // Handle versioned models
     if (model.startsWith('gpt-4o-mini')) {
@@ -132,9 +124,7 @@ export class MessageCostCalculationService {
     return model;
   }
 
-  /**
-   * Calculate estimated cost for a message before sending
-   */
+  /** Calculate estimated cost for a message before sending */
   static estimateCost(model: string, estimatedTokens: number): number {
     const pricing = this.getModelPricing(model);
     const avgTokenRate = (pricing.promptTokenRate + pricing.completionTokenRate) / 2;
@@ -143,9 +133,7 @@ export class MessageCostCalculationService {
     return Math.round(estimatedCostDollars * 100 * 10000) / 10000; // Return precise cents
   }
 
-  /**
-   * Get all supported models with their pricing
-   */
+  /** Get all supported models with their pricing */
   static getSupportedModels(): Array<{
     model: string;
     pricing: ModelPricing;
@@ -158,9 +146,7 @@ export class MessageCostCalculationService {
     }));
   }
 
-  /**
-   * Validate that cost calculation is within reasonable bounds
-   */
+  /** Validate that cost calculation is within reasonable bounds */
   static validateCost(costCents: number, totalTokens: number): boolean {
     // Sanity check: Cost should not exceed $1 per token (100 cents)
     const maxReasonableCostPerToken = 100;
@@ -169,9 +155,7 @@ export class MessageCostCalculationService {
     return costCents <= maxExpectedCost && costCents >= 0;
   }
 
-  /**
-   * Format cost for display purposes
-   */
+  /** Format cost for display purposes */
   static formatCostForDisplay(costCents: number): string {
     if (costCents >= 1) {
       return `${costCents.toFixed(2)}¢`;
@@ -182,9 +166,7 @@ export class MessageCostCalculationService {
     }
   }
 
-  /**
-   * Calculate expected cost for given token counts (for testing/validation)
-   */
+  /** Calculate expected cost for given token counts (for testing/validation) */
   static calculateExpectedCost(
     promptTokens: number,
     completionTokens: number,

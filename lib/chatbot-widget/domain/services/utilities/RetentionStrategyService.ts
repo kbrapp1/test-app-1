@@ -24,14 +24,7 @@ import {
  */
 export class RetentionStrategyService {
   
-  /**
-   * Generate retention recommendation based on prioritization
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide actionable retention strategy
-   * - Prioritize critical and high-value messages
-   * - Balance retention limits with business value
-   */
+  /** Generate retention recommendation based on prioritization */
   static generateRetentionRecommendation(
     categorized: CategorizedMessages,
     maxRetentionMessages: number
@@ -64,14 +57,7 @@ export class RetentionStrategyService {
     };
   }
   
-  /**
-   * Generate prioritized messages structure
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine categorization with retention recommendations
-   * - Calculate total relevance score for analytics
-   * - Provide complete prioritization result
-   */
+  /** Generate prioritized messages structure */
   static generatePrioritizedMessages(
     categorized: CategorizedMessages,
     maxRetentionMessages: number
@@ -106,14 +92,7 @@ export class RetentionStrategyService {
     };
   }
   
-  /**
-   * Calculate retention statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide retention analytics and insights
-   * - Calculate distribution across priority levels
-   * - Support retention optimization decisions
-   */
+  /** Calculate retention statistics */
   static calculateRetentionStatistics(categorized: CategorizedMessages): {
     totalMessages: number;
     criticalCount: number;
@@ -151,14 +130,7 @@ export class RetentionStrategyService {
     };
   }
   
-  /**
-   * Optimize retention strategy based on context limits
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply intelligent retention optimization
-   * - Balance business value with technical constraints
-   * - Provide adaptive retention strategies
-   */
+  /** Optimize retention strategy based on context limits */
   static optimizeRetentionStrategy(
     categorized: CategorizedMessages,
     maxRetentionMessages: number,

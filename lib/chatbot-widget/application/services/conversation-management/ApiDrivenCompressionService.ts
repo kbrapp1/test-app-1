@@ -56,14 +56,7 @@ export class ApiDrivenCompressionService {
 Focus on business-critical information that affects future responses.`
   };
 
-  /**
-   * Analyze current token usage and determine if compression is needed
-   * 
-   * AI INSTRUCTIONS:
-   * - Simple token counting and percentage calculation
-   * - Use 85% threshold as 2025 best practice
-   * - Return clear recommendation for compression
-   */
+  /** Analyze current token usage and determine if compression is needed */
   static analyzeTokenUsage(
     messages: ChatMessage[],
     config: Partial<CompressionConfig> = {}
@@ -88,15 +81,7 @@ Focus on business-critical information that affects future responses.`
     };
   }
 
-  /**
-   * Compress conversation using API summarization
-   * 
-   * AI INSTRUCTIONS:
-   * - Split messages into: older (to summarize) + recent (to preserve)
-   * - Use API to generate intelligent summary of older messages
-   * - Combine summary + recent messages for optimal context
-   * - Return structured result with metrics
-   */
+  /** Compress conversation using API summarization */
   static async compressConversation(
     messages: ChatMessage[],
     aiSummarizationFunction: (messages: ChatMessage[], instruction: string) => Promise<string>,

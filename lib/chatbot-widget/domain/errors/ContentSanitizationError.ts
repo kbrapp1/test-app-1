@@ -32,9 +32,7 @@ export class ContentSanitizationError extends DomainError {
     });
   }
 
-  /**
-   * Create error for invalid content type
-   */
+  /** Create error for invalid content type */
   static invalidContentType(contentType: string, validTypes: string[]): ContentSanitizationError {
     return new ContentSanitizationError(
       `Invalid content type: ${contentType}`,
@@ -46,9 +44,7 @@ export class ContentSanitizationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for content too long
-   */
+  /** Create error for content too long */
   static contentTooLong(length: number, maxLength: number, contentType: string): ContentSanitizationError {
     return new ContentSanitizationError(
       `Content exceeds maximum length of ${maxLength} characters`,
@@ -61,9 +57,7 @@ export class ContentSanitizationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for empty content
-   */
+  /** Create error for empty content */
   static emptyContent(contentType: string): ContentSanitizationError {
     return new ContentSanitizationError(
       'Content cannot be empty',
@@ -74,9 +68,7 @@ export class ContentSanitizationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for sanitization processing failure
-   */
+  /** Create error for sanitization processing failure */
   static processingFailure(contentType: string, originalError: Error): ContentSanitizationError {
     return new ContentSanitizationError(
       'Failed to process content during sanitization',
@@ -88,9 +80,7 @@ export class ContentSanitizationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for invalid input parameters
-   */
+  /** Create error for invalid input parameters */
   static invalidInput(parameterName: string, expectedType: string, actualValue: any): ContentSanitizationError {
     return new ContentSanitizationError(
       `Invalid input parameter: ${parameterName} must be ${expectedType}`,

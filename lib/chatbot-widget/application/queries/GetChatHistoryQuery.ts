@@ -1,10 +1,12 @@
 /**
  * Get Chat History Query
  * 
- * CQRS Query for retrieving chat session history.
- * Represents a read operation request for message data.
- * 
- * Single Responsibility: Encapsulate chat history query parameters
+ * AI INSTRUCTIONS:
+ * - CQRS query for chat session history retrieval with pagination support
+ * - Encapsulates read operation parameters for message data and conversation summaries
+ * - Provides conversation analytics including engagement scores and topic analysis
+ * - Supports filtering system messages and controlling result set size
+ * - Returns comprehensive conversation metadata for UI display and analytics
  */
 
 import { ChatMessage } from '../../domain/entities/ChatMessage';

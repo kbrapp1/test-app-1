@@ -7,9 +7,7 @@ import { ChatSessionProps, SessionStatus } from '../../value-objects/session-man
  */
 export class SessionStateService {
   
-  /**
-   * Update session activity and potentially change status
-   */
+  /** Update session activity and potentially change status */
   static updateActivity(props: ChatSessionProps): ChatSessionProps {
     const now = new Date();
     const newStatus = props.status === 'idle' ? 'active' : props.status;
@@ -21,9 +19,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Mark session as idle
-   */
+  /** Mark session as idle */
   static markAsIdle(props: ChatSessionProps): ChatSessionProps {
     return {
       ...props,
@@ -32,9 +28,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Mark session as abandoned
-   */
+  /** Mark session as abandoned */
   static markAsAbandoned(props: ChatSessionProps): ChatSessionProps {
     return {
       ...props,
@@ -43,9 +37,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * End session
-   */
+  /** End session */
   static endSession(props: ChatSessionProps): ChatSessionProps {
     return {
       ...props,
@@ -54,9 +46,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Mark session as completed
-   */
+  /** Mark session as completed */
   static markAsCompleted(props: ChatSessionProps): ChatSessionProps {
     return {
       ...props,
@@ -65,9 +55,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Update current URL
-   */
+  /** Update current URL */
   static updateCurrentUrl(props: ChatSessionProps, url: string): ChatSessionProps {
     return {
       ...props,
@@ -76,9 +64,7 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Update session metadata
-   */
+  /** Update session metadata */
   static updateSessionMetadata(
     props: ChatSessionProps,
     metadata: {
@@ -96,23 +82,17 @@ export class SessionStateService {
     };
   }
 
-  /**
-   * Check if session can be ended
-   */
+  /** Check if session can be ended */
   static canEndSession(status: SessionStatus): boolean {
     return ['active', 'idle'].includes(status);
   }
 
-  /**
-   * Check if session is active
-   */
+  /** Check if session is active */
   static isActive(status: SessionStatus): boolean {
     return status === 'active';
   }
 
-  /**
-   * Check if session is ended
-   */
+  /** Check if session is ended */
   static isEnded(status: SessionStatus): boolean {
     return ['ended', 'abandoned', 'completed'].includes(status);
   }

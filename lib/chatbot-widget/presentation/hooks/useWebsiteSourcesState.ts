@@ -23,16 +23,7 @@ import { useUIState } from './website-sources/useUIState';
 import { useCrawlProgress } from './website-sources/useCrawlProgress';
 import { simulateCrawlProgress } from '../utils/crawlProgressSimulator';
 
-/**
- * Main Website Sources State Hook
- * 
- * AI INSTRUCTIONS:
- * - Orchestrate all sub-hooks and actions
- * - Delegate to appropriate services
- * - Handle error cases gracefully
- * - Maintain clean separation of concerns
- * - Keep under 250 lines total
- */
+/** Main Website Sources State Hook */
 export function useWebsiteSourcesState(
   organizationId: string,
   chatbotConfigId: string,

@@ -36,9 +36,7 @@ export interface CacheStats {
 }
 
 export interface CacheConfiguration {
-  maxUserQueryCacheSize: number;
-  maxPdfCacheSize: number;
-  maxKnowledgeBaseCacheSize?: number;
+  // AI: Removed cache size limits - let serverless platform handle memory management
 }
 
 export enum CacheType {
@@ -105,8 +103,7 @@ export const EMBEDDING_CONSTANTS = {
   DEFAULT_PDF_BATCH_SIZE: 10,
   DEFAULT_TOP_K: 5,
   DEFAULT_MIN_SIMILARITY: 0.3,
-  DEFAULT_USER_QUERY_CACHE_SIZE: 1000,
-  DEFAULT_PDF_CACHE_SIZE: 5000,
+  // AI: Removed cache size constants - serverless handles memory management automatically
   API_TIMEOUT: 30000,
   KNOWLEDGE_BASE_MIN_LENGTH: 100
 } as const; 

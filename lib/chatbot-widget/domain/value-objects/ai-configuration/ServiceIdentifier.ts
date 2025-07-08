@@ -1,81 +1,60 @@
 /**
- * ServiceIdentifier Value Object
+ * Service Identifier Value Object - Domain Layer
  * 
  * AI INSTRUCTIONS:
- * - Immutable value object for identifying services in prompt coordination
- * - Include validation for service identifier format
- * - Support equality comparison and serialization
- * - Follow @golden-rule value object patterns exactly
- * - Keep business logic pure, no external dependencies
+ * - Immutable value object for service identification
+ * - Type-safe service references with validation
+ * - Support service priority and categorization
+ * - Follow @golden-rule patterns exactly
+ * - Keep under 100 lines - focus on identification logic
  */
 
-import { BusinessRuleViolationError } from '../../errors/base/DomainErrorBase';
-
 export class ServiceIdentifier {
-  private constructor(public readonly value: string) {
-    this.validateInvariants();
+  
+  constructor(private readonly value: string) {
+    if (!value || typeof value !== 'string' || value.trim().length === 0) {
+      throw new Error('ServiceIdentifier value cannot be empty');
+    }
   }
-
-  /**
-   * Create ServiceIdentifier with validation
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate service identifier format and constraints
-   * - Use specific domain errors for violations
-   * - Ensure immutability of created instance
-   */
-  static create(value: string): ServiceIdentifier {
-    return new ServiceIdentifier(value);
+  
+  toString(): string {
+    return this.value;
   }
-
-  /**
-   * Create ServiceIdentifier from known service types
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide factory methods for common service types
-   * - Ensure consistent naming conventions
-   * - Support service discovery and coordination
-   */
+  
+  equals(other: ServiceIdentifier): boolean {
+    return this.value === other.value;
+  }
+  
+  // Factory methods for known services
   static forPersonaGeneration(): ServiceIdentifier {
     return new ServiceIdentifier('persona-generation');
   }
-
+  
   static forKnowledgeBase(): ServiceIdentifier {
     return new ServiceIdentifier('knowledge-base');
   }
-
-  static forDynamicPrompt(): ServiceIdentifier {
-    return new ServiceIdentifier('dynamic-prompt');
+  
+  static forBusinessGuidance(): ServiceIdentifier {
+    return new ServiceIdentifier('business-guidance');
+  }
+  
+  static forAdaptiveContext(): ServiceIdentifier {
+    return new ServiceIdentifier('adaptive-context');
+  }
+  
+  static forSimplePrompt(): ServiceIdentifier {
+    return new ServiceIdentifier('simple-prompt');
   }
 
-  static forPromptCoordination(): ServiceIdentifier {
-    return new ServiceIdentifier('prompt-coordination');
-  }
-
-  static forIdentityResolution(): ServiceIdentifier {
-    return new ServiceIdentifier('identity-resolution');
-  }
-
-  static forContentDeduplication(): ServiceIdentifier {
-    return new ServiceIdentifier('content-deduplication');
-  }
-
-  /**
-   * Check if this service has higher priority than another
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business rules for service priority ordering
-   * - Support conflict resolution workflows
-   * - Use consistent priority rules across system
+  /** Check if this service has higher priority than another
    */
   hasHigherPriorityThan(other: ServiceIdentifier): boolean {
     const priorityOrder = [
-      'prompt-coordination',      // Highest priority - orchestrates others
-      'identity-resolution',      // High priority - resolves conflicts
-      'content-deduplication',    // High priority - removes duplicates
-      'persona-generation',       // Medium priority - core business logic
-      'knowledge-base',          // Medium priority - core content
-      'dynamic-prompt'           // Lower priority - dynamic content
+      'simple-prompt',           // Highest priority - main orchestrator
+      'persona-generation',      // High priority - core business logic
+      'knowledge-base',         // High priority - core content
+      'business-guidance',      // Medium priority - business rules
+      'adaptive-context'        // Lower priority - adaptive content
     ];
 
     const thisPriority = priorityOrder.indexOf(this.value);
@@ -98,77 +77,30 @@ export class ServiceIdentifier {
    */
   get category(): ServiceCategory {
     switch (this.value) {
-      case 'prompt-coordination':
-      case 'identity-resolution':
-      case 'content-deduplication':
-        return ServiceCategory.COORDINATION;
+      case 'simple-prompt':
+        return ServiceCategory.ORCHESTRATION;
       
       case 'persona-generation':
-      case 'dynamic-prompt':
         return ServiceCategory.GENERATION;
       
       case 'knowledge-base':
         return ServiceCategory.CONTENT;
       
+      case 'business-guidance':
+      case 'adaptive-context':
+        return ServiceCategory.ENHANCEMENT;
+      
       default:
         return ServiceCategory.UNKNOWN;
     }
   }
-
-  /**
-   * Value object equality comparison
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare values for equality
-   * - Support Set and Map operations
-   * - Follow value object equality patterns
-   */
-  equals(other: ServiceIdentifier): boolean {
-    return this.value === other.value;
-  }
-
-  /**
-   * String representation for logging and debugging
-   */
-  toString(): string {
-    return this.value;
-  }
-
-  // AI: Validate business invariants for ServiceIdentifier
-  private validateInvariants(): void {
-    if (!this.value || this.value.trim().length === 0) {
-      throw new BusinessRuleViolationError(
-        'ServiceIdentifier must have a valid value',
-        { value: this.value }
-      );
-    }
-
-    if (this.value.length > 50) {
-      throw new BusinessRuleViolationError(
-        'ServiceIdentifier cannot exceed 50 characters',
-        { value: this.value, length: this.value.length }
-      );
-    }
-
-    if (!/^[a-z0-9-]+$/.test(this.value)) {
-      throw new BusinessRuleViolationError(
-        'ServiceIdentifier must contain only lowercase letters, numbers, and hyphens',
-        { value: this.value }
-      );
-    }
-
-    if (this.value.startsWith('-') || this.value.endsWith('-')) {
-      throw new BusinessRuleViolationError(
-        'ServiceIdentifier cannot start or end with hyphens',
-        { value: this.value }
-      );
-    }
-  }
 }
 
+/** Service categories for organization and management */
 export enum ServiceCategory {
-  COORDINATION = 'coordination',
+  ORCHESTRATION = 'orchestration',
   GENERATION = 'generation',
   CONTENT = 'content',
+  ENHANCEMENT = 'enhancement',
   UNKNOWN = 'unknown'
 } 

@@ -32,14 +32,7 @@ export class InfrastructureServiceCompositionService {
 
   // ===== INFRASTRUCTURE SERVICE FACTORIES =====
   
-  /**
-   * Get Token Counting Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Singleton pattern for stateless infrastructure service
-   * - Follow @golden-rule dependency injection patterns
-   * - Never return null - always provide valid service instance
-   */
+  /** Get Token Counting Service */
   static getTokenCountingService(): ITokenCountingService {
     if (!this.tokenCountingService) {
       try {
@@ -54,15 +47,7 @@ export class InfrastructureServiceCompositionService {
     return this.tokenCountingService;
   }
 
-  /**
-   * Get Intent Classification Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Create new instance per call as it requires runtime configuration
-   * - Validate configuration before service creation
-   * - Use domain errors for configuration validation failures
-   * - Follow @golden-rule error handling patterns
-   */
+  /** Get Intent Classification Service */
   static async getIntentClassificationService(): Promise<IIntentClassificationService> {
     const apiKey = process.env.OPENAI_API_KEY;
     
@@ -133,15 +118,7 @@ export class InfrastructureServiceCompositionService {
     this.clearDynamicImportCaches();
   }
 
-  /**
-   * Clear dynamic import caches
-   * 
-   * AI INSTRUCTIONS:
-   * - Clear all cached dynamic imports to prevent memory leaks
-   * - Essential for testing and production memory management
-   * - Coordinates with existing cache management patterns
-   * - Uses safe module access to avoid Next.js build issues
-   */
+  /** Clear dynamic import caches */
   private static clearDynamicImportCaches(): void {
     try {
       // Clear OpenAI service caches using globalThis to avoid module resolution issues
@@ -199,14 +176,7 @@ export class InfrastructureServiceCompositionService {
     };
   }
 
-  /**
-   * Health check for all infrastructure services
-   * 
-   * AI INSTRUCTIONS:
-   * - Follow @golden-rule health check patterns
-   * - Validate service readiness without initializing if not needed
-   * - Return detailed health status for monitoring
-   */
+  /** Health check for all infrastructure services */
   static async healthCheck(): Promise<{
     tokenCountingService: boolean;
     debugInformationService: boolean;

@@ -73,9 +73,7 @@ export function useTestEnvironment() {
 
 // Assertion helpers
 export const TestAssertions = {
-  /**
-   * Assert that a domain entity has valid structure and required properties
-   */
+  /** Assert that a domain entity has valid structure and required properties */
   assertValidEntity<T extends { id: string; createdAt: Date; updatedAt: Date }>(
     entity: T,
     requiredFields: (keyof T)[] = []
@@ -90,9 +88,7 @@ export const TestAssertions = {
     });
   },
 
-  /**
-   * Assert that a chat message follows the expected structure
-   */
+  /** Assert that a chat message follows the expected structure */
   assertValidChatMessage(message: any, expectedType?: 'user' | 'bot' | 'system'): void {
     this.assertValidEntity(message, ['sessionId', 'messageType', 'content']);
     expect(message.timestamp).toBeInstanceOf(Date);
@@ -110,9 +106,7 @@ export const TestAssertions = {
     }
   },
 
-  /**
-   * Assert that a chat session has valid state
-   */
+  /** Assert that a chat session has valid state */
   assertValidChatSession(session: any): void {
     this.assertValidEntity(session, ['chatbotConfigId', 'visitorId', 'status']);
     expect(['active', 'ended', 'expired']).toContain(session.status);
@@ -120,9 +114,7 @@ export const TestAssertions = {
     expect(session.leadQualificationState).toBeDefined();
   },
 
-  /**
-   * Assert that a lead has valid qualification data
-   */
+  /** Assert that a lead has valid qualification data */
   assertValidLead(lead: any, expectedScore?: number): void {
     this.assertValidEntity(lead, ['organizationId', 'sessionId', 'source']);
     expect(lead.contactInfo).toBeDefined();
@@ -135,9 +127,7 @@ export const TestAssertions = {
     }
   },
 
-  /**
-   * Assert that AI response has expected structure
-   */
+  /** Assert that AI response has expected structure */
   assertValidAIResponse(response: any): void {
     expect(response).toBeDefined();
     expect(response.content).toBeTruthy();
@@ -146,9 +136,7 @@ export const TestAssertions = {
     expect(response.usage.totalTokens).toBeGreaterThan(0);
   },
 
-  /**
-   * Assert that conversation flow maintains consistency
-   */
+  /** Assert that conversation flow maintains consistency */
   assertValidConversationFlow(messages: any[]): void {
     expect(messages.length).toBeGreaterThan(0);
     
@@ -167,9 +155,7 @@ export const TestAssertions = {
     messages.forEach(msg => this.assertValidChatMessage(msg));
   },
 
-  /**
-   * Assert that mock service calls match expectations
-   */
+  /** Assert that mock service calls match expectations */
   assertMockCalls(mockService: any, expectedCalls: number): void {
     if ('getCallCount' in mockService) {
       expect(mockService.getCallCount()).toBe(expectedCalls);
@@ -192,18 +178,14 @@ export const TestAssertions = {
     }
   },
 
-  /**
-   * Assert that entity follows DDD patterns
-   */
+  /** Assert that entity follows DDD patterns */
   assertDomainEntityInvariants<T>(entity: T, invariantChecks: ((entity: T) => boolean)[]): void {
     invariantChecks.forEach((check, index) => {
       expect(check(entity)).toBe(true);
     });
   },
 
-  /**
-   * Assert that repository operations maintain data consistency
-   */
+  /** Assert that repository operations maintain data consistency */
   async assertRepositoryConsistency<T extends { id: string }>(
     repository: any,
     entity: T,
@@ -228,9 +210,7 @@ export const TestAssertions = {
 
 // Performance testing helpers
 export const PerformanceHelpers = {
-  /**
-   * Measure execution time of async operation
-   */
+  /** Measure execution time of async operation */
   async measureExecutionTime<T>(operation: () => Promise<T>): Promise<{ result: T; duration: number }> {
     const startTime = performance.now();
     const result = await operation();
@@ -242,9 +222,7 @@ export const PerformanceHelpers = {
     };
   },
 
-  /**
-   * Assert operation completes within time limit
-   */
+  /** Assert operation completes within time limit */
   async assertPerformance<T>(
     operation: () => Promise<T>,
     maxDurationMs: number,
@@ -257,9 +235,7 @@ export const PerformanceHelpers = {
     return result;
   },
 
-  /**
-   * Run operation multiple times and get average performance
-   */
+  /** Run operation multiple times and get average performance */
   async benchmarkOperation<T>(
     operation: () => Promise<T>,
     iterations: number = 10
@@ -281,18 +257,14 @@ export const PerformanceHelpers = {
 
 // Error simulation helpers
 export const ErrorSimulationHelpers = {
-  /**
-   * Simulate network failure for mock services
-   */
+  /** Simulate network failure for mock services */
   simulateNetworkFailure(mockService: any, shouldFail: boolean = true): void {
     if ('setFailure' in mockService) {
       mockService.setFailure(shouldFail);
     }
   },
 
-  /**
-   * Simulate AI service rate limiting
-   */
+  /** Simulate AI service rate limiting */
   simulateRateLimit(mockAI: any, delay: number = 1000): void {
     const originalMethod = mockAI.generateResponse;
     mockAI.generateResponse = async (...args: any[]) => {
@@ -301,9 +273,7 @@ export const ErrorSimulationHelpers = {
     };
   },
 
-  /**
-   * Simulate partial system failure
-   */
+  /** Simulate partial system failure */
   simulatePartialFailure(mocks: any, failureRate: number = 0.3): void {
     Object.values(mocks).forEach((mock: any) => {
       if ('setFailure' in mock) {
@@ -316,9 +286,7 @@ export const ErrorSimulationHelpers = {
 
 // Integration test helpers
 export const IntegrationHelpers = {
-  /**
-   * Create a complete conversation scenario
-   */
+  /** Create a complete conversation scenario */
   async createConversationScenario(
     env: TestEnvironment,
     scenario: 'pricing_inquiry' | 'support_request' | 'lead_capture'
@@ -369,9 +337,7 @@ export const IntegrationHelpers = {
     return { config, session, messages };
   },
 
-  /**
-   * Verify complete workflow execution
-   */
+  /** Verify complete workflow execution */
   async verifyWorkflowExecution(
     env: TestEnvironment,
     workflowType: 'message_processing' | 'lead_qualification' | 'knowledge_retrieval'

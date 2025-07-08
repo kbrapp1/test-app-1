@@ -16,8 +16,7 @@ import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKno
 import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
-/**
- * Represents existing knowledge entry for deduplication
+/** Represents existing knowledge entry for deduplication
  */
 export interface ExistingKnowledgeEntry {
   id: string;
@@ -27,8 +26,7 @@ export interface ExistingKnowledgeEntry {
   configId: string;
 }
 
-/**
- * Result of deduplication cleanup operation
+/** Result of deduplication cleanup operation
  */
 export interface DeduplicationCleanupResult {
   duplicatesRemoved: number;

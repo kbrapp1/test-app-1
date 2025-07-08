@@ -10,9 +10,7 @@
 
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 
-/**
- * Analysis result from OpenAI service
- */
+/** Analysis result from OpenAI service */
 export interface AnalysisResult {
   intent: {
     primaryIntent: string;
@@ -26,9 +24,7 @@ export interface AnalysisResult {
   processingTime: number;
 }
 
-/**
- * Complete chatbot interaction processing context
- */
+/** Complete chatbot interaction processing context */
 export interface ChatbotProcessingContext {
   messageHistory: ChatMessage[];
   sessionId: string;
@@ -38,9 +34,7 @@ export interface ChatbotProcessingContext {
   sharedLogFile?: string;
 }
 
-/**
- * Complete chatbot interaction result
- */
+/** Complete chatbot interaction result */
 export interface ChatbotProcessingResult {
   analysis: {
     primaryIntent: string;
@@ -74,9 +68,7 @@ export interface ChatbotProcessingResult {
   };
 }
 
-/**
- * Message analysis context for detailed analysis
- */
+/** Message analysis context for detailed analysis */
 export interface MessageAnalysisContext {
   messageHistory?: ChatMessage[];
   defaultConfidence?: number;

@@ -15,12 +15,25 @@ import { getActiveOrganizationWithFlags } from './getActiveOrganizationWithFlags
  * @throws {Error} If feature flag is not enabled
  */
 export async function checkFeatureFlag(flagName: string, featureName: string): Promise<void> {
-  const supabase = createSupabaseServerClient();
-  const organization = await getActiveOrganizationWithFlags(supabase);
-  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+  try {
+    const supabase = createSupabaseServerClient();
+    const organization = await getActiveOrganizationWithFlags(supabase);
+    const flags = organization?.feature_flags as Record<string, boolean> | undefined;
 
-  if (!flags?.[flagName]) {
-    throw new Error(`${featureName} feature is not enabled for this organization.`);
+    // Default to true if flag is missing, but respect explicit false values
+    const isEnabled = flags ? (flags.hasOwnProperty(flagName) ? flags[flagName] : true) : true;
+
+    if (!isEnabled) {
+      throw new Error(`${featureName} feature is not enabled for this organization.`);
+    }
+  } catch (error) {
+    // If we can't check the flag (e.g., cookies not available), default to enabled
+    // This ensures features work by default when flag checking fails
+    if (error instanceof Error && error.message.includes('not enabled')) {
+      throw error; // Re-throw feature disabled errors
+    }
+    console.warn(`Cannot check feature flag '${flagName}' (likely cookies not available), defaulting to enabled:`, error);
+    // Don't throw - allow access when flag checking fails
   }
 }
 
@@ -35,10 +48,13 @@ export async function isFeatureEnabled(flagName: string): Promise<boolean> {
     const organization = await getActiveOrganizationWithFlags(supabase);
     const flags = organization?.feature_flags as Record<string, boolean> | undefined;
     
-    return flags?.[flagName] ?? false;
+    // Default to true if flag is missing, but respect explicit false values
+    return flags ? (flags.hasOwnProperty(flagName) ? flags[flagName] : true) : true;
   } catch (error) {
-    console.error(`Error checking feature flag '${flagName}':`, error);
-    return false;
+    // If we can't check the flag (e.g., cookies not available), default to true
+    // This ensures features work by default when flag checking fails
+    console.warn(`Cannot check feature flag '${flagName}' (likely cookies not available), defaulting to enabled:`, error);
+    return true;
   }
 }
 

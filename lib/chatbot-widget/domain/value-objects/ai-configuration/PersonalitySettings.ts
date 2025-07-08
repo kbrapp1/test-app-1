@@ -1,8 +1,12 @@
 /**
  * Personality Settings Value Object
  * 
- * Domain layer value object representing chatbot personality configuration.
- * Immutable object that encapsulates personality-related behavior and validation.
+ * AI INSTRUCTIONS:
+ * - Domain value object for chatbot personality configuration with immutable behavior patterns
+ * - Encapsulates tone, communication style, escalation triggers, and conversation flow settings
+ * - Manages response behavior configuration and conversation turn limits with business validation
+ * - Provides escalation detection logic and custom instruction management
+ * - Pure immutable value object following DDD patterns with comprehensive personality control
  */
 
 export interface PersonalitySettingsProps {

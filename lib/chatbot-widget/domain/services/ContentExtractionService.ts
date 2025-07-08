@@ -40,25 +40,9 @@ export interface ILinkElement {
   isValid(): boolean;
 }
 
-/**
- * Content Extraction Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Pure business logic for HTML content extraction
- * - No external dependencies on HTML parsing libraries
- * - Focus on domain rules and content quality validation
- * - Use domain-specific error handling
- */
+/** Content Extraction Domain Service */
 export class ContentExtractionService {
-  /**
-   * Extract main content from HTML parser
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract main content, avoiding navigation and ads
-   * - Preserve structure and context
-   * - Clean up formatting for better embedding
-   * - Validate content quality before returning
-   */
+  /** Extract main content from HTML parser */
   extractMainContent(htmlParser: IHtmlParser): string {
     try {
       // Domain rule: Remove unwanted elements that don't contain meaningful content
@@ -94,14 +78,7 @@ export class ContentExtractionService {
     }
   }
 
-  /**
-   * Extract internal links for crawling
-   * 
-   * AI INSTRUCTIONS:
-   * - Business logic for determining crawlable links
-   * - Apply domain rules for link filtering
-   * - Ensure links meet content quality criteria
-   */
+  /** Extract internal links for crawling */
   extractInternalLinks(
     htmlParser: IHtmlParser,
     baseUrl: string,
@@ -145,14 +122,7 @@ export class ContentExtractionService {
     }
   }
 
-  /**
-   * Check if URL is likely to contain text content worth crawling
-   * 
-   * AI INSTRUCTIONS:
-   * - Domain business rules for content URL identification
-   * - Exclude media files and non-textual content
-   * - Include pages likely to have meaningful text
-   */
+  /** Check if URL is likely to contain text content worth crawling */
   isContentUrl(url: string): boolean {
     // Domain rule: Exclude obvious non-content URLs
     if (this.isExcludedPath(url)) {
@@ -173,9 +143,7 @@ export class ContentExtractionService {
     return hasNoExtension || hasTextIndicators;
   }
 
-  /**
-   * Remove unwanted HTML elements that don't contain meaningful content
-   */
+  /** Remove unwanted HTML elements that don't contain meaningful content */
   private removeUnwantedElements(htmlParser: IHtmlParser): void {
     const unwantedSelectors = [
       'script', 'style', 'nav', 'header', 'footer', 'aside',
@@ -186,9 +154,7 @@ export class ContentExtractionService {
     htmlParser.removeElements(unwantedSelectors);
   }
 
-  /**
-   * Find main content area using business rules
-   */
+  /** Find main content area using business rules */
   private findMainContentArea(htmlParser: IHtmlParser): string {
     // Domain rule: Content area priority order
     const contentSelectors = [
@@ -215,9 +181,7 @@ export class ContentExtractionService {
     return htmlParser.getBodyText();
   }
 
-  /**
-   * Clean and validate content according to domain rules
-   */
+  /** Clean and validate content according to domain rules */
   private cleanAndValidateContent(content: string): string {
     return content
       .replace(/\s+/g, ' ')  // Normalize whitespace
@@ -225,9 +189,7 @@ export class ContentExtractionService {
       .trim();
   }
 
-  /**
-   * Validate content meets domain quality standards
-   */
+  /** Validate content meets domain quality standards */
   private isValidContent(content: string): boolean {
     const minLength = this.getMinContentLength();
     return content.length >= minLength && 
@@ -235,25 +197,19 @@ export class ContentExtractionService {
            this.containsMeaningfulText(content);
   }
 
-  /**
-   * Check if content contains meaningful text
-   */
+  /** Check if content contains meaningful text */
   private containsMeaningfulText(content: string): boolean {
     // Domain rule: Content should have reasonable word count
     const words = content.split(/\s+/).filter(word => word.length > 2);
     return words.length >= 10;
   }
 
-  /**
-   * Get minimum content length requirement
-   */
+  /** Get minimum content length requirement */
   private getMinContentLength(): number {
     return 100; // Domain rule: Minimum 100 characters for meaningful content
   }
 
-  /**
-   * Extract domain from URL
-   */
+  /** Extract domain from URL */
   private extractDomain(url: string): string {
     try {
       return new URL(url).hostname;
@@ -265,9 +221,7 @@ export class ContentExtractionService {
     }
   }
 
-  /**
-   * Convert relative URL to absolute URL
-   */
+  /** Convert relative URL to absolute URL */
   private convertToAbsoluteUrl(href: string, baseUrl: string): string {
     try {
       return new URL(href, baseUrl).href;
@@ -279,9 +233,7 @@ export class ContentExtractionService {
     }
   }
 
-  /**
-   * Check if a path should be excluded from crawling
-   */
+  /** Check if a path should be excluded from crawling */
   private isExcludedPath(url: string): boolean {
     const excludedPatterns = [
       // Media files - no textual content

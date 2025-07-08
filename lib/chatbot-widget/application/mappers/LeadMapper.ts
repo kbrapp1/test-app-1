@@ -1,8 +1,12 @@
 /**
  * Lead Application Mapper
  * 
- * Transforms between domain entities and DTOs for application layer boundaries.
- * Follows DDD principles by maintaining clear separation between domain and application layers.
+ * AI INSTRUCTIONS:
+ * - Application mapper for Lead domain-DTO transformations following DDD boundaries
+ * - Handles complex object mapping between domain value objects and DTOs
+ * - Manages contact info, qualification data, and lead source transformations
+ * - Preserves domain integrity while enabling API serialization and deserialization
+ * - Provides bidirectional mapping with proper data type conversions and validations
  */
 
 import { Lead } from '../../domain/entities/Lead';
@@ -13,9 +17,7 @@ import { LeadNote } from '../../domain/value-objects/lead-management/LeadMetadat
 import { LeadDto, ContactInfoDto, QualificationDataDto, AnsweredQuestionDto, LeadSourceDto, CreateLeadDto } from '../dto/LeadDto';
 
 export class LeadMapper {
-  /**
-   * Convert domain entity to DTO
-   */
+  /** Convert domain entity to DTO */
   toDto(lead: Lead): LeadDto {
     return {
       id: lead.id,
@@ -36,9 +38,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Convert DTO to domain entity for creation
-   */
+  /** Convert DTO to domain entity for creation */
   fromCreateDto(dto: CreateLeadDto): {
     sessionId: string;
     organizationId: string;
@@ -59,9 +59,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map domain ContactInfo to DTO
-   */
+  /** Map domain ContactInfo to DTO */
   private mapContactInfoToDto(contactInfo: ContactInfo): ContactInfoDto {
     return {
       name: contactInfo.name,
@@ -81,9 +79,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map DTO ContactInfo to domain props
-   */
+  /** Map DTO ContactInfo to domain props */
   private mapContactInfoFromDto(dto: ContactInfoDto): ContactInfoProps {
     return {
       name: dto.name,
@@ -105,9 +101,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map domain QualificationData to DTO
-   */
+  /** Map domain QualificationData to DTO */
   private mapQualificationDataToDto(data: QualificationData): QualificationDataDto {
     return {
       answeredQuestions: data.answeredQuestions.map(this.mapAnsweredQuestionToDto.bind(this)),
@@ -123,9 +117,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map DTO QualificationData to domain props
-   */
+  /** Map DTO QualificationData to domain props */
   private mapQualificationDataFromDto(dto: QualificationDataDto): QualificationDataProps {
     return {
       budget: dto.budget,
@@ -141,9 +133,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map domain QualificationAnswer to DTO
-   */
+  /** Map domain QualificationAnswer to DTO */
   private mapAnsweredQuestionToDto(answer: QualificationAnswer): AnsweredQuestionDto {
     return {
       questionId: answer.questionId,
@@ -154,9 +144,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map DTO AnsweredQuestion to domain
-   */
+  /** Map DTO AnsweredQuestion to domain */
   private mapAnsweredQuestionFromDto(dto: AnsweredQuestionDto): QualificationAnswer {
     return {
       questionId: dto.questionId,
@@ -168,9 +156,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map domain LeadSource to DTO
-   */
+  /** Map domain LeadSource to DTO */
   private mapSourceToDto(source: LeadSource): LeadSourceDto {
     return {
       type: source.channel,
@@ -186,9 +172,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map DTO LeadSource to domain props
-   */
+  /** Map DTO LeadSource to domain props */
   private mapSourceFromDto(dto: LeadSourceDto): LeadSourceProps {
     return {
       channel: 'chatbot_widget',

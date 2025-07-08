@@ -15,8 +15,7 @@ import { ContentDeduplicationService, DeduplicatableContent } from '../../domain
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
-/**
- * Result of deduplication operation
+/** Result of deduplication operation
  */
 export interface DeduplicationResult {
   totalItemsAnalyzed: number;

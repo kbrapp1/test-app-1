@@ -38,9 +38,7 @@ export interface EntityMergeResult {
 
 export class EntityAccumulationService {
   
-  /**
-   * Merge fresh extracted entities with accumulated entities (including corrections)
-   */
+  /** Merge fresh extracted entities with accumulated entities (including corrections) */
   static mergeEntitiesWithCorrections(
     existingEntities: AccumulatedEntities | null,
     freshEntities: ExtractedEntities & { corrections?: EntityCorrections },
@@ -82,9 +80,7 @@ export class EntityAccumulationService {
   
 
   
-  /**
-   * Build entity context for AI prompts
-   */
+  /** Build entity context for AI prompts */
   static buildEntityContextPrompt(entities: AccumulatedEntities): string {
     const contextParts: string[] = [];
     

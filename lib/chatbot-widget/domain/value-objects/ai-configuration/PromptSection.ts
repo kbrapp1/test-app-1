@@ -62,14 +62,7 @@ export class PromptSection {
     );
   }
 
-  /**
-   * Create PromptSection with updated content
-   * 
-   * AI INSTRUCTIONS:
-   * - Return new immutable instance with updated content
-   * - Preserve all other properties unchanged
-   * - Validate new content according to business rules
-   */
+  /** Create PromptSection with updated content */
   withContent(newContent: string): PromptSection {
     return new PromptSection(
       this.sectionId,
@@ -84,13 +77,7 @@ export class PromptSection {
     );
   }
 
-  /**
-   * Create PromptSection with updated priority
-   * 
-   * AI INSTRUCTIONS:
-   * - Return new immutable instance with updated priority
-   * - Preserve all other properties unchanged
-   */
+  /** Create PromptSection with updated priority */
   withPriority(newPriority: PromptPriority): PromptSection {
     return new PromptSection(
       this.sectionId,
@@ -105,13 +92,7 @@ export class PromptSection {
     );
   }
 
-  /**
-   * Create PromptSection with updated metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Return new immutable instance with merged metadata
-   * - Preserve existing metadata, override with new values
-   */
+  /** Create PromptSection with updated metadata */
   withMetadata(additionalMetadata: Record<string, any>): PromptSection {
     return new PromptSection(
       this.sectionId,
@@ -126,14 +107,7 @@ export class PromptSection {
     );
   }
 
-  /**
-   * Check content similarity with another section
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare normalized content for similarity detection
-   * - Use business rules for similarity threshold
-   * - Support deduplication logic
-   */
+  /** Check content similarity with another section */
   isSimilarTo(other: PromptSection, similarityThreshold: number = 0.9): boolean {
     if (this.sectionType !== other.sectionType) {
       return false;
@@ -151,14 +125,7 @@ export class PromptSection {
     return similarity >= similarityThreshold;
   }
 
-  /**
-   * Check if section conflicts with another section
-   * 
-   * AI INSTRUCTIONS:
-   * - Detect conflicts based on type and content overlap
-   * - Apply business rules for conflict detection
-   * - Support conflict resolution workflows
-   */
+  /** Check if section conflicts with another section */
   conflictsWith(other: PromptSection): boolean {
     // AI: Same section type with different content indicates conflict
     if (this.sectionType === other.sectionType && !this.isSimilarTo(other, 0.8)) {
@@ -173,28 +140,17 @@ export class PromptSection {
     return false;
   }
 
-  /**
-   * Get content length for optimization calculations
-   */
+  /** Get content length for optimization calculations */
   get contentLength(): number {
     return this.content.length;
   }
 
-  /**
-   * Get unique content key for deduplication
-   */
+  /** Get unique content key for deduplication */
   get contentKey(): string {
     return `${this.sectionType}:${this.normalizeContent()}`;
   }
 
-  /**
-   * Value object equality comparison
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare all properties for equality
-   * - Support Set and Map operations
-   * - Follow value object equality patterns
-   */
+  /** Value object equality comparison */
   equals(other: PromptSection): boolean {
     return (
       this.sectionId === other.sectionId &&

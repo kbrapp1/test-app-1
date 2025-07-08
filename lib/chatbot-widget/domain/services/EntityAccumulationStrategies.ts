@@ -39,15 +39,7 @@ export class EntityAccumulationStrategies {
     trimWhitespace: true
   };
 
-  /**
-   * Strategy 1: Additive entities - accumulate unique values over time
-   * 
-   * AI INSTRUCTIONS:
-   * - Add new values to existing array without duplicates
-   * - Use normalization for deduplication comparison
-   * - Maintain chronological order of entities
-   * - Preserve all metadata for tracking
-   */
+  /** Strategy 1: Additive entities - accumulate unique values over time */
   static applyAdditiveStrategy(
     existingEntities: EntityWithMetadata<string>[],
     newValues: string[],
@@ -64,15 +56,7 @@ export class EntityAccumulationStrategies {
     return this.deduplicateEntityArray(mergedEntities);
   }
 
-  /**
-   * Strategy 2: Replaceable entities - keep latest value
-   * 
-   * AI INSTRUCTIONS:
-   * - Replace existing entity with new value
-   * - Always use latest value regardless of confidence
-   * - Update metadata to reflect new extraction
-   * - Simple replacement strategy for temporal data
-   */
+  /** Strategy 2: Replaceable entities - keep latest value */
   static applyReplaceableStrategy<T>(
     value: T,
     context: EntityOperationContext
@@ -85,15 +69,7 @@ export class EntityAccumulationStrategies {
     };
   }
 
-  /**
-   * Strategy 3: Confidence-based entities - keep highest confidence value
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare confidence scores to determine which entity to keep
-   * - Use confidence threshold to validate entity quality
-   * - Prefer higher confidence values for critical entities
-   * - Maintain metadata from highest confidence extraction
-   */
+  /** Strategy 3: Confidence-based entities - keep highest confidence value */
   static applyConfidenceBasedStrategy<T>(
     existingEntity: EntityWithMetadata<T> | null,
     newValue: T,
@@ -122,15 +98,7 @@ export class EntityAccumulationStrategies {
     return newEntity;
   }
 
-  /**
-   * Remove specific values from additive entity arrays
-   * 
-   * AI INSTRUCTIONS:
-   * - Filter out entities matching the normalized removal value
-   * - Use same normalization as deduplication for consistency
-   * - Preserve all other entities in original order
-   * - Handle case-insensitive and special character removal
-   */
+  /** Remove specific values from additive entity arrays */
   static removeFromAdditiveArray(
     existingEntities: EntityWithMetadata<string>[],
     valueToRemove: string
@@ -143,15 +111,7 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /**
-   * Correct/replace any entity with new value
-   * 
-   * AI INSTRUCTIONS:
-   * - Force replacement regardless of confidence or strategy
-   * - Used for explicit user corrections
-   * - Update metadata to reflect correction operation
-   * - Override normal strategy behavior for corrections
-   */
+  /** Correct/replace any entity with new value */
   static applyCorrection<T>(
     value: T,
     context: EntityOperationContext
@@ -188,15 +148,7 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /**
-   * Normalize entity values for comparison
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply consistent normalization for deduplication
-   * - Remove special characters, convert to lowercase, trim whitespace
-   * - Use configurable normalization rules
-   * - Ensure consistent comparison across all operations
-   */
+  /** Normalize entity values for comparison */
   static normalizeEntityValue(
     value: string,
     config: EntityNormalizationConfig = EntityAccumulationStrategies.DEFAULT_NORMALIZATION_CONFIG
@@ -218,15 +170,7 @@ export class EntityAccumulationStrategies {
     return normalized;
   }
 
-  /**
-   * Validate entity confidence scores
-   * 
-   * AI INSTRUCTIONS:
-   * - Ensure confidence scores are within valid range (0-1)
-   * - Provide validation for entity metadata
-   * - Support data integrity checks
-   * - Return detailed validation results
-   */
+  /** Validate entity confidence scores */
   static validateEntityConfidence(entities: EntityWithMetadata<any>[]): boolean {
     return entities.every(entity => 
       entity.confidence >= 0 && 
@@ -235,15 +179,7 @@ export class EntityAccumulationStrategies {
     );
   }
 
-  /**
-   * Get strategy type for entity type
-   * 
-   * AI INSTRUCTIONS:
-   * - Map entity types to their accumulation strategies
-   * - Support strategy-based processing decisions
-   * - Maintain consistency with type definitions
-   * - Enable strategy-specific validation
-   */
+  /** Get strategy type for entity type */
   static getStrategyForEntityType(
     entityType: AdditiveEntityType | ReplaceableEntityType | ConfidenceBasedEntityType
   ): 'additive' | 'replaceable' | 'confidence-based' {
@@ -266,15 +202,7 @@ export class EntityAccumulationStrategies {
     throw new Error(`Unknown entity type: ${entityType}`);
   }
 
-  /**
-   * Calculate entity quality score
-   * 
-   * AI INSTRUCTIONS:
-   * - Assess entity quality based on confidence and age
-   * - Support entity prioritization and cleanup decisions
-   * - Consider recency and confidence in scoring
-   * - Provide normalized quality scores (0-1)
-   */
+  /** Calculate entity quality score */
   static calculateEntityQuality(
     entity: EntityWithMetadata<any>,
     currentTime: Date = new Date()

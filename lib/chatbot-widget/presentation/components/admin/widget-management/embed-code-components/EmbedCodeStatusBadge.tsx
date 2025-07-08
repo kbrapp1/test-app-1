@@ -3,16 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 
-/**
- * EmbedCodeStatusBadge Component
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Display chatbot configuration status
- * - Presentation layer component for status visualization
- * - Keep under 50 lines, focused on status display only
- * - Use theme-aware styling with minimal color usage
- */
-
+/** EmbedCodeStatusBadge Component */
 interface EmbedCodeStatusBadgeProps {
   isActive: boolean;
 }

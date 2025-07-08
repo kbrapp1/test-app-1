@@ -14,9 +14,7 @@ import { createHash } from 'crypto';
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
 import { CrawledPageData, CrawlResult } from './WebsiteCrawlingDomainService';
 
-/**
- * Domain model for crawl metrics
- */
+/** Domain model for crawl metrics */
 export interface CrawlMetrics {
   readonly totalPages: number;
   readonly successfulPages: number;
@@ -39,15 +37,7 @@ export interface CrawlMetrics {
  */
 export class CrawlResultProcessorService {
 
-  /**
-   * Process crawl results comprehensively
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate complete result processing workflow
-   * - Apply quality filtering and metrics calculation
-   * - Generate knowledge items and business insights
-   * - Provide comprehensive crawl analysis
-   */
+  /** Process crawl results comprehensively */
   processComprehensively(crawledPages: CrawledPageData[]): CrawlResult {
     // Apply quality filtering
     const qualityFilteredPages = this.filterQualityContent(crawledPages);
@@ -68,28 +58,12 @@ export class CrawlResultProcessorService {
     };
   }
 
-  /**
-   * Filter content based on quality criteria
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business rules for content quality assessment
-   * - Filter out low-value or problematic content
-   * - Ensure only valuable content proceeds to knowledge generation
-   * - Support configurable quality thresholds
-   */
+  /** Filter content based on quality criteria */
   filterQualityContent(pages: CrawledPageData[]): CrawledPageData[] {
     return pages.filter(page => this.isQualityContent(page));
   }
 
-  /**
-   * Calculate detailed crawl metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate comprehensive success and quality metrics
-   * - Provide insights into crawl performance and effectiveness
-   * - Support crawl optimization and improvement decisions
-   * - Generate business-relevant success indicators
-   */
+  /** Calculate detailed crawl metrics */
   calculateDetailedMetrics(pages: CrawledPageData[]): CrawlMetrics {
     const totalPages = pages.length;
     const successfulPages = pages.filter(p => p.status === 'success').length;
@@ -121,30 +95,14 @@ export class CrawlResultProcessorService {
     };
   }
 
-  /**
-   * Generate knowledge items from crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform crawled content into structured knowledge items
-   * - Generate deterministic IDs for consistency across crawls
-   * - Apply appropriate categorization and tagging
-   * - Support knowledge base integration and indexing
-   */
+  /** Generate knowledge items from crawled pages */
   generateKnowledgeItems(pages: CrawledPageData[]): KnowledgeItem[] {
     return pages
       .filter(page => page.status === 'success')
       .map(page => this.createKnowledgeItem(page));
   }
 
-  /**
-   * Check if a page meets quality criteria
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply comprehensive quality assessment criteria
-   * - Consider content length, title quality, and success status
-   * - Filter out thin or low-value content
-   * - Support consistent quality standards
-   */
+  /** Check if a page meets quality criteria */
   private isQualityContent(page: CrawledPageData): boolean {
     // Must be successfully crawled
     if (page.status !== 'success') {
@@ -180,15 +138,7 @@ export class CrawlResultProcessorService {
     return true;
   }
 
-  /**
-   * Calculate overall quality score for crawl results
-   * 
-   * AI INSTRUCTIONS:
-   * - Assess overall quality of crawled content
-   * - Consider success rate, content quality, and completeness
-   * - Provide numerical quality assessment (0-100)
-   * - Support crawl effectiveness evaluation
-   */
+  /** Calculate overall quality score for crawl results */
   private calculateQualityScore(pages: CrawledPageData[]): number {
     if (pages.length === 0) {
       return 0;
@@ -217,15 +167,7 @@ export class CrawlResultProcessorService {
     return Math.min(qualityScore, 100);
   }
 
-  /**
-   * Create a knowledge item from a crawled page
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform crawled page into structured knowledge item
-   * - Generate consistent, deterministic identification
-   * - Apply appropriate metadata and categorization
-   * - Support knowledge base consistency and deduplication
-   */
+  /** Create a knowledge item from a crawled page */
   private createKnowledgeItem(page: CrawledPageData): KnowledgeItem {
     // Generate deterministic ID based on URL to prevent duplicates
     const urlForId = page.url.replace(/[#?].*$/, ''); // Remove query params and fragments
@@ -251,15 +193,7 @@ export class CrawlResultProcessorService {
     };
   }
 
-  /**
-   * Calculate relevance score for a knowledge item
-   * 
-   * AI INSTRUCTIONS:
-   * - Assess content relevance and value
-   * - Consider content length, depth, and quality indicators
-   * - Provide scoring for knowledge base ranking
-   * - Support content prioritization and discovery
-   */
+  /** Calculate relevance score for a knowledge item */
   private calculateRelevanceScore(page: CrawledPageData): number {
     let score = 0.5; // Base score
 

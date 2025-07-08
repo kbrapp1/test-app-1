@@ -30,14 +30,7 @@ import { EngagementScoreService } from './EngagementScoreService';
  */
 export class MessagePrioritizationService {
   
-  /**
-   * Scoring weights for overall relevance calculation
-   * 
-   * AI INSTRUCTIONS:
-   * - 2025 optimization weights - prioritize business context over pure recency
-   * - Adjust based on business requirements and conversion optimization
-   * - Total weights should sum to 1.0
-   */
+  /** Scoring weights for overall relevance calculation */
   private static readonly SCORING_WEIGHTS = {
     recency: 0.2,           // Reduced from traditional 0.4
     entityRelevance: 0.25,  // High weight for business entities
@@ -46,14 +39,7 @@ export class MessagePrioritizationService {
     engagement: 0.1         // Moderate weight for engagement
   };
   
-  /**
-   * Score message relevance for intelligent context management
-   * 
-   * AI INSTRUCTIONS:
-   * - Main orchestration method - delegate to specialized scoring services
-   * - Combine component scores using business-optimized weighting
-   * - Generate retention priority and reasons
-   */
+  /** Score message relevance for intelligent context management */
   static scoreMessageRelevance(
     message: ChatMessage,
     context: RelevanceContext,
@@ -97,14 +83,7 @@ export class MessagePrioritizationService {
     };
   }
   
-  /**
-   * Score all messages in a conversation
-   * 
-   * AI INSTRUCTIONS:
-   * - Process all messages with consistent scoring
-   * - Sort by relevance score for prioritization
-   * - Return scored messages for further processing
-   */
+  /** Score all messages in a conversation */
   static scoreAllMessages(
     messages: ChatMessage[],
     context: RelevanceContext
@@ -123,14 +102,7 @@ export class MessagePrioritizationService {
     return scoredMessages;
   }
   
-  /**
-   * Categorize messages by priority levels
-   * 
-   * AI INSTRUCTIONS:
-   * - Group messages for efficient retention decisions
-   * - Use retention priority from scoring
-   * - Provide structured categorization
-   */
+  /** Categorize messages by priority levels */
   static categorizeMessagesByPriority(scoredMessages: ScoredMessage[]): CategorizedMessages {
     return {
       critical: scoredMessages.filter(s => s.score.retentionPriority === 'critical'),
@@ -140,14 +112,7 @@ export class MessagePrioritizationService {
     };
   }
   
-  /**
-   * Calculate weighted overall score from component scores
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply business-optimized weighting for overall relevance
-   * - Use configurable weights for flexibility
-   * - Ensure score stays within 0.0-1.0 range
-   */
+  /** Calculate weighted overall score from component scores */
   private static calculateWeightedOverallScore(componentScores: ComponentScores): number {
     return (
       componentScores.recencyScore * this.SCORING_WEIGHTS.recency +
@@ -158,14 +123,7 @@ export class MessagePrioritizationService {
     );
   }
   
-  /**
-   * Determine retention priority based on overall score
-   * 
-   * AI INSTRUCTIONS:
-   * - Map scores to actionable priority levels
-   * - Use business-relevant thresholds
-   * - Provide clear priority categorization
-   */
+  /** Determine retention priority based on overall score */
   private static determineRetentionPriority(overallScore: number): 'critical' | 'high' | 'medium' | 'low' {
     if (overallScore >= 0.8) return 'critical';
     if (overallScore >= 0.6) return 'high';

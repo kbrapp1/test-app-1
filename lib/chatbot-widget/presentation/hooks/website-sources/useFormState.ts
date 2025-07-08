@@ -11,14 +11,7 @@
 import { useState } from 'react';
 import { WebsiteSourceFormData } from '../../actions/websiteSourcesActions';
 
-/**
- * Validate Form Data
- * 
- * AI INSTRUCTIONS:
- * - Validate required fields
- * - Return array of validation errors
- * - Keep validation rules simple and clear
- */
+/** Validate Form Data */
 function validateFormData(formData: WebsiteSourceFormData): string[] {
   const errors: string[] = [];
   
@@ -33,14 +26,7 @@ function validateFormData(formData: WebsiteSourceFormData): string[] {
   return errors;
 }
 
-/**
- * Create Initial Form Data
- * 
- * AI INSTRUCTIONS:
- * - Provide sensible defaults for form fields
- * - Follow domain business rules for defaults
- * - Return immutable data structure
- */
+/** Create Initial Form Data */
 function createInitialFormData(): WebsiteSourceFormData {
   return {
     url: '',
@@ -52,14 +38,7 @@ function createInitialFormData(): WebsiteSourceFormData {
   };
 }
 
-/**
- * Form State Hook
- * 
- * AI INSTRUCTIONS:
- * - Manage form data and validation
- * - Handle form reset and updates
- * - Keep form logic isolated
- */
+/** Form State Hook */
 export function useFormState() {
   const [formData, setFormData] = useState<WebsiteSourceFormData>(createInitialFormData());
   const [formErrors, setFormErrors] = useState<string[]>([]);

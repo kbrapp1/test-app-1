@@ -14,9 +14,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     'gpt-4o-mini': { input: 0.00015, output: 0.0006 }
   } as const;
 
-  /**
-   * Count tokens in a single message
-   */
+  /** Count tokens in a single message */
   async countMessageTokens(message: ChatMessage): Promise<number> {
     // Format message as it would be sent to OpenAI
     const formattedMessage = {
@@ -27,9 +25,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     return this.countTextTokens(JSON.stringify(formattedMessage));
   }
 
-  /**
-   * Count tokens in multiple messages
-   */
+  /** Count tokens in multiple messages */
   async countMessagesTokens(messages: ChatMessage[]): Promise<number> {
     let totalTokens = 0;
     
@@ -43,9 +39,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     return totalTokens;
   }
 
-  /**
-   * Count tokens in text content using tiktoken (if available) or estimation
-   */
+  /** Count tokens in text content using tiktoken (if available) or estimation */
   async countTextTokens(text: string): Promise<number> {
     try {
       // Cache the tiktoken import to avoid repeated dynamic imports
@@ -88,9 +82,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     }
   }
 
-  /**
-   * Get detailed token usage for messages
-   */
+  /** Get detailed token usage for messages */
   async getTokenUsage(messages: ChatMessage[]): Promise<TokenUsage> {
     const messageTokens = await this.countMessagesTokens(messages);
     const totalTokens = messageTokens;
@@ -109,9 +101,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     };
   }
 
-  /**
-   * Get token count for a complete prompt (system + messages)
-   */
+  /** Get token count for a complete prompt (system + messages) */
   async getPromptTokenCount(
     systemPrompt: string,
     messages: ChatMessage[]
@@ -123,9 +113,7 @@ export class OpenAITokenCountingService implements ITokenCountingService {
     return systemTokens + messageTokens + 10;
   }
 
-  /**
-   * Check if messages fit within token limit
-   */
+  /** Check if messages fit within token limit */
   async checkTokenLimit(
     messages: ChatMessage[],
     maxTokens: number,

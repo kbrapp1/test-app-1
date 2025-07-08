@@ -29,9 +29,10 @@ export class ConversationEnhancedAnalysisService {
    * Enhance base analysis with intent classification and knowledge retrieval
    * 
    * AI INSTRUCTIONS:
-   * - This method triggers the vector embeddings pipeline
+   * - PERFORMANCE OPTIMIZED: Run all async operations in parallel
    * - Coordinate async services while maintaining single responsibility
    * - Handle service failures gracefully with fallbacks
+   * - Minimize redundant token counting and processing
    */
   async enhanceAnalysis(
     baseAnalysis: ContextAnalysis,
@@ -48,27 +49,40 @@ export class ConversationEnhancedAnalysisService {
 
     const lastUserMessage = userMessages[userMessages.length - 1];
     
-    // PERFORMANCE OPTIMIZATION: Run intent classification and knowledge retrieval in parallel
-    // This saves 2-3 seconds by avoiding sequential processing
-    const [intentResult, relevantKnowledge] = await Promise.all([
+    // PERFORMANCE OPTIMIZATION: Run ALL operations in parallel
+    // This can save 2-3 seconds by avoiding sequential processing
+    const startTime = Date.now();
+    
+    const [intentResult, relevantKnowledge] = await Promise.allSettled([
       // Step 1: Classify intent if service is available
       this.intentClassificationService && chatbotConfig && session
         ? this.classifyMessageIntent(lastUserMessage, messages, chatbotConfig, session)
         : Promise.resolve(undefined),
       
       // Step 2: Retrieve relevant knowledge if service is available
-      // AI INSTRUCTIONS: This step triggers the vector embeddings pipeline
+      // AI: This step triggers the vector embeddings pipeline
       this.knowledgeRetrievalService
         ? this.retrieveRelevantKnowledge(lastUserMessage, userMessages, undefined, sharedLogFile)
         : Promise.resolve(undefined)
     ]);
 
+    const processingTime = Date.now() - startTime;
+    
+    // AI: Log performance metrics for monitoring
+    if (sharedLogFile && processingTime > 1000) {
+      // Only log if processing takes more than 1 second
+      console.log(`⚡ Enhanced Analysis: ${processingTime}ms (parallel processing)`);
+    }
+
+    // Extract results from Promise.allSettled
+    const intentValue = intentResult.status === 'fulfilled' ? intentResult.value : undefined;
+    const knowledgeValue = relevantKnowledge.status === 'fulfilled' ? relevantKnowledge.value : undefined;
+
     // Create enhanced analysis with all collected data
     return {
       ...baseAnalysis,
-      intentResult,
-      // Removed journeyState - using pure API-driven approach
-      relevantKnowledge,
+      intentResult: intentValue,
+      relevantKnowledge: knowledgeValue,
       knowledgeRetrievalThreshold: 0.15 // Pass the threshold used for knowledge retrieval
     };
   }

@@ -46,9 +46,7 @@ export class ResponseBehaviorSettings {
     }
   }
 
-  /**
-   * Generate behavior guidelines section for system prompt
-   */
+  /** Generate behavior guidelines section for system prompt */
   public generateSystemPromptSection(): string {
     let prompt = `**Behavior Guidelines:**\n`;
     
@@ -77,16 +75,12 @@ export class ResponseBehaviorSettings {
     return prompt;
   }
 
-  /**
-   * Create a copy with updated behavior
-   */
+  /** Create a copy with updated behavior */
   public withBehavior(behavior: ResponseBehavior): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings(behavior);
   }
 
-  /**
-   * Create a copy with updated emoji usage
-   */
+  /** Create a copy with updated emoji usage */
   public withUseEmojis(useEmojis: boolean): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings({
       ...this.behavior,
@@ -94,9 +88,7 @@ export class ResponseBehaviorSettings {
     });
   }
 
-  /**
-   * Create a copy with updated follow-up questions setting
-   */
+  /** Create a copy with updated follow-up questions setting */
   public withAskFollowUpQuestions(askFollowUpQuestions: boolean): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings({
       ...this.behavior,
@@ -104,9 +96,7 @@ export class ResponseBehaviorSettings {
     });
   }
 
-  /**
-   * Create a copy with updated proactive offering setting
-   */
+  /** Create a copy with updated proactive offering setting */
   public withProactiveOffering(proactiveOffering: boolean): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings({
       ...this.behavior,
@@ -114,9 +104,7 @@ export class ResponseBehaviorSettings {
     });
   }
 
-  /**
-   * Create a copy with updated personalization setting
-   */
+  /** Create a copy with updated personalization setting */
   public withPersonalizeResponses(personalizeResponses: boolean): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings({
       ...this.behavior,
@@ -124,9 +112,7 @@ export class ResponseBehaviorSettings {
     });
   }
 
-  /**
-   * Create a copy with updated acknowledgment setting
-   */
+  /** Create a copy with updated acknowledgment setting */
   public withAcknowledgePreviousInteractions(acknowledgePreviousInteractions: boolean): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings({
       ...this.behavior,
@@ -134,37 +120,27 @@ export class ResponseBehaviorSettings {
     });
   }
 
-  /**
-   * Check equality with another ResponseBehaviorSettings
-   */
+  /** Check equality with another ResponseBehaviorSettings */
   public equals(other: ResponseBehaviorSettings): boolean {
     return JSON.stringify(this.behavior) === JSON.stringify(other.behavior);
   }
 
-  /**
-   * Convert to JSON for storage
-   */
+  /** Convert to JSON for storage */
   public toJSON(): ResponseBehavior {
     return this.behavior;
   }
 
-  /**
-   * Create from JSON data
-   */
+  /** Create from JSON data */
   public static fromJSON(data: ResponseBehavior): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings(data || ResponseBehaviorSettings.getDefaultBehavior());
   }
 
-  /**
-   * Create default response behavior
-   */
+  /** Create default response behavior */
   public static createDefault(): ResponseBehaviorSettings {
     return new ResponseBehaviorSettings(ResponseBehaviorSettings.getDefaultBehavior());
   }
 
-  /**
-   * Get default response behavior
-   */
+  /** Get default response behavior */
   public static getDefaultBehavior(): ResponseBehavior {
     return {
       useEmojis: false,

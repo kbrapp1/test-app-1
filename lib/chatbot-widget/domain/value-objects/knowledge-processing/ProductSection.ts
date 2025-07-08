@@ -149,8 +149,8 @@ export class ProductSection {
     const thisWords = new Set(this.props.content.toLowerCase().split(/\W+/));
     const otherWords = new Set(other.content.toLowerCase().split(/\W+/));
     
-    const intersection = new Set([...thisWords].filter(word => otherWords.has(word)));
-    const union = new Set([...thisWords, ...otherWords]);
+    const intersection = new Set(Array.from(thisWords).filter(word => otherWords.has(word)));
+    const union = new Set([...Array.from(thisWords), ...Array.from(otherWords)]);
     
     const similarity = intersection.size / union.size;
     return similarity > 0.3; // 30% similarity threshold

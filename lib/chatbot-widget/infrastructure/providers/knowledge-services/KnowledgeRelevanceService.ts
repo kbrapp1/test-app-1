@@ -27,9 +27,7 @@ export class KnowledgeRelevanceService {
     this.logContext = logContext;
   }
 
-  /**
-   * Set logging context for API call logging
-   */
+  /** Set logging context for API call logging */
   setLogContext(logContext: EmbeddingLogContext): void {
     this.logContext = logContext;
     this.embeddingService.setLogContext(logContext);
@@ -109,9 +107,7 @@ export class KnowledgeRelevanceService {
     }
   }
 
-  /**
-   * Calculate enhanced relevance score combining semantic similarity with domain logic
-   */
+  /** Calculate enhanced relevance score combining semantic similarity with domain logic */
   private calculateEnhancedRelevanceScore(
     semanticSimilarity: number,
     item: KnowledgeItem,
@@ -152,9 +148,7 @@ export class KnowledgeRelevanceService {
     }
   }
 
-  /**
-   * Calculate category relevance based on intent
-   */
+  /** Calculate category relevance based on intent */
   calculateCategoryRelevance(intent: string, category: string): number {
     const intentCategoryMap: Record<string, string[]> = {
       'sales_inquiry': ['product_info', 'pricing', 'features'],
@@ -168,9 +162,7 @@ export class KnowledgeRelevanceService {
     return relevantCategories.includes(category) ? 1.0 : 0.3;
   }
 
-  /**
-   * Calculate tag relevance for query
-   */
+  /** Calculate tag relevance for query */
   calculateQueryTagRelevance(query: string, tags: string[]): number {
     if (!tags || tags.length === 0) return 0;
     
@@ -183,14 +175,7 @@ export class KnowledgeRelevanceService {
     return matchingTags.length / tags.length;
   }
 
-  /**
-   * Precompute embeddings for knowledge base items
-   * 
-   * AI INSTRUCTIONS:
-   * - Include tags in embedding content for better semantic matching
-   * - Tags enhance vector search precision by providing semantic anchors
-   * - Follows 2025 RAG best practices for tag-enhanced embeddings
-   */
+  /** Precompute embeddings for knowledge base items */
   async precomputeEmbeddings(items: KnowledgeItem[]): Promise<void> {
     const knowledgeItems = items.map(item => ({
       id: item.id,
@@ -201,14 +186,7 @@ export class KnowledgeRelevanceService {
     this.isInitialized = true;
   }
 
-  /**
-   * Build optimized content for embedding that includes tags
-   * 
-   * AI INSTRUCTIONS:
-   * - Combines title, content, and tags for comprehensive vectorization
-   * - Tags provide semantic anchors that improve search precision
-   * - Structured format helps embedding model understand content relationships
-   */
+  /** Build optimized content for embedding that includes tags */
   private buildEmbeddingContent(item: KnowledgeItem): string {
     let embeddingText = `${item.title}\n\n${item.content}`;
     
@@ -223,9 +201,7 @@ export class KnowledgeRelevanceService {
     return embeddingText;
   }
 
-  /**
-   * Check if embeddings are precomputed
-   */
+  /** Check if embeddings are precomputed */
   isReady(): boolean {
     return this.isInitialized;
   }

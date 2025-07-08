@@ -7,9 +7,7 @@ import { ChatSessionProps, SessionContext } from '../../value-objects/session-ma
  */
 export class ChatSessionFactory {
   
-  /**
-   * Create new session properties
-   */
+  /** Create new session properties */
   static createSessionProps(
     chatbotConfigId: string,
     visitorId: string,
@@ -57,9 +55,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Create initial lead qualification state
-   */
+  /** Create initial lead qualification state */
   private static createInitialQualificationState() {
     return {
       isQualified: false,
@@ -69,9 +65,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Create session props from persistence data
-   */
+  /** Create session props from persistence data */
   static fromPersistenceData(data: any): ChatSessionProps {
     return {
       id: data.id,
@@ -135,9 +129,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Parse qualification state from persistence
-   */
+  /** Parse qualification state from persistence */
   private static parseQualificationState(data: any) {
     return {
       isQualified: data.is_qualified || false,
@@ -148,9 +140,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Convert session props to persistence format
-   */
+  /** Convert session props to persistence format */
   static toPersistenceData(props: ChatSessionProps): any {
     return {
       id: props.id,
@@ -170,9 +160,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Convert context to persistence format - MODERN: Use accumulated entities
-   */
+  /** Convert context to persistence format - MODERN: Use accumulated entities */
   private static contextToPersistence(context: SessionContext): any {
     return {
       // MODERN: Legacy fields removed, entity data is in accumulated_entities
@@ -187,9 +175,7 @@ export class ChatSessionFactory {
     };
   }
 
-  /**
-   * Convert qualification state to persistence format
-   */
+  /** Convert qualification state to persistence format */
   private static qualificationToPersistence(state: any): any {
     return {
       is_qualified: state.isQualified,

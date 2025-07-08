@@ -93,14 +93,7 @@ export class CoreDomainServiceCompositionService {
     return this.sessionStateService;
   }
 
-  /**
-   * Get Context Window Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Singleton pattern for stateless domain service with dependency injection
-   * - Validate required dependencies before service creation
-   * - Follow @golden-rule dependency injection patterns
-   */
+  /** Get Context Window Service */
   static getContextWindowService(tokenCountingService?: ITokenCountingService): ContextWindowService {
     if (!this.contextWindowService) {
       // Use provided service or get from infrastructure composition service
@@ -147,14 +140,7 @@ export class CoreDomainServiceCompositionService {
     return this.leadExtractionService;
   }
 
-  /**
-   * Get Knowledge Base Form Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Singleton pattern for stateless domain service
-   * - Follow @golden-rule domain service composition patterns
-   * - Provide error handling for service initialization
-   */
+  /** Get Knowledge Base Form Service */
   static getKnowledgeBaseFormService(): KnowledgeBaseFormService {
     if (!this.knowledgeBaseFormService) {
       try {
@@ -191,14 +177,7 @@ export class CoreDomainServiceCompositionService {
     return this.userContentSanitizationService;
   }
 
-  /**
-   * Get Content Validation Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Singleton pattern for stateless domain service
-   * - Follow @golden-rule domain service composition patterns
-   * - Provide error handling for service initialization
-   */
+  /** Get Content Validation Service */
   static getContentValidationService(): ContentValidationService {
     if (!this.contentValidationService) {
       try {
@@ -235,14 +214,7 @@ export class CoreDomainServiceCompositionService {
     return this.contentLengthValidationService;
   }
 
-  /**
-   * Get Content Type Validation Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Singleton pattern for stateless domain service
-   * - Follow @golden-rule domain service composition patterns
-   * - Provide error handling for service initialization
-   */
+  /** Get Content Type Validation Service */
   static getContentTypeValidationService(): ContentTypeValidationService {
     if (!this.contentTypeValidationService) {
       try {
@@ -271,26 +243,12 @@ export class CoreDomainServiceCompositionService {
     return ChatSessionValidationService;
   }
 
-  /**
-   * Get Session Lead Qualification Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Return static service class for qualification utilities
-   * - Follow @golden-rule domain service patterns
-   * - No instantiation needed for pure utility services
-   */
+  /** Get Session Lead Qualification Service */
   static getSessionLeadQualificationService(): typeof SessionLeadQualificationService {
     return SessionLeadQualificationService;
   }
 
-  /**
-   * Get Entity Accumulation Service
-   * 
-   * AI INSTRUCTIONS:
-   * - Return static service class for entity accumulation utilities
-   * - Follow @golden-rule domain service patterns
-   * - No instantiation needed for pure utility services
-   */
+  /** Get Entity Accumulation Service */
   static getEntityAccumulationService(): typeof EntityAccumulationService {
     return EntityAccumulationService;
   }
@@ -349,14 +307,7 @@ export class CoreDomainServiceCompositionService {
     };
   }
 
-  /**
-   * Health check for all core domain services
-   * 
-   * AI INSTRUCTIONS:
-   * - Follow @golden-rule health check patterns
-   * - Validate service readiness without initializing if not needed
-   * - Return detailed health status for monitoring
-   */
+  /** Health check for all core domain services */
   static async healthCheck(): Promise<{
     sessionContextService: boolean;
     sessionStateService: boolean;

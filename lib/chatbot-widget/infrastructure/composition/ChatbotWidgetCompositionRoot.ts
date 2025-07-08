@@ -33,7 +33,7 @@ import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbed
 import { UrlNormalizationService } from '../../domain/services/UrlNormalizationService';
 import { ContentDeduplicationService } from '../../domain/services/ContentDeduplicationService';
 import { ErrorCategorizationDomainService } from '../../domain/services/ErrorCategorizationDomainService';
-import { DynamicPromptService } from '../../domain/services/ai-configuration/DynamicPromptService';
+import { SimplePromptService } from '../../domain/services/ai-configuration/SimplePromptService';
 import { ConversationAnalysisService } from '../../domain/services/ai-configuration/ConversationAnalysisService';
 import { PersonaGenerationService } from '../../domain/services/ai-configuration/PersonaGenerationService';
 import { KnowledgeBaseService } from '../../domain/services/ai-configuration/KnowledgeBaseService';
@@ -48,6 +48,7 @@ import { UseCaseCompositionService } from './UseCaseCompositionService';
 import { AIConfigurationCompositionService } from './AIConfigurationCompositionService';
 import { InfrastructureCompositionService } from './InfrastructureCompositionService';
 import { ErrorTrackingCompositionService } from './ErrorTrackingCompositionService';
+import { AppStartupService } from '../startup/AppStartupService';
 
 /**
  * AI Instructions: Main Composition Root for Chatbot Widget Domain
@@ -58,6 +59,7 @@ import { ErrorTrackingCompositionService } from './ErrorTrackingCompositionServi
  */
 export class ChatbotWidgetCompositionRoot {
   private static isInitialized = false;
+  private static initializationPromise: Promise<void> | null = null;
 
   // Repository access
   
@@ -198,17 +200,12 @@ export class ChatbotWidgetCompositionRoot {
   }
 
   static async getProcessChatMessageUseCase(): Promise<ProcessChatMessageUseCase> {
-    // Pre-initialize critical services to avoid cold starts
-    if (!this.isInitialized) {
-      await this.preInitializeServices();
-      this.isInitialized = true;
-    }
+    // Ensure cache warming and critical services are initialized
+    await this.ensureInitialized();
     return UseCaseCompositionService.getProcessChatMessageUseCase();
   }
 
-  /**
-   * Pre-initialize critical services to avoid cold start delays
-   */
+  // Pre-initialize critical services to avoid cold start delays
   private static async preInitializeServices(): Promise<void> {
     // Pre-cache the most expensive dynamic imports
     await Promise.all([
@@ -263,8 +260,8 @@ export class ChatbotWidgetCompositionRoot {
     return AIConfigurationCompositionService.getAdaptiveContextService();
   }
 
-  static getDynamicPromptService(): DynamicPromptService {
-    return AIConfigurationCompositionService.getDynamicPromptService();
+  static getSimplePromptService(): SimplePromptService {
+    return AIConfigurationCompositionService.getSimplePromptService();
   }
 
   // Configuration and testing
@@ -310,5 +307,43 @@ export class ChatbotWidgetCompositionRoot {
       vectorRepository, 
       embeddingService
     );
+  }
+
+  /**
+   * Ensure application startup and cache warming
+   * AI: Call this before any chatbot operations to ensure cache is ready
+   */
+  private static async ensureInitialized(): Promise<void> {
+    if (this.isInitialized) {
+      return;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = this.performInitialization();
+    return this.initializationPromise;
+  }
+
+  /**
+   * Perform lazy initialization for serverless environment
+   * AI: Trigger cache warming and wait for completion to ensure cache is ready
+   */
+  private static async performInitialization(): Promise<void> {
+    try {
+      // Pre-initialize critical services first to avoid cold starts
+      await this.preInitializeServices();
+      
+      // Wait for cache warming to complete before proceeding
+      // AI: This ensures the cache is ready before any user requests
+      await AppStartupService.initialize();
+      
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Composition root initialization failed:', error);
+      // Don't throw - allow app to continue even if cache warming fails
+      this.isInitialized = true;
+    }
   }
 } 

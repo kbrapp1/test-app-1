@@ -19,9 +19,7 @@ export class ChatMessageAnalyticsQueryService {
 
   constructor(private readonly supabase: SupabaseClient) {}
 
-  /**
-   * Basic organization queries (consolidated from analytics/ChatMessageQueryService)
-   */
+  /** Basic organization queries (consolidated from analytics/ChatMessageQueryService) */
   async getMessagesForOrganization(
     organizationId: string,
     dateFrom: Date,
@@ -131,9 +129,7 @@ export class ChatMessageAnalyticsQueryService {
     return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
   }
 
-  /**
-   * Advanced analytics queries (existing functionality)
-   */
+  /** Advanced analytics queries (existing functionality) */
   async findByIntentDetected(
     organizationId: string,
     intent: string,

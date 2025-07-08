@@ -40,7 +40,7 @@ export interface VectorSearchOptions {
 export interface VectorCacheConfig {
   maxMemoryKB?: number; // Default: 50MB
   maxVectors?: number; // Default: 10000
-  enableLRUEviction?: boolean; // Default: true
+  // AI: Removed LRU eviction - let serverless platform handle memory management
   evictionBatchSize?: number; // Default: 100
 }
 

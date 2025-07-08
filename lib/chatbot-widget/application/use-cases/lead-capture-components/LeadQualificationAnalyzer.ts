@@ -54,9 +54,7 @@ export class LeadQualificationAnalyzer {
     return this.createFallbackQualification(leadScore);
   }
 
-  /**
-   * Map AI qualification flags to our status enum
-   */
+  /** Map AI qualification flags to our status enum */
   private static mapAIStatusToQualificationStatus(
     aiData: {
       isQualified?: boolean;
@@ -78,9 +76,7 @@ export class LeadQualificationAnalyzer {
     return 'needs_review';
   }
 
-  /**
-   * Create minimal fallback qualification when AI data is unavailable
-   */
+  /** Create minimal fallback qualification when AI data is unavailable */
   private static createFallbackQualification(leadScore: number): QualificationAnalysis {
     // Minimal fallback logic - just use score ranges
     let status: QualificationStatus;
@@ -106,9 +102,7 @@ export class LeadQualificationAnalyzer {
     };
   }
 
-  /**
-   * Get simple qualification summary for reporting
-   */
+  /** Get simple qualification summary for reporting */
   static getQualificationSummary(analysis: QualificationAnalysis): {
     isQualified: boolean;
     readyForSales: boolean;
@@ -121,9 +115,7 @@ export class LeadQualificationAnalyzer {
     };
   }
 
-  /**
-   * Get recommended next action based on qualification status
-   */
+  /** Get recommended next action based on qualification status */
   private static getNextAction(status: QualificationStatus): string {
     switch (status) {
       case 'qualified':

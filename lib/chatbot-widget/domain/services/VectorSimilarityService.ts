@@ -22,28 +22,13 @@ import { VectorMemoryManagementService } from './VectorMemoryManagementService';
  */
 export class VectorSimilarityService {
 
-  /**
-   * Default similarity search configuration
-   * 
-   * AI INSTRUCTIONS:
-   * - Define reasonable default values for similarity search
-   * - Balance precision with performance
-   * - Support common use cases
-   */
+  /** Default similarity search configuration */
   static readonly DEFAULT_THRESHOLD = 0.15;
   static readonly DEFAULT_LIMIT = 5;
   static readonly MIN_THRESHOLD = 0.0;
   static readonly MAX_THRESHOLD = 1.0;
 
-  /**
-   * Search cached vectors using cosine similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Perform in-memory cosine similarity calculations
-   * - Update access tracking for LRU eviction
-   * - Apply filtering and threshold-based search
-   * - Return results sorted by similarity score
-   */
+  /** Search cached vectors using cosine similarity */
   static searchVectors(
     queryEmbedding: number[],
     vectorCache: Map<string, CachedKnowledgeVector>,
@@ -189,14 +174,7 @@ export class VectorSimilarityService {
     };
   }
 
-  /**
-   * Validate similarity threshold
-   * 
-   * AI INSTRUCTIONS:
-   * - Ensure threshold is within valid range
-   * - Use domain-specific error types
-   * - Provide reasonable bounds checking
-   */
+  /** Validate similarity threshold */
   static validateThreshold(threshold: number): void {
     if (threshold < this.MIN_THRESHOLD || threshold > this.MAX_THRESHOLD) {
       throw new BusinessRuleViolationError(
@@ -206,14 +184,7 @@ export class VectorSimilarityService {
     }
   }
 
-  /**
-   * Check if vector passes search filters
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply category and source type filters
-   * - Handle undefined filter values gracefully
-   * - Return boolean indicating filter pass/fail
-   */
+  /** Check if vector passes search filters */
   private static passesFilters(
     cachedVector: CachedKnowledgeVector,
     options: VectorSearchOptions
@@ -231,14 +202,7 @@ export class VectorSimilarityService {
     return true;
   }
 
-  /**
-   * Validate search parameters
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate query embedding and search options
-   * - Use domain-specific error types
-   * - Check for reasonable parameter values
-   */
+  /** Validate search parameters */
   private static validateSearchParameters(
     queryEmbedding: number[],
     options: VectorSearchOptions

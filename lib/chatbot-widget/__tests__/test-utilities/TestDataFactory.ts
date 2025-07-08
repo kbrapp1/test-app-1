@@ -14,14 +14,7 @@ import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrie
 
 export class TestDataFactory {
   
-  /**
-   * Website Source Factory
-   * 
-   * AI INSTRUCTIONS:
-   * - Create valid WebsiteSource objects for testing
-   * - Support different status scenarios
-   * - Include realistic crawl settings
-   */
+  /** Website Source Factory */
   static createWebsiteSource(overrides: Partial<WebsiteSource> = {}): WebsiteSource {
     return {
       id: `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -36,9 +29,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Website Source with Completed Status
-   */
+  /** Website Source with Completed Status */
   static createCompletedWebsiteSource(overrides: Partial<WebsiteSource> = {}): WebsiteSource {
     return this.createWebsiteSource({
       status: 'completed',
@@ -48,9 +39,7 @@ export class TestDataFactory {
     });
   }
 
-  /**
-   * Website Source with Error Status
-   */
+  /** Website Source with Error Status */
   static createErrorWebsiteSource(overrides: Partial<WebsiteSource> = {}): WebsiteSource {
     return this.createWebsiteSource({
       status: 'error',
@@ -59,9 +48,7 @@ export class TestDataFactory {
     });
   }
 
-  /**
-   * Website Crawl Settings Factory
-   */
+  /** Website Crawl Settings Factory */
   static createWebsiteCrawlSettings(overrides: Partial<WebsiteCrawlSettings> = {}): WebsiteCrawlSettings {
     return {
       maxPages: 50,
@@ -76,9 +63,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Knowledge Base Factory
-   */
+  /** Knowledge Base Factory */
   static createKnowledgeBase(overrides: Partial<{
     companyInfo: string;
     productCatalog: string;
@@ -98,9 +83,7 @@ export class TestDataFactory {
     });
   }
 
-  /**
-   * FAQ Factory
-   */
+  /** FAQ Factory */
   static createFAQ(overrides: Partial<FAQ> = {}): FAQ {
     return {
       id: `faq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -112,9 +95,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Knowledge Item Factory
-   */
+  /** Knowledge Item Factory */
   static createKnowledgeItem(overrides: Partial<KnowledgeItem> = {}): KnowledgeItem {
     return {
       id: `ki_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -129,9 +110,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Knowledge Item with Vector Data
-   */
+  /** Knowledge Item with Vector Data */
   static createKnowledgeItemWithVector(overrides: Partial<KnowledgeItem & { embedding: number[] }> = {}): KnowledgeItem & { embedding: number[] } {
     return {
       ...this.createKnowledgeItem(),
@@ -140,16 +119,12 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Mock Embedding Vector (1536 dimensions like OpenAI)
-   */
+  /** Mock Embedding Vector (1536 dimensions like OpenAI) */
   static createMockEmbedding(): number[] {
     return Array.from({ length: 1536 }, () => Math.random() * 2 - 1);
   }
 
-  /**
-   * Crawled Page Data Factory
-   */
+  /** Crawled Page Data Factory */
   static createCrawledPageData(overrides: Partial<{
     url: string;
     title: string;
@@ -174,9 +149,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Batch of Crawled Pages
-   */
+  /** Batch of Crawled Pages */
   static createCrawledPagesBatch(count: number = 3): Array<ReturnType<typeof TestDataFactory.createCrawledPageData>> {
     return Array.from({ length: count }, (_, index) => 
       this.createCrawledPageData({
@@ -188,9 +161,7 @@ export class TestDataFactory {
     );
   }
 
-  /**
-   * Duplicate Content Scenarios
-   */
+  /** Duplicate Content Scenarios */
   static createDuplicateContentScenario(): {
     canonical: KnowledgeItem;
     duplicates: KnowledgeItem[];
@@ -218,9 +189,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * URL Normalization Test Cases
-   */
+  /** URL Normalization Test Cases */
   static createUrlNormalizationTestCases(): Array<{
     input: string;
     expected: string;
@@ -255,9 +224,7 @@ export class TestDataFactory {
     ];
   }
 
-  /**
-   * Content Similarity Test Cases
-   */
+  /** Content Similarity Test Cases */
   static createContentSimilarityTestCases(): Array<{
     content1: string;
     content2: string;
@@ -286,9 +253,7 @@ export class TestDataFactory {
     ];
   }
 
-  /**
-   * Error Scenarios Factory
-   */
+  /** Error Scenarios Factory */
   static createErrorScenarios() {
     return {
       networkError: new Error('Network request failed'),
@@ -299,9 +264,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Mock Request/Response Objects
-   */
+  /** Mock Request/Response Objects */
   static createMockWebsiteCrawlRequest(overrides: Partial<{
     organizationId: string;
     chatbotConfigId: string;
@@ -315,9 +278,7 @@ export class TestDataFactory {
     };
   }
 
-  /**
-   * Performance Test Data
-   */
+  /** Performance Test Data */
   static createPerformanceTestData(pageCount: number = 100): {
     websiteSource: WebsiteSource;
     expectedPages: Array<ReturnType<typeof TestDataFactory.createCrawledPageData>>;

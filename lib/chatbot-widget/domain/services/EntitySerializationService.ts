@@ -31,15 +31,7 @@ import {
  */
 export class EntitySerializationService {
 
-  /**
-   * Serialize AccumulatedEntities to plain object for storage
-   * 
-   * AI INSTRUCTIONS:
-   * - Convert Date objects to ISO strings for JSON compatibility
-   * - Maintain all metadata for proper round-trip deserialization
-   * - Handle null entities gracefully
-   * - Provide consistent serialization format
-   */
+  /** Serialize AccumulatedEntities to plain object for storage */
   static serializeAccumulatedEntities(props: AccumulatedEntitiesProps): SerializedAccumulatedEntities {
     return {
       decisionMakers: this.serializeEntityArray(props.decisionMakers),
@@ -60,16 +52,7 @@ export class EntitySerializationService {
     };
   }
 
-  /**
-   * Deserialize stored data back to AccumulatedEntitiesProps
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle deserialization from SessionContext storage
-   * - Validate structure and provide defaults for missing fields
-   * - Convert string dates back to Date objects
-   * - Support legacy data format migration
-   * - Provide error recovery for malformed data
-   */
+  /** Deserialize stored data back to AccumulatedEntitiesProps */
   static deserializeAccumulatedEntities(storedData: any): AccumulatedEntitiesProps {
     if (!storedData || typeof storedData !== 'object') {
       return this.createDefaultProps();
@@ -107,15 +90,7 @@ export class EntitySerializationService {
     }
   }
 
-  /**
-   * Serialize single entity with metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle null entities gracefully
-   * - Convert Date objects to ISO strings
-   * - Maintain all metadata for round-trip compatibility
-   * - Provide consistent serialization format
-   */
+  /** Serialize single entity with metadata */
   static serializeEntity(entity: EntityWithMetadata<any> | null): SerializedEntityWithMetadata | null {
     if (!entity) return null;
     
@@ -140,15 +115,7 @@ export class EntitySerializationService {
     return entities.map(entity => this.serializeEntity(entity)).filter(Boolean) as SerializedEntityWithMetadata[];
   }
 
-  /**
-   * Deserialize single entity with metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle null and malformed entities gracefully
-   * - Convert ISO strings back to Date objects
-   * - Provide default values for missing metadata
-   * - Support legacy data format migration
-   */
+  /** Deserialize single entity with metadata */
   static deserializeEntity(entity: any): EntityWithMetadata<any> | null {
     if (!entity || typeof entity !== 'object') return null;
     
@@ -164,15 +131,7 @@ export class EntitySerializationService {
     }
   }
 
-  /**
-   * Deserialize array of entities with metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle non-array inputs gracefully
-   * - Support legacy string arrays for backward compatibility
-   * - Filter out malformed entities
-   * - Maintain array order where possible
-   */
+  /** Deserialize array of entities with metadata */
   static deserializeEntityArray(array: any[]): EntityWithMetadata<string>[] {
     if (!Array.isArray(array)) return [];
     
@@ -216,15 +175,7 @@ export class EntitySerializationService {
     }
   }
 
-  /**
-   * Create default AccumulatedEntitiesProps
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide clean default state for new entities
-   * - Initialize all required fields with appropriate defaults
-   * - Use current timestamp for metadata
-   * - Ensure type safety with proper defaults
-   */
+  /** Create default AccumulatedEntitiesProps */
   static createDefaultProps(): AccumulatedEntitiesProps {
     return {
       decisionMakers: [],
@@ -245,15 +196,7 @@ export class EntitySerializationService {
     };
   }
 
-  /**
-   * Validate serialized entity structure
-   * 
-   * AI INSTRUCTIONS:
-   * - Check for required fields in serialized entities
-   * - Validate data types and ranges
-   * - Provide detailed validation results
-   * - Support data integrity checks before deserialization
-   */
+  /** Validate serialized entity structure */
   static validateSerializedEntity(entity: any): EntityValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -312,15 +255,7 @@ export class EntitySerializationService {
     }
   }
 
-  /**
-   * Migrate legacy data format to current format
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle backward compatibility for old data structures
-   * - Transform legacy formats to current schema
-   * - Provide seamless migration without data loss
-   * - Support incremental migration strategies
-   */
+  /** Migrate legacy data format to current format */
   static migrateLegacyData(legacyData: any): AccumulatedEntitiesProps {
     if (!legacyData || typeof legacyData !== 'object') {
       return this.createDefaultProps();

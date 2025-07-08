@@ -124,7 +124,7 @@ describe('ChatbotConfig Entity', () => {
         name: 'Enterprise Support Bot'
       });
 
-      // Note: System prompt generation is now handled by DynamicPromptService
+      // Note: System prompt generation is now handled by SimplePromptService
       // This test verifies the configuration is properly created
       expect(config.personalitySettings.tone).toBe('professional');
       expect(config.personalitySettings.communicationStyle).toBe('consultative');

@@ -158,33 +158,14 @@ export class MessageProcessingWorkflowService {
       'text' // Default input method
     );
 
-    // Save the initial user message first
+    // Save the initial user message immediately - no blocking API calls
     const savedUserMessage = await this.messageRepository.save(userMessage, sharedLogFile);
 
-    // Analyze sentiment, urgency, and engagement using AI API and update the message
-    try {
-      // Get conversation history for engagement analysis
-      const allMessages = await this.messageRepository.findBySessionId(session.id);
-      
-      const [detectedSentiment, detectedUrgency, detectedEngagement] = await Promise.all([
-        this.aiConversationService.analyzeSentiment(request.userMessage),
-        this.aiConversationService.analyzeUrgency(request.userMessage, request.organizationId),
-        this.aiConversationService.analyzeEngagement(request.userMessage, allMessages, request.organizationId)
-      ]);
-      
-      // Update the message with the analyzed sentiment, urgency, and engagement
-      const updatedUserMessage = savedUserMessage
-        .updateSentiment(detectedSentiment)
-        .updateUrgency(detectedUrgency)
-        .updateEngagement(detectedEngagement);
-      
-      // Save the updated message with sentiment, urgency, and engagement information
-      return await this.messageRepository.save(updatedUserMessage, sharedLogFile);
-    } catch (error) {
-      // If analysis fails, return the original message
-      // This ensures the conversation can continue even if analysis has issues
-      return savedUserMessage;
-    }
+    // AI INSTRUCTIONS: Sentiment, urgency, and engagement analysis is now extracted 
+    // from the main API response in ChatMessageProcessingService.generateAIResponse()
+    // This eliminates 3 redundant API calls and 2.8s delay while preserving all data
+    
+    return savedUserMessage;
   }
 
   private initializeDebugSession(sessionId: string, userMessageId: string): void {

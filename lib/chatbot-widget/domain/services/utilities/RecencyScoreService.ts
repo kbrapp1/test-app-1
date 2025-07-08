@@ -15,14 +15,7 @@
  */
 export class RecencyScoreService {
   
-  /**
-   * Calculate recency score - more recent messages score higher
-   * 
-   * AI INSTRUCTIONS:
-   * - Implement exponential decay for recency scoring
-   * - Position 0 = most recent, higher positions = older
-   * - Return score between 0.0 and 1.0
-   */
+  /** Calculate recency score - more recent messages score higher */
   static calculateRecencyScore(position: number, totalMessages: number): number {
     if (totalMessages <= 1) return 1.0;
     
@@ -36,14 +29,7 @@ export class RecencyScoreService {
     return Math.exp(-decayFactor * normalizedPosition * 10);
   }
   
-  /**
-   * Calculate decay factor based on conversation length
-   * 
-   * AI INSTRUCTIONS:
-   * - Adjust decay rate based on conversation context
-   * - Longer conversations need more aggressive decay
-   * - Shorter conversations preserve more history
-   */
+  /** Calculate decay factor based on conversation length */
   static calculateAdaptiveDecayFactor(totalMessages: number): number {
     // Base decay factor
     let decayFactor = 0.1;
@@ -58,14 +44,7 @@ export class RecencyScoreService {
     return decayFactor;
   }
   
-  /**
-   * Calculate position-based score with adaptive decay
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine position scoring with adaptive decay
-   * - Optimize for different conversation lengths
-   * - Maintain score distribution between 0.0 and 1.0
-   */
+  /** Calculate position-based score with adaptive decay */
   static calculateAdaptiveRecencyScore(position: number, totalMessages: number): number {
     if (totalMessages <= 1) return 1.0;
     

@@ -1,15 +1,6 @@
 import { PlatformType } from './PlatformSelector';
 
-/**
- * EmbedCodeGenerationService
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Generate platform-specific embed codes
- * - Presentation layer service for code generation logic
- * - Keep under 150 lines, focused on code generation only
- * - Pure functions with no side effects
- */
-
+/** EmbedCodeGenerationService */
 export class EmbedCodeGenerationService {
   private static getBaseUrl(): string {
     return process.env.NEXT_PUBLIC_APP_URL_DEV || 'https://your-domain.com';

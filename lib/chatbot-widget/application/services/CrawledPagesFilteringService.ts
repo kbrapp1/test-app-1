@@ -7,28 +7,10 @@ import {
   SortOrder 
 } from '../types/CrawledPagesTypes';
 
-/**
- * Crawled Pages Filtering Service
- * 
- * AI INSTRUCTIONS:
- * - Handle all filtering and sorting logic for crawled pages
- * - Maintain single responsibility for data filtering operations
- * - Use domain-specific error types for validation failures
- * - Keep filtering logic pure and testable
- * - Support multiple filtering criteria and sorting options
- * - Handle edge cases gracefully
- */
+/** Crawled Pages Filtering Service */
 export class CrawledPagesFilteringService {
 
-  /**
-   * Apply filtering to crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Filter pages based on status and date range
-   * - Handle undefined values gracefully
-   * - Maintain type safety throughout filtering
-   * - Support multiple filter criteria simultaneously
-   */
+  /** Apply filtering to crawled pages */
   static applyFiltering(
     pages: CrawledPageData[],
     options: FilteringOptions
@@ -48,15 +30,7 @@ export class CrawledPagesFilteringService {
     return filtered;
   }
 
-  /**
-   * Apply sorting to crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Sort pages based on specified criteria
-   * - Handle different sort fields and orders
-   * - Maintain stable sorting for consistent results
-   * - Default to descending order for dates
-   */
+  /** Apply sorting to crawled pages */
   static applySorting(
     pages: CrawledPageData[],
     options: SortingOptions
@@ -74,15 +48,7 @@ export class CrawledPagesFilteringService {
     });
   }
 
-  /**
-   * Apply date filtering to crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Filter pages by crawl date range
-   * - Handle undefined date range gracefully
-   * - Validate date range before filtering
-   * - Maintain type safety
-   */
+  /** Apply date filtering to crawled pages */
   private static applyDateFiltering(
     pages: CrawledPageData[],
     dateRange: { startDate: Date; endDate: Date }
@@ -101,15 +67,7 @@ export class CrawledPagesFilteringService {
     );
   }
 
-  /**
-   * Compare two pages for sorting
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle different sort fields appropriately
-   * - Provide consistent comparison logic
-   * - Handle null/undefined values safely
-   * - Return standard comparison result (-1, 0, 1)
-   */
+  /** Compare two pages for sorting */
   private static comparePages(
     a: CrawledPageData,
     b: CrawledPageData,
@@ -130,15 +88,7 @@ export class CrawledPagesFilteringService {
     }
   }
 
-  /**
-   * Validate filtering options
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate filtering parameters
-   * - Use domain-specific error types
-   * - Check for valid status values
-   * - Validate date range if provided
-   */
+  /** Validate filtering options */
   static validateFilteringOptions(options: FilteringOptions): void {
     if (options.status && !['success', 'failed', 'skipped'].includes(options.status)) {
       throw new BusinessRuleViolationError(
@@ -157,14 +107,7 @@ export class CrawledPagesFilteringService {
     }
   }
 
-  /**
-   * Validate sorting options
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate sorting parameters
-   * - Check for valid sort fields and orders
-   * - Use domain-specific error types
-   */
+  /** Validate sorting options */
   static validateSortingOptions(options: SortingOptions): void {
     if (options.sortBy && !['crawledAt', 'url', 'status'].includes(options.sortBy)) {
       throw new BusinessRuleViolationError(

@@ -27,17 +27,7 @@ import {
   VectorSearchResult
 } from '../types/VectorCacheTypes';
 
-/**
- * In-Memory Vector Knowledge Cache Service with State Management Focus
- * 
- * AI INSTRUCTIONS:
- * - Manages cache state: vectors, statistics, and configuration
- * - Delegates complex workflows to VectorCacheOrchestrationService
- * - Provides simple API for initialization, search, and monitoring
- * - Maintains cache lifecycle and statistics tracking
- * - Handles error conditions and validation
- * - Focuses on state management rather than complex orchestration
- */
+/** In-Memory Vector Knowledge Cache Service with State Management Focus */
 export class VectorKnowledgeCache {
   private cachedVectors: Map<string, CachedKnowledgeVector> = new Map();
   private isInitialized: boolean = false;
@@ -58,15 +48,7 @@ export class VectorKnowledgeCache {
     this.config = VectorMemoryManagementService.createConfig(config);
   }
 
-  /**
-   * Initialize cache with knowledge vectors
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate complex initialization workflow to orchestration service
-   * - Update cache state based on orchestration results
-   * - Handle initialization errors gracefully
-   * - Maintain initialization tracking
-   */
+  /** Initialize cache with knowledge vectors */
   async initialize(
     vectors: Array<{ item: KnowledgeItem; vector: number[] }>,
     sharedLogFile: string
@@ -155,14 +137,7 @@ export class VectorKnowledgeCache {
     }
   }
 
-  /**
-   * Get cache statistics for monitoring
-   * 
-   * AI INSTRUCTIONS:
-   * - Use VectorCacheStatisticsService for comprehensive statistics
-   * - Provide current cache state and performance metrics
-   * - Support monitoring and optimization decisions
-   */
+  /** Get cache statistics for monitoring */
   getCacheStats(): VectorCacheStats {
     return VectorCacheStatisticsService.calculateCacheStats(
       this.cachedVectors,
@@ -174,21 +149,12 @@ export class VectorKnowledgeCache {
     );
   }
 
-  /**
-   * Check if cache is initialized and ready for searches
-   */
+  /** Check if cache is initialized and ready for searches */
   isReady(): boolean {
     return this.isInitialized && this.cachedVectors.size > 0;
   }
 
-  /**
-   * Clear cache and reset statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Clear cache state and reset counters
-   * - Use orchestration service for logging if needed
-   * - Reset initialization state
-   */
+  /** Clear cache and reset statistics */
   clear(): void {
     const previousSize = this.cachedVectors.size;
     
@@ -207,14 +173,7 @@ export class VectorKnowledgeCache {
     }
   }
 
-  /**
-   * Load vectors into cache with access tracking
-   * 
-   * AI INSTRUCTIONS:
-   * - Create cached vector entries with metadata
-   * - Initialize access tracking for LRU
-   * - Generate unique cache keys
-   */
+  /** Load vectors into cache with access tracking */
   private loadVectorsIntoCache(vectors: Array<{ item: KnowledgeItem; vector: number[] }>): void {
     const now = new Date();
     
@@ -229,9 +188,7 @@ export class VectorKnowledgeCache {
     });
   }
 
-  /**
-   * Clear cache state and reset counters
-   */
+  /** Clear cache state and reset counters */
   private clearCacheState(): void {
     this.cachedVectors.clear();
     this.searchCount = 0;
@@ -239,33 +196,25 @@ export class VectorKnowledgeCache {
     this.evictionsPerformed = 0;
   }
 
-  /**
-   * Perform complete cache clearing
-   */
+  /** Perform complete cache clearing */
   private performCacheClear(): void {
     this.clearCacheState();
     this.isInitialized = false;
     this.initializationTime = null;
   }
 
-  /**
-   * Increment search statistics
-   */
+  /** Increment search statistics */
   private incrementSearchStats(): void {
     this.searchCount++;
     this.cacheHits++; // All searches are cache hits since we search in-memory
   }
 
-  /**
-   * Generate cache key for knowledge item
-   */
+  /** Generate cache key for knowledge item */
   private generateCacheKey(itemId: string): string {
     return `${this.organizationId}_${this.chatbotConfigId}_${itemId}`;
   }
 
-  /**
-   * Create session logger with consistent context
-   */
+  /** Create session logger with consistent context */
   private createLogger(sessionId: string, logFile: string, operation: string) {
     return this.loggingService.createSessionLogger(
       sessionId,

@@ -32,9 +32,7 @@ export class ContentValidationError extends DomainError {
     });
   }
 
-  /**
-   * Create error for invalid content type
-   */
+  /** Create error for invalid content type */
   static invalidContentType(contentType: string, validTypes: string[]): ContentValidationError {
     return new ContentValidationError(
       `Invalid content type: ${contentType}`,
@@ -46,9 +44,7 @@ export class ContentValidationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for validation rule violation
-   */
+  /** Create error for validation rule violation */
   static ruleViolation(rule: string, contentType: string, details?: Record<string, any>): ContentValidationError {
     return new ContentValidationError(
       `Content violates validation rule: ${rule}`,
@@ -61,9 +57,7 @@ export class ContentValidationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for empty content
-   */
+  /** Create error for empty content */
   static emptyContent(contentType: string): ContentValidationError {
     return new ContentValidationError(
       'Content cannot be empty for validation',
@@ -74,9 +68,7 @@ export class ContentValidationError extends DomainError {
     );
   }
 
-  /**
-   * Create error for validation processing failure
-   */
+  /** Create error for validation processing failure */
   static processingFailure(contentType: string, originalError: Error): ContentValidationError {
     return new ContentValidationError(
       'Failed to process content during validation',

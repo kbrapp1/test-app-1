@@ -1,8 +1,9 @@
 /**
  * Initialize Chat Session Use Case
  * 
- * AI Instructions:
- * - Initialize chat session with knowledge cache warming
+ * AI INSTRUCTIONS:
+ * - Initialize chat session with comprehensive background cache warming
+ * - Trigger full vector cache initialization to eliminate 6+ second delays
  * - Validate chatbot config exists and is active
  * - Coordinate domain services without business logic
  * - Handle cache warming as part of session initialization
@@ -38,46 +39,48 @@ export class InitializeChatSessionUseCase {
     private readonly knowledgeRetrievalService: IKnowledgeRetrievalService
   ) {}
 
-  // Initialize new chat session with knowledge cache warming
+  // Initialize new chat session with comprehensive cache warming
   async execute(request: InitializeSessionRequest): Promise<InitializeSessionResponse> {
-    const { chatbotConfigId, visitorId, initialContext, warmKnowledgeCache = true } = request;
-
-    // 1. Validate and retrieve chatbot configuration
-    const chatbotConfig = await this.validateChatbotConfig(chatbotConfigId);
+    // 1. Validate chatbot configuration
+    const chatbotConfig = await this.validateChatbotConfig(request.chatbotConfigId);
 
     // 2. Generate visitor ID if not provided
-    const sessionVisitorId = visitorId || this.generateVisitorId();
+    const visitorId = request.visitorId || this.generateVisitorId();
 
-    // 3. Create new chat session using domain entity
+    // 3. Create new chat session
     const session = ChatSession.create(
-      chatbotConfigId,
-      sessionVisitorId,
-      initialContext
+      chatbotConfig.id,
+      visitorId,
+      request.initialContext
     );
 
-    // 4. Warm knowledge cache if requested
-    let cacheWarmed = false;
-    let cacheWarmingTimeMs: number | undefined;
+    // 4. Create session initialization log file for easy debugging
+    // This ensures session initialization has its own dedicated log file
+    const initTimestamp = new Date().toISOString().replace(/[:.]/g, '-').split('.')[0];
+    const sessionLogFile = `chatbot-init-${initTimestamp}.log`;
     
-    if (warmKnowledgeCache) {
-      const cacheResult = await this.warmKnowledgeCache(chatbotConfig);
-      cacheWarmed = cacheResult.success;
-      cacheWarmingTimeMs = cacheResult.timeMs;
-    }
+         // 5. Warm knowledge cache for optimal performance (serverless-optimized)
+     let cacheWarmed = false;
+     let cacheWarmingTimeMs = 0;
+     
+     if (request.warmKnowledgeCache !== false) {
+       const cacheResult = await this.warmKnowledgeCache(chatbotConfig, sessionLogFile);
+       cacheWarmed = cacheResult.success;
+       cacheWarmingTimeMs = cacheResult.timeMs;
+     }
 
-    // 5. Save session to repository
-    const initLogFile = `session-init-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
-    const savedSession = await this.sessionRepository.save(session, initLogFile);
+         // 6. Save session to repository using the same log file
+     const savedSession = await this.sessionRepository.save(session, sessionLogFile);
 
-    // 6. Publish domain event for session initialization
-    this.publishSessionInitializedEvent(savedSession, chatbotConfig, cacheWarmed);
+     // 7. Publish domain event for session initialization
+     this.publishSessionInitializedEvent(savedSession, chatbotConfig, cacheWarmed);
 
-    return {
-      session: savedSession,
-      chatbotConfig,
-      cacheWarmed,
-      cacheWarmingTimeMs
-    };
+     return {
+       session: savedSession,
+       chatbotConfig,
+       cacheWarmed,
+       cacheWarmingTimeMs
+     };
   }
 
   // Validate chatbot configuration exists and is active
@@ -116,46 +119,54 @@ export class InitializeChatSessionUseCase {
     return `visitor_${timestamp}_${randomSuffix}`;
   }
 
-  // Warm knowledge cache for optimal performance
+
+
+  // Warm knowledge cache for optimal performance (fallback)
   private async warmKnowledgeCache(
-    chatbotConfig: ChatbotConfig
+    chatbotConfig: ChatbotConfig,
+    sessionLogFile: string
   ): Promise<{ success: boolean; timeMs: number }> {
     const startTime = Date.now();
     
     try {
-      // Create cache warming specific log file
-      const cacheWarmingLogFile = `cache-warming-${new Date().toISOString().replace(/[:.]/g, '-').split('.')[0]}.log`;
+      // AI: Check if ALL caches are already ready to avoid redundant API calls
+      const vectorService = this.knowledgeRetrievalService as any;
+      const isVectorCacheReady = vectorService.isVectorCacheReady?.() || false;
       
-      // Check if vector cache is already initialized
-      const vectorCacheReady = 'isVectorCacheReady' in this.knowledgeRetrievalService 
-        ? (this.knowledgeRetrievalService as any).isVectorCacheReady() 
-        : false;
-
-      if (!vectorCacheReady) {
-        // Initialize vector cache by triggering a dummy search
+      // Check if embedding cache has substantial warming (not just dummy entries)
+      const embeddingCacheStats = vectorService.getEmbeddingService?.()?.getCacheStats?.() || { size: 0 };
+      const isEmbeddingCacheWarmed = embeddingCacheStats.size > 5; // Require more than just dummy entries
+      
+      if (isVectorCacheReady && isEmbeddingCacheWarmed) {
+        const timeMs = Date.now() - startTime;
+        return { success: true, timeMs }; // All caches ready - no API calls needed
+      }
+      
+      // Only initialize vector cache if not ready (avoids redundant API calls)
+      if (!isVectorCacheReady) {
         try {
           await this.knowledgeRetrievalService.searchKnowledge({
             userQuery: 'initialization dummy query',
-            sharedLogFile: cacheWarmingLogFile,
+            sharedLogFile: sessionLogFile,
             maxResults: 1,
-            minRelevanceScore: 0.1
+            minRelevanceScore: 0.15
           });
         } catch (error) {
           // Expected to fail, but should initialize cache
         }
       }
       
-      // Trigger embedding cache warming
-      if ('warmCache' in this.knowledgeRetrievalService) {
-        await (this.knowledgeRetrievalService as any).warmCache(cacheWarmingLogFile);
+      // Only warm embedding cache if not already warmed (avoids redundant API calls)
+      if (!isEmbeddingCacheWarmed && 'warmCache' in this.knowledgeRetrievalService) {
+        await (this.knowledgeRetrievalService as any).warmCache(sessionLogFile);
       }
 
       const timeMs = Date.now() - startTime;
-      const isReady = 'isVectorCacheReady' in this.knowledgeRetrievalService 
-        ? (this.knowledgeRetrievalService as any).isVectorCacheReady() 
-        : true;
+      const finalVectorCacheReady = vectorService.isVectorCacheReady?.() || false;
+      const finalEmbeddingCacheStats = vectorService.getEmbeddingService?.()?.getCacheStats?.() || { size: 0 };
+      const finalEmbeddingCacheWarmed = finalEmbeddingCacheStats.size > 0;
 
-      return { success: isReady, timeMs };
+      return { success: finalVectorCacheReady && finalEmbeddingCacheWarmed, timeMs };
       
     } catch (error) {
       // Cache warming failure should not prevent session creation

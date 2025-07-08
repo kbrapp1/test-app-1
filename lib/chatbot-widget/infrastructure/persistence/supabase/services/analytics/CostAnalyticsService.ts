@@ -1,6 +1,5 @@
 /**
  * Cost Analytics Service
- * 
  * AI INSTRUCTIONS:
  * - Single responsibility: Cost calculations and financial metrics
  * - Pure business logic, no external dependencies

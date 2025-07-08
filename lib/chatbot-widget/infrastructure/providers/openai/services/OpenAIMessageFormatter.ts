@@ -9,9 +9,7 @@ import OpenAI from 'openai';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 
 export class OpenAIMessageFormatter {
-  /**
-   * Convert ChatMessage history to OpenAI message format
-   */
+  /** Convert ChatMessage history to OpenAI message format */
   static formatConversationHistory(
     messageHistory: ChatMessage[]
   ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
@@ -21,9 +19,7 @@ export class OpenAIMessageFormatter {
     }));
   }
 
-  /**
-   * Build complete message array for OpenAI API
-   */
+  /** Build complete message array for OpenAI API */
   static buildMessageArray(
     systemPrompt: string,
     messageHistory: ChatMessage[],

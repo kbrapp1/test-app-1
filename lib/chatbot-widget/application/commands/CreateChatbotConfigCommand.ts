@@ -1,10 +1,12 @@
 /**
  * Create Chatbot Config Command
  * 
- * CQRS Command for creating new chatbot configurations.
- * Represents a write operation request with all necessary data.
- * 
- * Single Responsibility: Encapsulate chatbot creation request data
+ * AI INSTRUCTIONS:
+ * - CQRS command for chatbot configuration creation with complete domain data
+ * - Encapsulates write operation request with personality, knowledge base, and operating hours
+ * - Includes lead qualification questions and validation result structure
+ * - Pure data container following command pattern with no business logic
+ * - Provides typed interface for command handlers and application services
  */
 
 import { LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';

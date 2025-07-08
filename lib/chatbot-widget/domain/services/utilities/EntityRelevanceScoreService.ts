@@ -17,14 +17,7 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class EntityRelevanceScoreService {
   
-  /**
-   * Entity weights for business-critical scoring
-   * 
-   * AI INSTRUCTIONS:
-   * - Higher weights for more business-critical entities
-   * - Adjust weights based on business value and conversion impact
-   * - Total weights should allow for scores up to 1.0
-   */
+  /** Entity weights for business-critical scoring */
   private static readonly ENTITY_WEIGHTS = {
     budget: 0.3,
     company: 0.25,
@@ -36,15 +29,7 @@ export class EntityRelevanceScoreService {
     contactMethod: 0.05
   } as const;
   
-  /**
-   * Calculate entity relevance score based on business entity mentions
-   * 
-   * AI INSTRUCTIONS:
-   * - Score based on business-critical entity presence and density
-   * - Use weighted scoring for different entity types
-   * - Apply bonus for multiple entity mentions
-   * - Return score between 0.0 and 1.0
-   */
+  /** Calculate entity relevance score based on business entity mentions */
   static calculateEntityRelevanceScore(
     message: ChatMessage,
     businessEntities: Record<string, any>
@@ -77,14 +62,7 @@ export class EntityRelevanceScoreService {
     return Math.min(1.0, entityScore);
   }
   
-  /**
-   * Calculate entity density score
-   * 
-   * AI INSTRUCTIONS:
-   * - Measure entity mention density relative to message length
-   * - Higher density indicates more entity-focused content
-   * - Normalize for different message lengths
-   */
+  /** Calculate entity density score */
   static calculateEntityDensityScore(
     message: ChatMessage,
     businessEntities: Record<string, any>
@@ -120,26 +98,12 @@ export class EntityRelevanceScoreService {
     return Math.min(1.0, densityScore + diversityBonus);
   }
   
-  /**
-   * Get entity type priority score
-   * 
-   * AI INSTRUCTIONS:
-   * - Return priority score for specific entity types
-   * - Higher scores for more business-critical entities
-   * - Used for weighted calculations
-   */
+  /** Get entity type priority score */
   static getEntityTypePriority(entityType: string): number {
     return this.ENTITY_WEIGHTS[entityType as keyof typeof this.ENTITY_WEIGHTS] || 0.05;
   }
   
-  /**
-   * Calculate combined entity score
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine relevance and density scores
-   * - Weight relevance higher than density
-   * - Provide comprehensive entity-based scoring
-   */
+  /** Calculate combined entity score */
   static calculateCombinedEntityScore(
     message: ChatMessage,
     businessEntities: Record<string, any>

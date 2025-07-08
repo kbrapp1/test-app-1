@@ -20,9 +20,7 @@ export interface ConversationMetrics {
 }
 
 export class ConversationMetricsService {
-  /**
-   * Calculate comprehensive conversation metrics using existing session data
-   */
+  /** Calculate comprehensive conversation metrics using existing session data */
   async calculateConversationMetrics(
     session: ChatSession, 
     allMessages: ChatMessage[]

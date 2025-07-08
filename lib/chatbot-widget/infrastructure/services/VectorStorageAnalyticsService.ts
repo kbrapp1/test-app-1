@@ -10,28 +10,10 @@
  * - Provide actionable storage insights and recommendations
  */
 
-/**
- * Specialized Service for Vector Storage Analysis
- * 
- * AI INSTRUCTIONS:
- * - Handle storage efficiency calculations
- * - Analyze storage patterns and optimization opportunities
- * - Calculate storage utilization and waste
- * - Provide cost optimization recommendations
- * - Support capacity planning and scaling decisions
- */
+/** Specialized Service for Vector Storage Analysis */
 export class VectorStorageAnalyticsService {
 
-  /**
-   * Calculate storage optimization metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze vector storage efficiency
-   * - Identify duplicate content and waste
-   * - Calculate storage utilization rates
-   * - Provide actionable optimization recommendations
-   * - Support cost reduction strategies
-   */
+  /** Calculate storage optimization metrics */
   calculateOptimizationMetrics(data: Array<{
     vector: any;
     content_hash: string;
@@ -77,16 +59,7 @@ export class VectorStorageAnalyticsService {
     };
   }
 
-  /**
-   * Generate storage optimization recommendations
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze storage metrics for optimization opportunities
-   * - Provide actionable recommendations based on data
-   * - Consider cost reduction and efficiency improvements
-   * - Support capacity planning decisions
-   * - Handle different optimization scenarios
-   */
+  /** Generate storage optimization recommendations */
   private generateOptimizationRecommendations(
     duplicateCount: number,
     storageEfficiency: number,
@@ -169,16 +142,7 @@ export class VectorStorageAnalyticsService {
     };
   }
 
-  /**
-   * Analyze storage distribution patterns
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze how storage is distributed across categories
-   * - Identify storage hotspots and inefficiencies
-   * - Support targeted optimization strategies
-   * - Handle pattern recognition in storage usage
-   * - Provide insights for storage allocation
-   */
+  /** Analyze storage distribution patterns */
   analyzeStorageDistribution(data: Array<{
     content_hash: string;
     category?: string;

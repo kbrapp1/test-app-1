@@ -38,9 +38,7 @@ export type RecommendationCategory =
   | 'data_improvement'
   | 'qualification_improvement';
 
-/**
- * Lead Recommendation Value Object with validation and business methods
- */
+/** Lead Recommendation Value Object with validation and business methods */
 export class LeadRecommendationValueObject {
   private constructor(
     private readonly _type: RecommendationType,
@@ -72,32 +70,24 @@ export class LeadRecommendationValueObject {
   get timeline(): string { return this._timeline; }
   get category(): RecommendationCategory { return this._category; }
 
-  /**
-   * Check if recommendation is urgent (requires immediate action)
-   */
+  /** Check if recommendation is urgent (requires immediate action) */
   isUrgent(): boolean {
     return this._priority === 'high' && 
            (this._timeline.toLowerCase().includes('immediate') ||
             this._timeline.toLowerCase().includes('hour'));
   }
 
-  /**
-   * Check if recommendation is sales-focused
-   */
+  /** Check if recommendation is sales-focused */
   isSalesAction(): boolean {
     return this._category === 'sales_action';
   }
 
-  /**
-   * Check if recommendation is marketing-focused
-   */
+  /** Check if recommendation is marketing-focused */
   isMarketingAction(): boolean {
     return this._category === 'marketing_action';
   }
 
-  /**
-   * Get urgency score for prioritization
-   */
+  /** Get urgency score for prioritization */
   getUrgencyScore(): number {
     const timelineLower = this._timeline.toLowerCase();
     
@@ -109,9 +99,7 @@ export class LeadRecommendationValueObject {
     return 20; // Default
   }
 
-  /**
-   * Convert to plain object interface
-   */
+  /** Convert to plain object interface */
   toPlainObject(): LeadRecommendation {
     return {
       type: this._type,
@@ -123,9 +111,7 @@ export class LeadRecommendationValueObject {
     };
   }
 
-  /**
-   * Validate recommendation data
-   */
+  /** Validate recommendation data */
   private validateRecommendation(): void {
     if (!this._action || this._action.trim().length === 0) {
       throw new BusinessRuleViolationError(
@@ -169,9 +155,7 @@ export class LeadRecommendationValueObject {
     }
   }
 
-  /**
-   * Check if two recommendations are equal
-   */
+  /** Check if two recommendations are equal */
   equals(other: LeadRecommendationValueObject): boolean {
     return this._type === other._type &&
            this._priority === other._priority &&

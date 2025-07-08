@@ -61,14 +61,7 @@ export class ContextRelevanceService {
     );
   }
   
-  /**
-   * Prioritize messages based on relevance scores for context window optimization
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate message prioritization and retention recommendations
-   * - Delegate to specialized services for scoring and retention strategy
-   * - Provide complete prioritization result
-   */
+  /** Prioritize messages based on relevance scores for context window optimization */
   static prioritizeMessages(
     messages: ChatMessage[],
     context: RelevanceContext

@@ -14,9 +14,7 @@ import {
 
 type UseCase = 'greeting' | 'qualification' | 'demonstration' | 'closing';
 
-/**
- * Build selection criteria from input parameters
- */
+/** Build selection criteria from input parameters */
 export const buildSelectionCriteria = (
   availableTokens: number,
   conversationHistory: ChatMessage[],
@@ -33,9 +31,7 @@ export const buildSelectionCriteria = (
   };
 };
 
-/**
- * Get context generation options based on use case
- */
+/** Get context generation options based on use case */
 export const getUseCaseOptions = (useCase: UseCase): ContextGenerationOptions => {
   const baseOptions: ContextGenerationOptions = {
     includeUserProfile: true,
@@ -63,9 +59,7 @@ export const getUseCaseOptions = (useCase: UseCase): ContextGenerationOptions =>
   }
 };
 
-/**
- * Adjust token allocation based on use case requirements
- */
+/** Adjust token allocation based on use case requirements */
 export const adjustTokensForUseCase = (
   useCase: UseCase, 
   baseTokens: number, 

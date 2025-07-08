@@ -109,9 +109,7 @@ export class ContextWindowManagementService {
     }
   }
 
-  /**
-   * Determine which messages to retain based on token limits and relevance
-   */
+  /** Determine which messages to retain based on token limits and relevance */
   selectMessagesForRetention(
     messageTokens: MessageTokenInfo[],
     relevanceScores: MessageRelevanceScore[]
@@ -294,9 +292,7 @@ export class ContextWindowManagementService {
     }
   }
 
-  /**
-   * Get current context window utilization metrics
-   */
+  /** Get current context window utilization metrics */
   getContextWindowMetrics(
     currentTokens: number,
     messageCount: number

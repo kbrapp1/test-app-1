@@ -80,9 +80,7 @@ export class ChatMessageFactoryService {
     return ChatMessage.create(chatMessageProps);
   }
 
-  /**
-   * Create a message with enhanced AI metadata for complex scenarios
-   */
+  /** Create a message with enhanced AI metadata for complex scenarios */
   static createBotMessageWithFullMetadata(
     sessionId: string,
     content: string,
@@ -139,9 +137,7 @@ export class ChatMessageFactoryService {
     return ChatMessage.create(props);
   }
 
-  /**
-   * Create a system error message with detailed error information
-   */
+  /** Create a system error message with detailed error information */
   static createSystemErrorMessage(
     sessionId: string,
     content: string,

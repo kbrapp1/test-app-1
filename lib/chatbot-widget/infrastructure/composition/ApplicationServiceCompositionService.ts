@@ -22,8 +22,14 @@ import { AIConfigurationCompositionService } from './AIConfigurationCompositionS
 
 /**
  * Application Service Composition Service
- * Infrastructure Service: Manages application service creation and lifecycle
- * Following DDD principles: Single responsibility for application service management
+ * 
+ * AI INSTRUCTIONS:
+ * - Infrastructure composition service for application layer service orchestration
+ * - Manages application service singletons with proper dependency injection
+ * - Coordinates OpenAI provider, lead management, and AI conversation services
+ * - Handles service lifecycle, connection management, and health checks
+ * - Follows DDD composition root patterns with clean dependency boundaries
+ * - Provides reset capabilities for testing and service lifecycle management
  */
 export class ApplicationServiceCompositionService {
   // Infrastructure singletons
@@ -37,9 +43,7 @@ export class ApplicationServiceCompositionService {
   private static aiConversationService: AiConversationService | null = null;
   private static knowledgeBaseFormApplicationService: KnowledgeBaseFormApplicationService | null = null;
 
-  /**
-   * Get OpenAI Provider
-   */
+  /** Get OpenAI Provider - manages singleton with connection lifecycle */
   static async getOpenAIProvider(): Promise<OpenAIProvider> {
     if (!this.openAIProvider) {
       const config: OpenAIConfig = {
@@ -66,13 +70,11 @@ export class ApplicationServiceCompositionService {
     return this.openAIProvider;
   }
 
-  /**
-   * Get AI Conversation Service
-   */
+  /** Get AI Conversation Service - orchestrates with OpenAI, prompts, and knowledge retrieval */
   static async getAiConversationService(): Promise<AiConversationService> {
     if (!this.aiConversationService) {
       const openAIProvider = await this.getOpenAIProvider();
-      const dynamicPromptService = AIConfigurationCompositionService.getDynamicPromptService();
+      const simplePromptService = AIConfigurationCompositionService.getSimplePromptService();
       const intentService = await DomainServiceCompositionService.getIntentClassificationService();
       // AI INSTRUCTIONS: Following @golden-rule dependency injection patterns
       // Create a default knowledge retrieval service for AI conversation service
@@ -86,7 +88,7 @@ export class ApplicationServiceCompositionService {
 
       this.aiConversationService = new AiConversationService(
         openAIProvider,
-        dynamicPromptService,
+        simplePromptService,
         intentService,
         knowledgeRetrievalService, // Default service for AI conversation
         leadExtractionService
@@ -95,9 +97,7 @@ export class ApplicationServiceCompositionService {
     return this.aiConversationService as AiConversationService;
   }
 
-  /**
-   * Get Lead Capture Service
-   */
+  /** Get Lead Capture Service */
   static getLeadCaptureService(): LeadCaptureService {
     if (!this.leadCaptureService) {
       this.leadCaptureService = new LeadCaptureService(
@@ -109,9 +109,7 @@ export class ApplicationServiceCompositionService {
     return this.leadCaptureService;
   }
 
-  /**
-   * Get Lead Lifecycle Service
-   */
+  /** Get Lead Lifecycle Service */
   static getLeadLifecycleService(): LeadLifecycleService {
     if (!this.leadLifecycleService) {
       this.leadLifecycleService = new LeadLifecycleService(
@@ -121,9 +119,7 @@ export class ApplicationServiceCompositionService {
     return this.leadLifecycleService;
   }
 
-  /**
-   * Get Lead Query Service
-   */
+  /** Get Lead Query Service */
   static getLeadQueryService(): LeadQueryService {
     if (!this.leadQueryService) {
       this.leadQueryService = new LeadQueryService(
@@ -134,9 +130,7 @@ export class ApplicationServiceCompositionService {
     return this.leadQueryService;
   }
 
-  /**
-   * Get Lead Management Service (Application Service)
-   */
+  /** Get Lead Management Service */
   static getLeadManagementService(): LeadManagementService {
     if (!this.leadManagementService) {
       this.leadManagementService = new LeadManagementService(
@@ -148,16 +142,12 @@ export class ApplicationServiceCompositionService {
     return this.leadManagementService;
   }
 
-  /**
-   * Get AI Conversation Service as interface
-   */
+  /** Get AI Conversation Service as interface */
   static async getAiConversationServiceInterface(): Promise<IAIConversationService> {
     return await this.getAiConversationService() as IAIConversationService;
   }
 
-  /**
-   * Get Knowledge Base Form Application Service
-   */
+  /** Get Knowledge Base Form Application Service */
   static getKnowledgeBaseFormApplicationService(): KnowledgeBaseFormApplicationService {
     if (!this.knowledgeBaseFormApplicationService) {
       const knowledgeFormService = DomainServiceCompositionService.getKnowledgeBaseFormService();
@@ -173,9 +163,7 @@ export class ApplicationServiceCompositionService {
     return this.knowledgeBaseFormApplicationService;
   }
 
-  /**
-   * Reset all application service singletons
-   */
+  /** Reset all application service singletons */
   static reset(): void {
     this.openAIProvider = null;
     this.leadManagementService = null;

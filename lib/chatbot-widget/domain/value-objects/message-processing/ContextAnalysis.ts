@@ -72,27 +72,21 @@ export class ContextAnalysisValueObject {
     public readonly knowledgeRetrievalThreshold?: number
   ) {}
 
-  /**
-   * Check if analysis indicates high engagement (based on API-provided data)
-   */
+  /** Check if analysis indicates high engagement (based on API-provided data) */
   isHighlyEngaged(): boolean {
     return this.engagementLevel === 'high' && 
            this.sentiment === 'positive' && 
            this.topics.length > 2;
   }
 
-  /**
-   * Check if user is ready for qualification
-   */
+  /** Check if user is ready for qualification */
   isReadyForQualification(): boolean {
     return this.conversationStage === 'discovery' && 
            this.engagementLevel !== 'low' &&
            this.topics.length > 1;
   }
 
-  /**
-   * Create default context for empty conversations
-   */
+  /** Create default context for empty conversations */
   static createDefault(): ContextAnalysisValueObject {
     return new ContextAnalysisValueObject(
       [], // topics
@@ -105,9 +99,7 @@ export class ContextAnalysisValueObject {
     );
   }
 
-  /**
-   * Convert to plain object for serialization
-   */
+  /** Convert to plain object for serialization */
   toPlainObject(): ContextAnalysis {
     return {
       topics: this.topics,

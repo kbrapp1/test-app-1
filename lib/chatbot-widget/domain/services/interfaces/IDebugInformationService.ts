@@ -37,28 +37,18 @@ export interface IDebugInformationService {
     processingTime: number
   ): ApiCallDebugInfo;
 
-  /**
-   * Get complete debug information for a processing session
-   */
+  /** Get complete debug information for a processing session */
   getProcessingDebugInfo(sessionId: string): ProcessingDebugInfo | null;
 
-  /**
-   * Clear debug information for a session
-   */
+  /** Clear debug information for a session */
   clearDebugInfo(sessionId: string): void;
 
-  /**
-   * Initialize debug session
-   */
+  /** Initialize debug session */
   initializeSession(sessionId: string, userMessageId: string, botMessageId: string): void;
 
-  /**
-   * Add API call debug info to session
-   */
+  /** Add API call debug info to session */
   addApiCallToSession(sessionId: string, callType: 'first' | 'second', apiCallInfo: ApiCallDebugInfo): void;
 
-  /**
-   * Update total processing time for session
-   */
+  /** Update total processing time for session */
   updateProcessingTime(sessionId: string, totalTime: number): void;
 } 

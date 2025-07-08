@@ -14,18 +14,14 @@ import { createHash } from 'crypto';
 import { UrlNormalizationService } from './UrlNormalizationService';
 import { SimHashContentSimilarityService, SimilarityContent } from './SimHashContentSimilarityService';
 
-/**
- * Represents content that can be deduplicated
- */
+// Represents content that can be deduplicated
 export interface DeduplicatableContent {
   url: string;
   content: string;
   title?: string;
 }
 
-/**
- * Result of deduplication process
- */
+// Result of deduplication process
 export interface DeduplicationResult {
   /** The canonical content entry to keep */
   canonical: DeduplicatableContent;
@@ -37,14 +33,7 @@ export interface DeduplicationResult {
   contentHash: string;
 }
 
-/**
- * Domain service for detecting and handling duplicate content (2025 Enhanced)
- * 
- * Performs three types of deduplication:
- * 1. URL-based: URLs that normalize to the same canonical form
- * 2. Content-based: Different URLs with identical content (SHA-256)
- * 3. Similarity-based: Near-duplicate content using SimHash algorithm
- */
+// Domain service for detecting and handling duplicate content with URL, content, and similarity-based deduplication
 export class ContentDeduplicationService {
   
   private simHashService = new SimHashContentSimilarityService({
@@ -55,24 +44,14 @@ export class ContentDeduplicationService {
   
   constructor(private urlNormalizationService: UrlNormalizationService) {}
   
-  /**
-   * Create a hash of the cleaned content for deduplication
-   * 
-   * @param content - Raw HTML or text content
-   * @returns SHA-256 hash of cleaned content
-   */
+  /** Create a hash of the cleaned content for deduplication */
   createContentHash(content: string): string {
     // Clean content for consistent hashing
     const cleanedContent = this.cleanContentForHashing(content);
     return createHash('sha256').update(cleanedContent, 'utf8').digest('hex');
   }
   
-  /**
-   * Clean content for consistent hashing by removing variable elements
-   * 
-   * @param content - Raw content to clean
-   * @returns Cleaned content suitable for hashing
-   */
+  /** Clean content for consistent hashing by removing variable elements */
   private cleanContentForHashing(content: string): string {
     let cleaned = content;
     
@@ -94,12 +73,7 @@ export class ContentDeduplicationService {
     return cleaned;
   }
   
-  /**
-   * Group content by both URL normalization and content similarity
-   * 
-   * @param contentItems - Array of content to deduplicate
-   * @returns Array of deduplication results, one per unique content group
-   */
+  /** Group content by both URL normalization and content similarity */
   deduplicateContent(contentItems: DeduplicatableContent[]): DeduplicationResult[] {
     // Step 1: Group by normalized URL
     const urlGroups = new Map<string, DeduplicatableContent[]>();
@@ -177,13 +151,7 @@ export class ContentDeduplicationService {
     return results;
   }
   
-  /**
-   * Find duplicate content entries for a specific URL
-   * 
-   * @param targetUrl - URL to find duplicates for
-   * @param allContent - All content items to search through
-   * @returns Array of duplicate content items
-   */
+  /** Find duplicate content entries for a specific URL */
   findDuplicatesForUrl(targetUrl: string, allContent: DeduplicatableContent[]): DeduplicatableContent[] {
     const targetItem = allContent.find(item => item.url === targetUrl);
     if (!targetItem) return [];
@@ -204,13 +172,7 @@ export class ContentDeduplicationService {
     });
   }
   
-  /**
-   * Calculate similarity percentage between two content strings using SimHash (2025 Enhanced)
-   * 
-   * @param content1 - First content to compare
-   * @param content2 - Second content to compare
-   * @returns Similarity percentage (0-100)
-   */
+  /** Calculate similarity percentage between two content strings using SimHash */
   calculateContentSimilarity(content1: string, content2: string): number {
     const cleaned1 = this.cleanContentForHashing(content1);
     const cleaned2 = this.cleanContentForHashing(content2);
@@ -232,13 +194,7 @@ export class ContentDeduplicationService {
     return Math.round(result.similarity * 100);
   }
   
-  /**
-   * Check if two content items are similar enough to be considered near-duplicates
-   * 
-   * @param item1 - First content item
-   * @param item2 - Second content item
-   * @returns True if content is similar enough to be considered duplicate
-   */
+  /** Check if two content items are similar enough to be considered near-duplicates */
   areContentItemsSimilar(item1: DeduplicatableContent, item2: DeduplicatableContent): boolean {
     const similarityContent1: SimilarityContent = {
       url: item1.url,
@@ -255,12 +211,7 @@ export class ContentDeduplicationService {
     return this.simHashService.areSimilar(similarityContent1, similarityContent2);
   }
   
-  /**
-   * Enhanced deduplication that includes SimHash similarity detection
-   * 
-   * @param contentItems - Array of content to deduplicate
-   * @returns Array of deduplication results including near-duplicates
-   */
+  /** Enhanced deduplication that includes SimHash similarity detection */
   deduplicateContentWithSimilarity(contentItems: DeduplicatableContent[]): DeduplicationResult[] {
     // Start with standard deduplication
     const standardResults = this.deduplicateContent(contentItems);

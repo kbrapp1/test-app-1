@@ -94,9 +94,7 @@ export class UrlNormalizationService {
     }
   }
 
-  /**
-   * Normalize pathname component according to 2025 standards
-   */
+  /** Normalize pathname component according to 2025 standards */
   private normalizePathname(pathname: string): string {
     // Remove trailing slash for consistency (except root)
     if (pathname !== '/' && pathname.endsWith('/')) {
@@ -128,9 +126,7 @@ export class UrlNormalizationService {
     return '/' + normalizedSegments.join('/');
   }
 
-  /**
-   * Decode safe percent-encoded characters in pathname
-   */
+  /** Decode safe percent-encoded characters in pathname */
   private decodeSafeCharacters(pathname: string): string {
     try {
       // Use decodeURIComponent for proper percent-decoding

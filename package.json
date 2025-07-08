@@ -9,10 +9,10 @@
     "./app/globals.css"
   ],
   "scripts": {
-    "dev": "npm run generate:contexts && next dev --turbopack",
+    "dev": "next dev --turbopack",
     "dev:fast": "next dev --turbopack --port 3000",
-    "dev:debug": "npm run generate:contexts && NODE_OPTIONS='--inspect' next dev --turbopack",
-    "dev:webpack": "npm run generate:contexts && next dev",
+    "dev:debug": "NODE_OPTIONS='--inspect' next dev --turbopack",
+    "dev:webpack": "next dev",
     "build": "next build",
     "build:turbo": "next build --turbopack",
     "start": "next start",
@@ -29,12 +29,8 @@
     "analyze:turbo": "ANALYZE=true NODE_ENV=production npm run build:turbo",
     "lighthouse": "npx lighthouse http://localhost:3000 --output=html --output-path=lighthouse-report.html --no-enable-error-reporting && start lighthouse-report.html",
     "perf": "powershell -ExecutionPolicy Bypass -File scripts/performance-analysis.ps1",
-    "perf:turbo": "powershell -ExecutionPolicy Bypass -File scripts/turbopack-analysis.ps1",
-    "generate:contexts": "npx ts-node --project scripts/tsconfig.json scripts/generate-discovered-contexts.ts",
-    "generate:contexts:watch": "nodemon --watch lib --ext ts,tsx --exec \"npm run generate:contexts\"",
-    "prebuild": "npm run generate:contexts",
-    "clean": "rimraf .next && rimraf .turbopack",
-    "clean:install": "npm run clean && npm install"
+    "perf:turbo": "powershell -ExecutionPolicy Bypass -File scripts/turbopack-analysis.ps1"
+
   },
   "dependencies": {
     "@crawlee/cheerio": "^3.13.9",

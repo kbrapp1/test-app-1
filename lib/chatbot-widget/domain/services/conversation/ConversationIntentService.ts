@@ -45,9 +45,7 @@ export class ConversationIntentService {
     general_inquiry: 'inquiry' as const
   };
 
-  /**
-   * Detect user intent from message content
-   */
+  /** Detect user intent from message content */
   detectIntent(userMessage: string): IntentDetectionResult {
     const message = userMessage.toLowerCase();
     let bestMatch = { intent: 'general_inquiry', score: 0 };
@@ -73,9 +71,7 @@ export class ConversationIntentService {
     };
   }
 
-  /**
-   * Check if message should trigger lead capture
-   */
+  /** Check if message should trigger lead capture */
   shouldTriggerLeadCapture(userMessage: string): boolean {
     const leadTriggerPatterns = this.intentPatterns.lead_capture;
     const message = userMessage.toLowerCase();
@@ -83,9 +79,7 @@ export class ConversationIntentService {
     return leadTriggerPatterns.some(pattern => message.includes(pattern));
   }
 
-  /**
-   * Calculate confidence score based on pattern matches and message characteristics
-   */
+  /** Calculate confidence score based on pattern matches and message characteristics */
   private calculateConfidence(patternMatches: number, message: string): number {
     const baseConfidence = Math.min(patternMatches * 0.3, 0.9);
     

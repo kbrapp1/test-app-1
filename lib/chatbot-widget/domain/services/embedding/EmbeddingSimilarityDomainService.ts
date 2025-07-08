@@ -18,14 +18,7 @@ import {
 
 export class EmbeddingSimilarityDomainService {
 
-  /**
-   * Calculate cosine similarity between two embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure mathematical function for cosine similarity
-   * - Handle edge cases (zero vectors, different lengths)
-   * - Return normalized score between -1 and 1
-   */
+  /** Calculate cosine similarity between two embeddings */
   static calculateCosineSimilarity(embeddingA: number[], embeddingB: number[]): number {
     if (embeddingA.length !== embeddingB.length) {
       throw new Error(`Embedding vectors must have the same length. Got ${embeddingA.length} and ${embeddingB.length}`);
@@ -58,15 +51,7 @@ export class EmbeddingSimilarityDomainService {
     return Math.max(-1, Math.min(1, similarity));
   }
 
-  /**
-   * Find most similar embeddings using cosine similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate similarities for all candidates
-   * - Filter by minimum similarity threshold
-   * - Sort by similarity score (highest first)
-   * - Limit results to topK
-   */
+  /** Find most similar embeddings using cosine similarity */
   static findMostSimilar(
     queryEmbedding: number[],
     candidateEmbeddings: EmbeddingResult[],
@@ -93,14 +78,7 @@ export class EmbeddingSimilarityDomainService {
     return similarities;
   }
 
-  /**
-   * Calculate similarity matrix for multiple embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Create pairwise similarity matrix
-   * - Useful for clustering and analysis
-   * - Return symmetric matrix with diagonal of 1.0
-   */
+  /** Calculate similarity matrix for multiple embeddings */
   static calculateSimilarityMatrix(embeddings: number[][]): number[][] {
     const size = embeddings.length;
     const matrix: number[][] = Array(size).fill(null).map(() => Array(size).fill(0));
@@ -120,14 +98,7 @@ export class EmbeddingSimilarityDomainService {
     return matrix;
   }
 
-  /**
-   * Find duplicate or near-duplicate embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Identify embeddings with very high similarity
-   * - Useful for deduplication
-   * - Return pairs of similar embeddings
-   */
+  /** Find duplicate or near-duplicate embeddings */
   static findDuplicates(
     embeddings: EmbeddingResult[],
     duplicateThreshold: number = 0.95
@@ -179,14 +150,7 @@ export class EmbeddingSimilarityDomainService {
     return totalSimilarity / referenceEmbeddings.length;
   }
 
-  /**
-   * Find outlier embeddings with low average similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Identify embeddings that are dissimilar to the group
-   * - Useful for quality control and anomaly detection
-   * - Return embeddings below threshold
-   */
+  /** Find outlier embeddings with low average similarity */
   static findOutliers(
     embeddings: EmbeddingResult[],
     outlierThreshold: number = 0.3
@@ -210,14 +174,7 @@ export class EmbeddingSimilarityDomainService {
     return outliers.sort((a, b) => a.averageSimilarity - b.averageSimilarity);
   }
 
-  /**
-   * Calculate embedding diversity score
-   * 
-   * AI INSTRUCTIONS:
-   * - Measure how diverse a set of embeddings is
-   * - Higher score means more diverse content
-   * - Based on average pairwise distances
-   */
+  /** Calculate embedding diversity score */
   static calculateDiversityScore(embeddings: number[][]): number {
     if (embeddings.length < 2) {
       return 0;
@@ -238,14 +195,7 @@ export class EmbeddingSimilarityDomainService {
     return pairCount > 0 ? totalDistance / pairCount : 0;
   }
 
-  /**
-   * Validate embedding vector
-   * 
-   * AI INSTRUCTIONS:
-   * - Check for valid embedding format
-   * - Ensure no NaN or infinite values
-   * - Verify reasonable vector magnitude
-   */
+  /** Validate embedding vector */
   static validateEmbedding(embedding: number[]): boolean {
     if (!Array.isArray(embedding) || embedding.length === 0) {
       return false;
@@ -273,14 +223,7 @@ export class EmbeddingSimilarityDomainService {
     return isReasonableMagnitude;
   }
 
-  /**
-   * Normalize embedding vector to unit length
-   * 
-   * AI INSTRUCTIONS:
-   * - Convert to unit vector for consistent comparisons
-   * - Handle zero vectors gracefully
-   * - Preserve direction while normalizing magnitude
-   */
+  /** Normalize embedding vector to unit length */
   static normalizeEmbedding(embedding: number[]): number[] {
     const magnitude = Math.sqrt(embedding.reduce((sum, value) => sum + value * value, 0));
     

@@ -4,6 +4,7 @@ import { withErrorHandling } from '@/lib/middleware/error';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { DebugInfoMapper } from '@/lib/chatbot-widget/application/mappers/DebugInfoMapper';
+import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/services/ChatbotWidgetFeatureFlagService';
 
 /**
  * POST /api/chatbot-widget/chat
@@ -12,6 +13,9 @@ import { DebugInfoMapper } from '@/lib/chatbot-widget/application/mappers/DebugI
 async function postHandler(
   request: NextRequest
 ) {
+  // Check if chatbot widget feature is enabled
+  await checkChatbotWidgetFeatureFlag();
+
   // Parse request body
   const body = await request.json();
   const { 
@@ -65,9 +69,21 @@ async function postHandler(
       const config = await chatbotConfigRepository.findById(session.chatbotConfigId);
       
       if (config) {
-        // Use the new DynamicPromptService instead of the obsolete method
-        const dynamicPromptService = ChatbotWidgetCompositionRoot.getDynamicPromptService();
-        systemPrompt = dynamicPromptService.generateSystemPrompt(config, session);
+        // Use the new SimplePromptService for better performance
+        const simplePromptService = ChatbotWidgetCompositionRoot.getSimplePromptService();
+        
+        // Get message history for prompt generation
+        const messageRepository = await ChatbotWidgetCompositionRoot.getChatMessageRepository();
+        const messageHistory = await messageRepository.findBySessionId(session.id);
+        
+        // Generate system prompt with proper input structure
+        const promptResult = await simplePromptService.generateSystemPrompt({
+          chatbotConfig: config,
+          session: session,
+          messageHistory: messageHistory
+        });
+        
+        systemPrompt = promptResult.content;
       }
     }
   } catch {

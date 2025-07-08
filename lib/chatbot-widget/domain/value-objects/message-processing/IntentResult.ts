@@ -81,9 +81,7 @@ export class IntentResult {
     return new IntentResult(intent, confidence, entities, reasoning, metadata);
   }
 
-  /**
-   * Create a low-confidence unknown intent result
-   */
+  /** Create a low-confidence unknown intent result */
   static createUnknown(reasoning: string = 'Unable to classify intent'): IntentResult {
     return new IntentResult(
       'unknown',
@@ -118,9 +116,7 @@ export class IntentResult {
     return { ...this._metadata };
   }
 
-  /**
-   * Check if this intent indicates sales interest
-   */
+  /** Check if this intent indicates sales interest */
   isSalesIntent(): boolean {
     const salesIntents: IntentType[] = [
       'sales_inquiry',
@@ -132,9 +128,7 @@ export class IntentResult {
     return salesIntents.includes(this._intent);
   }
 
-  /**
-   * Check if this intent indicates support need
-   */
+  /** Check if this intent indicates support need */
   isSupportIntent(): boolean {
     const supportIntents: IntentType[] = [
       'support_request',
@@ -145,16 +139,12 @@ export class IntentResult {
     return supportIntents.includes(this._intent);
   }
 
-  /**
-   * Check if confidence is high enough to act on
-   */
+  /** Check if confidence is high enough to act on */
   isHighConfidence(threshold: number = 0.7): boolean {
     return this._confidence >= threshold;
   }
 
-  /**
-   * Get intent category for routing
-   */
+  /** Get intent category for routing */
   getCategory(): 'sales' | 'support' | 'general' | 'unknown' {
     if (this.isSalesIntent()) return 'sales';
     if (this.isSupportIntent()) return 'support';
@@ -162,17 +152,13 @@ export class IntentResult {
     return 'unknown';
   }
 
-  /**
-   * Check if entities suggest qualified lead
-   */
+  /** Check if entities suggest qualified lead */
   hasQualifyingEntities(): boolean {
     const { budget, timeline, company, teamSize } = this._entities;
     return !!(budget || timeline || company || teamSize);
   }
 
-  /**
-   * Get urgency level from entities or intent
-   */
+  /** Get urgency level from entities or intent */
   getUrgencyLevel(): 'low' | 'medium' | 'high' {
     // Explicit urgency from entities
     if (this._entities.urgency) {
@@ -191,9 +177,7 @@ export class IntentResult {
     return 'low';
   }
 
-  /**
-   * Convert to plain object for serialization
-   */
+  /** Convert to plain object for serialization */
   toPlainObject() {
     return {
       intent: this._intent,

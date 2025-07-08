@@ -86,15 +86,7 @@ export class WebsiteValidationService {
     }
   }
 
-  /**
-   * Validate crawl request against business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Enforce application-level business rules
-   * - Use domain-specific error types
-   * - Validate organization and chatbot access
-   * - Check website source configuration
-   */
+  /** Validate crawl request against business rules */
   validateCrawlRequest(request: CrawlRequestValidation): void {
     if (!request.organizationId?.trim()) {
       throw new BusinessRuleViolationError(
@@ -164,14 +156,7 @@ export class WebsiteValidationService {
     }
   }
 
-  /**
-   * Validate basic website source configuration
-   * 
-   * AI INSTRUCTIONS:
-   * - Check essential configuration fields
-   * - Validate URL format and accessibility
-   * - Add errors to collection for aggregation
-   */
+  /** Validate basic website source configuration */
   private validateBasicConfiguration(websiteSource: WebsiteSource, errors: string[]): void {
     if (!websiteSource.url || !this.isValidUrl(websiteSource.url)) {
       errors.push('Invalid or missing website URL');
@@ -222,15 +207,7 @@ export class WebsiteValidationService {
     }
   }
 
-  /**
-   * Check website accessibility for crawling
-   * 
-   * AI INSTRUCTIONS:
-   * - Quick HEAD request to check if website is accessible
-   * - Return boolean for accessibility status
-   * - Handle timeouts and errors gracefully
-   * - Follow @golden-rule patterns for error handling
-   */
+  /** Check website accessibility for crawling */
   private async checkWebsiteAccessibility(url: string): Promise<boolean> {
     try {
       const controller = new AbortController();
@@ -255,14 +232,7 @@ export class WebsiteValidationService {
     }
   }
 
-  /**
-   * Helper method for URL validation
-   * 
-   * AI INSTRUCTIONS:
-   * - Simple URL format validation
-   * - No external dependencies
-   * - Handle edge cases gracefully
-   */
+  /** Helper method for URL validation */
   private isValidUrl(url: string): boolean {
     try {
       new URL(url);

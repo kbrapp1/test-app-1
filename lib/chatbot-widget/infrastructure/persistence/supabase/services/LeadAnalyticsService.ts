@@ -72,9 +72,7 @@ export class LeadAnalyticsService {
     private tableName: string = 'chat_leads'
   ) {}
 
-  /**
-   * Calculate comprehensive lead analytics
-   */
+  /** Calculate comprehensive lead analytics */
   async calculateAnalytics(
     organizationId: string,
     dateFrom: Date,
@@ -96,9 +94,7 @@ export class LeadAnalyticsService {
     return this.processAnalytics(leads);
   }
 
-  /**
-   * Process analytics from lead data
-   */
+  /** Process analytics from lead data */
   private processAnalytics(leads: Lead[]): LeadAnalytics {
     const totalLeads = leads.length;
     const qualifiedLeads = leads.filter(l => l.qualificationStatus === 'qualified').length;
@@ -126,9 +122,7 @@ export class LeadAnalyticsService {
     };
   }
 
-  /**
-   * Calculate qualification status distribution
-   */
+  /** Calculate qualification status distribution */
   private calculateQualificationDistribution(leads: Lead[]) {
     return {
       not_qualified: leads.filter(l => l.qualificationStatus === 'not_qualified').length,
@@ -138,9 +132,7 @@ export class LeadAnalyticsService {
     };
   }
 
-  /**
-   * Calculate follow-up status distribution
-   */
+  /** Calculate follow-up status distribution */
   private calculateFollowUpDistribution(leads: Lead[]) {
     return {
       new: leads.filter(l => l.followUpStatus === 'new').length,
@@ -152,9 +144,7 @@ export class LeadAnalyticsService {
     };
   }
 
-  /**
-   * Calculate source breakdown
-   */
+  /** Calculate source breakdown */
   private calculateSourceBreakdown(leads: Lead[]) {
     const sourceMap = new Map<string, number>();
     leads.forEach(l => {
@@ -167,9 +157,7 @@ export class LeadAnalyticsService {
       .sort((a, b) => b.count - a.count);
   }
 
-  /**
-   * Calculate top companies
-   */
+  /** Calculate top companies */
   private calculateTopCompanies(leads: Lead[]) {
     const companyMap = new Map<string, { count: number; totalScore: number }>();
     leads.forEach(l => {
@@ -191,9 +179,7 @@ export class LeadAnalyticsService {
       .slice(0, 10);
   }
 
-  /**
-   * Calculate lead trends by day
-   */
+  /** Calculate lead trends by day */
   private calculateLeadTrends(leads: Lead[]) {
     const trendsMap = new Map<string, { count: number; totalScore: number }>();
     leads.forEach(l => {
@@ -214,9 +200,7 @@ export class LeadAnalyticsService {
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  /**
-   * Calculate funnel metrics
-   */
+  /** Calculate funnel metrics */
   async calculateFunnelMetrics(
     organizationId: string,
     dateFrom: Date,
@@ -255,9 +239,7 @@ export class LeadAnalyticsService {
     };
   }
 
-  /**
-   * Count leads by status
-   */
+  /** Count leads by status */
   async countByStatus(organizationId: string): Promise<StatusCounts> {
     const { data, error } = await this.supabase
       .from(this.tableName)

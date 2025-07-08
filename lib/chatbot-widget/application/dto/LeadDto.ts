@@ -82,9 +82,7 @@ export interface LeadSourceDto {
 export type LeadQualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 export type FollowUpStatus = 'new' | 'contacted' | 'in_progress' | 'converted' | 'lost' | 'nurturing';
 
-/**
- * DTO for creating a new lead
- */
+/** DTO for creating a new lead */
 export interface CreateLeadDto {
   readonly sessionId: string;
   readonly organizationId: string;
@@ -95,9 +93,7 @@ export interface CreateLeadDto {
   readonly source: LeadSourceDto;
 }
 
-/**
- * DTO for updating lead information
- */
+/** DTO for updating lead information */
 export interface UpdateLeadDto {
   readonly contactInfo?: Partial<ContactInfoDto>;
   readonly qualificationData?: Partial<QualificationDataDto>;
@@ -110,9 +106,7 @@ export interface UpdateLeadDto {
   readonly lastContactedAt?: string;
 }
 
-/**
- * DTO for lead analytics and reporting
- */
+/** DTO for lead analytics and reporting */
 export interface LeadAnalyticsDto {
   readonly totalLeads: number;
   readonly qualifiedLeads: number;

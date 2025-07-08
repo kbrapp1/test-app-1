@@ -38,9 +38,7 @@ export const CONTEXT_LIMITS_2025 = {
   COMPRESSION_EFFICIENCY_TARGET: 0.6 // Target compression ratio
 } as const;
 
-/**
- * Validation function to ensure limits are sensible
- */
+/** Validation function to ensure limits are sensible */
 export function validateContextLimits(): boolean {
   const limits = CONTEXT_LIMITS_2025;
   
@@ -62,9 +60,7 @@ export function validateContextLimits(): boolean {
   return true;
 }
 
-/**
- * Get available tokens for message content
- */
+/** Get available tokens for message content */
 export function getAvailableMessageTokens(): number {
   const limits = CONTEXT_LIMITS_2025;
   return limits.MAX_CONTEXT_TOKENS - 
@@ -74,9 +70,7 @@ export function getAvailableMessageTokens(): number {
          limits.TOKEN_BUFFER_SAFETY;
 }
 
-/**
- * Calculate business context strength with 2025 optimization
- */
+/** Calculate business context strength with 2025 optimization */
 export function calculateBusinessContextStrength(
   turnsSinceLastBusiness: number,
   businessIntentCount: number

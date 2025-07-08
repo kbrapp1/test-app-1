@@ -83,14 +83,7 @@ export class ConversationFlowCompositionService {
     }
   }
 
-  /**
-   * Get next best action from AI flow decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to domain service for action determination
-   * - Follow @golden-rule domain service delegation patterns
-   * - Validate decision parameter before processing
-   */
+  /** Get next best action from AI flow decision */
   static getNextBestAction(decision: AIConversationFlowDecision): string {
     if (!decision) {
       throw new BusinessRuleViolationError(
@@ -112,14 +105,7 @@ export class ConversationFlowCompositionService {
     }
   }
 
-  /**
-   * Calculate readiness score using AI flow decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to domain service for readiness calculation
-   * - Follow @golden-rule domain service delegation patterns
-   * - Validate decision parameter before processing
-   */
+  /** Calculate readiness score using AI flow decision */
   static calculateReadinessScore(flowDecision: AIConversationFlowDecision): number {
     if (!flowDecision) {
       throw new BusinessRuleViolationError(
@@ -141,14 +127,7 @@ export class ConversationFlowCompositionService {
     }
   }
 
-  /**
-   * Get derived readiness indicators from AI flow decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to domain service for readiness indicators
-   * - Follow @golden-rule domain service delegation patterns
-   * - Validate decision parameter before processing
-   */
+  /** Get derived readiness indicators from AI flow decision */
   static getReadinessIndicators(flowDecision: AIConversationFlowDecision): any {
     if (!flowDecision) {
       throw new BusinessRuleViolationError(
@@ -254,14 +233,7 @@ export class ConversationFlowCompositionService {
     });
   }
 
-  /**
-   * Get conversation flow service health status
-   * 
-   * AI INSTRUCTIONS:
-   * - Follow @golden-rule health check patterns
-   * - Validate service availability without side effects
-   * - Return detailed health status for monitoring
-   */
+  /** Get conversation flow service health status */
   static async healthCheck(): Promise<{
     conversationFlowService: boolean;
     canProcessDecisions: boolean;

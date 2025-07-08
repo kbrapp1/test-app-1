@@ -53,9 +53,7 @@ export type ChatSessionStatus = 'active' | 'completed' | 'abandoned' | 'escalate
 export type QualificationStatus = 'not_started' | 'in_progress' | 'qualified' | 'disqualified';
 export type EngagementLevel = 'low' | 'medium' | 'high';
 
-/**
- * DTO for creating a new chat session
- */
+/** DTO for creating a new chat session */
 export interface CreateChatSessionDto {
   readonly chatbotConfigId: string;
   readonly visitorId: string;
@@ -65,9 +63,7 @@ export interface CreateChatSessionDto {
   readonly currentUrl?: string;
 }
 
-/**
- * DTO for updating chat session context
- */
+/** DTO for updating chat session context */
 export interface UpdateChatSessionDto {
   readonly contextData?: Partial<SessionContextDto>;
   readonly leadQualificationState?: Partial<LeadQualificationStateDto>;

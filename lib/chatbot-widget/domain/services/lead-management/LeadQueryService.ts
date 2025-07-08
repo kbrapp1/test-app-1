@@ -18,52 +18,38 @@ import { FollowUpStatus } from '../../entities/LeadLifecycleManager';
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export class LeadQueryService {
-  /**
-   * Check if lead is qualified (qualified or highly qualified)
-   */
+  /** Check if lead is qualified (qualified or highly qualified) */
   static isQualified(qualificationStatus: QualificationStatus): boolean {
     return qualificationStatus === 'qualified' || 
            qualificationStatus === 'highly_qualified';
   }
 
-  /**
-   * Check if lead is highly qualified
-   */
+  /** Check if lead is highly qualified */
   static isHighlyQualified(qualificationStatus: QualificationStatus): boolean {
     return qualificationStatus === 'highly_qualified';
   }
 
-  /**
-   * Check if lead is disqualified
-   */
+  /** Check if lead is disqualified */
   static isDisqualified(qualificationStatus: QualificationStatus): boolean {
     return qualificationStatus === 'disqualified';
   }
 
-  /**
-   * Check if lead is new (not yet contacted)
-   */
+  /** Check if lead is new (not yet contacted) */
   static isNew(followUpStatus: FollowUpStatus): boolean {
     return followUpStatus === 'new';
   }
 
-  /**
-   * Check if lead is converted
-   */
+  /** Check if lead is converted */
   static isConverted(followUpStatus: FollowUpStatus): boolean {
     return followUpStatus === 'converted';
   }
 
-  /**
-   * Check if lead is assigned to someone
-   */
+  /** Check if lead is assigned to someone */
   static isAssigned(assignedTo?: string): boolean {
     return !!assignedTo;
   }
 
-  /**
-   * Check if lead has recent activity within threshold days
-   */
+  /** Check if lead has recent activity within threshold days */
   static hasRecentActivity(
     lastContactedAt?: Date,
     createdAt?: Date,
@@ -79,18 +65,14 @@ export class LeadQueryService {
     return diffDays <= daysThreshold;
   }
 
-  /**
-   * Calculate days since lead was created
-   */
+  /** Calculate days since lead was created */
   static getDaysSinceCreated(createdAt: Date): number {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - createdAt.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  /**
-   * Calculate days since last contact
-   */
+  /** Calculate days since last contact */
   static getDaysSinceLastContact(lastContactedAt?: Date): number | null {
     if (!lastContactedAt) return null;
     
@@ -99,9 +81,7 @@ export class LeadQueryService {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  /**
-   * Check if lead needs follow-up based on business rules
-   */
+  /** Check if lead needs follow-up based on business rules */
   static needsFollowUp(
     followUpStatus: FollowUpStatus,
     lastContactedAt?: Date,
@@ -120,9 +100,7 @@ export class LeadQueryService {
     return daysSince !== null && daysSince >= daysSinceLastContact;
   }
 
-  /**
-   * Check if lead is high priority based on score and status
-   */
+  /** Check if lead is high priority based on score and status */
   static isHighPriority(
     leadScore: number,
     qualificationStatus: QualificationStatus,
@@ -140,9 +118,7 @@ export class LeadQueryService {
     return false;
   }
 
-  /**
-   * Get lead priority level
-   */
+  /** Get lead priority level */
   static getPriorityLevel(
     leadScore: number,
     qualificationStatus: QualificationStatus,
@@ -159,9 +135,7 @@ export class LeadQueryService {
     return 'low';
   }
 
-  /**
-   * Check if lead is stale (no activity for extended period)
-   */
+  /** Check if lead is stale (no activity for extended period) */
   static isStale(
     lastContactedAt?: Date,
     createdAt?: Date,

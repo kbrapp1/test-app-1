@@ -35,9 +35,7 @@ interface LoggingContext {
   logEntry: (message: string) => void;
 }
 
-/**
- * API-provided analysis data from OpenAI - following @golden-rule.mdc DTO pattern
- */
+/** API-provided analysis data from OpenAI */
 export interface ApiAnalysisData {
   entities?: {
     urgency?: 'low' | 'medium' | 'high';
@@ -77,6 +75,9 @@ export class ConversationContextOrchestrator {
   private readonly sessionUpdateService: ConversationSessionUpdateService;
   private tokenCountingService: ITokenCountingService;
   private enhancedAnalysisService?: ConversationEnhancedAnalysisService;
+  
+  // AI: Performance optimization - cache token counts to avoid redundant calculations
+  private tokenCountCache = new Map<string, number>();
 
   constructor(
     tokenCountingService: ITokenCountingService,
@@ -87,21 +88,16 @@ export class ConversationContextOrchestrator {
     this.contextWindowService = new ContextWindowService(tokenCountingService);
     this.sessionUpdateService = new ConversationSessionUpdateService();
     
-    // Initialize enhanced analysis service if knowledge retrieval is available
-    // AI INSTRUCTIONS: Vector embeddings should work independently of intent classification
-    // This ensures all user queries are vectorized and compared against knowledge base
-    if (this.knowledgeRetrievalService) {
+    // Initialize enhanced analysis service if dependencies are available
+    if (this.intentClassificationService || this.knowledgeRetrievalService) {
       this.enhancedAnalysisService = new ConversationEnhancedAnalysisService(
-        this.intentClassificationService, // Can be undefined - service handles gracefully
+        this.intentClassificationService,
         this.knowledgeRetrievalService
       );
     }
   }
 
-  /**
-   * Get messages for context window with advanced compression and relevance analysis
-   * AI INSTRUCTIONS: Domain layer coordination only - delegate complex operations
-   */
+  /** Get messages for context window with compression and relevance analysis */
   async getMessagesForContextWindow(
     messages: ChatMessage[],
     contextWindow: ConversationContextWindow,
@@ -176,28 +172,40 @@ export class ConversationContextOrchestrator {
     };
   }
 
-  /**
-   * Estimate token usage for messages
-   */
+  /** Estimate token usage for messages */
   private async estimateTokenUsage(messages: ChatMessage[]): Promise<number> {
     try {
-      return await this.tokenCountingService.countMessagesTokens(messages);
+      // AI: Performance optimization - cache token counts to avoid redundant API calls
+      const cacheKey = messages.map(m => `${m.id}:${m.content.length}`).join('|');
+      
+      if (this.tokenCountCache.has(cacheKey)) {
+        return this.tokenCountCache.get(cacheKey)!;
+      }
+      
+      const tokenCount = await this.tokenCountingService.countMessagesTokens(messages);
+      this.tokenCountCache.set(cacheKey, tokenCount);
+      
+      // AI: Limit cache size to prevent memory leaks
+      if (this.tokenCountCache.size > 100) {
+        const firstKey = this.tokenCountCache.keys().next().value;
+        if (firstKey) {
+          this.tokenCountCache.delete(firstKey);
+        }
+      }
+      
+      return tokenCount;
     } catch (error) {
+      // Fallback to character-based estimation
       return messages.reduce((total, msg) => total + Math.ceil(msg.content.length / 4), 0);
     }
   }
 
-  /**
-   * Create AI-generated summary of older messages
-   */
+  /** Create AI-generated summary of older messages */
   async createAISummary(messages: ChatMessage[], maxTokens: number = 200): Promise<string> {
     return this.contextWindowService.createAISummary(messages, maxTokens);
   }
 
-  /**
-   * Analyze conversation context using API-provided data
-   * AI INSTRUCTIONS: Accept OpenAI API analysis as source of truth, coordinate transformation only
-   */
+  /** Analyze conversation context using API-provided data */
   analyzeContext(
     messages: ChatMessage[], 
     session?: ChatSession,
@@ -251,15 +259,7 @@ export class ConversationContextOrchestrator {
     return analysis.toPlainObject();
   }
 
-  /**
-   * Enhanced context analysis that triggers vector embeddings pipeline
-   * 
-   * AI INSTRUCTIONS:
-   * - Use ConversationEnhancedAnalysisService to trigger knowledge retrieval
-   * - This method enables vector embeddings pipeline execution
-   * - Follow @golden-rule.mdc: delegate to specialized services
-   * - Include intent classification and knowledge retrieval
-   */
+  /** Enhanced context analysis that triggers vector embeddings pipeline */
   async analyzeContextEnhanced(
     messages: ChatMessage[], 
     config: any,
@@ -293,9 +293,7 @@ export class ConversationContextOrchestrator {
     }
   }
 
-  /**
-   * Generate conversation summary using API data
-   */
+  /** Generate conversation summary using API data */
   generateConversationSummary(
     messages: ChatMessage[],
     session: ChatSession,
@@ -320,9 +318,7 @@ export class ConversationContextOrchestrator {
     };
   }
 
-  /**
-   * Create simple overview from messages
-   */
+  /** Create simple overview from messages */
   private createSimpleOverview(messages: ChatMessage[], context: any): string {
     const userMessages = messages.filter(m => m.isFromUser());
     
@@ -339,9 +335,7 @@ export class ConversationContextOrchestrator {
       `${topicsCount > 0 ? `${topicsCount} topics discussed.` : 'Topics being explored.'}`;
   }
 
-  /**
-   * Update session context with new message and API data
-   */
+  /** Update session context with new message and API data */
   updateSessionContext(
     session: ChatSession,
     message: ChatMessage,

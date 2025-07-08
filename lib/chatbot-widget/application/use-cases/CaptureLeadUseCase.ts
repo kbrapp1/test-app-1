@@ -106,9 +106,7 @@ export class CaptureLeadUseCase {
     }
   }
 
-  /**
-   * Update existing lead with new information
-   */
+  /** Update existing lead with new information */
   private async updateExistingLead(
     existingLead: Lead,
     request: CaptureLeadRequest
@@ -142,9 +140,7 @@ export class CaptureLeadUseCase {
     }
   }
 
-  /**
-   * Validate capture request
-   */
+  /** Validate capture request */
   private validateRequest(request: CaptureLeadRequest): void {
     if (!request.sessionId) {
       throw new BusinessRuleViolationError('Session ID is required for lead capture');
@@ -163,9 +159,7 @@ export class CaptureLeadUseCase {
     }
   }
 
-  /**
-   * Get lead capture analytics
-   */
+  /** Get lead capture analytics */
   async getCaptureAnalytics(organizationId: string, dateFrom: Date, dateTo: Date): Promise<{
     totalCaptured: number;
     avgLeadScore: number;

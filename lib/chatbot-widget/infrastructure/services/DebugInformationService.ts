@@ -37,9 +37,7 @@ export class DebugInformationService implements IDebugInformationService {
     this.debugSessions.delete(sessionId);
   }
 
-  /**
-   * Initialize debug session
-   */
+  /** Initialize debug session */
   initializeSession(sessionId: string, userMessageId: string, botMessageId: string): void {
     const existingSession = this.debugSessions.get(sessionId);
     if (existingSession) {
@@ -58,9 +56,7 @@ export class DebugInformationService implements IDebugInformationService {
     }
   }
 
-  /**
-   * Add API call debug info to session
-   */
+  /** Add API call debug info to session */
   addApiCallToSession(sessionId: string, callType: 'first' | 'second', apiCallInfo: ApiCallDebugInfo): void {
     const session = this.debugSessions.get(sessionId);
     if (session) {
@@ -73,9 +69,7 @@ export class DebugInformationService implements IDebugInformationService {
     }
   }
 
-  /**
-   * Update total processing time for session
-   */
+  /** Update total processing time for session */
   updateProcessingTime(sessionId: string, totalTime: number): void {
     const session = this.debugSessions.get(sessionId);
     if (session) {

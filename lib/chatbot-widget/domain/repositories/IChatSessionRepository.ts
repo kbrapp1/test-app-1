@@ -1,29 +1,19 @@
 import { ChatSession } from '../entities/ChatSession';
 
 export interface IChatSessionRepository {
-  /**
-   * Find chat session by ID
-   */
+  /** Find chat session by ID */
   findById(id: string): Promise<ChatSession | null>;
 
-  /**
-   * Find chat session by session token
-   */
+  /** Find chat session by session token */
   findBySessionToken(sessionToken: string): Promise<ChatSession | null>;
 
-  /**
-   * Find active sessions for a chatbot configuration
-   */
+  /** Find active sessions for a chatbot configuration */
   findActiveByChatbotConfigId(chatbotConfigId: string): Promise<ChatSession[]>;
 
-  /**
-   * Find sessions by visitor ID
-   */
+  /** Find sessions by visitor ID */
   findByVisitorId(visitorId: string): Promise<ChatSession[]>;
 
-  /**
-   * Find sessions by organization ID with pagination
-   */
+  /** Find sessions by organization ID with pagination */
   findByOrganizationIdWithPagination(
     organizationId: string,
     page: number,
@@ -42,34 +32,22 @@ export interface IChatSessionRepository {
     totalPages: number;
   }>;
 
-  /**
-   * Save a new chat session
-   */
+  /** Save a new chat session */
   save(session: ChatSession, sharedLogFile?: string): Promise<ChatSession>;
 
-  /**
-   * Update an existing chat session
-   */
+  /** Update an existing chat session */
   update(session: ChatSession, sharedLogFile?: string): Promise<ChatSession>;
 
-  /**
-   * Delete a chat session and related data
-   */
+  /** Delete a chat session and related data */
   delete(id: string): Promise<void>;
 
-  /**
-   * Find expired sessions for cleanup
-   */
+  /** Find expired sessions for cleanup */
   findExpiredSessions(timeoutMinutes: number): Promise<ChatSession[]>;
 
-  /**
-   * Mark expired sessions as abandoned
-   */
+  /** Mark expired sessions as abandoned */
   markExpiredAsAbandoned(timeoutMinutes: number): Promise<number>;
 
-  /**
-   * Get session analytics for a time period
-   */
+  /** Get session analytics for a time period */
   getAnalytics(
     organizationId: string,
     dateFrom: Date,
@@ -86,13 +64,9 @@ export interface IChatSessionRepository {
     hourlyDistribution: Array<{ hour: number; count: number }>;
   }>;
 
-  /**
-   * Get recent sessions for a visitor
-   */
+  /** Get recent sessions for a visitor */
   findRecentByVisitorId(visitorId: string, limit: number): Promise<ChatSession[]>;
 
-  /**
-   * Count active sessions by chatbot config
-   */
+  /** Count active sessions by chatbot config */
   countActiveByChatbotConfigId(chatbotConfigId: string): Promise<number>;
 } 

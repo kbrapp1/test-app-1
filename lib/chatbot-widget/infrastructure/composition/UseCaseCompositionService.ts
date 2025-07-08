@@ -31,9 +31,7 @@ export class UseCaseCompositionService {
   private static sanitizeUserContentUseCase: SanitizeUserContentUseCase | null = null;
   private static readonly CONTEXT_CACHE_KEY = 'UseCaseCompositionService_conversationContextOrchestratorCache';
 
-  /**
-   * Get Configure Chatbot Use Case
-   */
+  /** Get Configure Chatbot Use Case */
   static getConfigureChatbotUseCase(): ConfigureChatbotUseCase {
     if (!this.configureChatbotUseCase) {
       this.configureChatbotUseCase = new ConfigureChatbotUseCase(
@@ -87,9 +85,7 @@ export class UseCaseCompositionService {
     return this.processChatMessageUseCase;
   }
 
-  /**
-   * Get Capture Lead Use Case
-   */
+  /** Get Capture Lead Use Case */
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
     if (!this.captureLeadUseCase) {
       this.captureLeadUseCase = new CaptureLeadUseCase(
@@ -101,9 +97,7 @@ export class UseCaseCompositionService {
     return this.captureLeadUseCase;
   }
 
-  /**
-   * Get Validate Content Use Case
-   */
+  /** Get Validate Content Use Case */
   static getValidateContentUseCase(): ValidateContentUseCase {
     if (!this.validateContentUseCase) {
       this.validateContentUseCase = new ValidateContentUseCase(
@@ -115,9 +109,7 @@ export class UseCaseCompositionService {
     return this.validateContentUseCase;
   }
 
-  /**
-   * Get Sanitize User Content Use Case
-   */
+  /** Get Sanitize User Content Use Case */
   static getSanitizeUserContentUseCase(): SanitizeUserContentUseCase {
     if (!this.sanitizeUserContentUseCase) {
       this.sanitizeUserContentUseCase = new SanitizeUserContentUseCase(
@@ -128,9 +120,7 @@ export class UseCaseCompositionService {
     return this.sanitizeUserContentUseCase;
   }
 
-  /**
-   * Reset all use case singletons
-   */
+  /** Reset all use case singletons */
   static reset(): void {
     this.configureChatbotUseCase = null;
     this.processChatMessageUseCase = null;

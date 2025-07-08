@@ -3,16 +3,7 @@
 import { ExternalLink } from 'lucide-react';
 import { PlatformType } from './PlatformSelector';
 
-/**
- * InstallationInstructions Component
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Display platform-specific installation steps
- * - Presentation layer component for instruction visualization
- * - Keep under 100 lines, focused on instruction display only
- * - Use clean typography and minimal color usage
- */
-
+/** InstallationInstructions Component */
 interface InstallationInstructionsProps {
   platform: PlatformType;
 }

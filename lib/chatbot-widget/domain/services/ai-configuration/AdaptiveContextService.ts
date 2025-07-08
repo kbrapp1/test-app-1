@@ -15,9 +15,7 @@ import { ConversationAnalysis } from './ConversationAnalysisService';
  */
 export class AdaptiveContextService {
 
-  /**
-   * Adaptive context injection (2025 real-time)
-   */
+  /** Adaptive context injection (2025 real-time) */
   generateAdaptiveContext(
     session: ChatSession, 
     analysis: ConversationAnalysis, 
@@ -35,9 +33,7 @@ export class AdaptiveContextService {
     return this.buildAdaptiveContextString(contextData);
   }
 
-  /**
-   * Build adaptive context string
-   */
+  /** Build adaptive context string */
   private buildAdaptiveContextString(contextData: ContextData): string {
     const currentContextSection = this.buildCurrentContextSection(contextData);
     const instructionsSection = this.buildInstructionsSection(contextData);
@@ -45,9 +41,7 @@ export class AdaptiveContextService {
     return `${currentContextSection}${instructionsSection}`;
   }
 
-  /**
-   * Build current context section
-   */
+  /** Build current context section */
   private buildCurrentContextSection(contextData: ContextData): string {
     const responsePriority = contextData.businessContext ? 'High - Business inquiry' : 'Standard';
     
@@ -60,9 +54,7 @@ export class AdaptiveContextService {
 `;
   }
 
-  /**
-   * Build instructions section
-   */
+  /** Build instructions section */
   private buildInstructionsSection(contextData: ContextData): string {
     const availabilityMessage = contextData.businessHours 
       ? 'Offer immediate assistance and next steps' 

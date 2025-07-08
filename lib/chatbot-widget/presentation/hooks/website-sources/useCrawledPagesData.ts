@@ -12,15 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCrawledPages } from '../../actions/websiteSourcesActions';
 import { CrawledPageInfo } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
-/**
- * Transform Database Page to UI Format
- * 
- * AI INSTRUCTIONS:
- * - Transform data between layers
- * - Generate unique IDs for UI components
- * - Calculate derived properties
- * - Handle missing data gracefully
- */
+/** Transform Database Page to UI Format */
 function transformPageToUIFormat(page: any): CrawledPageInfo {
   return {
     id: generatePageId(),
@@ -39,14 +31,7 @@ function transformPageToUIFormat(page: any): CrawledPageInfo {
   };
 }
 
-/**
- * Generate Unique Page ID
- * 
- * AI INSTRUCTIONS:
- * - Create unique identifiers for UI components
- * - Use timestamp and random string for uniqueness
- * - Follow consistent naming pattern
- */
+/** Generate Unique Page ID */
 function generatePageId(): string {
   return `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
@@ -68,14 +53,7 @@ function extractBaseUrl(url: string): string {
   }
 }
 
-/**
- * Group Pages by Base URL
- * 
- * AI INSTRUCTIONS:
- * - Group crawled pages by website source
- * - Handle URL parsing errors gracefully
- * - Return organized data structure
- */
+/** Group Pages by Base URL */
 function groupPagesByBaseUrl(pages: any[]): Record<string, CrawledPageInfo[]> {
   const groupedData: Record<string, CrawledPageInfo[]> = {};
   
@@ -92,14 +70,7 @@ function groupPagesByBaseUrl(pages: any[]): Record<string, CrawledPageInfo[]> {
   return groupedData;
 }
 
-/**
- * Map Base URLs to Source IDs
- * 
- * AI INSTRUCTIONS:
- * - Map grouped pages to website source IDs
- * - Handle source URL parsing errors
- * - Return data structure compatible with UI components
- */
+/** Map Base URLs to Source IDs */
 function mapPagesToSourceIds(
   groupedData: Record<string, CrawledPageInfo[]>,
   sources: any[]
@@ -120,14 +91,7 @@ function mapPagesToSourceIds(
   return sourceIdMappedData;
 }
 
-/**
- * Crawled Pages Data Hook
- * 
- * AI INSTRUCTIONS:
- * - Handle data fetching and transformation
- * - Manage loading and error states
- * - Return processed data for UI consumption
- */
+/** Crawled Pages Data Hook */
 export function useCrawledPagesData(organizationId: string, chatbotConfigId: string, existingConfig: any) {
   return useQuery({
     queryKey: ['crawled-pages', organizationId, chatbotConfigId],

@@ -12,7 +12,8 @@ import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { DynamicPromptService } from '../../../domain/services/ai-configuration/DynamicPromptService';
+import { SimplePromptService } from '../../../domain/services/ai-configuration/SimplePromptService';
+import { PromptGenerationInput } from '../../../domain/services/ai-configuration/types/SimplePromptTypes';
 
 export interface EnhancedContext {
   intentResult?: {
@@ -45,7 +46,7 @@ export class SystemPromptBuilderService {
 
   constructor(
     private readonly aiConversationService: IAIConversationService,
-    private readonly dynamicPromptService: DynamicPromptService
+    private readonly simplePromptService: SimplePromptService
   ) {
     // Initialize centralized logging service
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
@@ -53,15 +54,13 @@ export class SystemPromptBuilderService {
 
 
 
-  /**
-   * Build enhanced system prompt with knowledge context (removed preliminary intent)
-   */
-  buildEnhancedSystemPrompt(
+  /** Build enhanced system prompt with knowledge context (removed preliminary intent) */
+  async buildEnhancedSystemPrompt(
     config: ChatbotConfig,
     session: ChatSession,
     messageHistory: ChatMessage[],
     enhancedContext: EnhancedContext
-  ): string {
+  ): Promise<string> {
     // Create session logger with context - shared log file is required
     if (!enhancedContext.sharedLogFile) {
       throw new Error('SharedLogFile is required for system prompt building - all logging must be conversation-specific');
@@ -152,15 +151,27 @@ export class SystemPromptBuilderService {
       logger.logMessage(`Total knowledge content: ${totalKnowledgeCharacters} characters`);
       logger.logMessage(`Average relevance score: ${(enhancedContext.relevantKnowledge.reduce((sum, item) => sum + item.relevanceScore, 0) / enhancedContext.relevantKnowledge.length).toFixed(3)}`);
       
-      // Use DynamicPromptService coordination to integrate knowledge with deduplication
-      logger.logMessage('🔧 Coordinating system prompt with knowledge integration...');
-      systemPrompt = this.dynamicPromptService.coordinateFinalSystemPrompt(
-        systemPrompt,
-        enhancedContext.relevantKnowledge,
-        logger
-      );
+      // Use SimplePromptService for efficient knowledge integration
+      logger.logMessage('🔧 Integrating knowledge using SimplePromptService...');
       
-      logger.logMessage('✅ Semantic knowledge successfully integrated and coordinated');
+      // Generate a complete system prompt with knowledge integration
+      const promptInput: PromptGenerationInput = {
+        chatbotConfig: config,
+        session: session,
+        messageHistory: messageHistory,
+        logger: logger,
+        enhancedContext: {
+          relevantKnowledge: enhancedContext.relevantKnowledge,
+          entityContextPrompt: enhancedContext.entityContextPrompt,
+          journeyState: enhancedContext.journeyState,
+          knowledgeRetrievalThreshold: enhancedContext.knowledgeRetrievalThreshold
+        }
+      };
+      
+      const promptResult = await this.simplePromptService.generateSystemPrompt(promptInput);
+      systemPrompt = promptResult.content;
+      
+      logger.logMessage('✅ Knowledge successfully integrated using SimplePromptService');
     } else {
       logger.logMessage('🧠 KNOWLEDGE INTEGRATION: No relevant knowledge found');
       logger.logMessage('Proceeding with base system prompt only');

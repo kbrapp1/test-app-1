@@ -7,17 +7,7 @@ import { ConversationFlowCompositionService } from './core/ConversationFlowCompo
 // Domain types
 import { AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
 
-/**
- * Domain Service Composition Service
- * 
- * AI INSTRUCTIONS:
- * - Clean, forward-only implementation following @golden-rule patterns
- * - No backward compatibility - break existing code that doesn't follow patterns
- * - Delegates to specialized composition services under 250 lines each
- * - Single responsibility: Orchestrate domain service access through delegation
- * - Force consumers to use proper dependency injection patterns
- * - Never exceed 250 lines - keep focused on delegation only
- */
+/** Domain Service Composition Service */
 export class DomainServiceCompositionService {
 
   // ===== INFRASTRUCTURE SERVICES =====

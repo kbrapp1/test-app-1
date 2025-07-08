@@ -33,24 +33,16 @@ export interface LogMetrics {
 }
 
 export interface ISessionLogger {
-  /**
-   * Log a header with separator lines (for main section headers)
-   */
+  /** Log a header with separator lines (for main section headers) */
   logHeader(title: string): void;
 
-  /**
-   * Log a separator line (================================================================================)
-   */
+  /** Log a separator line (================================================================================) */
   logSeparator(): void;
 
-  /**
-   * Log a raw message exactly as-is with no timestamp or emoji prefixes
-   */
+  /** Log a raw message exactly as-is with no timestamp or emoji prefixes */
   logRaw(message: string): void;
 
-  /**
-   * Log a direct message without any prefixes (for clean log entries)
-   */
+  /** Log a direct message without any prefixes (for clean log entries) */
   logMessage(message: string, data?: any, level?: LogLevel): void;
 
   /**
@@ -59,71 +51,45 @@ export interface ISessionLogger {
    */
   logMessageSync?(message: string, data?: any, level?: LogLevel): void;
 
-  /**
-   * Log a processing step with structured data
-   */
+  /** Log a processing step with structured data */
   logStep(step: string, data?: any, level?: LogLevel): void;
 
-  /**
-   * Log an error with context and stack trace
-   */
+  /** Log an error with context and stack trace */
   logError(error: Error, context?: any): void;
 
-  /**
-   * Log performance metrics and timing data
-   */
+  /** Log performance metrics and timing data */
   logMetrics(operation: string, metrics: LogMetrics): void;
 
-  /**
-   * Log API call details with request/response data
-   */
+  /** Log API call details with request/response data */
   logApiCall(endpoint: string, request: any, response: any, duration: number): void;
 
-  /**
-   * Log cache operations (hits, misses, warming)
-   */
+  /** Log cache operations (hits, misses, warming) */
   logCache(operation: 'hit' | 'miss' | 'warm' | 'evict', key: string, details?: any): void;
 
-  /**
-   * Log business domain events
-   */
+  /** Log business domain events */
   logDomainEvent(eventName: string, eventData: any): void;
 
-  /**
-   * Flush all pending log entries to storage
-   */
+  /** Flush all pending log entries to storage */
   flush(): Promise<void>;
 
-  /**
-   * Get correlation ID for this logging session
-   */
+  /** Get correlation ID for this logging session */
   getCorrelationId(): string;
 }
 
 export interface IOperationLogger {
-  /**
-   * Log operation start with context
-   */
+  /** Log operation start with context */
   start(context?: LogContext): void;
 
-  /**
-   * Log operation completion with results
-   */
+  /** Log operation completion with results */
   complete(result?: any, metrics?: LogMetrics): void;
 
-  /**
-   * Log operation failure with error details
-   */
+  /** Log operation failure with error details */
   fail(error: Error, context?: any): void;
 
-  /**
-   * Add contextual information to operation
-   */
+  /** Add contextual information to operation */
   addContext(key: string, value: any): void;
 
-  /**
-   * Get operation duration in milliseconds
-   */
+  /** Get operation duration in milliseconds */
   getDuration(): number;
 }
 

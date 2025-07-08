@@ -12,9 +12,7 @@ import { BusinessRuleViolationError, DataValidationError } from '../../domain/er
 
 type UseCase = 'greeting' | 'qualification' | 'demonstration' | 'closing';
 
-/**
- * Validate basic inputs for context injection
- */
+/** Validate basic inputs for context injection */
 export const validateInputs = (
   session: ChatSession, 
   chatbotConfig: ChatbotConfig, 
@@ -37,18 +35,14 @@ export const validateInputs = (
   }
 };
 
-/**
- * Validate selection criteria
- */
+/** Validate selection criteria */
 export const validateCriteria = (criteria: ContextSelectionCriteria): void => {
   if (!criteria) {
     throw new DataValidationError('criteria', 'is required');
   }
 };
 
-/**
- * Validate use case parameter
- */
+/** Validate use case parameter */
 export const validateUseCase = (useCase: UseCase): void => {
   const validUseCases: UseCase[] = ['greeting', 'qualification', 'demonstration', 'closing'];
   if (!validUseCases.includes(useCase)) {
@@ -56,9 +50,7 @@ export const validateUseCase = (useCase: UseCase): void => {
   }
 };
 
-/**
- * Validate analysis inputs
- */
+/** Validate analysis inputs */
 export const validateAnalysisInputs = (result: any, criteria: ContextSelectionCriteria): void => {
   if (!result) {
     throw new DataValidationError('result', 'is required for analysis');

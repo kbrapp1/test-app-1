@@ -56,13 +56,7 @@ export class LeadScoreCalculatorService {
     return calculatedLeadScore;
   }
 
-  /**
-   * Convert accumulated entities to lead scoring format
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract values from accumulated entities structure
-   * - Return format expected by DomainConstants.calculateLeadScore()
-   */
+  /** Convert accumulated entities to lead scoring format */
   private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: any): Partial<Record<string, any>> {
     const leadScoringEntities: Partial<Record<string, any>> = {};
     
@@ -80,14 +74,7 @@ export class LeadScoreCalculatorService {
     return leadScoringEntities;
   }
 
-  /**
-   * Log detailed lead score calculation
-   * 
-   * AI INSTRUCTIONS:
-   * - Log comprehensive score breakdown
-   * - Include individual component scores
-   * - Show qualification status
-   */
+  /** Log detailed lead score calculation */
   private logLeadScoreCalculation(
     leadScoreEntities: any,
     calculatedLeadScore: number,

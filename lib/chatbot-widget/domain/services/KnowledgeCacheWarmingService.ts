@@ -77,13 +77,13 @@ export class KnowledgeCacheWarmingService {
       logger.addContext('stage', 'Loading knowledge items for cache warming');
 
       // Load all knowledge items for cache warming using search with high limit
-      // We use a dummy embedding with high limit to get all items
+      // We use a dummy embedding with very low threshold to get all items
       const dummyEmbedding = new Array(1536).fill(0); // OpenAI embedding dimension
       const searchResults = await this.vectorRepository.searchKnowledgeItems(
         this.organizationId,
         this.chatbotConfigId,
         dummyEmbedding,
-        { threshold: -1, limit: 10000 } // Very low threshold and high limit to get all items
+        { threshold: 0.0001, limit: 10000 } // Very low but valid threshold and high limit to get all items
       );
 
       const allItems = searchResults.map(result => result.item);

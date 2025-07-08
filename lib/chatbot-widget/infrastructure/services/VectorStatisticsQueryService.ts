@@ -55,16 +55,7 @@ export class VectorStatisticsQueryService {
     return data || [];
   }
 
-  /**
-   * Get optimization data for storage analysis
-   * 
-   * AI INSTRUCTIONS:
-   * - Query data needed for storage optimization analysis
-   * - Include vector and content hash information
-   * - Return raw data for efficiency calculations
-   * - Handle large datasets efficiently
-   * - Support duplicate detection and analysis
-   */
+  /** Get optimization data for storage analysis */
   async getOptimizationData(context: VectorQueryContext): Promise<Array<{
     vector: any;
     content_hash: string;
@@ -84,16 +75,7 @@ export class VectorStatisticsQueryService {
     return data || [];
   }
 
-  /**
-   * Get health metrics data for content analysis
-   * 
-   * AI INSTRUCTIONS:
-   * - Query temporal data for health assessment
-   * - Include categorization for detailed analysis
-   * - Return raw data for health calculations
-   * - Support freshness and staleness analysis
-   * - Optimize for date-based queries
-   */
+  /** Get health metrics data for content analysis */
   async getHealthMetricsData(context: VectorQueryContext): Promise<Array<{
     updated_at: string;
     created_at: string;
@@ -113,16 +95,7 @@ export class VectorStatisticsQueryService {
     return data || [];
   }
 
-  /**
-   * Get usage analytics data for pattern analysis
-   * 
-   * AI INSTRUCTIONS:
-   * - Query data needed for usage pattern analysis
-   * - Include identification and categorization data
-   * - Return raw data for analytics calculations
-   * - Support content utilization analysis
-   * - Handle content tracking and trends
-   */
+  /** Get usage analytics data for pattern analysis */
   async getUsageAnalyticsData(context: VectorQueryContext): Promise<Array<{
     knowledge_item_id: string;
     title: string;
@@ -142,16 +115,7 @@ export class VectorStatisticsQueryService {
     return data || [];
   }
 
-  /**
-   * Get storage size using RPC function
-   * 
-   * AI INSTRUCTIONS:
-   * - Use optimized database functions for size calculation
-   * - Handle RPC function failures gracefully
-   * - Provide storage metrics for capacity planning
-   * - Support cost optimization insights
-   * - Default to zero if calculation fails
-   */
+  /** Get storage size using RPC function */
   async getStorageSize(context: VectorQueryContext): Promise<number> {
     try {
       const { data: statsData, error: statsError } = await this.supabase.rpc('get_vector_stats', {

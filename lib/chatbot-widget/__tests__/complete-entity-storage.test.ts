@@ -26,7 +26,7 @@ vi.mock('../infrastructure/composition/ChatbotWidgetCompositionRoot', () => ({
       }))
     })),
 
-    getDynamicPromptService: vi.fn(() => ({
+          getSimplePromptService: vi.fn(() => ({
       generateSystemPrompt: vi.fn().mockReturnValue('Generated system prompt'),
       coordinateFinalSystemPrompt: vi.fn().mockReturnValue('Final coordinated prompt')
     }))

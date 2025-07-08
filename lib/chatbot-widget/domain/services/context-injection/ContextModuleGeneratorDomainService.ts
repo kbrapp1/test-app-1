@@ -23,14 +23,7 @@ import {
 
 export class ContextModuleGeneratorDomainService {
   
-  /**
-   * Generate all candidate context modules for current session
-   * 
-   * AI INSTRUCTIONS:
-   * - Create modules based on available data
-   * - Apply business rules for module inclusion
-   * - Estimate tokens accurately for each module
-   */
+  /** Generate all candidate context modules for current session */
   static generateCandidateModules(
     session: ChatSession,
     chatbotConfig: ChatbotConfig,

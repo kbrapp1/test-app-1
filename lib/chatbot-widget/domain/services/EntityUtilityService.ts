@@ -18,27 +18,10 @@ import {
 } from '../types/AccumulatedEntityTypes';
 import { EntityAccumulationStrategies } from './EntityAccumulationStrategies';
 
-/**
- * Specialized Service for Entity Utility Operations
- * 
- * AI INSTRUCTIONS:
- * - Provide analysis and summary operations for entities
- * - Handle entity counting and categorization
- * - Support quality assessment and validation
- * - Maintain separation of concerns from value object state
- * - Enable entity statistics and reporting
- */
+/** Specialized Service for Entity Utility Operations */
 export class EntityUtilityService {
 
-  /**
-   * Generate comprehensive entity summary
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract all entity values into a clean summary format
-   * - Handle null entities gracefully
-   * - Provide consistent summary structure
-   * - Support display and reporting use cases
-   */
+  /** Generate comprehensive entity summary */
   static generateEntitySummary(props: AccumulatedEntitiesProps): EntitySummary {
     return {
       decisionMakers: props.decisionMakers.map(e => e.value),
@@ -57,15 +40,7 @@ export class EntityUtilityService {
     };
   }
 
-  /**
-   * Count entities by accumulation strategy category
-   * 
-   * AI INSTRUCTIONS:
-   * - Categorize entities by their accumulation strategy
-   * - Count non-null entities in each category
-   * - Provide statistics for entity distribution
-   * - Support analytics and monitoring use cases
-   */
+  /** Count entities by accumulation strategy category */
   static countEntitiesByCategory(props: AccumulatedEntitiesProps): EntityCounts {
     return {
       additive: props.decisionMakers.length + props.painPoints.length + 
@@ -77,28 +52,12 @@ export class EntityUtilityService {
     };
   }
 
-  /**
-   * Check if entity collection is empty
-   * 
-   * AI INSTRUCTIONS:
-   * - Determine if any entities have been extracted
-   * - Use totalExtractions as primary indicator
-   * - Provide simple boolean check for empty state
-   * - Support conditional logic in application layer
-   */
+  /** Check if entity collection is empty */
   static isEntityCollectionEmpty(props: AccumulatedEntitiesProps): boolean {
     return props.totalExtractions === 0;
   }
 
-  /**
-   * Validate entity collection integrity
-   * 
-   * AI INSTRUCTIONS:
-   * - Perform comprehensive validation of entity collection
-   * - Check confidence scores, dates, and metadata
-   * - Use existing validation services for consistency
-   * - Provide detailed validation results
-   */
+  /** Validate entity collection integrity */
   static validateEntityCollection(props: AccumulatedEntitiesProps): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -214,15 +173,7 @@ export class EntityUtilityService {
     };
   }
 
-  /**
-   * Find entities by confidence threshold
-   * 
-   * AI INSTRUCTIONS:
-   * - Filter entities based on confidence score
-   * - Support quality-based entity filtering
-   * - Provide flexible threshold configuration
-   * - Return entities with metadata for analysis
-   */
+  /** Find entities by confidence threshold */
   static findEntitiesByConfidence(
     props: AccumulatedEntitiesProps,
     minConfidence: number = 0.7

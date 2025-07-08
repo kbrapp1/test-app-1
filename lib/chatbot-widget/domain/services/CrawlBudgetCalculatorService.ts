@@ -5,9 +5,7 @@
 
 import { WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
 
-/**
- * Domain model for crawl budget calculation result
- */
+/** Domain model for crawl budget calculation result */
 export interface CrawlBudget {
   readonly maxPages: number;
   readonly maxDepth: number;

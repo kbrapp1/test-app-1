@@ -15,26 +15,12 @@
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
 import { ContentCategorizationError } from '../errors/ChatbotWidgetDomainErrors';
 
-/**
- * Interface for AI provider abstraction
- * 
- * AI INSTRUCTIONS:
- * - Abstract external AI service from domain logic
- * - Enable testing with mock implementations
- * - Keep domain layer pure from infrastructure dependencies
- */
+/** Interface for AI provider abstraction */
 export interface IAiCategorizationProvider {
   categorizeContent(content: string, title: string): Promise<string>;
 }
 
-/**
- * Domain rules for content categorization
- * 
- * AI INSTRUCTIONS:
- * - Define business rules for category assignment
- * - Maintain consistent categorization across system
- * - Use domain knowledge to improve categorization accuracy
- */
+/** Domain rules for content categorization */
 export interface CategoryRule {
   readonly category: KnowledgeItem['category'];
   readonly titlePatterns: RegExp[];
@@ -59,15 +45,7 @@ export class ContentCategorizationService {
     this.categoryRules = this.initializeCategoryRules();
   }
 
-  /**
-   * Categorize content using domain rules and AI fallback
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply domain rules first for consistent categorization
-   * - Use AI provider as fallback for complex content
-   * - Handle errors gracefully with meaningful fallbacks
-   * - Ensure categorization never fails the entire process
-   */
+  /** Categorize content using domain rules and AI fallback */
   async categorizeContent(
     content: string,
     title: string,
@@ -108,14 +86,7 @@ export class ContentCategorizationService {
     }
   }
 
-  /**
-   * Apply rule-based categorization using domain knowledge
-   * 
-   * AI INSTRUCTIONS:
-   * - Use explicit business rules for common content types
-   * - Prioritize rules by business importance
-   * - Ensure consistent categorization across crawls
-   */
+  /** Apply rule-based categorization using domain knowledge */
   private applyRuleBasedCategorization(
     content: string,
     title: string
@@ -142,9 +113,7 @@ export class ContentCategorizationService {
     return null;
   }
 
-  /**
-   * Check for strong content indicators beyond simple pattern matching
-   */
+  /** Check for strong content indicators beyond simple pattern matching */
   private hasStrongContentIndicators(content: string, rule: CategoryRule): boolean {
     // Domain rule: Content must have multiple indicators for non-title matches
     const matchCount = rule.contentPatterns.reduce((count, pattern) => {
@@ -155,9 +124,7 @@ export class ContentCategorizationService {
     return matchCount >= 2;
   }
 
-  /**
-   * Categorize content using AI provider
-   */
+  /** Categorize content using AI provider */
   private async categorizeWithAi(
     content: string,
     title: string,
@@ -209,9 +176,7 @@ export class ContentCategorizationService {
     }
   }
 
-  /**
-   * Validate categorization input
-   */
+  /** Validate categorization input */
   private validateCategorizationInput(content: string, title: string): void {
     if (!content || typeof content !== 'string') {
       throw new ContentCategorizationError(
@@ -235,9 +200,7 @@ export class ContentCategorizationService {
     }
   }
 
-  /**
-   * Check if category is valid
-   */
+  /** Check if category is valid */
   private isValidCategory(category: string): boolean {
     const validCategories: KnowledgeItem['category'][] = [
       'general',
@@ -250,9 +213,7 @@ export class ContentCategorizationService {
     return validCategories.includes(category as KnowledgeItem['category']);
   }
 
-  /**
-   * Truncate content for AI processing
-   */
+  /** Truncate content for AI processing */
   private truncateContentForAi(content: string): string {
     const maxLength = 2000; // Domain rule: Limit AI input length
     
@@ -267,9 +228,7 @@ export class ContentCategorizationService {
            content.substring(content.length - halfLength);
   }
 
-  /**
-   * Initialize category rules based on domain knowledge
-   */
+  /** Initialize category rules based on domain knowledge */
   private initializeCategoryRules(): CategoryRule[] {
     return [
       {

@@ -64,16 +64,7 @@ export class CrawlOrchestrationService {
     private validationService: WebsiteValidationService
   ) {}
 
-  /**
-   * Crawl single website source and convert to knowledge items
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate single website crawling process
-   * - Delegate crawling AND storage to infrastructure service
-   * - Ensure knowledge items are persisted with embeddings
-   * - Handle errors gracefully with proper error types
-   * - Maintain transaction boundaries
-   */
+  /** Crawl single website source and convert to knowledge items */
   async crawlWebsiteSource(request: WebsiteCrawlRequest): Promise<WebsiteCrawlResponse> {
     try {
       // Validate request using validation service
@@ -106,14 +97,7 @@ export class CrawlOrchestrationService {
     }
   }
 
-  /**
-   * Prepare crawl settings with appropriate defaults
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply sensible defaults for crawl settings
-   * - Ensure settings comply with business rules
-   * - Handle missing or invalid configurations gracefully
-   */
+  /** Prepare crawl settings with appropriate defaults */
   private prepareCrawlSettings(websiteSource: WebsiteSource): CrawlSettings {
     return {
       maxPages: websiteSource.crawlSettings?.maxPages || 50,
@@ -133,15 +117,7 @@ export class CrawlOrchestrationService {
     };
   }
 
-  /**
-   * Handle crawl errors with appropriate error responses
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform domain errors into appropriate response format
-   * - Preserve error context for debugging
-   * - Wrap unexpected errors with generic response
-   * - Maintain error consistency across operations
-   */
+  /** Handle crawl errors */
   private handleCrawlError(error: unknown, request: WebsiteCrawlRequest): WebsiteCrawlResponse {
     if (error instanceof BusinessRuleViolationError) {
       return {
@@ -168,26 +144,12 @@ export class CrawlOrchestrationService {
     };
   }
 
-  /**
-   * Validate website source before crawling
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate validation to validation service
-   * - Return validation results for UI feedback
-   * - Handle validation errors appropriately
-   */
+  /** Validate website source before crawling */
   async validateWebsiteSource(websiteSource: WebsiteSource) {
     return await this.validationService.validateWebsiteSource(websiteSource);
   }
 
-  /**
-   * Get crawl progress information
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide progress information for long-running crawl operations
-   * - Support real-time progress updates through callbacks
-   * - Handle progress tracking errors gracefully
-   */
+  /** Get crawl progress information */
   async getCrawlProgress(
     organizationId: string,
     chatbotConfigId: string,
@@ -217,14 +179,7 @@ export class CrawlOrchestrationService {
     }
   }
 
-  /**
-   * Cancel ongoing crawl operation
-   * 
-   * AI INSTRUCTIONS:
-   * - Gracefully cancel running crawl operations
-   * - Clean up partial data if needed
-   * - Return cancellation status
-   */
+  /** Cancel ongoing crawl operation */
   async cancelCrawl(
     organizationId: string,
     chatbotConfigId: string,

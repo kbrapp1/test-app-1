@@ -56,7 +56,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       {
         maxMemoryKB: 50 * 1024, // 50MB limit
         maxVectors: 10000, // Maximum 10k vectors
-        enableLRUEviction: true, // Enable automatic eviction
+        // AI: Removed LRU eviction - let serverless platform handle memory management
         evictionBatchSize: 100 // Evict 100 vectors at a time
       }
     );
@@ -106,7 +106,9 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       );
 
       // Initialize vector cache if not already done
+      // AI: Check if background warming completed first to avoid unnecessary initialization
       if (!this.vectorCache.isReady()) {
+        logger.logMessage('⚠️ Vector cache not ready - initializing during user interaction (this may cause delay)');
         await this.initializeVectorCache(context.sharedLogFile, logger);
       }
 
@@ -270,15 +272,8 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     }
   }
 
-  /**
-   * Initialize vector cache with knowledge base vectors
-   * 
-   * AI INSTRUCTIONS:
-   * - Load all knowledge vectors from database into memory
-   * - Should only be called once per service instance
-   * - Log initialization performance and statistics
-   * - Handle initialization failures gracefully
-   */
+  /** Initialize vector cache with knowledge base vectors
+ */
   private async initializeVectorCache(sharedLogFile: string, logger: ISessionLogger): Promise<void> {
     try {
       logger.logStep('Vector Cache Initialization');

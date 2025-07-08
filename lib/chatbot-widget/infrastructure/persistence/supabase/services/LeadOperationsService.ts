@@ -16,9 +16,7 @@ export class LeadOperationsService {
     private tableName: string = 'chat_leads'
   ) {}
 
-  /**
-   * Find lead by ID
-   */
+  /** Find lead by ID */
   async findById(id: string): Promise<RawLeadDbRecord | null> {
     const { data, error } = await this.supabase
       .from(this.tableName)
@@ -36,9 +34,7 @@ export class LeadOperationsService {
     return data as RawLeadDbRecord;
   }
 
-  /**
-   * Find lead by session ID
-   */
+  /** Find lead by session ID */
   async findBySessionId(sessionId: string): Promise<RawLeadDbRecord | null> {
     const { data, error } = await this.supabase
       .from(this.tableName)
@@ -56,9 +52,7 @@ export class LeadOperationsService {
     return data as RawLeadDbRecord;
   }
 
-  /**
-   * Find leads by email
-   */
+  /** Find leads by email */
   async findByEmail(email: string, organizationId: string): Promise<RawLeadDbRecord[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)
@@ -74,9 +68,7 @@ export class LeadOperationsService {
     return (data || []) as RawLeadDbRecord[];
   }
 
-  /**
-   * Find leads by assigned user
-   */
+  /** Find leads by assigned user */
   async findByAssignedTo(userId: string, organizationId: string): Promise<RawLeadDbRecord[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)
@@ -92,9 +84,7 @@ export class LeadOperationsService {
     return (data || []) as RawLeadDbRecord[];
   }
 
-  /**
-   * Save new lead
-   */
+  /** Save new lead */
   async save(lead: Lead): Promise<RawLeadDbRecord> {
     const insertData = LeadMapper.toInsert(lead);
     
@@ -111,9 +101,7 @@ export class LeadOperationsService {
     return data as RawLeadDbRecord;
   }
 
-  /**
-   * Update existing lead
-   */
+  /** Update existing lead */
   async update(lead: Lead): Promise<RawLeadDbRecord> {
     const updateData = LeadMapper.toUpdate(lead);
     
@@ -131,9 +119,7 @@ export class LeadOperationsService {
     return data as RawLeadDbRecord;
   }
 
-  /**
-   * Delete lead
-   */
+  /** Delete lead */
   async delete(id: string): Promise<void> {
     const { error } = await this.supabase
       .from(this.tableName)
@@ -145,9 +131,7 @@ export class LeadOperationsService {
     }
   }
 
-  /**
-   * Bulk update leads
-   */
+  /** Bulk update leads */
   async updateBulk(leadIds: string[], updates: {
     followUpStatus?: FollowUpStatus;
     assignedTo?: string;
@@ -182,9 +166,7 @@ export class LeadOperationsService {
     return count || 0;
   }
 
-  /**
-   * Find leads for export
-   */
+  /** Find leads for export */
   async findForExport(
     organizationId: string,
     filters?: {
@@ -223,9 +205,7 @@ export class LeadOperationsService {
     return (data || []) as RawLeadDbRecord[];
   }
 
-  /**
-   * Find duplicate leads
-   */
+  /** Find duplicate leads */
   async findDuplicates(organizationId: string): Promise<RawLeadDbRecord[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)

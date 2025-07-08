@@ -7,9 +7,7 @@ import { ChatSessionProps } from '../../value-objects/session-management/ChatSes
  */
 export class ChatSessionValidationService {
   
-  /**
-   * Validate chat session properties
-   */
+  /** Validate chat session properties */
   static validateSessionProps(props: ChatSessionProps): void {
     if (!props.chatbotConfigId?.trim()) {
       throw new Error('Chatbot config ID is required');
@@ -32,9 +30,7 @@ export class ChatSessionValidationService {
     this.validateEngagementScore(props.contextData.engagementScore);
   }
 
-  /**
-   * Validate session dates
-   */
+  /** Validate session dates */
   private static validateDates(props: ChatSessionProps): void {
     if (!(props.startedAt instanceof Date)) {
       throw new Error('startedAt must be a valid Date');
@@ -57,9 +53,7 @@ export class ChatSessionValidationService {
     }
   }
 
-  /**
-   * Validate session status
-   */
+  /** Validate session status */
   private static validateStatus(status: string): void {
     const validStatuses = ['active', 'idle', 'completed', 'abandoned', 'ended'];
     if (!validStatuses.includes(status)) {
@@ -67,18 +61,14 @@ export class ChatSessionValidationService {
     }
   }
 
-  /**
-   * Validate engagement score
-   */
+  /** Validate engagement score */
   private static validateEngagementScore(score: number): void {
     if (typeof score !== 'number' || score < 0 || score > 100) {
       throw new Error('Engagement score must be a number between 0 and 100');
     }
   }
 
-  /**
-   * Validate timeout value
-   */
+  /** Validate timeout value */
   static validateTimeout(timeoutMinutes: number): void {
     if (typeof timeoutMinutes !== 'number' || timeoutMinutes <= 0) {
       throw new Error('Timeout must be a positive number');

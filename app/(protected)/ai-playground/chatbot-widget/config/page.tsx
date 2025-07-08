@@ -3,6 +3,14 @@
 import { Suspense } from 'react';
 import { BotIdentityForm } from '@/lib/chatbot-widget/presentation/components/admin/configuration';
 
+/**
+ * Chatbot Config Page
+ * 
+ * AI INSTRUCTIONS:
+ * - Feature flag protection is handled at layout level
+ * - Focus on rendering the configuration form
+ * - Client component for form interactions
+ */
 export default function ChatbotConfigPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">

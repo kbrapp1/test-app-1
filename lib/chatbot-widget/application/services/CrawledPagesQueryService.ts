@@ -106,15 +106,7 @@ export class CrawledPagesQueryService {
     }
   }
 
-  /**
-   * Get crawled pages statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate and return statistics about crawled pages
-   * - Support filtering by date range and source
-   * - Provide metrics for monitoring and optimization
-   * - Handle large datasets efficiently
-   */
+  /** Get crawled pages statistics */
   async getCrawledPagesStats(request: CrawledPagesStatsRequest): Promise<CrawledPagesStatsResponse> {
     try {
       // Validate request
@@ -171,14 +163,7 @@ export class CrawledPagesQueryService {
     }
   }
 
-  /**
-   * Validate query request parameters
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate required fields and constraints
-   * - Use domain-specific error types
-   * - Check pagination limits and parameters
-   */
+  /** Validate query request parameters */
   private validateQueryRequest(request: CrawledPagesQueryRequest): void {
     if (!request.organizationId?.trim()) {
       throw new BusinessRuleViolationError(
@@ -212,14 +197,7 @@ export class CrawledPagesQueryService {
     });
   }
 
-  /**
-   * Validate statistics request parameters
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate required fields for statistics queries
-   * - Check date range validity
-   * - Use domain-specific error types
-   */
+  /** Validate statistics request parameters */
   private validateStatsRequest(request: CrawledPagesStatsRequest): void {
     if (!request.organizationId?.trim()) {
       throw new BusinessRuleViolationError(

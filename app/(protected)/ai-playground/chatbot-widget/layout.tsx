@@ -1,51 +1,43 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import { Ban } from 'lucide-react';
+import { getActiveOrganizationWithFlags } from '@/lib/organization/application/services/getActiveOrganizationWithFlags';
+import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
+import { ChatbotWidgetLayoutClient } from './layout-client';
 
-const chatbotNavItems: Array<{ title: string; href: string }> = [
-  { title: 'Configuration', href: '/ai-playground/chatbot-widget/config' },
-  { title: 'Knowledge Base', href: '/ai-playground/chatbot-widget/knowledge' },
-  { title: 'Website Sources', href: '/ai-playground/chatbot-widget/website-sources' },
-  { title: 'Lead Settings', href: '/ai-playground/chatbot-widget/leads' },
-  { title: 'Parameters', href: '/ai-playground/chatbot-widget/parameters' },
-  { title: 'Testing', href: '/ai-playground/chatbot-widget/testing' },
-  { title: 'Analytics', href: '/ai-playground/chatbot-widget/analytics' },
-];
+/**
+ * Chatbot Widget Layout (Server Component)
+ * 
+ * AI INSTRUCTIONS:
+ * - Check feature flag on server side
+ * - Show graceful feature disabled message if disabled
+ * - Follow the same pattern as DAM and TTS features
+ * - Only render layout if feature is enabled
+ */
+export default async function ChatbotWidgetLayout({ children }: { children: ReactNode }) {
+  // Feature flag check - server-side
+  const supabase = createSupabaseServerClient();
+  const organization = await getActiveOrganizationWithFlags(supabase);
+  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+  
+  // Default to true if flag is missing, but respect explicit false values
+  const isChatbotEnabled = flags ? (flags.hasOwnProperty('chatbot_widget') ? flags['chatbot_widget'] : true) : true;
 
-export default function ChatbotWidgetLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
-  return (
-    <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-6 lg:space-y-0">
-      <aside className="lg:w-52">
-        <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
-          {chatbotNavItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  isActive
-                    ? "bg-muted hover:bg-muted"
-                    : "hover:bg-transparent hover:underline",
-                  "justify-start"
-                )}
-              >
-                {item.title}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-      <div className="flex-1">
-        {children}
+  // If chatbot widget feature is not enabled, show feature not enabled message
+  if (!isChatbotEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-200px)] text-center">
+        <Ban className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Feature Not Enabled</h1>
+        <p className="text-muted-foreground">
+          The Chatbot Widget feature is not enabled for your organization.
+        </p>
+        <p className="text-muted-foreground mt-1">
+          Please contact your administrator for more information.
+        </p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Render the client-side layout if feature is enabled
+  return <ChatbotWidgetLayoutClient>{children}</ChatbotWidgetLayoutClient>;
 } 

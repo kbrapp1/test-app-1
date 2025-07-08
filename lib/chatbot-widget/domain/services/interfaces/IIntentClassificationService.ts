@@ -11,14 +11,7 @@ export interface IntentClassificationContext {
 }
 
 export interface IIntentClassificationService {
-  /**
-   * Classify the intent of a user message with context
-   * 
-   * AI INSTRUCTIONS:
-   * - This is the only method used by the unified processing workflow
-   * - All other methods were legacy and have been removed as dead code
-   * - Keep this implementation focused and efficient
-   */
+  /** Classify the intent of a user message with context */
   classifyIntent(
     message: string,
     context: IntentClassificationContext

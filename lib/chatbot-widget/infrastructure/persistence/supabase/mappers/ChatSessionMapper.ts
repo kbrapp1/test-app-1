@@ -1,8 +1,6 @@
 import { ChatSession, ChatSessionProps, SessionContext, LeadQualificationState, SessionStatus } from '../../../../domain/entities/ChatSession';
 
-/**
- * Raw database record structure from Supabase
- */
+/** Raw database record structure from Supabase */
 export interface RawChatSessionDbRecord {
   id: string;
   chatbot_config_id: string;
@@ -22,9 +20,7 @@ export interface RawChatSessionDbRecord {
   updated_at: string;
 }
 
-/**
- * Insert data structure for database operations
- */
+/** Insert data structure for database operations */
 export interface InsertChatSessionData {
   id: string;
   chatbot_config_id: string;
@@ -42,9 +38,7 @@ export interface InsertChatSessionData {
   current_url?: string;
 }
 
-/**
- * Update data structure for database operations
- */
+/** Update data structure for database operations */
 export interface UpdateChatSessionData {
   context_data?: any;
   lead_qualification_state?: any;
@@ -60,9 +54,7 @@ export interface UpdateChatSessionData {
  * Handles transformation between domain entities and database records
  */
 export class ChatSessionMapper {
-  /**
-   * Transform database record to domain entity
-   */
+  /** Transform database record to domain entity */
   static toDomain(record: RawChatSessionDbRecord): ChatSession {
     const props: ChatSessionProps = {
       id: record.id,
@@ -84,9 +76,7 @@ export class ChatSessionMapper {
     return ChatSession.fromPersistence(props);
   }
 
-  /**
-   * Transform domain entity to insert data
-   */
+  /** Transform domain entity to insert data */
   static toInsert(session: ChatSession): InsertChatSessionData {
     return {
       id: session.id,
@@ -106,9 +96,7 @@ export class ChatSessionMapper {
     };
   }
 
-  /**
-   * Transform domain entity to update data
-   */
+  /** Transform domain entity to update data */
   static toUpdate(session: ChatSession): UpdateChatSessionData {
     return {
       context_data: session.contextData,
@@ -121,9 +109,7 @@ export class ChatSessionMapper {
     };
   }
 
-  /**
-   * Map JSONB context data to domain object - MODERN: Use accumulated entities
-   */
+  /** Map JSONB context data to domain object - MODERN: Use accumulated entities */
   private static mapContextData(data: any): SessionContext {
     return {
       previousVisits: data?.previousVisits || 0,
@@ -142,9 +128,7 @@ export class ChatSessionMapper {
     };
   }
 
-  /**
-   * Map JSONB lead qualification state to domain object
-   */
+  /** Map JSONB lead qualification state to domain object */
   private static mapLeadQualificationState(data: any): LeadQualificationState {
     return {
       currentStep: data?.currentStep || 0,

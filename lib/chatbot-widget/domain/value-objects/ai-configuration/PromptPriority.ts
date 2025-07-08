@@ -32,14 +32,7 @@ export class PromptPriority {
     return new PromptPriority(numericValue, defaultLabel);
   }
 
-  /**
-   * Create predefined priority levels
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide factory methods for standard priority levels
-   * - Ensure consistent priority values across system
-   * - Support business rule implementation
-   */
+  /** Create predefined priority levels */
   static critical(): PromptPriority {
     return new PromptPriority(1000, 'Critical');
   }
@@ -60,26 +53,12 @@ export class PromptPriority {
     return new PromptPriority(100, 'Minimal');
   }
 
-  /**
-   * Create priority from numeric value with automatic labeling
-   * 
-   * AI INSTRUCTIONS:
-   * - Support custom priority values while maintaining consistency
-   * - Apply business rules for priority categorization
-   * - Ensure proper validation and labeling
-   */
+  /** Create priority from numeric value with automatic labeling */
   static fromNumeric(value: number): PromptPriority {
     return new PromptPriority(value, PromptPriority.getDefaultLabel(value));
   }
 
-  /**
-   * Compare priority levels
-   * 
-   * AI INSTRUCTIONS:
-   * - Support sorting and conflict resolution operations
-   * - Higher numeric value = higher priority
-   * - Follow consistent comparison patterns
-   */
+  /** Compare priority levels */
   isHigherThan(other: PromptPriority): boolean {
     return this.numericValue > other.numericValue;
   }
@@ -108,51 +87,23 @@ export class PromptPriority {
     return PriorityCategory.MINIMAL;
   }
 
-  /**
-   * Check if priority is above threshold for business rules
-   * 
-   * AI INSTRUCTIONS:
-   * - Support business rule evaluation based on priority
-   * - Enable threshold-based decision making
-   * - Consistent with system priority policies
-   */
+  /** Check if priority is above threshold for business rules */
   isAboveThreshold(threshold: PromptPriority): boolean {
     return this.numericValue >= threshold.numericValue;
   }
 
-  /**
-   * Create adjusted priority with offset
-   * 
-   * AI INSTRUCTIONS:
-   * - Return new immutable instance with adjusted priority
-   * - Preserve label consistency with new value
-   * - Validate adjusted value against constraints
-   */
+  /** Create adjusted priority with offset */
   adjustBy(offset: number): PromptPriority {
     const newValue = this.numericValue + offset;
     return new PromptPriority(newValue, PromptPriority.getDefaultLabel(newValue));
   }
 
-  /**
-   * Create priority with custom label
-   * 
-   * AI INSTRUCTIONS:
-   * - Return new immutable instance with updated label
-   * - Preserve numeric value unchanged
-   * - Validate label constraints
-   */
+  /** Create priority with custom label */
   withLabel(newLabel: string): PromptPriority {
     return new PromptPriority(this.numericValue, newLabel);
   }
 
-  /**
-   * Value object equality comparison
-   * 
-   * AI INSTRUCTIONS:
-   * - Compare numeric values for equality
-   * - Support Set and Map operations
-   * - Follow value object equality patterns
-   */
+  /** Value object equality comparison */
   equals(other: PromptPriority): boolean {
     return this.numericValue === other.numericValue;
   }

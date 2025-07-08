@@ -1,6 +1,11 @@
 import { ChatbotConfig } from '../../entities/ChatbotConfig';
 import { ConversationAnalysis } from './ConversationAnalysisService';
-import { TemplateVariable } from '../../../infrastructure/providers/templating/PromptTemplateEngine';
+// AI: Template variable type definition moved inline since template engine removed
+export interface TemplateVariable {
+  name: string;
+  value: string;
+  isRequired?: boolean;
+}
 
 /**
  * Persona Generation Domain Service

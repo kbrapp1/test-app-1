@@ -17,28 +17,14 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class EngagementScoreService {
   
-  /**
-   * Message length scoring thresholds
-   * 
-   * AI INSTRUCTIONS:
-   * - Define thresholds for different engagement levels
-   * - Longer messages generally indicate higher engagement
-   * - Adjust based on conversation context
-   */
+  /** Message length scoring thresholds */
   private static readonly LENGTH_THRESHOLDS = {
     HIGH: 100,
     MEDIUM: 50,
     LOW: 20
   };
   
-  /**
-   * Calculate engagement score based on message characteristics
-   * 
-   * AI INSTRUCTIONS:
-   * - Simplified engagement scoring focused on message substance
-   * - Use length and question indicators
-   * - Return score between 0.0 and 1.0
-   */
+  /** Calculate engagement score based on message characteristics */
   static calculateEngagementScore(message: ChatMessage): number {
     const content = message.content;
     let engagementScore = 0.3; // Base engagement score
@@ -59,14 +45,7 @@ export class EngagementScoreService {
     return Math.min(1.0, engagementScore);
   }
   
-  /**
-   * Calculate message length score
-   * 
-   * AI INSTRUCTIONS:
-   * - Score based on message length thresholds
-   * - Longer messages indicate more detailed engagement
-   * - Normalize to 0.0-1.0 range
-   */
+  /** Calculate message length score */
   static calculateLengthScore(messageLength: number): number {
     if (messageLength > this.LENGTH_THRESHOLDS.HIGH) {
       return 1.0;
@@ -78,14 +57,7 @@ export class EngagementScoreService {
     return 0.1;
   }
   
-  /**
-   * Calculate question engagement score
-   * 
-   * AI INSTRUCTIONS:
-   * - Score based on number of questions asked
-   * - Questions indicate active engagement and interest
-   * - Apply diminishing returns for excessive questions
-   */
+  /** Calculate question engagement score */
   static calculateQuestionScore(content: string): number {
     const questionCount = (content.match(/\?/g) || []).length;
     
@@ -97,14 +69,7 @@ export class EngagementScoreService {
     return Math.min(0.7, 0.5 + (questionCount - 2) * 0.1);
   }
   
-  /**
-   * Calculate combined engagement score
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine length and question scores
-   * - Apply balanced weighting
-   * - Provide comprehensive engagement assessment
-   */
+  /** Calculate combined engagement score */
   static calculateCombinedEngagementScore(
     message: ChatMessage,
     customWeights?: { lengthWeight: number; questionWeight: number }

@@ -25,16 +25,7 @@ export class EntityMergeProcessorService {
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
   }
 
-  /**
-   * Process and merge entities from unified AI results
-   * 
-   * AI INSTRUCTIONS:
-   * - Extract entities from API response
-   * - Merge with existing accumulated entities
-   * - Handle both single and array entities
-   * - Return final accumulated entities and API data
-   * - Use centralized logging for consistent tracking
-   */
+  /** Process and merge entities from unified AI results */
   processUnifiedEntities(
     session: any,
     botMessage: ChatMessage,
@@ -156,14 +147,7 @@ export class EntityMergeProcessorService {
     return extractedEntities;
   }
 
-  /**
-   * Build API provided data structure
-   * 
-   * AI INSTRUCTIONS:
-   * - Transform accumulated entities to API data format
-   * - Include persona inference and lead score data
-   * - Handle missing values with appropriate defaults
-   */
+  /** Build API provided data structure */
   private buildApiProvidedData(
     finalAccumulatedEntities: AccumulatedEntities,
     unifiedResult: any

@@ -32,14 +32,7 @@ export class EmbeddingApplicationService {
     private logContext?: EmbeddingLogContext
   ) {}
 
-  /**
-   * Generate embedding with intelligent caching
-   * 
-   * AI INSTRUCTIONS:
-   * - Check cache first, then API if needed
-   * - Log cache hits/misses for optimization
-   * - Store result in appropriate cache
-   */
+  /** Generate embedding with intelligent caching */
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
     const cacheKey = this.cacheService.generateCacheKey(text);
     
@@ -61,14 +54,7 @@ export class EmbeddingApplicationService {
     return result;
   }
 
-  /**
-   * Generate embeddings for multiple texts with batch optimization
-   * 
-   * AI INSTRUCTIONS:
-   * - Separate cached from uncached texts
-   * - Batch API calls for efficiency
-   * - Combine results in original order
-   */
+  /** Generate embeddings for multiple texts with batch optimization */
   async generateEmbeddings(texts: string[]): Promise<EmbeddingResult[]> {
     const uniqueTexts = Array.from(new Set(texts.filter(t => t.trim().length > 0)));
     const results: EmbeddingResult[] = [];
@@ -117,14 +103,7 @@ export class EmbeddingApplicationService {
     });
   }
 
-  /**
-   * Perform semantic similarity search
-   * 
-   * AI INSTRUCTIONS:
-   * - Generate query embedding (cached if possible)
-   * - Use domain service for similarity calculations
-   * - Return ranked results with scores
-   */
+  /** Perform semantic similarity search */
   async performSimilaritySearch(request: SimilaritySearchRequest): Promise<SimilarityMatch[]> {
     if (request.candidateTexts.length === 0) {
       return [];
@@ -155,14 +134,7 @@ export class EmbeddingApplicationService {
     return similarities;
   }
 
-  /**
-   * Precompute embeddings for knowledge base
-   * 
-   * AI INSTRUCTIONS:
-   * - Batch process knowledge base items
-   * - Store in permanent cache
-   * - Provide progress feedback
-   */
+  /** Precompute embeddings for knowledge base */
   async precomputeKnowledgeBaseEmbeddings(items: KnowledgeItem[]): Promise<void> {
     const texts = items.map(item => item.content);
     this.log(`🔄 Precomputing embeddings for ${texts.length} knowledge base items`);
@@ -217,26 +189,12 @@ export class EmbeddingApplicationService {
     this.log(`✅ PDF embedding processing completed: ${processed}/${total} chunks`);
   }
 
-  /**
-   * Get comprehensive cache statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to cache domain service
-   * - Return detailed cache breakdown
-   * - Include utilization metrics
-   */
+  /** Get comprehensive cache statistics */
   getCacheStats(): CacheStats {
     return this.cacheService.getCacheStats();
   }
 
-  /**
-   * Get detailed cache breakdown by type
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide cache statistics per type
-   * - Useful for cache optimization analysis
-   * - Include type-specific metrics
-   */
+  /** Get detailed cache breakdown by type */
   getDetailedCacheStats(): Record<CacheType, { size: number; maxSize: number | null; keys: string[] }> {
     return this.cacheService.getDetailedCacheStats();
   }
@@ -267,27 +225,13 @@ export class EmbeddingApplicationService {
     this.log(`🗑️  ${cacheType} cache cleared`);
   }
 
-  /**
-   * Set logging context
-   * 
-   * AI INSTRUCTIONS:
-   * - Update logging context for all services
-   * - Enable/disable logging dynamically
-   * - Propagate to provider service
-   */
+  /** Set logging context */
   setLogContext(logContext: EmbeddingLogContext): void {
     this.logContext = logContext;
     this.providerService.setLogContext(logContext);
   }
 
-  /**
-   * Log entry with fallback to no-op if no context
-   * 
-   * AI INSTRUCTIONS:
-   * - Safe logging that handles missing context
-   * - Consistent interface for all logging
-   * - No-op when logging context unavailable
-   */
+  /** Log entry with fallback to no-op if no context */
   private log(message: string): void {
     if (this.logContext) {
       this.logContext.logEntry(message);

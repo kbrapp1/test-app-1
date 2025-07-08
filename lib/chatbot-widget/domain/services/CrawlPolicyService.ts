@@ -12,9 +12,7 @@
 
 import { WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
 
-/**
- * Domain model for URL evaluation result
- */
+/** Domain model for URL evaluation result */
 export interface UrlEvaluation {
   readonly shouldCrawl: boolean;
   readonly reason: string;
@@ -34,15 +32,7 @@ export interface UrlEvaluation {
  */
 export class CrawlPolicyService {
 
-  /**
-   * Determine if URL should be crawled based on comprehensive policies
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply all relevant crawling policies systematically
-   * - Consider depth, domain, and content value constraints
-   * - Provide efficient crawl selection logic
-   * - Support policy-based crawl optimization
-   */
+  /** Determine if URL should be crawled based on comprehensive policies */
   shouldCrawlUrl(
     url: string,
     baseUrl: string,
@@ -53,15 +43,7 @@ export class CrawlPolicyService {
     return evaluation.shouldCrawl;
   }
 
-  /**
-   * Evaluate URL with detailed reasoning and priority
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide comprehensive URL evaluation with reasoning
-   * - Calculate priority and estimated value for crawl planning
-   * - Support advanced crawl optimization strategies
-   * - Enable detailed crawl decision analysis
-   */
+  /** Evaluate URL with detailed reasoning and priority */
   evaluateUrl(
     url: string,
     baseUrl: string,
@@ -110,15 +92,7 @@ export class CrawlPolicyService {
     };
   }
 
-  /**
-   * Check if URLs are from the same domain
-   * 
-   * AI INSTRUCTIONS:
-   * - Enforce same-domain crawling policy
-   * - Handle URL parsing edge cases gracefully
-   * - Support domain boundary enforcement
-   * - Prevent crawl scope expansion beyond target domain
-   */
+  /** Check if URLs are from the same domain */
   isSameDomain(url: string, baseUrl: string): boolean {
     try {
       const urlHostname = new URL(url).hostname.toLowerCase();
@@ -141,15 +115,7 @@ export class CrawlPolicyService {
     }
   }
 
-  /**
-   * Determine if URL points to valuable content
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply content value assessment rules
-   * - Filter out file downloads, admin pages, and low-value content
-   * - Support efficient crawl resource allocation
-   * - Enable content quality optimization
-   */
+  /** Determine if URL points to valuable content */
   isValuableContent(url: string): boolean {
     // Exclude file downloads and media
     const excludedExtensions = [
@@ -190,15 +156,7 @@ export class CrawlPolicyService {
     return true;
   }
 
-  /**
-   * Calculate URL priority for crawl ordering
-   * 
-   * AI INSTRUCTIONS:
-   * - Assign priority based on content value indicators
-   * - Consider depth and URL structure for prioritization
-   * - Support efficient crawl scheduling and resource allocation
-   * - Enable priority-based crawl optimization
-   */
+  /** Calculate URL priority for crawl ordering */
   calculateUrlPriority(url: string, depth: number): 'high' | 'medium' | 'low' {
     // High priority for shallow, content-rich pages
     if (depth === 0) return 'high';
@@ -231,15 +189,7 @@ export class CrawlPolicyService {
     return 'low';
   }
 
-  /**
-   * Estimate value of URL for crawl planning
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate estimated content value (0-1 scale)
-   * - Consider URL structure and content indicators
-   * - Support value-based crawl prioritization
-   * - Enable ROI optimization for crawl resources
-   */
+  /** Estimate value of URL for crawl planning */
   estimateUrlValue(url: string, depth: number): number {
     let value = 0.5; // Base value
 
@@ -267,28 +217,12 @@ export class CrawlPolicyService {
     return Math.max(0.1, Math.min(1.0, value));
   }
 
-  /**
-   * Check if subdomain crawling should be allowed
-   * 
-   * AI INSTRUCTIONS:
-   * - Control subdomain crawling policy
-   * - Support configuration of domain scope
-   * - Enable flexible domain boundary policies
-   * - Default to conservative same-domain only
-   */
+  /** Check if subdomain crawling should be allowed */
   private shouldAllowSubdomains(): boolean {
     return false; // Conservative default - same domain only to prevent scope creep and ensure focused crawling
   }
 
-  /**
-   * Get URLs that should be prioritized for crawling
-   * 
-   * AI INSTRUCTIONS:
-   * - Identify high-value URL patterns for prioritization
-   * - Support efficient crawl ordering and resource allocation
-   * - Enable content discovery optimization
-   * - Provide crawl strategy guidance
-   */
+  /** Get URLs that should be prioritized for crawling */
   getPriorityUrlPatterns(): string[] {
     return [
       '/about',

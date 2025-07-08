@@ -20,9 +20,7 @@ import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
-/**
- * Raw database record structure from Supabase
- */
+/** Raw database record structure from Supabase */
 export interface RawLeadDbRecord {
   id: string;
   organization_id: string;
@@ -44,9 +42,7 @@ export interface RawLeadDbRecord {
   updated_at: string;
 }
 
-/**
- * Insert data structure for database operations
- */
+/** Insert data structure for database operations */
 export interface InsertLeadData {
   id: string;
   organization_id: string;
@@ -66,9 +62,7 @@ export interface InsertLeadData {
   last_contacted_at?: string;
 }
 
-/**
- * Update data structure for database operations
- */
+/** Update data structure for database operations */
 export interface UpdateLeadData {
   contact_info?: any;
   qualification_data?: any;
@@ -88,9 +82,7 @@ export interface UpdateLeadData {
  * Handles transformation between domain entities and database records
  */
 export class LeadMapper {
-  /**
-   * Transform database record to domain entity
-   */
+  /** Transform database record to domain entity */
   static toDomain(record: RawLeadDbRecord): Lead {
     const props = {
       id: record.id,
@@ -114,9 +106,7 @@ export class LeadMapper {
     return Lead.fromPersistence(props);
   }
 
-  /**
-   * Transform domain entity to insert data
-   */
+  /** Transform domain entity to insert data */
   static toInsert(lead: Lead): InsertLeadData {
     return {
       id: lead.id,
@@ -138,9 +128,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Transform domain entity to update data
-   */
+  /** Transform domain entity to update data */
   static toUpdate(lead: Lead): UpdateLeadData {
     return {
       contact_info: lead.contactInfo,
@@ -157,9 +145,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map JSONB contact info to domain props
-   */
+  /** Map JSONB contact info to domain props */
   private static mapContactInfo(data: any) {
     return {
       name: data?.name || undefined,
@@ -181,9 +167,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map JSONB qualification data to domain props
-   */
+  /** Map JSONB qualification data to domain props */
   private static mapQualificationData(data: any) {
     return {
       budget: data?.budget || undefined,
@@ -206,9 +190,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map JSONB source to domain props
-   */
+  /** Map JSONB source to domain props */
   private static mapSource(data: any) {
     return {
       channel: data?.channel || 'chatbot_widget',
@@ -222,9 +204,7 @@ export class LeadMapper {
     };
   }
 
-  /**
-   * Map metadata to domain props
-   */
+  /** Map metadata to domain props */
   private static mapMetadata(conversationSummary: string, tags: string[], notes: any) {
     return {
       conversationSummary: conversationSummary || '',

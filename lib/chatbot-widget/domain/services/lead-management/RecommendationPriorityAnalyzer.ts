@@ -13,17 +13,13 @@ import { LeadRecommendation } from '../../value-objects/lead-management/LeadReco
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 
 export class RecommendationPriorityAnalyzer {
-  /**
-   * Get count of high priority recommendations
-   */
+  /** Get count of high priority recommendations */
   getHighPriorityCount(recommendations: LeadRecommendation[]): number {
     this.validateRecommendations(recommendations);
     return recommendations.filter(r => r.priority === 'high').length;
   }
 
-  /**
-   * Get primary action (highest priority, most urgent)
-   */
+  /** Get primary action (highest priority, most urgent) */
   getPrimaryAction(recommendations: LeadRecommendation[]): string {
     this.validateRecommendations(recommendations);
     
@@ -44,9 +40,7 @@ export class RecommendationPriorityAnalyzer {
     return recommendations[0].action;
   }
 
-  /**
-   * Get urgent actions that need immediate attention
-   */
+  /** Get urgent actions that need immediate attention */
   getUrgentActions(recommendations: LeadRecommendation[]): string[] {
     this.validateRecommendations(recommendations);
     
@@ -56,9 +50,7 @@ export class RecommendationPriorityAnalyzer {
       .slice(0, 5); // Limit to top 5 urgent actions
   }
 
-  /**
-   * Get most urgent recommendation from a list
-   */
+  /** Get most urgent recommendation from a list */
   getMostUrgentRecommendation(recommendations: LeadRecommendation[]): LeadRecommendation | null {
     if (recommendations.length === 0) return null;
 
@@ -70,9 +62,7 @@ export class RecommendationPriorityAnalyzer {
     });
   }
 
-  /**
-   * Get timeline urgency score for comparison
-   */
+  /** Get timeline urgency score for comparison */
   getTimelineUrgencyScore(timeline: string): number {
     if (!timeline || typeof timeline !== 'string') {
       return 0;
@@ -88,9 +78,7 @@ export class RecommendationPriorityAnalyzer {
     return 20; // Default
   }
 
-  /**
-   * Check if timeline indicates urgency
-   */
+  /** Check if timeline indicates urgency */
   private isUrgentTimeline(timeline: string): boolean {
     if (!timeline) return false;
     
@@ -100,9 +88,7 @@ export class RecommendationPriorityAnalyzer {
            (timelineLower.includes('day') && timelineLower.includes('1'));
   }
 
-  /**
-   * Validate recommendations array
-   */
+  /** Validate recommendations array */
   private validateRecommendations(recommendations: LeadRecommendation[]): void {
     if (!Array.isArray(recommendations)) {
       throw new BusinessRuleViolationError(

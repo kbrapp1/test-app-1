@@ -42,16 +42,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     this.statisticsService = new VectorStatisticsService(supabase);
   }
 
-  /**
-   * Store knowledge items with vectors
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to VectorStorageService for implementation
-   * - Maintain interface compatibility
-   * - Handle error transformation and context
-   * - Support batch operations efficiently
-   * - Provide comprehensive error handling
-   */
+  /** Store knowledge items with vectors */
   async storeKnowledgeItems(
     organizationId: string,
     chatbotConfigId: string,
@@ -132,16 +123,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     }
   }
 
-  /**
-   * Get all knowledge vectors for cache initialization
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to VectorQueryService for implementation
-   * - Transform results to match interface expectations
-   * - Handle vector validation and processing
-   * - Support bulk operations efficiently
-   * - Provide comprehensive error handling
-   */
+  /** Get all knowledge vectors for cache initialization */
   async getAllKnowledgeVectors(
     organizationId: string,
     chatbotConfigId: string
@@ -157,16 +139,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     }
   }
 
-  /**
-   * Delete knowledge items by source pattern
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to VectorStorageService for implementation
-   * - Handle source pattern matching and filtering
-   * - Support both exact and pattern-based deletion
-   * - Provide accurate deletion counts
-   * - Handle error tracking and recovery
-   */
+  /** Delete knowledge items by source pattern */
   async deleteKnowledgeItemsBySource(
     organizationId: string,
     chatbotConfigId: string,
@@ -190,16 +163,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     }
   }
 
-  /**
-   * Get knowledge item statistics and analytics
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to VectorStatisticsService for implementation
-   * - Transform results to match interface expectations
-   * - Handle comprehensive analytics and reporting
-   * - Support performance monitoring
-   * - Provide comprehensive error handling
-   */
+  /** Get knowledge item statistics and analytics */
   async getKnowledgeItemStats(
     organizationId: string,
     chatbotConfigId: string
@@ -257,16 +221,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
     }
   }
 
-  /**
-   * Get storage optimization metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to VectorStatisticsService for advanced analytics
-   * - Provide insights for storage optimization
-   * - Support cost reduction strategies
-   * - Handle performance monitoring
-   * - Enable proactive maintenance
-   */
+  /** Get storage optimization metrics */
   async getStorageOptimizationMetrics(
     organizationId: string,
     chatbotConfigId: string

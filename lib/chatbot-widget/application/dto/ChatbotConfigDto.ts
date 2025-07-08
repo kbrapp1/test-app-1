@@ -122,9 +122,7 @@ export interface LeadQualificationQuestionDto {
   readonly scoringWeight?: number;
 }
 
-/**
- * DTO for creating a new chatbot configuration
- */
+/** DTO for creating a new chatbot configuration */
 export interface CreateChatbotConfigDto {
   readonly organizationId: string;
   readonly name: string;
@@ -137,9 +135,7 @@ export interface CreateChatbotConfigDto {
   readonly aiConfiguration?: AIConfigurationDto;
 }
 
-/**
- * DTO for updating chatbot configuration
- */
+/** DTO for updating chatbot configuration */
 export interface UpdateChatbotConfigDto {
   readonly name?: string;
   readonly avatarUrl?: string;

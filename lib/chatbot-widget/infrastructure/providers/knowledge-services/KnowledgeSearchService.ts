@@ -9,9 +9,7 @@
 
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 
-/**
- * Search Result Interface
- */
+/** Search Result Interface */
 interface SearchResult {
   item: KnowledgeItem;
   score: number;

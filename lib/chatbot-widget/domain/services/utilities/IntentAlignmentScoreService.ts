@@ -18,14 +18,7 @@ import { IntentResult } from '../../value-objects/message-processing/IntentResul
  */
 export class IntentAlignmentScoreService {
   
-  /**
-   * Phase-based relevance scoring weights
-   * 
-   * AI INSTRUCTIONS:
-   * - Higher scores for business-critical conversation phases
-   * - Adjust based on conversion potential and business value
-   * - Use business context over keyword matching
-   */
+  /** Phase-based relevance scoring weights */
   private static readonly PHASE_SCORES: Record<string, number> = {
     'faq_pricing': 0.8,      // High business value
     'faq_features': 0.7,     // Product understanding
@@ -37,14 +30,7 @@ export class IntentAlignmentScoreService {
     'unknown': 0.3           // Low but not zero
   };
   
-  /**
-   * Calculate intent alignment score based on current conversation intent
-   * 
-   * AI INSTRUCTIONS:
-   * - Simplified scoring that trusts AI intent determination
-   * - Combine confidence and phase importance
-   * - Return score between 0.0 and 1.0
-   */
+  /** Calculate intent alignment score based on current conversation intent */
   static calculateIntentAlignmentScore(
     message: ChatMessage,
     currentIntent: IntentResult
@@ -63,14 +49,7 @@ export class IntentAlignmentScoreService {
     return Math.min(1.0, (confidenceScore * 0.4) + (phaseScore * 0.6));
   }
   
-  /**
-   * Get phase importance score
-   * 
-   * AI INSTRUCTIONS:
-   * - Return business importance score for specific intent phases
-   * - Higher scores for more conversion-critical phases
-   * - Used for weighted calculations
-   */
+  /** Get phase importance score */
   static getPhaseImportanceScore(intent: string): number {
     return this.PHASE_SCORES[intent] || 0.5;
   }

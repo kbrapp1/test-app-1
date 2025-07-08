@@ -27,16 +27,7 @@ import {
   VectorSearchResult
 } from '../types/VectorCacheTypes';
 
-/**
- * Orchestration Service for Complex Vector Cache Operations
- * 
- * AI INSTRUCTIONS:
- * - Coordinates complex workflows involving multiple specialized services
- * - Handles initialization workflow with memory management and logging
- * - Handles search workflow with similarity calculation and performance tracking
- * - Provides error handling and context for all operations
- * - Maintains separation of concerns between orchestration and state management
- */
+/** Orchestration Service for Complex Vector Cache Operations */
 export class VectorCacheOrchestrationService {
   
   /**
@@ -117,15 +108,7 @@ export class VectorCacheOrchestrationService {
     }
   }
 
-  /**
-   * Orchestrate cache search workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Coordinate search across multiple specialized services
-   * - Handle comprehensive logging and performance tracking
-   * - Manage similarity calculations and result filtering
-   * - Return detailed search results with debug information
-   */
+  /** Orchestrate cache search workflow */
   static async orchestrateSearch(
     queryEmbedding: number[],
     options: VectorSearchOptions,
@@ -198,14 +181,7 @@ export class VectorCacheOrchestrationService {
     }
   }
 
-  /**
-   * Orchestrate cache clearing workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Coordinate cache clearing with proper logging
-   * - Handle audit trail and monitoring
-   * - Provide visibility into cache lifecycle operations
-   */
+  /** Orchestrate cache clearing workflow */
   static orchestrateCacheClear(
     previousSize: number,
     organizationId: string,
@@ -238,14 +214,7 @@ export class VectorCacheOrchestrationService {
     }
   }
 
-  /**
-   * Orchestrate cache state monitoring
-   * 
-   * AI INSTRUCTIONS:
-   * - Coordinate comprehensive cache state reporting
-   * - Handle health monitoring and diagnostics
-   * - Provide insights for optimization and troubleshooting
-   */
+  /** Orchestrate cache state monitoring */
   static orchestrateStateMonitoring(
     cachedVectors: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>,

@@ -25,49 +25,33 @@ export class OpenAIEmbeddingService implements IEmbeddingService {
 
   constructor(
     apiKey: string, 
-    logContext?: EmbeddingLogContext, 
-    maxUserQueryCacheSize: number = 1000,
-    maxPdfCacheSize: number = 5000
+    logContext?: EmbeddingLogContext
   ) {
-    this.facade = new EmbeddingServiceFacade(
-      apiKey,
-      logContext,
-      maxUserQueryCacheSize,
-      maxPdfCacheSize
-    );
+    // AI: Removed cache size limits - serverless handles memory management automatically
+    this.facade = new EmbeddingServiceFacade(apiKey, logContext);
   }
 
-  /**
-   * Generate embedding for a single text (interface implementation)
-   */
+  /** Generate embedding for a single text (interface implementation) */
   async generateEmbedding(text: string): Promise<number[]> {
     return await this.facade.generateEmbedding(text);
   }
 
-  /**
-   * Generate embeddings for multiple texts in batch (interface implementation)
-   */
+  /** Generate embeddings for multiple texts in batch (interface implementation) */
   async generateEmbeddings(texts: string[]): Promise<number[][]> {
     return await this.facade.generateEmbeddings(texts);
   }
 
-  /**
-   * Generate embedding result with metadata for a single text
-   */
+  /** Generate embedding result with metadata for a single text */
   async generateEmbeddingWithMetadata(text: string): Promise<EmbeddingResult> {
     return await this.facade.generateEmbeddingWithMetadata(text);
   }
 
-  /**
-   * Generate embeddings for multiple texts with comprehensive logging
-   */
+  /** Generate embeddings for multiple texts with metadata */
   async generateEmbeddingsWithMetadata(texts: string[]): Promise<EmbeddingResult[]> {
     return await this.facade.generateEmbeddingsWithMetadata(texts);
   }
 
-  /**
-   * Find most similar texts using cosine similarity
-   */
+  /** Find most similar texts using cosine similarity */
   async findSimilarTexts(
     queryText: string,
     candidateTexts: string[],
@@ -77,9 +61,7 @@ export class OpenAIEmbeddingService implements IEmbeddingService {
     return await this.facade.findSimilarTexts(queryText, candidateTexts, topK, minSimilarity);
   }
 
-  /**
-   * Precompute embeddings for knowledge base
-   */
+  /** Precompute embeddings for knowledge base */
   async precomputeKnowledgeBaseEmbeddings(knowledgeItems: Array<{ id: string; content: string }>): Promise<void> {
     const items: KnowledgeItem[] = knowledgeItems.map(item => ({
       id: item.id,
@@ -89,9 +71,7 @@ export class OpenAIEmbeddingService implements IEmbeddingService {
     await this.facade.precomputeKnowledgeBaseEmbeddings(items);
   }
 
-  /**
-   * Precompute embeddings for PDF document chunks with optimized caching
-   */
+  /** Precompute embeddings for PDF document chunks */
   async precomputePDFEmbeddings(
     pdfChunks: Array<{ id: string; content: string }>,
     progressCallback?: (processed: number, total: number) => void
@@ -104,37 +84,27 @@ export class OpenAIEmbeddingService implements IEmbeddingService {
     await this.facade.precomputePDFEmbeddings(chunks, progressCallback);
   }
 
-  /**
-   * Clear embedding cache
-   */
+  /** Clear embedding cache */
   clearCache(): void {
     this.facade.clearCache();
   }
 
-  /**
-   * Get cache statistics
-   */
+  /** Get cache statistics */
   getCacheStats(): { size: number; maxSize: number; utilizationPercent: number; keys: string[] } {
     return this.facade.getCacheStats();
   }
 
-  /**
-   * Set logging context for API call logging
-   */
+  /** Set logging context for API call logging */
   setLogContext(logContext: EmbeddingLogContext): void {
     this.facade.setLogContext(logContext);
   }
 
-  /**
-   * Calculate cosine similarity between two embeddings (static method)
-   */
+  /** Calculate cosine similarity between two embeddings (static method) */
   static calculateCosineSimilarity(embeddingA: number[], embeddingB: number[]): number {
     return EmbeddingServiceFacade.calculateCosineSimilarity(embeddingA, embeddingB);
   }
 
-  /**
-   * Find duplicate embeddings with high similarity (static method)
-   */
+  /** Find duplicate embeddings with high similarity (static method) */
   static findDuplicateEmbeddings(
     embeddings: EmbeddingResult[],
     duplicateThreshold: number = 0.95
@@ -142,9 +112,7 @@ export class OpenAIEmbeddingService implements IEmbeddingService {
     return EmbeddingServiceFacade.findDuplicateEmbeddings(embeddings, duplicateThreshold);
   }
 
-  /**
-   * Validate embedding vector format (static method)
-   */
+  /** Validate embedding vector format (static method) */
   static validateEmbedding(embedding: number[]): boolean {
     return EmbeddingServiceFacade.validateEmbedding(embedding);
   }

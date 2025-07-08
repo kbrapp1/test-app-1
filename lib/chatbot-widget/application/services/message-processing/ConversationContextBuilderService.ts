@@ -31,30 +31,16 @@ export class ConversationContextBuilderService {
   constructor(
     private readonly aiConversationService: IAIConversationService
   ) {
-    /**
-     * AI INSTRUCTIONS:
-     * - Initialize system prompt builder for enhanced prompts
-     * - Initialize centralized logging service
-     * - Initialize error tracking service for database persistence
-     * - Follow composition over inheritance patterns
-     */
+    // Initialize services with composition pattern
     this.systemPromptBuilderService = new SystemPromptBuilderService(
       aiConversationService,
-      ChatbotWidgetCompositionRoot.getDynamicPromptService()
+      ChatbotWidgetCompositionRoot.getSimplePromptService()
     );
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
-  /**
-   * Build conversation context with compression and entity injection
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate compression, entity analysis, and system prompt building
-   * - Use centralized logging for consistent tracking
-   * - Delegate complex operations to specialized services
-   * - Return complete conversation context for AI processing
-   */
+  /** Build conversation context with compression and entity injection */
   async buildConversationContext(
     config: any,
     session: any,
@@ -107,7 +93,7 @@ export class ConversationContextBuilderService {
     };
 
     // Build enhanced system prompt with knowledge base integration
-    const systemPrompt = this.systemPromptBuilderService.buildEnhancedSystemPrompt(
+    const systemPrompt = await this.systemPromptBuilderService.buildEnhancedSystemPrompt(
       config,
       session,
       finalMessages,
@@ -125,15 +111,7 @@ export class ConversationContextBuilderService {
 
 
 
-  /**
-   * Apply conversation compression if needed
-   * 
-   * AI INSTRUCTIONS:
-   * - Check if compression is needed using token analysis
-   * - Apply API-driven compression with proper configuration
-   * - Return final messages and conversation summary
-   * - Use centralized logging for tracking
-   */
+  /** Apply conversation compression if needed */
   private async applyCompressionIfNeeded(
     messages: ChatMessage[],
     userMessage: ChatMessage,
@@ -175,16 +153,7 @@ export class ConversationContextBuilderService {
     return { finalMessages, conversationSummary };
   }
 
-  /**
-   * Analyze and inject accumulated entities
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze session context for accumulated entities
-   * - Log entity analysis for debugging
-   * - Build entity context prompt for system prompt injection
-   * - Return entity context prompt string
-   * - Use centralized logging for tracking
-   */
+  /** Analyze and inject accumulated entities */
   private analyzeAndInjectEntities(session: any, logger: ISessionLogger): string {
     logger.logStep('Entity injection analysis started', {
       hasContextData: !!session.contextData,
@@ -216,15 +185,7 @@ export class ConversationContextBuilderService {
     return entityContextPrompt;
   }
 
-  /**
-   * Log detailed entity analysis
-   * 
-   * AI INSTRUCTIONS:
-   * - Log which entities have values for injection
-   * - Include confidence scores and array entity counts
-   * - Provide comprehensive debugging information
-   * - Use centralized logging for tracking
-   */
+  /** Log detailed entity analysis */
   private logEntityAnalysis(entities: any, logger: ISessionLogger): void {
     logger.logStep('Raw accumulated entities structure', {
       entities: entities
@@ -259,14 +220,7 @@ export class ConversationContextBuilderService {
     }
   }
 
-  /**
-   * Create AI summarization function for compression
-   * 
-   * AI INSTRUCTIONS:
-   * - Use existing AI service to generate conversation summaries
-   * - Handle errors gracefully with fallback messages
-   * - Focus on business-critical information
-   */
+  /** Create AI summarization function for compression */
   private createSummarizationFunction() {
     return async (messages: ChatMessage[], instruction: string): Promise<string> => {
       const conversationText = messages

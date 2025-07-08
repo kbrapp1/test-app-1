@@ -5,10 +5,17 @@ import { withErrorHandling } from '@/lib/middleware/error';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { InitializeChatSessionUseCase } from '@/lib/chatbot-widget/application/use-cases/InitializeChatSessionUseCase';
 import { BusinessRuleViolationError, ResourceNotFoundError } from '@/lib/errors/base';
+import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/services/ChatbotWidgetFeatureFlagService';
 
 /**
  * POST /api/chatbot-widget/session
- * Initialize a new chat session with knowledge cache warming
+ * Initialize a new chat session with per-request cache warming
+ * 
+ * AI INSTRUCTIONS:
+ * - Trigger vector cache initialization during session creation
+ * - Use per-request cache warming optimized for serverless
+ * - Validate feature flags and chatbot configuration
+ * - Return comprehensive session information including cache status
  */
 async function postHandler(
   request: NextRequest,
@@ -24,6 +31,9 @@ async function postHandler(
   } = body;
 
   try {
+    // Check if chatbot widget feature is enabled
+    await checkChatbotWidgetFeatureFlag();
+
     // Get repositories and config first
     const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
@@ -47,26 +57,27 @@ async function postHandler(
       knowledgeRetrievalService
     );
 
-    // Execute session initialization with cache warming
+    // Execute session initialization with per-request cache warming
     const result = await initializeSessionUseCase.execute({
       chatbotConfigId,
       visitorId,
       initialContext,
-      warmKnowledgeCache
+      warmKnowledgeCache // Use provided value or default true
     });
 
     return NextResponse.json({
-      sessionId: result.session.id,
-      chatbotConfig: {
-        id: result.chatbotConfig.id,
-        name: result.chatbotConfig.name,
-        description: result.chatbotConfig.description,
-        isActive: result.chatbotConfig.isActive
-      },
-      visitorId: result.session.visitorId,
-      startedAt: result.session.startedAt,
-      cacheWarmed: result.cacheWarmed,
-      cacheWarmingTimeMs: result.cacheWarmingTimeMs
+      success: true,
+      data: {
+        sessionId: result.session.id,
+        sessionToken: result.session.sessionToken,
+        chatbotConfig: {
+          id: result.chatbotConfig.id,
+          name: result.chatbotConfig.name,
+          organizationId: result.chatbotConfig.organizationId,
+        },
+        cacheWarmed: result.cacheWarmed,
+        cacheWarmingTimeMs: result.cacheWarmingTimeMs
+      }
     });
 
   } catch (error) {
@@ -109,24 +120,40 @@ async function getHandler(
     );
   }
 
-  const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
-  const session = await sessionRepository.findById(sessionId);
+  try {
+    // Check if chatbot widget feature is enabled
+    await checkChatbotWidgetFeatureFlag();
 
-  if (!session) {
-    return NextResponse.json(
-      { error: 'Session not found' },
-      { status: 404 }
-    );
+    const sessionRepository = ChatbotWidgetCompositionRoot.getChatSessionRepository();
+    const session = await sessionRepository.findById(sessionId);
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      sessionId: session.id,
+      chatbotConfigId: session.chatbotConfigId,
+      visitorId: session.visitorId,
+      startedAt: session.startedAt,
+      status: session.status,
+      contextData: session.contextData
+    });
+  } catch (error) {
+    // Handle feature flag errors
+    if (error instanceof Error && error.message.includes('not enabled')) {
+      return NextResponse.json(
+        { error: error.message, code: 'FEATURE_DISABLED' },
+        { status: 403 }
+      );
+    }
+    
+    // Re-throw other errors for error middleware
+    throw error;
   }
-
-  return NextResponse.json({
-    sessionId: session.id,
-    chatbotConfigId: session.chatbotConfigId,
-    visitorId: session.visitorId,
-    startedAt: session.startedAt,
-    status: session.status,
-    contextData: session.contextData
-  });
 }
 
 export const POST = withErrorHandling(withAuth(postHandler));

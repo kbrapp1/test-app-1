@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * ConfigurationInfo Component
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Display widget configuration metadata
- * - Presentation layer component for configuration visualization
- * - Keep under 60 lines, focused on metadata display only
- * - Use clean typography and minimal styling
- */
-
+/** ConfigurationInfo Component */
 interface ConfigurationInfoProps {
   widgetId: string;
   lastUpdated: string;

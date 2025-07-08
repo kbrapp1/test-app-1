@@ -41,9 +41,8 @@ export class InfrastructureCompositionService {
   private static contentDeduplicationService: ContentDeduplicationService | null = null;
   private static loggingService: IChatbotLoggingService | null = null;
 
-  /**
-   * Get vector knowledge repository singleton
-   */
+  /** Get vector knowledge repository singleton
+ */
   static getVectorKnowledgeRepository(): IVectorKnowledgeRepository {
     if (!this.vectorKnowledgeRepository) {
       const supabase = createClient();
@@ -52,9 +51,8 @@ export class InfrastructureCompositionService {
     return this.vectorKnowledgeRepository;
   }
 
-  /**
-   * Get OpenAI provider singleton
-   */
+  /** Get OpenAI provider singleton
+ */
   static getOpenAIProvider(): OpenAIProvider {
     if (!this.openAIProvider) {
       this.openAIProvider = this.createOpenAIProvider();
@@ -62,9 +60,8 @@ export class InfrastructureCompositionService {
     return this.openAIProvider;
   }
 
-  /**
-   * Get embedding service singleton
-   */
+  /** Get embedding service singleton
+ */
   static getEmbeddingService(): OpenAIEmbeddingService {
     if (!this.embeddingService) {
       this.embeddingService = this.createEmbeddingService();
@@ -72,9 +69,8 @@ export class InfrastructureCompositionService {
     return this.embeddingService;
   }
 
-  /**
-   * Get crawl and store website use case singleton
-   */
+  /** Get crawl and store website use case singleton
+ */
   static getCrawlAndStoreWebsiteUseCase(): CrawlAndStoreWebsiteUseCase {
     if (!this.crawlAndStoreWebsiteUseCase) {
       const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
@@ -86,9 +82,8 @@ export class InfrastructureCompositionService {
     return this.crawlAndStoreWebsiteUseCase;
   }
 
-  /**
-   * Get vector knowledge application service singleton
-   */
+  /** Get vector knowledge application service singleton
+ */
   static getVectorKnowledgeApplicationService(): VectorKnowledgeApplicationService {
     if (!this.vectorKnowledgeApplicationService) {
       const vectorKnowledgeRepository = this.getVectorKnowledgeRepository();
@@ -101,9 +96,8 @@ export class InfrastructureCompositionService {
     return this.vectorKnowledgeApplicationService;
   }
 
-  /**
-   * Get website knowledge application service singleton
-   */
+  /** Get website knowledge application service singleton
+ */
   static getWebsiteKnowledgeApplicationService(): WebsiteKnowledgeApplicationService {
     if (!this.websiteKnowledgeApplicationService) {
       // Create the specialized services
@@ -142,9 +136,8 @@ export class InfrastructureCompositionService {
     return this.websiteKnowledgeApplicationService;
   }
 
-  /**
-   * Get URL normalization service singleton
-   */
+  /** Get URL normalization service singleton
+ */
   static getUrlNormalizationService(): UrlNormalizationService {
     if (!this.urlNormalizationService) {
       this.urlNormalizationService = new UrlNormalizationService();
@@ -152,9 +145,8 @@ export class InfrastructureCompositionService {
     return this.urlNormalizationService;
   }
 
-  /**
-   * Get content deduplication service singleton
-   */
+  /** Get content deduplication service singleton
+ */
   static getContentDeduplicationService(): ContentDeduplicationService {
     if (!this.contentDeduplicationService) {
       const urlNormalizationService = this.getUrlNormalizationService();
@@ -163,9 +155,8 @@ export class InfrastructureCompositionService {
     return this.contentDeduplicationService;
   }
 
-  /**
-   * Get deduplicate website content use case singleton
-   */
+  /** Get deduplicate website content use case singleton
+ */
   static getDeduplicateWebsiteContentUseCase(): DeduplicateWebsiteContentUseCase {
     if (!this.deduplicateWebsiteContentUseCase) {
       this.deduplicateWebsiteContentUseCase = this.createDeduplicateWebsiteContentUseCase();
@@ -173,9 +164,8 @@ export class InfrastructureCompositionService {
     return this.deduplicateWebsiteContentUseCase;
   }
 
-  /**
-   * Get logging service singleton
-   */
+  /** Get logging service singleton
+ */
   static getLoggingService(): IChatbotLoggingService {
     if (!this.loggingService) {
       this.loggingService = new ChatbotFileLoggingService();
@@ -183,9 +173,8 @@ export class InfrastructureCompositionService {
     return this.loggingService;
   }
 
-  /**
-   * Create OpenAI provider with environment configuration
-   */
+  /** Create OpenAI provider with environment configuration
+ */
   private static createOpenAIProvider(): OpenAIProvider {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -200,25 +189,20 @@ export class InfrastructureCompositionService {
     });
   }
 
-  /**
-   * Create embedding service with environment configuration
-   */
+  /** Create embedding service with environment configuration
+ */
   private static createEmbeddingService(): OpenAIEmbeddingService {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY is required for vector embeddings');
     }
     
-    const maxUserQueryCacheSize = process.env.USER_QUERY_CACHE_SIZE 
-      ? parseInt(process.env.USER_QUERY_CACHE_SIZE) 
-      : 1000;
-       
-    return new OpenAIEmbeddingService(apiKey, undefined, maxUserQueryCacheSize);
+        // AI: Removed cache size limits - serverless handles memory management automatically
+    return new OpenAIEmbeddingService(apiKey);
   }
 
-  /**
-   * Create deduplicate website content use case with dependencies
-   */
+  /** Create deduplicate website content use case with dependencies
+ */
   private static createDeduplicateWebsiteContentUseCase(): DeduplicateWebsiteContentUseCase {
     const urlNormalizationService = this.getUrlNormalizationService();
     const contentDeduplicationService = this.getContentDeduplicationService();
@@ -231,9 +215,8 @@ export class InfrastructureCompositionService {
     );
   }
 
-  /**
-   * Reset all infrastructure services for testing
-   */
+  /** Reset all infrastructure services for testing
+ */
   static reset(): void {
     this.vectorKnowledgeRepository = null;
     this.embeddingService = null;

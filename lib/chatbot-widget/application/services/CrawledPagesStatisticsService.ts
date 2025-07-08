@@ -14,15 +14,7 @@ import { CrawledPageData, CrawledPagesStatistics } from '../types/CrawledPagesTy
  */
 export class CrawledPagesStatisticsService {
 
-  /**
-   * Calculate comprehensive statistics from crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate all relevant metrics for crawled pages
-   * - Handle edge cases like empty datasets
-   * - Provide meaningful metrics for monitoring
-   * - Maintain type safety throughout calculations
-   */
+  /** Calculate comprehensive statistics from crawled pages */
   static calculateStatistics(pages: CrawledPageData[]): CrawledPagesStatistics {
     if (!Array.isArray(pages)) {
       throw new BusinessRuleViolationError(
@@ -64,14 +56,7 @@ export class CrawledPagesStatisticsService {
     };
   }
 
-  /**
-   * Calculate status-based counts
-   * 
-   * AI INSTRUCTIONS:
-   * - Count pages by status type
-   * - Handle all possible status values
-   * - Maintain accuracy in counting
-   */
+  /** Calculate status-based counts */
   private static calculateStatusCounts(pages: CrawledPageData[]) {
     const successfulPages = pages.filter(p => p.status === 'success').length;
     const failedPages = pages.filter(p => p.status === 'failed').length;
@@ -106,14 +91,7 @@ export class CrawledPagesStatisticsService {
     };
   }
 
-  /**
-   * Calculate content-related metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate unique sources and depth statistics
-   * - Handle URL parsing safely
-   * - Provide content distribution insights
-   */
+  /** Calculate content-related metrics */
   private static calculateContentMetrics(pages: CrawledPageData[]) {
     // Calculate unique sources
     const uniqueSources = new Set();
@@ -137,14 +115,7 @@ export class CrawledPagesStatisticsService {
     };
   }
 
-  /**
-   * Calculate temporal metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate time-based statistics
-   * - Handle date comparisons safely
-   * - Provide temporal insights
-   */
+  /** Calculate temporal metrics */
   private static calculateTemporalMetrics(pages: CrawledPageData[]) {
     const lastCrawlDate = pages.length > 0 
       ? new Date(Math.max(...pages.map(p => p.crawledAt.getTime())))
@@ -177,14 +148,7 @@ export class CrawledPagesStatisticsService {
     };
   }
 
-  /**
-   * Validate pages data for statistics calculation
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate input data structure
-   * - Use domain-specific error types
-   * - Check for required fields
-   */
+  /** Validate pages data for statistics calculation */
   static validatePagesData(pages: unknown): asserts pages is CrawledPageData[] {
     if (!Array.isArray(pages)) {
       throw new BusinessRuleViolationError(

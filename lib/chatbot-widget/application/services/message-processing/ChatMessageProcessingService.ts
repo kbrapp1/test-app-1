@@ -67,12 +67,7 @@ export class ChatMessageProcessingService {
     private readonly intentClassificationService?: IIntentClassificationService,
     private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService
   ) {
-    /**
-     * AI INSTRUCTIONS:
-     * - Initialize specialized services for focused responsibilities
-     * - Follow composition over inheritance patterns
-     * - Delegate complex operations to domain services
-     */
+    // Initialize specialized services with composition pattern
     this.conversationContextBuilder = new ConversationContextBuilderService(aiConversationService);
     this.unifiedResponseProcessor = new UnifiedResponseProcessorService(messageRepository, errorTrackingFacade);
     
@@ -89,14 +84,7 @@ export class ChatMessageProcessingService {
     );
   }
 
-  /**
-   * Process user message through workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Simple delegation to workflow context
-   * - No business logic in application service
-   * - Return structured context for next steps
-   */
+  /** Process user message through workflow */
   async processUserMessage(
     workflowContext: WorkflowContext,
     request: ProcessMessageRequest
@@ -110,15 +98,7 @@ export class ChatMessageProcessingService {
     };
   }
 
-  /**
-   * Generate AI response using unified processing
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate unified AI processing workflow
-   * - Delegate to specialized services for each concern
-   * - Handle errors gracefully without exposing internals
-   * - Follow @golden-rule single responsibility principle
-   */
+  /** Generate AI response using unified processing */
   async generateAIResponse(analysisResult: AnalysisResult, sharedLogFile: string): Promise<ResponseResult> {
     const { session, userMessage, contextResult, config, enhancedContext } = analysisResult;
     
@@ -156,6 +136,34 @@ export class ChatMessageProcessingService {
       conversationContext
     );
 
+    // AI INSTRUCTIONS: Extract sentiment, urgency, engagement from unified response
+    // This replaces the 3 separate API calls that were causing 2.8s delay
+    // while preserving exact same data format for downstream processes
+    let updatedUserMessage = userMessage;
+    try {
+      // Extract analysis data directly without requiring MessageProcessingWorkflowService
+      const sentiment = this.extractSentimentFromUnified(unifiedResult);
+      const urgency = this.extractUrgencyFromUnified(unifiedResult);
+      const engagement = this.extractEngagementFromUnified(unifiedResult);
+      
+      // Update user message with extracted data (same as before)
+      const messageWithSentiment = userMessage.updateSentiment(sentiment);
+      const messageWithUrgency = messageWithSentiment.updateUrgency(urgency);
+      const messageWithEngagement = messageWithUrgency.updateEngagement(engagement);
+      
+      // Save updated message with analysis data
+      updatedUserMessage = await this.messageRepository.save(messageWithEngagement, logFileName);
+      
+      // Fallback to original message if save failed
+      if (!updatedUserMessage) {
+        updatedUserMessage = userMessage;
+      }
+    } catch (error) {
+      // If extraction fails, continue with original message
+      console.error('Failed to extract analysis from unified response:', error);
+      updatedUserMessage = userMessage; // Ensure we have a valid message object
+    }
+
     // Process unified response and create bot message
     const botMessage = await this.unifiedResponseProcessor.createBotMessageFromUnifiedResult(
       session,
@@ -164,20 +172,25 @@ export class ChatMessageProcessingService {
       config
     );
 
+    // Update allMessages array with the updated user message
+    const finalAllMessages = allMessages.map((msg: ChatMessage) => 
+      updatedUserMessage && msg.id === updatedUserMessage.id ? updatedUserMessage : msg
+    );
+
     // Update session context with unified results
     const updatedSession = this.sessionContextUpdater.updateSessionWithUnifiedResults(
       session,
       botMessage,
-      allMessages,
+      finalAllMessages,
       unifiedResult,
       logFileName
     );
 
     return {
       session: updatedSession,
-      userMessage,
+      userMessage: updatedUserMessage, // Return updated user message with analysis
       botMessage,
-      allMessages,
+      allMessages: finalAllMessages,
       config,
       enhancedContext: {
         ...enhancedContext,
@@ -188,14 +201,7 @@ export class ChatMessageProcessingService {
     };
   }
 
-  /**
-   * Retrieve knowledge for query context
-   * 
-   * AI INSTRUCTIONS:
-   * - Simple delegation to knowledge retrieval service
-   * - Handle missing service gracefully
-   * - Return null if service unavailable
-   */
+  /** Retrieve knowledge for query context */
   async retrieveKnowledge(query: string, context?: any): Promise<any> {
     if (!this.knowledgeRetrievalService) {
       return null;
@@ -212,5 +218,50 @@ export class ChatMessageProcessingService {
 
     const result = await this.knowledgeRetrievalService.searchKnowledge(searchContext);
     return result.items;
+  }
+
+  /** Extract sentiment from unified API response */
+  private extractSentimentFromUnified(unifiedResult: any): 'positive' | 'neutral' | 'negative' {
+    // Try multiple paths in unified response
+    const sentiment = unifiedResult?.analysis?.sentiment ||
+                     unifiedResult?.response?.sentiment ||
+                     'neutral'; // Default fallback
+    
+    // Validate and normalize sentiment value
+    if (sentiment === 'positive' || sentiment === 'negative' || sentiment === 'neutral') {
+      return sentiment;
+    }
+    
+    return 'neutral'; // Safe fallback
+  }
+
+  /** Extract urgency from unified API response */
+  private extractUrgencyFromUnified(unifiedResult: any): 'low' | 'medium' | 'high' {
+    // Try multiple paths in unified response
+    const urgency = unifiedResult?.analysis?.entities?.urgency ||
+                   unifiedResult?.conversationFlow?.urgency ||
+                   'low'; // Default fallback
+    
+    // Validate and normalize urgency value
+    if (urgency === 'high' || urgency === 'medium' || urgency === 'low') {
+      return urgency;
+    }
+    
+    return 'low'; // Safe fallback
+  }
+
+  /** Extract engagement from unified API response */
+  private extractEngagementFromUnified(unifiedResult: any): 'low' | 'medium' | 'high' {
+    // Try multiple paths in unified response
+    const engagement = unifiedResult?.conversationFlow?.engagementLevel ||
+                      unifiedResult?.analysis?.engagementLevel ||
+                      'low'; // Default fallback
+    
+    // Validate and normalize engagement value
+    if (engagement === 'high' || engagement === 'medium' || engagement === 'low') {
+      return engagement;
+    }
+    
+    return 'low'; // Safe fallback
   }
 } 

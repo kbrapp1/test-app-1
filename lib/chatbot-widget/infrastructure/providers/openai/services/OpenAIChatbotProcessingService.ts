@@ -99,14 +99,11 @@ export class OpenAIChatbotProcessingService {
     );
     
     try {
-      // Extract context for dynamic schema generation
-      const existingEntities = context.userData?.entities || {};
-      const conversationPhase = this.determineConversationPhase(context.messageHistory);
-      
+      // Build simplified lead qualification schema
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext(
-        existingEntities,
-        conversationPhase, 
-        message
+        undefined, // existingEntities - not used in simplified schema
+        undefined, // conversationPhase - not used in simplified schema
+        message    // userMessage - not used in simplified schema
       );
       
       // Use the enhanced system prompt with knowledge base integration
@@ -149,11 +146,28 @@ export class OpenAIChatbotProcessingService {
       const functionArgs = JSON.parse(choice.message.function_call.arguments);
       sessionLogger.logMessage('🔧 EXTRACTED FUNCTION ARGUMENTS:', functionArgs);
 
+      // AI: Map simplified schema response to expected format
       const result = {
-        analysis: functionArgs.analysis,
-        conversationFlow: functionArgs.conversationFlow,
+        analysis: {
+          primaryIntent: functionArgs.intent || 'inquiry',
+          primaryConfidence: 0.8, // Default confidence for simplified schema
+          entities: functionArgs.lead_data || {},
+          reasoning: `Intent: ${functionArgs.intent}, Lead data extracted`
+        },
+        conversationFlow: {
+          shouldCaptureLeadNow: functionArgs.response?.capture_contact || false,
+          shouldAskQualificationQuestions: functionArgs.response?.next_question ? true : false,
+          shouldEscalateToHuman: false, // Default for simplified schema
+          nextBestAction: functionArgs.response?.capture_contact ? 'capture_contact' : 'continue_conversation',
+          conversationPhase: this.mapIntentToPhase(functionArgs.intent),
+          engagementLevel: this.mapIntentToEngagement(functionArgs.intent)
+        },
         // leadScore: Intentionally excluded - calculated by domain service
-        response: functionArgs.response,
+        response: {
+          content: functionArgs.response?.content || '',
+          tone: 'professional', // Default tone for simplified schema
+          shouldTriggerLeadCapture: functionArgs.response?.capture_contact || false
+        },
         usage: response.usage || {
           prompt_tokens: 0,
           completion_tokens: 0,
@@ -227,50 +241,26 @@ export class OpenAIChatbotProcessingService {
     return messages;
   }
 
-  /**
-   * Determine conversation phase for dynamic entity extraction
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze conversation flow to determine current phase
-   * - Used for selective entity extraction following 2025 best practices
-   * - Return phase that guides which entities to extract
-   */
-  private determineConversationPhase(messageHistory: any[]): string {
-    if (!messageHistory || messageHistory.length === 0) {
-      return 'greeting';
+  /** Map intent to conversation phase */
+  private mapIntentToPhase(intent: string): string {
+    switch (intent) {
+      case 'demo':
+      case 'pricing': return 'demonstration';
+      case 'qualification': return 'qualification';
+      case 'objection': return 'objection_handling';
+      default: return 'discovery';
     }
-
-    // Simple phase detection based on conversation length and content
-    const userMessages = messageHistory.filter(msg => msg.messageType === 'user');
-    const totalMessages = messageHistory.length;
-
-    // Early conversation phases
-    if (totalMessages <= 2) {
-      return 'greeting';
-    }
-
-    if (totalMessages <= 4) {
-      return 'discovery';
-    }
-
-    // Look for business inquiry keywords in recent messages
-    const recentContent = messageHistory.slice(-4)
-      .map(msg => msg.content.toLowerCase())
-      .join(' ');
-
-    if (recentContent.includes('pricing') || recentContent.includes('cost') || recentContent.includes('budget')) {
-      return 'qualification';
-    }
-
-    if (recentContent.includes('demo') || recentContent.includes('meeting') || recentContent.includes('schedule')) {
-      return 'scheduling';
-    }
-
-    if (recentContent.includes('ready') || recentContent.includes('move forward') || recentContent.includes('next step')) {
-      return 'closing';
-    }
-
-    // Default to qualification phase for mid-conversation
-    return 'qualification';
   }
+
+  /** Map intent to engagement level */
+  private mapIntentToEngagement(intent: string): string {
+    switch (intent) {
+      case 'demo':
+      case 'pricing': return 'high';
+      case 'qualification': return 'medium';
+      default: return 'low';
+    }
+  }
+
+  // AI: Phase-based entity extraction removed in favor of simplified schema approach
 } 

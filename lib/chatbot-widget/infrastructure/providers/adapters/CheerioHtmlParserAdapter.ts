@@ -42,9 +42,7 @@ export class CheerioLinkElementAdapter implements ILinkElement {
 export class CheerioHtmlParserAdapter implements IHtmlParser {
   constructor(private readonly $: any) {}
 
-  /**
-   * Remove elements by CSS selectors
-   */
+  /** Remove elements by CSS selectors */
   removeElements(selectors: string[]): void {
     selectors.forEach(selector => {
       this.$(selector).remove();

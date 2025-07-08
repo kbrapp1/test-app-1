@@ -20,9 +20,7 @@ export interface CategoryBreakdown {
 }
 
 export class RecommendationCategoryAnalyzer {
-  /**
-   * Get breakdown by category
-   */
+  /** Get breakdown by category */
   getCategoryBreakdown(recommendations: LeadRecommendation[]): CategoryBreakdown {
     this.validateRecommendations(recommendations);
     
@@ -40,9 +38,7 @@ export class RecommendationCategoryAnalyzer {
     return breakdown;
   }
 
-  /**
-   * Get dominant category
-   */
+  /** Get dominant category */
   getDominantCategory(breakdown: CategoryBreakdown): { category: string; count: number } {
     const entries = Object.entries(breakdown) as [keyof CategoryBreakdown, number][];
     
@@ -51,9 +47,7 @@ export class RecommendationCategoryAnalyzer {
     }, { category: '', count: 0 });
   }
 
-  /**
-   * Get category focus text
-   */
+  /** Get category focus text */
   getCategoryFocusText(breakdown: CategoryBreakdown): string {
     const dominant = this.getDominantCategory(breakdown);
     
@@ -66,9 +60,7 @@ export class RecommendationCategoryAnalyzer {
     return `Primary focus should be on ${categoryName} (${dominant.count} recommendation${dominant.count > 1 ? 's' : ''}).`;
   }
 
-  /**
-   * Get category display name
-   */
+  /** Get category display name */
   private getCategoryDisplayName(category: string): string {
     const categoryNames: Record<string, string> = {
       salesActions: 'sales activities',
@@ -80,9 +72,7 @@ export class RecommendationCategoryAnalyzer {
     return categoryNames[category] || category;
   }
 
-  /**
-   * Increment category count based on recommendation category
-   */
+  /** Increment category count based on recommendation category */
   private incrementCategoryCount(breakdown: CategoryBreakdown, category: string): void {
     switch (category) {
       case 'sales_action':
@@ -103,9 +93,7 @@ export class RecommendationCategoryAnalyzer {
     }
   }
 
-  /**
-   * Validate recommendations array
-   */
+  /** Validate recommendations array */
   private validateRecommendations(recommendations: LeadRecommendation[]): void {
     if (!Array.isArray(recommendations)) {
       throw new BusinessRuleViolationError(

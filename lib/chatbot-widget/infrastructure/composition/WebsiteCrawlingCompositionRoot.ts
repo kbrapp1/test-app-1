@@ -20,14 +20,7 @@ import { OpenAIProvider } from '../providers/openai/OpenAIProvider';
 import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 
-/**
- * AI Categorization Provider Adapter
- * 
- * AI INSTRUCTIONS:
- * - Adapt OpenAI provider to domain interface
- * - Abstract OpenAI complexity from domain layer
- * - Handle technical implementation details
- */
+/** AI Categorization Provider Adapter */
 class OpenAICategorizationAdapter {
   constructor(private readonly openAIProvider: OpenAIProvider) {}
 
@@ -51,15 +44,7 @@ class OpenAICategorizationAdapter {
   }
 }
 
-/**
- * Website Crawling Composition Root
- * 
- * AI INSTRUCTIONS:
- * - Provide centralized dependency wiring for website crawling
- * - Use singleton pattern for expensive services
- * - Enable dependency injection for testing
- * - Follow DDD composition patterns
- */
+/** Website Crawling Composition Root */
 export class WebsiteCrawlingCompositionRoot {
   private static instance: WebsiteCrawlingCompositionRoot;
   
@@ -75,9 +60,7 @@ export class WebsiteCrawlingCompositionRoot {
 
   private constructor() {}
 
-  /**
-   * Get singleton instance
-   */
+  /** Get singleton instance */
   static getInstance(): WebsiteCrawlingCompositionRoot {
     if (!WebsiteCrawlingCompositionRoot.instance) {
       WebsiteCrawlingCompositionRoot.instance = new WebsiteCrawlingCompositionRoot();
@@ -85,9 +68,7 @@ export class WebsiteCrawlingCompositionRoot {
     return WebsiteCrawlingCompositionRoot.instance;
   }
 
-  /**
-   * Get Website Crawling Domain Service
-   */
+  /** Get Website Crawling Domain Service */
   getWebsiteCrawlingDomainService(): WebsiteCrawlingDomainService {
     if (!this._websiteCrawlingDomainService) {
       this._websiteCrawlingDomainService = new WebsiteCrawlingDomainService();
@@ -95,9 +76,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._websiteCrawlingDomainService;
   }
 
-  /**
-   * Get Content Extraction Service
-   */
+  /** Get Content Extraction Service */
   getContentExtractionService(): ContentExtractionService {
     if (!this._contentExtractionService) {
       this._contentExtractionService = new ContentExtractionService();
@@ -105,9 +84,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._contentExtractionService;
   }
 
-  /**
-   * Get Content Categorization Service
-   */
+  /** Get Content Categorization Service */
   getContentCategorizationService(): ContentCategorizationService {
     if (!this._contentCategorizationService) {
       this._contentCategorizationService = new ContentCategorizationService();
@@ -115,9 +92,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._contentCategorizationService;
   }
 
-  /**
-   * Get Crawlee Crawler Provider
-   */
+  /** Get Crawlee Crawler Provider */
   getCrawleeCrawlerProvider(): CrawleeCrawlerProvider {
     if (!this._crawleeCrawlerProvider) {
       this._crawleeCrawlerProvider = new CrawleeCrawlerProvider();
@@ -125,9 +100,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._crawleeCrawlerProvider;
   }
 
-  /**
-   * Get Crawlee Robots.txt Provider
-   */
+  /** Get Crawlee Robots.txt Provider */
   getCrawleeRobotsTxtProvider(): CrawleeRobotsTxtProvider {
     if (!this._crawleeRobotsTxtProvider) {
       this._crawleeRobotsTxtProvider = new CrawleeRobotsTxtProvider();
@@ -135,9 +108,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._crawleeRobotsTxtProvider;
   }
 
-  /**
-   * Get OpenAI Provider
-   */
+  /** Get OpenAI Provider */
   getOpenAIProvider(): OpenAIProvider {
     if (!this._openAIProvider) {
       const apiKey = process.env.OPENAI_API_KEY;
@@ -169,9 +140,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._openAIProvider;
   }
 
-  /**
-   * Get OpenAI Embedding Service
-   */
+  /** Get OpenAI Embedding Service */
   getOpenAIEmbeddingService(): OpenAIEmbeddingService {
     if (!this._openAIEmbeddingService) {
       const apiKey = process.env.OPENAI_API_KEY;
@@ -183,9 +152,8 @@ export class WebsiteCrawlingCompositionRoot {
       try {
         this._openAIEmbeddingService = new OpenAIEmbeddingService(
           apiKey,
-          undefined, // logContext - can be added later if needed
-          1000,      // maxUserQueryCacheSize
-          5000       // maxPdfCacheSize
+          undefined // logContext - can be added later if needed
+          // AI: Removed cache size limits - serverless handles memory management automatically
         );
       } catch (error) {
         console.error('Failed to initialize OpenAI Embedding Service:', error);
@@ -195,9 +163,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._openAIEmbeddingService;
   }
 
-  /**
-   * Get OpenAI Categorization Adapter
-   */
+  /** Get OpenAI Categorization Adapter */
   getOpenAICategorizationAdapter(): OpenAICategorizationAdapter {
     if (!this._openAICategorizationAdapter) {
       const openAIProvider = this.getOpenAIProvider();
@@ -206,9 +172,7 @@ export class WebsiteCrawlingCompositionRoot {
     return this._openAICategorizationAdapter;
   }
 
-  /**
-   * Get Crawl Website Use Case
-   */
+  /** Get Crawl Website Use Case */
   getCrawlWebsiteUseCase(): CrawlWebsiteUseCase {
     return new CrawlWebsiteUseCase(
       this.getWebsiteCrawlingDomainService(),
@@ -218,9 +182,7 @@ export class WebsiteCrawlingCompositionRoot {
     );
   }
 
-  /**
-   * Get Crawl and Store Website Use Case
-   */
+  /** Get Crawl and Store Website Use Case */
   getCrawlAndStoreWebsiteUseCase(
     vectorKnowledgeRepository: IVectorKnowledgeRepository
   ): CrawlAndStoreWebsiteUseCase {
@@ -231,9 +193,7 @@ export class WebsiteCrawlingCompositionRoot {
     );
   }
 
-  /**
-   * Reset all singleton instances (for testing)
-   */
+  /** Reset all singleton instances (for testing) */
   static resetForTesting(): void {
     WebsiteCrawlingCompositionRoot.instance = new WebsiteCrawlingCompositionRoot();
   }

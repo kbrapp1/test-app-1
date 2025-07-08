@@ -16,17 +16,7 @@ import {
   type PlatformType
 } from './embed-code-components';
 
-/**
- * EmbedCodeGenerator Component
- * 
- * AI INSTRUCTIONS:
- * - Main orchestrator for embed code generation functionality
- * - Presentation layer component coordinating focused sub-components
- * - Keep under 150 lines, delegate specific responsibilities to sub-components
- * - Use composition pattern with single-responsibility components
- * - Follow DDD presentation layer patterns with clean separation
- */
-
+/** EmbedCodeGenerator Component */
 interface EmbedCodeGeneratorProps {
   config: ChatbotConfigDto;
   className?: string;

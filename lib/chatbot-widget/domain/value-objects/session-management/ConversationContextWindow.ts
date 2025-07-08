@@ -42,9 +42,7 @@ export class ConversationContextWindow {
     return new ConversationContextWindow(finalConfig);
   }
 
-  /**
-   * Calculate available tokens for recent messages
-   */
+  /** Calculate available tokens for recent messages */
   getAvailableTokensForMessages(): number {
     const reserved = this._config.systemPromptTokens + 
                     this._config.responseReservedTokens + 
@@ -53,9 +51,7 @@ export class ConversationContextWindow {
     return Math.max(0, this._config.maxTokens - reserved);
   }
 
-  /**
-   * Get token allocation breakdown
-   */
+  /** Get token allocation breakdown */
   getAllocation(): ContextAllocation {
     const availableForMessages = this.getAvailableTokensForMessages();
     
@@ -68,17 +64,13 @@ export class ConversationContextWindow {
     };
   }
 
-  /**
-   * Check if we need to summarize based on token usage
-   */
+  /** Check if we need to summarize based on token usage */
   shouldSummarize(currentMessageTokens: number): boolean {
     const availableForMessages = this.getAvailableTokensForMessages();
     return currentMessageTokens > availableForMessages;
   }
 
-  /**
-   * Calculate how many tokens to remove via summarization
-   */
+  /** Calculate how many tokens to remove via summarization */
   getTokensToSummarize(currentMessageTokens: number): number {
     const availableForMessages = this.getAvailableTokensForMessages();
     const excess = currentMessageTokens - availableForMessages;

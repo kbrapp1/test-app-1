@@ -25,14 +25,7 @@ import {
 
 export class ContextModulePriorityDomainService {
   
-  /**
-   * Calculate relevance factors for all context types
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure calculation based on conversation data
-   * - No external dependencies or side effects
-   * - Return structured relevance scores
-   */
+  /** Calculate relevance factors for all context types */
   static calculateRelevanceFactors(
     session: ChatSession,
     conversationHistory: ChatMessage[],
@@ -52,14 +45,7 @@ export class ContextModulePriorityDomainService {
     };
   }
 
-  /**
-   * Apply session-specific multipliers to module priorities
-   * 
-   * AI INSTRUCTIONS:
-   * - Adjust priorities based on conversation context
-   * - Use business rules for priority enhancement
-   * - Return adjusted priority values
-   */
+  /** Apply session-specific multipliers to module priorities */
   static applySessionMultipliers(
     modules: ContextModule[],
     session: ChatSession,
@@ -75,14 +61,7 @@ export class ContextModulePriorityDomainService {
     }));
   }
 
-  /**
-   * Determine conversation phase based on lead score and context
-   * 
-   * AI INSTRUCTIONS:
-   * - Business logic for conversation phase detection
-   * - Use lead scoring and context indicators
-   * - Return phase with confidence level
-   */
+  /** Determine conversation phase based on lead score and context */
   static determineConversationPhase(
     leadScore?: number,
     entityData?: EntityData,
@@ -128,14 +107,7 @@ export class ContextModulePriorityDomainService {
     return { phase, confidence, indicators };
   }
 
-  /**
-   * Calculate session multiplier for specific module type
-   * 
-   * AI INSTRUCTIONS:
-   * - Business rules for context priority adjustment
-   * - Consider conversation state and lead quality
-   * - Return multiplier value for priority calculation
-   */
+  /** Calculate session multiplier for specific module type */
   private static getSessionMultiplier(
     session: ChatSession,
     moduleType: ContextModuleType,
@@ -167,14 +139,7 @@ export class ContextModulePriorityDomainService {
     }
   }
 
-  /**
-   * Individual relevance calculation methods
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure calculation methods
-   * - Business rules for relevance scoring
-   * - Return normalized scores (0-100)
-   */
+  /** Individual relevance calculation methods */
   private static calculateUserProfileRelevance(entityData?: EntityData): number {
     if (!entityData) return 20;
     

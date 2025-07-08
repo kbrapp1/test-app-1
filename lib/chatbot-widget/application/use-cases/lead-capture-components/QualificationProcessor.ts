@@ -26,9 +26,7 @@ export interface QualificationProcessingResult {
 }
 
 export class QualificationProcessor {
-  /**
-   * Process all qualification answers for a session
-   */
+  /** Process all qualification answers for a session */
   static processAnswers(
     session: ChatSession,
     answers: QualificationAnswer[],
@@ -76,9 +74,7 @@ export class QualificationProcessor {
     };
   }
 
-  /**
-   * Process a single qualification answer
-   */
+  /** Process a single qualification answer */
   private static processAnswer(
     session: ChatSession,
     answer: QualificationAnswer,
@@ -130,9 +126,7 @@ export class QualificationProcessor {
     }
   }
 
-  /**
-   * Validate answer format and content
-   */
+  /** Validate answer format and content */
   private static validateAnswer(
     answer: QualificationAnswer,
     questionConfig: any
@@ -202,9 +196,7 @@ export class QualificationProcessor {
     return { valid: true };
   }
 
-  /**
-   * Validate answer against question type
-   */
+  /** Validate answer against question type */
   private static validateAnswerType(
     answer: string | string[],
     questionType: string
@@ -262,9 +254,7 @@ export class QualificationProcessor {
     return { valid: true };
   }
 
-  /**
-   * Get processing statistics
-   */
+  /** Get processing statistics */
   static getProcessingStats(result: QualificationProcessingResult): {
     totalAnswers: number;
     successRate: number;

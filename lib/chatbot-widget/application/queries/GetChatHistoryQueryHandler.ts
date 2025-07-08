@@ -19,9 +19,7 @@ export class GetChatHistoryQueryHandler {
     private readonly leadRepository: ILeadRepository
   ) {}
 
-  /**
-   * Handle the get chat history query
-   */
+  /** Handle the get chat history query */
   async handle(query: GetChatHistoryQuery): Promise<GetChatHistoryResult> {
     try {
       // 1. Load session

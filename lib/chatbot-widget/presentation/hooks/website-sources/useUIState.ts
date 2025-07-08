@@ -10,14 +10,7 @@
 
 import { useState } from 'react';
 
-/**
- * UI State Hook
- * 
- * AI INSTRUCTIONS:
- * - Manage UI-specific state
- * - Handle modal and loading states
- * - Keep UI state isolated from business logic
- */
+/** UI State Hook */
 export function useUIState() {
   const [isAddingSource, setIsAddingSource] = useState(false);
   const [isDeletingSource, setIsDeletingSource] = useState<string | null>(null);

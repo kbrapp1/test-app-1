@@ -51,9 +51,7 @@ export class LeadQueryService {
     private readonly leadMapper: LeadMapper
   ) {}
 
-  /**
-   * Get lead by ID with access validation
-   */
+  /** Get lead by ID with access validation */
   async getLeadById(id: string, organizationId?: string): Promise<LeadDto | null> {
     const lead = await this.leadRepository.findById(id);
     
@@ -74,17 +72,13 @@ export class LeadQueryService {
     return this.leadMapper.toDto(lead);
   }
 
-  /**
-   * Get lead by session ID
-   */
+  /** Get lead by session ID */
   async getLeadBySessionId(sessionId: string): Promise<LeadDto | null> {
     const lead = await this.leadRepository.findBySessionId(sessionId);
     return lead ? this.leadMapper.toDto(lead) : null;
   }
 
-  /**
-   * Get paginated leads for organization with filtering
-   */
+  /** Get paginated leads for organization with filtering */
   async getLeadsForOrganization(
     organizationId: string,
     page: number = 1,
@@ -117,9 +111,7 @@ export class LeadQueryService {
     };
   }
 
-  /**
-   * Search leads by query text
-   */
+  /** Search leads by query text */
   async searchLeads(
     organizationId: string,
     query: string,
@@ -129,9 +121,7 @@ export class LeadQueryService {
     return leads.map(lead => this.leadMapper.toDto(lead));
   }
 
-  /**
-   * Get leads requiring follow-up
-   */
+  /** Get leads requiring follow-up */
   async getLeadsRequiringFollowUp(
     organizationId: string,
     daysSinceLastContact: number = 7
@@ -144,9 +134,7 @@ export class LeadQueryService {
     return leads.map(lead => this.leadMapper.toDto(lead));
   }
 
-  /**
-   * Get leads for export with filtering
-   */
+  /** Get leads for export with filtering */
   async getLeadsForExport(
     organizationId: string,
     filters: LeadSearchFilters = {}
@@ -161,9 +149,7 @@ export class LeadQueryService {
     return leads.map(lead => this.leadMapper.toDto(lead));
   }
 
-  /**
-   * Get analytics for organization within date range
-   */
+  /** Get analytics for organization within date range */
   async getLeadAnalytics(
     organizationId: string,
     dateFrom: Date,
@@ -192,9 +178,7 @@ export class LeadQueryService {
     };
   }
 
-  /**
-   * Get lead count by filters for quick metrics
-   */
+  /** Get lead count by filters for quick metrics */
   async getLeadCount(
     organizationId: string,
     filters: LeadSearchFilters = {}
@@ -210,9 +194,7 @@ export class LeadQueryService {
     return result.total;
   }
 
-  /**
-   * Get recent leads for organization
-   */
+  /** Get recent leads for organization */
   async getRecentLeads(
     organizationId: string,
     limit: number = 10

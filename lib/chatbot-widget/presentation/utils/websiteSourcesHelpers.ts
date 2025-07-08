@@ -34,26 +34,12 @@ export interface ActionResult<T = any> {
   };
 }
 
-/**
- * Generate Website Source ID Helper
- * 
- * AI INSTRUCTIONS:
- * - Generate unique identifiers for website sources
- * - Use timestamp and random string for uniqueness
- * - Follow consistent naming pattern
- */
+/** Generate Website Source ID Helper */
 function generateWebsiteSourceId(): string {
   return `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/**
- * Create Crawl Settings Helper
- * 
- * AI INSTRUCTIONS:
- * - Transform form data to domain value object
- * - Apply sensible defaults and constraints
- * - Validate settings within business rules
- */
+/** Create Crawl Settings Helper */
 function createCrawlSettings(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
   return {
     maxPages: Math.min(formData.maxPages || 50, 1000), // Cap at 1000 pages
@@ -67,26 +53,12 @@ function createCrawlSettings(formData: WebsiteSourceFormData): WebsiteCrawlSetti
   };
 }
 
-/**
- * Create Crawl Settings from Form Data (Public)
- * 
- * AI INSTRUCTIONS:
- * - Transform form data to domain value object
- * - Apply sensible defaults and constraints
- * - Validate settings within business rules
- */
+/** Create Crawl Settings from Form Data (Public) */
 export function createCrawlSettingsFromFormData(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
   return createCrawlSettings(formData);
 }
 
-/**
- * Create Website Source from Form Data
- * 
- * AI INSTRUCTIONS:
- * - Transform form data to domain entity
- * - Generate unique ID and set initial state
- * - Apply business rules and defaults
- */
+/** Create Website Source from Form Data */
 export function createWebsiteSourceFromFormData(formData: WebsiteSourceFormData): WebsiteSource {
   return {
     id: generateWebsiteSourceId(),
@@ -99,14 +71,7 @@ export function createWebsiteSourceFromFormData(formData: WebsiteSourceFormData)
   };
 }
 
-/**
- * Update Website Source Status Helper
- * 
- * AI INSTRUCTIONS:
- * - Update source status after operations
- * - Handle status transitions properly
- * - Provide detailed error context
- */
+/** Update Website Source Status Helper */
 export async function updateWebsiteSourceStatus(
   configId: string,
   sourceId: string,
@@ -153,14 +118,7 @@ export function createErrorResult(code: string, message: string, severity: strin
   };
 }
 
-/**
- * Handle Action Error Helper
- * 
- * AI INSTRUCTIONS:
- * - Standardize error handling across all actions
- * - Preserve domain error context
- * - Provide user-friendly error messages
- */
+/** Handle Action Error Helper */
 export function handleActionError(error: unknown, operation: string): ActionResult {
   if (error instanceof DomainError) {
     return {
@@ -184,27 +142,13 @@ export function handleActionError(error: unknown, operation: string): ActionResu
   };
 }
 
-/**
- * Revalidate Website Sources Paths Helper
- * 
- * AI INSTRUCTIONS:
- * - Centralize path revalidation logic
- * - Ensure UI consistency after mutations
- * - Handle Next.js cache invalidation
- */
+/** Revalidate Website Sources Paths Helper */
 export function revalidateWebsiteSourcesPaths(): void {
   revalidatePath('/ai-playground/chatbot-widget/website-sources');
   revalidatePath('/ai-playground/chatbot-widget/knowledge');
 }
 
-/**
- * Create Cleaned Knowledge Base Helper
- * 
- * AI INSTRUCTIONS:
- * - Create new knowledge base without website sources
- * - Preserve all other knowledge base data
- * - Use for cleanup operations
- */
+/** Create Cleaned Knowledge Base Helper */
 export function createCleanedKnowledgeBase(existingKnowledgeBase: any): any {
   const { KnowledgeBase } = require('../../domain/value-objects/ai-configuration/KnowledgeBase');
   return KnowledgeBase.create({

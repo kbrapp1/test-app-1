@@ -21,9 +21,7 @@ import {
 } from '../dto/ChatSessionDto';
 
 export class ChatSessionMapper {
-  /**
-   * Convert domain entity to DTO
-   */
+  /** Convert domain entity to DTO */
   static toDto(entity: ChatSession): ChatSessionDto {
     const props = entity.toPlainObject();
     
@@ -45,9 +43,7 @@ export class ChatSessionMapper {
     };
   }
 
-  /**
-   * Convert DTO to domain entity
-   */
+  /** Convert DTO to domain entity */
   static toDomain(dto: ChatSessionDto): ChatSession {
     return ChatSession.fromPersistence({
       id: dto.id,

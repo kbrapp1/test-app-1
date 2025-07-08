@@ -322,6 +322,6 @@ describe('ChatbotConfig', () => {
     });
   });
 
-  // Note: System prompt generation is now handled by DynamicPromptService
+        // Note: System prompt generation is now handled by SimplePromptService
   // Tests for prompt generation should be in the service layer tests
 }); 

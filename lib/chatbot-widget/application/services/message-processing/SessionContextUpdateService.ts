@@ -24,15 +24,7 @@ export class SessionContextUpdateService {
     private readonly conversationFlowAnalyzer: ConversationFlowAnalyzerService
   ) {}
 
-  /**
-   * Update session with unified processing results
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate session update workflow
-   * - Delegate to specialized services
-   * - Handle error propagation gracefully
-   * - Return updated session with enhanced context
-   */
+  /** Update session with unified processing results */
   updateSessionWithUnifiedResults(
     session: any,
     botMessage: ChatMessage,

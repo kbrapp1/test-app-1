@@ -51,9 +51,7 @@ export class ChatSessionService {
     this.conversationContextService = null;
   }
 
-  /**
-   * Create a new chat session
-   */
+  /** Create a new chat session */
   async createChatSession(createDto: CreateChatSessionDto): Promise<ChatSessionDto> {
     // Validate chatbot configuration exists
     const chatbotConfigRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
@@ -90,9 +88,7 @@ export class ChatSessionService {
     return ChatSessionMapper.toDto(savedSession);
   }
 
-  /**
-   * Update chat session context and state
-   */
+  /** Update chat session context and state */
   async updateChatSession(
     sessionId: string,
     updateDto: UpdateChatSessionDto
@@ -138,9 +134,7 @@ export class ChatSessionService {
     return ChatSessionMapper.toDto(savedSession);
   }
 
-  /**
-   * Get chat session by ID
-   */
+  /** Get chat session by ID */
   async getChatSessionById(sessionId: string): Promise<ChatSessionDto | null> {
     const session = await this.chatSessionRepository.findById(sessionId);
     
@@ -151,25 +145,19 @@ export class ChatSessionService {
     return ChatSessionMapper.toDto(session);
   }
 
-  /**
-   * Get active chat sessions for a chatbot
-   */
+  /** Get active chat sessions for a chatbot */
   async getActiveSessionsForChatbot(chatbotConfigId: string): Promise<ChatSessionDto[]> {
     const sessions = await this.chatSessionRepository.findActiveByChatbotConfigId(chatbotConfigId);
     return sessions.map((session: any) => ChatSessionMapper.toDto(session));
   }
 
-  /**
-   * Get chat sessions by visitor ID
-   */
+  /** Get chat sessions by visitor ID */
   async getSessionsByVisitor(visitorId: string): Promise<ChatSessionDto[]> {
     const sessions = await this.chatSessionRepository.findByVisitorId(visitorId);
     return sessions.map((session: any) => ChatSessionMapper.toDto(session));
   }
 
-  /**
-   * End a chat session
-   */
+  /** End a chat session */
   async endChatSession(sessionId: string): Promise<ChatSessionDto> {
     const session = await this.chatSessionRepository.findById(sessionId);
     
@@ -185,9 +173,7 @@ export class ChatSessionService {
     return ChatSessionMapper.toDto(savedSession);
   }
 
-  /**
-   * Escalate chat session to human agent
-   */
+  /** Escalate chat session to human agent */
   async escalateChatSession(sessionId: string): Promise<ChatSessionDto> {
     const session = await this.chatSessionRepository.findById(sessionId);
     
@@ -204,9 +190,7 @@ export class ChatSessionService {
     return ChatSessionMapper.toDto(savedSession);
   }
 
-  /**
-   * Update visitor activity (heartbeat)
-   */
+  /** Update visitor activity (heartbeat) */
   async updateActivity(sessionId: string): Promise<void> {
     const session = await this.chatSessionRepository.findById(sessionId);
     
@@ -220,9 +204,7 @@ export class ChatSessionService {
     await this.chatSessionRepository.update(updatedSession, activityLogFile);
   }
 
-  /**
-   * Get session analytics
-   */
+  /** Get session analytics */
   async getSessionAnalytics(organizationId: string, timeframe: string = '7d') {
     const now = new Date();
     const days = parseInt(timeframe.replace('d', '')) || 7;
@@ -231,9 +213,7 @@ export class ChatSessionService {
     return await this.chatSessionRepository.getAnalytics(organizationId, dateFrom, now);
   }
 
-  /**
-   * Check for abandoned sessions and clean up
-   */
+  /** Check for abandoned sessions and clean up */
   async cleanupAbandonedSessions(): Promise<number> {
     const timeoutMinutes = 30; // 30 minutes timeout
     return await this.chatSessionRepository.markExpiredAsAbandoned(timeoutMinutes);

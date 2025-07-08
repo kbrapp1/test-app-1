@@ -9,6 +9,6 @@ export const useFeatureFlag = (featureName: string): boolean => {
   const { currentContext } = useOrganization();
   const flags = currentContext?.feature_flags as Record<string, boolean> | undefined;
 
-  // Default to false if flags are not present or the specific flag is not set.
-  return flags?.[featureName] ?? false;
+  // Default to true if flag is missing, but respect explicit false values
+  return flags ? (flags.hasOwnProperty(featureName) ? flags[featureName] : true) : true;
 }; 

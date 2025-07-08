@@ -15,9 +15,7 @@ export class ContextWindowService {
     private tokenCountingService: ITokenCountingService
   ) {}
 
-  /**
-   * Get messages that fit within context window with token management
-   */
+  /** Get messages that fit within context window with token management */
   async getMessagesForContextWindow(
     messages: ChatMessage[],
     contextWindow: ConversationContextWindow,
@@ -90,9 +88,7 @@ export class ContextWindowService {
     };
   }
 
-  /**
-   * Create AI-generated summary of older messages
-   */
+  /** Create AI-generated summary of older messages */
   async createAISummary(
     messages: ChatMessage[],
     maxTokens: number = 200
@@ -121,9 +117,7 @@ Summary:`;
     return `Conversation covered: ${topics.join(', ')}. User interested in: ${interests.join(', ')}. ${userMessages.length} user messages exchanged.`;
   }
 
-  /**
-   * Extract basic topics for summary (simplified version)
-   */
+  /** Extract basic topics for summary (simplified version) */
   private extractBasicTopics(userMessages: ChatMessage[]): string[] {
     const topics = new Set<string>();
     const topicKeywords = {
@@ -146,9 +140,7 @@ Summary:`;
     return Array.from(topics).slice(0, 3);
   }
 
-  /**
-   * Extract basic interests for summary (simplified version)
-   */
+  /** Extract basic interests for summary (simplified version) */
   private extractBasicInterests(userMessages: ChatMessage[]): string[] {
     const interests = new Set<string>();
     const interestPatterns = [

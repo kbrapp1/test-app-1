@@ -95,14 +95,7 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
     }
   }
 
-  /**
-   * Unified processing method for complete chatbot interaction
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to OpenAIChatbotProcessingService for unified processing
-   * - This enables the unified API approach while maintaining interface compatibility
-   * - Follow @golden-rule patterns: orchestration only
-   */
+  /** Unified processing method for complete chatbot interaction */
   async processChatbotInteractionComplete(
     message: string,
     context: any

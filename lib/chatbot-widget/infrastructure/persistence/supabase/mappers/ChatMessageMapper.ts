@@ -4,9 +4,7 @@ import { MessageContextMetadata } from '../../../../domain/value-objects/message
 import { MessageProcessingMetrics } from '../../../../domain/value-objects/message-processing/MessageProcessingMetrics';
 import { MessageCostTracking } from '../../../../domain/value-objects/message-processing/MessageCostTracking';
 
-/**
- * Raw database record structure from Supabase
- */
+/** Raw database record structure from Supabase */
 export interface RawChatMessageDbRecord {
   id: string;
   session_id: string;
@@ -19,9 +17,7 @@ export interface RawChatMessageDbRecord {
   created_at: string;
 }
 
-/**
- * Insert data structure for database operations
- */
+/** Insert data structure for database operations */
 export interface InsertChatMessageData {
   id: string;
   session_id: string;
@@ -33,9 +29,7 @@ export interface InsertChatMessageData {
   processing_time_ms?: number;
 }
 
-/**
- * Update data structure for database operations
- */
+/** Update data structure for database operations */
 export interface UpdateChatMessageData {
   content?: string;
   metadata?: any;
@@ -48,9 +42,7 @@ export interface UpdateChatMessageData {
  * Handles transformation between domain entities and database records
  */
 export class ChatMessageMapper {
-  /**
-   * Transform database record to domain entity
-   */
+  /** Transform database record to domain entity */
   static toDomain(record: RawChatMessageDbRecord): ChatMessage {
     const metadata = record.metadata || {};
     
@@ -103,9 +95,7 @@ export class ChatMessageMapper {
     return ChatMessage.fromPersistence(props);
   }
 
-  /**
-   * Transform domain entity to insert data
-   */
+  /** Transform domain entity to insert data */
   static toInsert(message: ChatMessage): InsertChatMessageData {
     const metadata = this.serializeMetadata(message);
     
@@ -121,9 +111,7 @@ export class ChatMessageMapper {
     };
   }
 
-  /**
-   * Transform domain entity to update data
-   */
+  /** Transform domain entity to update data */
   static toUpdate(message: ChatMessage): UpdateChatMessageData {
     const metadata = this.serializeMetadata(message);
     
@@ -135,9 +123,7 @@ export class ChatMessageMapper {
     };
   }
 
-  /**
-   * Serialize domain value objects to database metadata format
-   */
+  /** Serialize domain value objects to database metadata format */
   private static serializeMetadata(message: ChatMessage): any {
     return {
       // AI metadata

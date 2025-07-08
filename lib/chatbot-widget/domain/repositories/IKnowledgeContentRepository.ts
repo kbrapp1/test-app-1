@@ -39,45 +39,31 @@ export interface ContentProcessingMetadata {
 }
 
 export interface IKnowledgeContentRepository {
-  /**
-   * Get raw knowledge content from database without processing
-   */
+  /** Get raw knowledge content from database without processing */
   getRawKnowledgeContent(organizationId: string): Promise<RawKnowledgeContent>;
 
-  /**
-   * Get structured knowledge content with sanitization and validation
-   */
+  /** Get structured knowledge content with sanitization and validation */
   getStructuredKnowledgeContent(organizationId: string): Promise<StructuredKnowledgeContent>;
 
-  /**
-   * Get specific content type with processing
-   */
+  /** Get specific content type with processing */
   getProcessedContent(
     organizationId: string, 
     contentType: ContentType
   ): Promise<SanitizedContent | null>;
 
-  /**
-   * Get content processing metadata for monitoring
-   */
+  /** Get content processing metadata for monitoring */
   getContentMetadata(organizationId: string): Promise<ContentProcessingMetadata>;
 
-  /**
-   * Validate content without full processing (for preview)
-   */
+  /** Validate content without full processing (for preview) */
   validateContent(
     content: string, 
     contentType: ContentType
   ): Promise<{ isValid: boolean; issues: string[]; warnings: string[] }>;
 
-  /**
-   * Check if organization has any knowledge content
-   */
+  /** Check if organization has any knowledge content */
   hasKnowledgeContent(organizationId: string): Promise<boolean>;
 
-  /**
-   * Get content statistics for analytics
-   */
+  /** Get content statistics for analytics */
   getContentStatistics(organizationId: string): Promise<{
     totalContentItems: number;
     contentTypes: ContentType[];

@@ -97,14 +97,7 @@ export class ConversationFlowService {
     }
   }
 
-  /**
-   * Get derived readiness indicators from API data
-   * 
-   * AI INSTRUCTIONS:
-   * - Public method to expose derived indicators for external use
-   * - Uses domain service for consistent calculation
-   * - Handles missing API data gracefully
-   */
+  /** Get derived readiness indicators from API data */
   static getReadinessIndicators(flowDecision: AIConversationFlowDecision): ReadinessIndicators {
     if (!flowDecision) {
       return {
@@ -137,40 +130,19 @@ export class ConversationFlowService {
     }
   }
   
-  /**
-   * Should trigger lead capture based on AI decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure delegation to AI decision
-   * - No business logic in application service
-   * - Validate input structure only
-   */
+  /** Should trigger lead capture based on AI decision */
   static shouldTriggerLeadCapture(decision: AIConversationFlowDecision): boolean {
     this.validateFlowDecision(decision);
     return decision.shouldCaptureLeadNow;
   }
   
-  /**
-   * Should ask qualification questions based on AI decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure delegation to AI decision
-   * - No business logic in application service
-   * - Validate input structure only
-   */
+  /** Should ask qualification questions based on AI decision */
   static shouldAskQualificationQuestions(decision: AIConversationFlowDecision): boolean {
     this.validateFlowDecision(decision);
     return decision.shouldAskQualificationQuestions;
   }
   
-  /**
-   * Should escalate to human based on AI decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure delegation to AI decision
-   * - No business logic in application service
-   * - Validate input structure only
-   */
+  /** Should escalate to human based on AI decision */
   static shouldEscalateToHuman(decision: AIConversationFlowDecision): boolean {
     this.validateFlowDecision(decision);
     return decision.shouldEscalateToHuman;
@@ -189,27 +161,13 @@ export class ConversationFlowService {
     return decision.nextBestAction;
   }
 
-  /**
-   * Get conversation phase based on AI decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure delegation to AI decision
-   * - No business logic in application service
-   * - Validate input structure only
-   */
+  /** Get conversation phase based on AI decision */
   static getConversationPhase(decision: AIConversationFlowDecision): string {
     this.validateFlowDecision(decision);
     return decision.conversationPhase;
   }
 
-  /**
-   * Get engagement level based on AI decision
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure delegation to AI decision
-   * - No business logic in application service
-   * - Validate input structure only
-   */
+  /** Get engagement level based on AI decision */
   static getEngagementLevel(decision: AIConversationFlowDecision): string {
     this.validateFlowDecision(decision);
     return decision.engagementLevel;

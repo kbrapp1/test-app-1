@@ -19,15 +19,7 @@ export class VectorKnowledgeApplicationService {
     private embeddingService: OpenAIEmbeddingService
   ) {}
 
-  /**
-   * Search knowledge base using semantic vector similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Generates embedding for user query using OpenAI
-   * - Performs vector similarity search in single table
-   * - Returns complete knowledge items with content for injection
-   * - Enables accurate question answering with full context
-   */
+  /** Search knowledge base using semantic vector similarity */
   async searchKnowledge(
     organizationId: string,
     chatbotConfigId: string,
@@ -120,15 +112,7 @@ export class VectorKnowledgeApplicationService {
     }
   }
 
-  /**
-   * Delete knowledge items by source (unified cleanup)
-   * 
-   * AI INSTRUCTIONS:
-   * - Removes both content and vectors in single operation
-   * - Used for website source deletion and refresh
-   * - Maintains data consistency in single table
-   * - Returns count of deleted items for confirmation
-   */
+  /** Delete knowledge items by source (unified cleanup) */
   async deleteKnowledgeItemsBySource(
     organizationId: string,
     chatbotConfigId: string,
@@ -159,14 +143,7 @@ export class VectorKnowledgeApplicationService {
     }
   }
 
-  /**
-   * Get knowledge base statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Provides unified statistics from single table
-   * - Supports monitoring and performance optimization
-   * - Returns comprehensive metrics for dashboard display
-   */
+  /** Get knowledge base statistics */
   async getKnowledgeStats(
     organizationId: string,
     chatbotConfigId: string

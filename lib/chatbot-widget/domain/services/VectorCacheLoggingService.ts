@@ -51,18 +51,12 @@ export class VectorCacheLoggingService {
     logger.logMessage(`Loading ${vectorCount} knowledge vectors into memory`);
     logger.logMessage(`📊 Memory limit: ${config.maxMemoryKB} KB, Vector limit: ${config.maxVectors}`);
     logger.logMessage(`📊 Organization: ${organizationId}`);
-    logger.logMessage(`📊 LRU Eviction: ${config.enableLRUEviction ? 'enabled' : 'disabled'}`);
+    logger.logMessage(`📊 LRU Eviction: disabled (serverless optimized)`);
     logger.logMessage(`📊 Eviction batch size: ${config.evictionBatchSize}`);
   }
 
-  /**
-   * Log cache initialization results and metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Log successful initialization with comprehensive metrics
-   * - Provide performance insights for optimization
-   * - Support monitoring and capacity planning
-   */
+  /** Log cache initialization results and metrics
+ */
   static logInitializationResults(
     logger: ISessionLogger,
     metrics: ReturnType<typeof VectorCacheStatisticsService.generateInitializationMetrics>
@@ -112,14 +106,8 @@ export class VectorCacheLoggingService {
     }
   }
 
-  /**
-   * Log search results and performance metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Log comprehensive search results and performance
-   * - Provide insights into search effectiveness
-   * - Support optimization and monitoring
-   */
+  /** Log search results and performance metrics
+ */
   static logSearchResults(
     logger: ISessionLogger,
     options: VectorSearchOptions,
@@ -155,14 +143,8 @@ export class VectorCacheLoggingService {
     }
   }
 
-  /**
-   * Log search performance metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Log detailed performance metrics for monitoring
-   * - Support performance optimization and analysis
-   * - Handle type compatibility with logger interface
-   */
+  /** Log search performance metrics
+ */
   static logSearchMetrics(
     logger: ISessionLogger,
     timeMs: number,
@@ -187,14 +169,8 @@ export class VectorCacheLoggingService {
     });
   }
 
-  /**
-   * Log cache state and health information
-   * 
-   * AI INSTRUCTIONS:
-   * - Log current cache state for monitoring
-   * - Provide health insights for optimization
-   * - Support troubleshooting and capacity planning
-   */
+  /** Log cache state and health information
+ */
   static logCacheState(
     logger: ISessionLogger,
     stats: VectorCacheStats,
@@ -277,7 +253,7 @@ export class VectorCacheLoggingService {
     logger.logMessage(`  - Chatbot Config: ${chatbotConfigId}`);
     logger.logMessage(`  - Max Memory: ${config.maxMemoryKB} KB`);
     logger.logMessage(`  - Max Vectors: ${config.maxVectors}`);
-    logger.logMessage(`  - LRU Eviction: ${config.enableLRUEviction ? 'enabled' : 'disabled'}`);
+    logger.logMessage(`  - LRU Eviction: disabled (serverless optimized)`);
     logger.logMessage(`  - Eviction Batch Size: ${config.evictionBatchSize}`);
   }
 } 

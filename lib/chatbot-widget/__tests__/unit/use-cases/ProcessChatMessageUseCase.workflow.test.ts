@@ -104,7 +104,7 @@ vi.mock('../../../infrastructure/composition/ChatbotWidgetCompositionRoot', () =
     })),
     getVectorKnowledgeRepository: vi.fn(() => ({})),
     getEmbeddingService: vi.fn(() => ({})),
-    getDynamicPromptService: vi.fn(() => ({
+          getSimplePromptService: vi.fn(() => ({
       generateSystemPrompt: vi.fn().mockReturnValue('Mock system prompt'),
       coordinateFinalSystemPrompt: vi.fn().mockReturnValue('Mock coordinated prompt')
     }))

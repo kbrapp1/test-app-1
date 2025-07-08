@@ -7,9 +7,7 @@ import { ScoringFactors, ScoringCriteria } from '../../value-objects/lead-manage
  */
 export class LeadScoreValidationService {
   
-  /**
-   * Validate scoring factors for calculation
-   */
+  /** Validate scoring factors for calculation */
   static validateScoringFactors(factors: ScoringFactors): void {
     if (typeof factors.answeredQuestionsCount !== 'number' || factors.answeredQuestionsCount < 0) {
       throw new Error('answeredQuestionsCount must be a non-negative number');
@@ -43,9 +41,7 @@ export class LeadScoreValidationService {
     this.validateBooleanField(factors.hasCompanySizeInfo, 'hasCompanySizeInfo');
   }
 
-  /**
-   * Validate scoring criteria weights
-   */
+  /** Validate scoring criteria weights */
   static validateScoringCriteria(criteria: ScoringCriteria): void {
     const weights = [
       criteria.questionAnswerWeight,
@@ -67,9 +63,7 @@ export class LeadScoreValidationService {
     }
   }
 
-  /**
-   * Validate LeadScore constructor parameters
-   */
+  /** Validate LeadScore constructor parameters */
   static validateLeadScoreParams(score: number, qualificationLevel: any, breakdown: any, calculatedAt: Date): void {
     const MIN_SCORE = 0;
     const MAX_SCORE = 100;
@@ -91,17 +85,13 @@ export class LeadScoreValidationService {
     }
   }
 
-  /**
-   * Check if qualification level is valid
-   */
+  /** Check if qualification level is valid */
   private static isValidQualificationLevel(level: any): boolean {
     const validLevels = ['not_qualified', 'qualified', 'highly_qualified', 'disqualified'];
     return validLevels.includes(level);
   }
 
-  /**
-   * Validate boolean field
-   */
+  /** Validate boolean field */
   private static validateBooleanField(value: any, fieldName: string): void {
     if (typeof value !== 'boolean') {
       throw new Error(`${fieldName} must be a boolean`);

@@ -51,4 +51,16 @@ tasks.json
 tasks/
 
 # Cursor state
-+.cursor/ 
++.cursor/
+
+# MCP (Model Context Protocol) configuration
+.mcp.json
+
+# Screenshots
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.webp 

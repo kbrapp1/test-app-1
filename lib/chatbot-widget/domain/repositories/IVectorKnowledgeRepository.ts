@@ -10,15 +10,7 @@ import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService
  * - Follows DDD repository pattern - interface only in domain
  */
 export interface IVectorKnowledgeRepository {
-  /**
-   * Store knowledge items with both content and embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Stores content, metadata, and vector embeddings in single table
-   * - Upserts based on knowledge_item_id to handle updates
-   * - Enables both semantic search and content injection
-   * - Supports crawl metadata for UI display
-   */
+  /** Store knowledge items with both content and embeddings */
   storeKnowledgeItems(
     organizationId: string,
     chatbotConfigId: string,
@@ -35,14 +27,7 @@ export interface IVectorKnowledgeRepository {
     }>
   ): Promise<void>;
 
-  /**
-   * Search knowledge using vector similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Performs semantic search using stored embeddings
-   * - Returns complete content for injection into completions
-   * - Single table query for optimal performance
-   */
+  /** Search knowledge using vector similarity */
   searchKnowledgeItems(
     organizationId: string,
     chatbotConfigId: string,
@@ -58,14 +43,7 @@ export interface IVectorKnowledgeRepository {
     similarity: number;
   }>>;
 
-  /**
-   * Get all knowledge vectors for cache initialization
-   * 
-   * AI INSTRUCTIONS:
-   * - Retrieves all knowledge items with their actual vector embeddings
-   * - Used for initializing in-memory vector cache during session start
-   * - Returns both content and embeddings for fast similarity search
-   */
+  /** Get all knowledge vectors for cache initialization */
   getAllKnowledgeVectors(
     organizationId: string,
     chatbotConfigId: string
@@ -74,14 +52,7 @@ export interface IVectorKnowledgeRepository {
     vector: number[];
   }>>;
 
-  /**
-   * Delete knowledge items by source
-   * 
-   * AI INSTRUCTIONS:
-   * - Bulk cleanup when content sources are removed
-   * - Deletes both content and vectors in single operation
-   * - Used for website source deletion and refresh
-   */
+  /** Delete knowledge items by source */
   deleteKnowledgeItemsBySource(
     organizationId: string,
     chatbotConfigId: string,
@@ -89,13 +60,7 @@ export interface IVectorKnowledgeRepository {
     sourceUrl?: string
   ): Promise<number>; // Returns count of deleted items
 
-  /**
-   * Get knowledge item storage statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Provides storage performance metrics from single table
-   * - Supports monitoring and optimization
-   */
+  /** Get knowledge item storage statistics */
   getKnowledgeItemStats(
     organizationId: string,
     chatbotConfigId: string
@@ -107,15 +72,7 @@ export interface IVectorKnowledgeRepository {
     storageSize: number;
   }>;
 
-  /**
-   * Get crawled pages data for UI display
-   * 
-   * AI INSTRUCTIONS:
-   * - Retrieves crawled pages metadata from vector table
-   * - Returns data needed for crawled pages UI display
-   * - Filters by source_type = 'website_crawled'
-   * - Includes crawl metadata (status, response time, depth, etc.)
-   */
+  /** Get crawled pages data for UI display */
   getCrawledPages(
     organizationId: string,
     chatbotConfigId: string,

@@ -59,16 +59,7 @@ export class VectorMetricsCalculatorService {
     return stats;
   }
 
-  /**
-   * Calculate knowledge base health metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Assess content freshness and quality
-   * - Identify maintenance requirements
-   * - Calculate health scores and ratings
-   * - Provide actionable health recommendations
-   * - Support proactive knowledge management
-   */
+  /** Calculate knowledge base health metrics */
   calculateHealthMetrics(data: Array<{
     updated_at: string;
     created_at: string;
@@ -135,16 +126,7 @@ export class VectorMetricsCalculatorService {
     };
   }
 
-  /**
-   * Calculate usage analytics from available data
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze content patterns and distribution
-   * - Identify popular and unused content
-   * - Calculate utilization metrics
-   * - Support content optimization decisions
-   * - Provide insights for knowledge curation
-   */
+  /** Calculate usage analytics from available data */
   calculateUsageAnalytics(data: Array<{
     knowledge_item_id: string;
     title: string;

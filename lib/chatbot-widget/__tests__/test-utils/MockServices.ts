@@ -231,6 +231,9 @@ export class MockIntentClassificationService implements IIntentClassificationSer
 export class MockKnowledgeRetrievalService implements IKnowledgeRetrievalService {
   private knowledgeItems: KnowledgeItem[] = [];
   private shouldFail = false;
+  private vectorCacheReady = false;
+  private embeddingCacheStats = { size: 0 };
+  private warmCacheFunction: ((logFile: string) => Promise<void>) | null = null;
 
   setKnowledgeItems(items: KnowledgeItem[]): void {
     this.knowledgeItems = items;
@@ -242,6 +245,36 @@ export class MockKnowledgeRetrievalService implements IKnowledgeRetrievalService
 
   setFailure(shouldFail: boolean): void {
     this.shouldFail = shouldFail;
+  }
+
+  // Cache warming methods for testing
+  isVectorCacheReady(): boolean {
+    return this.vectorCacheReady;
+  }
+
+  setVectorCacheReady(ready: boolean): void {
+    this.vectorCacheReady = ready;
+  }
+
+  getEmbeddingService(): any {
+    return {
+      getCacheStats: () => this.embeddingCacheStats
+    };
+  }
+
+  setEmbeddingCacheSize(size: number): void {
+    this.embeddingCacheStats.size = size;
+  }
+
+  async warmCache(logFile: string): Promise<void> {
+    if (this.warmCacheFunction) {
+      return this.warmCacheFunction(logFile);
+    }
+    // Default mock behavior - just return successfully
+  }
+
+  setWarmCacheFunction(fn: (logFile: string) => Promise<void>): void {
+    this.warmCacheFunction = fn;
   }
 
   async searchKnowledge(context: KnowledgeRetrievalContext): Promise<KnowledgeSearchResult> {

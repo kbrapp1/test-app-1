@@ -52,9 +52,7 @@ export class CommunicationSettings {
     }
   }
 
-  /**
-   * Get response length guidelines for AI
-   */
+  /** Get response length guidelines for AI */
   public getResponseLengthGuidelines(): { minWords: number; maxWords: number; description: string } {
     switch (this.responseLength) {
       case ResponseLength.CONCISE:
@@ -90,9 +88,7 @@ export class CommunicationSettings {
     }
   }
 
-  /**
-   * Generate readable descriptions for system prompts
-   */
+  /** Generate readable descriptions for system prompts */
   public getReadableTone(): string {
     switch (this.tone) {
       case CommunicationTone.PROFESSIONAL: return 'Professional and business-appropriate';
@@ -126,30 +122,22 @@ export class CommunicationSettings {
     }
   }
 
-  /**
-   * Create a copy with updated tone
-   */
+  /** Create a copy with updated tone */
   public withTone(tone: CommunicationTone): CommunicationSettings {
     return new CommunicationSettings(tone, this.responseLength, this.communicationStyle);
   }
 
-  /**
-   * Create a copy with updated response length
-   */
+  /** Create a copy with updated response length */
   public withResponseLength(responseLength: ResponseLength): CommunicationSettings {
     return new CommunicationSettings(this.tone, responseLength, this.communicationStyle);
   }
 
-  /**
-   * Create a copy with updated communication style
-   */
+  /** Create a copy with updated communication style */
   public withCommunicationStyle(communicationStyle: CommunicationStyle): CommunicationSettings {
     return new CommunicationSettings(this.tone, this.responseLength, communicationStyle);
   }
 
-  /**
-   * Check equality with another CommunicationSettings
-   */
+  /** Check equality with another CommunicationSettings */
   public equals(other: CommunicationSettings): boolean {
     return (
       this.tone === other.tone &&
@@ -158,9 +146,7 @@ export class CommunicationSettings {
     );
   }
 
-  /**
-   * Convert to JSON for storage
-   */
+  /** Convert to JSON for storage */
   public toJSON(): object {
     return {
       tone: this.tone,
@@ -169,9 +155,7 @@ export class CommunicationSettings {
     };
   }
 
-  /**
-   * Create from JSON data
-   */
+  /** Create from JSON data */
   public static fromJSON(data: any): CommunicationSettings {
     return new CommunicationSettings(
       data.tone || CommunicationTone.PROFESSIONAL,
@@ -180,9 +164,7 @@ export class CommunicationSettings {
     );
   }
 
-  /**
-   * Create default communication settings
-   */
+  /** Create default communication settings */
   public static createDefault(): CommunicationSettings {
     return new CommunicationSettings(
       CommunicationTone.PROFESSIONAL,

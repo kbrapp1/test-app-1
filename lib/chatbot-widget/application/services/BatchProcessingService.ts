@@ -54,16 +54,7 @@ export class BatchProcessingService {
     private validationService: WebsiteValidationService
   ) {}
 
-  /**
-   * Update knowledge base with multiple website sources
-   * 
-   * AI INSTRUCTIONS:
-   * - Orchestrate batch website crawling and knowledge updates
-   * - Process sources in parallel with proper error isolation
-   * - Aggregate results across all sources
-   * - Handle partial failures gracefully
-   * - Maintain data consistency across operations
-   */
+  /** Update knowledge base with multiple website sources */
   async updateWebsiteKnowledge(request: WebsiteKnowledgeUpdateRequest): Promise<WebsiteKnowledgeUpdateResponse> {
     const startTime = Date.now();
     
@@ -115,15 +106,7 @@ export class BatchProcessingService {
     }
   }
 
-  /**
-   * Process website sources in controlled batches
-   * 
-   * AI INSTRUCTIONS:
-   * - Control concurrency to prevent resource exhaustion
-   * - Process sources in parallel with error isolation
-   * - Return individual results for aggregation
-   * - Handle timeouts and resource limits
-   */
+  /** Process website sources in controlled batches */
   private async processSourcesBatch(
     request: WebsiteKnowledgeUpdateRequest,
     maxConcurrency: number
@@ -145,15 +128,7 @@ export class BatchProcessingService {
     return results;
   }
 
-  /**
-   * Process a single website source
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle individual source processing with error isolation
-   * - Track processing metrics and timing
-   * - Return structured result for aggregation
-   * - Skip inactive sources unless forced
-   */
+  /** Process a single website source */
   private async processSingleSource(
     request: WebsiteKnowledgeUpdateRequest,
     websiteSource: WebsiteSource
@@ -218,15 +193,7 @@ export class BatchProcessingService {
     }
   }
 
-  /**
-   * Aggregate individual processing results
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine individual results into batch summary
-   * - Track success/failure counts and totals
-   * - Collect errors for reporting
-   * - Calculate aggregate metrics
-   */
+  /** Aggregate individual processing results */
   private aggregateResults(
     results: BatchProcessingResult[],
     response: WebsiteKnowledgeUpdateResponse
@@ -247,14 +214,7 @@ export class BatchProcessingService {
     }
   }
 
-  /**
-   * Get batch processing statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide insights into batch processing performance
-   * - Support monitoring and optimization
-   * - Return metrics for UI display
-   */
+  /** Get batch processing statistics */
   getBatchProcessingStats(): {
     averageProcessingTime: number;
     successRate: number;
@@ -270,14 +230,7 @@ export class BatchProcessingService {
   }
 }
 
-/**
- * Simple semaphore implementation for controlling concurrency
- * 
- * AI INSTRUCTIONS:
- * - Control concurrent operations to prevent resource exhaustion
- * - Simple implementation focused on batch processing needs
- * - Handle async operations with proper queuing
- */
+/** Simple semaphore implementation for controlling concurrency */
 class Semaphore {
   private permits: number;
   private waitQueue: Array<() => void> = [];

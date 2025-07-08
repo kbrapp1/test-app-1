@@ -11,9 +11,7 @@
  */
 export class IntentInferenceService {
 
-  /**
-   * Infer intent from message content using advanced pattern recognition
-   */
+  /** Infer intent from message content using advanced pattern recognition */
   static inferIntentFromMessage(content: string): string {
     const normalizedContent = content.toLowerCase().trim();
     
@@ -57,9 +55,7 @@ export class IntentInferenceService {
     return 'discovery';
   }
 
-  /**
-   * Detect greeting intent patterns
-   */
+  /** Detect greeting intent patterns */
   private static isGreetingIntent(content: string): boolean {
     const greetingPatterns = [
       /^(hello|hi|hey|good morning|good afternoon|good evening)/i,
@@ -70,9 +66,7 @@ export class IntentInferenceService {
     return greetingPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect pricing and budget intent patterns
-   */
+  /** Detect pricing and budget intent patterns */
   private static isPricingIntent(content: string): boolean {
     const pricingPatterns = [
       /price|cost|budget|how much|pricing|expensive|cheap|affordable/i,
@@ -83,9 +77,7 @@ export class IntentInferenceService {
     return pricingPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect demo and demonstration intent patterns
-   */
+  /** Detect demo and demonstration intent patterns */
   private static isDemoIntent(content: string): boolean {
     const demoPatterns = [
       /demo|demonstration|show me|see it|preview|walkthrough/i,
@@ -96,9 +88,7 @@ export class IntentInferenceService {
     return demoPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect booking and meeting intent patterns
-   */
+  /** Detect booking and meeting intent patterns */
   private static isBookingIntent(content: string): boolean {
     const bookingPatterns = [
       /meeting|schedule|book|call|appointment|consultation/i,
@@ -109,9 +99,7 @@ export class IntentInferenceService {
     return bookingPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect feature and capability intent patterns
-   */
+  /** Detect feature and capability intent patterns */
   private static isFeatureIntent(content: string): boolean {
     const featurePatterns = [
       /feature|capability|function|how does|what can|functionality/i,
@@ -122,9 +110,7 @@ export class IntentInferenceService {
     return featurePatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect sales and purchase intent patterns
-   */
+  /** Detect sales and purchase intent patterns */
   private static isSalesIntent(content: string): boolean {
     const salesPatterns = [
       /buy|purchase|get started|sign up|interested in buying/i,
@@ -135,9 +121,7 @@ export class IntentInferenceService {
     return salesPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect support and help intent patterns
-   */
+  /** Detect support and help intent patterns */
   private static isSupportIntent(content: string): boolean {
     const supportPatterns = [
       /help|support|problem|issue|trouble|error/i,
@@ -148,9 +132,7 @@ export class IntentInferenceService {
     return supportPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect qualification and business context intent patterns
-   */
+  /** Detect qualification and business context intent patterns */
   private static isQualificationIntent(content: string): boolean {
     const qualificationPatterns = [
       /company|business|team|organization|department/i,
@@ -161,9 +143,7 @@ export class IntentInferenceService {
     return qualificationPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect objection and concern intent patterns
-   */
+  /** Detect objection and concern intent patterns */
   private static isObjectionIntent(content: string): boolean {
     const objectionPatterns = [
       /concern|worry|but|however|what if|problem with/i,
@@ -174,9 +154,7 @@ export class IntentInferenceService {
     return objectionPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect closing and next steps intent patterns
-   */
+  /** Detect closing and next steps intent patterns */
   private static isClosingIntent(content: string): boolean {
     const closingPatterns = [
       /next step|move forward|proceed|ready to start/i,
@@ -187,9 +165,7 @@ export class IntentInferenceService {
     return closingPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect escalation intent patterns
-   */
+  /** Detect escalation intent patterns */
   private static isEscalationIntent(content: string): boolean {
     const escalationPatterns = [
       /speak to someone|talk to a person|human|representative/i,
@@ -200,9 +176,7 @@ export class IntentInferenceService {
     return escalationPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Detect general FAQ intent patterns
-   */
+  /** Detect general FAQ intent patterns */
   private static isGeneralFAQIntent(content: string): boolean {
     const generalPatterns = [
       /what is|who are|where are|when did|why do/i,
@@ -213,9 +187,7 @@ export class IntentInferenceService {
     return generalPatterns.some(pattern => pattern.test(content));
   }
 
-  /**
-   * Infer sentiment from message content
-   */
+  /** Infer sentiment from message content */
   static inferSentiment(content: string): string {
     const positiveWords = /great|excellent|love|amazing|perfect|awesome|fantastic|wonderful|outstanding|impressed/i;
     const negativeWords = /problem|issue|concern|worry|frustrated|difficult|bad|terrible|awful|disappointed|angry/i;
@@ -232,9 +204,7 @@ export class IntentInferenceService {
     return 'neutral';
   }
 
-  /**
-   * Assess engagement level from message content
-   */
+  /** Assess engagement level from message content */
   static assessEngagementLevel(content: string): string {
     const wordCount = content.split(' ').length;
     const hasQuestions = content.includes('?');
@@ -261,9 +231,7 @@ export class IntentInferenceService {
     return 'low';
   }
 
-  /**
-   * Determine conversation phase based on intent progression
-   */
+  /** Determine conversation phase based on intent progression */
   static determineConversationPhase(recentIntents: string[]): string {
     if (recentIntents.length === 0) return 'initial';
     
@@ -285,9 +253,7 @@ export class IntentInferenceService {
     return 'discovery'; // Default phase
   }
 
-  /**
-   * Calculate intent confidence score
-   */
+  /** Calculate intent confidence score */
   static calculateIntentConfidence(content: string, inferredIntent: string): number {
     const contentLength = content.length;
     const wordCount = content.split(' ').length;

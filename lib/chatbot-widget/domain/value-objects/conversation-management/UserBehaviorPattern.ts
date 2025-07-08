@@ -12,14 +12,7 @@ export type CommunicationStyle = 'brief' | 'detailed' | 'comprehensive';
 export type FormalityLevel = 'casual' | 'professional' | 'technical';
 export type QuestioningPattern = 'direct' | 'exploratory' | 'skeptical';
 
-/**
- * Tracks user communication style and engagement patterns
- * 
- * AI INSTRUCTIONS:
- * - Manage communication style preferences
- * - Track engagement metrics immutably
- * - Provide convenient update methods
- */
+/** Tracks user communication style and engagement patterns */
 export class UserBehaviorPattern {
   private constructor(
     public readonly communicationStyle: {

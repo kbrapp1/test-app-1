@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * Crawl Progress Tracker Component
- * 
- * AI INSTRUCTIONS:
- * - Display real-time crawling progress with visual indicators
- * - Show current status, progress percentage, and activity
- * - Use clean minimal design with appropriate animations
- * - Single responsibility: progress visualization only
- */
-
+/** Crawl Progress Tracker Component */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

@@ -36,9 +36,7 @@ export class LeadQueryService {
     private tableName: string = 'chat_leads'
   ) {}
 
-  /**
-   * Build base query with organization filter
-   */
+  /** Build base query with organization filter */
   buildBaseQuery(organizationId: string) {
     return this.supabase
       .from(this.tableName)
@@ -46,9 +44,7 @@ export class LeadQueryService {
       .eq('organization_id', organizationId);
   }
 
-  /**
-   * Apply filters to query
-   */
+  /** Apply filters to query */
   applyFilters(query: any, filters: LeadFilters) {
     let filteredQuery = query;
 
@@ -87,9 +83,7 @@ export class LeadQueryService {
     return filteredQuery;
   }
 
-  /**
-   * Execute paginated query
-   */
+  /** Execute paginated query */
   async executePaginatedQuery(
     organizationId: string,
     page: number,
@@ -127,9 +121,7 @@ export class LeadQueryService {
     };
   }
 
-  /**
-   * Execute search query
-   */
+  /** Execute search query */
   async executeSearchQuery(
     organizationId: string,
     query: string,
@@ -156,9 +148,7 @@ export class LeadQueryService {
     return data || [];
   }
 
-  /**
-   * Find leads requiring follow-up
-   */
+  /** Find leads requiring follow-up */
   async findRequiringFollowUp(organizationId: string, daysSinceLastContact: number) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysSinceLastContact);
@@ -178,9 +168,7 @@ export class LeadQueryService {
     return data || [];
   }
 
-  /**
-   * Find top leads by score
-   */
+  /** Find top leads by score */
   async findTopByScore(organizationId: string, limit: number) {
     const { data, error } = await this.supabase
       .from(this.tableName)
@@ -196,9 +184,7 @@ export class LeadQueryService {
     return data || [];
   }
 
-  /**
-   * Find recent leads
-   */
+  /** Find recent leads */
   async findRecent(organizationId: string, limit: number) {
     const { data, error } = await this.supabase
       .from(this.tableName)

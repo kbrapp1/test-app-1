@@ -31,15 +31,7 @@ export interface ReadinessCalculationContext {
 
 export class ReadinessIndicatorDomainService {
   
-  /**
-   * Derive readiness indicators from API-provided data
-   * 
-   * AI INSTRUCTIONS:
-   * - Pure business logic transformation
-   * - Use domain knowledge to infer indicators from available data
-   * - Apply business rules for each indicator type
-   * - Handle missing data gracefully with business defaults
-   */
+  /** Derive readiness indicators from API-provided data */
   static deriveReadinessIndicators(context: ReadinessCalculationContext): ReadinessIndicators {
     // Validate required context
     if (typeof context.leadScore !== 'number' || context.leadScore < 0 || context.leadScore > 100) {
@@ -90,9 +82,7 @@ export class ReadinessIndicatorDomainService {
     return score;
   }
 
-  /**
-   * Domain logic: Calculate contact information indicator
-   */
+  /** Domain logic: Calculate contact information indicator */
   private static calculateContactInfoIndicator(entities: Record<string, any>, conversationPhase: string): boolean {
     // Direct contact information available
     if (entities.email || entities.phone || entities.contactMethod) {
@@ -112,9 +102,7 @@ export class ReadinessIndicatorDomainService {
     return false;
   }
 
-  /**
-   * Domain logic: Calculate buying intent indicator
-   */
+  /** Domain logic: Calculate buying intent indicator */
   private static calculateBuyingIntentIndicator(
     leadScore: number, 
     entities: Record<string, any>, 
@@ -149,9 +137,7 @@ export class ReadinessIndicatorDomainService {
     return false;
   }
 
-  /**
-   * Domain logic: Calculate decision authority indicator
-   */
+  /** Domain logic: Calculate decision authority indicator */
   private static calculateDecisionAuthorityIndicator(entities: Record<string, any>, userRole?: string): boolean {
     const role = entities.role || userRole || '';
     const normalizedRole = role.toLowerCase();
@@ -211,9 +197,7 @@ export class ReadinessIndicatorDomainService {
     return false;
   }
 
-  /**
-   * Domain logic: Calculate timeline urgency indicator
-   */
+  /** Domain logic: Calculate timeline urgency indicator */
   private static calculateTimelineUrgencyIndicator(
     entities: Record<string, any>, 
     conversationPhase: string,
@@ -242,9 +226,7 @@ export class ReadinessIndicatorDomainService {
     return false;
   }
 
-  /**
-   * Helper: Determine if team size indicates small organization
-   */
+  /** Helper: Determine if team size indicates small organization */
   private static isSmallTeam(teamSize: string): boolean {
     const normalizedSize = teamSize.toLowerCase();
     return normalizedSize.includes('1-10') || 
@@ -254,9 +236,7 @@ export class ReadinessIndicatorDomainService {
            normalizedSize.includes('under 20');
   }
 
-  /**
-   * Helper: Determine if role/company combination implies budget capacity
-   */
+  /** Helper: Determine if role/company combination implies budget capacity */
   private static hasImpliedBudgetCapacity(entities: Record<string, any>): boolean {
     const role = (entities.role || '').toLowerCase();
     const industry = (entities.industry || '').toLowerCase();

@@ -17,9 +17,7 @@ import { LeadMetadata } from '../../value-objects/lead-management/LeadMetadata';
 import { LeadSource } from '../../value-objects/lead-management/LeadSource';
 
 export class LeadExportService {
-  /**
-   * Generate summary data for lead overview
-   */
+  /** Generate summary data for lead overview */
   static generateSummary(lead: Lead): object {
     return {
       id: lead.id,
@@ -39,9 +37,7 @@ export class LeadExportService {
     };
   }
 
-  /**
-   * Generate export data for CSV/Excel export
-   */
+  /** Generate export data for CSV/Excel export */
   static generateExportData(lead: Lead): object {
     return {
       id: lead.id,
@@ -62,9 +58,7 @@ export class LeadExportService {
     };
   }
 
-  /**
-   * Generate detailed analytics data
-   */
+  /** Generate detailed analytics data */
   static generateAnalyticsData(lead: Lead): object {
     return {
       id: lead.id,
@@ -88,9 +82,7 @@ export class LeadExportService {
     };
   }
 
-  /**
-   * Generate compact data for lists and tables
-   */
+  /** Generate compact data for lists and tables */
   static generateListData(lead: Lead): object {
     return {
       id: lead.id,
@@ -107,18 +99,14 @@ export class LeadExportService {
     };
   }
 
-  /**
-   * Calculate days since lead was created
-   */
+  /** Calculate days since lead was created */
   private static calculateDaysSinceCreated(createdAt: Date): number {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - createdAt.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  /**
-   * Calculate days since last contact
-   */
+  /** Calculate days since last contact */
   private static calculateDaysSinceLastContact(lastContactedAt?: Date): number | null {
     if (!lastContactedAt) return null;
     

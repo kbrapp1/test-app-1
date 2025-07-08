@@ -14,7 +14,7 @@ The current `app/api/chatbot-widget/chat/route.ts` file violates multiple DDD pr
 
 Follow **golden-rule.mdc** DDD architecture to create a clean, maintainable, and testable solution.
 
----
+----
 
 ## Phase 1: Extract Domain Services
 

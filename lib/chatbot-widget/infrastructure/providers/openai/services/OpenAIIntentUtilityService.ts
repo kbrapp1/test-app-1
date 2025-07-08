@@ -71,14 +71,7 @@ export class OpenAIIntentUtilityService {
     );
   }
 
-  /**
-   * Get valid intent types
-   * 
-   * AI INSTRUCTIONS:
-   * - Centralize valid intent type definitions
-   * - Maintain consistency across classification methods
-   * - Easy to update when new intent types are added
-   */
+  /** Get valid intent types */
   static getValidIntents(): IntentType[] {
     return [
       'greeting', 'faq_general', 'faq_pricing', 'faq_features',
@@ -87,14 +80,7 @@ export class OpenAIIntentUtilityService {
     ];
   }
 
-  /**
-   * Validate and map intent
-   * 
-   * AI INSTRUCTIONS:
-   * - Ensure intent is valid type
-   * - Provide fallback to 'unknown' for invalid intents
-   * - Centralize intent validation logic
-   */
+  /** Validate and map intent */
   static validateAndMapIntent(intentText: string): IntentType {
     const validIntents = this.getValidIntents();
     return validIntents.includes(intentText as IntentType) ? intentText as IntentType : 'unknown';

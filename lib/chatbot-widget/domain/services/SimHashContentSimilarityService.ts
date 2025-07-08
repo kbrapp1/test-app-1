@@ -10,18 +10,14 @@
  * - Keep under 250 lines - focus on similarity detection logic
  */
 
-/**
- * Content that can be analyzed for similarity
- */
+/** Content that can be analyzed for similarity */
 export interface SimilarityContent {
   url: string;
   content: string;
   title?: string;
 }
 
-/**
- * Result of similarity analysis
- */
+/** Result of similarity analysis */
 export interface SimilarityResult {
   url1: string;
   url2: string;
@@ -30,9 +26,7 @@ export interface SimilarityResult {
   isDuplicate: boolean;
 }
 
-/**
- * SimHash configuration
- */
+/** SimHash configuration */
 export interface SimHashConfig {
   /** Number of bits in the hash (default: 64) */
   hashBits: number;
@@ -114,9 +108,7 @@ export class SimHashContentSimilarityService {
     return result.isDuplicate;
   }
   
-  /**
-   * Prepare text for analysis by cleaning and normalizing
-   */
+  /** Prepare text for analysis by cleaning and normalizing */
   private prepareTextForAnalysis(content: SimilarityContent): string {
     let text = content.content;
     
@@ -142,9 +134,7 @@ export class SimHashContentSimilarityService {
     return text.trim();
   }
   
-  /**
-   * Tokenize content into meaningful terms
-   */
+  /** Tokenize content into meaningful terms */
   private tokenizeContent(text: string): string[] {
     // Split on word boundaries and filter meaningful tokens
     const tokens = text
@@ -158,9 +148,7 @@ export class SimHashContentSimilarityService {
     return tokens;
   }
   
-  /**
-   * Check if a word is a common stop word
-   */
+  /** Check if a word is a common stop word */
   private isStopWord(word: string): boolean {
     const stopWords = new Set([
       'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
@@ -171,9 +159,7 @@ export class SimHashContentSimilarityService {
     return stopWords.has(word.toLowerCase());
   }
   
-  /**
-   * Extract features from tokens using shingle approach
-   */
+  /** Extract features from tokens using shingle approach */
   private extractFeatures(tokens: string[]): string[] {
     const features: string[] = [];
     
@@ -195,9 +181,7 @@ export class SimHashContentSimilarityService {
     return features;
   }
   
-  /**
-   * Compute SimHash from features using 2025 best practices
-   */
+  /** Compute SimHash from features using 2025 best practices */
   private computeSimHash(features: string[]): bigint {
     const hashBits = this.config.hashBits;
     const bitCounts = new Array(hashBits).fill(0);
@@ -224,9 +208,7 @@ export class SimHashContentSimilarityService {
     return simHash;
   }
   
-  /**
-   * Create hash for individual feature
-   */
+  /** Create hash for individual feature */
   private hashFeature(feature: string): bigint {
     // Simple but effective hash function for features
     let hash = BigInt(0);
@@ -238,9 +220,7 @@ export class SimHashContentSimilarityService {
     return hash;
   }
   
-  /**
-   * Calculate Hamming distance between two SimHashes
-   */
+  /** Calculate Hamming distance between two SimHashes */
   private calculateHammingDistance(hash1: bigint, hash2: bigint): number {
     let xor = hash1 ^ hash2;
     let distance = 0;
@@ -254,9 +234,7 @@ export class SimHashContentSimilarityService {
     return distance;
   }
   
-  /**
-   * Convert Hamming distance to similarity percentage
-   */
+  /** Convert Hamming distance to similarity percentage */
   private hammingDistanceToSimilarity(hammingDistance: number): number {
     const maxDistance = this.config.hashBits;
     const similarity = 1 - (hammingDistance / maxDistance);

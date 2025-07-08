@@ -17,14 +17,7 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class BusinessContextScoreService {
   
-  /**
-   * Conversation phase scoring weights
-   * 
-   * AI INSTRUCTIONS:
-   * - Higher scores for business-critical conversation phases
-   * - Adjust based on lead qualification and business value
-   * - Focus on conversion potential
-   */
+  /** Conversation phase scoring weights */
   private static readonly PHASE_SCORES: Record<string, number> = {
     'discovery': 0.6,
     'qualification': 1.0,    // Critical for lead assessment
@@ -35,14 +28,7 @@ export class BusinessContextScoreService {
     'unknown': 0.3
   };
   
-  /**
-   * Calculate business context score based on lead qualification signals
-   * 
-   * AI INSTRUCTIONS:
-   * - Simplified scoring focused on lead score and phase
-   * - Weight lead score higher than phase
-   * - Return score between 0.0 and 1.0
-   */
+  /** Calculate business context score based on lead qualification signals */
   static calculateBusinessContextScore(
     message: ChatMessage,
     leadScore: number,
@@ -60,26 +46,12 @@ export class BusinessContextScoreService {
     return Math.min(1.0, combinedScore);
   }
   
-  /**
-   * Get conversation phase importance score
-   * 
-   * AI INSTRUCTIONS:
-   * - Return business importance score for specific conversation phases
-   * - Higher scores for more conversion-critical phases
-   * - Used for weighted calculations
-   */
+  /** Get conversation phase importance score */
   static getConversationPhaseScore(phase: string): number {
     return this.PHASE_SCORES[phase] || 0.5;
   }
   
-  /**
-   * Calculate lead score normalization
-   * 
-   * AI INSTRUCTIONS:
-   * - Normalize lead scores to 0.0-1.0 range
-   * - Handle edge cases and invalid scores
-   * - Provide consistent scoring range
-   */
+  /** Calculate lead score normalization */
   static normalizeLeadScore(leadScore: number): number {
     // Handle invalid scores
     if (isNaN(leadScore) || leadScore < 0) {
@@ -90,14 +62,7 @@ export class BusinessContextScoreService {
     return Math.min(1.0, leadScore / 100);
   }
   
-  /**
-   * Calculate combined business value score
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine lead score and phase importance
-   * - Apply business-optimized weighting
-   * - Provide comprehensive business context scoring
-   */
+  /** Calculate combined business value score */
   static calculateCombinedBusinessScore(
     leadScore: number,
     conversationPhase: string,

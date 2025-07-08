@@ -7,28 +7,18 @@ export interface TokenUsage {
 }
 
 export interface ITokenCountingService {
-  /**
-   * Count tokens in a single message
-   */
+  /** Count tokens in a single message */
   countMessageTokens(message: ChatMessage): Promise<number>;
 
-  /**
-   * Count tokens in multiple messages
-   */
+  /** Count tokens in multiple messages */
   countMessagesTokens(messages: ChatMessage[]): Promise<number>;
 
-  /**
-   * Count tokens in text content
-   */
+  /** Count tokens in text content */
   countTextTokens(text: string): Promise<number>;
 
-  /**
-   * Estimate tokens without API call (faster, less accurate)
-   */
+  /** Estimate tokens without API call (faster, less accurate) */
   estimateTextTokens(text: string): number;
 
-  /**
-   * Get detailed token usage for messages
-   */
+  /** Get detailed token usage for messages */
   getTokenUsage(messages: ChatMessage[]): Promise<TokenUsage>;
 } 

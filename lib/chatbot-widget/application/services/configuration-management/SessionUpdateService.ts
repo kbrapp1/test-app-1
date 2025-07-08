@@ -20,9 +20,7 @@ export class SessionUpdateService {
    */
   // updateSessionWithJourneyState method removed - using pure API-driven approach
 
-  /**
-   * Save updated session
-   */
+  /** Save updated session */
   async saveSession(session: ChatSession, sharedLogFile: string): Promise<ChatSession> {
     return await this.sessionRepository.update(session, sharedLogFile);
   }

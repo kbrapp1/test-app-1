@@ -13,9 +13,7 @@ import { ChatMessage } from '../../../../domain/entities/ChatMessage';
  */
 export class BehavioralPatternAnalyzer {
 
-  /**
-   * Extract comprehensive behavioral patterns from conversation
-   */
+  /** Extract comprehensive behavioral patterns from conversation */
   static extractBehaviorSignals(conversationHistory: ChatMessage[]): string[] {
     const patterns = [];
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
@@ -38,9 +36,7 @@ export class BehavioralPatternAnalyzer {
     return patterns.length > 0 ? patterns : ['Standard information-seeking behavior'];
   }
 
-  /**
-   * Analyze buying behavior patterns
-   */
+  /** Analyze buying behavior patterns */
   private static analyzeBuyingBehavior(userMessages: ChatMessage[]): string[] {
     const patterns = [];
     
@@ -67,9 +63,7 @@ export class BehavioralPatternAnalyzer {
     return patterns;
   }
 
-  /**
-   * Analyze communication style patterns
-   */
+  /** Analyze communication style patterns */
   private static analyzeCommunicationStyle(userMessages: ChatMessage[]): string[] {
     const patterns = [];
     
@@ -99,9 +93,7 @@ export class BehavioralPatternAnalyzer {
     return patterns;
   }
 
-  /**
-   * Analyze decision-making style patterns
-   */
+  /** Analyze decision-making style patterns */
   private static analyzeDecisionMakingStyle(userMessages: ChatMessage[]): string[] {
     const patterns = [];
     
@@ -128,9 +120,7 @@ export class BehavioralPatternAnalyzer {
     return patterns;
   }
 
-  /**
-   * Analyze technical sophistication patterns
-   */
+  /** Analyze technical sophistication patterns */
   private static analyzeTechnicalSophistication(userMessages: ChatMessage[]): string[] {
     const patterns = [];
     
@@ -157,9 +147,7 @@ export class BehavioralPatternAnalyzer {
     return patterns;
   }
 
-  /**
-   * Analyze urgency and timeline patterns
-   */
+  /** Analyze urgency and timeline patterns */
   private static analyzeUrgencyPatterns(userMessages: ChatMessage[]): string[] {
     const patterns = [];
     
@@ -182,9 +170,7 @@ export class BehavioralPatternAnalyzer {
     return patterns;
   }
 
-  /**
-   * Analyze engagement progression patterns
-   */
+  /** Analyze engagement progression patterns */
   static analyzeEngagementProgression(conversationHistory: ChatMessage[]): {
     trend: string;
     quality: string;
@@ -221,9 +207,7 @@ export class BehavioralPatternAnalyzer {
     return { trend, quality, depth: detailLevel };
   }
 
-  /**
-   * Identify conversation momentum indicators
-   */
+  /** Identify conversation momentum indicators */
   static identifyMomentumIndicators(conversationHistory: ChatMessage[]): string[] {
     const userMessages = conversationHistory.filter(m => m.messageType === 'user');
     const indicators = [];
@@ -256,9 +240,7 @@ export class BehavioralPatternAnalyzer {
     return indicators.length > 0 ? indicators : ['Building initial engagement momentum'];
   }
 
-  /**
-   * Assess conversation readiness for next action
-   */
+  /** Assess conversation readiness for next action */
   static assessActionReadiness(conversationHistory: ChatMessage[]): {
     readyForDemo: boolean;
     readyForContact: boolean;

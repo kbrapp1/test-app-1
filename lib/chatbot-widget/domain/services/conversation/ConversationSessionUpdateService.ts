@@ -24,9 +24,7 @@ export class ConversationSessionUpdateService {
   constructor() {
   }
 
-  /**
-   * Update session context with new message using API-provided data
-   */
+  /** Update session context with new message using API-provided data */
   updateSessionContext(
     session: ChatSession,
     message: ChatMessage,
@@ -78,9 +76,7 @@ export class ConversationSessionUpdateService {
     return session;
   }
 
-  /**
-   * Convert API-provided engagement level to numerical score
-   */
+  /** Convert API-provided engagement level to numerical score */
   private convertEngagementLevelToScore(engagementLevel: 'low' | 'medium' | 'high'): number {
     switch (engagementLevel) {
       case 'high': return 85;
@@ -112,9 +108,7 @@ export class ConversationSessionUpdateService {
     return summary;
   }
 
-  /**
-   * Update conversation summary from messages
-   */
+  /** Update conversation summary from messages */
   updateConversationSummary(
     session: ChatSession,
     messages: ChatMessage[]
@@ -123,9 +117,7 @@ export class ConversationSessionUpdateService {
     return session.updateConversationSummary(conversationSummary);
   }
 
-  /**
-   * Update session with intent data for persistence
-   */
+  /** Update session with intent data for persistence */
   updateSessionWithIntentData(
     session: ChatSession,
     message: ChatMessage,
@@ -143,9 +135,7 @@ export class ConversationSessionUpdateService {
     return session.updateContextData(updatedContextData);
   }
 
-  /**
-   * Update session context with enhanced analysis including intent persistence
-   */
+  /** Update session context with enhanced analysis including intent persistence */
   updateSessionWithEnhancedAnalysisAndIntent(
     session: ChatSession,
     message: ChatMessage,
@@ -165,9 +155,7 @@ export class ConversationSessionUpdateService {
     return updatedSession;
   }
 
-  /**
-   * Create updated session with conversation summary
-   */
+  /** Create updated session with conversation summary */
   createSessionWithSummary(
     session: ChatSession,
     messages: ChatMessage[]
@@ -176,9 +164,7 @@ export class ConversationSessionUpdateService {
     return session.updateConversationSummary(conversationSummary);
   }
 
-  /**
-   * Update session engagement metrics using API-provided data
-   */
+  /** Update session engagement metrics using API-provided data */
   updateSessionEngagement(
     session: ChatSession,
     analysis: ContextAnalysis

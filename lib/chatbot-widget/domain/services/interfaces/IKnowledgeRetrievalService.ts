@@ -29,48 +29,34 @@ export interface KnowledgeRetrievalContext {
 }
 
 export interface IKnowledgeRetrievalService {
-  /**
-   * Search for relevant knowledge based on user query and intent
-   */
+  /** Search for relevant knowledge based on user query and intent */
   searchKnowledge(context: KnowledgeRetrievalContext): Promise<KnowledgeSearchResult>;
 
-  /**
-   * Get knowledge items by category
-   */
+  /** Get knowledge items by category */
   getKnowledgeByCategory(
     category: KnowledgeItem['category'],
     limit?: number
   ): Promise<KnowledgeItem[]>;
 
-  /**
-   * Get frequently asked questions
-   */
+  /** Get frequently asked questions */
   getFrequentlyAskedQuestions(limit?: number): Promise<KnowledgeItem[]>;
 
-  /**
-   * Search for similar questions/content
-   */
+  /** Search for similar questions/content */
   findSimilarContent(
     query: string,
     excludeIds?: string[],
     limit?: number
   ): Promise<KnowledgeItem[]>;
 
-  /**
-   * Get knowledge items by tags
-   */
+  /** Get knowledge items by tags */
   getKnowledgeByTags(
     tags: string[],
     limit?: number
   ): Promise<KnowledgeItem[]>;
 
-  /**
-   * Add or update knowledge item (for dynamic learning)
-   */
+  /** Add or update knowledge item (for dynamic learning) */
   upsertKnowledgeItem(item: Omit<KnowledgeItem, 'id' | 'lastUpdated'>): Promise<KnowledgeItem>;
 
-  /**
-   * Check if the service is available and healthy
-   */
+  /** Check if the service is available and healthy */
   healthCheck(): Promise<boolean>;
 } 

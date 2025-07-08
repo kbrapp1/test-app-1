@@ -27,15 +27,7 @@ export class WebsiteKnowledgeApplicationService {
     private validationService: WebsiteValidationService
   ) {}
 
-  /**
-   * Crawl single website source and convert to knowledge items
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to CrawlOrchestrationService for single website crawling
-   * - Maintain backward compatibility with existing interface
-   * - Handle errors gracefully with proper error types
-   * - Follow orchestration patterns from @golden-rule
-   */
+  /** Crawl single website source and convert to knowledge items */
   async crawlWebsiteSource(request: WebsiteCrawlRequest): Promise<WebsiteCrawlResponse> {
     return await this.crawlOrchestrationService.crawlWebsiteSource(request);
   }
@@ -112,14 +104,7 @@ export class WebsiteKnowledgeApplicationService {
     });
   }
 
-  /**
-   * Get batch processing statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to BatchProcessingService for performance metrics
-   * - Support monitoring and optimization
-   * - Return metrics for UI display
-   */
+  /** Get batch processing statistics */
   getBatchProcessingStats() {
     return this.batchProcessingService.getBatchProcessingStats();
   }

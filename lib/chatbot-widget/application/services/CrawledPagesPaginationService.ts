@@ -1,40 +1,15 @@
 import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { CrawledPageData, PaginationOptions, PaginationResult } from '../types/CrawledPagesTypes';
 
-/**
- * Crawled Pages Pagination Service
- * 
- * AI INSTRUCTIONS:
- * - Handle all pagination logic for crawled pages
- * - Maintain single responsibility for pagination operations
- * - Use domain-specific error types for validation failures
- * - Keep pagination logic pure and testable
- * - Support offset-based pagination with hasMore flag
- * - Handle edge cases like empty datasets and invalid parameters
- */
+/** Crawled Pages Pagination Service */
 export class CrawledPagesPaginationService {
 
-  /**
-   * Default pagination limits
-   * 
-   * AI INSTRUCTIONS:
-   * - Define reasonable default values
-   * - Prevent excessive memory usage
-   * - Support efficient data loading
-   */
+  /** Default pagination limits */
   static readonly DEFAULT_LIMIT = 50;
   static readonly MAX_LIMIT = 1000;
   static readonly MIN_LIMIT = 1;
 
-  /**
-   * Apply pagination to crawled pages
-   * 
-   * AI INSTRUCTIONS:
-   * - Implement offset-based pagination
-   * - Calculate hasMore flag for UI
-   * - Handle edge cases gracefully
-   * - Validate pagination parameters
-   */
+  /** Apply pagination to crawled pages */
   static applyPagination<T extends CrawledPageData>(
     pages: T[],
     options: PaginationOptions
@@ -94,14 +69,7 @@ export class CrawledPagesPaginationService {
     };
   }
 
-  /**
-   * Get pagination boundaries
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate start and end indices for pagination
-   * - Handle edge cases for boundary calculation
-   * - Ensure boundaries are within valid range
-   */
+  /** Get pagination boundaries */
   static getPaginationBoundaries(
     totalItems: number,
     options: PaginationOptions
@@ -155,14 +123,7 @@ export class CrawledPagesPaginationService {
     }
   }
 
-  /**
-   * Create pagination options with defaults
-   * 
-   * AI INSTRUCTIONS:
-   * - Apply default values for undefined options
-   * - Validate and sanitize input parameters
-   * - Return normalized pagination options
-   */
+  /** Create pagination options with defaults */
   static createPaginationOptions(
     limit?: number,
     offset?: number
@@ -177,14 +138,7 @@ export class CrawledPagesPaginationService {
     return options;
   }
 
-  /**
-   * Calculate next page offset
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate offset for next page
-   * - Handle edge cases for last page
-   * - Return null if no next page exists
-   */
+  /** Calculate next page offset */
   static getNextPageOffset(
     currentOffset: number,
     limit: number,
@@ -194,14 +148,7 @@ export class CrawledPagesPaginationService {
     return nextOffset < totalItems ? nextOffset : null;
   }
 
-  /**
-   * Calculate previous page offset
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate offset for previous page
-   * - Handle edge cases for first page
-   * - Return null if no previous page exists
-   */
+  /** Calculate previous page offset */
   static getPreviousPageOffset(
     currentOffset: number,
     limit: number

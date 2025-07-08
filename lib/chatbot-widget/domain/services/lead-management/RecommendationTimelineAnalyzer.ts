@@ -20,9 +20,7 @@ export interface TimelineSummary {
 }
 
 export class RecommendationTimelineAnalyzer {
-  /**
-   * Get timeline summary breakdown
-   */
+  /** Get timeline summary breakdown */
   getTimelineSummary(recommendations: LeadRecommendation[]): TimelineSummary {
     this.validateRecommendations(recommendations);
     
@@ -40,9 +38,7 @@ export class RecommendationTimelineAnalyzer {
     return summary;
   }
 
-  /**
-   * Get top recommendations (limited set for quick overview)
-   */
+  /** Get top recommendations (limited set for quick overview) */
   getTopRecommendations(recommendations: LeadRecommendation[], limit: number = 3): LeadRecommendation[] {
     this.validateRecommendations(recommendations);
     
@@ -59,9 +55,7 @@ export class RecommendationTimelineAnalyzer {
     return recommendations.slice(0, limit);
   }
 
-  /**
-   * Check if timeline indicates immediate action needed
-   */
+  /** Check if timeline indicates immediate action needed */
   isImmediateAction(timeline: string): boolean {
     if (!timeline || typeof timeline !== 'string') {
       return false;
@@ -73,9 +67,7 @@ export class RecommendationTimelineAnalyzer {
            timelineLower.includes('asap');
   }
 
-  /**
-   * Check if timeline indicates action within hours
-   */
+  /** Check if timeline indicates action within hours */
   isWithinHours(timeline: string): boolean {
     if (!timeline || typeof timeline !== 'string') {
       return false;
@@ -85,9 +77,7 @@ export class RecommendationTimelineAnalyzer {
     return timelineLower.includes('hour') && !this.isImmediateAction(timeline);
   }
 
-  /**
-   * Check if timeline indicates action within days
-   */
+  /** Check if timeline indicates action within days */
   isWithinDays(timeline: string): boolean {
     if (!timeline || typeof timeline !== 'string') {
       return false;
@@ -99,9 +89,7 @@ export class RecommendationTimelineAnalyzer {
            !this.isWithinHours(timeline);
   }
 
-  /**
-   * Check if timeline indicates action within weeks
-   */
+  /** Check if timeline indicates action within weeks */
   isWithinWeeks(timeline: string): boolean {
     if (!timeline || typeof timeline !== 'string') {
       return false;
@@ -114,9 +102,7 @@ export class RecommendationTimelineAnalyzer {
            !this.isWithinDays(timeline);
   }
 
-  /**
-   * Categorize timeline and increment appropriate counter
-   */
+  /** Categorize timeline and increment appropriate counter */
   private categorizeTimeline(summary: TimelineSummary, timeline: string): void {
     if (this.isImmediateAction(timeline)) {
       summary.immediate++;
@@ -130,9 +116,7 @@ export class RecommendationTimelineAnalyzer {
     // If none match, don't increment any counter (unknown timeline format)
   }
 
-  /**
-   * Validate recommendations array
-   */
+  /** Validate recommendations array */
   private validateRecommendations(recommendations: LeadRecommendation[]): void {
     if (!Array.isArray(recommendations)) {
       throw new BusinessRuleViolationError(

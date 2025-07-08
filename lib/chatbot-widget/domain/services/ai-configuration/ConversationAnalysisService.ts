@@ -14,9 +14,7 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class ConversationAnalysisService {
   
-  /**
-   * Analyze conversation context using extracted entities and intent (2025 efficient approach)
-   */
+  /** Analyze conversation context using extracted entities and intent (2025 efficient approach) */
   analyzeConversationContext(
     session: ChatSession,
     conversationHistory?: ChatMessage[],
@@ -52,9 +50,7 @@ export class ConversationAnalysisService {
     };
   }
 
-  /**
-   * Conversation phase classification (2025 approach)
-   */
+  /** Conversation phase classification (2025 approach) */
   private classifyConversationPhase(messageCount: number, topics: string[]): ConversationPhase {
     if (messageCount <= 1) return 'greeting';
     if (messageCount <= 3) return 'discovery';
@@ -62,9 +58,7 @@ export class ConversationAnalysisService {
     return 'qualification';
   }
 
-  /**
-   * Use extracted intent data for business context (no re-processing)
-   */
+  /** Use extracted intent data for business context (no re-processing) */
   private determineBusinessContextFromIntent(intentData?: any, entityData?: any): boolean {
     // Use previously extracted intent instead of keyword matching
     if (intentData?.primary === 'business_inquiry' || 
@@ -83,9 +77,7 @@ export class ConversationAnalysisService {
     return false;
   }
 
-  /**
-   * Use extracted intent data for product interest (no re-processing)
-   */
+  /** Use extracted intent data for product interest (no re-processing) */
   private determineProductInterestFromIntent(intentData?: any, entityData?: any): boolean {
     if (intentData?.primary === 'product_inquiry' || 
         intentData?.primary === 'feature_inquiry' ||
@@ -101,9 +93,7 @@ export class ConversationAnalysisService {
     return false;
   }
 
-  /**
-   * Use extracted intent data for pricing focus (no re-processing)
-   */
+  /** Use extracted intent data for pricing focus (no re-processing) */
   private determinePricingFocusFromIntent(intentData?: any, entityData?: any): boolean {
     if (intentData?.primary === 'pricing_inquiry' || 
         intentData?.primary === 'cost_inquiry') {
@@ -118,9 +108,7 @@ export class ConversationAnalysisService {
     return false;
   }
 
-  /**
-   * Use extracted intent data for comparison mode (no re-processing)
-   */
+  /** Use extracted intent data for comparison mode (no re-processing) */
   private determineComparisonModeFromIntent(intentData?: any, entityData?: any): boolean {
     if (intentData?.primary === 'comparison_inquiry' || 
         intentData?.primary === 'competitor_inquiry') {
@@ -135,9 +123,7 @@ export class ConversationAnalysisService {
     return false;
   }
 
-  /**
-   * Calculate entity complexity from extracted data
-   */
+  /** Calculate entity complexity from extracted data */
   private calculateEntityComplexity(entityData?: any): number {
     if (!entityData) return 0;
     
@@ -151,9 +137,7 @@ export class ConversationAnalysisService {
     return complexity;
   }
 
-  /**
-   * Token requirement prediction (2025 efficiency)
-   */
+  /** Token requirement prediction (2025 efficiency) */
   private calculateTokenRequirements(intentSignals: any): number {
     let baseTokens = 400; // Core persona
     

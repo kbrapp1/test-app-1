@@ -1,8 +1,12 @@
 /**
  * Chat Message DTO
  * 
- * Data Transfer Object for chat message data across application boundaries.
- * Handles message content, metadata, and AI processing information.
+ * AI INSTRUCTIONS:
+ * - Application layer DTO for chat message data transfer across boundaries
+ * - Encapsulates message content, AI metadata, processing metrics, and entity extraction
+ * - Provides serializable format for API responses and frontend consumption
+ * - Includes comprehensive message metadata for debugging and analytics
+ * - Handles user/bot/system message types with processing time and confidence data
  */
 
 export interface ChatMessageDto {
@@ -43,9 +47,7 @@ export interface ExtractedEntityDto {
 
 export type MessageType = 'user' | 'bot' | 'system' | 'lead_capture' | 'qualification';
 
-/**
- * DTO for creating a new chat message
- */
+/** DTO for creating a new chat message */
 export interface CreateChatMessageDto {
   readonly sessionId: string;
   readonly messageType: MessageType;
@@ -55,9 +57,7 @@ export interface CreateChatMessageDto {
   readonly processingTimeMs?: number;
 }
 
-/**
- * DTO for AI response with processing metadata
- */
+/** DTO for AI response with processing metadata */
 export interface AiResponseDto {
   readonly content: string;
   readonly aiModel: string;
@@ -74,9 +74,7 @@ export interface FunctionCallDto {
   readonly arguments: Record<string, any>;
 }
 
-/**
- * DTO for conversation context
- */
+/** DTO for conversation context */
 export interface ConversationContextDto {
   readonly messages: ChatMessageDto[];
   readonly sessionContext: any;

@@ -7,28 +7,10 @@ import {
 } from '../types/VectorCacheTypes';
 import { VectorMemoryManagementService } from './VectorMemoryManagementService';
 
-/**
- * Vector Cache Statistics Service
- * 
- * AI INSTRUCTIONS:
- * - Handle all statistics calculation and monitoring for vector cache
- * - Maintain single responsibility for cache metrics and analysis
- * - Keep statistics logic pure and testable
- * - Support comprehensive cache monitoring and optimization
- * - Provide detailed performance insights
- * - Calculate hit rates, memory usage, and operational metrics
- */
+/** Vector Cache Statistics Service */
 export class VectorCacheStatisticsService {
 
-  /**
-   * Calculate comprehensive cache statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Calculate all relevant metrics for cache monitoring
-   * - Handle edge cases like empty cache gracefully
-   * - Provide meaningful statistics for optimization
-   * - Maintain accuracy in calculations
-   */
+  /** Calculate comprehensive cache statistics */
   static calculateCacheStats(
     vectorCache: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>,
@@ -67,14 +49,7 @@ export class VectorCacheStatisticsService {
     return Math.min(1.0, cacheHits / searchCount);
   }
 
-  /**
-   * Generate search performance metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Create comprehensive search metrics for monitoring
-   * - Include timing, efficiency, and result quality metrics
-   * - Support performance optimization analysis
-   */
+  /** Generate search performance metrics */
   static generateSearchMetrics(
     searchTimeMs: number,
     vectorsSearched: number,
@@ -93,14 +68,7 @@ export class VectorCacheStatisticsService {
     };
   }
 
-  /**
-   * Generate initialization performance metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Create comprehensive initialization metrics
-   * - Include timing, memory usage, and efficiency data
-   * - Support cache optimization analysis
-   */
+  /** Generate initialization performance metrics */
   static generateInitializationMetrics(
     initializationTimeMs: number,
     vectorsLoaded: number,
@@ -169,14 +137,7 @@ export class VectorCacheStatisticsService {
     };
   }
 
-  /**
-   * Generate cache health report
-   * 
-   * AI INSTRUCTIONS:
-   * - Assess overall cache health and performance
-   * - Identify potential issues and optimization opportunities
-   * - Provide actionable insights
-   */
+  /** Generate cache health report */
   static generateHealthReport(
     vectorCache: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>,
@@ -236,14 +197,7 @@ export class VectorCacheStatisticsService {
     };
   }
 
-  /**
-   * Calculate overall cache health score
-   * 
-   * AI INSTRUCTIONS:
-   * - Combine individual health indicators into overall score
-   * - Weight different aspects appropriately
-   * - Return simple health classification
-   */
+  /** Calculate overall cache health score */
   private static calculateOverallHealth(healthIndicators: Record<string, string>): string {
     const scores = Object.values(healthIndicators);
     
@@ -255,14 +209,7 @@ export class VectorCacheStatisticsService {
     return 'good';
   }
 
-  /**
-   * Track vector access patterns
-   * 
-   * AI INSTRUCTIONS:
-   * - Analyze how vectors are being accessed
-   * - Identify hot and cold vectors
-   * - Support LRU optimization
-   */
+  /** Track vector access patterns */
   static analyzeAccessPatterns(vectorCache: Map<string, CachedKnowledgeVector>) {
     const vectors = Array.from(vectorCache.values());
     

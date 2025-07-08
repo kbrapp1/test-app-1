@@ -15,9 +15,7 @@ export class GetLeadsQueryHandler {
     private readonly leadRepository: ILeadRepository
   ) {}
 
-  /**
-   * Handle the get leads query
-   */
+  /** Handle the get leads query */
   async handle(query: GetLeadsQuery): Promise<GetLeadsResult> {
     try {
       // 1. Build filters from query

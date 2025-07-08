@@ -1,8 +1,12 @@
 /**
  * Message Cost Tracking Value Object
  * 
- * Handles cost calculation and tracking for chat messages with precise decimal handling.
- * Encapsulates business rules for cost breakdown and display formatting.
+ * AI INSTRUCTIONS:
+ * - Value object for precise AI token cost calculation and tracking with decimal cent precision
+ * - Handles prompt/completion token cost breakdown with model rate calculations
+ * - Manages cost aggregation, efficiency ratios, and formatted display methods
+ * - Validates cost integrity and provides business logic for cost analysis
+ * - Immutable value object with precision handling for financial accuracy
  */
 
 export interface MessageCostTrackingProps {

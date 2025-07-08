@@ -50,9 +50,7 @@ export class EscalationTriggerCollection {
     }
   }
 
-  /**
-   * Check if a message should trigger escalation
-   */
+  /** Check if a message should trigger escalation */
   public shouldEscalate(message: string, context?: {
     sentimentScore?: number;
     complexityScore?: number;
@@ -129,9 +127,7 @@ export class EscalationTriggerCollection {
     return { shouldEscalate: false };
   }
 
-  /**
-   * Generate escalation section for system prompt
-   */
+  /** Generate escalation section for system prompt */
   public generateSystemPromptSection(): string {
     if (this.triggers.length === 0) {
       return '';
@@ -144,53 +140,39 @@ export class EscalationTriggerCollection {
     return prompt;
   }
 
-  /**
-   * Create a copy with updated triggers
-   */
+  /** Create a copy with updated triggers */
   public withTriggers(triggers: EscalationTrigger[]): EscalationTriggerCollection {
     return new EscalationTriggerCollection(triggers);
   }
 
-  /**
-   * Add a trigger
-   */
+  /** Add a trigger */
   public addTrigger(trigger: EscalationTrigger): EscalationTriggerCollection {
     return new EscalationTriggerCollection([...this.triggers, trigger]);
   }
 
-  /**
-   * Remove a trigger by index
-   */
+  /** Remove a trigger by index */
   public removeTrigger(index: number): EscalationTriggerCollection {
     const newTriggers = [...this.triggers];
     newTriggers.splice(index, 1);
     return new EscalationTriggerCollection(newTriggers);
   }
 
-  /**
-   * Check equality with another EscalationTriggerCollection
-   */
+  /** Check equality with another EscalationTriggerCollection */
   public equals(other: EscalationTriggerCollection): boolean {
     return JSON.stringify(this.triggers) === JSON.stringify(other.triggers);
   }
 
-  /**
-   * Convert to JSON for storage
-   */
+  /** Convert to JSON for storage */
   public toJSON(): EscalationTrigger[] {
     return this.triggers;
   }
 
-  /**
-   * Create from JSON data
-   */
+  /** Create from JSON data */
   public static fromJSON(data: EscalationTrigger[]): EscalationTriggerCollection {
     return new EscalationTriggerCollection(data || []);
   }
 
-  /**
-   * Create default escalation triggers
-   */
+  /** Create default escalation triggers */
   public static createDefault(): EscalationTriggerCollection {
     return new EscalationTriggerCollection([
       {

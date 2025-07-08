@@ -51,17 +51,15 @@ export interface LeadCaptureRequest {
 }
 
 export interface IAIConversationService {
-  /**
-   * Generate AI response to user message
-   */
+  /** Generate AI response to user message
+ */
   generateResponse(
     userMessage: string,
     context: ConversationContext
   ): Promise<AIResponse>;
 
-  /**
-   * Generate system prompt from chatbot configuration and context
-   */
+  /** Generate system prompt from chatbot configuration and context
+ */
   buildSystemPrompt(
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
@@ -69,24 +67,8 @@ export interface IAIConversationService {
     logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): string;
 
-  /**
-   * Analyze sentiment of user message
-   */
-  analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'>;
-
-  /**
-   * Analyze urgency of user message
-   */
-  analyzeUrgency(userMessage: string, organizationId?: string): Promise<'low' | 'medium' | 'high'>;
-
-  /**
-   * Analyze engagement level of user message
-   */
-  analyzeEngagement(userMessage: string, conversationHistory?: ChatMessage[], organizationId?: string): Promise<'low' | 'medium' | 'high'>;
-
-  /**
-   * Extract lead information from conversation
-   */
+  /** Extract lead information from conversation
+ */
   extractLeadInformation(
     messageHistory: ChatMessage[],
     context: ConversationContext

@@ -58,16 +58,7 @@ export class VectorStatisticsService {
     }
   }
 
-  /**
-   * Get vector storage optimization metrics
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate data collection to query service
-   * - Use storage analytics service for calculations
-   * - Coordinate between specialized services
-   * - Handle error context and propagation
-   * - Provide optimization insights interface
-   */
+  /** Get vector storage optimization metrics */
   async getStorageOptimizationMetrics(context: VectorQueryContext): Promise<{
     averageVectorSize: number;
     totalVectorCount: number;

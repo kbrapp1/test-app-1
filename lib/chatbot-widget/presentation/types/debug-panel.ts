@@ -42,9 +42,7 @@ export interface DebugSectionProps {
   children: React.ReactNode;
 }
 
-/**
- * Performance metrics display props
- */
+/** Performance metrics display props */
 export interface PerformanceMetricsProps {
   processingTimeMs?: number;
   componentTimings?: {
@@ -59,9 +57,7 @@ export interface PerformanceMetricsProps {
   apiCalls?: number;
 }
 
-/**
- * Cost analysis display props
- */
+/** Cost analysis display props */
 export interface CostAnalysisProps {
   costData?: {
     inputTokens: number;
@@ -77,9 +73,7 @@ export interface CostAnalysisProps {
   };
 }
 
-/**
- * API call details display props
- */
+/** API call details display props */
 export interface ApiCallDetailsProps {
   requestData?: {
     model: string;
@@ -105,9 +99,7 @@ export interface ApiCallDetailsProps {
   };
 }
 
-/**
- * Function call execution display props
- */
+/** Function call execution display props */
 export interface FunctionCallsProps {
   functionCalls?: {
     functions?: Array<{
@@ -127,9 +119,7 @@ export interface FunctionCallsProps {
   };
 }
 
-/**
- * Business rules execution display props
- */
+/** Business rules execution display props */
 export interface BusinessRulesProps {
   businessRules?: {
     rulesTriggered: Array<{
@@ -151,9 +141,7 @@ export interface BusinessRulesProps {
   };
 }
 
-/**
- * Debug panel theme configuration
- */
+/** Debug panel theme configuration */
 export interface DebugPanelTheme {
   primary: {
     bg: string;
@@ -187,9 +175,7 @@ export interface DebugPanelTheme {
   };
 }
 
-/**
- * Debug panel configuration
- */
+/** Debug panel configuration */
 export interface DebugPanelConfig {
   showPerformanceMetrics: boolean;
   showCostAnalysis: boolean;

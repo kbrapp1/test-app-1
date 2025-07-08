@@ -13,14 +13,7 @@ import { ConversationFlowViolationError } from '../../errors/ChatbotWidgetDomain
 export type EngagementLevel = 'high' | 'medium' | 'low';
 export type ResponseType = 'informational' | 'question' | 'action_request' | 'clarification';
 
-/**
- * Tracks quality metrics for conversation responses
- * 
- * AI INSTRUCTIONS:
- * - Validate score ranges in constructor
- * - Provide immutable update methods
- * - Calculate overall quality score using business rules
- */
+/** Tracks quality metrics for conversation responses */
 export class ResponseQuality {
   private constructor(
     public readonly coherenceScore: number,

@@ -18,23 +18,9 @@ export interface IEmbeddingService {
    */
   generateEmbedding(text: string): Promise<number[]>;
 
-  /**
-   * Generate embeddings for multiple texts in batch
-   * 
-   * AI INSTRUCTIONS:
-   * - More efficient than multiple single calls
-   * - Returns embeddings in same order as input texts
-   * - Handles partial failures gracefully
-   */
+  /** Generate embeddings for multiple texts in batch */
   generateEmbeddings(texts: string[]): Promise<number[][]>;
 
-  /**
-   * Clear internal embedding cache
-   * 
-   * AI INSTRUCTIONS:
-   * - Useful for memory management
-   * - Should be called when knowledge base changes
-   * - Resets any cached embeddings
-   */
+  /** Clear internal embedding cache */
   clearCache(): void;
 } 

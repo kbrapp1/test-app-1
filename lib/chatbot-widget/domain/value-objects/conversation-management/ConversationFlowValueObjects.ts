@@ -22,14 +22,7 @@ export const ConversationPhaseValues = {
   CLOSING: 'closing' as const
 } as const;
 
-/**
- * Core conversation flow management
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: manage conversation phase transitions
- * - Immutable value object with pure functions
- * - Validate phase transitions using business rules
- */
+/** Core conversation flow management */
 export class ConversationFlow {
   private constructor(
     public readonly currentPhase: ConversationPhase,

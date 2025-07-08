@@ -32,9 +32,7 @@ export interface LeadUpdateResult {
 }
 
 export class LeadBusinessService {
-  /**
-   * Update contact information and return changes
-   */
+  /** Update contact information and return changes */
   static updateContactInfo(
     currentContactInfo: ContactInfo,
     updates: Partial<ContactInfoProps>
@@ -69,9 +67,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Update follow-up status using lifecycle manager
-   */
+  /** Update follow-up status using lifecycle manager */
   static updateFollowUpStatus(
     currentState: LeadLifecycleState,
     status: FollowUpStatus
@@ -85,9 +81,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Assign lead to user
-   */
+  /** Assign lead to user */
   static assignLead(
     currentState: LeadLifecycleState,
     userId: string
@@ -100,9 +94,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Unassign lead
-   */
+  /** Unassign lead */
   static unassignLead(
     currentState: LeadLifecycleState
   ): LeadUpdateResult {
@@ -114,9 +106,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Add tag to lead metadata
-   */
+  /** Add tag to lead metadata */
   static addTag(
     currentMetadata: LeadMetadata,
     tag: string
@@ -129,9 +119,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Remove tag from lead metadata
-   */
+  /** Remove tag from lead metadata */
   static removeTag(
     currentMetadata: LeadMetadata,
     tag: string
@@ -162,9 +150,7 @@ export class LeadBusinessService {
     };
   }
 
-  /**
-   * Update conversation summary
-   */
+  /** Update conversation summary */
   static updateConversationSummary(
     currentMetadata: LeadMetadata,
     summary: string

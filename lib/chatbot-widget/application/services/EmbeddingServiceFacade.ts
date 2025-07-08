@@ -34,15 +34,10 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
 
   constructor(
     apiKey: string,
-    logContext?: EmbeddingLogContext,
-    maxUserQueryCacheSize: number = EMBEDDING_CONSTANTS.DEFAULT_USER_QUERY_CACHE_SIZE,
-    maxPdfCacheSize: number = EMBEDDING_CONSTANTS.DEFAULT_PDF_CACHE_SIZE
+    logContext?: EmbeddingLogContext
   ) {
     // Initialize services with dependency injection
-    this.cacheService = new EmbeddingCacheDomainService({
-      maxUserQueryCacheSize,
-      maxPdfCacheSize
-    });
+    this.cacheService = new EmbeddingCacheDomainService();
     
     this.providerService = new OpenAIEmbeddingProviderService(apiKey, logContext);
     
@@ -53,64 +48,34 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     );
   }
 
-  /**
-   * Generate embedding for a single text (interface implementation)
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to application service
-   * - Maintain interface compatibility
-   * - Return only embedding vector
-   */
+  /** Generate embedding for a single text (interface implementation)
+ */
   async generateEmbedding(text: string): Promise<number[]> {
     const result = await this.applicationService.generateEmbedding(text);
     return result.embedding;
   }
 
-  /**
-   * Generate embeddings for multiple texts in batch (interface implementation)
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to application service
-   * - Maintain interface compatibility
-   * - Return only embedding vectors
-   */
+  /** Generate embeddings for multiple texts in batch (interface implementation)
+ */
   async generateEmbeddings(texts: string[]): Promise<number[][]> {
     const results = await this.applicationService.generateEmbeddings(texts);
     return results.map(result => result.embedding);
   }
 
-  /**
-   * Generate embedding with metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Extended interface for full embedding data
-   * - Include token count and text metadata
-   * - Useful for analytics and optimization
-   */
+  /** Generate embedding with metadata
+ */
   async generateEmbeddingWithMetadata(text: string): Promise<EmbeddingResult> {
     return await this.applicationService.generateEmbedding(text);
   }
 
-  /**
-   * Generate embeddings with metadata for multiple texts
-   * 
-   * AI INSTRUCTIONS:
-   * - Extended interface for full embedding data
-   * - Batch processing with complete metadata
-   * - Efficient for analytics workflows
-   */
+  /** Generate embeddings with metadata for multiple texts
+ */
   async generateEmbeddingsWithMetadata(texts: string[]): Promise<EmbeddingResult[]> {
     return await this.applicationService.generateEmbeddings(texts);
   }
 
-  /**
-   * Find most similar texts using cosine similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Semantic search with ranking
-   * - Use application service for orchestration
-   * - Return similarity scores and indices
-   */
+  /** Find most similar texts using cosine similarity
+ */
   async findSimilarTexts(
     queryText: string,
     candidateTexts: string[],
@@ -124,26 +89,14 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     });
   }
 
-  /**
-   * Precompute embeddings for knowledge base
-   * 
-   * AI INSTRUCTIONS:
-   * - Batch process knowledge base items
-   * - Store in permanent cache
-   * - Optimize for business knowledge
-   */
+  /** Precompute embeddings for knowledge base
+ */
   async precomputeKnowledgeBaseEmbeddings(knowledgeItems: KnowledgeItem[]): Promise<void> {
     await this.applicationService.precomputeKnowledgeBaseEmbeddings(knowledgeItems);
   }
 
-  /**
-   * Precompute embeddings for PDF document chunks
-   * 
-   * AI INSTRUCTIONS:
-   * - Process large documents efficiently
-   * - Provide progress tracking
-   * - Optimize for document workflows
-   */
+  /** Precompute embeddings for PDF document chunks
+ */
   async precomputePDFEmbeddings(
     pdfChunks: PDFChunk[],
     progressCallback?: (processed: number, total: number) => void
@@ -156,26 +109,14 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     await this.applicationService.precomputePDFEmbeddings(pdfChunks, options);
   }
 
-  /**
-   * Calculate cosine similarity between two embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Direct access to similarity calculations
-   * - Use domain service for pure math operations
-   * - No caching or API calls needed
-   */
+  /** Calculate cosine similarity between two embeddings
+ */
   static calculateCosineSimilarity(embeddingA: number[], embeddingB: number[]): number {
     return EmbeddingSimilarityDomainService.calculateCosineSimilarity(embeddingA, embeddingB);
   }
 
-  /**
-   * Find duplicate embeddings with high similarity
-   * 
-   * AI INSTRUCTIONS:
-   * - Content deduplication functionality
-   * - Use domain service for calculations
-   * - Return detailed duplicate information
-   */
+  /** Find duplicate embeddings with high similarity
+ */
   static findDuplicateEmbeddings(
     embeddings: EmbeddingResult[],
     duplicateThreshold: number = 0.95
@@ -183,26 +124,14 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     return EmbeddingSimilarityDomainService.findDuplicates(embeddings, duplicateThreshold);
   }
 
-  /**
-   * Validate embedding vector format
-   * 
-   * AI INSTRUCTIONS:
-   * - Quality control for embeddings
-   * - Use domain service for validation
-   * - Check for common embedding issues
-   */
+  /** Validate embedding vector format
+ */
   static validateEmbedding(embedding: number[]): boolean {
     return EmbeddingSimilarityDomainService.validateEmbedding(embedding);
   }
 
-  /**
-   * Get cache statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Monitoring and optimization data
-   * - Delegate to application service
-   * - Include all cache types
-   */
+  /** Get cache statistics
+ */
   getCacheStats(): CacheStats {
     return this.applicationService.getCacheStats();
   }
@@ -219,26 +148,14 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     return this.applicationService.getDetailedCacheStats();
   }
 
-  /**
-   * Clear embedding cache
-   * 
-   * AI INSTRUCTIONS:
-   * - Complete cache reset
-   * - Delegate to application service
-   * - Use for testing and maintenance
-   */
+  /** Clear embedding cache
+ */
   clearCache(): void {
     this.applicationService.clearCache();
   }
 
-  /**
-   * Clear specific cache type
-   * 
-   * AI INSTRUCTIONS:
-   * - Selective cache management
-   * - Preserve other cache types
-   * - Fine-grained control
-   */
+  /** Clear specific cache type
+ */
   clearCacheType(cacheType: CacheType): void {
     this.applicationService.clearCacheType(cacheType);
   }

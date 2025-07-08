@@ -1,9 +1,13 @@
 /**
  * Chatbot Configuration Application Service
  * 
- * Orchestrates chatbot configuration use cases and coordinates domain services.
- * Following DDD principles: Application services contain no business logic,
- * only workflow coordination and DTO transformations.
+ * AI INSTRUCTIONS:
+ * - Application service for chatbot configuration orchestration with no business logic
+ * - Coordinates CRUD operations, workflow orchestration, and DTO transformations
+ * - Handles organization-scoped authorization and ownership validation
+ * - Delegates all business logic to domain services and entities
+ * - Manages partial updates through domain entity methods and mapper coordination
+ * - Enforces one-chatbot-per-organization constraint at application level
  */
 
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -21,9 +25,7 @@ export class ChatbotConfigService {
     this.chatbotConfigRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
   }
 
-  /**
-   * Create a new chatbot configuration
-   */
+  /** Create a new chatbot configuration */
   async createChatbotConfig(createDto: CreateChatbotConfigDto): Promise<ChatbotConfigDto> {
     try {
       // Check if organization already has a chatbot config
@@ -49,9 +51,7 @@ export class ChatbotConfigService {
     }
   }
 
-  /**
-   * Update an existing chatbot configuration
-   */
+  /** Update an existing chatbot configuration */
   async updateChatbotConfig(
     id: string,
     updateDto: UpdateChatbotConfigDto,
@@ -143,9 +143,7 @@ export class ChatbotConfigService {
     }
   }
 
-  /**
-   * Get chatbot configuration by organization ID
-   */
+  /** Get chatbot configuration by organization ID */
   async getChatbotConfigByOrganization(organizationId: string): Promise<ChatbotConfigDto | null> {
     try {
       const config = await this.chatbotConfigRepository.findByOrganizationId(organizationId);
@@ -161,9 +159,7 @@ export class ChatbotConfigService {
     }
   }
 
-  /**
-   * Get chatbot configuration by ID
-   */
+  /** Get chatbot configuration by ID */
   async getChatbotConfigById(id: string, organizationId?: string): Promise<ChatbotConfigDto | null> {
     const config = await this.chatbotConfigRepository.findById(id);
     
@@ -179,18 +175,14 @@ export class ChatbotConfigService {
     return ChatbotConfigMapper.toDto(config);
   }
 
-  /**
-   * Get all active chatbot configurations for an organization
-   */
+  /** Get all active chatbot configurations for an organization */
   async getActiveChatbotConfigs(organizationId: string): Promise<ChatbotConfigDto[]> {
     const configs = await this.chatbotConfigRepository.findActiveByOrganizationId(organizationId);
     
     return configs.map(config => ChatbotConfigMapper.toDto(config));
   }
 
-  /**
-   * Delete a chatbot configuration
-   */
+  /** Delete a chatbot configuration */
   async deleteChatbotConfig(id: string, organizationId: string): Promise<void> {
     const config = await this.chatbotConfigRepository.findById(id);
     
@@ -205,17 +197,13 @@ export class ChatbotConfigService {
     await this.chatbotConfigRepository.delete(id);
   }
 
-  /**
-   * Check if organization can create a new chatbot
-   */
+  /** Check if organization can create a new chatbot */
   async canCreateChatbot(organizationId: string): Promise<boolean> {
     const hasExisting = await this.chatbotConfigRepository.existsByOrganizationId(organizationId);
     return !hasExisting; // For MVP, limit to one chatbot per org
   }
 
-  /**
-   * Get chatbot configuration statistics
-   */
+  /** Get chatbot configuration statistics */
   async getChatbotConfigStats(organizationId: string) {
     return await this.chatbotConfigRepository.getStatistics(organizationId);
   }

@@ -121,14 +121,7 @@ export {
 
 // ===== ERROR UTILITIES & HELPERS =====
 
-/**
- * Error Factory for Common Patterns
- * 
- * AI INSTRUCTIONS:
- * - Provides factory methods for common error creation patterns
- * - Maintains consistency across error creation
- * - Reduces boilerplate in error handling
- */
+/** Error Factory for Common Patterns */
 export class ChatbotErrorFactory {
   static createBusinessRuleViolation(rule: string, context?: Record<string, any>): BusinessRuleViolationError {
     return new BusinessRuleViolationError(rule, context);
@@ -151,13 +144,7 @@ export class ChatbotErrorFactory {
   }
 }
 
-/**
- * Error Severity Utilities
- * 
- * AI INSTRUCTIONS:
- * - Utility functions for error severity handling
- * - Consistent severity classification across domain
- */
+/** Error Severity Utilities */
 export class ErrorSeverityUtils {
   static isCritical(error: DomainError): boolean {
     return error.severity === ErrorSeverity.CRITICAL;
@@ -177,13 +164,7 @@ export class ErrorSeverityUtils {
   }
 }
 
-/**
- * Error Context Utilities
- * 
- * AI INSTRUCTIONS:
- * - Utility functions for error context handling
- * - Consistent context enrichment across domain
- */
+/** Error Context Utilities */
 export class ErrorContextUtils {
   static enrichWithTimestamp(context: Record<string, any>): Record<string, any> {
     return {

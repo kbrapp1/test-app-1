@@ -6,6 +6,7 @@
  * - Immutable data structure with all relevant context
  * - Follow @golden-rule domain event patterns
  * - Include timestamp and aggregate information
+ * - Include cache warming status for monitoring and optimization
  */
 
 export class SessionInitializedEvent {
@@ -31,6 +32,7 @@ export class SessionInitializedEvent {
    * AI INSTRUCTIONS:
    * - Provide clean data structure for event persistence
    * - Include all relevant context for event handlers
+   * - Include cache warming metrics for performance monitoring
    */
   toEventData(): Record<string, any> {
     return {

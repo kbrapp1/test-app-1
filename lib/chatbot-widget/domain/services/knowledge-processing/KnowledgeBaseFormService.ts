@@ -73,9 +73,7 @@ export class KnowledgeBaseFormService {
     return chunks;
   }
 
-  /**
-   * Identify semantic sections in product catalog
-   */
+  /** Identify semantic sections in product catalog */
   private identifyProductSections(catalog: string): ProductSection[] {
     const sections: ProductSection[] = [];
     
@@ -174,9 +172,7 @@ export class KnowledgeBaseFormService {
     return 0;
   }
 
-  /**
-   * Extract semantic tags from product content
-   */
+  /** Extract semantic tags from product content */
   private extractProductTags(content: string): string[] {
     const tags: string[] = [];
     const lowercaseContent = content.toLowerCase();
@@ -210,12 +206,10 @@ export class KnowledgeBaseFormService {
       }
     });
     
-    return tags.length > 0 ? [...new Set(tags)] : ['general'];
+    return tags.length > 0 ? Array.from(new Set(tags)) : ['general'];
   }
 
-  /**
-   * Generate content deduplication hash
-   */
+  /** Generate content deduplication hash */
   generateContentHash(content: string): string {
     if (!content?.trim()) {
       throw new BusinessRuleViolationError(
@@ -227,9 +221,7 @@ export class KnowledgeBaseFormService {
     return this.hashStrategy.createHash(content.trim());
   }
 
-  /**
-   * Validate chunk quality for embedding generation
-   */
+  /** Validate chunk quality for embedding generation */
   validateChunkQuality(chunk: ProductChunk): boolean {
     // Minimum content length
     if (chunk.content.length < 50) return false;
