@@ -39,31 +39,4 @@ export interface DebugInfoDto {
   firstApiCall?: ApiCallDebugDto;
   secondApiCall?: ApiCallDebugDto;
   functionCalls?: FunctionCallsDebugDto;
-  
-  // Legacy fields for backward compatibility
-  sessionId?: string;
-  userMessageId?: string;
-  botResponse?: string;
-  botMessageId?: string;
-  shouldCaptureLeadInfo?: boolean;
-  suggestedNextActions?: string[];
-  conversationMetrics?: {
-    messageCount: number;
-    sessionDuration: number;
-    engagementScore: number;
-    leadQualificationProgress: number;
-  };
-  processingTimeMs?: number;
-  intentAnalysis?: any;
-  journeyState?: any;
-  requestData?: {
-    model: string;
-    messagesCount: number;
-    temperature: number;
-    maxTokens: number;
-    timestamp: string;
-    systemPrompt?: string;
-    userMessage: string;
-    fullPrompt?: string;
-  };
 } 

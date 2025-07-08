@@ -26,20 +26,7 @@ export class OpenAIChatbotProcessingService {
     });
   }
 
-  /**
-   * Process complete chatbot interaction in single API call
-   * 
-   * AI INSTRUCTIONS:
-   * - Single API call that handles all chatbot logic: analysis, scoring, response
-   * - Reduces cost by 50% compared to separate analysis + response calls
-   * - Maintains all business functionality with enhanced efficiency
-   * - Follow @golden-rule patterns: single responsibility, no redundancy
-   * - Use proper domain services for knowledge base integration
-   * 
-   * @param message User's message content
-   * @param context Conversation context including history and session data
-   * @returns Complete chatbot processing results
-   */
+  // Process complete chatbot interaction in single API call
   async processChatbotInteractionComplete(
     message: string,
     context: {
@@ -190,15 +177,7 @@ export class OpenAIChatbotProcessingService {
     }
   }
 
-  /**
-   * Build messages with proper knowledge base integration
-   * 
-   * AI INSTRUCTIONS:
-   * - Use the enhanced system prompt that includes knowledge base data
-   * - Follow @golden-rule patterns for clean message construction
-   * - Ensure knowledge base context is properly included
-   * - Prevent message duplication by filtering current message from history
-   */
+  // Build messages with proper knowledge base integration
   private buildMessagesWithKnowledgeBase(
     userMessage: string,
     context: any,
@@ -241,7 +220,7 @@ export class OpenAIChatbotProcessingService {
     return messages;
   }
 
-  /** Map intent to conversation phase */
+  // Map intent to conversation phase
   private mapIntentToPhase(intent: string): string {
     switch (intent) {
       case 'demo':
@@ -252,7 +231,7 @@ export class OpenAIChatbotProcessingService {
     }
   }
 
-  /** Map intent to engagement level */
+  // Map intent to engagement level
   private mapIntentToEngagement(intent: string): string {
     switch (intent) {
       case 'demo':
@@ -262,14 +241,7 @@ export class OpenAIChatbotProcessingService {
     }
   }
 
-  /**
-   * Map function call entities to expected format
-   * 
-   * AI INSTRUCTIONS:
-   * - Convert snake_case field names to camelCase
-   * - Handle array entities properly
-   * - Ensure backward compatibility with existing entity processing
-   */
+  // Map function call entities to expected format
   private mapFunctionCallEntitiesToExpectedFormat(leadData: any): any {
     const mappedEntities = { ...leadData };
     

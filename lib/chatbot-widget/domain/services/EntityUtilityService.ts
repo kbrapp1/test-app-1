@@ -18,12 +18,10 @@ import {
 } from '../types/AccumulatedEntityTypes';
 import { EntityAccumulationStrategies } from './EntityAccumulationStrategies';
 
-/** Specialized Service for Entity Utility Operations
- */
+// Specialized Service for Entity Utility Operations
 export class EntityUtilityService {
 
-  /** Generate comprehensive entity summary
- */
+  // Generate comprehensive entity summary
   static generateEntitySummary(props: AccumulatedEntitiesProps): EntitySummary {
     return {
       goals: props.goals.map(e => e.value),
@@ -43,8 +41,7 @@ export class EntityUtilityService {
     };
   }
 
-  /** Count entities by accumulation strategy category
- */
+  // Count entities by accumulation strategy category
   static countEntitiesByCategory(props: AccumulatedEntitiesProps): EntityCounts {
     return {
       additive: props.goals.length + props.decisionMakers.length + props.painPoints.length + 
@@ -56,14 +53,12 @@ export class EntityUtilityService {
     };
   }
 
-  /** Check if entity collection is empty
- */
+  // Check if entity collection is empty
   static isEntityCollectionEmpty(props: AccumulatedEntitiesProps): boolean {
     return props.totalExtractions === 0;
   }
 
-  /** Validate entity collection integrity
- */
+  // Validate entity collection integrity
   static validateEntityCollection(props: AccumulatedEntitiesProps): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -114,15 +109,7 @@ export class EntityUtilityService {
     };
   }
 
-  /**
-   * Calculate entity collection statistics
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide comprehensive statistics about entity collection
-   * - Include quality metrics and distribution analysis
-   * - Support monitoring and optimization decisions
-   * - Calculate averages, totals, and quality scores
-   */
+  // Calculate entity collection statistics
   static calculateEntityStatistics(props: AccumulatedEntitiesProps): {
     totalEntities: number;
     averageConfidence: number;
@@ -181,8 +168,7 @@ export class EntityUtilityService {
     };
   }
 
-  /** Find entities by confidence threshold
- */
+  // Find entities by confidence threshold
   static findEntitiesByConfidence(
     props: AccumulatedEntitiesProps,
     minConfidence: number = 0.7
@@ -207,15 +193,7 @@ export class EntityUtilityService {
     return allEntities.filter(entity => entity.confidence >= minConfidence);
   }
 
-  /**
-   * Get entity extraction timeline
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide chronological view of entity extractions
-   * - Support timeline analysis and debugging
-   * - Sort entities by extraction date
-   * - Include entity type and confidence information
-   */
+  // Get entity extraction timeline
   static getEntityExtractionTimeline(props: AccumulatedEntitiesProps): Array<{
     date: Date;
     entityType: string;

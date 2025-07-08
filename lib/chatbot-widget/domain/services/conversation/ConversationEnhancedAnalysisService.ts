@@ -25,15 +25,7 @@ export class ConversationEnhancedAnalysisService {
     private knowledgeRetrievalService?: IKnowledgeRetrievalService
   ) {}
 
-  /**
-   * Enhance base analysis with intent classification and knowledge retrieval
-   * 
-   * AI INSTRUCTIONS:
-   * - PERFORMANCE OPTIMIZED: Run all async operations in parallel
-   * - Coordinate async services while maintaining single responsibility
-   * - Handle service failures gracefully with fallbacks
-   * - Minimize redundant token counting and processing
-   */
+  // Enhance base analysis with intent classification and knowledge retrieval
   async enhanceAnalysis(
     baseAnalysis: ContextAnalysis,
     messages: ChatMessage[],
@@ -82,10 +74,7 @@ export class ConversationEnhancedAnalysisService {
     };
   }
 
-  /**
-   * Classify message intent using intent classification service
-   * AI INSTRUCTIONS: Delegate to intent service, handle failures gracefully
-   */
+  // Classify message intent using intent classification service
   private async classifyMessageIntent(
     message: ChatMessage,
     allMessages: ChatMessage[],
@@ -114,15 +103,7 @@ export class ConversationEnhancedAnalysisService {
     }
   }
 
-  /**
-   * Retrieve relevant knowledge based on user query and intent
-   * 
-   * AI INSTRUCTIONS:
-   * - THIS METHOD TRIGGERS THE VECTOR EMBEDDINGS PIPELINE
-   * - Calls SimpleKnowledgeRetrievalService.searchKnowledge
-   * - Which initializes vector embeddings and performs semantic search
-   * - Includes comprehensive logging of the embeddings process
-   */
+  // Retrieve relevant knowledge based on user query and intent
   private async retrieveRelevantKnowledge(
     message: ChatMessage,
     userMessages: ChatMessage[],

@@ -22,9 +22,7 @@ export class GenerationStatusService {
     private readonly autoSaveUseCase: AutoSaveGenerationUseCase
   ) {}
 
-  /**
-   * Check single generation status with provider communication and auto-save
-   */
+  // Check single generation status with provider communication and auto-save
   async checkGenerationStatus(
     generationId: string,
     authContext: { userId: string; organizationId: string }
@@ -75,9 +73,7 @@ export class GenerationStatusService {
     }
   }
 
-  /**
-   * Check multiple generation statuses in batch
-   */
+  // Check multiple generation statuses in batch
   async checkMultipleGenerationStatus(
     generationIds: string[],
     authContext: { userId: string; organizationId: string }
@@ -108,9 +104,7 @@ export class GenerationStatusService {
     }
   }
 
-  /**
-   * Handle timeout check for stuck generations
-   */
+  // Handle timeout check for stuck generations
   private async handleTimeoutCheck(generation: Generation): Promise<boolean> {
     const now = new Date();
     const generationAge = now.getTime() - generation.createdAt.getTime();
@@ -124,9 +118,7 @@ export class GenerationStatusService {
     return false;
   }
 
-  /**
-   * Check status with provider and update generation accordingly
-   */
+  // Check status with provider and update generation accordingly
   private async checkWithProviderAndUpdate(
     generation: Generation, 
     authContext: { userId: string; organizationId: string }
@@ -165,9 +157,7 @@ export class GenerationStatusService {
     // For 'processing' status, no update needed - generation remains in current state
   }
 
-  /**
-   * Trigger auto-save for completed generation
-   */
+  // Trigger auto-save for completed generation
   private async triggerAutoSave(generation: Generation): Promise<void> {
     try {
       await this.generationRepository.save(generation);
@@ -177,16 +167,12 @@ export class GenerationStatusService {
     }
   }
 
-  /**
-   * Check if generation is in active (non-terminal) status
-   */
+  // Check if generation is in active (non-terminal) status
   private isActiveStatus(generation: Generation): boolean {
     return ['pending', 'processing'].includes(generation.getStatus().value);
   }
 
-  /**
-   * Check if generation is in terminal status
-   */
+  // Check if generation is in terminal status
   private isTerminalStatus(generation: Generation): boolean {
     return ['completed', 'cancelled'].includes(generation.getStatus().value);
   }

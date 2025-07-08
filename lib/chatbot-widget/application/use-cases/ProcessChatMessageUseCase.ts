@@ -35,27 +35,6 @@ import {
 } from '../../domain/errors/ChatMessageProcessingErrors';
 import { PerformanceProfiler } from '../../../performance-profiler';
 
-// AI: Legacy interfaces for backward compatibility
-export interface ProcessMessageRequest {
-  userMessage: string;
-  sessionId: string;
-  organizationId: string;
-  metadata?: any;
-}
-
-export interface ProcessMessageResult {
-  chatSession: any;
-  userMessage: any;
-  botResponse: any;
-  shouldCaptureLeadInfo: boolean;
-  suggestedNextActions: string[];
-  conversationMetrics: any;
-  intentAnalysis?: any;
-  journeyState?: any;
-  relevantKnowledge?: any;
-  callToAction?: any;
-}
-
 export class ProcessChatMessageUseCase {
   private readonly workflowOrchestrator: ProcessChatMessageWorkflowOrchestrator;
 
@@ -105,19 +84,16 @@ export class ProcessChatMessageUseCase {
     );
   }
 
-  async execute(request: ProcessMessageRequest): Promise<ProcessMessageResult> {
+  async execute(request: ProcessChatMessageRequest): Promise<ProcessChatMessageResult> {
     // AI: Clear performance profiler for fresh metrics
     PerformanceProfiler.clear();
     
     try {
-      // AI: Validate and transform input
-      const validatedRequest = this.validateAndTransformRequest(request);
+      // AI: Validate input using dedicated validator
+      const validatedRequest = this.validateRequest(request);
       
       // AI: Delegate to workflow orchestrator
-      const result = await this.workflowOrchestrator.orchestrate(validatedRequest);
-      
-      // AI: Transform result for backward compatibility
-      return this.transformResultForBackwardCompatibility(result);
+      return await this.workflowOrchestrator.orchestrate(validatedRequest);
       
     } catch (error) {
       // AI: Transform domain errors for presentation layer
@@ -125,7 +101,7 @@ export class ProcessChatMessageUseCase {
     }
   }
 
-  private validateAndTransformRequest(request: ProcessMessageRequest): ProcessChatMessageRequest {
+  private validateRequest(request: ProcessChatMessageRequest): ProcessChatMessageRequest {
     try {
       // AI: Validate organization ID first (critical requirement)
       if (!request.organizationId?.trim()) {
@@ -147,22 +123,6 @@ export class ProcessChatMessageUseCase {
         { request }
       );
     }
-  }
-
-  private transformResultForBackwardCompatibility(result: ProcessChatMessageResult): ProcessMessageResult {
-    // AI: Transform new DTO structure back to legacy interface
-    return {
-      chatSession: result.chatSession,
-      userMessage: result.userMessage,
-      botResponse: result.botResponse,
-      shouldCaptureLeadInfo: result.shouldCaptureLeadInfo,
-      suggestedNextActions: [...result.suggestedNextActions], // Convert from readonly
-      conversationMetrics: result.conversationMetrics,
-      intentAnalysis: result.intentAnalysis,
-      journeyState: result.journeyState,
-      relevantKnowledge: result.relevantKnowledge ? [...result.relevantKnowledge] : undefined,
-      callToAction: result.callToAction
-    };
   }
 
   private transformError(error: unknown): Error {

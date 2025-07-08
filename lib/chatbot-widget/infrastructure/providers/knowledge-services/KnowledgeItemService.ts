@@ -18,16 +18,6 @@ import { KnowledgeBasicFilterService } from './KnowledgeBasicFilterService';
 import { KnowledgeSearchService } from './KnowledgeSearchService';
 import { KnowledgeAdvancedQueryService, AdvancedQueryFilters } from './KnowledgeAdvancedQueryService';
 
-// Legacy interface for backward compatibility
-export interface KnowledgeStatsResult {
-  totalItems: number;
-  itemsByCategory: Record<string, number>;
-  itemsBySource: Record<string, number>;
-  averageRelevanceScore: number;
-  totalTags: number;
-  processingTime: number;
-}
-
 export class KnowledgeItemService {
   private processingContext: KnowledgeProcessingContext;
 
@@ -104,22 +94,9 @@ export class KnowledgeItemService {
   }
 
   // Get Knowledge Processing Statistics - Delegate to Stats Service
-  async getKnowledgeProcessingStats(): Promise<KnowledgeStatsResult> {
+  async getKnowledgeProcessingStats() {
     const items = await this.getAllKnowledgeItems();
-    const basicStats = await KnowledgeStatisticsService.getBasicStats(items);
-    
-    // Convert to KnowledgeStatsResult format
-    const averageRelevanceScore = items.length > 0 ? 
-      items.reduce((sum, item) => sum + item.relevanceScore, 0) / items.length : 0;
-    
-    return {
-      totalItems: basicStats.totalItems,
-      itemsByCategory: basicStats.itemsByType,
-      itemsBySource: basicStats.itemsBySource,
-      averageRelevanceScore,
-      totalTags: basicStats.totalTags,
-      processingTime: 0 // Not tracked in this context
-    };
+    return KnowledgeStatisticsService.getBasicStats(items);
   }
 
   // Get Knowledge Health Metrics - Delegate to Stats Service

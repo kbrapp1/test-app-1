@@ -7,7 +7,8 @@ import { ChatSessionProps, SessionContext } from '../../value-objects/session-ma
  */
 export class ChatSessionFactory {
   
-  /** Create new session properties */
+  /** Create new session properties
+ */
   static createSessionProps(
     chatbotConfigId: string,
     visitorId: string,
@@ -55,7 +56,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Create initial lead qualification state */
+  /** Create initial lead qualification state
+ */
   private static createInitialQualificationState() {
     return {
       isQualified: false,
@@ -65,7 +67,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Create session props from persistence data */
+  /** Create session props from persistence data
+ */
   static fromPersistenceData(data: any): ChatSessionProps {
     return {
       id: data.id,
@@ -87,29 +90,17 @@ export class ChatSessionFactory {
 
   /**
    * Parse context data from persistence
-   * AI INSTRUCTIONS: Handle enhanced conversationSummary format with backwards compatibility
+   * AI INSTRUCTIONS: Handle enhanced conversationSummary format
    */
   private static parseContextData(data: any): SessionContext {
-    // Handle conversationSummary format - could be string (legacy) or object (enhanced)
-    let conversationSummary;
-    if (typeof data.conversation_summary === 'string') {
-      // Legacy format - convert to enhanced format
-      conversationSummary = {
-        fullSummary: data.conversation_summary || 'New conversation started',
-        phaseSummaries: [],
-        criticalMoments: []
-      };
-    } else if (data.conversation_summary && typeof data.conversation_summary === 'object') {
-      // Enhanced format
-      conversationSummary = data.conversation_summary;
-    } else {
-      // Default format
-      conversationSummary = {
-        fullSummary: 'New conversation started',
-        phaseSummaries: [],
-        criticalMoments: []
-      };
-    }
+    // Handle conversationSummary format - use enhanced object format
+    const conversationSummary = data.conversation_summary && typeof data.conversation_summary === 'object'
+      ? data.conversation_summary
+      : {
+          fullSummary: data.conversation_summary || 'New conversation started',
+          phaseSummaries: [],
+          criticalMoments: []
+        };
 
     return {
       previousVisits: data.previous_visits || 0,
@@ -119,7 +110,6 @@ export class ChatSessionFactory {
       interests: data.interests || [],
       engagementScore: data.engagement_score || 0,
       journeyState: data.journey_state,
-      // MODERN: Legacy fields removed, data is now in accumulated entities
       accumulatedEntities: data.accumulated_entities || {
         decisionMakers: [],
         painPoints: [],
@@ -129,7 +119,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Parse qualification state from persistence */
+  /** Parse qualification state from persistence
+ */
   private static parseQualificationState(data: any) {
     return {
       isQualified: data.is_qualified || false,
@@ -140,7 +131,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Convert session props to persistence format */
+  /** Convert session props to persistence format
+ */
   static toPersistenceData(props: ChatSessionProps): any {
     return {
       id: props.id,
@@ -160,7 +152,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Convert context to persistence format - MODERN: Use accumulated entities */
+  /** Convert context to persistence format - MODERN: Use accumulated entities
+ */
   private static contextToPersistence(context: SessionContext): any {
     return {
       // MODERN: Legacy fields removed, entity data is in accumulated_entities
@@ -175,7 +168,8 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Convert qualification state to persistence format */
+  /** Convert qualification state to persistence format
+ */
   private static qualificationToPersistence(state: any): any {
     return {
       is_qualified: state.isQualified,

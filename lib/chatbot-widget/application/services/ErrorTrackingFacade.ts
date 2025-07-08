@@ -235,27 +235,6 @@ export class ErrorTrackingFacade {
     await this.trackError(error, context);
   }
 
-  // ===== LEGACY FALLBACK METHOD =====
-
-  async trackResponseExtractionFallback(
-    unifiedResult: any,
-    sessionId: string,
-    userId: string | null,
-    organizationId: string
-  ): Promise<void> {
-    await this.trackAIResponseGenerationError('gpt-4o-mini', {
-      sessionId,
-      userId: userId || undefined,
-      organizationId,
-      metadata: {
-        unifiedResultStructure: this.sanitizeUnifiedResult(unifiedResult),
-        extractionPath: 'unifiedResult?.response?.content',
-        fallbackTriggered: true,
-        legacyMethod: 'trackResponseExtractionFallback'
-      }
-    });
-  }
-
   // ===== ANALYTICS METHODS =====
 
   async getErrorSummary(organizationId: string, timeRange: '1h' | '24h' | '7d' | '30d' = '24h'): Promise<ErrorSummary> {

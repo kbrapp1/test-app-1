@@ -21,16 +21,7 @@ import {
   EntityNormalizationConfig
 } from '../types/AccumulatedEntityTypes';
 
-/**
- * Specialized Service for Entity Accumulation Strategies
- * 
- * AI INSTRUCTIONS:
- * - Implements three distinct accumulation strategies
- * - Handles entity deduplication and normalization
- * - Provides pure functions for entity operations
- * - Maintains separation of concerns from value object state
- * - Supports confidence-based decision making
- */
+// Specialized Service for Entity Accumulation Strategies
 export class EntityAccumulationStrategies {
   
   private static readonly DEFAULT_NORMALIZATION_CONFIG: EntityNormalizationConfig = {
@@ -39,8 +30,7 @@ export class EntityAccumulationStrategies {
     trimWhitespace: true
   };
 
-  /** Strategy 1: Additive entities - accumulate unique values over time
- */
+  // Strategy 1: Additive entities - accumulate unique values over time
   static applyAdditiveStrategy(
     existingEntities: EntityWithMetadata<string>[],
     newValues: string[],
@@ -57,8 +47,7 @@ export class EntityAccumulationStrategies {
     return this.deduplicateEntityArray(mergedEntities);
   }
 
-  /** Strategy 2: Replaceable entities - keep latest value
- */
+  // Strategy 2: Replaceable entities - keep latest value
   static applyReplaceableStrategy<T>(
     value: T,
     context: EntityOperationContext
@@ -71,8 +60,7 @@ export class EntityAccumulationStrategies {
     };
   }
 
-  /** Strategy 3: Confidence-based entities - keep highest confidence value
- */
+  // Strategy 3: Confidence-based entities - keep highest confidence value
   static applyConfidenceBasedStrategy<T>(
     existingEntity: EntityWithMetadata<T> | null,
     newValue: T,
@@ -101,8 +89,7 @@ export class EntityAccumulationStrategies {
     return newEntity;
   }
 
-  /** Remove specific values from additive entity arrays
- */
+  // Remove specific values from additive entity arrays
   static removeFromAdditiveArray(
     existingEntities: EntityWithMetadata<string>[],
     valueToRemove: string
@@ -115,8 +102,7 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /** Correct/replace any entity with new value
- */
+  // Correct/replace any entity with new value
   static applyCorrection<T>(
     value: T,
     context: EntityOperationContext
@@ -129,15 +115,7 @@ export class EntityAccumulationStrategies {
     };
   }
 
-  /**
-   * Deduplicate array entities by normalized value
-   * 
-   * AI INSTRUCTIONS:
-   * - Remove duplicate entities based on normalized comparison
-   * - Keep first occurrence to maintain chronological order
-   * - Use consistent normalization for reliable deduplication
-   * - Preserve metadata from first occurrence
-   */
+  // Deduplicate array entities by normalized value
   static deduplicateEntityArray(
     entities: EntityWithMetadata<string>[]
   ): EntityWithMetadata<string>[] {
@@ -153,8 +131,7 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /** Normalize entity values for comparison
- */
+  // Normalize entity values for comparison
   static normalizeEntityValue(
     value: string,
     config: EntityNormalizationConfig = EntityAccumulationStrategies.DEFAULT_NORMALIZATION_CONFIG
@@ -176,8 +153,7 @@ export class EntityAccumulationStrategies {
     return normalized;
   }
 
-  /** Validate entity confidence scores
- */
+  // Validate entity confidence scores
   static validateEntityConfidence(entities: EntityWithMetadata<any>[]): boolean {
     return entities.every(entity => 
       entity.confidence >= 0 && 
@@ -186,8 +162,7 @@ export class EntityAccumulationStrategies {
     );
   }
 
-  /** Get strategy type for entity type
- */
+  // Get strategy type for entity type
   static getStrategyForEntityType(
     entityType: AdditiveEntityType | ReplaceableEntityType | ConfidenceBasedEntityType
   ): 'additive' | 'replaceable' | 'confidence-based' {
@@ -210,8 +185,7 @@ export class EntityAccumulationStrategies {
     throw new Error(`Unknown entity type: ${entityType}`);
   }
 
-  /** Calculate entity quality score
- */
+  // Calculate entity quality score
   static calculateEntityQuality(
     entity: EntityWithMetadata<any>,
     currentTime: Date = new Date()

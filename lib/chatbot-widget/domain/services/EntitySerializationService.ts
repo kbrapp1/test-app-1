@@ -19,20 +19,10 @@ import {
   EntityValidationResult
 } from '../types/AccumulatedEntityTypes';
 
-/**
- * Specialized Service for Entity Serialization Operations
- * 
- * AI INSTRUCTIONS:
- * - Handle conversion between runtime and storage formats
- * - Support legacy data format migration
- * - Provide error recovery for malformed data
- * - Maintain type safety throughout serialization process
- * - Handle Date object conversion for JSON compatibility
- */
+// Specialized Service for Entity Serialization Operations
 export class EntitySerializationService {
 
-  /** Serialize AccumulatedEntities to plain object for storage
- */
+  // Serialize AccumulatedEntities to plain object for storage
   static serializeAccumulatedEntities(props: AccumulatedEntitiesProps): SerializedAccumulatedEntities {
     return {
       goals: this.serializeEntityArray(props.goals),
@@ -54,8 +44,7 @@ export class EntitySerializationService {
     };
   }
 
-  /** Deserialize stored data back to AccumulatedEntitiesProps
- */
+  // Deserialize stored data back to AccumulatedEntitiesProps
   static deserializeAccumulatedEntities(storedData: any): AccumulatedEntitiesProps {
     if (!storedData || typeof storedData !== 'object') {
       return this.createDefaultProps();
@@ -94,8 +83,7 @@ export class EntitySerializationService {
     }
   }
 
-  /** Serialize single entity with metadata
- */
+  // Serialize single entity with metadata
   static serializeEntity(entity: EntityWithMetadata<any> | null): SerializedEntityWithMetadata | null {
     if (!entity) return null;
     
@@ -107,21 +95,12 @@ export class EntitySerializationService {
     };
   }
 
-  /**
-   * Serialize array of entities with metadata
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle empty arrays gracefully
-   * - Apply consistent serialization to all entities
-   * - Maintain array order and metadata
-   * - Filter out null entities from serialization
-   */
+  // Serialize array of entities with metadata
   static serializeEntityArray(entities: EntityWithMetadata<string>[]): SerializedEntityWithMetadata[] {
     return entities.map(entity => this.serializeEntity(entity)).filter(Boolean) as SerializedEntityWithMetadata[];
   }
 
-  /** Deserialize single entity with metadata
- */
+  // Deserialize single entity with metadata
   static deserializeEntity(entity: any): EntityWithMetadata<any> | null {
     if (!entity || typeof entity !== 'object') return null;
     
@@ -137,8 +116,7 @@ export class EntitySerializationService {
     }
   }
 
-  /** Deserialize array of entities with metadata
- */
+  // Deserialize array of entities with metadata
   static deserializeEntityArray(array: any[]): EntityWithMetadata<string>[] {
     if (!Array.isArray(array)) return [];
     
@@ -156,15 +134,7 @@ export class EntitySerializationService {
     }).filter(Boolean) as EntityWithMetadata<string>[];
   }
 
-  /**
-   * Parse date from various input formats
-   * 
-   * AI INSTRUCTIONS:
-   * - Handle ISO strings, Date objects, and invalid inputs
-   * - Provide fallback to current date for invalid inputs
-   * - Support legacy date format migration
-   * - Ensure valid Date objects are returned
-   */
+  // Parse date from various input formats
   static parseDate(dateInput: any): Date {
     if (!dateInput) {
       return new Date();
@@ -182,8 +152,7 @@ export class EntitySerializationService {
     }
   }
 
-  /** Create default AccumulatedEntitiesProps
- */
+  // Create default AccumulatedEntitiesProps
   static createDefaultProps(): AccumulatedEntitiesProps {
     return {
       goals: [],
@@ -205,8 +174,7 @@ export class EntitySerializationService {
     };
   }
 
-  /** Validate serialized entity structure
- */
+  // Validate serialized entity structure
   static validateSerializedEntity(entity: any): EntityValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -247,15 +215,7 @@ export class EntitySerializationService {
     };
   }
 
-  /**
-   * Check if string is valid ISO date format
-   * 
-   * AI INSTRUCTIONS:
-   * - Validate ISO string format for date parsing
-   * - Support data integrity checks
-   * - Provide simple boolean validation
-   * - Handle edge cases gracefully
-   */
+  // Check if string is valid ISO date format
   static isValidISOString(dateString: string): boolean {
     try {
       const date = new Date(dateString);
@@ -265,8 +225,7 @@ export class EntitySerializationService {
     }
   }
 
-  /** Migrate legacy data format to current format
- */
+  // Migrate legacy data format to current format
   static migrateLegacyData(legacyData: any): AccumulatedEntitiesProps {
     if (!legacyData || typeof legacyData !== 'object') {
       return this.createDefaultProps();

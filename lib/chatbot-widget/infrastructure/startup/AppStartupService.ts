@@ -18,10 +18,7 @@ export class AppStartupService {
     timestamp: string;
   } | null = null;
 
-  /**
-   * Initialize the application on startup
-   * Should be called once when the app starts
-   */
+  // Initialize the application on startup
   static async initialize(): Promise<void> {
     if (this.isInitialized || this.initializationPromise) {
       return this.initializationPromise || Promise.resolve();
@@ -31,8 +28,7 @@ export class AppStartupService {
     return this.initializationPromise;
   }
 
-  /** Get startup status
- */
+  // Get startup status
   static getStartupStatus(): {
     isInitialized: boolean;
     featureCheck: { enabled: boolean; error?: string };
@@ -48,8 +44,7 @@ export class AppStartupService {
     };
   }
 
-  /** Perform application initialization
- */
+  // Perform application initialization
   private static async performInitialization(): Promise<void> {
     const startTime = Date.now();
     
@@ -84,8 +79,7 @@ export class AppStartupService {
     }
   }
 
-  /** Check feature flags
- */
+  // Check feature flags
   private static async checkFeatureFlags(): Promise<{ enabled: boolean; error?: string }> {
     try {
       // AI: Removed console.log - use proper logging service in production
@@ -110,8 +104,7 @@ export class AppStartupService {
     }
   }
 
-  /** Reset for testing
- */
+  // Reset for testing
   static resetForTesting(): void {
     this.isInitialized = false;
     this.initializationPromise = null;

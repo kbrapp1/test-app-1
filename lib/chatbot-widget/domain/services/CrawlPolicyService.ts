@@ -293,14 +293,12 @@ export class CrawlPolicyService {
     return Math.max(0.1, Math.min(1.0, value));
   }
 
-  /** Check if subdomain crawling should be allowed
- */
+  // Check if subdomain crawling should be allowed
   private shouldAllowSubdomains(): boolean {
     return false; // Conservative default - same domain only to prevent scope creep and ensure focused crawling
   }
 
-  /** Get URLs that should be prioritized for crawling
- */
+  // Get URLs that should be prioritized for crawling
   getPriorityUrlPatterns(): string[] {
     return [
       '/about',

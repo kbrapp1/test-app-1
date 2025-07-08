@@ -40,14 +40,7 @@ export class AccumulatedEntities {
     });
   }
 
-  /**
-   * Create AccumulatedEntities from stored object (deserialization)
-   * AI INSTRUCTIONS:
-   * - Delegate deserialization to specialized service
-   * - Handle deserialization from SessionContext storage
-   * - Provide error recovery for malformed data
-   * - Follow @golden-rule error handling patterns
-   */
+  // Create AccumulatedEntities from stored object (deserialization)
   static fromObject(storedData: any): AccumulatedEntities {
     const props = EntitySerializationService.deserializeAccumulatedEntities(storedData);
     return new AccumulatedEntities(props);
@@ -71,7 +64,7 @@ export class AccumulatedEntities {
   get lastUpdated(): Date { return this.props.lastUpdated; }
   get totalExtractions(): number { return this.props.totalExtractions; }
 
-  /** Strategy 1: Additive entities - accumulate unique values over time */
+  // Strategy 1: Additive entities - accumulate unique values over time
   withAdditiveEntity(
     entityType: AdditiveEntityType,
     newValues: string[],
@@ -99,7 +92,7 @@ export class AccumulatedEntities {
     });
   }
 
-  /** Strategy 2: Replaceable entities - keep latest value */
+  // Strategy 2: Replaceable entities - keep latest value
   withReplaceableEntity(
     entityType: ReplaceableEntityType,
     value: string,
@@ -125,7 +118,7 @@ export class AccumulatedEntities {
     });
   }
 
-  /** Strategy 3: Confidence-based entities - keep highest confidence value */
+  // Strategy 3: Confidence-based entities - keep highest confidence value
   withConfidenceBasedEntity(
     entityType: ConfidenceBasedEntityType,
     value: string,
@@ -155,7 +148,7 @@ export class AccumulatedEntities {
     });
   }
 
-  /** Remove specific values from additive arrays */
+  // Remove specific values from additive arrays
   withRemovedEntity(
     entityType: AdditiveEntityType,
     valueToRemove: string,
@@ -175,7 +168,7 @@ export class AccumulatedEntities {
     });
   }
 
-  /** Correct/replace any entity type */
+  // Correct/replace any entity type
   withCorrectedEntity(
     entityType: ReplaceableEntityType | ConfidenceBasedEntityType,
     value: string,
@@ -201,34 +194,27 @@ export class AccumulatedEntities {
     });
   }
 
-  /** Get all entities as a summary object */
+  // Get all entities as a summary object
   getAllEntitiesSummary(): EntitySummary {
     return EntityUtilityService.generateEntitySummary(this.props);
   }
 
-  /** Check if accumulated entities are empty */
+  // Check if accumulated entities are empty
   isEmpty(): boolean {
     return EntityUtilityService.isEntityCollectionEmpty(this.props);
   }
 
-  /** Get entity count by category */
+  // Get entity count by category
   getEntityCountByCategory(): EntityCounts {
     return EntityUtilityService.countEntitiesByCategory(this.props);
   }
 
-  /**
-   * Convert to plain object for serialization
-   * AI INSTRUCTIONS:
-   * - Delegate serialization to specialized service
-   * - Serialize for storage in SessionContext
-   * - Maintain all metadata for proper round-trip deserialization
-   * - Follow @golden-rule immutability patterns
-   */
+  // Convert to plain object for serialization
   toPlainObject(): any {
     return EntitySerializationService.serializeAccumulatedEntities(this.props);
   }
 
-  /** Validate domain invariants */
+  // Validate domain invariants
   private validateInvariants(): void {
     const validation = EntityUtilityService.validateEntityCollection(this.props);
     if (!validation.isValid) {
