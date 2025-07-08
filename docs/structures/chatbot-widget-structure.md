@@ -36,6 +36,7 @@ lib/chatbot-widget/application/services/analysis/DebugDataEnricher.ts
 lib/chatbot-widget/application/services/analysis/EntityCategorizationService.ts
 lib/chatbot-widget/application/services/analysis/index.ts
 lib/chatbot-widget/application/services/BatchProcessingService.ts
+lib/chatbot-widget/application/services/ChatbotWidgetFeatureFlagService.ts
 lib/chatbot-widget/application/services/configuration-management/ChatbotConfigService.ts
 lib/chatbot-widget/application/services/configuration-management/ChatSessionService.ts
 lib/chatbot-widget/application/services/configuration-management/index.ts
@@ -430,6 +431,7 @@ lib/chatbot-widget/infrastructure/services/VectorStatisticsService.ts
 lib/chatbot-widget/infrastructure/services/VectorStorageAnalyticsService.ts
 lib/chatbot-widget/infrastructure/services/VectorStorageService.ts
 lib/chatbot-widget/infrastructure/services/__tests__/VectorStatisticsService.test.ts
+lib/chatbot-widget/infrastructure/startup/AppStartupService.ts
 lib/chatbot-widget/infrastructure/types/VectorRepositoryTypes.ts
 lib/chatbot-widget/presentation/actions/configActions.ts
 lib/chatbot-widget/presentation/actions/contentValidationActions.ts

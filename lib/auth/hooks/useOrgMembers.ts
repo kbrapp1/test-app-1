@@ -19,7 +19,6 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
         try {
             return await operation();
         } catch (error: any) {
-            console.log(`Operation failed:`, error.message);
             
             // Check if this looks like a session/auth error and we haven't retried too many times
             if (retryCount < MAX_RETRIES && (
@@ -29,43 +28,24 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                 error.message?.includes('invalid claim') ||
                 error.code === 'PGRST301' // PostgREST auth error
             )) {
-                console.log(`Attempting session refresh (attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 
                 // First, let's see what the current session looks like
                 const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                console.log('Current session state:', {
-                    hasSession: !!sessionData.session,
-                    hasUser: !!sessionData.session?.user,
-                    expiresAt: sessionData.session?.expires_at,
-                    now: Math.floor(Date.now() / 1000),
-                    isExpired: sessionData.session?.expires_at ? 
-                        sessionData.session.expires_at < Math.floor(Date.now() / 1000) : 'unknown',
-                    sessionError: sessionError?.message
-                });
                 
                 try {
                     // Attempt to refresh the session
                     const { data, error: refreshError } = await supabase.auth.refreshSession();
                     if (refreshError) {
                         console.warn('Session refresh failed:', refreshError);
-                        console.log('Refresh error details:', {
-                            message: refreshError.message,
-                            status: (refreshError as any).status,
-                            code: (refreshError as any).code
-                        });
                         
                         // Session refresh failed - redirect to login immediately
-                        console.log('Session refresh failed - redirecting to login');
                         setTimeout(() => {
                             window.location.href = '/login';
                         }, 500);
                         throw new Error('Session expired - redirecting to login');
                     }
                     
-                    console.log('Session refreshed successfully:', {
-                        hasNewSession: !!data.session,
-                        newExpiresAt: data.session?.expires_at
-                    });
+                    
                     // Wait a bit before retrying
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     // Retry the operation
@@ -85,7 +65,6 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                 error.message?.includes('session') ||
                 error.message?.includes('unauthorized') ||
                 error.message?.includes('invalid claim')) {
-                console.log('Session error detected - redirecting to login');
                 setTimeout(() => {
                     window.location.href = '/login';
                 }, 500);

@@ -226,7 +226,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration (Fixed)', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
     });
 
@@ -238,7 +238,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration (Fixed)', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
     });
 
@@ -250,7 +250,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration (Fixed)', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
     });
   });

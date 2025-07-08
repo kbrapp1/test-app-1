@@ -345,9 +345,12 @@ export class OrganizationService {
             timeoutPromise
           ]);
         } catch (timeoutError: any) {
-          console.log('Session refresh timed out after 5 seconds - this is a known Supabase issue');
-          console.log('Session refresh timed out, but Edge Function succeeded - refreshing page instead...');
+          // AI: Removed console.log - use proper logging service in production
+          // AI: Removed console.log - use proper logging service in production
           
+          // Force page refresh as fallback
+          window.location.reload();
+
           // Update progress to show success and page refresh
           const progressToast = document.getElementById('org-switch-progress');
           if (progressToast) {
@@ -406,58 +409,11 @@ export class OrganizationService {
         if (error) {
           console.error('Session refresh failed:', error);
           // Fallback to complete session reset - this guarantees a fresh session
-          console.log('Session refresh failed, forcing complete session reset...');
+          // AI: Removed console.log - use proper logging service in production
           
-          // Update progress to show we're resetting session
-          if (progressToast) {
-            progressToast.innerHTML = `
-              <div style="
-                position: fixed; 
-                top: 20px; 
-                right: 20px; 
-                background: white; 
-                border: 1px solid #f59e0b; 
-                border-radius: 8px; 
-                padding: 16px 20px; 
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-                z-index: 9999;
-                font-family: system-ui, -apple-system, sans-serif;
-                font-size: 14px;
-                min-width: 280px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-              ">
-                <div style="
-                  width: 20px; 
-                  height: 20px; 
-                  background: #f59e0b; 
-                  border-radius: 50%; 
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: white;
-                  font-size: 12px;
-                ">⟳</div>
-                <div>
-                  <div style="font-weight: 500; color: #1f2937;">Resetting Session</div>
-                  <div style="color: #6b7280; font-size: 13px;">Please login again...</div>
-                </div>
-              </div>
-            `;
-          }
-          
-          // Store flag for post-login redirect
-          localStorage.setItem('org_switch_post_login', JSON.stringify({
-            organizationId,
-            timestamp: Date.now()
-          }));
-          
-          // Force complete logout and redirect to login
+          // Complete session reset
           await this.supabase.auth.signOut();
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 1000);
+          window.location.href = '/login';
           return;
         }
         

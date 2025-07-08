@@ -54,6 +54,7 @@ export class AccumulatedEntities {
   }
 
   // Getters for immutable access
+  get goals(): EntityWithMetadata<string>[] { return [...this.props.goals]; }
   get decisionMakers(): EntityWithMetadata<string>[] { return [...this.props.decisionMakers]; }
   get painPoints(): EntityWithMetadata<string>[] { return [...this.props.painPoints]; }
   get integrationNeeds(): EntityWithMetadata<string>[] { return [...this.props.integrationNeeds]; }

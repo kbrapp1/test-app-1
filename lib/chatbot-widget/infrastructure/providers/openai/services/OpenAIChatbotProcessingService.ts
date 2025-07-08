@@ -151,7 +151,7 @@ export class OpenAIChatbotProcessingService {
         analysis: {
           primaryIntent: functionArgs.intent || 'inquiry',
           primaryConfidence: 0.8, // Default confidence for simplified schema
-          entities: functionArgs.lead_data || {},
+          entities: this.mapFunctionCallEntitiesToExpectedFormat(functionArgs.lead_data || {}),
           reasoning: `Intent: ${functionArgs.intent}, Lead data extracted`
         },
         conversationFlow: {
@@ -260,6 +260,29 @@ export class OpenAIChatbotProcessingService {
       case 'qualification': return 'medium';
       default: return 'low';
     }
+  }
+
+  /**
+   * Map function call entities to expected format
+   * 
+   * AI INSTRUCTIONS:
+   * - Convert snake_case field names to camelCase
+   * - Handle array entities properly
+   * - Ensure backward compatibility with existing entity processing
+   */
+  private mapFunctionCallEntitiesToExpectedFormat(leadData: any): any {
+    const mappedEntities = { ...leadData };
+    
+    // Map snake_case to camelCase for array entities
+    if (leadData.pain_points) {
+      mappedEntities.painPoints = leadData.pain_points;
+      delete mappedEntities.pain_points;
+    }
+    
+    // Goals already uses correct camelCase name
+    // Other fields like name, company, role, budget, timeline, urgency are already correct
+    
+    return mappedEntities;
   }
 
   // AI: Phase-based entity extraction removed in favor of simplified schema approach

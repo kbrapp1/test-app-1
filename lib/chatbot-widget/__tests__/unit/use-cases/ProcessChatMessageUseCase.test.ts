@@ -10,6 +10,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ProcessChatMessageUseCase, ProcessMessageRequest } from '../../../application/use-cases/ProcessChatMessageUseCase';
 
+// Mock Performance Profiler
+vi.mock('../../../performance-profiler', () => ({
+  PerformanceProfiler: {
+    clear: vi.fn(),
+    start: vi.fn(),
+    end: vi.fn(),
+    getMetrics: vi.fn().mockReturnValue({})
+  }
+}));
+
 // Mock external dependencies
 vi.mock('../../../infrastructure/composition/ChatbotWidgetCompositionRoot', () => ({
   ChatbotWidgetCompositionRoot: {
@@ -30,31 +40,53 @@ vi.mock('../../../infrastructure/composition/ChatbotWidgetCompositionRoot', () =
       })
     }),
     getVectorKnowledgeRepository: vi.fn().mockReturnValue({}),
-    getEmbeddingService: vi.fn().mockReturnValue({})
+    getEmbeddingService: vi.fn().mockReturnValue({}),
+    getSimplePromptService: vi.fn().mockReturnValue({
+      generatePrompt: vi.fn().mockResolvedValue('mock prompt'),
+      validatePrompt: vi.fn().mockReturnValue(true)
+    })
   }
 }));
 
 // Mock internal services
 vi.mock('../../../application/services/message-processing', () => ({
   MessageProcessingWorkflowService: vi.fn().mockImplementation(() => ({
-    initializeWorkflow: vi.fn(),
-    finalizeWorkflow: vi.fn()
+    initializeWorkflow: vi.fn().mockResolvedValue({}),
+    finalizeWorkflow: vi.fn().mockResolvedValue({})
   })),
   ChatMessageProcessingService: vi.fn().mockImplementation(() => ({
-    processUserMessage: vi.fn(),
-    generateAIResponse: vi.fn()
+    processUserMessage: vi.fn().mockResolvedValue({}),
+    generateAIResponse: vi.fn().mockResolvedValue({})
   }))
 }));
 
 vi.mock('../../../application/services/conversation-management/ConversationContextManagementService', () => ({
   ConversationContextManagementService: vi.fn().mockImplementation(() => ({
-    getTokenAwareContext: vi.fn()
+    getTokenAwareContext: vi.fn().mockResolvedValue({})
+  }))
+}));
+
+vi.mock('../../../application/services/ProcessChatMessageWorkflowOrchestrator', () => ({
+  ProcessChatMessageWorkflowOrchestrator: vi.fn().mockImplementation(() => ({
+    orchestrate: vi.fn().mockResolvedValue({
+      chatSession: { id: 'test-session-123' },
+      userMessage: { id: 'msg-1', content: 'Hello' },
+      botResponse: { id: 'msg-2', content: 'Hi there!' },
+      shouldCaptureLeadInfo: false,
+      suggestedNextActions: ['Ask more questions'],
+      conversationMetrics: { responseTime: 100 },
+      intentAnalysis: { intent: 'greeting', confidence: 0.9 },
+      journeyState: { phase: 'initial' },
+      relevantKnowledge: [],
+      callToAction: null
+    })
   }))
 }));
 
 vi.mock('../../../application/services/configuration-management/SessionUpdateService', () => ({
   SessionUpdateService: vi.fn().mockImplementation(() => ({
-    updateSession: vi.fn()
+    updateSession: vi.fn().mockResolvedValue({}),
+    saveSession: vi.fn().mockResolvedValue({})
   }))
 }));
 
@@ -64,10 +96,10 @@ vi.mock('../../../infrastructure/composition/DomainServiceCompositionService', (
       countTokens: vi.fn().mockResolvedValue(100)
     }),
     getIntentClassificationService: vi.fn().mockResolvedValue({
-      classifyIntent: vi.fn()
+      classifyIntent: vi.fn().mockResolvedValue({ intent: 'general', confidence: 0.8 })
     }),
     getKnowledgeRetrievalService: vi.fn().mockReturnValue({
-      searchKnowledge: vi.fn()
+      searchKnowledge: vi.fn().mockResolvedValue([])
     })
   }
 }));
@@ -428,6 +460,83 @@ describe('ProcessChatMessageUseCase', () => {
 
       // buildProcessMessageResult should be accessible (even if private)
       expect(useCase).toBeDefined();
+    });
+  });
+
+  describe('Integration Tests', () => {
+    it('should execute complete workflow successfully', async () => {
+      const useCase = new ProcessChatMessageUseCase(
+        mockSessionRepository,
+        mockMessageRepository,
+        mockConfigRepository,
+        mockAIService,
+        mockContextOrchestrator,
+        mockTokenService
+      );
+
+      const request: ProcessMessageRequest = {
+        userMessage: 'Hello, I need help with my account',
+        sessionId: 'test-session-123',
+        organizationId: 'test-org-456'
+      };
+
+      const result = await useCase.execute(request);
+
+      expect(result).toBeDefined();
+      expect(result.chatSession).toBeDefined();
+      expect(result.userMessage).toBeDefined();
+      expect(result.botResponse).toBeDefined();
+      expect(result.shouldCaptureLeadInfo).toBe(false);
+      expect(result.suggestedNextActions).toEqual(['Ask more questions']);
+      expect(result.conversationMetrics).toBeDefined();
+    });
+
+    it('should handle validation errors properly', async () => {
+      const useCase = new ProcessChatMessageUseCase(
+        mockSessionRepository,
+        mockMessageRepository,
+        mockConfigRepository,
+        mockAIService,
+        mockContextOrchestrator,
+        mockTokenService
+      );
+
+      const invalidRequest: ProcessMessageRequest = {
+        userMessage: 'Hello',
+        sessionId: 'test-session-123',
+        organizationId: '' // Empty organization ID should trigger validation error
+      };
+
+      await expect(useCase.execute(invalidRequest)).rejects.toThrow();
+    });
+
+    it('should handle request with metadata', async () => {
+      const useCase = new ProcessChatMessageUseCase(
+        mockSessionRepository,
+        mockMessageRepository,
+        mockConfigRepository,
+        mockAIService,
+        mockContextOrchestrator,
+        mockTokenService
+      );
+
+      const requestWithMetadata: ProcessMessageRequest = {
+        userMessage: 'Hello with metadata',
+        sessionId: 'test-session-123',
+        organizationId: 'test-org-456',
+        metadata: { 
+          source: 'widget',
+          timestamp: Date.now(),
+          userAgent: 'test-agent'
+        }
+      };
+
+      const result = await useCase.execute(requestWithMetadata);
+
+      expect(result).toBeDefined();
+      expect(result.chatSession).toBeDefined();
+      expect(result.userMessage).toBeDefined();
+      expect(result.botResponse).toBeDefined();
     });
   });
 });

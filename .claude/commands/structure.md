@@ -11,7 +11,7 @@ Steps:
 1. First delete any existing file in the docs/structures/{args}-structure.md
 2. Generate the file structure using: `find "lib/{args}" -type f > "docs/structures/{args}-structure.md"`
 
-if you get an error like this /usr/bin/bash: line 1: C:UsersownerAppDataLocalTemp/claude-8a79-cwd: No such file or directory
+if you get an error like this "Error: /usr/bin/bash: line 1: C:UsersownerAppDataLocalTemp/*: No such file or directory"
 - just ignore it. It has nothing to do with the this request
 
 Example command for chatbot-widget domain:

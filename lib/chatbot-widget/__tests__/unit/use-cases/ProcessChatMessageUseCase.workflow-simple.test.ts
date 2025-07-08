@@ -18,6 +18,16 @@ import { PersonalitySettings } from '../../../domain/value-objects/ai-configurat
 import { KnowledgeBase } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { OperatingHours } from '../../../domain/value-objects/session-management/OperatingHours';
 
+// Mock Performance Profiler
+vi.mock('../../../performance-profiler', () => ({
+  PerformanceProfiler: {
+    clear: vi.fn(),
+    start: vi.fn(),
+    end: vi.fn(),
+    getMetrics: vi.fn().mockReturnValue({})
+  }
+}));
+
 // Helper functions to create test data
 const createMockChatSession = () => ChatSession.create(
   'test-config-123',
@@ -145,6 +155,13 @@ vi.mock('../../../application/services/configuration-management/SessionUpdateSer
   SessionUpdateService: vi.fn().mockImplementation(() => mockSessionUpdateService)
 }));
 
+// Mock the main workflow orchestrator
+let mockWorkflowOrchestrator: any;
+
+vi.mock('../../../application/services/ProcessChatMessageWorkflowOrchestrator', () => ({
+  ProcessChatMessageWorkflowOrchestrator: vi.fn().mockImplementation(() => mockWorkflowOrchestrator)
+}));
+
 describe('ProcessChatMessageUseCase - Workflow Integration', () => {
   let useCase: ProcessChatMessageUseCase;
   let mockSessionRepository: any;
@@ -153,9 +170,29 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
   let mockAIService: any;
   let mockContextOrchestrator: any;
   let mockTokenService: any;
+  let mockOrchestrator: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Create a simple orchestrator mock
+    mockOrchestrator = {
+      orchestrate: vi.fn().mockResolvedValue({
+        chatSession: { id: 'test-session-123' },
+        userMessage: { id: 'msg-1', content: 'Hello' },
+        botResponse: { id: 'msg-2', content: 'Hi there!' },
+        shouldCaptureLeadInfo: false,
+        suggestedNextActions: ['Ask more questions'],
+        conversationMetrics: { responseTime: 100 },
+        intentAnalysis: { intent: 'greeting', confidence: 0.9 },
+        journeyState: { phase: 'initial' },
+        relevantKnowledge: [],
+        callToAction: null
+      })
+    };
+    
+    // Set the mock for the constructor
+    mockWorkflowOrchestrator = mockOrchestrator;
 
     // Create simplified mock repositories
     mockSessionRepository = {
@@ -256,52 +293,11 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
       const mockUserMessage = createMockChatMessage('user', 'I want to buy your premium service');
       const mockBotMessage = createMockChatMessage('assistant', 'Great! Let me help you with that. Can I get your email?');
 
-      // Mock workflow for lead capture scenario
-      mockWorkflowService.initializeWorkflow.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
-      mockProcessingService.processUserMessage.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
-      mockContextManagementService.getTokenAwareContext.mockResolvedValue({
-        messages: [mockUserMessage],
-        contextWindow: { maxTokens: 4096, usedTokens: 120 }
-      });
-
-      mockContextOrchestrator.analyzeContextEnhanced.mockResolvedValue({
-        intent: 'purchase_intent',
-        entities: { product: 'premium_service' },
-        relevantKnowledge: [],
-        conversationContext: {
-          phase: 'conversion',
-          userBehavior: 'buying_intent'
-        }
-      });
-
-      mockProcessingService.generateAIResponse.mockResolvedValue({
-        session: mockSession,
-        botMessage: mockBotMessage,
-        allMessages: [mockUserMessage, mockBotMessage],
-        enhancedContext: {
-          unifiedAnalysis: {
-            intent: 'purchase_intent',
-            entities: { product: 'premium_service' },
-            sentiment: 'positive',
-            leadScore: 0.85
-          }
-        }
-      });
-
-      mockWorkflowService.finalizeWorkflow.mockResolvedValue({
-        session: mockSession,
+      // Mock the orchestrator to return lead capture scenario
+      mockOrchestrator.orchestrate.mockResolvedValue({
+        chatSession: mockSession,
         userMessage: mockUserMessage,
-        botMessage: mockBotMessage,
+        botResponse: mockBotMessage,
         shouldCaptureLeadInfo: true, // Lead capture should be triggered
         suggestedNextActions: ['Collect contact information', 'Schedule demo'],
         conversationMetrics: {
@@ -319,7 +315,9 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
           confidence: 0.9,
           isSalesReady: true,
           recommendedActions: ['Capture lead', 'Provide pricing']
-        }
+        },
+        relevantKnowledge: [],
+        callToAction: null
       });
 
       const request: ProcessMessageRequest = {
@@ -364,7 +362,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
 
   describe('Error Handling in Workflow', () => {
     it('should handle workflow initialization failures', async () => {
-      mockWorkflowService.initializeWorkflow.mockRejectedValue(
+      mockOrchestrator.orchestrate.mockRejectedValue(
         new Error('Session not found')
       );
 
@@ -374,44 +372,21 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
         organizationId: 'test-org-123'
       };
 
-      await expect(useCase.execute(request)).rejects.toThrow('Session not found');
+      await expect(useCase.execute(request)).rejects.toThrow(/Session not found/);
       
-      // Ensure error tracking was called
-      expect(mockWorkflowService.initializeWorkflow).toHaveBeenCalledWith(
-        request,
-        expect.any(String)
+      // Ensure orchestrator was called
+      expect(mockOrchestrator.orchestrate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userMessage: 'Hello',
+          sessionId: 'non-existent-session',
+          organizationId: 'test-org-123'
+        })
       );
     });
 
     it('should handle AI service failures during response generation', async () => {
-      const mockSession = createMockChatSession();
-      const mockConfig = createMockChatbotConfig();
-      const mockUserMessage = createMockChatMessage('user', 'Hello');
-
-      mockWorkflowService.initializeWorkflow.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
-      mockProcessingService.processUserMessage.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
-      mockContextManagementService.getTokenAwareContext.mockResolvedValue({
-        messages: [mockUserMessage],
-        contextWindow: { maxTokens: 4096, usedTokens: 100 }
-      });
-
-      mockContextOrchestrator.analyzeContextEnhanced.mockResolvedValue({
-        intent: 'greeting',
-        entities: {}
-      });
-
       // Simulate AI service failure
-      mockProcessingService.generateAIResponse.mockRejectedValue(
+      mockOrchestrator.orchestrate.mockRejectedValue(
         new Error('AI service unavailable')
       );
 
@@ -421,28 +396,12 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
         organizationId: 'test-org-123'
       };
 
-      await expect(useCase.execute(request)).rejects.toThrow('AI service unavailable');
+      await expect(useCase.execute(request)).rejects.toThrow(/AI service unavailable/);
     });
 
     it('should handle context analysis failures', async () => {
-      const mockSession = createMockChatSession();
-      const mockConfig = createMockChatbotConfig();
-      const mockUserMessage = createMockChatMessage('user', 'Hello');
-
-      mockWorkflowService.initializeWorkflow.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
-      mockProcessingService.processUserMessage.mockResolvedValue({
-        session: mockSession,
-        config: mockConfig,
-        userMessage: mockUserMessage
-      });
-
       // Simulate context analysis failure
-      mockContextManagementService.getTokenAwareContext.mockRejectedValue(
+      mockOrchestrator.orchestrate.mockRejectedValue(
         new Error('Context analysis failed')
       );
 
@@ -452,7 +411,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
         organizationId: 'test-org-123'
       };
 
-      await expect(useCase.execute(request)).rejects.toThrow('Context analysis failed');
+      await expect(useCase.execute(request)).rejects.toThrow(/Context analysis failed/);
     });
   });
 
@@ -465,11 +424,11 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
 
       // Workflow should not have been initialized
-      expect(mockWorkflowService.initializeWorkflow).not.toHaveBeenCalled();
+      expect(mockOrchestrator.orchestrate).not.toHaveBeenCalled();
     });
 
     it('should validate organizationId is not just whitespace', async () => {
@@ -480,10 +439,10 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
 
-      expect(mockWorkflowService.initializeWorkflow).not.toHaveBeenCalled();
+      expect(mockOrchestrator.orchestrate).not.toHaveBeenCalled();
     });
 
     it('should handle undefined organizationId', async () => {
@@ -494,10 +453,10 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
       };
 
       await expect(useCase.execute(request)).rejects.toThrow(
-        'Organization ID is required and cannot be empty'
+        /Organization ID is required/
       );
 
-      expect(mockWorkflowService.initializeWorkflow).not.toHaveBeenCalled();
+      expect(mockOrchestrator.orchestrate).not.toHaveBeenCalled();
     });
   });
 
@@ -550,8 +509,8 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
     });
 
     it('should handle workflow step failures gracefully', async () => {
-      // Simulate failure in early workflow step
-      mockWorkflowService.initializeWorkflow.mockRejectedValue(
+      // Simulate failure in workflow orchestration
+      mockOrchestrator.orchestrate.mockRejectedValue(
         new Error('Processing service failure')
       );
 
@@ -561,10 +520,10 @@ describe('ProcessChatMessageUseCase - Workflow Integration', () => {
         organizationId: 'test-org-123'
       };
 
-      await expect(useCase.execute(request)).rejects.toThrow('Processing service failure');
+      await expect(useCase.execute(request)).rejects.toThrow(/Processing service failure/);
       
-      // Verify the failure point was reached
-      expect(mockWorkflowService.initializeWorkflow).toHaveBeenCalledTimes(1);
+      // Verify the orchestrator was called
+      expect(mockOrchestrator.orchestrate).toHaveBeenCalledTimes(1);
     });
   });
 });

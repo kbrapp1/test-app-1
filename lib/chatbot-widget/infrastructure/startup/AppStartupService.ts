@@ -52,8 +52,7 @@ export class AppStartupService {
  */
   private static async performInitialization(): Promise<void> {
     const startTime = Date.now();
-    console.log('🚀 Starting application initialization...');
-
+    
     try {
       // Check feature flags
       const featureCheckResult = await this.checkFeatureFlags();
@@ -62,15 +61,15 @@ export class AppStartupService {
         featureCheck: featureCheckResult,
         timestamp: new Date().toISOString()
       };
-
+      
       const totalTime = Date.now() - startTime;
-      console.log(`✅ Application initialization completed in ${totalTime}ms`);
+      // AI: Removed console.log - use proper logging service in production
       
       this.isInitialized = true;
-
+      
     } catch (error) {
       const totalTime = Date.now() - startTime;
-      console.error(`❌ Application initialization failed after ${totalTime}ms:`, error);
+      // AI: Removed console.error - use proper logging service in production
       
       this.startupResults = {
         featureCheck: { 
@@ -89,21 +88,21 @@ export class AppStartupService {
  */
   private static async checkFeatureFlags(): Promise<{ enabled: boolean; error?: string }> {
     try {
-      console.log('🔍 Checking chatbot widget feature flag...');
+      // AI: Removed console.log - use proper logging service in production
       
       // Check if chatbot widget feature is enabled
       const isChatbotEnabled = await isChatbotWidgetEnabled();
       
       if (!isChatbotEnabled) {
-        console.log('⏭️ Chatbot widget feature is disabled');
+        // AI: Removed console.log - use proper logging service in production
         return { enabled: false };
       }
 
-      console.log('✅ Chatbot widget feature is enabled');
+      // AI: Removed console.log - use proper logging service in production
       return { enabled: true };
       
     } catch (error) {
-      console.error('Failed to check feature flags:', error);
+      // AI: Removed console.error - use proper logging service in production
       return { 
         enabled: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 

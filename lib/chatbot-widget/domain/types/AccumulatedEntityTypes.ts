@@ -18,6 +18,7 @@ export interface EntityWithMetadata<T> {
 
 export interface AccumulatedEntitiesProps {
   // Additive array entities (accumulate over time)
+  goals: EntityWithMetadata<string>[];
   decisionMakers: EntityWithMetadata<string>[];
   painPoints: EntityWithMetadata<string>[];
   integrationNeeds: EntityWithMetadata<string>[];
@@ -41,7 +42,7 @@ export interface AccumulatedEntitiesProps {
   totalExtractions: number;
 }
 
-export type AdditiveEntityType = 'decisionMakers' | 'painPoints' | 'integrationNeeds' | 'evaluationCriteria';
+export type AdditiveEntityType = 'goals' | 'decisionMakers' | 'painPoints' | 'integrationNeeds' | 'evaluationCriteria';
 export type ReplaceableEntityType = 'budget' | 'timeline' | 'urgency' | 'contactMethod';
 export type ConfidenceBasedEntityType = 'visitorName' | 'role' | 'industry' | 'company' | 'teamSize';
 export type AnyEntityType = AdditiveEntityType | ReplaceableEntityType | ConfidenceBasedEntityType;
@@ -64,6 +65,7 @@ export interface EntityCounts {
 }
 
 export interface EntitySummary {
+  goals: string[];
   decisionMakers: string[];
   painPoints: string[];
   integrationNeeds: string[];
@@ -87,6 +89,7 @@ export interface SerializedEntityWithMetadata {
 }
 
 export interface SerializedAccumulatedEntities {
+  goals: SerializedEntityWithMetadata[];
   decisionMakers: SerializedEntityWithMetadata[];
   painPoints: SerializedEntityWithMetadata[];
   integrationNeeds: SerializedEntityWithMetadata[];

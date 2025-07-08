@@ -35,7 +35,8 @@
       "mcp__supabase__list_organizations",
       "mcp__supabase__execute_sql",
       "Bash(./node_modules/.bin/tsc:*)",
-      "Bash(yarn tsc:*)"
+      "Bash(yarn tsc:*)",
+      "WebFetch(domain:ironmarkusa.com)"
     ],
     "deny": []
   },

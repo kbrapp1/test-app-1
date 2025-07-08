@@ -60,8 +60,6 @@ export async function inviteMemberToOrganization(
       }
     }
 
-    console.log('Determined app URL for invite:', appUrl);
-
     const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/invite-member`;
     
     const response = await fetch(edgeFunctionUrl, {

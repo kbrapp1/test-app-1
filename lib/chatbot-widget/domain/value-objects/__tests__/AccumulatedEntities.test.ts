@@ -18,6 +18,7 @@ describe('AccumulatedEntities Value Object', () => {
     it('should create empty AccumulatedEntities with defaults', () => {
       const entities = AccumulatedEntities.create();
 
+      expect(entities.goals).toEqual([]);
       expect(entities.decisionMakers).toEqual([]);
       expect(entities.painPoints).toEqual([]);
       expect(entities.integrationNeeds).toEqual([]);
@@ -26,6 +27,7 @@ describe('AccumulatedEntities Value Object', () => {
       expect(entities.timeline).toBeNull();
       expect(entities.urgency).toBeNull();
       expect(entities.contactMethod).toBeNull();
+      expect(entities.visitorName).toBeNull();
       expect(entities.role).toBeNull();
       expect(entities.industry).toBeNull();
       expect(entities.company).toBeNull();
@@ -323,6 +325,7 @@ describe('AccumulatedEntities Value Object', () => {
       const summary = entities.getAllEntitiesSummary();
 
       expect(summary).toEqual({
+        goals: [],
         decisionMakers: ['John Doe'],
         painPoints: ['Slow reporting'],
         integrationNeeds: [],

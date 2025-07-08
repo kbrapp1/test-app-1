@@ -40,7 +40,7 @@ export function useCompleteOnboarding() {
         const { data: { user }, error: getUserError } = await supabase.auth.getUser()
         
         if (getUserError || !user) {
-          console.log('No authenticated user found')
+          // AI: Removed console.log - use proper logging service in production
           return
         }
 
@@ -56,7 +56,7 @@ export function useCompleteOnboarding() {
           return
         }
 
-        console.log('Attempting to finalize app onboarding for user:', user.id)
+        // AI: Removed console.log - use proper logging service in production
         
         // Get the current session for the auth header
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -93,7 +93,7 @@ export function useCompleteOnboarding() {
           )
         }
 
-        console.log('App onboarding finalized, refreshing session.')
+        // AI: Removed console.log - use proper logging service in production
         
         // Refresh session to get updated JWT with org claims
         const { error: refreshError } = await supabase.auth.refreshSession()

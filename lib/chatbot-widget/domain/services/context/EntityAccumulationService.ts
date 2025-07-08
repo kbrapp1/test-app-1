@@ -127,6 +127,11 @@ export class EntityAccumulationService {
       contextParts.push(`Decision makers identified: ${makers}`);
     }
     
+    if (entities.goals.length > 0) {
+      const goals = entities.goals.map(g => g.value).join(', ');
+      contextParts.push(`Goals mentioned: ${goals}`);
+    }
+    
     if (entities.painPoints.length > 0) {
       const points = entities.painPoints.map(pp => pp.value).join(', ');
       contextParts.push(`Pain points mentioned: ${points}`);

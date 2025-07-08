@@ -67,13 +67,8 @@ export class ConversationEnhancedAnalysisService {
     ]);
 
     const processingTime = Date.now() - startTime;
+    // AI: Removed console.log - use proper logging service in production
     
-    // AI: Log performance metrics for monitoring
-    if (sharedLogFile && processingTime > 1000) {
-      // Only log if processing takes more than 1 second
-      console.log(`⚡ Enhanced Analysis: ${processingTime}ms (parallel processing)`);
-    }
-
     // Extract results from Promise.allSettled
     const intentValue = intentResult.status === 'fulfilled' ? intentResult.value : undefined;
     const knowledgeValue = relevantKnowledge.status === 'fulfilled' ? relevantKnowledge.value : undefined;

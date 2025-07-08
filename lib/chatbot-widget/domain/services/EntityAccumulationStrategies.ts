@@ -39,7 +39,8 @@ export class EntityAccumulationStrategies {
     trimWhitespace: true
   };
 
-  /** Strategy 1: Additive entities - accumulate unique values over time */
+  /** Strategy 1: Additive entities - accumulate unique values over time
+ */
   static applyAdditiveStrategy(
     existingEntities: EntityWithMetadata<string>[],
     newValues: string[],
@@ -56,7 +57,8 @@ export class EntityAccumulationStrategies {
     return this.deduplicateEntityArray(mergedEntities);
   }
 
-  /** Strategy 2: Replaceable entities - keep latest value */
+  /** Strategy 2: Replaceable entities - keep latest value
+ */
   static applyReplaceableStrategy<T>(
     value: T,
     context: EntityOperationContext
@@ -69,7 +71,8 @@ export class EntityAccumulationStrategies {
     };
   }
 
-  /** Strategy 3: Confidence-based entities - keep highest confidence value */
+  /** Strategy 3: Confidence-based entities - keep highest confidence value
+ */
   static applyConfidenceBasedStrategy<T>(
     existingEntity: EntityWithMetadata<T> | null,
     newValue: T,
@@ -98,7 +101,8 @@ export class EntityAccumulationStrategies {
     return newEntity;
   }
 
-  /** Remove specific values from additive entity arrays */
+  /** Remove specific values from additive entity arrays
+ */
   static removeFromAdditiveArray(
     existingEntities: EntityWithMetadata<string>[],
     valueToRemove: string
@@ -111,7 +115,8 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /** Correct/replace any entity with new value */
+  /** Correct/replace any entity with new value
+ */
   static applyCorrection<T>(
     value: T,
     context: EntityOperationContext
@@ -148,7 +153,8 @@ export class EntityAccumulationStrategies {
     });
   }
 
-  /** Normalize entity values for comparison */
+  /** Normalize entity values for comparison
+ */
   static normalizeEntityValue(
     value: string,
     config: EntityNormalizationConfig = EntityAccumulationStrategies.DEFAULT_NORMALIZATION_CONFIG
@@ -170,7 +176,8 @@ export class EntityAccumulationStrategies {
     return normalized;
   }
 
-  /** Validate entity confidence scores */
+  /** Validate entity confidence scores
+ */
   static validateEntityConfidence(entities: EntityWithMetadata<any>[]): boolean {
     return entities.every(entity => 
       entity.confidence >= 0 && 
@@ -179,11 +186,12 @@ export class EntityAccumulationStrategies {
     );
   }
 
-  /** Get strategy type for entity type */
+  /** Get strategy type for entity type
+ */
   static getStrategyForEntityType(
     entityType: AdditiveEntityType | ReplaceableEntityType | ConfidenceBasedEntityType
   ): 'additive' | 'replaceable' | 'confidence-based' {
-    const additiveTypes: AdditiveEntityType[] = ['decisionMakers', 'painPoints', 'integrationNeeds', 'evaluationCriteria'];
+    const additiveTypes: AdditiveEntityType[] = ['goals', 'decisionMakers', 'painPoints', 'integrationNeeds', 'evaluationCriteria'];
     const replaceableTypes: ReplaceableEntityType[] = ['budget', 'timeline', 'urgency', 'contactMethod'];
     const confidenceBasedTypes: ConfidenceBasedEntityType[] = ['visitorName', 'role', 'industry', 'company', 'teamSize'];
     
@@ -202,7 +210,8 @@ export class EntityAccumulationStrategies {
     throw new Error(`Unknown entity type: ${entityType}`);
   }
 
-  /** Calculate entity quality score */
+  /** Calculate entity quality score
+ */
   static calculateEntityQuality(
     entity: EntityWithMetadata<any>,
     currentTime: Date = new Date()

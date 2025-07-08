@@ -18,12 +18,15 @@ import {
 } from '../types/AccumulatedEntityTypes';
 import { EntityAccumulationStrategies } from './EntityAccumulationStrategies';
 
-/** Specialized Service for Entity Utility Operations */
+/** Specialized Service for Entity Utility Operations
+ */
 export class EntityUtilityService {
 
-  /** Generate comprehensive entity summary */
+  /** Generate comprehensive entity summary
+ */
   static generateEntitySummary(props: AccumulatedEntitiesProps): EntitySummary {
     return {
+      goals: props.goals.map(e => e.value),
       decisionMakers: props.decisionMakers.map(e => e.value),
       painPoints: props.painPoints.map(e => e.value),
       integrationNeeds: props.integrationNeeds.map(e => e.value),
@@ -40,10 +43,11 @@ export class EntityUtilityService {
     };
   }
 
-  /** Count entities by accumulation strategy category */
+  /** Count entities by accumulation strategy category
+ */
   static countEntitiesByCategory(props: AccumulatedEntitiesProps): EntityCounts {
     return {
-      additive: props.decisionMakers.length + props.painPoints.length + 
+      additive: props.goals.length + props.decisionMakers.length + props.painPoints.length + 
                 props.integrationNeeds.length + props.evaluationCriteria.length,
       replaceable: [props.budget, props.timeline, props.urgency, props.contactMethod]
                   .filter(entity => entity !== null).length,
@@ -52,12 +56,14 @@ export class EntityUtilityService {
     };
   }
 
-  /** Check if entity collection is empty */
+  /** Check if entity collection is empty
+ */
   static isEntityCollectionEmpty(props: AccumulatedEntitiesProps): boolean {
     return props.totalExtractions === 0;
   }
 
-  /** Validate entity collection integrity */
+  /** Validate entity collection integrity
+ */
   static validateEntityCollection(props: AccumulatedEntitiesProps): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -68,6 +74,7 @@ export class EntityUtilityService {
 
     // Collect all entities for validation
     const allEntities = [
+      ...props.goals,
       ...props.decisionMakers,
       ...props.painPoints,
       ...props.integrationNeeds,
@@ -125,6 +132,7 @@ export class EntityUtilityService {
     newestEntity: Date | null;
   } {
     const allEntities = [
+      ...props.goals,
       ...props.decisionMakers,
       ...props.painPoints,
       ...props.integrationNeeds,
@@ -173,12 +181,14 @@ export class EntityUtilityService {
     };
   }
 
-  /** Find entities by confidence threshold */
+  /** Find entities by confidence threshold
+ */
   static findEntitiesByConfidence(
     props: AccumulatedEntitiesProps,
     minConfidence: number = 0.7
   ): EntityWithMetadata<any>[] {
     const allEntities = [
+      ...props.goals,
       ...props.decisionMakers,
       ...props.painPoints,
       ...props.integrationNeeds,
@@ -222,7 +232,7 @@ export class EntityUtilityService {
     }> = [];
 
     // Add additive entities
-    const additiveTypes = ['decisionMakers', 'painPoints', 'integrationNeeds', 'evaluationCriteria'] as const;
+    const additiveTypes = ['goals', 'decisionMakers', 'painPoints', 'integrationNeeds', 'evaluationCriteria'] as const;
     additiveTypes.forEach(type => {
       props[type].forEach(entity => {
         timeline.push({

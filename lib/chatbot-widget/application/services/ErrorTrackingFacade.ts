@@ -343,8 +343,9 @@ export class ErrorTrackingFacade {
       case 'low':
         console.info('LOW CHATBOT ERROR:', logData);
         break;
-      default:
-        console.log('CHATBOT ERROR:', logData);
+              default:
+          // AI: Removed console.log - use proper logging service in production
+          break;
     }
   }
 

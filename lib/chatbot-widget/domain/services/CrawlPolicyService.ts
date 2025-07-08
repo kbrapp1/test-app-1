@@ -12,7 +12,8 @@
 
 import { WebsiteCrawlSettings } from '../value-objects/ai-configuration/KnowledgeBase';
 
-/** Domain model for URL evaluation result */
+/** Domain model for URL evaluation result
+ */
 export interface UrlEvaluation {
   readonly shouldCrawl: boolean;
   readonly reason: string;
@@ -32,7 +33,8 @@ export interface UrlEvaluation {
  */
 export class CrawlPolicyService {
 
-  /** Determine if URL should be crawled based on comprehensive policies */
+  /** Determine if URL should be crawled based on comprehensive policies
+ */
   shouldCrawlUrl(
     url: string,
     baseUrl: string,
@@ -43,7 +45,8 @@ export class CrawlPolicyService {
     return evaluation.shouldCrawl;
   }
 
-  /** Evaluate URL with detailed reasoning and priority */
+  /** Evaluate URL with detailed reasoning and priority
+ */
   evaluateUrl(
     url: string,
     baseUrl: string,
@@ -92,7 +95,8 @@ export class CrawlPolicyService {
     };
   }
 
-  /** Check if URLs are from the same domain */
+  /** Check if URLs are from the same domain
+ */
   isSameDomain(url: string, baseUrl: string): boolean {
     try {
       const urlHostname = new URL(url).hostname.toLowerCase();
@@ -115,7 +119,78 @@ export class CrawlPolicyService {
     }
   }
 
-  /** Determine if URL points to valuable content */
+  /** Determine if URL points to valuable content for lead generation
+ */
+  isValuableLeadGenContent(url: string): boolean {
+    // First apply basic content filtering
+    if (!this.isValuableContent(url)) {
+      return false;
+    }
+
+    // Exclude pages that don't help with lead generation
+    const excludedLeadGenPaths = [
+      /\/(career|careers|jobs|job-posting|employment)/i,  // Career pages
+      /\/(privacy|terms|legal|cookie|gdpr)/i,             // Legal pages
+      /\/(blog|news|press|media|article)(?!.*?(service|product|solution|benefit))/i, // Blogs unless about services/products
+      /\/(event|webinar|conference)(?!.*?(service|product|solution))/i, // Events unless service-related
+      /\/(team|staff|employee|bio|biography)/i,           // Team/staff pages
+      /\/(history|timeline|milestone|award)/i,            // Company history
+      /\/(download|resource)(?!.*?(guide|whitepaper|case-study))/i, // Downloads unless valuable resources
+      /\/(sitemap|index|archive|tag|category)$/i,         // Navigation/utility pages
+      /\/(thank-you|thanks|confirmation|success)/i,       // Thank you pages
+      /\/(404|error|maintenance)/i,                       // Error pages
+      /\/(login|register|signup|account|profile)/i,       // User account pages
+      /\/(search|filter|sort)[\?&]/i                      // Search/filter pages
+    ];
+
+    if (excludedLeadGenPaths.some(pattern => pattern.test(url))) {
+      return false;
+    }
+
+    // Include high-value lead generation pages
+    const highValueLeadGenPaths = [
+      /\/(services|service|what-we-do|solutions|offerings)/i,     // Core services
+      /\/(products|product|portfolio)/i,                          // Products
+      /\/(about|company|who-we-are|overview)/i,                  // Company info
+      /\/(benefits|value|why-choose|advantages)/i,                // Value propositions
+      /\/(case-study|case-studies|success|client|customer)/i,     // Social proof
+      /\/(testimonial|review|feedback)/i,                         // Testimonials
+      /\/(contact|get-started|quote|consultation|demo)/i,         // Contact/CTA pages
+      /\/(faq|help|support|documentation)/i,                     // Support content
+      /\/(pricing|cost|investment|package|plan)/i,                // Pricing info
+      /\/(industry|sector|vertical)/i,                            // Industry-specific
+      /\/(process|methodology|approach|how-it-works)/i,           // Process explanations
+      /\/(expertise|specialization|capability)/i,                 // Expertise areas
+      /\/(integration|partnership|collaboration)/i,               // Integration info
+      /\/(compliance|security|certification)/i,                   // Trust factors
+      /\/(roi|return|value|benefit|impact)/i,                    // Business value
+      /\/(guide|whitepaper|ebook|resource).*?(service|product|solution)/i // Valuable resources
+    ];
+
+    // If it matches high-value patterns, include it
+    if (highValueLeadGenPaths.some(pattern => pattern.test(url))) {
+      return true;
+    }
+
+    // For blog/article content, only include if it's service/product related
+    if (/\/(blog|article|news|post)/i.test(url)) {
+      const serviceRelatedPatterns = [
+        /\b(service|product|solution|benefit|advantage|feature|capability)\b/i,
+        /\b(how-to|guide|tutorial|best-practice|tip|strategy)\b/i,
+        /\b(case-study|success-story|client-story|customer-story)\b/i,
+        /\b(industry|sector|vertical|market|trend)\b/i,
+        /\b(roi|return|value|cost|saving|efficiency)\b/i
+      ];
+      
+      return serviceRelatedPatterns.some(pattern => pattern.test(url));
+    }
+
+    // Default: include if it doesn't match excluded patterns
+    return true;
+  }
+
+  /** Determine if URL points to valuable content
+ */
   isValuableContent(url: string): boolean {
     // Exclude file downloads and media
     const excludedExtensions = [
@@ -156,7 +231,8 @@ export class CrawlPolicyService {
     return true;
   }
 
-  /** Calculate URL priority for crawl ordering */
+  /** Calculate URL priority for crawl ordering
+ */
   calculateUrlPriority(url: string, depth: number): 'high' | 'medium' | 'low' {
     // High priority for shallow, content-rich pages
     if (depth === 0) return 'high';
@@ -189,7 +265,7 @@ export class CrawlPolicyService {
     return 'low';
   }
 
-  /** Estimate value of URL for crawl planning */
+  /** Estimate value of URL for crawl planning */
   estimateUrlValue(url: string, depth: number): number {
     let value = 0.5; // Base value
 
@@ -217,12 +293,14 @@ export class CrawlPolicyService {
     return Math.max(0.1, Math.min(1.0, value));
   }
 
-  /** Check if subdomain crawling should be allowed */
+  /** Check if subdomain crawling should be allowed
+ */
   private shouldAllowSubdomains(): boolean {
     return false; // Conservative default - same domain only to prevent scope creep and ensure focused crawling
   }
 
-  /** Get URLs that should be prioritized for crawling */
+  /** Get URLs that should be prioritized for crawling
+ */
   getPriorityUrlPatterns(): string[] {
     return [
       '/about',

@@ -31,9 +31,11 @@ import {
  */
 export class EntitySerializationService {
 
-  /** Serialize AccumulatedEntities to plain object for storage */
+  /** Serialize AccumulatedEntities to plain object for storage
+ */
   static serializeAccumulatedEntities(props: AccumulatedEntitiesProps): SerializedAccumulatedEntities {
     return {
+      goals: this.serializeEntityArray(props.goals),
       decisionMakers: this.serializeEntityArray(props.decisionMakers),
       painPoints: this.serializeEntityArray(props.painPoints),
       integrationNeeds: this.serializeEntityArray(props.integrationNeeds),
@@ -52,7 +54,8 @@ export class EntitySerializationService {
     };
   }
 
-  /** Deserialize stored data back to AccumulatedEntitiesProps */
+  /** Deserialize stored data back to AccumulatedEntitiesProps
+ */
   static deserializeAccumulatedEntities(storedData: any): AccumulatedEntitiesProps {
     if (!storedData || typeof storedData !== 'object') {
       return this.createDefaultProps();
@@ -61,6 +64,7 @@ export class EntitySerializationService {
     try {
       const props: AccumulatedEntitiesProps = {
         // Parse array entities
+        goals: this.deserializeEntityArray(storedData.goals),
         decisionMakers: this.deserializeEntityArray(storedData.decisionMakers),
         painPoints: this.deserializeEntityArray(storedData.painPoints),
         integrationNeeds: this.deserializeEntityArray(storedData.integrationNeeds),
@@ -90,7 +94,8 @@ export class EntitySerializationService {
     }
   }
 
-  /** Serialize single entity with metadata */
+  /** Serialize single entity with metadata
+ */
   static serializeEntity(entity: EntityWithMetadata<any> | null): SerializedEntityWithMetadata | null {
     if (!entity) return null;
     
@@ -115,7 +120,8 @@ export class EntitySerializationService {
     return entities.map(entity => this.serializeEntity(entity)).filter(Boolean) as SerializedEntityWithMetadata[];
   }
 
-  /** Deserialize single entity with metadata */
+  /** Deserialize single entity with metadata
+ */
   static deserializeEntity(entity: any): EntityWithMetadata<any> | null {
     if (!entity || typeof entity !== 'object') return null;
     
@@ -131,7 +137,8 @@ export class EntitySerializationService {
     }
   }
 
-  /** Deserialize array of entities with metadata */
+  /** Deserialize array of entities with metadata
+ */
   static deserializeEntityArray(array: any[]): EntityWithMetadata<string>[] {
     if (!Array.isArray(array)) return [];
     
@@ -175,9 +182,11 @@ export class EntitySerializationService {
     }
   }
 
-  /** Create default AccumulatedEntitiesProps */
+  /** Create default AccumulatedEntitiesProps
+ */
   static createDefaultProps(): AccumulatedEntitiesProps {
     return {
+      goals: [],
       decisionMakers: [],
       painPoints: [],
       integrationNeeds: [],
@@ -196,7 +205,8 @@ export class EntitySerializationService {
     };
   }
 
-  /** Validate serialized entity structure */
+  /** Validate serialized entity structure
+ */
   static validateSerializedEntity(entity: any): EntityValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -255,7 +265,8 @@ export class EntitySerializationService {
     }
   }
 
-  /** Migrate legacy data format to current format */
+  /** Migrate legacy data format to current format
+ */
   static migrateLegacyData(legacyData: any): AccumulatedEntitiesProps {
     if (!legacyData || typeof legacyData !== 'object') {
       return this.createDefaultProps();
@@ -279,6 +290,7 @@ export class EntitySerializationService {
     };
 
     return {
+      goals: migrateStringArray(legacyData.goals),
       decisionMakers: migrateStringArray(legacyData.decisionMakers),
       painPoints: migrateStringArray(legacyData.painPoints),
       integrationNeeds: migrateStringArray(legacyData.integrationNeeds),

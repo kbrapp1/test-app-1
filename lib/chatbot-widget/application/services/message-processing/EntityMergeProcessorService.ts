@@ -62,6 +62,7 @@ export class EntityMergeProcessorService {
 
     // Separate array entities from single entities
     const arrayEntities = {
+      goals: analysis.entities?.goals || [],
       painPoints: analysis.entities?.painPoints || [],
       decisionMakers: analysis.entities?.decisionMakers || [],
       integrationNeeds: analysis.entities?.integrationNeeds || [],
@@ -92,7 +93,7 @@ export class EntityMergeProcessorService {
     let finalAccumulatedEntities = entityMergeResult.accumulatedEntities;
     
     // Add array entities using withAdditiveEntity method
-    const validArrayEntityTypes = ['painPoints', 'decisionMakers', 'integrationNeeds', 'evaluationCriteria'] as const;
+    const validArrayEntityTypes = ['goals', 'painPoints', 'decisionMakers', 'integrationNeeds', 'evaluationCriteria'] as const;
     
     validArrayEntityTypes.forEach(entityType => {
       const values = arrayEntities[entityType];
@@ -157,6 +158,7 @@ export class EntityMergeProcessorService {
     return {
       entities: {
         urgency: accumulatedEntitiesPlain.urgency?.value || 'medium' as const,
+        goals: accumulatedEntitiesPlain.goals?.map((g: any) => g.value) || [],
         painPoints: accumulatedEntitiesPlain.painPoints?.map((p: any) => p.value) || [],
         integrationNeeds: accumulatedEntitiesPlain.integrationNeeds?.map((i: any) => i.value) || [],
         evaluationCriteria: accumulatedEntitiesPlain.evaluationCriteria?.map((e: any) => e.value) || [],
