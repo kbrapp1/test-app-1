@@ -101,7 +101,7 @@ async function postHandler(
     result.journeyState,
     result.conversationMetrics,
     result.shouldCaptureLeadInfo,
-    result.suggestedNextActions
+[...result.suggestedNextActions]
   );
 
   // Debug info available in response for client-side debugging

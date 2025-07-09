@@ -19,7 +19,8 @@ import { IChatbotLoggingService, ISessionLogger } from './interfaces/IChatbotLog
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeCacheWarmingService, CacheWarmingMetrics } from './KnowledgeCacheWarmingService';
 import { KnowledgeManagementService, KnowledgeStatsResult, HealthCheckResult } from './KnowledgeManagementService';
-import { VectorKnowledgeCache, VectorCacheStats } from './VectorKnowledgeCache';
+import { VectorKnowledgeCache } from './VectorKnowledgeCache';
+import { VectorCacheStats } from '../types/VectorCacheTypes';
 
 /**
  * Vector Knowledge Retrieval Service

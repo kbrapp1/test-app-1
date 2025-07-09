@@ -34,7 +34,7 @@ export class SendMessageHandler {
         botResponseId: result.botResponse.id,
         success: true,
         shouldCaptureLeadInfo: result.shouldCaptureLeadInfo,
-        suggestedNextActions: result.suggestedNextActions,
+        suggestedNextActions: [...result.suggestedNextActions],
         conversationMetrics: result.conversationMetrics
       };
     } catch (error) {

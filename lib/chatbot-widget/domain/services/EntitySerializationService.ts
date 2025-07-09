@@ -224,47 +224,4 @@ export class EntitySerializationService {
       return false;
     }
   }
-
-  // Migrate legacy data format to current format
-  static migrateLegacyData(legacyData: any): AccumulatedEntitiesProps {
-    if (!legacyData || typeof legacyData !== 'object') {
-      return this.createDefaultProps();
-    }
-
-    // Handle legacy format where entities were simple strings
-    const migrateStringArray = (arr: any[]): EntityWithMetadata<string>[] => {
-      if (!Array.isArray(arr)) return [];
-      
-      return arr.map(item => {
-        if (typeof item === 'string') {
-          return {
-            value: item,
-            extractedAt: new Date(),
-            confidence: 0.5,
-            sourceMessageId: 'legacy-migration'
-          };
-        }
-        return this.deserializeEntity(item);
-      }).filter(Boolean) as EntityWithMetadata<string>[];
-    };
-
-    return {
-      goals: migrateStringArray(legacyData.goals),
-      decisionMakers: migrateStringArray(legacyData.decisionMakers),
-      painPoints: migrateStringArray(legacyData.painPoints),
-      integrationNeeds: migrateStringArray(legacyData.integrationNeeds),
-      evaluationCriteria: migrateStringArray(legacyData.evaluationCriteria),
-      budget: this.deserializeEntity(legacyData.budget),
-      timeline: this.deserializeEntity(legacyData.timeline),
-      urgency: this.deserializeEntity(legacyData.urgency),
-      contactMethod: this.deserializeEntity(legacyData.contactMethod),
-      visitorName: this.deserializeEntity(legacyData.visitorName),
-      role: this.deserializeEntity(legacyData.role),
-      industry: this.deserializeEntity(legacyData.industry),
-      company: this.deserializeEntity(legacyData.company),
-      teamSize: this.deserializeEntity(legacyData.teamSize),
-      lastUpdated: this.parseDate(legacyData.lastUpdated || legacyData.lastEntityUpdate),
-      totalExtractions: legacyData.totalExtractions || legacyData.entityMetadata?.totalEntitiesExtracted || 0
-    };
-  }
 } 

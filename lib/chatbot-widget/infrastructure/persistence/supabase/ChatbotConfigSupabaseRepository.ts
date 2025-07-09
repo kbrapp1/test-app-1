@@ -254,8 +254,8 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
       return {
         totalConfigs,
         activeConfigs,
-        totalFaqs: 0, // TODO: Implement FAQ counting
-        avgLeadQuestions: 0, // TODO: Implement lead questions
+        totalFaqs: 0, // FAQ counting not implemented
+        avgLeadQuestions: 0, // Lead questions not implemented
         lastUpdated
       };
     } catch (error) {

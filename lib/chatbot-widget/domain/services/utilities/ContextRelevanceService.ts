@@ -20,17 +20,6 @@ import {
 import { MessagePrioritizationService } from './MessagePrioritizationService';
 import { RetentionStrategyService } from './RetentionStrategyService';
 
-// Re-export types for backward compatibility
-export type { 
-  RelevanceScore, 
-  RelevanceContext, 
-  PrioritizedMessages,
-  ScoredMessage,
-  CategorizedMessages,
-  ComponentScores,
-  RetentionRecommendation
-} from './types/RelevanceTypes';
-
 /**
  * Domain Service for intelligent message relevance scoring
  * Orchestrates specialized services for context prioritization beyond simple recency-based retention
@@ -61,7 +50,8 @@ export class ContextRelevanceService {
     );
   }
   
-  /** Prioritize messages based on relevance scores for context window optimization */
+  /** Prioritize messages based on relevance scores for context window optimization
+ */
   static prioritizeMessages(
     messages: ChatMessage[],
     context: RelevanceContext

@@ -24,9 +24,6 @@ import { EntityAccumulationStrategies } from '../../services/EntityAccumulationS
 import { EntitySerializationService } from '../../services/EntitySerializationService';
 import { EntityUtilityService } from '../../services/EntityUtilityService';
 
-// Re-export types for backward compatibility with tests
-export type { EntityWithMetadata } from '../../types/AccumulatedEntityTypes';
-
 export class AccumulatedEntities {
   private constructor(private readonly props: AccumulatedEntitiesProps) {
     this.validateInvariants();

@@ -39,7 +39,8 @@ describe('UnifiedResponseProcessorService', () => {
 
     // Create mock error tracking
     mockErrorTracking = {
-      trackResponseExtractionFallback: vi.fn().mockResolvedValue(undefined)
+      trackResponseExtractionFallback: vi.fn().mockResolvedValue(undefined),
+      trackMessageProcessingError: vi.fn().mockResolvedValue(undefined)
     } as any;
 
     // Create test session and config
@@ -235,11 +236,17 @@ describe('UnifiedResponseProcessorService', () => {
         mockConfig
       );
 
-      expect(mockErrorTracking.trackResponseExtractionFallback).toHaveBeenCalledWith(
-        unifiedResult,
-        'session-123',
-        null,
-        'org-789'
+      expect(mockErrorTracking.trackMessageProcessingError).toHaveBeenCalledWith(
+        'Response content extraction failed - using fallback response',
+        {
+          sessionId: 'session-123',
+          organizationId: 'org-789',
+          metadata: {
+            unifiedResult: JSON.stringify(unifiedResult),
+            errorType: 'response_extraction_fallback',
+            timestamp: expect.any(String)
+          }
+        }
       );
 
       expect(ChatMessageFactoryService.createBotMessageWithFullMetadata).toHaveBeenCalledWith(
@@ -273,7 +280,7 @@ describe('UnifiedResponseProcessorService', () => {
         mockConfig
       );
 
-      expect(mockErrorTracking.trackResponseExtractionFallback).toHaveBeenCalled();
+      expect(mockErrorTracking.trackMessageProcessingError).toHaveBeenCalled();
       expect(ChatMessageFactoryService.createBotMessageWithFullMetadata).toHaveBeenCalledWith(
         'session-123',
         "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.",
@@ -664,11 +671,17 @@ describe('UnifiedResponseProcessorService', () => {
         mockConfig
       );
 
-      expect(mockErrorTracking.trackResponseExtractionFallback).toHaveBeenCalledWith(
-        unifiedResult,
-        'session-123',
-        null, // No authenticated user for chatbot widget visitors
-        'org-789' // Organization ID from config
+      expect(mockErrorTracking.trackMessageProcessingError).toHaveBeenCalledWith(
+        'Response content extraction failed - using fallback response',
+        {
+          sessionId: 'session-123',
+          organizationId: 'org-789',
+          metadata: {
+            unifiedResult: JSON.stringify(unifiedResult),
+            errorType: 'response_extraction_fallback',
+            timestamp: expect.any(String)
+          }
+        }
       );
     });
 
@@ -677,7 +690,7 @@ describe('UnifiedResponseProcessorService', () => {
       vi.mocked(ChatMessageFactoryService.createBotMessageWithFullMetadata).mockReturnValue(mockMessage);
       
       // Make error tracking throw
-      mockErrorTracking.trackResponseExtractionFallback = vi.fn().mockRejectedValue(
+      mockErrorTracking.trackMessageProcessingError = vi.fn().mockRejectedValue(
         new Error('Error tracking failed')
       );
 

@@ -23,20 +23,27 @@ export class DebugInfoMapper {
 
     const dto: DebugInfoDto = {
       // Basic session info
-      sessionId: domainDebugInfo.sessionId,
-      userMessageId: domainDebugInfo.userMessageId,
-      botMessageId: domainDebugInfo.botMessageId,
-      processingTimeMs: domainDebugInfo.totalProcessingTime,
+      session: {
+        sessionId: domainDebugInfo.sessionId,
+        userMessageId: domainDebugInfo.userMessageId,
+        botMessageId: domainDebugInfo.botMessageId,
+        conversationMetrics: conversationMetrics || {
+          messageCount: 0,
+          sessionDuration: 0,
+          engagementScore: 0,
+          leadQualificationProgress: 0,
+        },
+        performanceMetrics: {
+          processingTimeMs: domainDebugInfo.totalProcessingTime,
+        },
+      },
       
       // Additional context
-      intentAnalysis,
-      journeyState,
-      conversationMetrics,
-      shouldCaptureLeadInfo,
-      suggestedNextActions,
+      intentClassification: intentAnalysis,
+      journeyProgression: journeyState,
       
-      // Root-level requestData for RequestPreprocessingStep component
-      requestData: this.buildRequestData(domainDebugInfo.firstApiCall),
+      // Request processing information
+      request: this.buildRequestData(domainDebugInfo.firstApiCall),
     };
 
     // Transform API calls

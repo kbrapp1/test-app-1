@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ProcessMessageRequest } from '../ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest as ProcessMessageRequest } from '../../dto/ProcessChatMessageRequest';
 
 describe('ProcessChatMessageUseCase - Input Validation', () => {
   describe('Organization ID Validation', () => {
@@ -153,8 +153,7 @@ describe('ProcessChatMessageUseCase - Input Validation', () => {
         organizationId: 'org-company-456',
         metadata: {
           userId: 'user-789',
-          source: 'website',
-          page: '/contact'
+          clientInfo: { source: 'website', page: '/contact' }
         }
       };
 

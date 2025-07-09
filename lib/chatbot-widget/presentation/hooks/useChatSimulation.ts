@@ -214,16 +214,22 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
           setApiDebugInfo(data.debugInfo);
         } else {
           setApiDebugInfo({
-            sessionId: data.sessionId,
-            userMessageId: data.userMessageId,
-            botResponse: data.botResponse,
-            botMessageId: data.botMessageId,
-            shouldCaptureLeadInfo: data.shouldCaptureLeadInfo,
-            suggestedNextActions: data.suggestedNextActions,
-            conversationMetrics: data.conversationMetrics,
-            processingTimeMs: data.processingTimeMs,
-            intentAnalysis: data.intentAnalysis,
-            journeyState: data.journeyState,
+            session: {
+              sessionId: data.sessionId,
+              userMessageId: data.userMessageId,
+              botMessageId: data.botMessageId,
+              conversationMetrics: data.conversationMetrics || {
+                messageCount: 0,
+                sessionDuration: 0,
+                engagementScore: 0,
+                leadQualificationProgress: 0,
+              },
+              performanceMetrics: {
+                processingTimeMs: data.processingTimeMs,
+              },
+            },
+            intentClassification: data.intentAnalysis,
+            journeyProgression: data.journeyState,
           });
         }
       } else {

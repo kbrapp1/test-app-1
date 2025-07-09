@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { AccumulatedEntities, EntityWithMetadata } from '../context/AccumulatedEntities';
+import { AccumulatedEntities } from '../context/AccumulatedEntities';
+import { EntityWithMetadata } from '../../types/AccumulatedEntityTypes';
 
 describe('AccumulatedEntities Value Object', () => {
   const mockMessageId = 'msg-123';

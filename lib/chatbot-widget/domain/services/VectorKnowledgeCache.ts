@@ -27,7 +27,8 @@ import {
   VectorSearchResult
 } from '../types/VectorCacheTypes';
 
-/** In-Memory Vector Knowledge Cache Service with State Management Focus */
+/** In-Memory Vector Knowledge Cache Service with State Management Focus
+ */
 export class VectorKnowledgeCache {
   private cachedVectors: Map<string, CachedKnowledgeVector> = new Map();
   private isInitialized: boolean = false;
@@ -48,7 +49,8 @@ export class VectorKnowledgeCache {
     this.config = VectorMemoryManagementService.createConfig(config);
   }
 
-  /** Initialize cache with knowledge vectors */
+  /** Initialize cache with knowledge vectors
+ */
   async initialize(
     vectors: Array<{ item: KnowledgeItem; vector: number[] }>,
     sharedLogFile: string
@@ -137,7 +139,8 @@ export class VectorKnowledgeCache {
     }
   }
 
-  /** Get cache statistics for monitoring */
+  /** Get cache statistics for monitoring
+ */
   getCacheStats(): VectorCacheStats {
     return VectorCacheStatisticsService.calculateCacheStats(
       this.cachedVectors,
@@ -149,12 +152,14 @@ export class VectorKnowledgeCache {
     );
   }
 
-  /** Check if cache is initialized and ready for searches */
+  /** Check if cache is initialized and ready for searches
+ */
   isReady(): boolean {
     return this.isInitialized && this.cachedVectors.size > 0;
   }
 
-  /** Clear cache and reset statistics */
+  /** Clear cache and reset statistics
+ */
   clear(): void {
     const previousSize = this.cachedVectors.size;
     
@@ -173,7 +178,8 @@ export class VectorKnowledgeCache {
     }
   }
 
-  /** Load vectors into cache with access tracking */
+  /** Load vectors into cache with access tracking
+ */
   private loadVectorsIntoCache(vectors: Array<{ item: KnowledgeItem; vector: number[] }>): void {
     const now = new Date();
     
@@ -188,7 +194,8 @@ export class VectorKnowledgeCache {
     });
   }
 
-  /** Clear cache state and reset counters */
+  /** Clear cache state and reset counters
+ */
   private clearCacheState(): void {
     this.cachedVectors.clear();
     this.searchCount = 0;
@@ -196,25 +203,29 @@ export class VectorKnowledgeCache {
     this.evictionsPerformed = 0;
   }
 
-  /** Perform complete cache clearing */
+  /** Perform complete cache clearing
+ */
   private performCacheClear(): void {
     this.clearCacheState();
     this.isInitialized = false;
     this.initializationTime = null;
   }
 
-  /** Increment search statistics */
+  /** Increment search statistics
+ */
   private incrementSearchStats(): void {
     this.searchCount++;
     this.cacheHits++; // All searches are cache hits since we search in-memory
   }
 
-  /** Generate cache key for knowledge item */
+  /** Generate cache key for knowledge item
+ */
   private generateCacheKey(itemId: string): string {
     return `${this.organizationId}_${this.chatbotConfigId}_${itemId}`;
   }
 
-  /** Create session logger with consistent context */
+  /** Create session logger with consistent context
+ */
   private createLogger(sessionId: string, logFile: string, operation: string) {
     return this.loggingService.createSessionLogger(
       sessionId,
@@ -226,14 +237,4 @@ export class VectorKnowledgeCache {
       }
     );
   }
-}
-
-// Re-export types for backward compatibility
-export type { 
-  CachedKnowledgeVector,
-  VectorCacheStats,
-  VectorSearchOptions,
-  VectorCacheConfig,
-  VectorCacheInitializationResult,
-  VectorSearchResult
-} from '../types/VectorCacheTypes'; 
+} 

@@ -36,7 +36,11 @@
       "mcp__supabase__execute_sql",
       "Bash(./node_modules/.bin/tsc:*)",
       "Bash(yarn tsc:*)",
-      "WebFetch(domain:ironmarkusa.com)"
+      "WebFetch(domain:ironmarkusa.com)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   },

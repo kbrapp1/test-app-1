@@ -8,7 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ProcessChatMessageUseCase, ProcessMessageRequest } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest } from '../../../application/dto/ProcessChatMessageRequest';
 
 // Mock Performance Profiler
 vi.mock('../../../performance-profiler', () => ({
@@ -229,7 +230,7 @@ describe('ProcessChatMessageUseCase', () => {
 
   describe('Input Validation', () => {
     it('should handle ProcessMessageRequest structure', () => {
-      const validRequest: ProcessMessageRequest = {
+      const validRequest: ProcessChatMessageRequest = {
         userMessage: 'Hello, I need help',
         sessionId: 'test-session-123',
         organizationId: 'test-org'
@@ -241,15 +242,15 @@ describe('ProcessChatMessageUseCase', () => {
     });
 
     it('should handle optional metadata in request', () => {
-      const requestWithMetadata: ProcessMessageRequest = {
+      const requestWithMetadata: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org',
-        metadata: { source: 'widget', timestamp: Date.now() }
+        metadata: { userId: 'user-123', timestamp: Date.now().toString() }
       };
 
       expect(requestWithMetadata.metadata).toBeDefined();
-      expect(requestWithMetadata.metadata.source).toBe('widget');
+      expect(requestWithMetadata.metadata?.userId).toBe('user-123');
     });
   });
 
@@ -338,7 +339,7 @@ describe('ProcessChatMessageUseCase', () => {
         mockTokenService
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Test message',
         sessionId: 'test-session-123',
         organizationId: 'test-org'
@@ -364,7 +365,7 @@ describe('ProcessChatMessageUseCase', () => {
         mockTokenService
       );
 
-      const emptyRequest: ProcessMessageRequest = {
+      const emptyRequest: ProcessChatMessageRequest = {
         userMessage: '',
         sessionId: 'test-session-123',
         organizationId: 'test-org'
@@ -389,7 +390,7 @@ describe('ProcessChatMessageUseCase', () => {
       );
 
       const longMessage = 'x'.repeat(10000);
-      const longRequest: ProcessMessageRequest = {
+      const longRequest: ProcessChatMessageRequest = {
         userMessage: longMessage,
         sessionId: 'test-session-123',
         organizationId: 'test-org'
@@ -474,7 +475,7 @@ describe('ProcessChatMessageUseCase', () => {
         mockTokenService
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello, I need help with my account',
         sessionId: 'test-session-123',
         organizationId: 'test-org-456'
@@ -501,7 +502,7 @@ describe('ProcessChatMessageUseCase', () => {
         mockTokenService
       );
 
-      const invalidRequest: ProcessMessageRequest = {
+      const invalidRequest: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: '' // Empty organization ID should trigger validation error
@@ -520,14 +521,14 @@ describe('ProcessChatMessageUseCase', () => {
         mockTokenService
       );
 
-      const requestWithMetadata: ProcessMessageRequest = {
+      const requestWithMetadata: ProcessChatMessageRequest = {
         userMessage: 'Hello with metadata',
         sessionId: 'test-session-123',
         organizationId: 'test-org-456',
         metadata: { 
-          source: 'widget',
-          timestamp: Date.now(),
-          userAgent: 'test-agent'
+          userId: 'test-user-123',
+          timestamp: Date.now().toString(),
+          clientInfo: { source: 'widget', userAgent: 'test-agent' }
         }
       };
 

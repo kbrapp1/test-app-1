@@ -11,7 +11,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { ProcessChatMessageUseCase, ProcessMessageRequest } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest } from '../../../application/dto/ProcessChatMessageRequest';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
@@ -318,7 +319,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
 
   describe('Repository Error Handling', () => {
     it('should handle session repository connection failures', async () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -342,7 +343,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Failed to save message: Connection timeout')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -357,7 +358,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Session was modified by another process')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -374,7 +375,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Request timeout: AI service did not respond within 30 seconds')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -389,7 +390,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Rate limit exceeded: Too many requests')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -404,7 +405,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Invalid response format')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -419,7 +420,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Quota exceeded')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -436,7 +437,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Context window overflow')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Very long message that exceeds limits',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -451,7 +452,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Token counting service unavailable')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -466,7 +467,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Intent classification model unavailable')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -481,7 +482,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Vector database connection failed')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'What are your pricing plans?',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -497,7 +498,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Network error: DNS resolution failed')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -512,7 +513,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Service unavailable')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -529,7 +530,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Invalid session ID format')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'invalid-session-format',
         organizationId: 'test-org-123'
@@ -545,7 +546,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Message too large')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: hugeMessage,
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -561,7 +562,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Invalid message content')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: messageWithInvalidChars,
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -577,7 +578,7 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('Primary service failure')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -593,14 +594,13 @@ describe('ProcessChatMessageUseCase - Error Handling', () => {
         new Error('AI service error: Invalid API key provided')
       );
 
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Test message',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123',
         metadata: {
           userId: 'user-456',
-          source: 'widget',
-          userAgent: 'Mozilla/5.0...'
+          clientInfo: { source: 'widget', userAgent: 'Mozilla/5.0...' }
         }
       };
 

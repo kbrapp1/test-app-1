@@ -9,7 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ProcessChatMessageUseCase, ProcessMessageRequest } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest as ProcessMessageRequest } from '../../../application/dto/ProcessChatMessageRequest';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
@@ -291,7 +292,7 @@ describe('ProcessChatMessageUseCase - Workflow Integration (Fixed)', () => {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123',
-        metadata: { source: 'web-widget', version: '1.0' }
+        metadata: { userId: 'test-user', clientInfo: { source: 'web-widget', version: '1.0' } }
       };
 
       // Should not throw validation error for valid request

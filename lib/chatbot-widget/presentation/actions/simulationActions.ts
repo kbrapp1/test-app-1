@@ -131,7 +131,7 @@ export async function sendSimulationMessage(
       botResponse: result.botResponse.content,
       botMessageId: result.botResponse.id,
       shouldCaptureLeadInfo: result.shouldCaptureLeadInfo,
-      suggestedNextActions: result.suggestedNextActions,
+      suggestedNextActions: [...result.suggestedNextActions],
       conversationMetrics: result.conversationMetrics,
       processingTimeMs: processingTime,
       totalPromptTimeSeconds: totalPromptTimeSeconds,

@@ -152,11 +152,9 @@ export class ChatSessionFactory {
     };
   }
 
-  /** Convert context to persistence format - MODERN: Use accumulated entities
- */
+  /** Convert context to persistence format */
   private static contextToPersistence(context: SessionContext): any {
     return {
-      // MODERN: Legacy fields removed, entity data is in accumulated_entities
       previous_visits: context.previousVisits,
       page_views: context.pageViews,
       conversation_summary: context.conversationSummary,

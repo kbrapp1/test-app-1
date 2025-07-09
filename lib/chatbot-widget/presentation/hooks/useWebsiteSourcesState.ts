@@ -131,9 +131,24 @@ export function useWebsiteSourcesState(
     crawlProgressState.startCrawlProgress(sourceId);
 
     try {
+      // AI: Run simulation first for visual feedback
       await simulateCrawlProgress(sourceId, websiteSources, crawlProgressState.updateCrawlProgress);
 
-      const result = await crawlWebsiteSource(existingConfig.id, activeOrganizationId, sourceId);
+      // AI: Update message to show real processing is starting
+      crawlProgressState.updateCrawlProgress({
+        status: 'processing',
+        progress: 99,
+        message: 'Starting actual crawl...'
+      });
+
+      // AI: Add timeout protection for actual crawling (2 minutes max)
+      const crawlPromise = crawlWebsiteSource(existingConfig.id, activeOrganizationId, sourceId);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Crawling timed out after 2 minutes')), 120000);
+      });
+
+      // AI: Race between crawling and timeout
+      const result = await Promise.race([crawlPromise, timeoutPromise]) as any;
       
       if (result.success) {
         crawlProgressState.completeCrawlProgress(result.data?.itemsProcessed || 0);
@@ -145,8 +160,10 @@ export function useWebsiteSourcesState(
         formState.setFormErrors([result.error?.message || 'Failed to crawl website source']);
       }
     } catch (error) {
-      crawlProgressState.errorCrawlProgress('An unexpected error occurred during crawling');
-      formState.setFormErrors(['An unexpected error occurred during crawling']);
+      // AI: Handle both timeout and other errors
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during crawling';
+      crawlProgressState.errorCrawlProgress(errorMessage);
+      formState.setFormErrors([errorMessage]);
     } finally {
       uiState.setCrawlingSourceId(null);
     }

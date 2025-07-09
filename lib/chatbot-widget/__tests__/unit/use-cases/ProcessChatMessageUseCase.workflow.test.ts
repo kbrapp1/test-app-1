@@ -10,7 +10,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { ProcessChatMessageUseCase, ProcessMessageRequest, ProcessMessageResult } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest as ProcessMessageRequest } from '../../../application/dto/ProcessChatMessageRequest';
+import { ProcessChatMessageResult as ProcessMessageResult } from '../../../application/dto/ProcessChatMessageResult';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';

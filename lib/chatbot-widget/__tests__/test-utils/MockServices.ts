@@ -19,6 +19,7 @@ import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { Lead } from '../../domain/entities/Lead';
 import { IntentResult } from '../../domain/value-objects/message-processing/IntentResult';
+import { ConversationContextOrchestrator } from '../../domain/services/conversation/ConversationContextOrchestrator';
 
 // AI Service Mocks
 export class MockOpenAIProvider implements IAIConversationService {
@@ -1193,6 +1194,150 @@ export class MockDebugInformationService implements IDebugInformationService {
   }
 }
 
+// Mock ConversationContextOrchestrator
+export class MockConversationContextOrchestrator {
+  private shouldFail = false;
+  
+  // Add required properties to match real ConversationContextOrchestrator
+  private readonly contextWindowService = {
+    getContextWindow: vi.fn().mockReturnValue({ maxTokens: 2000 }),
+    compressContext: vi.fn().mockReturnValue({ compressed: true })
+  };
+  
+  private readonly sessionUpdateService = {
+    updateSessionWithAnalysis: vi.fn(),
+    updateVisitorContext: vi.fn()
+  };
+  
+  private tokenCountingService = {
+    countTokens: vi.fn().mockReturnValue(100),
+    estimateTokens: vi.fn().mockReturnValue(100)
+  };
+  
+  private enhancedAnalysisService = {
+    analyzeWithEnhancedContext: vi.fn().mockResolvedValue({
+      intent: 'unknown',
+      entities: {},
+      relevantKnowledge: []
+    })
+  };
+  
+  private tokenCountCache = new Map<string, number>();
+  
+  private intentClassificationService = {
+    classifyIntent: vi.fn().mockResolvedValue({
+      intent: 'unknown',
+      confidence: 0.5,
+      entities: {}
+    })
+  };
+  
+  private knowledgeRetrievalService = {
+    searchKnowledge: vi.fn().mockResolvedValue({
+      items: [],
+      totalFound: 0
+    })
+  };
+
+  setFailure(shouldFail: boolean): void {
+    this.shouldFail = shouldFail;
+  }
+
+  async orchestrateContext(
+    session: ChatSession,
+    messages: ChatMessage[],
+    config: ChatbotConfig,
+    sharedLogFile?: string
+  ): Promise<any> {
+    if (this.shouldFail) {
+      throw new Error('Mock context orchestrator failure');
+    }
+
+    return {
+      messageCount: messages.length,
+      lastUserMessage: messages[messages.length - 1]?.content || '',
+      conversationTopic: 'general',
+      contextEntities: [],
+      leadQualificationScore: 0.7,
+      messageLength: messages[messages.length - 1]?.content?.length || 0,
+      hasQuestions: true,
+      urgencySignals: [],
+      nextSteps: [],
+      conversationStage: 'active',
+      isHandoffNeeded: false,
+      extractedMetadata: {}
+    };
+  }
+
+  // Add missing methods that ConversationContextOrchestrator has
+  async getMessagesForContextWindow(
+    messages: ChatMessage[],
+    contextWindow: any,
+    existingSummary?: string,
+    loggingContext?: any
+  ): Promise<any> {
+    return {
+      messages: messages,
+      summary: existingSummary,
+      tokenUsage: { messagesTokens: 100, summaryTokens: 50, totalTokens: 150 },
+      wasCompressed: false
+    };
+  }
+
+  async createAISummary(messages: ChatMessage[], maxTokens: number = 200): Promise<string> {
+    return `Summary of ${messages.length} messages`;
+  }
+
+  analyzeContext(messages: ChatMessage[], session?: ChatSession, apiAnalysisData?: any): any {
+    return {
+      topics: ['general'],
+      interests: ['help'],
+      sentiment: 'neutral',
+      engagement: 'medium',
+      intent: 'unknown',
+      urgency: 'low',
+      stage: 'discovery'
+    };
+  }
+
+  async analyzeContextEnhanced(
+    messages: ChatMessage[],
+    config: any,
+    session?: ChatSession,
+    sharedLogFile?: string
+  ): Promise<any> {
+    return this.analyzeContext(messages, session);
+  }
+
+  generateConversationSummary(
+    messages: ChatMessage[],
+    session: ChatSession,
+    apiAnalysisData?: any
+  ): any {
+    return {
+      overview: 'Mock conversation summary',
+      keyTopics: ['general'],
+      userNeeds: ['help'],
+      painPoints: [],
+      nextSteps: ['Continue conversation'],
+      qualificationStatus: 'unknown'
+    };
+  }
+
+  updateSessionContext(
+    session: ChatSession,
+    message: ChatMessage,
+    allMessages: ChatMessage[],
+    apiAnalysisData?: any
+  ): ChatSession {
+    return session;
+  }
+
+  clear(): void {
+    this.shouldFail = false;
+  }
+}
+
 // Helper function to create a complete mock environment
 export function createMockEnvironment() {
   return {
@@ -1204,6 +1349,8 @@ export function createMockEnvironment() {
     configRepository: new MockChatbotConfigRepository(),
     sessionRepository: new MockChatSessionRepository(),
     messageRepository: new MockChatMessageRepository(),
-    leadRepository: new MockLeadRepository()
+    leadRepository: new MockLeadRepository(),
+    conversationContextOrchestrator: new MockConversationContextOrchestrator(),
+    debugInformationService: new MockDebugInformationService()
   };
 }

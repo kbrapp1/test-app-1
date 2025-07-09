@@ -106,7 +106,8 @@ export class CrawledPagesQueryService {
     }
   }
 
-  /** Get crawled pages statistics */
+  /** Get crawled pages statistics
+ */
   async getCrawledPagesStats(request: CrawledPagesStatsRequest): Promise<CrawledPagesStatsResponse> {
     try {
       // Validate request
@@ -163,7 +164,8 @@ export class CrawledPagesQueryService {
     }
   }
 
-  /** Validate query request parameters */
+  /** Validate query request parameters
+ */
   private validateQueryRequest(request: CrawledPagesQueryRequest): void {
     if (!request.organizationId?.trim()) {
       throw new BusinessRuleViolationError(
@@ -197,7 +199,8 @@ export class CrawledPagesQueryService {
     });
   }
 
-  /** Validate statistics request parameters */
+  /** Validate statistics request parameters
+ */
   private validateStatsRequest(request: CrawledPagesStatsRequest): void {
     if (!request.organizationId?.trim()) {
       throw new BusinessRuleViolationError(
@@ -220,13 +223,4 @@ export class CrawledPagesQueryService {
       });
     }
   }
-}
-
-// Re-export types for backward compatibility
-export type { 
-  CrawledPagesQueryRequest, 
-  CrawledPagesQueryResponse, 
-  CrawledPagesStatsRequest, 
-  CrawledPagesStatsResponse,
-  CrawledPageData
-} from '../types/CrawledPagesTypes'; 
+} 

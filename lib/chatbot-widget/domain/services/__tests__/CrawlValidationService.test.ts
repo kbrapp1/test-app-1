@@ -128,7 +128,7 @@ describe('CrawlValidationService', () => {
     });
 
     it('should reject maxPages exceeding limit', () => {
-      expect(() => service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: 101 }))
+      expect(() => service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: 1001 }))
         .toThrow(DataValidationError);
     });
 
@@ -141,14 +141,14 @@ describe('CrawlValidationService', () => {
 
     it('should provide specific error context for validation failures', () => {
       try {
-        service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: 150 });
+        service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: 1500 });
       } catch (error) {
         expect(error).toBeInstanceOf(DataValidationError);
         expect((error as DataValidationError).context).toEqual({
-          maxPages: 150,
-          limit: 100,
+          maxPages: 1500,
+          limit: 1000,
           field: 'maxPages',
-          validationRule: 'cannot exceed 100'
+          validationRule: 'cannot exceed 1000'
         });
       }
     });
@@ -320,8 +320,8 @@ describe('CrawlValidationService', () => {
   });
 
   describe('business rule enforcement', () => {
-    it('should enforce maximum pages limit of 100', () => {
-      const maxAllowedPages = 100;
+    it('should enforce maximum pages limit of 1000', () => {
+      const maxAllowedPages = 1000;
       expect(() => service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: maxAllowedPages }))
         .not.toThrow();
       expect(() => service.validateCrawlSettings({ ...mockCrawlSettings, maxPages: maxAllowedPages + 1 }))

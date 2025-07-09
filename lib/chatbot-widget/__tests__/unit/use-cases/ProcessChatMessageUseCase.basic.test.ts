@@ -9,7 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ProcessChatMessageUseCase, ProcessMessageRequest } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+import { ProcessChatMessageRequest } from '../../../application/dto/ProcessChatMessageRequest';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
@@ -272,7 +273,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
 
   describe('Input Validation', () => {
     it('should reject requests with empty organizationId', async () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: ''
@@ -296,7 +297,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
     });
 
     it('should reject requests with whitespace-only organizationId', async () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
         organizationId: '   '
@@ -308,7 +309,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
     });
 
     it('should accept valid requests with required fields', () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello, I need help',
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'
@@ -320,20 +321,60 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
     });
 
     it('should handle requests with optional metadata', () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'test-session-123',
-        organizationId: 'test-org-123',
+        organizationId: 'org-123',
         metadata: {
-          source: 'widget',
-          userId: 'user-456',
-          timestamp: Date.now()
+          userId: 'user-123',
+          timestamp: '2023-01-01T00:00:00.000Z',
+          clientInfo: { browser: 'Chrome' }
+        }
+      };
+      
+      expect(request.metadata?.userId).toBe('user-123');
+      expect(request.metadata?.timestamp).toBe('2023-01-01T00:00:00.000Z');
+      expect(request.metadata?.clientInfo?.browser).toBe('Chrome');
+    });
+    
+    it('should execute method accept ProcessMessageRequest', () => {
+      const request: ProcessChatMessageRequest = {
+        userMessage: 'Test',
+        sessionId: 'session-123',
+        organizationId: 'org-123',
+        metadata: {
+          userId: 'user-123'
+        }
+      };
+      
+      expect(typeof useCase.execute).toBe('function');
+      expect(request.userMessage).toBe('Test');
+    });
+    
+    it('should enforce ProcessMessageRequest interface', () => {
+      // Valid request should compile
+      const validRequest: ProcessChatMessageRequest = {
+        userMessage: 'Hello',
+        sessionId: 'session-123',
+        organizationId: 'org-123'
+      };
+      
+      expect(validRequest.userMessage).toBe('Hello');
+      expect(validRequest.sessionId).toBe('session-123');
+      expect(validRequest.organizationId).toBe('org-123');
+      
+      // Metadata should be optional
+      const requestWithMetadata: ProcessChatMessageRequest = {
+        userMessage: 'Hello',
+        sessionId: 'session-123',
+        organizationId: 'org-123',
+        metadata: { 
+          userId: 'user-123',
+          clientInfo: { custom: 'data' }
         }
       };
 
-      expect(request.metadata).toBeDefined();
-      expect(request.metadata?.source).toBe('widget');
-      expect(request.metadata?.userId).toBe('user-456');
+      expect(requestWithMetadata.metadata).toBeDefined();
     });
   });
 
@@ -343,7 +384,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
     });
 
     it('should execute method accept ProcessMessageRequest', () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Test',
         sessionId: 'session-123',
         organizationId: 'org-123'
@@ -357,7 +398,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
   describe('Type Safety', () => {
     it('should enforce ProcessMessageRequest interface', () => {
       // Valid request should compile
-      const validRequest: ProcessMessageRequest = {
+      const validRequest: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'session-123',
         organizationId: 'org-123'
@@ -366,11 +407,11 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
       expect(validRequest).toBeDefined();
 
       // Metadata should be optional
-      const requestWithMetadata: ProcessMessageRequest = {
+      const requestWithMetadata: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: 'session-123',
         organizationId: 'org-123',
-        metadata: { custom: 'data' }
+        metadata: { userId: 'user-123', clientInfo: { custom: 'data' } }
       };
 
       expect(requestWithMetadata.metadata).toBeDefined();
@@ -461,7 +502,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
     });
 
     it('should handle invalid session ID format', async () => {
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: 'Hello',
         sessionId: '', // Empty session ID
         organizationId: 'test-org-123'
@@ -477,7 +518,7 @@ describe('ProcessChatMessageUseCase - Basic Tests', () => {
 
     it('should handle very long messages appropriately', async () => {
       const longMessage = 'x'.repeat(5000); // Over 4000 char limit
-      const request: ProcessMessageRequest = {
+      const request: ProcessChatMessageRequest = {
         userMessage: longMessage,
         sessionId: 'test-session-123',
         organizationId: 'test-org-123'

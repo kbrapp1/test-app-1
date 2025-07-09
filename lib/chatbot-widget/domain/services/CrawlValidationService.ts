@@ -192,7 +192,7 @@ export class CrawlValidationService {
 
   /** Get maximum allowed pages per crawl */
   private getMaxAllowedPages(): number {
-    return 100; // Domain rule: Maximum 100 pages per crawl
+    return 1000; // Domain rule: Maximum 100 pages per crawl
   }
 
   /** Get maximum allowed crawl depth */

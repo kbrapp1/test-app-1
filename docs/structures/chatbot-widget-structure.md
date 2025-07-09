@@ -20,6 +20,8 @@ lib/chatbot-widget/application/dto/debug-components/SessionDebugDto.ts
 lib/chatbot-widget/application/dto/DebugInfoDto.ts
 lib/chatbot-widget/application/dto/KnowledgeBaseFormDto.ts
 lib/chatbot-widget/application/dto/LeadDto.ts
+lib/chatbot-widget/application/dto/ProcessChatMessageRequest.ts
+lib/chatbot-widget/application/dto/ProcessChatMessageResult.ts
 lib/chatbot-widget/application/dto/PromptTemplateDTO.ts
 lib/chatbot-widget/application/dto/SanitizedContentDTO.ts
 lib/chatbot-widget/application/mappers/ChatbotConfigMapper.ts
@@ -85,6 +87,7 @@ lib/chatbot-widget/application/services/message-processing/MessageProcessingWork
 lib/chatbot-widget/application/services/message-processing/SessionContextUpdateService.ts
 lib/chatbot-widget/application/services/message-processing/UnifiedResponseProcessorService.ts
 lib/chatbot-widget/application/services/message-processing/__tests__/UnifiedResponseProcessorService.test.ts
+lib/chatbot-widget/application/services/ProcessChatMessageWorkflowOrchestrator.ts
 lib/chatbot-widget/application/services/PromptAssemblyApplicationService.ts
 lib/chatbot-widget/application/services/simulation/ChatSimulationService.ts
 lib/chatbot-widget/application/services/simulation/index.ts
@@ -108,6 +111,7 @@ lib/chatbot-widget/application/use-cases/lead-capture-components/recommendation-
 lib/chatbot-widget/application/use-cases/ProcessChatMessageUseCase.ts
 lib/chatbot-widget/application/use-cases/SanitizeUserContentUseCase.ts
 lib/chatbot-widget/application/use-cases/ValidateContentUseCase.ts
+lib/chatbot-widget/application/use-cases/__tests__/ProcessChatMessageUseCase.test.ts
 lib/chatbot-widget/application/use-cases/__tests__/ProcessChatMessageUseCase.validation.test.ts
 lib/chatbot-widget/domain/entities/ChatbotConfig.ts
 lib/chatbot-widget/domain/entities/ChatMessage.ts
@@ -121,10 +125,12 @@ lib/chatbot-widget/domain/errors/AIProcessingErrors.ts
 lib/chatbot-widget/domain/errors/base/DomainErrorBase.ts
 lib/chatbot-widget/domain/errors/BusinessDomainErrors.ts
 lib/chatbot-widget/domain/errors/ChatbotWidgetDomainErrors.ts
+lib/chatbot-widget/domain/errors/ChatMessageProcessingErrors.ts
 lib/chatbot-widget/domain/errors/ContentSanitizationError.ts
 lib/chatbot-widget/domain/errors/ContentValidationError.ts
 lib/chatbot-widget/domain/errors/ConversationErrors.ts
 lib/chatbot-widget/domain/errors/InfrastructureErrors.ts
+lib/chatbot-widget/domain/events/ChatMessageProcessingEvents.ts
 lib/chatbot-widget/domain/events/SessionInitializedEvent.ts
 lib/chatbot-widget/domain/repositories/IChatbotConfigRepository.ts
 lib/chatbot-widget/domain/repositories/IChatMessageRepository.ts
@@ -164,6 +170,7 @@ lib/chatbot-widget/domain/services/conversation/ConversationContextOrchestrator.
 lib/chatbot-widget/domain/services/conversation/ConversationEnhancedAnalysisService.ts
 lib/chatbot-widget/domain/services/conversation/ConversationIntentService.ts
 lib/chatbot-widget/domain/services/conversation/ConversationSessionUpdateService.ts
+lib/chatbot-widget/domain/services/conversation/__tests__/ConversationEnhancedAnalysisService.test.ts
 lib/chatbot-widget/domain/services/conversation-management/ConversationFlowService.ts
 lib/chatbot-widget/domain/services/conversation-management/ReadinessIndicatorDomainService.ts
 lib/chatbot-widget/domain/services/CrawlBudgetCalculatorService.ts
@@ -231,6 +238,7 @@ lib/chatbot-widget/domain/services/__tests__/CrawlBudgetCalculatorService.test.t
 lib/chatbot-widget/domain/services/__tests__/CrawlPolicyService.test.ts
 lib/chatbot-widget/domain/services/__tests__/CrawlResultProcessorService.test.ts
 lib/chatbot-widget/domain/services/__tests__/CrawlValidationService.test.ts
+lib/chatbot-widget/domain/services/__tests__/EntityAccumulationStrategies.test.ts
 lib/chatbot-widget/domain/services/__tests__/SimHashContentSimilarityService.test.ts
 lib/chatbot-widget/domain/services/__tests__/UrlNormalizationService.test.ts
 lib/chatbot-widget/domain/services/__tests__/WebsiteCrawlingDomainService.test.ts
@@ -419,6 +427,7 @@ lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIEmbeddingServi
 lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIFunctionSchemaBuilder.ts
 lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIIntentUtilityService.ts
 lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIMessageFormatter.ts
+lib/chatbot-widget/infrastructure/providers/openai/services/__tests__/OpenAIChatbotProcessingService.test.ts
 lib/chatbot-widget/infrastructure/providers/openai/services/__tests__/OpenAIFunctionSchemaBuilder.test.ts
 lib/chatbot-widget/infrastructure/providers/openai/types/OpenAIIntentTypes.ts
 lib/chatbot-widget/infrastructure/providers/openai/types/OpenAITypes.ts

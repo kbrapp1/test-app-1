@@ -27,7 +27,8 @@ import {
 import { ContextWindowService } from '../utilities/ContextWindowService';
 import { ConversationSessionUpdateService } from './ConversationSessionUpdateService';
 // Removed UserJourneyState import - using pure API-driven approach
-import { ContextRelevanceService, RelevanceContext } from '../utilities/ContextRelevanceService';
+import { ContextRelevanceService } from '../utilities/ContextRelevanceService';
+import { RelevanceContext } from '../utilities/types/RelevanceTypes';
 import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 import { ConversationEnhancedAnalysisService } from './ConversationEnhancedAnalysisService';
 

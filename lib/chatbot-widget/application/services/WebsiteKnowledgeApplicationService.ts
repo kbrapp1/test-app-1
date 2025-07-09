@@ -15,7 +15,8 @@
 import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { CrawlOrchestrationService, WebsiteCrawlRequest, WebsiteCrawlResponse } from './CrawlOrchestrationService';
 import { BatchProcessingService, WebsiteKnowledgeUpdateRequest, WebsiteKnowledgeUpdateResponse } from './BatchProcessingService';
-import { CrawledPagesQueryService, CrawledPagesQueryRequest, CrawledPagesQueryResponse } from './CrawledPagesQueryService';
+import { CrawledPagesQueryService } from './CrawledPagesQueryService';
+import { CrawledPagesQueryRequest, CrawledPagesQueryResponse } from '../types/CrawledPagesTypes';
 import { WebsiteValidationService, WebsiteValidationResult } from './WebsiteValidationService';
 
 export class WebsiteKnowledgeApplicationService {

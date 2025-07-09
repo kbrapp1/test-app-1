@@ -45,11 +45,17 @@ export class UnifiedResponseProcessorService {
     
     // Track fallback error if response content missing
     if (!responseContent) {
-      await this.errorTrackingFacade.trackResponseExtractionFallback(
-        unifiedResult,
-        session.id,
-        null, // Chatbot visitors are not authenticated users
-        config.organizationId // Use organizationId from chatbot config
+      await this.errorTrackingFacade.trackMessageProcessingError(
+        'Response content extraction failed - using fallback response',
+        {
+          sessionId: session.id,
+          organizationId: config.organizationId,
+          metadata: {
+            unifiedResult: JSON.stringify(unifiedResult),
+            errorType: 'response_extraction_fallback',
+            timestamp: new Date().toISOString()
+          }
+        }
       );
       
       responseContent = "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";

@@ -89,7 +89,7 @@ export function calculateStatistics(chunks: ProcessedChunkDto[], processingTimeM
   const qualityMetrics: QualityMetricsDto = {
     averageQualityScore: chunks.length > 0 ? totalQualityScore / chunks.length : 0,
     chunksAboveThreshold,
-    duplicateChunks: 0, // TODO: Implement duplicate detection
+    duplicateChunks: 0, // Duplicate detection not implemented
     emptyChunks: 0,
     lowQualityChunks: chunks.length - chunksAboveThreshold
   };
