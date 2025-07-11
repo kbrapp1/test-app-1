@@ -9,14 +9,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { UserRole, Permission } from '@/lib/auth/roles';
-import { 
-  hasRole, 
-  hasPermission, 
-  hasAnyRole,
-  hasAnyPermission, 
-  getUserPermissions 
-} from '@/lib/auth/authorization';
+import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/auth/roles';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -42,32 +35,96 @@ export type AuthHelpers = {
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRoleLoading, setIsRoleLoading] = useState(false);
   const supabase = createClient();
   const { toast } = useToast();
   const router = useRouter();
   
-  // Memoized auth helpers that update when the user changes
-  const auth = useMemo<AuthHelpers>(() => ({
-    // Role checks
-    hasRole: (role: UserRole) => hasRole(user, role),
-    hasAnyRole: (roles: UserRole[]) => hasAnyRole(user, roles),
+  // AI: Fetch user's role from database when user or organization changes
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user) {
+        setUserRole(undefined);
+        return;
+      }
+
+      setIsRoleLoading(true);
+      try {
+        // AI: Get active organization ID from JWT claims
+        const { data: orgData } = await supabase.rpc('get_active_organization_id');
+        
+        if (orgData) {
+          // AI: Fetch user's role in the active organization
+          const { data: membership } = await supabase
+            .from('organization_memberships')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('organization_id', orgData)
+            .single();
+          
+          setUserRole(membership?.role as UserRole | undefined);
+        } else {
+          setUserRole(undefined);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch user role:', error);
+        setUserRole(undefined);
+      } finally {
+        setIsRoleLoading(false);
+      }
+    };
+
+    fetchUserRole();
+  }, [user, supabase]);
+  
+  // AI: Memoized auth helpers that update when user or role changes
+  const auth = useMemo<AuthHelpers>(() => {
+    // AI: Create permission checking functions based on database role
+    const hasRoleCheck = (role: UserRole) => userRole === role;
+    const hasAnyRoleCheck = (roles: UserRole[]) => userRole ? roles.includes(userRole) : false;
     
-    // Permission checks
-    hasPermission: (permission: Permission) => hasPermission(user, permission),
-    hasAnyPermission: (permissions: Permission[]) => hasAnyPermission(user, permissions),
-    hasAllPermissions: (permissions: Permission[]) => 
-      permissions.every(permission => hasPermission(user, permission)),
+    const hasPermissionCheck = (permission: Permission) => {
+      if (!userRole) return false;
+      const rolePermissions = ROLE_PERMISSIONS[userRole] || [];
+      return rolePermissions.includes(permission);
+    };
     
-    // User's role and permissions
-    role: user?.app_metadata?.role as UserRole | undefined,
-    permissions: getUserPermissions(user),
+    const hasAnyPermissionCheck = (permissions: Permission[]) => {
+      if (!userRole) return false;
+      const rolePermissions = ROLE_PERMISSIONS[userRole] || [];
+      return permissions.some(permission => rolePermissions.includes(permission));
+    };
     
-    // Convenience properties for common roles
-    isAdmin: hasRole(user, UserRole.ADMIN),
-    isEditor: hasRole(user, UserRole.EDITOR),
-    isViewer: hasRole(user, UserRole.VIEWER),
-  }), [user]);
+    const hasAllPermissionsCheck = (permissions: Permission[]) => {
+      if (!userRole) return false;
+      const rolePermissions = ROLE_PERMISSIONS[userRole] || [];
+      return permissions.every(permission => rolePermissions.includes(permission));
+    };
+    
+    const userPermissions = userRole ? ROLE_PERMISSIONS[userRole] || [] : [];
+    
+    return {
+      // Role checks
+      hasRole: hasRoleCheck,
+      hasAnyRole: hasAnyRoleCheck,
+      
+      // Permission checks
+      hasPermission: hasPermissionCheck,
+      hasAnyPermission: hasAnyPermissionCheck,
+      hasAllPermissions: hasAllPermissionsCheck,
+      
+      // User's role and permissions
+      role: userRole,
+      permissions: userPermissions,
+      
+      // Convenience properties for common roles
+      isAdmin: hasRoleCheck(UserRole.ADMIN),
+      isEditor: hasRoleCheck(UserRole.EDITOR),
+      isViewer: hasRoleCheck(UserRole.VIEWER),
+    };
+  }, [user, userRole]);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,7 +143,9 @@ export function useUser() {
       // Clear state immediately to prevent hook errors
       if (isMounted) {
         setUser(null);
+        setUserRole(undefined);
         setIsLoading(false);
+        setIsRoleLoading(false);
       }
 
       // Cleanup any pending operations
@@ -117,7 +176,9 @@ export function useUser() {
       if (!user && _event === 'SIGNED_OUT') {
         // Clear any remaining state
         setUser(null);
+        setUserRole(undefined);
         setIsLoading(false);
+        setIsRoleLoading(false);
       }
     });
 
@@ -147,7 +208,9 @@ export function useUser() {
           } else {
             // Handle other errors during initial fetch
             setUser(null);
+            setUserRole(undefined);
             setIsLoading(false);
+            setIsRoleLoading(false);
           }
         } else {
           // Success case: user fetched
@@ -168,7 +231,9 @@ export function useUser() {
         } else {
           // If it's a different unexpected error, clear user and stop loading
           setUser(null);
+          setUserRole(undefined);
           setIsLoading(false);
+          setIsRoleLoading(false);
         }
       }
     };
@@ -183,5 +248,10 @@ export function useUser() {
     };
   }, [supabase, toast, router]);
 
-  return { user, isLoading, auth };
+  // AI: Return loading true if either user or role is loading
+  return { 
+    user, 
+    isLoading: isLoading || isRoleLoading, 
+    auth 
+  };
 } 

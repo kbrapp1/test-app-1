@@ -6,6 +6,8 @@
  * to ensure consistency and maintainability across the system.
  */
 
+import { LeadScoringEntities } from '../../types/ChatbotTypes';
+
 // Core Intent Types (Updated to include all business logic intents)
 export const INTENT_TYPES = [
   // General intents
@@ -337,7 +339,7 @@ export class DomainConstants {
     return ROLE_AUTHORITY_WEIGHTS;
   }
 
-  static calculateLeadScore(entities: any): number {
+  static calculateLeadScore(entities: LeadScoringEntities): number {
     let score = 0;
     
     // Handle role with authority-based scoring
@@ -345,12 +347,35 @@ export class DomainConstants {
       score += this.getRoleAuthorityScore(entities.role);
     }
     
-    // Handle other entities with standard scoring
-    Object.entries(entities).forEach(([key, value]) => {
-      if (value && key !== 'role' && key in LEAD_SCORING_RULES) {
-        score += LEAD_SCORING_RULES[key as keyof typeof LEAD_SCORING_RULES];
-      }
-    });
+    // Handle business info entities
+    if (entities.businessInfo.company) {
+      score += LEAD_SCORING_RULES.company || 0;
+    }
+    if (entities.businessInfo.industry) {
+      score += LEAD_SCORING_RULES.industry || 0;
+    }
+    if (entities.businessInfo.size) {
+      score += LEAD_SCORING_RULES.teamSize || 0;
+    }
+    
+    // Handle intent signals
+    if (entities.intentSignals.budget) {
+      score += LEAD_SCORING_RULES.budget || 0;
+    }
+    if (entities.intentSignals.timeline) {
+      score += LEAD_SCORING_RULES.timeline || 0;
+    }
+    if (entities.intentSignals.urgency) {
+      score += LEAD_SCORING_RULES.urgency || 0;
+    }
+    
+    // Handle contact info entities
+    if (entities.contactInfo.email) {
+      score += LEAD_SCORING_RULES.contactMethod || 0;
+    }
+    if (entities.contactInfo.phone) {
+      score += LEAD_SCORING_RULES.contactMethod || 0;
+    }
     
     return Math.min(score, 100);
   }

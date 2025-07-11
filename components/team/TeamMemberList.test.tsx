@@ -18,19 +18,19 @@ const mockMembers: TeamMember[] = [
         id: '1',
         name: 'Member One',
         title: 'Title One',
+        organization_id: 'test-org-123',
         primary_image_url: '/img1p.jpg',
         secondary_image_url: '/img1s.jpg',
         created_at: new Date().toISOString(),
-        organization_id: 'test-org-123',
     },
     {
         id: '2',
         name: 'Member Two',
         title: 'Title Two',
+        organization_id: 'test-org-123',
         primary_image_url: '/img2p.jpg',
         secondary_image_url: '/img2s.jpg',
         created_at: new Date().toISOString(),
-        organization_id: 'test-org-123',
     },
 ];
 

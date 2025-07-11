@@ -11,6 +11,7 @@
  */
 
 import { IntentResult } from './IntentResult';
+import { ContextAnalysisInput } from '../../types/ChatbotTypes';
 // Removed UserJourneyState import - using pure API-driven approach
 
 export interface ContextAnalysis {
@@ -42,7 +43,7 @@ export interface ConversationSummary {
 }
 
 export interface ContextWindowResult {
-  messages: any[]; // ChatMessage type from entities
+  messages: ContextAnalysisInput['messages']; // ChatMessage type from entities
   summary?: string;
   tokenUsage: {
     messagesTokens: number;

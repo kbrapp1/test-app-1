@@ -62,9 +62,11 @@ describe('Role-Based Permission Integration', () => {
       const checkApiAccess = (userRole: UserRole, requiredRole: UserRole) => {
         // Simple role hierarchy check
         const roleHierarchy = {
+          [UserRole.VISITOR]: 0,
           [UserRole.VIEWER]: 1,
-          [UserRole.EDITOR]: 2,
-          [UserRole.ADMIN]: 3
+          [UserRole.MEMBER]: 2,
+          [UserRole.EDITOR]: 3,
+          [UserRole.ADMIN]: 4
         };
 
         return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
@@ -128,7 +130,7 @@ describe('Role-Based Permission Integration', () => {
       
       expect(validateServerAction(UserRole.ADMIN, teamManagementPerms, true)).toBe(true);
       expect(validateServerAction(UserRole.EDITOR, teamManagementPerms, true)).toBe(false);
-      expect(validateServerAction(UserRole.EDITOR, teamManagementPerms, false)).toBe(false); // Editor has neither
+      expect(validateServerAction(UserRole.EDITOR, teamManagementPerms, false)).toBe(true); // Editor has MANAGE_TEAMS
 
       // Asset action requiring any asset permission
       const assetPerms = [Permission.CREATE_ASSET, Permission.UPDATE_ASSET, Permission.VIEW_ASSET];
@@ -178,7 +180,7 @@ describe('Role-Based Permission Integration', () => {
       expect(editorPerms.canDeleteAssets).toBe(true);
       expect(editorPerms.canViewAssets).toBe(true);
       expect(editorPerms.canManageUsers).toBe(false);
-      expect(editorPerms.canManageTeams).toBe(false);
+      expect(editorPerms.canManageTeams).toBe(true);
       expect(editorPerms.canManageSettings).toBe(false);
       expect(editorPerms.canCreateFolders).toBe(true);
       expect(editorPerms.canEditFolders).toBe(true);

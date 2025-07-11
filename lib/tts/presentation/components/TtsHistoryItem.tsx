@@ -34,7 +34,7 @@ export function TtsHistoryItem({
   item, 
   onReplay, 
   onReloadInput, 
-  onViewInDam,
+  onViewInDam, // TODO: Implement View in DAM functionality
   onDelete,
   onSaveToDam,
   onSaveAsToDam, 
@@ -48,6 +48,9 @@ export function TtsHistoryItem({
   isProblematicFromDb,      
   dbProblematicMessage      
 }: TtsHistoryItemProps) {
+  // Temporarily reference onViewInDam to avoid unused variable warning
+  // TODO: Remove when View in DAM functionality is implemented
+  void onViewInDam; // Suppress unused variable warning
   // const [isDeleting, setIsDeleting] = useState(false); // isDeleting seems unused
   const [isSavingToDam, setIsSavingToDam] = useState(false);
   const [isSavingAsToDam, setIsSavingAsToDam] = useState(false);

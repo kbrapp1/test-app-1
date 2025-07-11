@@ -20,7 +20,6 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
 } from "@/components/ui/command"
 
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -121,7 +120,7 @@ export function CommandPalette({ open, setOpen }: CommandPaletteProps) {
             value="Go to Settings Danger Zone"
           >
              <span className="mr-2 h-4 w-4">⚠️</span>
-             <span>Danger Zone</span>
+             <span>Danger</span>
           </CommandItem>
         </CommandGroup>
 

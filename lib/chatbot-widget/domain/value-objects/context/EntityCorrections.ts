@@ -12,6 +12,7 @@
  */
 
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
+import { EntityValue, EntityChange } from '../../types/ChatbotTypes';
 
 export interface CorrectionMetadata {
   timestamp: Date;
@@ -144,7 +145,7 @@ export class EntityCorrections {
     confidence: number = 0.9,
     reason?: string
   ): EntityCorrections {
-    this.validateCorrectionInput(newValue, messageId, confidence);
+    this.validateCorrectionInput(newValue as unknown, messageId, confidence);
     
     const correction: CorrectionOperation<T> = {
       newValue,
@@ -258,7 +259,7 @@ export class EntityCorrections {
     }
   }
   
-  private validateCorrectionInput(newValue: any, messageId: string, confidence: number): void {
+  private validateCorrectionInput(newValue: unknown, messageId: string, confidence: number): void {
     if (!newValue || (typeof newValue === 'string' && newValue.trim().length === 0)) {
       throw new BusinessRuleViolationError(
         'New value for correction cannot be empty',

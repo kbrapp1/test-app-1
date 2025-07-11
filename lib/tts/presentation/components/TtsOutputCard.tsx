@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Loader2, Download, Save, AlertCircleIcon, CopyIcon, Trash2Icon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -68,7 +67,7 @@ export function TtsOutputCard({
     if (!audioUrl) return;
     navigator.clipboard.writeText(audioUrl).then(() => {
       toast({ title: "Success", description: "Audio URL copied to clipboard!" });
-    }).catch(err => {
+    }).catch(() => {
       toast({ variant: "destructive", title: "Error", description: "Could not copy URL to clipboard." });
     });
   };

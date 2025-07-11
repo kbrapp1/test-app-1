@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, Mock, MockedFunction } from 'vitest';
 import { VoiceSelector } from './VoiceSelector';
-import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
 import { getTtsVoices } from '../actions/tts';
 import { type TtsVoice } from '../../domain';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -24,7 +23,7 @@ vi.mock('lucide-react', () => ({
 // Mocks for ShadCN UI components
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({ children }: { children: React.ReactNode }) => <div data-testid="popover">{children}</div>,
-  PopoverTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
+  PopoverTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
     <div data-testid="popover-trigger">{children}</div>
   ),
   PopoverContent: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
@@ -88,7 +87,7 @@ const resetMocks = () => {
 describe('VoiceSelector', () => {
   beforeEach(() => {
     resetMocks();
-    mockGetTtsVoices.mockResolvedValue({ success: true, data: mockVoices, error: null });
+    mockGetTtsVoices.mockResolvedValue({ success: true, voices: mockVoices, error: null });
   });
 
   // Helper function to render the component with FormProvider
@@ -207,7 +206,7 @@ describe('VoiceSelector', () => {
   it('shows loading state initially (simulated by delayed promise)', async () => {
     // Delay the mock response to show loading
     mockGetTtsVoices.mockImplementationOnce(() => 
-      new Promise(resolve => setTimeout(() => resolve({ success: true, data: mockVoices, error: null }), 100))
+      new Promise(resolve => setTimeout(() => resolve({ success: true, voices: mockVoices, error: null }), 100))
     );
     renderComponent();
     // Expect the initial call without waiting for it to resolve for this specific check
@@ -224,7 +223,7 @@ describe('VoiceSelector', () => {
   });
 
   it('handles error when fetching voices', async () => {
-    mockGetTtsVoices.mockResolvedValueOnce({ success: false, data: null, error: { message: 'Failed to fetch' } });
+    mockGetTtsVoices.mockResolvedValueOnce({ success: false, voices: null, error: { message: 'Failed to fetch' } });
     renderComponent();
 
     await waitFor(() => expect(mockGetTtsVoices).toHaveBeenCalledWith('test-provider', undefined));
@@ -253,6 +252,17 @@ describe('VoiceSelector', () => {
     expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Select a voice');
   
     fireEvent.click(screen.getByTestId('popover-trigger'));
+    
+    // Wait for the popover content to be visible and voices to load
+    await waitFor(() => {
+      expect(screen.getByTestId('popover-content')).toBeVisible();
+    });
+    
+    // Wait for the command items to be rendered
+    await waitFor(() => {
+      expect(screen.getAllByTestId('command-item')).toHaveLength(mockVoices.length);
+    });
+    
     const items = screen.getAllByTestId('command-item');
     const bobItem = items.find(item => item.getAttribute('data-value') === 'voice2');
     expect(bobItem).toBeDefined();

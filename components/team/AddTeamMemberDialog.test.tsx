@@ -6,6 +6,33 @@ import { UserProfileProvider } from '@/lib/auth/providers/UserProfileProvider';
 import { OrganizationProvider } from '@/lib/organization/application/providers/OrganizationProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+// Mock Next.js router
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: vi.fn(),
+  }),
+}));
+
+// Mock the permissions hook
+let mockPermissions = {
+  canCreate: true,
+  canUpdate: true,
+  canDelete: true,
+  isLoading: false,
+};
+
+vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
+  useTeamMemberPermissions: () => mockPermissions,
+}));
+
 // Mock Supabase client
 const mockSupabaseClient = {
   auth: {
@@ -91,7 +118,18 @@ describe('AddTeamMemberDialog', () => {
     });
   });
 
-  it('shows disabled button with tooltip for non-admin users', async () => {
+  beforeEach(() => {
+    // Reset permissions to default state
+    mockPermissions.canCreate = true;
+    mockPermissions.canUpdate = true;
+    mockPermissions.canDelete = true;
+    mockPermissions.isLoading = false;
+  });
+
+  it('hides component entirely for non-admin users', async () => {
+    // Set permissions for non-admin (cannot create)
+    mockPermissions.canCreate = false;
+    
     // Mock non-admin profile
     mockQueryBuilder.single.mockResolvedValue({
       data: { ...mockProfile, is_super_admin: false },
@@ -104,17 +142,16 @@ describe('AddTeamMemberDialog', () => {
       </TestWrapper>
     );
 
-    // Wait for component to mount and load user data
+    // Component should not render at all for users without CREATE permission
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /add team member/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
-
-    // Should render disabled button for non-admin
-    const button = screen.getByRole('button', { name: /add team member/i });
-    expect(button).toBeDisabled();
   });
 
   it('shows enabled button and dialog for admin users', async () => {
+    // Set permissions for admin (can create)
+    mockPermissions.canCreate = true;
+    
     // Mock admin profile  
     mockQueryBuilder.single.mockResolvedValue({
       data: { ...mockProfile, is_super_admin: true },
@@ -137,7 +174,11 @@ describe('AddTeamMemberDialog', () => {
     expect(button).not.toBeDisabled();
   });
 
-  it('shows disabled button with loading tooltip while loading', async () => {
+  it('shows disabled button while loading', async () => {
+    // Set permissions to loading state
+    mockPermissions.isLoading = true;
+    mockPermissions.canCreate = false; // Doesn't matter when loading
+    
     // Mock loading state by delaying the session
     mockSupabaseClient.auth.getSession.mockImplementation(() => 
       new Promise(resolve => 
@@ -151,7 +192,12 @@ describe('AddTeamMemberDialog', () => {
       </TestWrapper>
     );
 
-    // Component should return null while loading, so no button should be present initially
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    // Component should render a disabled button while loading
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add team member/i })).toBeInTheDocument();
+    });
+    
+    const button = screen.getByRole('button', { name: /add team member/i });
+    expect(button).toBeDisabled();
   });
 }); 

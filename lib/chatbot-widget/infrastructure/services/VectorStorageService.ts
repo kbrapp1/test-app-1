@@ -23,7 +23,8 @@ import {
   VectorStorageConfig
 } from '../types/VectorRepositoryTypes';
 
-/** Specialized Service for Vector Storage Operations */
+/** Specialized Service for Vector Storage Operations
+ */
 export class VectorStorageService {
   
   private static readonly DEFAULT_STORAGE_CONFIG: VectorStorageConfig = {
@@ -42,7 +43,8 @@ export class VectorStorageService {
     private errorTrackingService: ErrorTrackingFacade
   ) {}
 
-  /** Store knowledge items with vectors in batch */
+  /** Store knowledge items with vectors in batch
+ */
   async storeKnowledgeItems(
     context: VectorQueryContext,
     items: VectorKnowledgeItem[]
@@ -118,7 +120,8 @@ export class VectorStorageService {
     }
   }
 
-  /** Delete existing items by IDs */
+  /** Delete existing items by IDs
+ */
   private async deleteExistingItems(
     context: VectorQueryContext,
     knowledgeItemIds: string[]
@@ -138,7 +141,8 @@ export class VectorStorageService {
     }
   }
 
-  /** Insert vector records in batch */
+  /** Insert vector records in batch
+ */
   private async insertVectorRecords(
     context: VectorQueryContext,
     items: VectorKnowledgeItem[]
@@ -217,7 +221,8 @@ export class VectorStorageService {
     return count || 0;
   }
 
-  /** Perform actual deletion operation */
+  /** Perform actual deletion operation
+ */
   private async performDeletion(deletionContext: VectorDeletionContext): Promise<number> {
     let deleteQuery = this.supabase
       .from('chatbot_knowledge_vectors')
@@ -330,7 +335,7 @@ export class VectorStorageService {
    * - Handle error tracking failures gracefully
    * - Enable operational insights
    */
-  private async trackDeletionError(deletionContext: VectorDeletionContext, error: any): Promise<void> {
+  private async trackDeletionError(deletionContext: VectorDeletionContext, error: unknown): Promise<void> {
     try {
       await this.errorTrackingService.trackKnowledgeIndexingError(
         'vector_storage_deletion_failed',

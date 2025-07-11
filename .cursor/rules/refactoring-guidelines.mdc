@@ -1,0 +1,262 @@
+# Simple Refactoring Guidelines
+
+## 🎯 Quick Refactoring Prompt
+
+```
+Please refactor this code following these simple rules:
+
+REFACTORING GOALS:
+1. **Break down large files** - Split 350+ line files into multiple smaller files (50-150 lines each)
+2. **Single responsibility** - Each new file should do ONE thing well
+3. **Keep it simple** - Don't add complexity, just organize existing code
+4. **Preserve security** - NEVER remove organizationId, activeOrganizationId, or auth variables
+5. **Maintain functionality** - All existing behavior must work exactly the same
+
+SPLITTING STRATEGY:
+- Split by FEATURE/RESPONSIBILITY, not by arbitrary line count
+- Extract related functions/components into their own files
+- Keep imports/exports simple and clear
+- Use descriptive file names that explain the purpose
+
+SECURITY RULES:
+- NEVER remove organization/auth variables (even if ESLint says "unused")
+- If organizationId appears unused, USE it for validation, don't remove it
+- Preserve all React Hooks order (all hooks before any returns)
+- Keep JWT-based security patterns intact
+
+WHAT NOT TO DO:
+- Don't create complex abstractions or interfaces
+- Don't add unnecessary classes or inheritance
+- Don't create tiny 10-line files
+- Don't change working patterns just to be "clever"
+
+OUTPUT:
+- Show what you're extracting and why
+- List the new files and their purpose (1-2 sentences each)
+- Confirm all functionality is preserved
+```
+
+## 📏 File Size Targets
+
+**GOOD FILE SIZES:**
+- **50-150 lines** - Sweet spot for most files
+- **150-200 lines** - Acceptable for complex components
+- **200+ lines** - Needs to be split
+
+**SPLITTING EXAMPLES:**
+
+### Example 1: Large Component (350 lines)
+```typescript
+// BEFORE: user-profile.tsx (350 lines)
+export function UserProfile() {
+  // 50 lines of hooks and state
+  // 100 lines of form handling
+  // 100 lines of data display
+  // 100 lines of action buttons
+}
+
+// AFTER: Split into 4 focused files
+// user-profile.tsx (80 lines) - Main component + organization validation
+// user-profile-form.tsx (120 lines) - Form handling logic
+// user-profile-display.tsx (100 lines) - Data display components  
+// user-profile-actions.tsx (90 lines) - Action buttons and handlers
+```
+
+### Example 2: Large Service (400 lines)
+```typescript
+// BEFORE: user-service.ts (400 lines)
+export class UserService {
+  // 100 lines of CRUD operations
+  // 100 lines of validation logic
+  // 100 lines of formatting/transformation
+  // 100 lines of external API calls
+}
+
+// AFTER: Split by responsibility
+// user-service.ts (100 lines) - Main service + CRUD operations
+// user-validation.ts (100 lines) - All validation logic
+// user-formatting.ts (100 lines) - Data transformation
+// user-api-client.ts (100 lines) - External API integration
+```
+
+## 🔧 Simple Splitting Strategies
+
+### 1. Component Splitting
+```typescript
+// Large component → Multiple focused components
+UserDashboard (300 lines) →
+  - UserDashboard (60 lines) - Main layout + security validation
+  - UserStats (80 lines) - Statistics display
+  - UserActivity (90 lines) - Activity feed
+  - UserSettings (70 lines) - Settings panel
+```
+
+### 2. Service Splitting  
+```typescript
+// Large service → Focused services
+ChatbotService (400 lines) →
+  - ChatbotService (100 lines) - Main orchestration
+  - MessageProcessor (100 lines) - Message handling
+  - ConversationManager (100 lines) - Conversation logic
+  - ChatbotRepository (100 lines) - Data access
+```
+
+### 3. Utility Splitting
+```typescript
+// Large utils file → Domain-specific utils
+utils.ts (500 lines) →
+  - date-utils.ts (80 lines) - Date formatting/parsing
+  - validation-utils.ts (100 lines) - Input validation
+  - format-utils.ts (90 lines) - Data formatting
+  - api-utils.ts (120 lines) - API helpers
+  - string-utils.ts (60 lines) - String manipulation
+```
+
+## 🚨 Security Preservation Rules
+
+### 1. Always Preserve Organization Context
+```typescript
+// ✅ PRESERVE: Organization validation in main component
+export function UserProfile({ organizationId }: Props) {
+  const { activeOrganizationId } = useOrganizationContext();
+  
+  // CRITICAL: Keep this validation when splitting
+  if (activeOrganizationId !== organizationId) {
+    return <SecurityErrorUI />;
+  }
+  
+  return (
+    <div>
+      <UserProfileForm organizationId={organizationId} />
+      <UserProfileActions organizationId={organizationId} />
+    </div>
+  );
+}
+
+// ✅ PRESERVE: Pass organizationId to child components
+export function UserProfileForm({ organizationId }: Props) {
+  // Child components receive organizationId for security context
+}
+```
+
+### 2. Maintain React Hooks Order
+```typescript
+// ✅ PRESERVE: All hooks called first in every component
+export function SplitComponent({ organizationId }: Props) {
+  // ALL HOOKS FIRST - don't change this during splitting
+  const { activeOrganizationId } = useOrganizationContext();
+  const [state, setState] = useState();
+  const { data } = useQuery();
+  
+  // Validation after all hooks
+  if (activeOrganizationId !== organizationId) {
+    return <SecurityErrorUI />;
+  }
+  
+  // Component logic
+}
+```
+
+## 📋 Splitting Checklist
+
+### Before Splitting
+- [ ] File is actually too large (200+ lines)
+- [ ] Identify clear responsibilities to separate
+- [ ] Note all security-critical variables
+- [ ] Plan 3-5 focused files (not 10+ tiny files)
+
+### During Splitting
+- [ ] Each new file has ONE clear purpose
+- [ ] File names describe what they do
+- [ ] Security variables are preserved and passed down
+- [ ] React Hooks rules maintained
+- [ ] Imports/exports are clean
+
+### After Splitting
+- [ ] All functionality works the same
+- [ ] No security variables were removed
+- [ ] Each file is 50-150 lines (sweet spot)
+- [ ] File purposes are clear from names
+- [ ] Code is easier to understand, not more complex
+
+## 🎯 Good File Names
+
+**DESCRIPTIVE NAMES:**
+- `user-profile-form.tsx` - Form for editing user profile
+- `chat-message-processor.ts` - Processes chat messages
+- `organization-validator.ts` - Validates organization data
+- `asset-upload-handler.ts` - Handles file uploads
+
+**AVOID GENERIC NAMES:**
+- `utils.ts` - Too vague
+- `helpers.ts` - Unclear purpose  
+- `components.tsx` - What components?
+- `service.ts` - Which service?
+
+## 🚫 What NOT to Do
+
+### 1. Don't Create Tiny Files
+```typescript
+// ❌ DON'T: Split into too many tiny files
+// user-name.ts (5 lines)
+// user-email.ts (8 lines)
+// user-phone.ts (6 lines)
+
+// ✅ DO: Group related functionality
+// user-contact-info.ts (50 lines)
+export const UserContactInfo = {
+  formatName: (name: string) => name.trim(),
+  validateEmail: (email: string) => /\S+@\S+\.\S+/.test(email),
+  formatPhone: (phone: string) => phone.replace(/\D/g, '')
+};
+```
+
+### 2. Don't Add Unnecessary Complexity
+```typescript
+// ❌ DON'T: Add abstractions during splitting
+interface UserProcessor<T> {
+  process(data: T): ProcessedUser<T>;
+}
+
+// ✅ DO: Keep it simple
+export function processUserData(userData: UserData): ProcessedUserData {
+  return {
+    id: userData.id,
+    name: userData.name.trim(),
+    email: userData.email.toLowerCase()
+  };
+}
+```
+
+### 3. Don't Remove Working Patterns
+```typescript
+// ✅ PRESERVE: Working security patterns
+const organizationId = await getActiveOrganizationId(); // From JWT
+// Don't change this pattern - it works!
+
+// ✅ PRESERVE: Working RLS integration  
+const data = await supabase.from('assets').select('*');
+// RLS automatically filters by organization - don't change!
+```
+
+## 📖 Quick Reference
+
+**When to Split:**
+- File > 200 lines
+- Multiple responsibilities in one file
+- Hard to find specific functionality
+- Code review takes too long
+
+**How to Split:**
+- By feature/responsibility
+- 50-150 lines per new file
+- Clear, descriptive file names
+- Preserve all security patterns
+
+**Red Flags:**
+- Creating 10+ tiny files
+- Adding complex abstractions
+- Removing organization variables
+- Breaking working patterns
+
+**Remember: The goal is to make code easier to find and understand, not to show off advanced patterns.** 

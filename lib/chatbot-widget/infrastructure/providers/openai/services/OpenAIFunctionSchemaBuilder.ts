@@ -22,7 +22,7 @@ export class OpenAIFunctionSchemaBuilder {
    * - Parameters kept for backward compatibility but not used in simplified approach
    */
   static buildUnifiedChatbotSchemaWithContext(
-    existingEntities?: any, 
+    existingEntities?: Record<string, unknown>, 
     conversationPhase?: string, 
     userMessage?: string
   ): OpenAIFunctionSchema {

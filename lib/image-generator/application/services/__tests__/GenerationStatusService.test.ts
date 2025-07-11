@@ -64,7 +64,8 @@ describe('GenerationStatusService', () => {
       externalProviderId: 'ext-123',
       getStatus: vi.fn().mockReturnValue({ value: 'processing' }),
       markAsCompleted: vi.fn(),
-      markAsFailed: vi.fn()
+      markAsFailed: vi.fn(),
+      getId: vi.fn().mockReturnValue('gen-123')
     } as any;
 
     // Mock provider
@@ -200,7 +201,7 @@ describe('GenerationStatusService', () => {
         25
       );
       expect(mockGenerationRepository.update).toHaveBeenCalledWith(mockGeneration);
-      expect(mockGenerationRepository.save).toHaveBeenCalledWith(mockGeneration);
+      expect(mockAutoSaveUseCase.execute).toHaveBeenCalledWith('gen-123');
     });
 
     it('should handle failed generation from provider', async () => {
@@ -272,7 +273,7 @@ describe('GenerationStatusService', () => {
       });
 
       // Make auto-save fail
-      mockGenerationRepository.save.mockRejectedValue(new Error('Auto-save failed'));
+      mockAutoSaveUseCase.execute.mockRejectedValue(new Error('Auto-save failed'));
 
       const result = await service.checkGenerationStatus('gen-123', authContext);
 

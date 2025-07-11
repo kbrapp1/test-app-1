@@ -5,8 +5,47 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { TeamMember } from '@/types/team';
 import { apiDeduplicationService } from '@/lib/dam/application/services/ApiDeduplicationService';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { 
+  checkViewTeamMemberAccess,
+  checkCreateTeamMemberAccess,
+  checkUpdateTeamMemberAccess,
+  checkDeleteTeamMemberAccess
+} from '@/lib/shared/access-control/server/checkFeatureAccess';
 
+// Organization context validation - ensures team member belongs to current org
+async function validateOrganizationContext(teamMemberId: string): Promise<void> {
+  const activeOrgId = await getActiveOrganizationId();
+  if (!activeOrgId) {
+    throw new Error('No active organization context');
+  }
+
+  const supabase = createClient();
+  const { data: teamMember, error } = await supabase
+    .from('team_members')
+    .select('organization_id')
+    .eq('id', teamMemberId)
+    .single();
+    
+  if (error || !teamMember) {
+    throw new Error('Team member not found');
+  }
+  
+  if (teamMember.organization_id !== activeOrgId) {
+    throw new Error('Team member not found in current organization');
+  }
+}
+
+// Get team members with permission checking - fail-secure with deduplication
 export async function getTeamMembers(): Promise<TeamMember[]> {
+  try {
+    // AI: Check permission first
+    await checkViewTeamMemberAccess();
+  } catch (error) {
+    // AI: Fail-secure - return empty array if no permission
+    console.warn('User lacks permission to view team members:', error);
+    return [];
+  }
   
   return apiDeduplicationService.deduplicateServerAction(
     'getTeamMembers',
@@ -21,9 +60,17 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 async function executeGetTeamMembers(): Promise<TeamMember[]> {
   const supabase = createClient();
 
+  // AI: Get organization context for explicit filtering
+  const activeOrgId = await getActiveOrganizationId();
+  if (!activeOrgId) {
+    console.warn('No active organization context for getTeamMembers');
+    return [];
+  }
+
   const { data: membersData, error } = await supabase
     .from('team_members')
     .select('*')
+    .eq('organization_id', activeOrgId) // AI: Explicit organization filtering
     .order('created_at', { ascending: true }); // Or sort_order if using
 
   if (error) {
@@ -66,6 +113,7 @@ const TeamMemberSchema = z.object({
   secondaryImage: z.any(), //.instanceof(File).refine(...)
 });
 
+// Add team member with permission checking and file upload handling
 export async function addTeamMember(formData: FormData): Promise<{
   success: boolean;
   error?: string;
@@ -73,18 +121,15 @@ export async function addTeamMember(formData: FormData): Promise<{
 }> {
   const supabase = createClient();
 
-  // --- Authorization Check (Example) ---
-  // Uncomment and adapt if only specific users can add members
-  /*
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' };
+  // AI: Check permission first
+  try {
+    await checkCreateTeamMemberAccess();
+  } catch (error) {
+    return { 
+      success: false, 
+      error: 'Insufficient permissions to add team members' 
+    };
   }
-  // Add role check if necessary
-  // if (user.role !== 'admin') { // Check your user roles
-  //   return { success: false, error: 'Not authorized' };
-  // }
-  */
 
   const rawFormData = {
     name: formData.get('name'),
@@ -140,12 +185,19 @@ export async function addTeamMember(formData: FormData): Promise<{
     }
     const secondary_image_path = secondaryUploadData.path;
 
+    // AI: Get organization context for explicit insertion
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      throw new Error('No active organization context');
+    }
+
     // --- Database Insert ---
     const { data: insertData, error: insertError } = await supabase
       .from('team_members')
       .insert({
         name,
         title,
+        organization_id: activeOrgId, // AI: Explicit organization context
         primary_image_path,
         secondary_image_path,
         // user_id: user.id, // Include if tracking user who added member
@@ -181,8 +233,227 @@ export async function addTeamMember(formData: FormData): Promise<{
       }
     };
 
-  } catch (error: any) {
-    console.error('Error in addTeamMember:', error);
-    return { success: false, error: error.message || 'An unexpected error occurred' };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    console.error('Error in addTeamMember:', errorMessage);
+    return { success: false, error: errorMessage };
   }
-} 
+}
+
+// Update team member with permission checking and optional file uploads
+export async function updateTeamMember(
+  id: string,
+  formData: FormData
+): Promise<{
+  success: boolean;
+  error?: string;
+  data?: TeamMember;
+}> {
+  const supabase = createClient();
+
+  // AI: Check permission first
+  try {
+    await checkUpdateTeamMemberAccess();
+  } catch (error) {
+    return { 
+      success: false, 
+      error: 'Insufficient permissions to update team members' 
+    };
+  }
+
+  try {
+    // AI: Validate organization context first
+    await validateOrganizationContext(id);
+
+    // AI: Verify team member exists
+    const { data: existingMember, error: fetchError } = await supabase
+      .from('team_members')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existingMember) {
+      return { success: false, error: 'Team member not found' };
+    }
+
+    const rawFormData = {
+      name: formData.get('name') || existingMember.name,
+      title: formData.get('title') || existingMember.title,
+      primaryImage: formData.get('primaryImage'),
+      secondaryImage: formData.get('secondaryImage'),
+    };
+
+    // AI: Build update object with only changed fields
+    const updateData: Record<string, unknown> = {
+      name: rawFormData.name,
+      title: rawFormData.title,
+    };
+
+    // AI: Handle image updates if provided
+    if (rawFormData.primaryImage instanceof File) {
+      const primaryFileName = `${crypto.randomUUID()}-${rawFormData.primaryImage.name}`;
+      const primaryPath = `public/${primaryFileName}`;
+      
+      const { data: primaryUploadData, error: primaryUploadError } = await supabase.storage
+        .from('team-images')
+        .upload(primaryPath, rawFormData.primaryImage);
+
+      if (primaryUploadError) {
+        throw new Error(`Failed to upload primary image: ${primaryUploadError.message}`);
+      }
+
+      // AI: Clean up old primary image
+      if (existingMember.primary_image_path) {
+        await supabase.storage.from('team-images').remove([existingMember.primary_image_path]);
+      }
+
+      updateData.primary_image_path = primaryUploadData.path;
+    }
+
+    if (rawFormData.secondaryImage instanceof File) {
+      const secondaryFileName = `${crypto.randomUUID()}-${rawFormData.secondaryImage.name}`;
+      const secondaryPath = `public/${secondaryFileName}`;
+      
+      const { data: secondaryUploadData, error: secondaryUploadError } = await supabase.storage
+        .from('team-images')
+        .upload(secondaryPath, rawFormData.secondaryImage);
+
+      if (secondaryUploadError) {
+        throw new Error(`Failed to upload secondary image: ${secondaryUploadError.message}`);
+      }
+
+      // AI: Clean up old secondary image
+      if (existingMember.secondary_image_path) {
+        await supabase.storage.from('team-images').remove([existingMember.secondary_image_path]);
+      }
+
+      updateData.secondary_image_path = secondaryUploadData.path;
+    }
+
+    // AI: Get organization context for update validation
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      throw new Error('No active organization context');
+    }
+
+    // AI: Update database record with organization context validation
+    const { data: updatedMember, error: updateError } = await supabase
+      .from('team_members')
+      .update(updateData)
+      .eq('id', id)
+      .eq('organization_id', activeOrgId) // AI: Defense-in-depth organization validation
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new Error(`Failed to update team member: ${updateError.message}`);
+    }
+
+    // AI: Revalidate and return success
+    revalidatePath('/team');
+
+    // AI: Construct public URLs for response
+    const { data: primaryUrlData } = supabase.storage
+      .from('team-images')
+      .getPublicUrl(updatedMember.primary_image_path);
+
+    const { data: secondaryUrlData } = supabase.storage
+      .from('team-images')
+      .getPublicUrl(updatedMember.secondary_image_path);
+
+    return {
+      success: true,
+      data: {
+        ...updatedMember,
+        primary_image_url: primaryUrlData?.publicUrl || '',
+        secondary_image_url: secondaryUrlData?.publicUrl || '',
+      }
+    };
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    console.error('Error in updateTeamMember:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Delete team member with permission checking and file cleanup
+export async function deleteTeamMember(id: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const supabase = createClient();
+
+  // AI: Check permission first
+  try {
+    await checkDeleteTeamMemberAccess();
+  } catch (error) {
+    return { 
+      success: false, 
+      error: 'Insufficient permissions to delete team members' 
+    };
+  }
+
+  try {
+    // AI: Validate organization context first
+    await validateOrganizationContext(id);
+
+    // AI: Get team member data for file cleanup
+    const { data: teamMember, error: fetchError } = await supabase
+      .from('team_members')
+      .select('primary_image_path, secondary_image_path')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      return { success: false, error: 'Team member not found' };
+    }
+
+    // AI: Get organization context for delete validation
+    const activeOrgId = await getActiveOrganizationId();
+    if (!activeOrgId) {
+      throw new Error('No active organization context');
+    }
+
+    // AI: Delete from database first with organization context validation
+    const { error: deleteError } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('id', id)
+      .eq('organization_id', activeOrgId); // AI: Defense-in-depth organization validation
+
+    if (deleteError) {
+      throw new Error(`Failed to delete team member: ${deleteError.message}`);
+    }
+
+    // AI: Clean up image files (best effort - don't fail if cleanup fails)
+    const filesToRemove = [];
+    if (teamMember.primary_image_path) {
+      filesToRemove.push(teamMember.primary_image_path);
+    }
+    if (teamMember.secondary_image_path) {
+      filesToRemove.push(teamMember.secondary_image_path);
+    }
+
+    if (filesToRemove.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('team-images')
+        .remove(filesToRemove);
+
+      if (storageError) {
+        console.warn('Failed to clean up team member images:', storageError);
+        // AI: Don't fail the operation for storage cleanup issues
+      }
+    }
+
+    // AI: Revalidate team page
+    revalidatePath('/team');
+
+    return { success: true };
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    console.error('Error in deleteTeamMember:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}

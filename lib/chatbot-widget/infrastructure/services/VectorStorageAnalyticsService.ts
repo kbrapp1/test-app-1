@@ -10,12 +10,14 @@
  * - Provide actionable storage insights and recommendations
  */
 
-/** Specialized Service for Vector Storage Analysis */
+/** Specialized Service for Vector Storage Analysis
+ */
 export class VectorStorageAnalyticsService {
 
-  /** Calculate storage optimization metrics */
+  /** Calculate storage optimization metrics
+ */
   calculateOptimizationMetrics(data: Array<{
-    vector: any;
+    vector: number[] | string;
     content_hash: string;
     created_at: string;
     updated_at: string;
@@ -59,7 +61,8 @@ export class VectorStorageAnalyticsService {
     };
   }
 
-  /** Generate storage optimization recommendations */
+  /** Generate storage optimization recommendations
+ */
   private generateOptimizationRecommendations(
     duplicateCount: number,
     storageEfficiency: number,
@@ -142,7 +145,8 @@ export class VectorStorageAnalyticsService {
     };
   }
 
-  /** Analyze storage distribution patterns */
+  /** Analyze storage distribution patterns
+ */
   analyzeStorageDistribution(data: Array<{
     content_hash: string;
     category?: string;

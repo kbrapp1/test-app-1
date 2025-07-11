@@ -34,31 +34,35 @@ export interface ActionResult<T = any> {
   };
 }
 
-/** Generate Website Source ID Helper */
+/** Generate Website Source ID Helper
+ */
 function generateWebsiteSourceId(): string {
   return `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/** Create Crawl Settings Helper */
+/** Create Crawl Settings Helper
+ */
 function createCrawlSettings(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
   return {
-    maxPages: Math.min(formData.maxPages || 50, 1000), // Cap at 1000 pages
-    maxDepth: Math.min(formData.maxDepth || 3, 10), // Cap at 10 levels
+    maxPages: Math.min(formData.maxPages!, 1000), // Cap at 1000 pages
+    maxDepth: Math.min(formData.maxDepth!, 10), // Cap at 10 levels
     includePatterns: [],
     excludePatterns: [],
-    respectRobotsTxt: formData.respectRobotsTxt ?? true,
+    respectRobotsTxt: formData.respectRobotsTxt!,
     crawlFrequency: 'manual',
     includeImages: false,
     includePDFs: true
   };
 }
 
-/** Create Crawl Settings from Form Data (Public) */
+/** Create Crawl Settings from Form Data (Public)
+ */
 export function createCrawlSettingsFromFormData(formData: WebsiteSourceFormData): WebsiteCrawlSettings {
   return createCrawlSettings(formData);
 }
 
-/** Create Website Source from Form Data */
+/** Create Website Source from Form Data
+ */
 export function createWebsiteSourceFromFormData(formData: WebsiteSourceFormData): WebsiteSource {
   return {
     id: generateWebsiteSourceId(),
@@ -71,7 +75,8 @@ export function createWebsiteSourceFromFormData(formData: WebsiteSourceFormData)
   };
 }
 
-/** Update Website Source Status Helper */
+/** Update Website Source Status Helper
+ */
 export async function updateWebsiteSourceStatus(
   configId: string,
   sourceId: string,
@@ -118,7 +123,8 @@ export function createErrorResult(code: string, message: string, severity: strin
   };
 }
 
-/** Handle Action Error Helper */
+/** Handle Action Error Helper
+ */
 export function handleActionError(error: unknown, operation: string): ActionResult {
   if (error instanceof DomainError) {
     return {
@@ -142,14 +148,24 @@ export function handleActionError(error: unknown, operation: string): ActionResu
   };
 }
 
-/** Revalidate Website Sources Paths Helper */
+/** Revalidate Website Sources Paths Helper
+ */
 export function revalidateWebsiteSourcesPaths(): void {
   revalidatePath('/ai-playground/chatbot-widget/website-sources');
   revalidatePath('/ai-playground/chatbot-widget/knowledge');
 }
 
-/** Create Cleaned Knowledge Base Helper */
-export function createCleanedKnowledgeBase(existingKnowledgeBase: any): any {
+/** Create Cleaned Knowledge Base Helper
+ */
+interface KnowledgeBaseData {
+  companyInfo: unknown;
+  productCatalog: unknown;
+  faqs: unknown;
+  supportDocs: unknown;
+  complianceGuidelines: unknown;
+}
+
+export function createCleanedKnowledgeBase(existingKnowledgeBase: KnowledgeBaseData): unknown {
   const { KnowledgeBase } = require('../../domain/value-objects/ai-configuration/KnowledgeBase');
   return KnowledgeBase.create({
     companyInfo: existingKnowledgeBase.companyInfo,

@@ -28,7 +28,7 @@ export class TtsReplicateAdapter {
   /**
    * Generate speech from text with TTS-specific logic
    */
-  async generateSpeech(request: SpeechRequest): Promise<{ predictionId: string; outputUrl?: string }> {
+  async generateSpeech(request: SpeechRequest): Promise<{ predictionId: string }> {
     const provider = this.getProvider();
     
     // Validate request for Replicate
@@ -57,13 +57,9 @@ export class TtsReplicateAdapter {
           const fakePredictionId = `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           
           // Store the result temporarily (in a real implementation, you might use a cache)
-          this.storeRunResult(fakePredictionId, output);
+          await this.storeRunResult(fakePredictionId, output);
           
-          // Return both prediction ID and output URL for immediate completion
-          return { 
-            predictionId: fakePredictionId,
-            outputUrl: typeof output === 'string' ? output : undefined
-          };
+          return { predictionId: fakePredictionId };
         } else {
           // Use predictions API for other models
           const prediction = await provider.createPrediction({
@@ -97,16 +93,23 @@ export class TtsReplicateAdapter {
     // Check if this is a cached run result first
     if (this.runResultsCache.has(predictionId)) {
       const cachedResult = this.runResultsCache.get(predictionId);
-      return this.mapPredictionToTtsResult(cachedResult);
+      console.log('TTS DEBUG: Found cached result for', predictionId, ':', cachedResult);
+      const result = this.mapPredictionToTtsResult(cachedResult);
+      console.log('TTS DEBUG: Mapped cached result to:', { status: result.status, audioUrl: result.audioUrl });
+      return result;
     }
 
+    console.log('TTS DEBUG: No cached result found for', predictionId, 'checking predictions API');
+    
     // Otherwise, get from predictions API
     const provider = this.getProvider();
     
     try {
       const prediction = await provider.getPrediction(predictionId);
+      console.log('TTS DEBUG: Got prediction from API:', { id: prediction.id, status: prediction.status });
       return this.mapPredictionToTtsResult(prediction);
     } catch (error) {
+      console.error('TTS DEBUG: Error getting prediction from API:', error);
       throw new Error(`Failed to get TTS result: ${(error as Error).message}`);
     }
   }
@@ -135,13 +138,89 @@ export class TtsReplicateAdapter {
    * Map Replicate prediction to TTS-specific result
    */
   private mapPredictionToTtsResult(prediction: ReplicatePrediction): SpeechResult {
-    // Use the SpeechResult static factory method for Replicate
-    return SpeechResult.fromReplicate({
-      status: prediction.status,
-      output: prediction.output,
-      error: prediction.error,
+    // Convert ReplicatePrediction to ReplicatePredictionResponse format
+    // Provide defaults for missing fields required by the interface
+    const replicateResponse = {
       id: prediction.id,
-    });
+      status: this.mapReplicateStatusToExpected(prediction.status),
+      output: this.validateOutput(prediction.output),
+      error: prediction.error || null,
+      created_at: new Date().toISOString(), // Default to current time since not available
+      started_at: null, // Not available in ReplicatePrediction
+      completed_at: null, // Not available in ReplicatePrediction
+      urls: undefined, // Not available in ReplicatePrediction
+      metrics: this.validateMetrics(prediction.metrics),
+      logs: prediction.logs || undefined,
+      input: undefined, // Not available in ReplicatePrediction
+    };
+    
+    // Use the SpeechResult static factory method for Replicate
+    return SpeechResult.fromReplicate(replicateResponse);
+  }
+
+  /**
+   * Map Replicate status to expected status type
+   */
+  private mapReplicateStatusToExpected(status: string): "starting" | "processing" | "succeeded" | "completed" | "failed" | "canceled" {
+    switch (status.toLowerCase()) {
+      case 'succeeded':
+        return 'succeeded';
+      case 'completed':
+        return 'completed';
+      case 'failed':
+        return 'failed';
+      case 'canceled':
+      case 'cancelled':
+        return 'canceled';
+      case 'starting':
+        return 'starting';
+      case 'processing':
+        return 'processing';
+      default:
+        return 'processing'; // Default to processing for unknown statuses
+    }
+  }
+
+  /**
+   * Validate and type the output properly
+   */
+  private validateOutput(output: unknown): string | string[] | null | undefined {
+    if (output === null || output === undefined) {
+      return output;
+    }
+    
+    if (typeof output === 'string') {
+      return output;
+    }
+    
+    if (Array.isArray(output) && output.every(item => typeof item === 'string')) {
+      return output as string[];
+    }
+    
+    // If output is not the expected type, return null
+    return null;
+  }
+
+  /**
+   * Validate and type the metrics properly
+   */
+  private validateMetrics(metrics: unknown): { readonly predict_time?: number; readonly total_time?: number } | undefined {
+    if (!metrics || typeof metrics !== 'object') {
+      return undefined;
+    }
+    
+    const metricsObj = metrics as Record<string, unknown>;
+    const result: { predict_time?: number; total_time?: number } = {};
+    
+    if (typeof metricsObj.predict_time === 'number') {
+      result.predict_time = metricsObj.predict_time;
+    }
+    
+    if (typeof metricsObj.total_time === 'number') {
+      result.total_time = metricsObj.total_time;
+    }
+    
+    return Object.keys(result).length > 0 ? result : undefined;
   }
 
   /**
@@ -186,12 +265,79 @@ export class TtsReplicateAdapter {
   /**
    * Store run result for later retrieval (used for synchronous run API)
    */
-  private storeRunResult(predictionId: string, output: any): void {
+  private async storeRunResult(predictionId: string, output: any): Promise<void> {
+    console.log('TTS DEBUG: Storing run result for', predictionId, 'with output type:', typeof output, output?.constructor?.name);
+    
+    let processedOutput = output;
+    
+    // Handle ReadableStream from run API - convert to blob URL
+    // More robust detection for ReadableStream
+    if (output && typeof output === 'object' && 
+        (output.constructor?.name === 'ReadableStream' || 
+         output instanceof ReadableStream ||
+         (typeof output.getReader === 'function' && typeof output.locked === 'boolean'))) {
+      try {
+        console.log('TTS DEBUG: Converting ReadableStream to data URL');
+        // Convert ReadableStream to blob
+        const response = new Response(output);
+        const blob = await response.blob();
+        // Convert to ArrayBuffer then to base64 data URL for browser compatibility
+        const arrayBuffer = await blob.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const dataUrl = `data:audio/wav;base64,${base64}`;
+        processedOutput = dataUrl;
+        console.log('TTS DEBUG: Created data URL (length):', dataUrl.length);
+      } catch (error) {
+        console.error('TTS DEBUG: Failed to convert ReadableStream:', error);
+        processedOutput = null;
+      }
+    }
+    // Handle FileOutput object that might contain a ReadableStream
+    else if (output && typeof output === 'object' && output.constructor?.name === 'FileOutput') {
+      try {
+        console.log('TTS DEBUG: Handling FileOutput object');
+        // FileOutput might have a stream property or be iterable
+        if (typeof output.stream === 'function') {
+          const stream = output.stream();
+          console.log('TTS DEBUG: Got stream from FileOutput:', stream);
+          const response = new Response(stream);
+          const blob = await response.blob();
+          // Convert to ArrayBuffer then to base64 data URL for browser compatibility
+          const arrayBuffer = await blob.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const dataUrl = `data:audio/wav;base64,${base64}`;
+          processedOutput = dataUrl;
+          console.log('TTS DEBUG: Created data URL from FileOutput (length):', dataUrl.length);
+        } else if (output[Symbol.asyncIterator]) {
+          console.log('TTS DEBUG: FileOutput is async iterable');
+          // Handle async iterable
+          const chunks = [];
+          for await (const chunk of output) {
+            chunks.push(chunk);
+          }
+          const blob = new Blob(chunks);
+          // Convert to ArrayBuffer then to base64 data URL for browser compatibility
+          const arrayBuffer = await blob.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const dataUrl = `data:audio/wav;base64,${base64}`;
+          processedOutput = dataUrl;
+          console.log('TTS DEBUG: Created data URL from async iterable (length):', dataUrl.length);
+        } else {
+          console.log('TTS DEBUG: FileOutput structure:', Object.keys(output));
+          processedOutput = null;
+        }
+      } catch (error) {
+        console.error('TTS DEBUG: Failed to convert FileOutput:', error);
+        processedOutput = null;
+      }
+    }
+    
     this.runResultsCache.set(predictionId, {
-      status: 'completed',
-      output,
+      status: 'succeeded', // Use 'succeeded' to match Replicate's actual status
+      output: processedOutput,
       id: predictionId,
     });
+    console.log('TTS DEBUG: Cache now has', this.runResultsCache.size, 'entries');
   }
 
   /**

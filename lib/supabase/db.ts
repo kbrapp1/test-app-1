@@ -1,7 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { DatabaseError } from '@/lib/errors/base';
-import { logger } from '@/lib/logging';
 
 // Error handling utility
 export const handleSupabaseError = (error: any, status = 500) => {

@@ -1,3 +1,13 @@
+/**
+ * Note List Item Component
+ * 
+ * AI INSTRUCTIONS:
+ * - Individual note card with permission-based action buttons
+ * - Shows edit/delete buttons only if user has respective permissions
+ * - Follows fail-secure principles (hide if no permission)
+ * - Single responsibility: individual note display and interaction
+ */
+
 'use client';
 
 import React, { useEffect, useActionState, useState, useRef } from 'react';
@@ -14,6 +24,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { NoteEditForm } from './note-edit-form'; // Import the new form component
 import type { ColorOption } from '@/types/notes'; // Import central ColorOption
+import { useNotesPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
 
 // Type for the Server Action function signatures
 type DeleteNoteAction = (prevState: any, formData: FormData) => Promise<{
@@ -65,6 +76,7 @@ export function NoteListItem({
   const [deleteState, deleteFormAction] = useActionState(deleteNoteAction, initialActionState);
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const { canUpdate, canDelete, isLoading } = useNotesPermissions();
 
   // dnd-kit hook
   const { 
@@ -176,22 +188,25 @@ export function NoteListItem({
         />
       ) : (
         <>
-            <div className="absolute bottom-1 left-1 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10">
-              {availableColors.map((colorOption) => (
-                <button
-                  key={colorOption.bg}
-                  type="button"
-                  aria-label={`Set color to ${colorOption.bg.split('-')[1]}`}
-                  className={cn(
-                    "h-4 w-4 rounded-full border border-black/20 dark:border-white/20 shadow-xs",
-                    colorOption.bg,
-                    currentBgClass === colorOption.bg ? 'ring-2 ring-offset-1 ring-black/50 dark:ring-white/50' : '' 
-                  )}
-                  onClick={() => handleColorChange(colorOption.bg)}
-                  disabled={currentBgClass === colorOption.bg}
-                />
-              ))}
-            </div>
+            {/* AI: Show color picker only if user can update */}
+            {!isLoading && canUpdate && (
+              <div className="absolute bottom-1 left-1 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10">
+                {availableColors.map((colorOption) => (
+                  <button
+                    key={colorOption.bg}
+                    type="button"
+                    aria-label={`Set color to ${colorOption.bg.split('-')[1]}`}
+                    className={cn(
+                      "h-4 w-4 rounded-full border border-black/20 dark:border-white/20 shadow-xs",
+                      colorOption.bg,
+                      currentBgClass === colorOption.bg ? 'ring-2 ring-offset-1 ring-black/50 dark:ring-white/50' : '' 
+                    )}
+                    onClick={() => handleColorChange(colorOption.bg)}
+                    disabled={currentBgClass === colorOption.bg}
+                  />
+                ))}
+              </div>
+            )}
             <h3 
                 className="font-semibold mb-1 break-words pr-10 cursor-grab"
                 {...listeners}
@@ -205,16 +220,23 @@ export function NoteListItem({
                 {timeAgo}
             </span>
             
-            <div 
-                className="absolute top-1 right-1 flex items-center space-x-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                {...(!isDragging ? {} : { 'data-no-dnd': 'true' })}
-            >
-                 <EditButton onClick={handleEditClick} />
-                <form action={deleteFormAction} className="leading-none">
-                    <input type="hidden" name="note_id" value={note.id} />
-                    <DeleteButton />
-                </form>
-            </div>
+            {/* AI: Show action buttons only if user has permissions and not loading */}
+            {!isLoading && (canUpdate || canDelete) && (
+              <div 
+                  className="absolute top-1 right-1 flex items-center space-x-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  {...(!isDragging ? {} : { 'data-no-dnd': 'true' })}
+              >
+                  {/* AI: Show edit button only if user can update */}
+                  {canUpdate && <EditButton onClick={handleEditClick} />}
+                  {/* AI: Show delete button only if user can delete */}
+                  {canDelete && (
+                    <form action={deleteFormAction} className="leading-none">
+                        <input type="hidden" name="note_id" value={note.id} />
+                        <DeleteButton />
+                    </form>
+                  )}
+              </div>
+            )}
         </>
       )}
     </li>

@@ -19,6 +19,7 @@ import {
   LeadScoringConfiguration,
   MonitoringConfiguration
 } from './ai-config-components';
+import { AIConfigurationComponent } from '../../types/ChatbotTypes';
 
 export interface AIConfigurationProps {
   // OpenAI Configuration
@@ -234,26 +235,32 @@ export class AIConfiguration {
     return { ...this.props };
   }
 
-  private withUpdatedComponent(componentType: string, newComponent: any): AIConfiguration {
+  private withUpdatedComponent(
+    componentType: string, 
+    newComponent: OpenAIConfiguration | ContextConfiguration | IntentConfiguration
+  ): AIConfiguration {
     const newProps = { ...this.props };
     
     switch (componentType) {
       case 'openai':
-        newProps.openaiModel = newComponent.model;
-        newProps.openaiTemperature = newComponent.temperature;
-        newProps.openaiMaxTokens = newComponent.maxTokens;
+        const openaiComp = newComponent as OpenAIConfiguration;
+        newProps.openaiModel = openaiComp.model as AIConfigurationProps['openaiModel'];
+        newProps.openaiTemperature = openaiComp.temperature;
+        newProps.openaiMaxTokens = openaiComp.maxTokens;
         break;
       case 'context':
-        newProps.contextMaxTokens = newComponent.maxTokens;
-        newProps.contextSystemPromptTokens = newComponent.systemPromptTokens;
-        newProps.contextResponseReservedTokens = newComponent.responseReservedTokens;
-        newProps.contextSummaryTokens = newComponent.summaryTokens;
+        const contextComp = newComponent as ContextConfiguration;
+        newProps.contextMaxTokens = contextComp.maxTokens;
+        newProps.contextSystemPromptTokens = contextComp.systemPromptTokens;
+        newProps.contextResponseReservedTokens = contextComp.responseReservedTokens;
+        newProps.contextSummaryTokens = contextComp.summaryTokens;
         break;
       case 'intent':
-        newProps.intentConfidenceThreshold = newComponent.confidenceThreshold;
-        newProps.intentAmbiguityThreshold = newComponent.ambiguityThreshold;
-        newProps.enableMultiIntentDetection = newComponent.enableMultiIntentDetection;
-        newProps.enablePersonaInference = newComponent.enablePersonaInference;
+        const intentComp = newComponent as IntentConfiguration;
+        newProps.intentConfidenceThreshold = intentComp.confidenceThreshold;
+        newProps.intentAmbiguityThreshold = intentComp.ambiguityThreshold;
+        newProps.enableMultiIntentDetection = intentComp.enableMultiIntentDetection;
+        newProps.enablePersonaInference = intentComp.enablePersonaInference;
         break;
     }
     

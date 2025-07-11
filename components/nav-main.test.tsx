@@ -9,6 +9,21 @@ import { MailIcon, PlusCircleIcon, LayoutDashboardIcon, FolderIcon, FileTextIcon
 import { TooltipProvider } from '@/components/ui/tooltip'
 import React from 'react'
 
+// Mock the organization provider
+vi.mock('@/lib/organization/application/providers/OrganizationProvider', () => ({
+  useOrganization: () => ({
+    currentContext: {
+      feature_flags: {
+        // Add any feature flags that might be tested
+        'test-feature': true,
+        'disabled-feature': false,
+      }
+    },
+    loading: false,
+    error: null,
+  })
+}))
+
 // Mock the super admin hook
 vi.mock('@/lib/auth/super-admin', () => ({
   useAuthWithSuperAdmin: () => ({
@@ -18,22 +33,12 @@ vi.mock('@/lib/auth/super-admin', () => ({
   })
 }))
 
-// Mock next/link to inspect its props
+// Mock next/link to allow finding the inner button/content
 vi.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href, passHref, legacyBehavior, ...props }: any) => {
-    // Render children within a div that captures props for inspection
-    return React.createElement(
-      'div',
-      {
-        'data-testid': 'next-link',
-        'data-href': href,
-        'data-passhref': passHref ? 'true' : 'false',
-        'data-legacy': legacyBehavior ? 'true' : 'false',
-        ...props,
-      },
-      children
-    );
+  default: ({ children, href }: any) => {
+    // Use a span instead of an anchor to avoid nested anchors
+    return <span className="next-link-mock" data-href={href} role="link">{children}</span>;
   },
 }));
 
@@ -87,15 +92,6 @@ vi.mock('@/components/ui/accordion', async (importOriginal) => {
     AccordionContent: mod.AccordionContent,
   }
 });
-
-// Mock next/link to allow finding the inner button/content
-vi.mock('next/link', () => ({
-  __esModule: true,
-  default: ({ children, href }: any) => {
-    // Use a span instead of an anchor to avoid nested anchors
-    return <span className="next-link-mock" data-href={href} role="link">{children}</span>;
-  },
-}));
 
 // Helper function to wrap component with providers
 const renderWithProvider = (ui: React.ReactElement) => {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
-import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { InitializeChatSessionUseCase } from '@/lib/chatbot-widget/application/use-cases/InitializeChatSessionUseCase';
@@ -18,9 +17,7 @@ import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/
  * - Return comprehensive session information including cache status
  */
 async function postHandler(
-  request: NextRequest,
-  user: User,
-  supabase: SupabaseClient
+  request: NextRequest
 ) {
   const body = await request.json();
   const { 
@@ -106,9 +103,7 @@ async function postHandler(
  * Retrieve session information
  */
 async function getHandler(
-  request: NextRequest,
-  user: User,
-  supabase: SupabaseClient
+  request: NextRequest
 ) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');

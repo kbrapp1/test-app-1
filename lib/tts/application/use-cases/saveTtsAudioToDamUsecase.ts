@@ -78,14 +78,16 @@ export async function saveTtsAudioToDam(
       });
 
       return { success: true, assetId: newAsset.id };
-    } catch (dbError: any) {
-      return { success: false, error: `Database error: ${dbError.message}` };
+    } catch (dbError: unknown) {
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Database error occurred';
+      return { success: false, error: `Database error: ${errorMessage}` };
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to save audio to DAM.';
     return {
       success: false,
-      error: error.message || 'Failed to save audio to DAM.',
+      error: errorMessage,
     };
   }
 } 

@@ -12,9 +12,10 @@ import { ConversationContextOrchestrator } from '../../../domain/services/conver
 import { ITokenCountingService } from '../../../domain/services/interfaces/ITokenCountingService';
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
+import { ContextAnalysisInput } from '../../../domain/types/ChatbotTypes';
 
 export interface TokenAwareContextResult {
-  messages: ChatMessage[];
+  messages: ContextAnalysisInput['messages'];
   summary?: string;
   tokenUsage: { messagesTokens: number; summaryTokens: number; totalTokens: number };
   wasCompressed: boolean;

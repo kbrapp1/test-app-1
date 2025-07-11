@@ -131,8 +131,9 @@ export async function getFolderNavigation(folderId: string | null): Promise<{
         }));
 
         return { breadcrumbs };
-      } catch (error: any) {
-        console.error('Error getting folder navigation:', error);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error getting folder navigation:', errorMessage);
         
         // Handle folder not found - redirect to root
         if (error instanceof NotFoundError && folderId) {
@@ -145,8 +146,8 @@ export async function getFolderNavigation(folderId: string | null): Promise<{
         }
         
         // Handle generic errors that might indicate folder not found
-        if (folderId && (error.message?.includes('not found') || error.message?.includes('Folder with ID'))) {
-          console.warn(`Folder ${folderId} appears to be missing (${error.message}), redirecting to root`);
+        if (folderId && (errorMessage.includes('not found') || errorMessage.includes('Folder with ID'))) {
+          console.warn(`Folder ${folderId} appears to be missing (${errorMessage}), redirecting to root`);
           return { 
             breadcrumbs: [{ id: null, name: 'Root', href: '/dam' }],
             shouldRedirect: true,

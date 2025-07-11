@@ -22,7 +22,7 @@ function getSupabaseAdminClient() {
 /**
  * Creates a prediction request with Replicate using the new adapter.
  */
-export async function createReplicatePrediction(input: StartSpeechInput, modelId: string): Promise<{ predictionId: string; outputUrl?: string }> {
+export async function createReplicatePrediction(input: StartSpeechInput, modelId: string): Promise<{ predictionId: string }> {
   if (!modelId) {
     throw new Error('Replicate modelId (version) is required to create a prediction.');
   }
@@ -36,10 +36,7 @@ export async function createReplicatePrediction(input: StartSpeechInput, modelId
   );
   
   const result = await adapter.generateSpeech(speechRequest);
-  return { 
-    predictionId: result.predictionId,
-    outputUrl: result.outputUrl
-  };
+  return { predictionId: result.predictionId };
 }
 
 /**

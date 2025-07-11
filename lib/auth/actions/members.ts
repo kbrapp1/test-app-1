@@ -10,11 +10,20 @@ interface InviteMemberParams {
   roleId: string;
 }
 
+interface InvitedMember {
+  id: string;
+  email: string;
+  name?: string;
+  organization_id: string;
+  role_id: string;
+  invited_at: string;
+}
+
 interface InviteMemberResult {
   success: boolean;
   error?: string;
   isNewUser?: boolean;
-  invitedMember?: any; // Define more specific type if needed based on Edge Function response
+  invitedMember?: InvitedMember;
 }
 
 export async function inviteMemberToOrganization(
@@ -89,8 +98,9 @@ export async function inviteMemberToOrganization(
       invitedMember: result.data // Assuming the edge function returns data under a 'data' key
     };
 
-  } catch (error: any) {
-    console.error('Error inviting member in action:', error);
-    return { success: false, error: error.message || 'An unexpected error occurred' };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    console.error('Error inviting member in action:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 } 

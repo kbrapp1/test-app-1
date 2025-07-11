@@ -31,8 +31,9 @@ export function useOrgMemberActions({ activeOrganizationId, supabase, members }:
 
       toast({ title: 'Role updated', description: 'User role updated successfully.' });
 
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error updating role', description: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update role';
+      toast({ variant: 'destructive', title: 'Error updating role', description: errorMessage });
     } finally {
       setUpdatingMemberId(null);
     }
@@ -58,11 +59,12 @@ export function useOrgMemberActions({ activeOrganizationId, supabase, members }:
         });
         return true; // Indicate success
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to remove member';
         toast({
             variant: "destructive",
             title: "Error removing member",
-            description: error.message,
+            description: errorMessage,
         });
         return false; // Indicate failure
     } finally {
@@ -103,8 +105,9 @@ export function useOrgMemberActions({ activeOrganizationId, supabase, members }:
                     title: 'Password Reset Email Sent',
                     description: `User already confirmed. A password reset link has been sent to ${memberToResend.email}.`,
                 });
-            } catch (resetErr: any) {
-                throw new Error(`Failed to send password reset: ${resetErr.message}`);
+            } catch (resetErr: unknown) {
+                const resetErrorMessage = resetErr instanceof Error ? resetErr.message : 'Unknown error';
+                throw new Error(`Failed to send password reset: ${resetErrorMessage}`);
             }
         } else if (data && data.success === true) {
             toast({ 
@@ -114,12 +117,13 @@ export function useOrgMemberActions({ activeOrganizationId, supabase, members }:
         } else {
            throw new Error(data?.error || "Unexpected response from function.");
         }
-    } catch (e: any) {
-        console.error("Error resending invitation:", e);
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred.";
+        console.error("Error resending invitation:", errorMessage);
         toast({ 
           variant: "destructive", 
           title: "Error Resending Invitation", 
-          description: e.message || "An unexpected error occurred." 
+          description: errorMessage 
         });
     } finally {
         setUpdatingMemberId(null);
@@ -144,9 +148,10 @@ export function useOrgMemberActions({ activeOrganizationId, supabase, members }:
         } else {
             throw new Error("Unexpected response from password reset function.");
         }
-    } catch (e: any) {
-        console.error('Error sending password reset email:', e);
-        sonnerToast.error('Error Sending Reset', { description: e.message });
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to send password reset';
+        console.error('Error sending password reset email:', errorMessage);
+        sonnerToast.error('Error Sending Reset', { description: errorMessage });
     } finally {
         setUpdatingMemberId(null);
     }

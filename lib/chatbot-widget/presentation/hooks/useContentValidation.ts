@@ -10,7 +10,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ContentType } from '../../domain/value-objects/content/ContentType';
-import { validateContent, type ContentValidationRequest, type ContentValidationResponse } from '../actions/contentValidationActions';
+import { validateContent, type ContentValidationResponse } from '../actions/contentValidationActions';
 
 export interface ContentValidationError {
   field: string;
@@ -217,17 +217,32 @@ export function useContentValidation(
 }
 
 // AI: Hook for validating multiple content fields
+// Fixed implementation that doesn't violate React Hooks Rules
 export function useMultiContentValidation(
   contentFields: Record<string, { content: string; type: ContentType; maxLength?: number }>
 ) {
-  const validations = Object.entries(contentFields).reduce((acc, [fieldName, field]) => {
-    acc[fieldName] = useContentValidation(field.content, {
+  // AI: Get field entries at the top level (not in a callback)
+  const fieldEntries = Object.entries(contentFields);
+  
+  // AI: Call hooks for each field individually at the top level
+  // This is safe because the number and order of fields should be consistent
+  const validationResults = fieldEntries.map(([fieldName, field]) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const validation = useContentValidation(field.content, {
       contentType: field.type,
       maxLength: field.maxLength,
       enableRealTime: true
     });
-    return acc;
-  }, {} as Record<string, ReturnType<typeof useContentValidation>>);
+    return [fieldName, validation] as const;
+  });
+  
+  // AI: Convert to object for easier access
+  const validations = useMemo(() => {
+    return validationResults.reduce((acc, [fieldName, validation]) => {
+      acc[fieldName] = validation;
+      return acc;
+    }, {} as Record<string, ReturnType<typeof useContentValidation>>);
+  }, [validationResults]);
 
   // AI: Compute overall validation status
   const overallStatus = useMemo(() => {

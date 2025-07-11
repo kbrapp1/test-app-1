@@ -14,7 +14,151 @@ alwaysApply: true
 5. **Template-Driven Development**: Create reusable templates and schemas that guide AI code generation
 6. **Explicit Instructions**: Embed AI guidance directly in code comments and documentation
 7. **No Redundancy**: Review codebase to ensure new code isn't redundant; provide recommendations using DDD, network efficient, API efficient, memory/cache efficient, rendering efficient practices
-8. Please dont p/npm build or dev each time. Next JS hotloads
+8. **JWT-Based Security**: All domains must implement JWT custom claims for organization context
+9. Please dont p/npm build or dev each time. Next JS hotloads
+
+## Implemented Domain Architecture
+
+### Current Production Domains
+```typescript
+// /lib/CONTEXT_MAP.ts - ACTUAL IMPLEMENTED DOMAINS
+export const DOMAIN_RELATIONSHIPS = {
+  'chatbot-widget': {
+    type: 'core-domain',
+    boundedContext: 'AI-powered conversational interface with lead management',
+    dependsOn: ['auth', 'organization', 'openai'],
+    publishes: ['LeadCaptured', 'ConversationCompleted', 'ChatSessionStarted'],
+    subscribes: ['UserAuthenticated', 'OrganizationSwitched'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['OpenAIAdapter', 'ElevenLabsAdapter']
+  },
+  'dam': {
+    type: 'core-domain',
+    boundedContext: 'Digital Asset Management with full DDD structure',
+    dependsOn: ['auth', 'organization', 'supabase'],
+    publishes: ['AssetUploaded', 'AssetDeleted', 'FolderCreated'],
+    subscribes: ['UserAuthenticated', 'OrganizationSwitched'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['SupabaseStorageAdapter']
+  },
+  'image-generator': {
+    type: 'core-domain',
+    boundedContext: 'AI image generation using FLUX models',
+    dependsOn: ['auth', 'organization', 'openai'],
+    publishes: ['ImageGenerated', 'GenerationStarted', 'GenerationFailed'],
+    subscribes: ['UserAuthenticated', 'OrganizationSwitched'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['ReplicateAdapter', 'FLUXAdapter']
+  },
+  'tts': {
+    type: 'supporting-domain',
+    boundedContext: 'Text-to-speech functionality with ElevenLabs integration',
+    dependsOn: ['auth', 'organization'],
+    publishes: ['AudioGenerated', 'VoiceCloned'],
+    subscribes: ['UserAuthenticated', 'OrganizationSwitched'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['ElevenLabsAdapter']
+  },
+  'auth': {
+    type: 'generic-subdomain',
+    boundedContext: 'Authentication and authorization services',
+    dependsOn: ['supabase'],
+    publishes: ['UserAuthenticated', 'UserLoggedOut', 'PasswordReset'],
+    subscribes: [],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['SupabaseAuthAdapter']
+  },
+  'organization': {
+    type: 'generic-subdomain', 
+    boundedContext: 'Multi-tenant organization management',
+    dependsOn: ['auth', 'supabase'],
+    publishes: ['OrganizationCreated', 'OrganizationSwitched', 'MemberAdded'],
+    subscribes: ['UserAuthenticated'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['SupabaseRLSAdapter']
+  },
+  'monitoring': {
+    type: 'generic-subdomain',
+    boundedContext: 'Application monitoring and observability',
+    dependsOn: ['auth', 'organization'],
+    publishes: ['MetricRecorded', 'AlertTriggered'],
+    subscribes: ['UserAuthenticated', 'OrganizationSwitched'],
+    sharedKernel: ['shared-types', 'shared-infrastructure'],
+    antiCorruptionLayers: ['DatadogAdapter', 'SentryAdapter']
+  }
+} as const;
+```
+
+## JWT-Based Security Architecture
+
+### Organization Context Security Pattern
+```typescript
+/**
+ * JWT-Based Organization Security
+ * 
+ * AI INSTRUCTIONS:
+ * - ALL domains must implement JWT custom claims for organization context
+ * - Use get_active_organization_id() database function for server-side validation
+ * - Implement client-side validation with useOrganizationContext() hook
+ * - Never remove organizationId variables - they are security-critical
+ * - RLS policies automatically scope all queries via JWT custom claims
+ */
+
+// Database Function (PostgreSQL)
+CREATE OR REPLACE FUNCTION get_active_organization_id()
+RETURNS uuid AS $$
+  SELECT nullif(
+    (current_setting('request.jwt.claims', true)::jsonb -> 'custom_claims') ->> 'active_organization_id', 
+    ''
+  )::uuid;
+$$ LANGUAGE sql STABLE;
+
+// Server Action Pattern
+'use server';
+
+export async function secureServerAction(input: string, organizationId: string) {
+  // AI: organizationId is pre-validated via JWT and RLS
+  // Server already verified user has access to this organization
+  try {
+    const service = CompositionRoot.getApplicationService();
+    return await service.processSecurely(input, organizationId);
+  } catch (error) {
+    if (error instanceof DomainError) {
+      return { success: false, error: error.toJSON() };
+    }
+    throw error;
+  }
+}
+
+// React Component Pattern
+export function SecureComponent({ organizationId }: { organizationId: string }) {
+  // AI: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
+  const { activeOrganizationId } = useOrganizationContext();
+  
+  // AI: SECURITY VALIDATION - verify client context matches server validation
+  if (activeOrganizationId !== organizationId) {
+    return <SecurityErrorUI message="Organization context mismatch" />;
+  }
+  
+  return <div>Secured content automatically scoped to organization</div>;
+}
+```
+
+### RLS Policy Integration
+```sql
+-- AI: All tables must have RLS policies using JWT custom claims
+CREATE POLICY "organization_isolation" ON assets
+  FOR ALL USING (
+    organization_id = get_active_organization_id()
+  );
+
+-- AI: Users can only access organizations they belong to
+CREATE POLICY "user_organization_access" ON organization_memberships
+  FOR ALL USING (
+    user_id = auth.uid() AND
+    organization_id = get_active_organization_id()
+  );
+```
 
 ## Advanced DDD Patterns for Complex Domains
 
@@ -704,29 +848,32 @@ function {Feature}Section()                 // UI components
 
 ## Context Mapping & Domain Relationships
 
+### Real Domain Integration Patterns
 ```typescript
-// /lib/CONTEXT_MAP.ts
-export const DOMAIN_RELATIONSHIPS = {
-  'example-domain': {
-    type: 'core-domain',
-    boundedContext: 'Example Context',
-    dependsOn: ['user-management', 'notification'],
-    publishes: ['ExampleCompleted', 'ProcessStarted'],
-    subscribes: ['UserAuthenticated', 'UserProfileUpdated'],
-    sharedKernel: ['shared-types', 'shared-infrastructure'],
-    antiCorruptionLayers: ['ExternalAPIAdapter', 'LegacySystemAdapter']
-  }
+// Actual Domain Relationships in Production
+export const INTEGRATION_PATTERNS = {
+  'chatbot-widget-to-auth': IntegrationPattern.CUSTOMER_SUPPLIER,
+  'dam-to-organization': IntegrationPattern.CONFORMIST,
+  'image-generator-to-openai': IntegrationPattern.ANTI_CORRUPTION_LAYER,
+  'tts-to-elevenlabs': IntegrationPattern.ANTI_CORRUPTION_LAYER,
+  'all-domains-to-supabase': IntegrationPattern.SHARED_KERNEL
 } as const;
 
-// Context Integration Patterns
-export enum IntegrationPattern {
-  SHARED_KERNEL = 'shared-kernel',
-  CUSTOMER_SUPPLIER = 'customer-supplier',
-  CONFORMIST = 'conformist',
-  ANTI_CORRUPTION_LAYER = 'anti-corruption-layer',
-  SEPARATE_WAYS = 'separate-ways',
-  OPEN_HOST_SERVICE = 'open-host-service'
-}
+// AI: Use these patterns when implementing cross-domain communication
+export const DOMAIN_COMMUNICATION_RULES = {
+  // Core domains can depend on generic subdomains
+  'chatbot-widget': ['auth', 'organization', 'openai'],
+  'dam': ['auth', 'organization', 'supabase'],
+  'image-generator': ['auth', 'organization', 'openai'],
+  
+  // Generic subdomains should not depend on core domains
+  'auth': ['supabase'],
+  'organization': ['auth', 'supabase'],
+  'monitoring': ['auth', 'organization'],
+  
+  // Shared kernel available to all domains
+  'shared-kernel': ['shared-types', 'shared-infrastructure', 'supabase']
+} as const;
 ```
 
 ## AI Anti-Patterns to Avoid

@@ -65,21 +65,23 @@ export async function getAuthContext(): Promise<{ context: AuthContext | null, e
 }
 
 // Helper to handle database errors consistently
-export async function handleDatabaseError(error: any, context: string): Promise<ActionResult> {
-    console.error(`Database Error (${context}):`, error.message || error);
+export async function handleDatabaseError(error: unknown, context: string): Promise<ActionResult> {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Database Error (${context}):`, errorMessage);
+    
     // Basic check for Supabase PostgrestError structure
-    const errorCode = typeof error?.code === 'string' ? error.code : null;
-    const errorMessage = typeof error?.message === 'string' ? error.message : '';
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string' ? error.code : null;
+    const message = typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message : '';
 
-    const code = errorMessage.includes('timeout') 
+    const code = message.includes('timeout') 
         ? ErrorCodes.DATABASE_TIMEOUT 
         : errorCode === '23505' // Handle unique constraint violation
             ? ErrorCodes.DUPLICATE_ENTRY
             : ErrorCodes.DATABASE_ERROR;
             
-    const message = code === ErrorCodes.DUPLICATE_ENTRY
+    const userMessage = code === ErrorCodes.DUPLICATE_ENTRY
         ? 'A similar item already exists or conflicts with existing data.'
         : `Failed during ${context.toLowerCase()}. Please try again.`;
         
-    return { success: false, message: message, code: code };
+    return { success: false, message: userMessage, code: code };
 } 

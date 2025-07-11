@@ -126,7 +126,7 @@ export interface SupabaseVectorRow {
   category: string;
   source_type: string;
   source_url?: string;
-  vector: any; // Can be array or string from Supabase
+  vector: number[] | string; // Can be array or string from Supabase
   updated_at: string;
   created_at: string;
   metadata?: Record<string, any>;

@@ -1,3 +1,12 @@
+/**
+ * Image Generator Main Component
+ * 
+ * AI INSTRUCTIONS:
+ * - Remove unused props to keep interface clean
+ * - Use memo for performance optimization
+ * - Follow single responsibility principle
+ */
+
 'use client';
 
 import React, { memo } from 'react';
@@ -7,16 +16,11 @@ import { ActionButtonsToolbar } from './ActionButtonsToolbar';
 import { HeaderModelSelector } from '../providers/HeaderModelSelector';
 import {
   LazyHistoryPanelWithLoading,
-  LazyProviderSelectorWithLoading
 } from '../LazyComponentLoader';
 import { useImageGeneratorMain } from '../../hooks/useImageGeneratorMain';
 import { GenerationErrorBoundary } from '../shared/GenerationErrorBoundary';
 
-interface ImageGeneratorMainProps {
-  className?: string;
-}
-
-const ImageGeneratorMainComponent: React.FC<ImageGeneratorMainProps> = ({ className }) => {
+const ImageGeneratorMainComponent: React.FC = () => {
   const {
     formState,
     actionHandlers,
@@ -26,13 +30,11 @@ const ImageGeneratorMainComponent: React.FC<ImageGeneratorMainProps> = ({ classN
     availableProviders,
     onProviderChange,
     capabilities,
-    generations,
     historyGenerations,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
     refetchGenerations,
-    isLoading,
     generateImageMutation,
     coreGeneration,
     latestGeneration,
@@ -126,14 +128,5 @@ const ImageGeneratorMainComponent: React.FC<ImageGeneratorMainProps> = ({ classN
   );
 };
 
-// Custom comparison function for React.memo
-const arePropsEqual = (
-  prevProps: ImageGeneratorMainProps,
-  nextProps: ImageGeneratorMainProps
-): boolean => {
-  // Component only has className prop, and it's optional
-  return prevProps.className === nextProps.className;
-};
-
-// Export memoized component
-export const ImageGeneratorMain = memo(ImageGeneratorMainComponent, arePropsEqual);
+// Export memoized component - no props needed
+export const ImageGeneratorMain = memo(ImageGeneratorMainComponent);
