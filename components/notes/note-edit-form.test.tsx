@@ -28,6 +28,7 @@ const mockInitialNote: Note = {
     color_class: 'bg-blue-200',
     updated_at: new Date().toISOString(),
     position: 1,
+    organization_id: 'test-org-123',
 };
 
 const defaultProps = {

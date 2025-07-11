@@ -1,6 +1,7 @@
 import { TextInput } from '../value-objects/TextInput';
 import { PredictionStatus } from '../value-objects/PredictionStatus';
 import { VoiceId } from '../value-objects/VoiceId';
+import { TtsPredictionDatabaseRow } from '../types/DatabaseTypes';
 
 /**
  * TtsPrediction Domain Entity
@@ -273,7 +274,7 @@ export class TtsPrediction {
   /**
    * Create from database row data
    */
-  public static fromDatabaseRow(row: any): TtsPrediction {
+  public static fromDatabaseRow(row: TtsPredictionDatabaseRow): TtsPrediction {
     return new TtsPrediction({
       id: row.id,
       replicatePredictionId: row.replicatePredictionId,
@@ -301,7 +302,7 @@ export class TtsPrediction {
   /**
    * Convert to database row format (for backward compatibility)
    */
-  public toDatabaseRow(): any {
+  public toDatabaseRow(): TtsPredictionDatabaseRow {
     return {
       id: this.id,
       replicatePredictionId: this.replicatePredictionId,
@@ -328,7 +329,7 @@ export class TtsPrediction {
   /**
    * Convert to legacy format for backward compatibility
    */
-  public toLegacyFormat(): any {
+  public toLegacyFormat(): TtsPredictionDatabaseRow {
     return this.toDatabaseRow();
   }
 

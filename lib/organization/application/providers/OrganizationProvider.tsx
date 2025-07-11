@@ -1,18 +1,22 @@
-// Application Provider: Global Organization Context
-// Single Responsibility: Provide organization state across the app
-// DDD: Application layer coordination with React Context
+/**
+ * Organization Provider Component
+ * 
+ * AI INSTRUCTIONS:
+ * - All hooks must be called unconditionally at the top level
+ * - Use error boundaries for error handling, not try-catch around hooks
+ * - Follow single responsibility principle for component logic
+ * - Maintain proper React component lifecycle patterns
+ * - Handle loading and error states explicitly
+ */
 
 'use client';
 
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useOrganizationContext } from '../hooks/useOrganizationContext';
-import { type OrganizationContext, type OrganizationContextError } from '../../domain/services/OrganizationContextService';
 import { type OrganizationPermission } from '../../domain/services/PermissionValidationService';
 
-// Get the return type from the hook
 type UseOrganizationContextResult = ReturnType<typeof useOrganizationContext>;
 
-// Context type with additional helper methods
 interface OrganizationContextType extends UseOrganizationContextResult {
   // Helper methods
   hasAccessToOrganization: (organizationId: string) => boolean;
@@ -21,7 +25,6 @@ interface OrganizationContextType extends UseOrganizationContextResult {
   isCurrentOrganization: (organizationId: string) => boolean;
 }
 
-// Create context with null default (will throw if used outside provider)
 const OrganizationContext = createContext<OrganizationContextType | null>(null);
 
 interface OrganizationProviderProps {
@@ -31,67 +34,28 @@ interface OrganizationProviderProps {
 
 export function OrganizationProvider({ children, fallback }: OrganizationProviderProps) {
   const [mounted, setMounted] = useState(false);
-  const [hookError, setHookError] = useState<Error | null>(null);
   
-  // Protect against React hook errors during logout
-  let hookResult: UseOrganizationContextResult | null = null;
+  // AI: Always call hooks unconditionally at the top level
+  const hookResult = useOrganizationContext();
   
-  try {
-    hookResult = useOrganizationContext();
-    
-    // Clear any previous hook errors if successful
-    if (hookError) {
-      setHookError(null);
-    }
-  } catch (error) {
-    // Handle React hook errors during logout/session changes
-    if (error instanceof Error) {
-      setHookError(error);
-    }
-    
-    // Return a safe fallback state
-    hookResult = {
-      currentContext: null,
-      accessibleOrganizations: [],
-      activeOrganizationId: null,
-      isLoading: false,
-      isSwitching: false,
-      isLoadingOrganizations: false,
-      error: 'Session error occurred',
-      switchOrganization: async () => false,
-      refreshContext: async () => {},
-      clearContext: async () => {},
-      checkAccess: async () => false,
-    };
-  }
-
   // Ensure component is mounted before rendering context
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  // Don't render context until mounted and hook is working
-  if (!mounted || !hookResult) {
+  // Don't render context until mounted
+  if (!mounted) {
     return <>{fallback || null}</>;
   }
 
-  // If there's a hook error, show an error state
-  if (hookError) {
-          // Silently handle organization provider errors (likely during logout)
-    
-    // Auto-refresh page for React hook errors
-    if (hookError.message.includes('Invalid hook call')) {
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
-    
+  // Handle error states from the hook
+  if (hookResult.error) {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="text-center space-y-2">
           <div className="text-sm text-muted-foreground">
-            Session expired - refreshing...
+            {hookResult.error === 'Session expired' ? 'Session expired - please refresh' : 'Loading organization data...'}
           </div>
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -182,7 +146,13 @@ export function WithOrganizationAccess({
     return <>{children}</>;
   }
   
-  // Check access to specific organization
+  // SECURITY: Validate organization context - user must be operating within the target organization
+  // This prevents privilege escalation across organizations
+  if (requiredAccess && activeOrganizationId !== organizationId) {
+    return <>{fallback}</>;
+  }
+  
+  // Additional check: Ensure user has access to the organization
   const hasAccess = hasAccessToOrganization(organizationId);
   
   if (requiredAccess && !hasAccess) {
@@ -235,8 +205,5 @@ export function useOrganizationAudit() {
 // Type exports for external use
 export type { 
   OrganizationContextType, 
-  OrganizationOption,
-  OrganizationContext,
-  OrganizationPermission,
-  OrganizationContextError
+  OrganizationOption
 }; 

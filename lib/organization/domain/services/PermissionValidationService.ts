@@ -48,7 +48,7 @@ export class PermissionValidationService {
       }
 
       return data === true;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -79,14 +79,14 @@ export class PermissionValidationService {
         return [];
       }
       
-      return data.map((row: any) => ({
+      return data.map((row: { organization_id: string; organization_name: string; role_name: string; granted_at: string; role_id: string }) => ({
         organization_id: row.organization_id,
         organization_name: row.organization_name,
         role_name: row.role_name,
         granted_at: row.granted_at,
         role_id: row.role_id,
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   }
@@ -140,7 +140,7 @@ export class PermissionValidationService {
       });
 
       return results;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -169,7 +169,7 @@ export class PermissionValidationService {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -219,9 +219,9 @@ export class PermissionValidationService {
         return false;
       }
 
-      const userRole = (data.roles as any)?.name;
+      const userRole = data.roles?.[0]?.name;
       return requiredRoles.includes(userRole);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -239,7 +239,7 @@ export class PermissionValidationService {
   private createError(
     code: PermissionValidationError['code'], 
     message: string, 
-    context?: any
+    context?: Record<string, unknown>
   ): PermissionValidationError {
     const error = new Error(message) as PermissionValidationError;
     error.code = code;

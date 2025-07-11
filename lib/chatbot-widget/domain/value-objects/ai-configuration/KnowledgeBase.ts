@@ -38,7 +38,7 @@ export interface WebsiteSource {
   crawlSettings: WebsiteCrawlSettings;
   lastCrawled?: Date;
   pageCount?: number;
-  status: 'pending' | 'crawling' | 'completed' | 'error';
+  status: 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error';
   errorMessage?: string;
 }
 
@@ -286,7 +286,7 @@ export class KnowledgeBase {
 
   static createDefaultWebsiteCrawlSettings(): WebsiteCrawlSettings {
     return {
-      maxPages: 50,
+      maxPages: 5,
       maxDepth: 3,
       includePatterns: [],
       excludePatterns: ['/admin/*', '/login', '/logout', '/account/*', '/cart/*', '/checkout/*'],

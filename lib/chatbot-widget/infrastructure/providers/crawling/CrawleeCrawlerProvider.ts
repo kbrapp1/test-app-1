@@ -58,9 +58,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         filteredSitemapUrls.forEach(url => {
           crawlQueue.push({ url, depth: 0 });
         });
+        
+        // AI: Update total based on discovered URLs
+        const totalPages = Math.min(filteredSitemapUrls.length, settings.maxPages);
+        // progressCallback?.({ current: 0, total: totalPages, status: 'crawling', currentPage: `Found ${filteredSitemapUrls.length} pages to crawl` });
       } else {
         // Fallback to starting with just the homepage
         crawlQueue.push({ url: source.url, depth: 0 });
+        // progressCallback?.({ current: 0, total: settings.maxPages, status: 'crawling' });
       }
       
       // Use Cheerio for HTML parsing
@@ -75,6 +80,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
           continue;
         }
         normalizedUrls.add(normalizedUrl);
+        
+        // AI: Emit progress for current page being crawled
+        // progressCallback?.({ 
+        //   current: crawledData.length, 
+        //   total: Math.max(crawlQueue.length + crawledData.length + 1, settings.maxPages), 
+        //   status: 'crawling', 
+        //   currentPage: currentUrl 
+        // });
         
         try {
           const response = await fetch(currentUrl, {
@@ -107,11 +120,27 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
 
           crawledData.push(pageData);
 
+          // AI: Emit progress after page is crawled
+          // progressCallback?.({ 
+          //   current: crawledData.length, 
+          //   total: Math.max(crawlQueue.length + crawledData.length, settings.maxPages), 
+          //   status: 'processing', 
+          //   currentPage: `Processing: ${title}` 
+          // });
+
           // Create HTML parser adapter for content processing
           const htmlParser = new CheerioHtmlParserAdapter($);
 
           // Process the page through the callback
           await onPageCrawled(pageData, htmlParser);
+
+          // AI: Emit progress after page is processed
+          // progressCallback?.({ 
+          //   current: crawledData.length, 
+          //   total: Math.max(crawlQueue.length + crawledData.length, settings.maxPages), 
+          //   status: crawledData.length >= settings.maxPages ? 'vectorizing' : 'crawling', 
+          //   currentPage: `Processed: ${title}` 
+          // });
 
           // If we haven't reached max depth and didn't use sitemap, extract links for next level
           if (currentDepth < settings.maxDepth && crawledData.length < settings.maxPages && sitemapUrls.length === 0) {
@@ -146,6 +175,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
           continue;
         }
       }
+      
+      // AI: Emit completion progress
+      // progressCallback?.({ 
+      //   current: crawledData.length, 
+      //   total: crawledData.length, 
+      //   status: 'completed', 
+      //   currentPage: `Completed crawling ${crawledData.length} pages` 
+      // });
       
       return crawledData;
 

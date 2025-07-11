@@ -20,8 +20,7 @@ import { createHash } from 'crypto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
-/** Storage result for crawl and store operation
- */
+// Storage result for crawl and store operation
 export interface CrawlAndStoreResult {
   readonly storedItems: number;
   readonly totalPages: number;
@@ -61,22 +60,23 @@ export class CrawlAndStoreWebsiteUseCase {
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
   }
 
-  /** Execute crawl and store workflow
- */
+  // Execute crawl and store workflow
   async execute(
     organizationId: string,
     chatbotConfigId: string,
     source: WebsiteSource,
-    settings: WebsiteCrawlSettings
+    settings: WebsiteCrawlSettings,
+    statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>
   ): Promise<CrawlAndStoreResult> {
     try {
       // Step 1: Crawl website using existing use case
       const crawlResult = await this.crawlWebsiteUseCase.execute(source, settings, organizationId);
 
-      // Step 2: Prepare knowledge items for storage
+      // Step 2: Prepare knowledge items for storage with progress tracking
       const itemsToStore = await this.prepareKnowledgeItemsForStorage(
         crawlResult.knowledgeItems,
-        crawlResult.crawledPages
+        crawlResult.crawledPages,
+        statusUpdateCallback
       );
 
       // Step 3: Store knowledge items with embeddings
@@ -153,11 +153,13 @@ export class CrawlAndStoreWebsiteUseCase {
    * - Calculate content hashes for change detection
    * - Store crawl metadata for UI display (status, response time, depth, etc.)
    * - Handle embedding generation errors gracefully
+   * - Report vectorization progress for UI updates
    * - Return items ready for storage
    */
   private async prepareKnowledgeItemsForStorage(
     knowledgeItems: any[],
-    crawledPages: any[]
+    crawledPages: any[],
+    statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>
   ): Promise<any[]> {
     const itemsToStore = [];
 
@@ -166,6 +168,15 @@ export class CrawlAndStoreWebsiteUseCase {
     crawledPages.forEach(page => {
       crawledPagesMap.set(page.url, page);
     });
+
+    // AI: Report vectorization start if callback provided
+    if (statusUpdateCallback && knowledgeItems.length > 0) {
+      await statusUpdateCallback('vectorizing', {
+        vectorizedItems: 0,
+        totalItems: knowledgeItems.length,
+        currentItem: knowledgeItems[0]?.title || 'Starting vectorization...'
+      });
+    }
 
     for (let i = 0; i < knowledgeItems.length; i++) {
       const knowledgeItem = knowledgeItems[i];
@@ -181,6 +192,15 @@ export class CrawlAndStoreWebsiteUseCase {
         if (content.length === 0) {
           // AI: Skip empty content items silently - error tracking handled at higher level
           continue;
+        }
+        
+        // AI: Report progress before generating embedding for this item
+        if (statusUpdateCallback) {
+          await statusUpdateCallback('vectorizing', {
+            vectorizedItems: i,
+            totalItems: knowledgeItems.length,
+            currentItem: knowledgeItem.title || `Page ${i + 1}`
+          });
         }
         
         // Generate embedding for content
@@ -233,6 +253,15 @@ export class CrawlAndStoreWebsiteUseCase {
         // Don't fail the entire process for individual items - error tracking handled at higher level
         continue;
       }
+    }
+
+    // AI: Report vectorization completion
+    if (statusUpdateCallback && knowledgeItems.length > 0) {
+      await statusUpdateCallback('vectorizing', {
+        vectorizedItems: knowledgeItems.length,
+        totalItems: knowledgeItems.length,
+        currentItem: 'Vectorization completed'
+      });
     }
 
     return itemsToStore;

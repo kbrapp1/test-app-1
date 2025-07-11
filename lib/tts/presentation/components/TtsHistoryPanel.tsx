@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { TtsHistoryItem, TtsHistoryActionCallbacks, TtsAudioPlayerState } from '../types/TtsPresentation';
+import { TtsHistoryActionCallbacks, TtsAudioPlayerState } from '../types/TtsPresentation';
 import { useTtsHistory } from '../hooks/useTtsHistory';
 import { TtsHistoryPanelHeader } from './TtsHistoryPanelHeader';
 import { TtsHistoryPanelSearch } from './TtsHistoryPanelSearch';

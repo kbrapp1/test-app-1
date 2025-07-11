@@ -61,17 +61,24 @@ async function executeGetActiveOrganizationId(): Promise<string | null> {
   const supabase = createClient();
 
   try {
-    const { data, error } = await supabase.rpc('get_active_organization_id');
-    
-    if (error) {
+    // AI: Get current user first
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return null;
     }
 
-    if (data && typeof data === 'string' && data.length > 0) {
-      return data;
+    // AI: Direct query instead of RPC to avoid auth.uid() issues
+    const { data, error } = await supabase
+      .from('user_organization_context')
+      .select('active_organization_id')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (error || !data) {
+      return null;
     }
 
-    return null;
+    return data.active_organization_id;
   } catch (e) {
     return null;
   }

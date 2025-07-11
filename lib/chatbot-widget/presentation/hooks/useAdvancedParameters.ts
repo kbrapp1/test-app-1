@@ -65,6 +65,11 @@ export function useAdvancedParameters({
   existingConfig,
   activeOrganizationId
 }: UseAdvancedParametersProps): UseAdvancedParametersReturn {
+  // AI: Security validation - activeOrganizationId must be provided
+  if (!activeOrganizationId) {
+    throw new Error('Active organization ID is required for advanced parameters management');
+  }
+
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [parameters, setParameters] = useState<AdvancedParameters>(DEFAULT_PARAMETERS);

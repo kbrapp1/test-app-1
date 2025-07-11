@@ -1,34 +1,65 @@
-import { Ban } from 'lucide-react';
-import { getActiveOrganizationWithFlags } from '@/lib/organization/application/services/getActiveOrganizationWithFlags';
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { TtsPageClient } from '@/lib/tts/presentation/components/TtsPageClient';
+/**
+ * Text-to-Speech Page - Protected with Server-Side Access Control
+ * 
+ * AI INSTRUCTIONS:
+ * - Uses server-side access control for consistent protection
+ * - Guarantees non-null organizationId to content component
+ * - Handles feature flags and role permissions
+ * - Single responsibility: access control wrapper
+ * - Follows established pattern from notes and team pages
+ */
 
-// TODO: Implement the TTS UI according to the design spec
-// FSD: docs/text-to-speech/tts-fsd.md
-// UX: docs/text-to-speech/tts-ux-design.md
+import { checkTtsAccess } from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { FeatureNotAvailable, NoOrganizationAccess, InsufficientPermissions } from '@/components/access-guards';
+import { TtsPageClient } from '@/lib/tts/presentation/components/TtsPageClient';
+import { Permission } from '@/lib/auth/roles';
+
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
 
 export default async function TextToSpeechPage() {
-  // Feature flag check - server-side
-  const supabase = createSupabaseServerClient();
-  const organization = await getActiveOrganizationWithFlags(supabase);
-  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
-  const isTtsEnabled = flags?.tts ?? false;
+  try {
+    // AI: Check feature access with TTS viewing permissions on server-side
+    const accessResult = await checkTtsAccess([Permission.VIEW_TTS]);
 
-  // If TTS feature is not enabled, show feature not enabled message
-  if (!isTtsEnabled) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-200px)] text-center">
-        <Ban className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Feature Not Enabled</h1>
-        <p className="text-muted-foreground">
-          The Text-to-Speech feature is not enabled for your organization.
-        </p>
-        <p className="text-muted-foreground mt-1">
-          Please contact your administrator for more information.
-        </p>
-      </div>
-    );
+    // AI: Access granted - render content with guaranteed organizationId
+    return <TtsPageClient organizationId={accessResult.organizationId} />;
+    
+  } catch (error: unknown) {
+    // AI: Handle different types of access denials with specific error matching
+    const errorMessage = error instanceof Error ? error.message : '';
+    
+    // AI: Check for feature flag errors
+    if (errorMessage.includes('Feature') && errorMessage.includes('not enabled')) {
+      return <FeatureNotAvailable feature="Text-to-Speech" />;
+    }
+    
+    // AI: Check for organization access errors
+    if (errorMessage.includes('Organization access required')) {
+      return <NoOrganizationAccess />;
+    }
+    
+    // AI: Check for permission errors (most specific match)
+    if (errorMessage.includes('Insufficient permissions')) {
+      // AI: Extract required permissions from error message
+      const permissionMatch = errorMessage.match(/\[(.*?)\]/);
+      const requiredPermissions = permissionMatch ? permissionMatch[1].split(', ') : ['view:tts'];
+      
+      return (
+        <InsufficientPermissions 
+          feature="Text-to-Speech"
+          requiredPermissions={requiredPermissions}
+          showContactAdmin={true}
+        />
+      );
+    }
+    
+    // AI: Check for role-related errors
+    if (errorMessage.includes('No role found')) {
+      return <NoOrganizationAccess />;
+    }
+    
+    // AI: Generic access denied fallback
+    return <NoOrganizationAccess />;
   }
-
-  return <TtsPageClient />;
 } 

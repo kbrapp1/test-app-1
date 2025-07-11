@@ -3,6 +3,7 @@
 export interface Note {
     id: string;        // Assuming ID is string (like UUID)
     user_id?: string;   // Optional on client, required from DB
+    organization_id: string; // Required for multi-tenant data isolation
     title: string | null;
     content: string | null;
     created_at?: string; // Optional on client

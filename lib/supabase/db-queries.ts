@@ -8,24 +8,39 @@ export type QueryOptions = {
   matchValue?: string | null;
   isNull?: string;
   userId?: string;
-  organizationId?: string;
+  organizationId: string; // AI: Required for tenant-scoped operations
   orderBy?: string;
   ascending?: boolean;
   limit?: number;
 };
 
-// Generic database query function
+// AI: Add non-tenant-scoped query options for system tables
+export type SystemQueryOptions = {
+  matchColumn?: string;
+  matchValue?: string | null;
+  isNull?: string;
+  userId?: string;
+  organizationId?: string; // Optional for system-level queries
+  orderBy?: string;
+  ascending?: boolean;
+  limit?: number;
+};
+
+// Generic database query function - TENANT-SCOPED
 export const queryData = async <T = any>(
   supabase: SupabaseClient,
   table: string,
   selectFields: string,
-  options: QueryOptions = {}
+  options: QueryOptions // AI: organizationId is now required
 ): Promise<{ data: T[] | null; error: DatabaseError | null }> => {
   const executeQuery = async () => {
     // This inner function contains the actual Supabase call
     let queryBuilder = supabase.from(table).select(selectFields);
 
-    // Apply filters
+    // AI: Always apply organization filter for tenant-scoped operations
+    queryBuilder = queryBuilder.eq('organization_id', options.organizationId);
+
+    // Apply other filters
     if (options.matchColumn && options.matchValue !== undefined) {
       queryBuilder = queryBuilder.eq(options.matchColumn, options.matchValue);
     }
@@ -34,9 +49,6 @@ export const queryData = async <T = any>(
     }
     if (options.userId) {
       queryBuilder = queryBuilder.eq('user_id', options.userId);
-    }
-    if (options.organizationId) {
-      queryBuilder = queryBuilder.eq('organization_id', options.organizationId);
     }
     // Apply ordering
     if (options.orderBy) {
@@ -123,18 +135,162 @@ export const queryData = async <T = any>(
   }
 };
 
-// Insert data utility
+// AI: System-level query function for non-tenant-scoped operations
+export const querySystemData = async <T = any>(
+  supabase: SupabaseClient,
+  table: string,
+  selectFields: string,
+  options: SystemQueryOptions = {}
+): Promise<{ data: T[] | null; error: DatabaseError | null }> => {
+  const executeQuery = async () => {
+    let queryBuilder = supabase.from(table).select(selectFields);
+
+    // Apply filters (organizationId is optional for system queries)
+    if (options.matchColumn && options.matchValue !== undefined) {
+      queryBuilder = queryBuilder.eq(options.matchColumn, options.matchValue);
+    }
+    if (options.isNull) {
+      queryBuilder = queryBuilder.is(options.isNull, null);
+    }
+    if (options.userId) {
+      queryBuilder = queryBuilder.eq('user_id', options.userId);
+    }
+    if (options.organizationId) {
+      queryBuilder = queryBuilder.eq('organization_id', options.organizationId);
+    }
+    // Apply ordering
+    if (options.orderBy) {
+      queryBuilder = queryBuilder.order(options.orderBy, {
+        ascending: options.ascending ?? true
+      });
+    }
+    // Apply limit
+    if (options.limit) {
+      queryBuilder = queryBuilder.limit(options.limit);
+    }
+
+    const { data, error } = await queryBuilder;
+
+    if (error) {
+      throw error; 
+    }
+    
+    return data;
+  };
+
+  try {
+    const shouldRetryQuery = (error: any, attempt: number): boolean => {
+      const isAuthError = error?.status === 401 || error?.status === 403;
+      const isQuerySyntaxError = error?.code === 'PGRST116';
+      
+      if (isAuthError || isQuerySyntaxError) {
+        logger.warn({ message: `Non-retryable error encountered on attempt ${attempt}`, code: error?.code, context: { table, error } });
+        return false;
+      }
+      
+      logger.info({ message: `Potential transient error on attempt ${attempt}. Retrying querySystemData.`, code: error?.code, context: { table, error } });
+      return attempt < 3;
+    };
+
+    const data = await retryAsyncFunction(
+      executeQuery, 
+      shouldRetryQuery, 
+      3,
+      200
+    );
+    
+    return { data: data as T[] | null, error: null };
+
+  } catch (error: any) {
+    const errorCode = error?.code || 'UNKNOWN_DB_ERROR';
+    const errorMessage = error?.message || 'An unknown database error occurred';
+
+    const dbError = new DatabaseError(
+      `Failed querying system table ${table} after retries: ${errorMessage}`,
+      error instanceof DatabaseError ? error.code : `DB_QUERY_FAILED_${errorCode}`,
+      {
+        originalError: error,
+        table,
+        selectFields,
+        options,
+        stack: error?.stack,
+        status: error?.status,
+      }
+    );
+    
+    logger.error({ 
+      message: dbError.message,
+      code: dbError.code,
+      statusCode: dbError.statusCode,
+      context: dbError.context,
+      stack: dbError.stack
+    });
+    
+    return { data: null, error: dbError };
+  }
+};
+
+// Generic database query function - SYSTEM-SCOPED (for non-tenant data)
+export const queryDataSystem = async (
+  supabase: any,
+  table: string,
+  columns: string = '*',
+  options: SystemQueryOptions = {}
+) => {
+  const { matchColumn, matchValue, isNull, userId, orderBy, ascending = true, limit } = options;
+
+  let query = supabase.from(table).select(columns);
+
+  // AI: Apply filters for system-level queries
+  if (matchColumn && matchValue !== undefined) {
+    query = query.eq(matchColumn, matchValue);
+  }
+
+  if (isNull) {
+    query = query.is(isNull, null);
+  }
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  // AI: Optional organization filtering for system queries
+  if (options.organizationId) {
+    query = query.eq('organization_id', options.organizationId);
+  }
+
+  if (orderBy) {
+    query = query.order(orderBy, { ascending });
+  }
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  return await query;
+};
+
+// Generic database insert function - SYSTEM-SCOPED (for non-tenant data)
+export const insertDataSystem = async (
+  supabase: any,
+  table: string,
+  data: Record<string, any>
+) => {
+  // AI: System-level insert without required organization context
+  return await supabase.from(table).insert(data).select().single();
+};
+
+// Insert data utility - TENANT-SCOPED
 export const insertData = async <T = any>(
   supabase: SupabaseClient,
   table: string,
   insertValues: Record<string, any>,
-  options?: { organizationId?: string }
+  organizationId: string // AI: Required parameter, not optional
 ): Promise<{ data: T | null; error: DatabaseError | null }> => {
   try {
-    // Inject organization_id if provided to enforce tenant-scope
-    if (options?.organizationId) {
-      insertValues.organization_id = options.organizationId;
-    }
+    // AI: Always inject organization_id for tenant-scoped operations
+    insertValues.organization_id = organizationId;
+    
     const { data: result, error } = await supabase.from(table).insert(insertValues).select().maybeSingle();
 
     if (error) {
@@ -143,7 +299,6 @@ export const insertData = async <T = any>(
         'DB_INSERT_ERROR',
         { originalError: error, table, insertValues }
       );
-      // Log the structured error context
       logger.error({ 
         message: dbError.message,
         code: dbError.code,
@@ -160,7 +315,6 @@ export const insertData = async <T = any>(
       'DB_UNEXPECTED_INSERT_ERROR',
       { originalError: error, table, insertValues, stack: error.stack }
     );
-    // Log the structured error context
     logger.error({ 
       message: dbError.message,
       code: dbError.code,
@@ -172,29 +326,28 @@ export const insertData = async <T = any>(
   }
 };
 
-// Delete data utility
+// Delete data utility - TENANT-SCOPED
 export const deleteData = async (
   supabase: SupabaseClient,
   table: string,
   matchColumn: string,
   matchValue: string | number,
-  options?: { organizationId?: string }
+  organizationId: string // AI: Required parameter for tenant isolation
 ): Promise<{ success: boolean; error: DatabaseError | null }> => {
   try {
-    // Build delete query with optional organization filter for tenant-scope
-    let query = supabase.from(table).delete().eq(matchColumn, matchValue);
-    if (options?.organizationId) {
-      query = query.eq('organization_id', options.organizationId);
-    }
-    const { error } = await query;
+    // AI: Always include organization filter for tenant-scoped operations
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq(matchColumn, matchValue)
+      .eq('organization_id', organizationId);
 
     if (error) {
       const dbError = new DatabaseError(
         `Error deleting from table ${table}: ${error.message}`,
         'DB_DELETE_ERROR',
-        { originalError: error, table, matchColumn, matchValue }
+        { originalError: error, table, matchColumn, matchValue, organizationId }
       );
-      // Log the structured error context
       logger.error({ 
         message: dbError.message,
         code: dbError.code,
@@ -209,9 +362,8 @@ export const deleteData = async (
     const dbError = new DatabaseError(
       `Unexpected error deleting from table ${table}: ${error.message}`,
       'DB_UNEXPECTED_DELETE_ERROR',
-      { originalError: error, table, matchColumn, matchValue, stack: error.stack }
+      { originalError: error, table, matchColumn, matchValue, organizationId, stack: error.stack }
     );
-    // Log the structured error context
     logger.error({ 
       message: dbError.message,
       code: dbError.code,

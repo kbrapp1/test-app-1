@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveTtsAudioToDam } from './saveTtsAudioToDamUsecase';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { downloadAndUploadAudio } from '../../infrastructure/providers/ttsService';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsPrediction } from '../../domain/entities/TtsPrediction';
@@ -92,6 +91,15 @@ const mockSupabaseClient = {
   },
 };
 
+// Mock repository interfaces
+interface MockAssetRepository {
+  save: ReturnType<typeof vi.fn>;
+}
+
+interface MockTtsRepository {
+  findById: ReturnType<typeof vi.fn>;
+}
+
 describe('saveTtsAudioToDamUsecase', () => {
   const testAudioUrl = 'http://example.com/audio.mp3';
   const testDesiredAssetName = 'My Test Audio.mp3';
@@ -105,8 +113,8 @@ describe('saveTtsAudioToDamUsecase', () => {
     blobSize: 12345,
   };
 
-  let mockAssetRepositoryInstance: any;
-  let mockTtsRepositoryInstance: any;
+  let mockAssetRepositoryInstance: MockAssetRepository;
+  let mockTtsRepositoryInstance: MockTtsRepository;
 
   beforeEach(async () => {
     vi.clearAllMocks();

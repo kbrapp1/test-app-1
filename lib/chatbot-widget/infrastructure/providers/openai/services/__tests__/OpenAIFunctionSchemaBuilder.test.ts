@@ -34,7 +34,8 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include all lead data fields in simplified schema', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const leadDataProperties = schema.parameters.properties.lead_data.properties;
+      const leadData = schema.parameters.properties.lead_data as { properties: Record<string, unknown> };
+      const leadDataProperties = leadData.properties;
 
       // Core lead data fields should always be present
       expect(leadDataProperties.name).toBeDefined();
@@ -49,7 +50,8 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include proper field types and constraints', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const leadDataProperties = schema.parameters.properties.lead_data.properties;
+      const leadData = schema.parameters.properties.lead_data as { properties: Record<string, { type: string; enum?: string[] }> };
+      const leadDataProperties = leadData.properties;
 
       // Verify field types
       expect(leadDataProperties.name.type).toBe('string');
@@ -67,7 +69,7 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include intent field with proper enum values', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const intentProperty = schema.parameters.properties.intent;
+      const intentProperty = schema.parameters.properties.intent as { type: string; enum: string[] };
 
       expect(intentProperty.type).toBe('string');
       expect(intentProperty.enum).toEqual([
@@ -77,7 +79,11 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include response object with required fields', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const responseProperties = schema.parameters.properties.response.properties;
+      const response = schema.parameters.properties.response as { 
+        properties: Record<string, { type: string }>;
+        required: string[];
+      };
+      const responseProperties = response.properties;
 
       expect(responseProperties.content).toBeDefined();
       expect(responseProperties.content.type).toBe('string');
@@ -89,7 +95,7 @@ describe('OpenAIFunctionSchemaBuilder', () => {
       expect(responseProperties.next_question.type).toBe('string');
 
       // Verify required fields
-      expect(schema.parameters.properties.response.required).toEqual(
+      expect(response.required).toEqual(
         expect.arrayContaining(['content', 'capture_contact'])
       );
     });
@@ -123,7 +129,8 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include proper descriptions for all fields', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const leadDataProperties = schema.parameters.properties.lead_data.properties;
+      const leadData = schema.parameters.properties.lead_data as { properties: Record<string, { description: string }> };
+      const leadDataProperties = leadData.properties;
 
       // Verify descriptions exist for key fields
       expect(leadDataProperties.name.description).toContain('name');

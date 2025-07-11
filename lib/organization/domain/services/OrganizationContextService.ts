@@ -23,11 +23,7 @@ export interface OrganizationContextError extends Error {
 export class OrganizationContextService {
   private supabase = createClient();
 
-  /**
-   * Get current user's organization context
-   * @returns Current organization context or null if not set
-   * @throws OrganizationContextError for authentication or access errors
-   */
+  // Get current user's organization context
   async getCurrentContext(): Promise<OrganizationContext | null> {
     try {
       const { data: { user }, error: authError } = await this.supabase.auth.getUser();
@@ -73,19 +69,15 @@ export class OrganizationContextService {
         last_accessed_at: data.last_accessed_at,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        organization_name: (data.organizations as any)?.name || 'Unknown',
-        feature_flags: (data.organizations as any)?.feature_flags || {}
+        organization_name: data.organizations?.[0]?.name || 'Unknown',
+        feature_flags: data.organizations?.[0]?.feature_flags || {}
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw error;
     }
   }
 
-  /**
-   * Switch user's active organization with access validation
-   * @param organizationId - Organization ID to switch to
-   * @throws OrganizationContextError for validation or access errors
-   */
+  // Switch user's active organization with access validation
   async switchOrganization(organizationId: string): Promise<void> {
     if (!organizationId?.trim()) {
       throw this.createError('VALIDATION_ERROR', 'Organization ID is required');
@@ -134,7 +126,7 @@ export class OrganizationContextService {
           organizationId 
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -142,10 +134,7 @@ export class OrganizationContextService {
     }
   }
 
-  /**
-   * Clear user's organization context
-   * @throws OrganizationContextError for authentication or database errors
-   */
+  // Clear user's organization context
   async clearContext(): Promise<void> {
     try {
       const { data: { user }, error: authError } = await this.supabase.auth.getUser();
@@ -162,7 +151,7 @@ export class OrganizationContextService {
       if (error) {
         throw this.createError('DATABASE_ERROR', `Failed to clear context: ${error.message}`, { error });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -170,10 +159,7 @@ export class OrganizationContextService {
     }
   }
 
-  /**
-   * Update last accessed timestamp for current context
-   * @throws OrganizationContextError for authentication or database errors
-   */
+  // Update last accessed timestamp for current context
   async updateLastAccessed(): Promise<void> {
     try {
       const { data: { user }, error: authError } = await this.supabase.auth.getUser();
@@ -190,7 +176,7 @@ export class OrganizationContextService {
       if (error) {
         throw this.createError('DATABASE_ERROR', `Failed to update last accessed: ${error.message}`, { error });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -198,12 +184,7 @@ export class OrganizationContextService {
     }
   }
 
-  /**
-   * Verify user has access to specific organization
-   * @param organizationId - Organization ID to check
-   * @returns boolean indicating access
-   * @private
-   */
+  // Verify user has access to specific organization
   private async verifyOrganizationAccess(organizationId: string): Promise<boolean> {
     try {
       const { data, error } = await this.supabase
@@ -214,7 +195,7 @@ export class OrganizationContextService {
       }
 
       return data === true;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
       }
@@ -222,17 +203,11 @@ export class OrganizationContextService {
     }
   }
 
-  /**
-   * Create a standardized error with proper typing
-   * @param code - Error code for categorization
-   * @param message - Human-readable error message
-   * @param context - Additional error context
-   * @private
-   */
+  // Create a standardized error with proper typing
   private createError(
     code: OrganizationContextError['code'], 
     message: string, 
-    context?: any
+    context?: Record<string, unknown>
   ): OrganizationContextError {
     const error = new Error(message) as OrganizationContextError;
     error.code = code;

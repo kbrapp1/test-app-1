@@ -114,12 +114,13 @@ export function useCompleteOnboarding() {
         }
         
         setIsCompleted(true)
-      } catch (error: any) {
-        console.error('Failed to finalize app onboarding:', error)
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to complete organization setup';
+        console.error('Failed to finalize app onboarding:', errorMessage);
         toast({ 
           variant: 'destructive', 
           title: 'Setup Issue', 
-          description: error.message || 'Failed to complete organization setup' 
+          description: errorMessage 
         })
       } finally {
         setIsCompleting(false)

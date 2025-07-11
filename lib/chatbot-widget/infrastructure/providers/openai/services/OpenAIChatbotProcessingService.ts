@@ -11,7 +11,8 @@
 
 import OpenAI from 'openai';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
-import { OpenAIIntentConfig } from '../types/OpenAITypes';
+import { OpenAIIntentConfig, PersonaInference } from '../types/OpenAITypes';
+import { ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
 import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
 
 export class OpenAIChatbotProcessingService {
@@ -33,7 +34,7 @@ export class OpenAIChatbotProcessingService {
       messageHistory: ChatMessage[];
       sessionId: string;
       organizationId?: string;
-      userData?: any;
+      userData?: Record<string, unknown>;
       systemPrompt?: string;
       sharedLogFile?: string;
     }
@@ -41,9 +42,9 @@ export class OpenAIChatbotProcessingService {
     analysis: {
       primaryIntent: string;
       primaryConfidence: number;
-      entities: any;
-      personaInference?: any;
-      corrections?: any;
+      entities: ExtractedEntities;
+      personaInference?: PersonaInference;
+      corrections?: Record<string, unknown>;
       sentiment?: string;
       sentimentConfidence?: number;
       emotionalTone?: string;
@@ -242,7 +243,7 @@ export class OpenAIChatbotProcessingService {
   }
 
   // Map function call entities to expected format
-  private mapFunctionCallEntitiesToExpectedFormat(leadData: any): any {
+  private mapFunctionCallEntitiesToExpectedFormat(leadData: any): ExtractedEntities {
     const mappedEntities = { ...leadData };
     
     // Map snake_case to camelCase for array entities

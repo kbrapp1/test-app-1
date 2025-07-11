@@ -9,6 +9,15 @@ import type { Note } from "@/types/notes";
 
 // --- Mocks ---
 
+// Mock the permissions hook
+vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
+  useNotesPermissions: () => ({
+    canUpdate: true,
+    canDelete: true,
+    isLoading: false,
+  }),
+}));
+
 // Mock Server Actions from the new path
 vi.mock('@/app/(protected)/documents/notes/actions', () => ({
     addNote: vi.fn(), // Mock even if not directly used here
@@ -72,6 +81,7 @@ const mockNote = {
     updated_at: new Date().toISOString(),
     position: 0,
     color_class: 'bg-yellow-200', // Default color
+    organization_id: 'test-org-123',
 };
 
 // Example available colors (match note-list.tsx)
@@ -220,7 +230,8 @@ describe('NoteListItem', () => {
     });
 
     it('disables the button for the current color', () => {
-        render(<NoteListItem {...defaultProps} note={{ ...mockNote, color_class: 'bg-pink-200' }} />);
+        const noteWithPinkColor = { ...mockNote, color_class: 'bg-pink-200' };
+        render(<NoteListItem {...defaultProps} note={noteWithPinkColor} />);
         expect(screen.getByRole('button', { name: /set color to yellow/i })).not.toBeDisabled();
         expect(screen.getByRole('button', { name: /set color to pink/i })).toBeDisabled();
         expect(screen.getByRole('button', { name: /set color to blue/i })).not.toBeDisabled();

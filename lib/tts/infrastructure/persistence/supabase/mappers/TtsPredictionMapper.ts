@@ -8,6 +8,8 @@ type DatabaseRow = Database['public']['Tables']['TtsPrediction']['Row'];
 type DatabaseInsert = Database['public']['Tables']['TtsPrediction']['Insert'];
 type DatabaseUpdate = Database['public']['Tables']['TtsPrediction']['Update'];
 
+// The database row already includes these fields, so we can use DatabaseRow directly
+
 /**
  * Infrastructure mapper for converting between TtsPrediction domain entities
  * and Supabase database rows. This maintains the separation between domain
@@ -37,9 +39,9 @@ export class TtsPredictionMapper {
       predictionProvider: row.prediction_provider,
       isOutputUrlProblematic: row.is_output_url_problematic || false,
       outputUrlLastError: row.output_url_last_error,
-      outputStoragePath: (row as any).output_storage_path || null,
-      outputContentType: (row as any).output_content_type || null,
-      outputFileSize: (row as any).output_file_size || null,
+      outputStoragePath: row.output_storage_path || null,
+      outputContentType: row.output_content_type || null,
+      outputFileSize: row.output_file_size || null,
     });
   }
   

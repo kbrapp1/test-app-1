@@ -80,7 +80,10 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
         {
           model: this.config.model,
           processingTimeMs: analysisResult.processingTime,
-          alternativeIntents: analysisResult.intent.alternativeIntents || []
+          alternativeIntents: (analysisResult.intent.alternativeIntents || []).map(alt => ({
+            intent: OpenAIIntentUtilityService.validateAndMapIntent(alt.intent),
+            confidence: alt.confidence
+          }))
         }
       );
 

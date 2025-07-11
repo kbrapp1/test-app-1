@@ -38,7 +38,7 @@ export class LazyProviderLoader {
       performance.mark(`provider-cache-hit-${cacheKey}`);
       
       const models = this.configCache.get(cacheKey)!;
-      this.trackBundleMetrics(cacheKey, startTime, true);
+      this.trackBundleMetrics(cacheKey, startTime);
       return models;
     }
 
@@ -65,7 +65,7 @@ export class LazyProviderLoader {
         `provider-load-end-${cacheKey}`
       );
       
-      this.trackBundleMetrics(cacheKey, startTime, false);
+      this.trackBundleMetrics(cacheKey, startTime);
       return models;
     } finally {
       this.loadingPromises.delete(cacheKey);
@@ -81,7 +81,7 @@ export class LazyProviderLoader {
     
     if (this.configCache.has(cacheKey)) {
       this.cacheHits++;
-      this.trackBundleMetrics(cacheKey, startTime, true);
+      this.trackBundleMetrics(cacheKey, startTime);
       return this.configCache.get(cacheKey)!;
     }
 
@@ -97,7 +97,7 @@ export class LazyProviderLoader {
     try {
       const models = await loadingPromise;
       this.configCache.set(cacheKey, models);
-      this.trackBundleMetrics(cacheKey, startTime, false);
+      this.trackBundleMetrics(cacheKey, startTime);
       return models;
     } finally {
       this.loadingPromises.delete(cacheKey);
@@ -146,7 +146,7 @@ export class LazyProviderLoader {
         bundleMetrics.cacheMetrics,
         bundleMetrics.efficiencyMetrics
       );
-    } catch (error) {
+    } catch {
       // Silent fail if monitoring not available
     }
   }
@@ -221,7 +221,7 @@ export class LazyProviderLoader {
     return OPENAI_MODELS;
   }
 
-  private static trackBundleMetrics(cacheKey: string, startTime: number, wasHit: boolean): void {
+  private static trackBundleMetrics(cacheKey: string, startTime: number): void {
     const loadTime = performance.now() - startTime;
     const metrics = this.getBundlePerformanceMetrics();
     
@@ -240,7 +240,7 @@ export class LazyProviderLoader {
   private static calculateAverageLoadTime(): number {
     // Calculate based on recent load times
     const recentLoadTimes: number[] = [];
-    this.loadStartTimes.forEach((startTime, key) => {
+    this.loadStartTimes.forEach((startTime) => {
       recentLoadTimes.push(performance.now() - startTime);
     });
     
@@ -250,8 +250,8 @@ export class LazyProviderLoader {
 
   private static getProviderLoadTimes(): Record<string, number> {
     const loadTimes: Record<string, number> = {};
-    this.loadStartTimes.forEach((startTime, key) => {
-      loadTimes[key] = performance.now() - startTime;
+    this.loadStartTimes.forEach((startTime, providerKey) => {
+      loadTimes[providerKey] = performance.now() - startTime;
     });
     return loadTimes;
   }

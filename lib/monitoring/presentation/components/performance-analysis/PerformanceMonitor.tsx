@@ -70,17 +70,9 @@ const PerformanceMonitorComponent = ({
   }, [isOpen, dashboard.isPaused]);
 
   // Memoize expensive calculations
-  const lastUpdateTime = useMemo(() => {
-    return new Date(metrics.lastUpdate).getTime();
-  }, [metrics.lastUpdate]);
-
   const cardClassName = useMemo(() => {
     return `fixed bottom-20 right-4 z-50 ${className}`;
   }, [className]);
-
-  const cardContentMaxHeight = useMemo(() => {
-    return 'calc(85vh - 120px)';
-  }, []);
 
   // Initialize enhanced monitoring when component mounts
   useEffect(() => {
@@ -132,10 +124,6 @@ const PerformanceMonitorComponent = ({
 
   const handleToggleNetworkSection = useCallback(() => {
     dashboard.toggleSection('network');
-  }, [dashboard]);
-
-  const handleToggleBundleSection = useCallback(() => {
-    dashboard.toggleSection('bundle');
   }, [dashboard]);
 
   // Show compact view when in compact mode
@@ -218,7 +206,7 @@ const PerformanceMonitorComponent = ({
             icon="📦"
             score={bundleScore}
             isExpanded={dashboard.expandedSections.bundle}
-            onToggle={handleToggleBundleSection}
+            onToggle={() => dashboard.toggleSection('bundle')}
           >
             <BundleDetailsContent 
               bundleStats={bundleStats}
@@ -231,7 +219,7 @@ const PerformanceMonitorComponent = ({
             onReset={dashboard.resetCounters}
             onFullReset={dashboard.handleFullResetClick}
             showFullResetConfirm={dashboard.showFullResetConfirm}
-            lastUpdateTime={lastUpdateTime}
+            lastUpdateTime={Date.now()}
           />
         </CardContent>
       </Card>

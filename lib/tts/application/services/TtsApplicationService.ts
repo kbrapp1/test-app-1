@@ -1,10 +1,4 @@
-/**
- * TTS Application Service
- * 
- * Coordinates TTS use cases, handles cross-cutting concerns (feature flags),
- * and manages DTO transformations. This follows DDD patterns by keeping
- * business logic orchestration separate from server actions.
- */
+// TTS Application Service - coordinates use cases and manages DTO transformations
 import { getTtsVoices as getTtsVoicesUsecase } from '../use-cases/getTtsVoicesUsecase';
 import { startSpeechGeneration as startSpeechGenerationUsecase } from '../use-cases/startSpeechGenerationUsecase';
 import { getSpeechGenerationResult as getSpeechGenerationResultUsecase } from '../use-cases/getSpeechGenerationResultUsecase';
@@ -13,11 +7,12 @@ import { saveTtsHistory as saveTtsHistoryUsecase } from '../use-cases/saveTtsHis
 import { getTtsHistory as getTtsHistoryUsecase } from '../use-cases/getTtsHistoryUsecase';
 import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
 import { TtsPredictionToDisplayDtoMapper } from '../mappers/TtsPredictionToDisplayDtoMapper';
-import { GetTtsHistoryResponseDto, TtsPredictionDisplayDto } from '../dto/TtsPredictionDto';
+import { GetTtsHistoryResponseDto } from '../dto/TtsPredictionDto';
 import { TtsGenerationService } from './TtsGenerationService';
 import { ITtsFeatureFlagService } from '../../domain/services/ITtsFeatureFlagService';
 // Domain interfaces only - no concrete infrastructure imports
 import { TtsPredictionRepository } from '../../domain/repositories/TtsPredictionRepository';
+import { TtsHistorySaveInput, TtsServiceResponse } from '../../domain/types/DatabaseTypes';
 
 // Types
 type TtsPredictionSortField = 'createdAt' | 'updatedAt' | 'inputText' | 'status' | 'voiceId';
@@ -78,12 +73,13 @@ export class TtsApplicationService {
   /**
    * Get available TTS voices
    */
-  async getVoices(provider?: string, modelId?: string): Promise<any> {
+  async getVoices(provider?: string, modelId?: string): Promise<{ success: boolean; voices?: unknown[]; error?: string }> {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
       return getTtsVoicesUsecase(provider, modelId);
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -98,8 +94,9 @@ export class TtsApplicationService {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
       return await startSpeechGenerationUsecase(inputText, voiceId, provider, this.ttsGenerationService);
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -110,8 +107,9 @@ export class TtsApplicationService {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
       return await getSpeechGenerationResultUsecase(ttsPredictionDbId);
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -132,7 +130,10 @@ export class TtsApplicationService {
         try {
           await this.predictionService.linkToAsset(ttsPredictionId, result.assetId);
           return { success: true, assetId: result.assetId };
-        } catch (linkError: any) {
+        } catch (linkError: unknown) {
+          // Log the specific linking error for debugging
+          const errorMessage = linkError instanceof Error ? linkError.message : 'Unknown linking error';
+          console.error('Failed to link TTS asset to prediction:', errorMessage);
           return { 
             success: false, 
             error: 'Failed to link asset to prediction.',
@@ -142,20 +143,40 @@ export class TtsApplicationService {
       }
 
       return result;
-    } catch (error: any) {
-      return { success: false, error: error.message, assetId: undefined };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage, assetId: undefined };
     }
   }
 
   /**
    * Save TTS history
    */
-  async saveTtsHistory(input: any): Promise<any> {
+  async saveTtsHistory(input: TtsHistorySaveInput): Promise<TtsServiceResponse<void>> {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
-      return await saveTtsHistoryUsecase(input);
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      const result = await saveTtsHistoryUsecase(input);
+      
+      if (result.success) {
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: { 
+            code: 'TTS_HISTORY_SAVE_FAILED', 
+            message: result.error || 'Failed to save TTS history' 
+          } 
+        };
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unexpected error saving TTS history';
+      return { 
+        success: false, 
+        error: { 
+          code: 'TTS_HISTORY_SAVE_ERROR', 
+          message: errorMessage
+        } 
+      };
     }
   }
 
@@ -181,8 +202,9 @@ export class TtsApplicationService {
         data: displayDtos, 
         count: result.count 
       };
-    } catch (error: any) {
-      return { success: false, error: error.message, count: undefined };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage, count: undefined };
     }
   }
 
@@ -200,8 +222,9 @@ export class TtsApplicationService {
         errorMessage || 'URL marked as problematic'
       );
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return { success: false, error: errorMessage };
     }
   }
 } 

@@ -13,6 +13,7 @@ export interface TeamMember {
   id: string;
   name: string;
   title: string;
+  organization_id: string; // Organization context for multi-tenant isolation
   primary_image_url: string;
   secondary_image_url: string;
   created_at: string;

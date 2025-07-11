@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
-import { DatabaseError } from '@/lib/errors/base';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
 // interface Profile { // No longer directly needed here
@@ -81,7 +80,7 @@ async function getHandler(
     } else {
       errorDetails = { error: String(error) };
     }
-    return NextResponse.json({ error: 'An unexpected error occurred', details: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: 'An unexpected error occurred', details: errorMessage, errorDetails }, { status: 500 });
   }
 }
 

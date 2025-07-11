@@ -14,9 +14,6 @@ const isStatusSuccessful = (status: string): boolean => {
   return status === 'completed' || status === 'succeeded';
 };
 
-const isStatusFailure = (status: string): boolean => {
-  return status === 'failed' || status === 'canceled';
-};
 
 interface UseTtsGenerationOptions {
   onGenerationComplete?: () => void;
@@ -32,6 +29,7 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [ttsErrorMessage, setTtsErrorMessage] = useState<string | null>(null);
   const [ttsPredictionDbId, setTtsPredictionDbId] = useState<string | null>(null);
+  const [pollCount, setPollCount] = useState(0);
 
   // Reset state function
   const resetTtsState = useCallback(() => {
@@ -66,8 +64,12 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     }
 
     const intervalId = setInterval(async () => {
+      setPollCount(prev => prev + 1);
       try {
         const result = await getSpeechGenerationResult(ttsPredictionDbId); 
+
+        // Reset poll count on successful fetch
+        setPollCount(0);
 
         // Use string-based status checks for failure detection
         const resultStatus = 'status' in result ? result.status || 'failed' : 'failed';
@@ -77,10 +79,17 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
           ));
           
         if (isFailure) {
-          setTtsErrorMessage(result.error || `Prediction status: ${resultStatus}`);
+          const errorMessage = typeof result.error === 'string' 
+            ? result.error 
+            : result.error?.message || `Prediction status: ${resultStatus}`;
+          // Special handling for 'Record not found' to retry
+          if (errorMessage.includes('Record not found') && pollCount < 3) {
+            return; // Continue polling
+          }
+          setTtsErrorMessage(errorMessage);
           setCurrentPredictionId(null); 
           setIsPollingLoading(false);
-          setPredictionStatus(resultStatus); // Ensure status reflects the failure
+          setPredictionStatus(resultStatus);
           clearInterval(intervalId); 
           return;
         }
@@ -100,8 +109,9 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
           clearInterval(intervalId); 
         }
         // For any other status (like 'processing', 'starting') that isn't a hard error, just continue polling.
-      } catch (error: any) {
-        setTtsErrorMessage(error.message || 'An error occurred during polling.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred during polling.';
+        setTtsErrorMessage(errorMessage);
         setCurrentPredictionId(null); 
         setIsPollingLoading(false);
         setPredictionStatus('failed');
@@ -112,8 +122,9 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     return () => {
       clearInterval(intervalId);
       setIsPollingLoading(false);
+      setPollCount(0);
     };
-  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete, ttsPredictionDbId]); // REMOVED resetTtsState from deps
+  }, [currentPredictionId, predictionStatus, toast, onGenerationComplete, ttsPredictionDbId, pollCount]); // REMOVED resetTtsState from deps
 
   // Function to initiate the TTS generation
   const startGeneration = useCallback((formData: FormData) => {
@@ -138,7 +149,11 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
         setTtsPredictionDbId(result.ttsPredictionDbId); 
         setCurrentPredictionId(result.predictionId);
       } else {
-        setTtsErrorMessage(result.error || 'Failed to start generation.');
+        // AI: Extract error message from domain error object or use string
+        const errorMessage = typeof result.error === 'string' 
+          ? result.error 
+          : result.error?.message || 'Failed to start generation.';
+        setTtsErrorMessage(errorMessage);
         setPredictionStatus('failed');
         // Ensure currentPredictionId and ttsPredictionDbId are null if start failed
         setCurrentPredictionId(null);

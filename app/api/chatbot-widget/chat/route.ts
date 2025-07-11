@@ -56,39 +56,8 @@ async function postHandler(
 
   const processingTime = Date.now() - startTime;
 
-  // Get the system prompt for debug info (if available)
-  let systemPrompt = 'System prompt not available';
-  
-  try {
-    // Try to get the chatbot config to build the system prompt
-    const sessionRepository = await ChatbotWidgetCompositionRoot.getChatSessionRepository();
-    const session = await sessionRepository.findById(sessionId);
-    
-    if (session) {
-      const chatbotConfigRepository = await ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
-      const config = await chatbotConfigRepository.findById(session.chatbotConfigId);
-      
-      if (config) {
-        // Use the new SimplePromptService for better performance
-        const simplePromptService = ChatbotWidgetCompositionRoot.getSimplePromptService();
-        
-        // Get message history for prompt generation
-        const messageRepository = await ChatbotWidgetCompositionRoot.getChatMessageRepository();
-        const messageHistory = await messageRepository.findBySessionId(session.id);
-        
-        // Generate system prompt with proper input structure
-        const promptResult = await simplePromptService.generateSystemPrompt({
-          chatbotConfig: config,
-          session: session,
-          messageHistory: messageHistory
-        });
-        
-        systemPrompt = promptResult.content;
-      }
-    }
-  } catch {
-    // If we can't get the system prompt, that's okay for debug purposes
-  }
+  // Note: System prompt generation removed as it was not being used in the response
+  // The debug information is handled by DebugInfoMapper instead
 
   // Get debug information if available and transform to DTO
   const debugService = ChatbotWidgetCompositionRoot.getDebugInformationService();

@@ -5,8 +5,28 @@ import { TtsHistoryPanel, TtsInterface, type TtsFormInitializationData, SaveAsDi
 import { TtsHistoryItem } from '@/lib/tts/presentation/types/TtsPresentation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useOrganizationContext } from '@/lib/organization/application/hooks/useOrganizationContext';
 
-export function TtsPageClient() {
+/**
+ * TTS Page Client Component
+ * 
+ * AI INSTRUCTIONS:
+ * - Uses organization context hook for automatic organization scoping
+ * - SECURITY: All operations automatically scoped to active organization
+ * - Handles TTS interface and history management within organization boundaries
+ * - Follows established pattern from other domain modules
+ * - ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS (React rules)
+ */
+
+interface TtsPageClientProps {
+  organizationId: string; // Server-side validation ensures access
+}
+
+export function TtsPageClient({ organizationId }: TtsPageClientProps) {
+  // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
+  // SECURITY: Get active organization context for all operations
+  const { activeOrganizationId } = useOrganizationContext();
+  
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [formInitialValues, setFormInitialValues] = useState<TtsFormInitializationData | undefined>(undefined);
   const [shouldRefreshHistory, setShouldRefreshHistory] = useState<boolean>(false);
@@ -30,6 +50,7 @@ export function TtsPageClient() {
     setIsSaveAsDialogOpen,
   } = useTtsSaveAsDialog({
     onSaveComplete: () => setShouldRefreshHistory(true)
+    // NOTE: useTtsSaveAsDialog should use useOrganizationContext() internally
   });
 
   const toggleHistoryPanel = useCallback(() => {
@@ -75,14 +96,6 @@ export function TtsPageClient() {
     }
   }, [headlessPlayAudio, headlessPauseAudio, headlessResumeAudio, headlessStopAudio, isHeadlessPlayerPlaying, headlessPlayerUrl]);
 
-  const handleViewInDam = useCallback((item: TtsHistoryItem) => {
-    // TODO: Implement DAM navigation
-  }, []);
-
-  const handleDeleteItem = useCallback(async (item: TtsHistoryItem) => {
-    // TODO: Implement delete logic
-  }, []);
-
   const handleSaveToDam = async (item: TtsHistoryItem): Promise<boolean> => {
     const predictionId = item.id;
     const audioUrl = item.outputUrl;
@@ -96,6 +109,7 @@ export function TtsPageClient() {
 
     const toastId = toast.loading("Saving to DAM...");
     try {
+      // NOTE: saveTtsAudioToDam should use useOrganizationContext() internally for organization scoping
       const result = await saveTtsAudioToDam(audioUrl, assetName, predictionId, true);
       
       if (result.success && result.assetId) {
@@ -117,6 +131,18 @@ export function TtsPageClient() {
     return !!item.outputUrl;
   }, [openSaveAsDialog]);
 
+  // SECURITY VALIDATION: After all hooks are called, validate organization context
+  if (activeOrganizationId !== organizationId) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center py-8">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Organization Context Mismatch</h2>
+          <p className="text-gray-600">Please refresh the page or switch to the correct organization.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
@@ -125,6 +151,7 @@ export function TtsPageClient() {
           <Clock className="h-4 w-4" />
         </Button>
       </div>
+      {/* NOTE: TtsInterface should use useOrganizationContext() internally */}
       <TtsInterface
         key={formInitialValues?.key ?? 'default'}
         remountKey={formInitialValues?.key ?? 'default'}
@@ -140,13 +167,14 @@ export function TtsPageClient() {
         />
       )}
 
+      {/* NOTE: TtsHistoryPanel should use useOrganizationContext() internally */}
       <TtsHistoryPanel
         isOpen={isHistoryOpen}
         onClose={toggleHistoryPanel}
         onReloadInputFromItem={handleReloadInputFromItem}
         onReplayItem={handleReplayItem}
-        onViewInDamItem={handleViewInDam}
-        onDeleteItem={handleDeleteItem}
+        onViewInDamItem={() => {}}
+        onDeleteItem={() => {}}
         onSaveToDam={handleSaveToDam}
         onSaveAsToDam={handleSaveAsToDam}
         headlessPlayerCurrentlyPlayingUrl={headlessPlayerUrl}
@@ -157,6 +185,7 @@ export function TtsPageClient() {
         onRefreshComplete={() => setShouldRefreshHistory(false)}
       />
 
+      {/* NOTE: SaveAsDialog should use useOrganizationContext() internally */}
       <SaveAsDialog
         isOpen={isSaveAsDialogOpen}
         onOpenChange={setIsSaveAsDialogOpen}

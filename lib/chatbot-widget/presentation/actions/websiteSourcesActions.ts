@@ -87,7 +87,7 @@ export async function crawlWebsiteSource(
   configId: string,
   organizationId: string,
   sourceId: string
-): Promise<ActionResult<{ itemsProcessed: number; crawledPages?: any[] }>> {
+): Promise<ActionResult<{ itemsProcessed: number; crawledPages?: unknown[] }>> {
   try {
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
     const websiteService = ChatbotWidgetCompositionRoot.getWebsiteKnowledgeApplicationService();
@@ -102,13 +102,35 @@ export async function crawlWebsiteSource(
       return createErrorResult('SOURCE_NOT_FOUND', 'Website source not found', 'HIGH');
     }
     
+    // AI: Update status to 'crawling' when starting
+    await updateWebsiteSourceStatus(configId, sourceId, 'crawling');
+    
+    // AI: Create status callback for vectorization progress tracking
+    const statusUpdateCallback = async (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => {
+      if (status === 'vectorizing') {
+        // Update website source status to 'vectorizing' with progress metadata
+        const config = await configRepository.findById(configId);
+        if (config) {
+          const updatedKnowledgeBase = config.knowledgeBase.updateWebsiteSource(sourceId, {
+            status: 'vectorizing',
+            pageCount: progress.vectorizedItems, // Use vectorizedItems as progress indicator
+            errorMessage: `Vectorizing ${progress.vectorizedItems}/${progress.totalItems}: ${progress.currentItem}`
+          });
+          const updatedConfig = config.updateKnowledgeBase(updatedKnowledgeBase);
+          await configRepository.update(updatedConfig);
+        }
+      }
+    };
+    
     const result = await websiteService.crawlWebsiteSource({
       organizationId,
       chatbotConfigId: configId,
-      websiteSource
+      websiteSource,
+      statusUpdateCallback
     });
     
     if (!result.success) {
+      await updateWebsiteSourceStatus(configId, sourceId, 'error', 0, result.error?.message);
       return createErrorResult(
         result.error?.code || 'CRAWL_ERROR',
         result.error?.message || 'Crawl failed',
@@ -219,7 +241,7 @@ export async function cleanupWebsiteSources(
     const deletedItemsCount = await vectorService.deleteKnowledgeItemsBySource(organizationId, configId, 'website_crawled');
 
     const cleanedKnowledgeBase = createCleanedKnowledgeBase(existingConfig.knowledgeBase);
-    const updatedConfig = existingConfig.updateKnowledgeBase(cleanedKnowledgeBase);
+    const updatedConfig = existingConfig.updateKnowledgeBase(cleanedKnowledgeBase as any);
     await configRepository.update(updatedConfig);
     
     revalidateWebsiteSourcesPaths();

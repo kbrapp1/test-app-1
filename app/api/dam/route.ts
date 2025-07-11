@@ -103,12 +103,12 @@ async function getHandler(
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        const { error: refreshError } = await supabase.auth.refreshSession();
-        if (!refreshError) {
+        const { error } = await supabase.auth.refreshSession();
+        if (!error) {
           organizationId = await getActiveOrganizationId();
         }
       }
-    } catch (refreshError) {
+    } catch {
       // Session refresh failed silently
     }
   }

@@ -29,7 +29,7 @@ const createFolderHandler: AuthenticatedHandler = async (
   let body: PostRequestBody;
   try {
     body = await request.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Invalid request body: Must be valid JSON' }, { status: 400 });
   }
 

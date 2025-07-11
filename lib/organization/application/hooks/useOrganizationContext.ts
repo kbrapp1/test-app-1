@@ -1,8 +1,10 @@
+"use client";
+
 // Application Hook: Organization Context Integration
 // Single Responsibility: React state integration for organization context
 // DDD: Application layer that coordinates domain services with UI state
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { OrganizationContextService, type OrganizationContext } from '../../domain/services/OrganizationContextService';
 import { PermissionValidationService, type OrganizationPermission } from '../../domain/services/PermissionValidationService';
@@ -31,9 +33,9 @@ interface UseOrganizationContextResult {
 
 export function useOrganizationContext(): UseOrganizationContextResult {
   // Services
-  const contextService = new OrganizationContextService();
-  const permissionService = new PermissionValidationService();
-  const auditService = new AuditTrailService();
+  const contextService = useMemo(() => new OrganizationContextService(), []);
+  const permissionService = useMemo(() => new PermissionValidationService(), []);
+  const auditService = useMemo(() => new AuditTrailService(), []);
 
   // State
   const [currentContext, setCurrentContext] = useState<OrganizationContext | null>(null);
@@ -41,7 +43,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
+  const [isLoadingOrganizations] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load initial data
@@ -80,7 +82,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [contextService, permissionService]);
 
   // Switch organization with optimistic updates
   const switchOrganization = useCallback(async (organizationId: string): Promise<boolean> => {
