@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state'; // Import EmptyState
 // Import server actions from the separate file
 import { addNote, deleteNote, editNote } from './actions';
 import { getActiveOrganizationId } from '@/lib/auth/server-action'; // <-- IMPORT UTILITY
+import type { Note } from '@/types/notes'; // Import the Note type
 
 // Type for Server Action Response (keep for action definitions)
 // interface ActionResult {
@@ -39,16 +40,6 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action'; // <-- IMPOR
    // ... entire editNote function ...
 // }
 // --- TO HERE ---
-
-// Define Note type based on table structure (or Supabase generated types)
-interface Note {
-    id: string;
-    user_id: string;
-    title: string | null; // Add title
-    content: string | null;
-    created_at: string;
-    updated_at: string | null; // Add updated_at
-}
 
 // Props for dependency injection of organization ID fetcher
 export default async function NotesPage() {
