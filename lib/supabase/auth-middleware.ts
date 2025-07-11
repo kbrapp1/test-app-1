@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseClient, User } from '@supabase/supabase-js';
 import { createClient } from './server';
 import { checkAuth } from './db-auth';
+import { AuthorizationError } from '@/lib/errors/base';
 
 export type AuthenticatedHandler = (
   req: NextRequest,

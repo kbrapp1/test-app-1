@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { 
   addWebsiteSource, 
   removeWebsiteSource, 
-  crawlWebsiteSource as crawlWebsiteSourceAction,
+  crawlWebsiteSource,
   cleanupWebsiteSources
 } from '../actions/websiteSourcesActions';
 import { WebsiteSourceDto } from '../../application/dto/ChatbotConfigDto';
@@ -22,16 +22,15 @@ import { useFormState } from './website-sources/useFormState';
 import { useUIState } from './website-sources/useUIState';
 import { useCrawlProgress } from './website-sources/useCrawlProgress';
 import { simulateCrawlProgress } from '../utils/crawlProgressSimulator';
-import { useToast } from '@/components/ui/use-toast';
 
 /** Main Website Sources State Hook */
 export function useWebsiteSourcesState(
-  organizationId: string | null,
+  organizationId: string,
   chatbotConfigId: string,
-  existingConfig: any
+  existingConfig: any,
+  activeOrganizationId: string | null
 ) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   
   // Sub-hooks for different concerns
   const formState = useFormState();
@@ -42,22 +41,20 @@ export function useWebsiteSourcesState(
   const {
     data: crawledPagesData = {},
     refetch: refetchCrawledPages
-  } = useCrawledPagesData(organizationId || '', chatbotConfigId, existingConfig);
+  } = useCrawledPagesData(organizationId, chatbotConfigId, existingConfig);
 
   // Derived state
   const websiteSources: WebsiteSourceDto[] = existingConfig?.knowledgeBase?.websiteSources || [];
 
   // Helper functions
   const invalidateQueries = () => {
-    if (organizationId) {
-      queryClient.invalidateQueries({ queryKey: ['chatbot-config', organizationId] });
-      refetchCrawledPages();
-    }
+    queryClient.invalidateQueries({ queryKey: ['chatbot-config', activeOrganizationId] });
+    refetchCrawledPages();
   };
 
   // Action handlers
   const handleAddSource = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
     if (!formState.validateForm()) return;
     
@@ -67,11 +64,11 @@ export function useWebsiteSourcesState(
   };
 
   const confirmAddSource = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await addWebsiteSource(existingConfig.id, organizationId, formState.formData);
+      const result = await addWebsiteSource(existingConfig.id, activeOrganizationId, formState.formData);
       
       if (result.success) {
         formState.setFormErrors([]);
@@ -91,7 +88,7 @@ export function useWebsiteSourcesState(
   };
 
   const handleRemoveSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
     uiState.clearMessages();
     uiState.setIsConfirmingAdd(false);
@@ -99,11 +96,11 @@ export function useWebsiteSourcesState(
   };
 
   const confirmDeleteSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await removeWebsiteSource(existingConfig.id, organizationId, sourceId);
+      const result = await removeWebsiteSource(existingConfig.id, activeOrganizationId, sourceId);
       
       if (result.success) {
         invalidateQueries();
@@ -127,57 +124,57 @@ export function useWebsiteSourcesState(
     }
   };
 
-  // AI: Crawl website source with real database polling
-  const crawlWebsiteSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+  const handleCrawlSource = async (sourceId: string) => {
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
+    uiState.setCrawlingSourceId(sourceId);
+    crawlProgressState.startCrawlProgress(sourceId);
+
     try {
-      crawlProgressState.startCrawlProgress(sourceId);
+      // AI: Run simulation first for visual feedback
+      await simulateCrawlProgress(sourceId, websiteSources, crawlProgressState.updateCrawlProgress);
+
+      // AI: Update message to show real processing is starting
+      crawlProgressState.updateCrawlProgress({
+        status: 'processing',
+        progress: 99,
+        message: 'Starting actual crawl...'
+      });
+
+      // AI: Add timeout protection for actual crawling (2 minutes max)
+      const crawlPromise = crawlWebsiteSource(existingConfig.id, activeOrganizationId, sourceId);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Crawling timed out after 2 minutes')), 120000);
+      });
+
+      // AI: Race between crawling and timeout
+      const result = await Promise.race([crawlPromise, timeoutPromise]) as any;
       
-      // AI: Start database polling for real progress updates  
-      crawlProgressState.startPolling(organizationId, chatbotConfigId, sourceId);
-      
-      // AI: Execute crawl in background - polling will show real progress
-      const result = await crawlWebsiteSourceAction(existingConfig.id, organizationId, sourceId);
-      
-      if (result.success && result.data) {
-        crawlProgressState.completeCrawlProgress(result.data.itemsProcessed);
-        
-        // AI: Refresh data to show final results
-        await queryClient.invalidateQueries({ 
-          queryKey: ['chatbot-config', organizationId] 
-        });
-        
-        toast({
-          title: "Crawl Completed",
-          description: `Successfully crawled and processed ${result.data.itemsProcessed} pages`
-        });
+      if (result.success) {
+        crawlProgressState.completeCrawlProgress(result.data?.itemsProcessed || 0);
+        refetchCrawledPages();
+        setTimeout(() => crawlProgressState.clearCrawlProgress(), 3000);
+        invalidateQueries();
       } else {
-        const errorMsg = result.error?.message || 'Crawl failed';
-        crawlProgressState.errorCrawlProgress(errorMsg);
-        toast({
-          title: "Crawl Failed",
-          description: errorMsg,
-          variant: "destructive"
-        });
+        crawlProgressState.errorCrawlProgress(result.error?.message || 'Crawl failed');
+        formState.setFormErrors([result.error?.message || 'Failed to crawl website source']);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      // AI: Handle both timeout and other errors
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during crawling';
       crawlProgressState.errorCrawlProgress(errorMessage);
-      toast({
-        title: "Crawl Failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      formState.setFormErrors([errorMessage]);
+    } finally {
+      uiState.setCrawlingSourceId(null);
     }
   };
 
   const handleCleanupSources = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    if (!existingConfig?.id || !activeOrganizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await cleanupWebsiteSources(existingConfig.id, organizationId);
+      const result = await cleanupWebsiteSources(existingConfig.id, activeOrganizationId);
       
       if (result.success) {
         invalidateQueries();
@@ -211,7 +208,7 @@ export function useWebsiteSourcesState(
     // Actions
     handleAddSource,
     handleRemoveSource,
-    handleCrawlSource: crawlWebsiteSource,
+    handleCrawlSource,
     handleCleanupSources,
     confirmAddSource,
     confirmDeleteSource

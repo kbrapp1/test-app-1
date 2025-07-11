@@ -7,11 +7,20 @@ import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
 import { AssetSelectorModal } from '@/lib/dam/presentation/components/dialogs';
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WaveformAudioPlayer } from "@/components/ui/waveform-audio-player";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useTtsGeneration } from '../hooks/useTtsGeneration';
 import { useTtsDamIntegration } from '../hooks/useTtsDamIntegration';
 import { DamAssetManagementAdapter } from '../../infrastructure/adapters/DamAssetManagementAdapter';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';
+import { Loader2 } from "lucide-react";
 import { ttsProvidersConfig } from '../../infrastructure/providers/ttsProviderConfig'; // Import provider configs
 
 import { TextInput, VoiceId } from '../../domain';
@@ -82,13 +91,13 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
     isAudioActionLoading,
     sourceAssetId, 
     originalLoadedText, 
- 
+    damErrorMessage, 
     loadTextFromAsset, 
     saveTextToAsset, 
     saveTextAsNewAsset, 
     saveAudioToDam, 
   } = useTtsDamIntegration({
-      onTextLoaded: (text) => {
+      onTextLoaded: (text, assetId) => {
         form.setValue('inputText', text, { shouldValidate: true });
         resetTtsState();
       },

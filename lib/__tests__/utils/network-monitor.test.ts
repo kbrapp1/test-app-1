@@ -39,6 +39,7 @@ export class NetworkCallMonitor {
     
     // Create our own fetch interceptor for testing
     const originalFetch = this.originalFetch!;
+    const self = this;
     
     global.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       // Handle different URL input types
@@ -79,7 +80,7 @@ export class NetworkCallMonitor {
         stackTrace: new Error().stack
       };
       
-      this.calls.push(call);
+      self.calls.push(call);
       
       // Make the actual request with original fetch
       return originalFetch(input, init);
@@ -117,34 +118,29 @@ export class NetworkCallMonitor {
     // Find redundant calls
     const redundantCalls: NetworkCall[] = [];
     Object.entries(callsByEndpoint).forEach(([endpoint, calls]) => {
-      // Log endpoint analysis for debugging when needed
-      if (endpoint && false) {
-        console.log('Analyzing endpoint:', endpoint);
-      }
-      // Skip if endpoint has only one call (no redundancy possible)
-      if (calls.length <= 1) return;
-      
-      // Check for exact duplicates within time window  
-      for (let i = 0; i < calls.length - 1; i++) {
-        for (let j = i + 1; j < calls.length; j++) {
-          const timeDiff = calls[j].timestamp - calls[i].timestamp;
-          if (timeDiff <= timeWindowMs) {
-            // Check if calls are identical
-            if (this.areCallsIdentical(calls[i], calls[j])) {
-              duplicatesWithinMs.push([calls[i], calls[j]]);
-              redundantCalls.push(calls[j]); // Mark the later call as redundant
+      if (calls.length > 1) {
+        // Check for exact duplicates within time window
+        for (let i = 0; i < calls.length - 1; i++) {
+          for (let j = i + 1; j < calls.length; j++) {
+            const timeDiff = calls[j].timestamp - calls[i].timestamp;
+            if (timeDiff <= timeWindowMs) {
+              // Check if calls are identical
+              if (this.areCallsIdentical(calls[i], calls[j])) {
+                duplicatesWithinMs.push([calls[i], calls[j]]);
+                redundantCalls.push(calls[j]); // Mark the later call as redundant
+              }
             }
           }
         }
-      }
 
-      // Check for rapid-fire calls (many calls to same endpoint quickly)
-      if (calls.length >= 3) {
-        const recentCalls = calls.filter(call => 
-          calls[calls.length - 1].timestamp - call.timestamp <= timeWindowMs
-        );
-        if (recentCalls.length >= 3) {
-          rapidFireCalls.push(recentCalls);
+        // Check for rapid-fire calls (many calls to same endpoint quickly)
+        if (calls.length >= 3) {
+          const recentCalls = calls.filter(call => 
+            calls[calls.length - 1].timestamp - call.timestamp <= timeWindowMs
+          );
+          if (recentCalls.length >= 3) {
+            rapidFireCalls.push(recentCalls);
+          }
         }
       }
     });
@@ -212,10 +208,6 @@ describe('NetworkCallMonitor', () => {
   beforeEach(() => {
     // Setup global fetch mock
     vi.stubGlobal('fetch', mockFetch.mockImplementation(async (url: string, options: any = {}) => {
-      // Log options for mock fetch debugging when needed
-      if (options && false) {
-        console.log('Mock fetch options:', options);
-      }
       return Promise.resolve({
         ok: true,
         status: 200,

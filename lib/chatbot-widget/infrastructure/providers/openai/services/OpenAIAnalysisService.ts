@@ -11,8 +11,7 @@
 
 import OpenAI from 'openai';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
-import { OpenAIIntentConfig, OpenAIRequestData, OpenAIResponseData, PersonaInference } from '../types/OpenAITypes';
-import { ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
+import { OpenAIIntentConfig, OpenAIRequestData, OpenAIResponseData } from '../types/OpenAITypes';
 import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
 // AI: OpenAIPromptBuilder removed - prompt building now handled by SimplePromptService
 import { OpenAIMessageFormatter } from './OpenAIMessageFormatter';
@@ -45,11 +44,11 @@ export class OpenAIAnalysisService {
       primaryIntent: string;
       primaryConfidence: number;
       reasoning: string;
-      alternativeIntents?: Array<{ intent: string; confidence: number }>;
+      alternativeIntents?: any[];
     };
-    entities: ExtractedEntities;
-    corrections: Record<string, unknown>;
-    persona: PersonaInference;
+    entities: any;
+    corrections: any;
+    persona: any;
     processingTime: number;
   }> {
     try {
@@ -103,7 +102,7 @@ export class OpenAIAnalysisService {
       const responseData: OpenAIResponseData = {
         timestamp: new Date().toISOString(),
         processingTime: `${processingTime}ms`,
-        response: response as unknown as Record<string, unknown>,
+        response: response,
         responseSize: `${JSON.stringify(response).length} characters`
       };
 

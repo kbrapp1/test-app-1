@@ -2,26 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { ErrorCodes } from '@/lib/errors/constants';
-import { checkNotesAccess } from '@/lib/shared/access-control';
-import { Permission } from '@/lib/auth/roles';
 
 // Import helpers from the new file
 import { getAuthContext, handleDatabaseError, ActionResult } from './helpers';
 
 // Server Action for adding notes 
-export async function addNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
-    try {
-        // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.CREATE_NOTE]); // AI: Use note-specific permissions
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Access denied';
-        return {
-            success: false,
-            message: errorMessage,
-            code: ErrorCodes.UNAUTHORIZED
-        };
-    }
-
+export async function addNote(prevState: any, formData: FormData): Promise<ActionResult> {
     const title = formData.get('title')?.toString();
     const content = formData.get('content')?.toString();
     const defaultColor = 'bg-yellow-200';
@@ -81,19 +67,7 @@ export async function addNote(prevState: unknown, formData: FormData): Promise<A
 }
 
 // Server Action for deleting notes
-export async function deleteNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
-    try {
-        // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.DELETE_NOTE]); // AI: Use note-specific permissions
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Access denied';
-        return {
-            success: false,
-            message: errorMessage,
-            code: ErrorCodes.UNAUTHORIZED
-        };
-    }
-
+export async function deleteNote(prevState: any, formData: FormData): Promise<ActionResult> {
     const noteId = formData.get('note_id')?.toString();
 
     if (!noteId) {
@@ -122,19 +96,7 @@ export async function deleteNote(prevState: unknown, formData: FormData): Promis
 }
 
 // Server Action for editing notes
-export async function editNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
-    try {
-        // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.UPDATE_NOTE]); // AI: Use note-specific permissions
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Access denied';
-        return {
-            success: false,
-            message: errorMessage,
-            code: ErrorCodes.UNAUTHORIZED
-        };
-    }
-
+export async function editNote(prevState: any, formData: FormData): Promise<ActionResult> {
     const noteId = formData.get('note_id')?.toString();
     const newTitle = formData.get('title')?.toString();
     const newContent = formData.get('content')?.toString();
@@ -174,18 +136,6 @@ export async function editNote(prevState: unknown, formData: FormData): Promise<
 
 // Server Action to update note order
 export async function updateNoteOrder(orderedNoteIds: string[]): Promise<ActionResult> {
-    try {
-        // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.UPDATE_NOTE]); // AI: Use note-specific permissions
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Access denied';
-        return {
-            success: false,
-            message: errorMessage,
-            code: ErrorCodes.UNAUTHORIZED
-        };
-    }
-
     if (!Array.isArray(orderedNoteIds)) {
         return { success: false, message: 'Invalid order data.', code: ErrorCodes.VALIDATION_ERROR };
     }

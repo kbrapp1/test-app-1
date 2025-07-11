@@ -1,22 +1,6 @@
 import { ElevenLabsProvider, ElevenLabsVoice } from '@/lib/infrastructure/providers/elevenlabs/ElevenLabsProvider';
 import { SpeechRequest, SpeechResult, type TtsVoice } from '../../../domain';
 
-// ElevenLabs User Info interface
-interface ElevenLabsUserInfo {
-  subscription?: {
-    tier?: string;
-    character_count?: number;
-    character_limit?: number;
-    can_extend_character_limit?: boolean;
-    allowed_to_extend_character_limit?: boolean;
-  };
-  is_new_user?: boolean;
-  xi_api_key?: string;
-  can_use_instant_voice_cloning?: boolean;
-  can_use_professional_voice_cloning?: boolean;
-  [key: string]: unknown;
-}
-
 /**
  * TTS-specific adapter for ElevenLabs provider
  * Handles TTS domain logic, error handling, and data transformation
@@ -97,7 +81,7 @@ export class TtsElevenLabsAdapter {
   /**
    * Get user subscription info (useful for quota management)
    */
-  async getUserInfo(): Promise<ElevenLabsUserInfo> {
+  async getUserInfo(): Promise<any> {
     const provider = this.getProvider();
     
     try {

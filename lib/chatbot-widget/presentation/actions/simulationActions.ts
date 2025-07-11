@@ -26,13 +26,13 @@ export interface SimulationMessageResult {
   botMessageId: string;
   shouldCaptureLeadInfo: boolean;
   suggestedNextActions: string[];
-  conversationMetrics: Record<string, unknown>;
+  conversationMetrics: any;
   processingTimeMs: number;
   totalPromptTimeSeconds: number;
-  intentAnalysis?: Record<string, unknown>;
-  journeyState?: Record<string, unknown>;
-  callToAction?: Record<string, unknown>;
-  debugInfo?: Record<string, unknown>;
+  intentAnalysis?: any;
+  journeyState?: any;
+  callToAction?: any;
+  debugInfo?: any;
   error?: string;
 }
 
@@ -132,13 +132,13 @@ export async function sendSimulationMessage(
       botMessageId: result.botResponse.id,
       shouldCaptureLeadInfo: result.shouldCaptureLeadInfo,
       suggestedNextActions: [...result.suggestedNextActions],
-      conversationMetrics: result.conversationMetrics as unknown as Record<string, unknown>,
+      conversationMetrics: result.conversationMetrics,
       processingTimeMs: processingTime,
       totalPromptTimeSeconds: totalPromptTimeSeconds,
-      intentAnalysis: result.intentAnalysis as unknown as Record<string, unknown>,
-      journeyState: result.journeyState as unknown as Record<string, unknown>,
-      callToAction: result.callToAction as unknown as Record<string, unknown>,
-      debugInfo: domainDebugInfo as unknown as Record<string, unknown>
+      intentAnalysis: result.intentAnalysis,
+      journeyState: result.journeyState,
+      callToAction: result.callToAction,
+      debugInfo: domainDebugInfo
     };
   } catch (error) {
     try {

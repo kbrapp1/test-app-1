@@ -47,18 +47,7 @@ export class ContextWindowService {
     if (availableTokens <= 0) {
       // Only critical messages fit
       return {
-        messages: criticalMessages.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          role: msg.messageType === 'user' ? 'user' as const : 
-                msg.messageType === 'bot' ? 'assistant' as const : 'system' as const,
-          timestamp: msg.timestamp,
-          metadata: { 
-            sessionId: msg.sessionId,
-            processingTime: msg.processingTime,
-            isVisible: msg.isVisible
-          }
-        })),
+        messages: criticalMessages,
         summary: existingSummary,
         tokenUsage: {
           messagesTokens: criticalTokens,
@@ -88,18 +77,7 @@ export class ContextWindowService {
     const wasCompressed = selectedMessages.length < messages.length;
 
     return {
-      messages: selectedMessages.map(msg => ({
-        id: msg.id,
-        content: msg.content,
-        role: msg.messageType === 'user' ? 'user' as const : 
-              msg.messageType === 'bot' ? 'assistant' as const : 'system' as const,
-        timestamp: msg.timestamp,
-        metadata: { 
-          sessionId: msg.sessionId,
-          processingTime: msg.processingTime,
-          isVisible: msg.isVisible
-        }
-      })),
+      messages: selectedMessages,
       summary: existingSummary,
       tokenUsage: {
         messagesTokens: currentTokens,

@@ -16,14 +16,7 @@ import { AppStartupService } from '@/lib/chatbot-widget/infrastructure/startup/A
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    // Check if details requested for potential future detailed status
-    const detailsRequested = searchParams.get('details') === 'true';
-    
-    // Currently all responses include basic status
-    // Future: Use detailsRequested for detailed status when needed
-    if (detailsRequested) {
-      // Placeholder for future detailed status implementation
-    }
+    const includeDetails = searchParams.get('details') === 'true';
 
     // Get startup status
     const startupStatus = AppStartupService.getStartupStatus();

@@ -88,24 +88,18 @@ export const getOptimizedImageUrl = (
 
 /**
  * React hook for automatic image optimization
- * 
- * AI INSTRUCTIONS:
- * - All hooks must be called before any early returns
- * - Follow React's rules of hooks strictly
- * - Use proper dependency arrays for optimization
  */
 export const useOptimizedImage = (
   imageUrl: string, 
   size?: 'thumbnail' | 'medium' | 'full',
   options?: ImageOptimizationOptions
 ): string => {
-  // AI: Always call hooks before any early returns
+  if (typeof window === 'undefined') {
+    return imageUrl;
+  }
+
+  // Use useMemo equivalent for optimization
   const optimizedUrl = React.useMemo(() => {
-    // Handle server-side rendering case
-    if (typeof window === 'undefined') {
-      return imageUrl;
-    }
-    
     return getOptimizedImageUrl(imageUrl, size, options);
   }, [imageUrl, size, options]);
 

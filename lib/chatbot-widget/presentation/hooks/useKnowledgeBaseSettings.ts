@@ -53,11 +53,6 @@ export function useKnowledgeBaseSettings(
   existingConfig: ChatbotConfigDto | null,
   organizationId: string | null
 ) {
-  // AI: Security validation - organizationId must be provided
-  if (!organizationId) {
-    throw new Error('Organization ID is required for knowledge base settings management');
-  }
-
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<KnowledgeBaseFormData>({

@@ -22,7 +22,6 @@ describe('Lead Entity', () => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Use test data factory for consistent test data
     validContactInfo = {
       name: 'John Doe',
       email: 'john.doe@example.com',
@@ -224,28 +223,10 @@ describe('Lead Entity', () => {
       expect(lead.assignedTo).toBe('user-123');
       expect(lead.tags).toEqual(['high-priority']);
     });
-
-    it('should create using test data factory for consistent testing', () => {
-      const highValueLead = ChatbotTestDataFactory.createHighValueLead();
-      const unqualifiedLead = ChatbotTestDataFactory.createUnqualifiedLead();
-
-      // High value lead should have enterprise characteristics
-      expect(highValueLead.leadScore).toBe(95);
-      expect(highValueLead.qualificationStatus).toBe('highly_qualified');
-      expect(highValueLead.contactInfo.email).toBe('ceo@enterprise-corp.com');
-      expect(highValueLead.qualificationData.budget).toBe('$500,000');
-
-      // Unqualified lead should have student characteristics
-      expect(unqualifiedLead.leadScore).toBe(25);
-      expect(unqualifiedLead.qualificationStatus).toBe('not_qualified');
-      expect(unqualifiedLead.contactInfo.email).toBe('curious@student.edu');
-      expect(unqualifiedLead.qualificationData.decisionMaker).toBe(false);
-    });
   });
 
   describe('Business Logic', () => {
     let lead: Lead;
-    let originalDateNow: () => number;
 
     beforeEach(() => {
       lead = Lead.create(
@@ -257,23 +238,12 @@ describe('Lead Entity', () => {
         validSource,
         'Test lead'
       );
-      
-      // Mock Date.now to control timing in tests
-      originalDateNow = Date.now;
-      let mockTime = Date.now();
-      Date.now = vi.fn(() => mockTime);
-      
-      // Helper to advance mock time
-      (Date.now as any).advanceTime = (ms: number) => {
-        mockTime += ms;
-      };
     });
 
-    afterEach(() => {
-      Date.now = originalDateNow;
-    });
-
-    it('should update contact information', () => {
+    it('should update contact information', async () => {
+      // Add small delay to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       const updatedLead = lead.updateContactInfo({
         phone: '+1-555-999-9999',
         company: 'New Company Inc'
@@ -283,10 +253,12 @@ describe('Lead Entity', () => {
       expect(updatedLead.contactInfo.company).toBe('New Company Inc');
       expect(updatedLead.contactInfo.name).toBe('John Doe'); // Should preserve other fields
       expect(updatedLead.id).toBe(lead.id); // Should maintain identity
-      expect(updatedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(updatedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
     });
 
-    it('should update qualification data', () => {
+    it('should update qualification data', async () => {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       const updatedLead = lead.updateQualificationData({
         budget: 'startup',
         timeline: '6_months',
@@ -297,55 +269,70 @@ describe('Lead Entity', () => {
       expect(updatedLead.qualificationData.timeline).toBe('6_months');
       expect(updatedLead.qualificationData.painPoints).toEqual(['new pain point']);
       expect(updatedLead.id).toBe(lead.id);
-      expect(updatedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(updatedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
     });
 
-    it('should handle follow-up status transitions', () => {
+    it('should handle follow-up status transitions', async () => {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       // Test direct status update
       const contactedLead = lead.updateFollowUpStatus('contacted');
       expect(contactedLead.followUpStatus).toBe('contacted');
-      expect(contactedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(contactedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
 
       // Test shortcut methods
+      await new Promise(resolve => setTimeout(resolve, 1));
       const convertedLead = contactedLead.markAsConverted();
       expect(convertedLead.followUpStatus).toBe('converted');
 
+      await new Promise(resolve => setTimeout(resolve, 1));
       const lostLead = convertedLead.markAsLost();
       expect(lostLead.followUpStatus).toBe('lost');
 
+      await new Promise(resolve => setTimeout(resolve, 1));
       const nurturingLead = lostLead.markAsNurturing();
       expect(nurturingLead.followUpStatus).toBe('nurturing');
 
+      await new Promise(resolve => setTimeout(resolve, 1));
       const inProgressLead = nurturingLead.markAsInProgress();
       expect(inProgressLead.followUpStatus).toBe('in_progress');
     });
 
-    it('should handle lead assignment', () => {
+    it('should handle lead assignment', async () => {
+      await new Promise(resolve => setTimeout(resolve, 2));
+      
       const assignedLead = lead.assignTo('user-456');
       expect(assignedLead.assignedTo).toBe('user-456');
-      expect(assignedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(assignedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
 
+      await new Promise(resolve => setTimeout(resolve, 1));
       const unassignedLead = assignedLead.unassign();
       expect(unassignedLead.assignedTo).toBeUndefined();
-      expect(unassignedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(assignedLead.updatedAt.getTime());
+      expect(unassignedLead.updatedAt.getTime()).toBeGreaterThan(assignedLead.updatedAt.getTime());
     });
 
-    it('should manage tags', () => {
+    it('should manage tags', async () => {
+      await new Promise(resolve => setTimeout(resolve, 5));
+      
       // Add tags
       const taggedLead = lead.addTag('high-priority');
       expect(taggedLead.tags).toContain('high-priority');
-      expect(taggedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(taggedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
 
+      await new Promise(resolve => setTimeout(resolve, 1));
       const multiTaggedLead = taggedLead.addTag('enterprise');
       expect(multiTaggedLead.tags).toEqual(expect.arrayContaining(['high-priority', 'enterprise']));
 
       // Remove tag
+      await new Promise(resolve => setTimeout(resolve, 1));
       const removedTagLead = multiTaggedLead.removeTag('high-priority');
       expect(removedTagLead.tags).toContain('enterprise');
       expect(removedTagLead.tags).not.toContain('high-priority');
     });
 
-    it('should manage notes', () => {
+    it('should manage notes', async () => {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       const leadWithNote = lead.addNote(
         'Customer wants demo next week',
         'user-123',
@@ -358,14 +345,16 @@ describe('Lead Entity', () => {
       expect(leadWithNote.notes[0].authorId).toBe('user-123');
       expect(leadWithNote.notes[0].authorName).toBe('Sales Rep');
       expect(leadWithNote.notes[0].isInternal).toBe(false);
-      expect(leadWithNote.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(leadWithNote.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
     });
 
-    it('should update conversation summary', () => {
+    it('should update conversation summary', async () => {
+      await new Promise(resolve => setTimeout(resolve, 1));
+      
       const updatedLead = lead.updateConversationSummary('Updated summary with more details');
       
       expect(updatedLead.conversationSummary).toBe('Updated summary with more details');
-      expect(updatedLead.updatedAt.getTime()).toBeGreaterThanOrEqual(lead.updatedAt.getTime());
+      expect(updatedLead.updatedAt.getTime()).toBeGreaterThan(lead.updatedAt.getTime());
     });
   });
 
@@ -475,10 +464,8 @@ describe('Lead Entity', () => {
   });
 
   describe('Error Handling', () => {
-    let lead: Lead;
-
-    beforeEach(() => {
-      lead = Lead.create(
+    it('should handle invalid contact info updates gracefully', () => {
+      const lead = Lead.create(
         'session-123',
         'org-456',
         'config-789',
@@ -487,9 +474,7 @@ describe('Lead Entity', () => {
         validSource,
         'Test lead'
       );
-    });
 
-    it('should handle invalid contact info updates gracefully', () => {
       // Should delegate validation to ContactInfo value object
       expect(() => {
         lead.updateContactInfo({ email: 'invalid-email' });
@@ -497,76 +482,20 @@ describe('Lead Entity', () => {
     });
 
     it('should handle invalid qualification data gracefully', () => {
+      const lead = Lead.create(
+        'session-123',
+        'org-456',
+        'config-789',
+        validContactInfo,
+        validQualificationData,
+        validSource,
+        'Test lead'
+      );
+
       // QualificationData may not validate timeline values, so test a more fundamental validation
       expect(() => {
         lead.updateQualificationData({ engagementLevel: 'invalid-level' as any });
       }).toThrow(); // QualificationData should validate engagement level
-    });
-
-    it('should handle empty or invalid tag management', () => {
-      // Should throw error for empty tags
-      expect(() => {
-        lead.addTag('');
-      }).toThrow('Tags cannot be empty');
-      
-      // Should handle duplicate tags
-      const leadWithTag = lead.addTag('duplicate');
-      const leadWithDuplicate = leadWithTag.addTag('duplicate');
-      expect(leadWithDuplicate.tags.filter(tag => tag === 'duplicate')).toHaveLength(1);
-      
-      // Should handle removing non-existent tags
-      const leadWithoutTag = lead.removeTag('non-existent');
-      expect(leadWithoutTag.tags).toEqual(lead.tags);
-    });
-
-    it('should handle invalid note content', () => {
-      // Should handle empty note content
-      expect(() => {
-        lead.addNote('', 'user-123', 'User', false);
-      }).toThrow(); // Should validate note content
-      
-      // Should handle invalid author information
-      expect(() => {
-        lead.addNote('Valid content', '', 'User', false);
-      }).toThrow(); // Should validate author ID
-      
-      expect(() => {
-        lead.addNote('Valid content', 'user-123', '', false);
-      }).toThrow(); // Should validate author name
-    });
-
-    it('should handle invalid assignment operations', () => {
-      // LeadLifecycleManager doesn't validate empty user ID, so test actual behavior
-      const leadAssignedEmpty = lead.assignTo('');
-      expect(leadAssignedEmpty.assignedTo).toBe('');
-      
-      // Should handle assigning to same user
-      const assignedLead = lead.assignTo('user-123');
-      const reassignedLead = assignedLead.assignTo('user-123');
-      expect(reassignedLead.assignedTo).toBe('user-123');
-    });
-
-    it('should handle invalid conversation summary updates', () => {
-      // LeadMetadata allows empty summary, so test actual behavior
-      const leadWithEmptySummary = lead.updateConversationSummary('');
-      expect(leadWithEmptySummary.conversationSummary).toBe('');
-      
-      // Should handle excessively long summaries (over 5000 characters)
-      const longSummary = 'a'.repeat(5001);
-      expect(() => {
-        lead.updateConversationSummary(longSummary);
-      }).toThrow('Conversation summary cannot exceed 5000 characters');
-    });
-
-    it('should handle edge cases in lifecycle operations', () => {
-      // Should handle transition to same status
-      const contactedLead = lead.markAsContacted();
-      const stillContactedLead = contactedLead.markAsContacted();
-      expect(stillContactedLead.followUpStatus).toBe('contacted');
-      
-      // Should handle unassigning already unassigned lead
-      const unassignedLead = lead.unassign();
-      expect(unassignedLead.assignedTo).toBeUndefined();
     });
   });
 

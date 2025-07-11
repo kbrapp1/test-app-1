@@ -3,15 +3,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { TeamMemberCard } from './TeamMemberCard';
 import type { TeamMember } from '@/types/team';
 
-// Mock the permissions hook
-vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
-  useTeamMemberPermissions: () => ({
-    canUpdate: true,
-    canDelete: true,
-    isLoading: false,
-  }),
-}));
-
 // Mock next/image
 vi.mock('next/image', () => ({
     __esModule: true,
@@ -26,10 +17,10 @@ const mockMember: TeamMember = {
     id: '1',
     name: 'Test User',
     title: 'Test Title',
-    organization_id: 'test-org-123',
     primary_image_url: '/test-primary.jpg',
     secondary_image_url: '/test-secondary.jpg',
     created_at: new Date().toISOString(),
+    organization_id: 'test-org-123',
 };
 
 describe('TeamMemberCard', () => {

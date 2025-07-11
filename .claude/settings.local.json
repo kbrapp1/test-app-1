@@ -40,10 +40,7 @@
       "Bash(pnpm test:*)",
       "Bash(pnpm tsc:*)",
       "Bash(pnpm exec tsc:*)",
-      "Bash(rm:*)",
-      "Bash(true)",
-      "mcp__supabase__list_tables",
-      "mcp__supabase__get_logs"
+      "Bash(rm:*)"
     ],
     "deny": []
   },

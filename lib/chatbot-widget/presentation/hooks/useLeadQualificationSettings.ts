@@ -22,11 +22,6 @@ export function useLeadQualificationSettings(
   existingConfig: ChatbotConfigDto | null,
   organizationId: string | null
 ) {
-  // AI: Security validation - organizationId must be provided
-  if (!organizationId) {
-    throw new Error('Organization ID is required for lead qualification settings management');
-  }
-
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState<LeadQualificationFormData>({

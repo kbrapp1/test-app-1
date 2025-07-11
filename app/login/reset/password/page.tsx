@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
@@ -100,9 +100,8 @@ export default function ResetPasswordPage() {
       setIsComplete(true)
       toast({ title: 'Password Reset', description: 'Your password has been set. Redirecting...' })
       setTimeout(() => router.push('/dashboard'), 2000)
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'Failed to reset password';
-      setError(errorMessage);
+    } catch (e: any) {
+      setError(e.message || 'Failed to reset password')
     } finally {
       setSubmitting(false)
     }

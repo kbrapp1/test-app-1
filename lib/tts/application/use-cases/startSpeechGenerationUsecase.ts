@@ -1,14 +1,19 @@
-import { type StartSpeechInput } from '../schemas/ttsSchemas';
+import { StartSpeechSchema, type StartSpeechInput } from '../schemas/ttsSchemas';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { TextInput } from '../../domain/value-objects/TextInput';
 import { VoiceId } from '../../domain/value-objects/VoiceId';
+import { PredictionStatus } from '../../domain/value-objects/PredictionStatus';
+import { TtsPrediction } from '../../domain/entities/TtsPrediction';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsValidationService } from '../../domain/services/TtsValidationService';
 import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
 import { TtsGenerationService } from '../services/TtsGenerationService';
 
-// Validates input, initiates speech generation via provider, and saves prediction to DB
+/**
+ * Usecase: Validates input, initiates speech generation via the specified provider, and saves initial prediction to DB.
+ * Now using DDD patterns with repository and domain services, plus dependency injection for TTS generation.
+ */
 export async function startSpeechGeneration(
   inputText: string, 
   voiceId: string, 
@@ -73,7 +78,7 @@ export async function startSpeechGeneration(
 
     // For providers that return immediate results (like ElevenLabs), update with output info
     if (generationResult.outputUrl) {
-      await predictionService.completePrediction(savedPrediction.id, generationResult.outputUrl, {
+      const completedPrediction = await predictionService.completePrediction(savedPrediction.id, generationResult.outputUrl, {
         outputStoragePath: generationResult.outputStoragePath,
         outputContentType: generationResult.outputContentType,
         outputFileSize: generationResult.outputFileSize
@@ -85,11 +90,7 @@ export async function startSpeechGeneration(
       predictionId: generationResult.predictionId, 
       ttsPredictionDbId: savedPrediction.id 
     };
-  } catch (error: unknown) {
-    // AI: Use domain-specific error handling instead of generic errors
-    if (error instanceof Error) {
-      return { success: false, error: error.message };
-    }
-    return { success: false, error: 'Failed to start speech generation.' };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to start speech generation.' };
   }
 } 

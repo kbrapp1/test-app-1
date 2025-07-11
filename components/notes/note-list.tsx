@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 // Import Note type from note-list-item
 import { NoteListItem } from './note-list-item'; 
 import type { Note } from '@/types/notes'; // Import central type
-import { updateNoteOrder, deleteNote, editNote } from '@/app/(protected)/documents/notes/actions'; // Import the server actions
+import { updateNoteOrder } from '@/app/(protected)/documents/notes/actions'; // Import the new action
 import { useToast } from '@/components/ui/use-toast';
 
 // dnd-kit imports
@@ -24,8 +24,27 @@ import {
   rectSortingStrategy, // Use grid layout strategy
 } from '@dnd-kit/sortable';
 
+// Types matching NotesPage
+// Remove local Note definition
+// interface Note {
+//     id: string;
+//     user_id: string;
+//     content: string | null;
+//     created_at: string;
+// }
+
+interface ActionResult {
+  success: boolean;
+  message: string;
+}
+
+type DeleteNoteAction = (prevState: any, formData: FormData) => Promise<ActionResult>;
+type EditNoteAction = (prevState: any, formData: FormData) => Promise<ActionResult>;
+
 interface NoteListProps {
     initialNotes: Note[]; // Rename prop
+    deleteNoteAction: DeleteNoteAction;
+    editNoteAction: EditNoteAction;
 }
 
 // Define sticky note color class pairs
@@ -55,7 +74,7 @@ function getStableIndex(id: string, arrayLength: number): number {
     return index;
 }
 
-export function NoteList({ initialNotes }: NoteListProps) {
+export function NoteList({ initialNotes, deleteNoteAction, editNoteAction }: NoteListProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const { toast } = useToast();
 
@@ -136,8 +155,8 @@ export function NoteList({ initialNotes }: NoteListProps) {
                   key={note.id} 
                   id={note.id} // Pass ID for dnd-kit
                   note={note} 
-                  deleteNoteAction={deleteNote} 
-                  editNoteAction={editNote}
+                  deleteNoteAction={deleteNoteAction} 
+                  editNoteAction={editNoteAction}
                   // Remove colorClasses prop:
                   // colorClasses={color} 
                   rotationClass={rotation}

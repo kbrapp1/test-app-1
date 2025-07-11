@@ -52,10 +52,8 @@ export function useTtsSaveAsDialog({ onSaveComplete }: UseTtsSaveAsDialogProps) 
       } else {
         toast.error(`Failed to save as new asset: ${result.error || 'Unknown error'}`, { id: toastId });
       }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      console.error('Error saving TTS audio to DAM:', errorMessage);
-      toast.error(`Error saving as new asset: ${errorMessage}`, { id: toastId });
+    } catch (error: any) {
+      toast.error(`Error saving as new asset: ${error.message || 'Unknown error'}`, { id: toastId });
     }
     setIsSaveAsDialogOpen(false);
     setCurrentItemForSaveAs(null);

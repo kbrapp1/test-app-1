@@ -1,9 +1,6 @@
 import { getReplicatePrediction } from '../../infrastructure/providers/ttsService';
-import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
-import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { PredictionStatus } from '../../domain';
+import { createClient } from '@/lib/supabase/server';
+import { PredictionStatus, TtsPrediction } from '../../domain';
 
 /**
  * Usecase: Fetches the result/status of a speech generation prediction from the specified provider
@@ -18,7 +15,7 @@ export async function getSpeechGenerationResult(
   error: string | null;    
   ttsPredictionDbId: string | null; // Echo back our DB ID
 }> {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
 
   try {
     const { data: ttsRecord, error: fetchError } = await supabase
@@ -83,14 +80,7 @@ export async function getSpeechGenerationResult(
       };
     }
 
-    const updateData: {
-      status?: string;
-      outputUrl?: string | null;
-      errorMessage?: string | null;
-      updatedAt?: string;
-      is_output_url_problematic?: boolean;
-      output_url_last_error?: string | null;
-    } = {
+    const updateData: any = {
       status: currentProviderStatus,
       updatedAt: new Date().toISOString(),
     };
@@ -139,13 +129,12 @@ export async function getSpeechGenerationResult(
       ttsPredictionDbId 
     };
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get speech generation result.';
+  } catch (error: any) {
     return {
       success: false,
       status: 'failed',
       audioUrl: null,
-      error: errorMessage,
+      error: error.message || 'Failed to get speech generation result.',
       ttsPredictionDbId,
     };
   }

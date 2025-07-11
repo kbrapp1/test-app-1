@@ -12,13 +12,13 @@ export abstract class TtsError extends Error {
   public readonly code: string;
   public readonly category: TtsErrorCategory;
   public readonly timestamp: Date;
-  public readonly context?: Record<string, unknown>;
+  public readonly context?: Record<string, any>;
 
   constructor(
     message: string, 
     code: string, 
     category: TtsErrorCategory,
-    context?: Record<string, unknown>
+    context?: Record<string, any>
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -33,7 +33,9 @@ export abstract class TtsError extends Error {
     }
   }
 
-  // Convert to serializable object for API responses
+  /**
+   * Convert to serializable object for API responses
+   */
   toJSON(): TtsErrorResponse {
     return {
       success: false,
@@ -47,16 +49,22 @@ export abstract class TtsError extends Error {
     };
   }
 
-  // Check if error is retryable
+  /**
+   * Check if error is retryable
+   */
   abstract isRetryable(): boolean;
 
-  // Check if error should be logged
+  /**
+   * Check if error should be logged
+   */
   abstract shouldLog(): boolean;
 }
 
-// Domain validation errors
+/**
+ * Domain validation errors
+ */
 export class TtsValidationError extends TtsError {
-  constructor(message: string, field?: string, value?: unknown) {
+  constructor(message: string, field?: string, value?: any) {
     super(
       message, 
       'TTS_VALIDATION_ERROR', 
@@ -74,9 +82,11 @@ export class TtsValidationError extends TtsError {
   }
 }
 
-// Business rule violations
+/**
+ * Business rule violations
+ */
 export class TtsBusinessRuleError extends TtsError {
-  constructor(message: string, rule: string, context?: Record<string, unknown>) {
+  constructor(message: string, rule: string, context?: Record<string, any>) {
     super(
       message, 
       'TTS_BUSINESS_RULE_ERROR', 
@@ -94,7 +104,9 @@ export class TtsBusinessRuleError extends TtsError {
   }
 }
 
-// Domain entity not found errors
+/**
+ * Domain entity not found errors
+ */
 export class TtsEntityNotFoundError extends TtsError {
   constructor(entityType: string, identifier: string) {
     super(
@@ -114,7 +126,9 @@ export class TtsEntityNotFoundError extends TtsError {
   }
 }
 
-// Infrastructure/external service errors
+/**
+ * Infrastructure/external service errors
+ */
 export class TtsInfrastructureError extends TtsError {
   constructor(message: string, service: string, originalError?: Error) {
     super(
@@ -138,7 +152,9 @@ export class TtsInfrastructureError extends TtsError {
   }
 }
 
-// Provider-specific errors
+/**
+ * Provider-specific errors
+ */
 export class TtsProviderError extends TtsError {
   constructor(
     message: string, 
@@ -167,7 +183,9 @@ export class TtsProviderError extends TtsError {
   }
 }
 
-// Feature flag/permission errors
+/**
+ * Feature flag/permission errors
+ */
 export class TtsFeatureError extends TtsError {
   constructor(message: string, feature: string) {
     super(
@@ -187,67 +205,9 @@ export class TtsFeatureError extends TtsError {
   }
 }
 
-// Permission denied errors
-export class TtsPermissionDeniedError extends TtsError {
-  constructor(message: string, requiredPermission: string, userRole?: string) {
-    super(
-      message, 
-      'TTS_PERMISSION_DENIED', 
-      TtsErrorCategory.PERMISSION,
-      { requiredPermission, userRole }
-    );
-  }
-
-  isRetryable(): boolean {
-    return false; // Permission denied is not retryable
-  }
-
-  shouldLog(): boolean {
-    return true; // Permission violations should be logged for security
-  }
-}
-
-// Feature not available for organization
-export class TtsFeatureNotAvailableError extends TtsError {
-  constructor(organizationId: string, feature: string = 'TTS') {
-    super(
-      `${feature} feature is not available for this organization`, 
-      'TTS_FEATURE_NOT_AVAILABLE', 
-      TtsErrorCategory.FEATURE,
-      { organizationId, feature }
-    );
-  }
-
-  isRetryable(): boolean {
-    return false; // Feature availability is not retryable
-  }
-
-  shouldLog(): boolean {
-    return false; // Expected condition based on organization settings
-  }
-}
-
-// Organization access errors
-export class TtsOrganizationAccessError extends TtsError {
-  constructor(message: string, organizationId?: string, userId?: string) {
-    super(
-      message, 
-      'TTS_ORGANIZATION_ACCESS_ERROR', 
-      TtsErrorCategory.PERMISSION,
-      { organizationId, userId }
-    );
-  }
-
-  isRetryable(): boolean {
-    return false; // Organization access errors are not retryable
-  }
-
-  shouldLog(): boolean {
-    return true; // Access violations should be logged for security
-  }
-}
-
-// Configuration errors
+/**
+ * Configuration errors
+ */
 export class TtsConfigurationError extends TtsError {
   constructor(message: string, configKey: string) {
     super(
@@ -267,7 +227,9 @@ export class TtsConfigurationError extends TtsError {
   }
 }
 
-// Error categories for classification
+/**
+ * Error categories for classification
+ */
 export enum TtsErrorCategory {
   VALIDATION = 'validation',
   BUSINESS_RULE = 'business_rule',
@@ -276,10 +238,11 @@ export enum TtsErrorCategory {
   PROVIDER = 'provider',
   FEATURE = 'feature',
   CONFIGURATION = 'configuration',
-  PERMISSION = 'permission',
 }
 
-// Standardized error response format
+/**
+ * Standardized error response format
+ */
 export interface TtsErrorResponse {
   success: false;
   error: {
@@ -287,24 +250,32 @@ export interface TtsErrorResponse {
     code: string;
     category: TtsErrorCategory;
     timestamp: string;
-    context?: Record<string, unknown>;
+    context?: Record<string, any>;
   };
 }
 
-// Success response format for consistency
+/**
+ * Success response format for consistency
+ */
 export interface TtsSuccessResponse<T = any> {
   success: true;
   data?: T;
   count?: number;
 }
 
-// Union type for all TTS responses
+/**
+ * Union type for all TTS responses
+ */
 export type TtsResponse<T = any> = TtsSuccessResponse<T> | TtsErrorResponse;
 
-// Error handler utility functions
+/**
+ * Error handler utility functions
+ */
 export class TtsErrorHandler {
-  // Convert any error to standardized TtsError
-  static standardizeError(error: unknown, context?: Record<string, unknown>): TtsError {
+  /**
+   * Convert any error to standardized TtsError
+   */
+  static standardizeError(error: unknown, context?: Record<string, any>): TtsError {
     if (error instanceof TtsError) {
       return error;
     }
@@ -323,7 +294,9 @@ export class TtsErrorHandler {
     );
   }
 
-  // Create success response
+  /**
+   * Create success response
+   */
   static success<T>(data?: T, count?: number): TtsSuccessResponse<T> {
     return {
       success: true,
@@ -332,7 +305,9 @@ export class TtsErrorHandler {
     };
   }
 
-  // Create error response from TtsError
+  /**
+   * Create error response from TtsError
+   */
   static errorResponse(error: TtsError): TtsErrorResponse {
     return error.toJSON();
   }

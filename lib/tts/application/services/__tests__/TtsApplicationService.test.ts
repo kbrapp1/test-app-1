@@ -53,7 +53,7 @@ vi.mock('../../use-cases/getTtsHistoryUsecase', () => ({
 
 vi.mock('../mappers/TtsPredictionToDisplayDtoMapper', () => ({
   TtsPredictionToDisplayDtoMapper: class {
-    toDisplayDto(entity: { id?: string; textInput?: { value?: string }; status?: { value?: string } }) {
+    toDisplayDto(entity: any) {
       return {
         id: entity.id || 'test-id',
         inputText: entity.textInput?.value || 'test text',
@@ -85,10 +85,10 @@ describe('TtsApplicationService', () => {
     mockPredictionService = {
       linkToAsset: vi.fn().mockResolvedValue(undefined),
       markUrlProblematic: vi.fn().mockResolvedValue(undefined),
-    } as Partial<TtsPredictionService> as TtsPredictionService;
+    } as any;
     mockFeatureFlagService = {
       checkTtsFeatureFlag: vi.fn().mockResolvedValue(undefined)
-    } as Partial<ITtsFeatureFlagService> as ITtsFeatureFlagService;
+    } as any;
     
     // Create service with dependency injection
     service = new TtsApplicationService(

@@ -50,6 +50,20 @@ export const teamMemberFormSchema = z.object({
 
 export type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;
 
+// --- Schema for API Route (Validates File-like objects) ---
+// Validates that the value is a File-like object with required properties
+const fileSchemaForApi = z
+  .custom<File>((val) => typeof val === 'object' && val !== null &&
+    'size' in val && 'type' in val && 'name' in val,
+    { message: 'Image is required.' }
+  )
+  .refine((file) => file.size > 0, 'Image is required.')
+  .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`)
+  .refine(
+    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+    `Invalid file type. Only ${ACCEPTED_IMAGE_TYPES.map(t => t.split('/')[1]).join(', ')} are allowed.`
+  );
+
 // For API route, accept any file-like value and defer detailed checks to upload logic
 export const teamMemberApiSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),

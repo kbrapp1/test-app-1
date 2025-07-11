@@ -28,7 +28,7 @@ export class TtsReplicateAdapter {
   /**
    * Generate speech from text with TTS-specific logic
    */
-  async generateSpeech(request: SpeechRequest): Promise<{ predictionId: string }> {
+  async generateSpeech(request: SpeechRequest): Promise<{ predictionId: string; outputUrl?: string }> {
     const provider = this.getProvider();
     
     // Validate request for Replicate
@@ -59,7 +59,11 @@ export class TtsReplicateAdapter {
           // Store the result temporarily (in a real implementation, you might use a cache)
           this.storeRunResult(fakePredictionId, output);
           
-          return { predictionId: fakePredictionId };
+          // Return both prediction ID and output URL for immediate completion
+          return { 
+            predictionId: fakePredictionId,
+            outputUrl: typeof output === 'string' ? output : undefined
+          };
         } else {
           // Use predictions API for other models
           const prediction = await provider.createPrediction({

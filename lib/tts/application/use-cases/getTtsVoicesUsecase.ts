@@ -1,5 +1,6 @@
 import type { TtsVoice } from '@/types/tts';
-import { ttsProvidersConfig } from '../../infrastructure/providers/ttsProviderConfig';
+import { ttsProvidersConfig, ProviderConfig, REPLICATE_MODELS } from '../../infrastructure/providers/ttsProviderConfig';
+import { getReplicatePrediction } from '../../infrastructure/providers/ttsService';
 import { TtsProviderManager } from '../../infrastructure/providers/TtsProviderManager';
 
 /**
@@ -19,10 +20,9 @@ export async function getTtsVoices(
       const adapter = await TtsProviderManager.getElevenLabsAdapter();
       const elevenLabsVoices = await adapter.listVoices(); 
       return { success: true, data: elevenLabsVoices };
-          } catch (error: unknown) {
-        console.error('Error fetching ElevenLabs voices:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch ElevenLabs voices.';
-        return { success: false, error: errorMessage };
+    } catch (error: any) {
+      console.error('Error fetching ElevenLabs voices:', error);
+      return { success: false, error: error.message || 'Failed to fetch ElevenLabs voices.' };
     }
   }
 
@@ -60,9 +60,8 @@ export async function getTtsVoices(
   //     // const apiKey = await getApiKeyForProvider(providerId); // Placeholder
   //     const voices = await providerConfig.fetchVoicesFn(); 
   //     return { success: true, data: voices };
-  //   } catch (e: unknown) {
-  //     const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-  //     return { success: false, error: `Failed to dynamically fetch voices for ${providerId}: ${errorMessage}` };
+  //   } catch (e: any) {
+  //     return { success: false, error: `Failed to dynamically fetch voices for ${providerId}: ${e.message}` };
   //   }
   // }
 

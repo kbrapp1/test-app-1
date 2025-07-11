@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server'; // Using server client suitable for Route Handlers
 import { uploadFile, removeFile } from '@/lib/supabase/db-storage';
 import { insertData } from '@/lib/supabase/db-queries';
 import { withAuth } from '@/lib/supabase/auth-middleware';
-import { User, SupabaseClient } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import crypto from 'crypto';
 // Import shared schema and error handling utilities
 import { withErrorHandling } from '@/lib/middleware/error';
@@ -28,14 +29,13 @@ export const config = {
 */
 
 // Admin-only handler for team member uploads
-async function postHandler(req: NextRequest, user: User, supabase: SupabaseClient) {
+async function postHandler(req: NextRequest, user: User, supabase: any) {
   let formData;
   try {
     formData = await req.formData();
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Failed to parse FormData:', errorMessage);
-    if (errorMessage.includes('body exceeded limit')) {
+  } catch (error: any) {
+    console.error('Failed to parse FormData:', error);
+    if (error.message?.includes('body exceeded limit')) {
       throw new ValidationError(`Body exceeded limit. Max size is approx 4.5MB by default on Vercel.`);
     }
     throw new ValidationError('Invalid form data provided.');
@@ -48,12 +48,12 @@ async function postHandler(req: NextRequest, user: User, supabase: SupabaseClien
   const secondaryEntry = formData.get('secondaryImage');
   if (typeof name !== 'string' || name.trim() === '' ||
       typeof title !== 'string' || title.trim() === '' ||
-      !primaryEntry || !(primaryEntry instanceof File) ||
-      !secondaryEntry || !(secondaryEntry instanceof File)) {
+      !primaryEntry || typeof (primaryEntry as any).name !== 'string' ||
+      !secondaryEntry || typeof (secondaryEntry as any).name !== 'string') {
     throw new ValidationError('Invalid input');
   }
-  const primaryFile = primaryEntry as File;
-  const secondaryFile = secondaryEntry as File;
+  const primaryFile = primaryEntry as any;
+  const secondaryFile = secondaryEntry as any;
 
   // --- File Upload & DB Logic (Using utilities) ---
   let primary_image_path: string | null = null; // Initialize for potential cleanup
@@ -110,8 +110,7 @@ async function postHandler(req: NextRequest, user: User, supabase: SupabaseClien
     const { data: teamMemberData, error: insertError } = await insertData(
       supabase,
       'team_members',
-      { name, title, primary_image_path, secondary_image_path },
-      activeOrgId // AI: Pass organizationId as 4th argument for tenant-scoped insert
+      { name, title, primary_image_path, secondary_image_path, organization_id: activeOrgId }
     );
 
     if (insertError) {
@@ -123,13 +122,12 @@ async function postHandler(req: NextRequest, user: User, supabase: SupabaseClien
     // Return success response
     return NextResponse.json({ success: true, data: teamMemberData }, { status: 201 });
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('API Error in POST /api/team/upload:', errorMessage);
+  } catch (error: any) {
+    console.error('API Error in POST /api/team/upload:', error);
     if (error instanceof ValidationError || error instanceof DatabaseError || error instanceof ExternalServiceError) {
       throw error;
     }
-    throw new ExternalServiceError(errorMessage);
+    throw new ExternalServiceError(error.message);
   }
 }
 

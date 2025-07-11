@@ -32,7 +32,7 @@ export function useTtsHistory({
   const [isActuallyLoadingMore, setIsActuallyLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [allItemsLoaded, setAllItemsLoaded] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -70,21 +70,18 @@ export function useTtsHistory({
         setTotalCount('count' in result ? (result.count || 0) : 0);
         setCurrentPage(page);
       } else {
-        // AI: Extract error message from domain error object or use string
-        const errorMessage = typeof result.error === 'string' 
-          ? result.error 
-          : result.error?.message || 'Failed to fetch history.';
-        setError(errorMessage);
+        setError(result.error || 'Failed to fetch history.');
         if (page === 1) {
           setHistoryItems([]);
           setTotalCount(0);
         }
       }
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred';
-      console.error('Error loading TTS history:', errorMessage);
-      setError(errorMessage);
-      setIsLoading(false);
+    } catch (e: any) {
+      setError(e.message || 'An unexpected error occurred while fetching history.');
+      if (page === 1) {
+        setHistoryItems([]);
+        setTotalCount(0);
+      }
     }
     if (page === 1) setIsLoading(false);
     if (page > 1) setIsActuallyLoadingMore(false);

@@ -1,14 +1,3 @@
-/**
- * Add Note Dialog Component
- * 
- * AI INSTRUCTIONS:
- * - Client component with permission-based access control
- * - Shows dialog only if user has CREATE_NOTE permission
- * - Follows fail-secure principles (hide if no permission)
- * - Single responsibility: note creation dialog
- * - Imports server actions directly instead of receiving as props
- */
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -25,21 +14,20 @@ import {
 } from "@/components/ui/dialog";
 import { AddNoteForm } from './add-note-form'; // Import the actual form
 import { PlusCircleIcon } from 'lucide-react';
-import { useNotesPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
-import { addNote } from '@/app/(protected)/documents/notes/actions';
+
+// Type for the action prop expected by AddNoteForm
+type AddNoteAction = (prevState: any, formData: FormData) => Promise<{
+    success: boolean;
+    message: string;
+}>;
 
 interface AddNoteDialogProps {
+    addNoteAction: AddNoteAction;
     triggerButtonText?: string; // Optional custom text for the trigger
 }
 
-export function AddNoteDialog({ triggerButtonText = "Add Note" }: AddNoteDialogProps) {
+export function AddNoteDialog({ addNoteAction, triggerButtonText = "Add Note" }: AddNoteDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const { canCreate, isLoading } = useNotesPermissions();
-
-    // AI: Don't render if no permission or still loading (fail-secure)
-    if (isLoading || !canCreate) {
-        return null;
-    }
 
     // We need a way for AddNoteForm to tell us it succeeded so we can close the dialog.
     // We can modify AddNoteForm to accept an onFormSuccess callback.
@@ -64,7 +52,7 @@ export function AddNoteDialog({ triggerButtonText = "Add Note" }: AddNoteDialogP
                 </DialogHeader>
                 <div className="py-4">
                     {/* Pass the success callback to the form */}
-                    <AddNoteForm addNoteAction={addNote} onFormSuccess={handleFormSuccess} />
+                    <AddNoteForm addNoteAction={addNoteAction} onFormSuccess={handleFormSuccess} />
                 </div>
                 {/* 
                     Note: The AddNoteForm now contains its own submit button.

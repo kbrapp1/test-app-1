@@ -39,7 +39,7 @@ export function withLazyLoading<T extends object>(
   errorFallback?: ComponentType<{ error: Error; retry: () => void }>
 ): ComponentType<T> {
   return function LazyLoadedComponent(props: T) {
-    const DefaultErrorFallback = ({ retry }: { error: Error; retry: () => void }) => (
+    const DefaultErrorFallback = ({ error, retry }: { error: Error; retry: () => void }) => (
       <div className="p-4 border border-destructive/20 rounded-lg">
         <p className="text-sm text-destructive mb-2">Failed to load component</p>
         <button onClick={retry} className="text-xs text-primary hover:underline">

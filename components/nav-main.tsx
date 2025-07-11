@@ -1,7 +1,7 @@
 "use client"
 
-import type { NavItem, NavSubItem } from "@/lib/config/navigation";
-import { MailIcon, PlusCircleIcon } from "lucide-react"
+import type { NavItem } from "@/lib/config/navigation";
+import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -21,42 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { useAuthWithSuperAdmin } from "@/lib/auth/super-admin"
-import { useOrganization } from "@/lib/organization/application/providers/OrganizationProvider"
-import { useMemo } from "react"
-
-// Custom hook to get all feature flags at once
-function useAllFeatureFlags(items: NavItem[]) {
-  const { currentContext } = useOrganization();
-  const flags = currentContext?.feature_flags as Record<string, boolean> | undefined;
-  
-  return useMemo(() => {
-    const getFeatureFlagValue = (featureName: string): boolean => {
-      // Default to true if flag is missing, but respect explicit false values
-      return flags ? (flags.hasOwnProperty(featureName) ? flags[featureName] : true) : true;
-    };
-    
-    // Create a lookup object for all feature flags used in navigation
-    const featureFlagValues: Record<string, boolean> = {};
-    
-    const collectAndEvaluateFlags = (navItems: NavItem[]) => {
-      navItems.forEach(item => {
-        if (item.featureFlag) {
-          featureFlagValues[item.featureFlag] = getFeatureFlagValue(item.featureFlag);
-        }
-        if (item.items) {
-          item.items.forEach(subItem => {
-            if (subItem.featureFlag) {
-              featureFlagValues[subItem.featureFlag] = getFeatureFlagValue(subItem.featureFlag);
-            }
-          });
-        }
-      });
-    };
-    
-    collectAndEvaluateFlags(items);
-    return featureFlagValues;
-  }, [items, flags]);
-}
+import { useFeatureFlag } from "@/lib/organization/presentation/hooks/useFeatureFlag"
 
 export function NavMain({
   items,
@@ -65,22 +30,6 @@ export function NavMain({
 }) {
   const { setOpenMobile } = useSidebar()
   const { isSuperAdmin } = useAuthWithSuperAdmin()
-  const featureFlagValues = useAllFeatureFlags(items)
-  
-  // Helper functions that use pre-computed values (no hooks inside)
-  const isItemVisible = (item: NavItem) => {
-    const isVisibleByAdmin = !item.superAdminOnly || isSuperAdmin;
-    const isVisibleByFeature = !item.featureFlag || featureFlagValues[item.featureFlag] === true;
-    return isVisibleByAdmin && isVisibleByFeature;
-  };
-  
-  const isSubItemVisible = (subItem: NavSubItem) => {
-    const isVisibleByFeature = !subItem.featureFlag || featureFlagValues[subItem.featureFlag] === true;
-    return isVisibleByFeature;
-  };
-  
-  // Filter items using the helper functions (no hooks called here)
-  const visibleItems = items.filter(isItemVisible);
   
   return (
     <SidebarGroup>
@@ -103,7 +52,11 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           <Accordion type="multiple" className="w-full">
-            {visibleItems.map((item) => (
+            {items.filter(item => {
+                const isVisibleByFlag = !item.featureFlag || useFeatureFlag(item.featureFlag);
+                const isVisibleByAdmin = !item.superAdminOnly || isSuperAdmin;
+                return isVisibleByFlag && isVisibleByAdmin;
+            }).map((item) => (
               item.collapsible && item.items ? (
                 <AccordionItem key={item.title} value={item.title} className="border-none">
                   <AccordionTrigger
@@ -115,7 +68,7 @@ export function NavMain({
                     <span className="flex-1 truncate">{item.title}</span>
                   </AccordionTrigger>
                   <AccordionContent className="pb-1 pl-5">
-                    {item.items?.filter(isSubItemVisible).map((subItem) => (
+                    {item.items.filter(subItem => !subItem.featureFlag || useFeatureFlag(subItem.featureFlag)).map((subItem) => (
                       <SidebarMenuItem key={subItem.title} className="my-0.5">
                         <Link href={subItem.url}>
                           <SidebarMenuButton

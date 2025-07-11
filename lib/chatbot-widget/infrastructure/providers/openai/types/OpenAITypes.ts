@@ -19,7 +19,7 @@ export interface OpenAIFunctionSchema {
   description: string;
   parameters: {
     type: string;
-    properties: Record<string, unknown>;
+    properties: Record<string, any>;
     required: string[];
   };
 }
@@ -28,7 +28,7 @@ export interface OpenAIRequestData {
   endpoint: string;
   method: string;
   timestamp: string;
-  payload: Record<string, unknown>;
+  payload: any;
   payloadSize: string;
   messageCount: number;
   conversationHistoryLength: number;
@@ -38,7 +38,7 @@ export interface OpenAIRequestData {
 export interface OpenAIResponseData {
   timestamp: string;
   processingTime: string;
-  response: Record<string, unknown>;
+  response: any;
   responseSize: string;
 }
 

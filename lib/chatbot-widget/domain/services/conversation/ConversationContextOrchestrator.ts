@@ -162,18 +162,7 @@ export class ConversationContextOrchestrator {
     logEntry(`✅ COMPLETE: ${finalMessages.length} messages, ${finalTokensUsed + finalSummaryTokens} tokens, compressed=${compressionRecommendation}`);
 
     return {
-      messages: finalMessages.map(msg => ({
-        id: msg.id,
-        content: msg.content,
-        role: msg.messageType === 'user' ? 'user' as const : 
-              msg.messageType === 'bot' ? 'assistant' as const : 'system' as const,
-        timestamp: msg.timestamp,
-        metadata: { 
-          sessionId: msg.sessionId,
-          processingTime: msg.processingTime,
-          isVisible: msg.isVisible
-        }
-      })),
+      messages: finalMessages,
       summary: existingSummary,
       tokenUsage: {
         messagesTokens: finalTokensUsed,

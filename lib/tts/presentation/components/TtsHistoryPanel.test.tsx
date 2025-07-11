@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { TtsHistoryPanel, TtsHistoryPanelProps } from './TtsHistoryPanel';
-import { createMockTtsPredictionDisplayDto } from './__tests__/dtoTestUtils';
+import { createMockTtsPredictionDisplayDto, createMockTtsPredictionDisplayDtos } from './__tests__/dtoTestUtils';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
 import * as ttsActions from '../actions/tts';
 
@@ -352,7 +352,7 @@ describe('TtsHistoryPanel Error Handling', () => {
     const errorMessage = 'Network failed during initial load';
     
     // Moved mock setup immediately before render
-    (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>).mockImplementationOnce(async () => {
+    (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>).mockImplementationOnce(async (params) => { // Added params to log
       return {
         success: false,
         error: errorMessage,

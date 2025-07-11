@@ -1,11 +1,7 @@
 /**
- * Team Member Addition Dialog Component
- * 
- * AI INSTRUCTIONS:
- * - Uses permission-based access control (CREATE_TEAM_MEMBER)
- * - Fail-secure rendering (hidden if no permission)
- * - Provides user feedback via tooltips for disabled state
- * - Follows @golden-rule DDD patterns with single responsibility
+ * Next.js Server Component that renders a dialog for adding a new team member.
+ * It checks if the user is an administrator and only shows the add button if they are.
+ * The dialog includes a form for adding a new team member and a success message.
  */
 'use client';
 
@@ -20,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { AddTeamMemberForm } from './AddTeamMemberForm';
-import { useTeamMemberPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
+import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlusCircle } from 'lucide-react';
 
@@ -28,22 +24,17 @@ export function AddTeamMemberDialog() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   
-  // AI: Use permission-based access control
-  const { canCreate, isLoading } = useTeamMemberPermissions();
+  // Use centralized user profile provider
+  const { user, profile, isLoading } = useUserProfile();
 
-  // AI: Ensure component is mounted before rendering
+  // Ensure component is mounted before rendering
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  // AI: Don't render until mounted (fail-secure)
-  if (!mounted) {
-    return null;
-  }
-
-  // AI: Hide component entirely if no CREATE_TEAM_MEMBER permission
-  if (!isLoading && !canCreate) {
+  // Don't render until mounted and we have user data
+  if (!mounted || !user) {
     return null;
   }
 
@@ -51,8 +42,13 @@ export function AddTeamMemberDialog() {
     setOpen(false);
   };
 
-  // AI: Button disabled during loading or if no permission
-  const isButtonDisabled = isLoading || !canCreate;
+  // Check if user is admin (using profile data or fallback to user metadata)
+  const isAdmin = profile?.is_super_admin || 
+                  user?.app_metadata?.role === 'admin' || 
+                  user?.app_metadata?.role === 'super-admin';
+
+  const isButtonDisabled = isLoading || !isAdmin;
+  // The dialog should only open if the button is NOT disabled
   const canOpenDialog = !isButtonDisabled;
 
   const buttonContent = (
@@ -75,7 +71,7 @@ export function AddTeamMemberDialog() {
             <Tooltip>
               <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
               <TooltipContent side="top" align="center" sideOffset={8}>
-                {isLoading ? 'Loading permissions...' : 'Insufficient permissions to add team members'}
+                {isLoading ? 'Loading...' : 'Only administrators can add team members'}
               </TooltipContent>
             </Tooltip>
           ) : (

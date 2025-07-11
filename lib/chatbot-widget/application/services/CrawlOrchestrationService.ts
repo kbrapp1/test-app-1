@@ -22,7 +22,7 @@ export interface WebsiteCrawlRequest {
   chatbotConfigId: string;
   websiteSource: WebsiteSource;
   forceRefresh?: boolean;
-  statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>;
+  progressCallback?: (progress: { current: number; total: number; status: string }) => void;
 }
 
 export interface WebsiteCrawlResponse {
@@ -64,7 +64,7 @@ export class CrawlOrchestrationService {
     private validationService: WebsiteValidationService
   ) {}
 
-  // Crawl single website source and convert to knowledge items
+  /** Crawl single website source and convert to knowledge items */
   async crawlWebsiteSource(request: WebsiteCrawlRequest): Promise<WebsiteCrawlResponse> {
     try {
       // Validate request using validation service
@@ -78,13 +78,12 @@ export class CrawlOrchestrationService {
       // Prepare crawl settings with defaults
       const crawlSettings = this.prepareCrawlSettings(request.websiteSource);
 
-      // Execute crawling and storage through use case with status callback
+      // Execute crawling and storage through use case
       const crawlResult = await this.crawlAndStoreUseCase.execute(
         request.organizationId,
         request.chatbotConfigId,
         request.websiteSource,
-        crawlSettings,
-        request.statusUpdateCallback
+        crawlSettings
       );
 
       return {
@@ -98,21 +97,27 @@ export class CrawlOrchestrationService {
     }
   }
 
-  // Prepare crawl settings with appropriate defaults
+  /** Prepare crawl settings with appropriate defaults */
   private prepareCrawlSettings(websiteSource: WebsiteSource): CrawlSettings {
     return {
-      maxPages: websiteSource.crawlSettings?.maxPages!,
-      maxDepth: websiteSource.crawlSettings?.maxDepth!,
-      includePatterns: websiteSource.crawlSettings?.includePatterns!,
-      excludePatterns: websiteSource.crawlSettings?.excludePatterns!,
-      respectRobotsTxt: websiteSource.crawlSettings?.respectRobotsTxt!,
-      crawlFrequency: websiteSource.crawlSettings?.crawlFrequency!,
-      includeImages: websiteSource.crawlSettings?.includeImages!,
-      includePDFs: websiteSource.crawlSettings?.includePDFs!
+      maxPages: websiteSource.crawlSettings?.maxPages || 50,
+      maxDepth: websiteSource.crawlSettings?.maxDepth || 3,
+      includePatterns: websiteSource.crawlSettings?.includePatterns || [],
+      excludePatterns: websiteSource.crawlSettings?.excludePatterns || [
+        '/admin/*', 
+        '/login', 
+        '/logout',
+        '/api/*',
+        '/private/*'
+      ],
+      respectRobotsTxt: websiteSource.crawlSettings?.respectRobotsTxt ?? true,
+      crawlFrequency: websiteSource.crawlSettings?.crawlFrequency || 'manual',
+      includeImages: websiteSource.crawlSettings?.includeImages ?? false,
+      includePDFs: websiteSource.crawlSettings?.includePDFs ?? true
     };
   }
 
-  // Handle crawl errors
+  /** Handle crawl errors */
   private handleCrawlError(error: unknown, request: WebsiteCrawlRequest): WebsiteCrawlResponse {
     if (error instanceof BusinessRuleViolationError) {
       return {
@@ -139,12 +144,12 @@ export class CrawlOrchestrationService {
     };
   }
 
-  // Validate website source before crawling
+  /** Validate website source before crawling */
   async validateWebsiteSource(websiteSource: WebsiteSource) {
     return await this.validationService.validateWebsiteSource(websiteSource);
   }
 
-  // Get crawl progress information
+  /** Get crawl progress information */
   async getCrawlProgress(
     organizationId: string,
     chatbotConfigId: string,
@@ -174,7 +179,7 @@ export class CrawlOrchestrationService {
     }
   }
 
-  // Cancel ongoing crawl operation
+  /** Cancel ongoing crawl operation */
   async cancelCrawl(
     organizationId: string,
     chatbotConfigId: string,

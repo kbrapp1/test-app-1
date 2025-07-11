@@ -6,141 +6,81 @@ import React from 'react';
 vi.mock('next/headers', () => ({ cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() })) }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-// Mock Supabase server client (used by server component for data fetching)
-const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
-  from: vi.fn(),
-};
-
-const mockQueryBuilder = {
+// Mock Supabase server client
+const mockSupabaseServer = {
+  auth: { getUser: vi.fn() },
+  from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
 };
+vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn(() => mockSupabaseServer) }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => mockSupabaseClient,
+// Mock UI components used by NotesPage
+vi.mock('@/components/notes/add-note-dialog', () => ({
+  AddNoteDialog: ({ triggerButtonText, addNoteAction }: { triggerButtonText?: string; addNoteAction: (payload: any) => any }) => (
+    <button data-testid="add-note-dialog-trigger" onClick={() => addNoteAction({})}>
+      {triggerButtonText}
+    </button>
+  ),
 }));
-
-// Mock the access control function
-vi.mock('@/lib/shared/access-control', () => ({
-  checkFeatureAccess: vi.fn(),
-  checkDamAccess: vi.fn(),
-  checkChatbotAccess: vi.fn(),
-  checkTtsAccess: vi.fn(),
-  checkNotesAccess: vi.fn(),
+vi.mock('@/components/notes/note-list', () => ({
+  NoteList: ({ initialNotes }: { initialNotes: any[] }) => (
+    <ul data-testid="note-list">
+      {initialNotes.map((n: any) => (
+        <li key={n.id} data-testid={`note-item-${n.id}`}>
+          {n.title || 'Untitled'}
+        </li>
+      ))}
+    </ul>
+  ),
 }));
-
-// Mock the NotesPageContent to reflect proper props
-vi.mock('./NotesPageContent', () => ({
-  default: ({ organizationId, notes, fetchError }: { 
-    organizationId: string; 
-    notes: any[]; 
-    fetchError: string | null; 
-  }) => {
-    
-    // Render based on props received
-    if (fetchError) {
-      return (
-        <div data-testid="notes-page-content" data-organization-id={organizationId}>
-          <p>Error: {fetchError}</p>
-        </div>
-      );
-    }
-    
-    if (notes.length === 0) {
-      return (
-        <div data-testid="notes-page-content" data-organization-id={organizationId}>
-          <h1>My Notes</h1>
-          <div data-testid="empty-state">
-            <h2>No Notes Yet</h2>
-            <p>Get started by adding your first note.</p>
-            <button data-testid="add-note-dialog-trigger">Add First Note</button>
-          </div>
-        </div>
-      );
-    }
-    
-    // Notes exist
-    return (
-      <div data-testid="notes-page-content" data-organization-id={organizationId}>
-        <h1>My Notes</h1>
-        <button data-testid="add-note-dialog-trigger">Add New Note</button>
-        <ul data-testid="note-list">
-          {notes.map((note, index) => (
-            <li key={note.id || index} data-testid={`note-item-${note.id || `note-${index + 1}`}`}>
-              {note.title || 'Untitled'}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  },
-}));
-
-// No need to mock individual UI components since we mock NotesPageContent entirely
-
-// Mock access guard components
-vi.mock('@/components/access-guards/NoOrganizationAccess', () => ({
-  NoOrganizationAccess: () => (
-    <div data-testid="no-organization-access">
-      <h3>No Organization Access</h3>
-      <p>You don&apos;t currently have access to any organization.</p>
+vi.mock('@/components/ui/empty-state', () => ({
+  EmptyState: ({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) => (
+    <div data-testid="empty-state">
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {action}
     </div>
   ),
 }));
+vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
 
-vi.mock('@/components/access-guards/FeatureNotAvailable', () => ({
-  FeatureNotAvailable: ({ feature }: { feature: string }) => (
-    <div data-testid="feature-not-available">
-      <h3>Feature Not Available</h3>
-      <p>{feature} feature is not available.</p>
-    </div>
-  ),
+// Mock the getActiveOrganizationId function
+vi.mock('@/lib/auth/server-action', () => ({
+  getActiveOrganizationId: vi.fn(),
 }));
 
 // Import the page and the mocked function after mocks
 import NotesPage from './page';
-import { checkNotesAccess } from '@/lib/shared/access-control';
+import { getActiveOrganizationId } from '@/lib/auth/server-action';
 
-const mockCheckNotesAccess = vi.mocked(checkNotesAccess);
+const mockGetActiveOrganizationId = vi.mocked(getActiveOrganizationId);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Setup Supabase mocks
-  mockSupabaseClient.from.mockReturnValue(mockQueryBuilder);
-  mockCheckNotesAccess.mockClear();
+  // Reset Supabase client mocks
+  mockSupabaseServer.auth.getUser = vi.fn();
+  mockSupabaseServer.from = vi.fn().mockReturnThis();
+  mockSupabaseServer.select = vi.fn().mockReturnThis();
+  mockSupabaseServer.eq = vi.fn().mockReturnThis();
+  mockSupabaseServer.order = vi.fn().mockReturnThis();
+  // Reset getActiveOrganizationId mock
+  mockGetActiveOrganizationId.mockClear();
 });
 
 describe('NotesPage', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };
   const mockOrg = 'org-abc-123';
+  const mockNotes = [
+    { id: 'note-1', user_id: 'user-123', organization_id: mockOrg, title: 'Note 1', content: 'First', created_at: '', updated_at: null, position: 1 },
+    { id: 'note-2', user_id: 'user-123', organization_id: mockOrg, title: null, content: 'Second', created_at: '', updated_at: null, position: 2 },
+  ];
 
   it('renders list when notes exist', async () => {
-    // Mock successful access check
-    mockCheckNotesAccess.mockResolvedValueOnce({
-      organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
-    });
-
-    // Mock successful user fetch
-    mockSupabaseClient.auth.getUser.mockResolvedValueOnce({
-      data: { user: mockUser },
-      error: null,
-    });
-
-    // Mock successful notes fetch
-    const mockNotes = [
-      { id: 'note-1', title: 'Note 1', user_id: mockUser.id, organization_id: mockOrg },
-      { id: 'note-2', title: 'Untitled', user_id: mockUser.id, organization_id: mockOrg },
-    ];
-    mockQueryBuilder.order.mockResolvedValueOnce({
-      data: mockNotes,
-      error: null,
-    });
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
+    mockSupabaseServer.order.mockResolvedValueOnce({ data: mockNotes, error: null });
 
     const Page = await NotesPage();
     render(Page);
@@ -153,24 +93,9 @@ describe('NotesPage', () => {
   });
 
   it('renders empty state when no notes', async () => {
-    // Mock successful access check
-    mockCheckNotesAccess.mockResolvedValueOnce({
-      organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
-    });
-
-    // Mock successful user fetch
-    mockSupabaseClient.auth.getUser.mockResolvedValueOnce({
-      data: { user: mockUser },
-      error: null,
-    });
-
-    // Mock empty notes fetch
-    mockQueryBuilder.order.mockResolvedValueOnce({
-      data: [],
-      error: null,
-    });
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
+    mockSupabaseServer.order.mockResolvedValueOnce({ data: [], error: null });
 
     const Page = await NotesPage();
     render(Page);
@@ -179,82 +104,44 @@ describe('NotesPage', () => {
     expect(screen.getByRole('heading', { name: /no notes yet/i })).toBeInTheDocument();
   });
 
-  it('shows no organization access when access check throws organization error', async () => {
-    mockCheckNotesAccess.mockRejectedValueOnce(new Error('Organization access required'));
+  it('shows error if getOrgId returns null', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(null);
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
     const Page = await NotesPage();
     render(Page);
 
-    expect(screen.getByTestId('no-organization-access')).toBeInTheDocument();
-    expect(screen.getByText('No Organization Access')).toBeInTheDocument();
+    expect(screen.getByText(/active organization context is missing/i)).toBeInTheDocument();
   });
 
-  it('shows feature not available when access check throws feature error', async () => {
-    mockCheckNotesAccess.mockRejectedValueOnce(new Error('Feature \'notes\' is not enabled for this organization'));
+  it('shows error if getOrgId throws', async () => {
+    mockGetActiveOrganizationId.mockRejectedValueOnce(new Error('fail'));
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
 
     const Page = await NotesPage();
     render(Page);
-    
-    // Verify the mock was called
-    expect(mockCheckNotesAccess).toHaveBeenCalledWith(['view:note']);
-    
-    expect(screen.getByTestId('feature-not-available')).toBeInTheDocument();
-    expect(screen.getByText('Notes feature is not available.')).toBeInTheDocument();
+
+    expect(screen.getByText(/could not determine active organization/i)).toBeInTheDocument();
   });
 
-  it('shows insufficient permissions when access check throws permission error', async () => {
-    mockCheckNotesAccess.mockRejectedValueOnce(new Error('Insufficient permissions: requires one of [view:note]'));
+  it('shows error if user fetch fails', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: new Error('fail') });
 
     const Page = await NotesPage();
     render(Page);
 
-    expect(screen.getByText('Insufficient Permissions')).toBeInTheDocument();
-    expect(screen.getByText(/You don't have the required permissions to access Notes/)).toBeInTheDocument();
+    expect(screen.getByText(/could not fetch user data/i)).toBeInTheDocument();
   });
 
-  it('shows error when notes fetching fails in content component', async () => {
-    // Mock successful access check
-    mockCheckNotesAccess.mockResolvedValueOnce({
-      organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
-    });
-
-    // Mock successful user fetch
-    mockSupabaseClient.auth.getUser.mockResolvedValueOnce({
-      data: { user: mockUser },
-      error: null,
-    });
-
-    // Mock failed notes fetch
-    mockQueryBuilder.order.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Database error' },
-    });
+  it('shows error if fetching notes fails', async () => {
+    mockGetActiveOrganizationId.mockResolvedValueOnce(mockOrg);
+    mockSupabaseServer.auth.getUser.mockResolvedValueOnce({ data: { user: mockUser }, error: null });
+    mockSupabaseServer.order.mockResolvedValueOnce({ data: null, error: new Error('db') });
 
     const Page = await NotesPage();
     render(Page);
 
-    expect(screen.getByText(/Error: Could not fetch notes/)).toBeInTheDocument();
-  });
-
-  it('shows error when user fetch fails in content component', async () => {
-    // Mock successful access check
-    mockCheckNotesAccess.mockResolvedValueOnce({
-      organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
-    });
-
-    // Mock failed user fetch
-    mockSupabaseClient.auth.getUser.mockResolvedValueOnce({
-      data: { user: null },
-      error: { message: 'Authentication failed' },
-    });
-
-    const Page = await NotesPage();
-    render(Page);
-
-    expect(screen.getByText(/Error: Authentication error occurred/)).toBeInTheDocument();
+    expect(screen.getByText(/could not fetch notes/i)).toBeInTheDocument();
   });
 }); 

@@ -11,8 +11,7 @@
 import { useState } from 'react';
 import { WebsiteSourceFormData } from '../../actions/websiteSourcesActions';
 
-/** Validate Form Data
- */
+/** Validate Form Data */
 function validateFormData(formData: WebsiteSourceFormData): string[] {
   const errors: string[] = [];
   
@@ -27,21 +26,19 @@ function validateFormData(formData: WebsiteSourceFormData): string[] {
   return errors;
 }
 
-/** Create Initial Form Data
- */
+/** Create Initial Form Data */
 function createInitialFormData(): WebsiteSourceFormData {
   return {
     url: '',
     name: '',
     description: '',
-    maxPages: 5,
+    maxPages: 50,
     maxDepth: 3,
     respectRobotsTxt: true
   };
 }
 
-/** Form State Hook
- */
+/** Form State Hook */
 export function useFormState() {
   const [formData, setFormData] = useState<WebsiteSourceFormData>(createInitialFormData());
   const [formErrors, setFormErrors] = useState<string[]>([]);

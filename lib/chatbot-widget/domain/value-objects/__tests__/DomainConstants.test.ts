@@ -200,35 +200,27 @@ describe('DomainConstants', () => {
 
     it('should calculate lead scores correctly', () => {
       // No entities
-      expect(DomainConstants.calculateLeadScore({
-        contactInfo: {},
-        businessInfo: {},
-        intentSignals: {},
-        engagementMetrics: {}
-      })).toBe(0);
+      expect(DomainConstants.calculateLeadScore({})).toBe(0);
       
       // Single entity
-      expect(DomainConstants.calculateLeadScore({
-        contactInfo: {},
-        businessInfo: {},
-        intentSignals: { budget: 'high' },
-        engagementMetrics: {}
-      })).toBe(25);
+      expect(DomainConstants.calculateLeadScore({ budget: 'high' })).toBe(25);
       
       // Multiple entities
       expect(DomainConstants.calculateLeadScore({
-        contactInfo: {},
-        businessInfo: { company: 'ACME Corp' },
-        intentSignals: { budget: 'high', timeline: 'short' },
-        engagementMetrics: {}
+        budget: 'high',
+        timeline: 'Q1',
+        company: 'ACME Corp'
       })).toBe(60); // 25 + 20 + 15
       
       // All entities (should cap at 100)
       const allEntities = {
-        contactInfo: { name: 'John Doe', email: 'john@acme.com' },
-        businessInfo: { company: 'ACME', industry: 'tech', size: '50+' },
-        intentSignals: { budget: 'high' as const, timeline: 'short' as const, urgency: 'high' as const },
-        engagementMetrics: { messageCount: 10, sessionDuration: 300 },
+        budget: 'high',
+        timeline: 'Q1', 
+        company: 'ACME',
+        industry: 'tech',
+        teamSize: '50+',
+        urgency: 'high',
+        contactMethod: 'phone',
         role: 'cto' // CTO = 25 points via authority-based scoring
       };
       // 25+20+15+10+15+10+5+25 = 125, capped at 100
@@ -293,20 +285,8 @@ describe('DomainConstants', () => {
 
     it('should integrate role authority scoring with lead score calculation', () => {
       // CEO vs Engineer comparison
-      const ceoEntities = { 
-        contactInfo: {},
-        businessInfo: { company: 'Acme' },
-        intentSignals: { budget: 'high' as const },
-        engagementMetrics: {},
-        role: 'CEO'
-      };
-      const engineerEntities = { 
-        contactInfo: {},
-        businessInfo: { company: 'Acme' },
-        intentSignals: { budget: 'high' as const },
-        engagementMetrics: {},
-        role: 'Engineer'
-      };
+      const ceoEntities = { company: 'Acme', role: 'CEO', budget: '$50k' };
+      const engineerEntities = { company: 'Acme', role: 'Engineer', budget: '$50k' };
       
       const ceoScore = DomainConstants.calculateLeadScore(ceoEntities);
       const engineerScore = DomainConstants.calculateLeadScore(engineerEntities);

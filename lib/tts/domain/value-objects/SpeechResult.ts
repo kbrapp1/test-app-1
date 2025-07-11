@@ -1,5 +1,4 @@
 import { PredictionStatus } from './PredictionStatus';
-import { ReplicatePredictionResponse } from '../types/DatabaseTypes';
 
 /**
  * Audio output data for speech results
@@ -20,7 +19,7 @@ export interface ProviderMetadata {
   processingTime?: number; // Time taken to generate
   modelUsed?: string;     // Model identifier
   voiceUsed?: string;     // Voice identifier
-  [key: string]: unknown;     // Additional provider-specific data
+  [key: string]: any;     // Additional provider-specific data
 }
 
 /**
@@ -274,7 +273,12 @@ export class SpeechResult {
   /**
    * Create result from Replicate prediction
    */
-  static fromReplicate(prediction: ReplicatePredictionResponse): SpeechResult {
+  static fromReplicate(prediction: {
+    status: string;
+    output?: any;
+    error?: string;
+    id?: string;
+  }): SpeechResult {
     if (prediction.status === 'failed' || prediction.error) {
       return SpeechResult.failed(
         prediction.error || 'Speech generation failed',
@@ -282,7 +286,6 @@ export class SpeechResult {
       );
     }
 
-    // Handle both 'succeeded' and 'completed' status as successful
     if ((prediction.status === 'succeeded' || prediction.status === 'completed') && prediction.output) {
       // Handle different output formats
       let audioUrl = '';
@@ -292,16 +295,12 @@ export class SpeechResult {
       } else if (Array.isArray(prediction.output) && prediction.output.length > 0) {
         audioUrl = prediction.output[0] as string;
       } else if (typeof prediction.output === 'object' && prediction.output !== null) {
-        // Handle object output (not array)
-        if (!Array.isArray(prediction.output)) {
-          const outputObj = prediction.output as Record<string, unknown>;
-          if (typeof outputObj.url === 'function') {
-            const urlResult = outputObj.url();
-            audioUrl = typeof urlResult === 'string' ? urlResult : String(urlResult);
-          } else {
-            // Handle object with url property
-            audioUrl = String(outputObj.url || outputObj.audio || outputObj.output || '');
-          }
+        const outputObj = prediction.output as any;
+        if (typeof outputObj.url === 'function') {
+          const urlResult = outputObj.url();
+          audioUrl = typeof urlResult === 'string' ? urlResult : urlResult.toString();
+        } else {
+          audioUrl = (outputObj.audio || outputObj.output || outputObj.url) as string;
         }
       }
 

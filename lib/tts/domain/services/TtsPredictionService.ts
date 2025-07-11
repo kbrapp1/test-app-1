@@ -2,7 +2,7 @@ import { TtsPrediction } from '../entities/TtsPrediction';
 import { TtsPredictionRepository } from '../repositories/TtsPredictionRepository';
 import { TextInput } from '../value-objects/TextInput';
 import { VoiceId } from '../value-objects/VoiceId';
-import { TtsError } from '../common/TtsError';
+import { PredictionStatus } from '../value-objects/PredictionStatus';
 
 /**
  * Domain service for TtsPrediction business logic coordination.

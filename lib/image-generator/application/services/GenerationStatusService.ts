@@ -160,7 +160,7 @@ export class GenerationStatusService {
   // Trigger auto-save for completed generation
   private async triggerAutoSave(generation: Generation): Promise<void> {
     try {
-      await this.autoSaveUseCase.execute(generation.getId());
+      await this.generationRepository.save(generation);
     } catch (error) {
       // Auto-save failure should not affect the main generation flow
       // Error is logged internally by the use case

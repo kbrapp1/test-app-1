@@ -9,44 +9,39 @@
  */
 
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
-import { ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
-import { PersonaInference } from './OpenAITypes';
 
-/** Analysis result from OpenAI service
- */
+/** Analysis result from OpenAI service */
 export interface AnalysisResult {
   intent: {
     primaryIntent: string;
     primaryConfidence: number;
     reasoning: string;
-    alternativeIntents?: Array<{ intent: string; confidence: number }>;
+    alternativeIntents?: any[];
   };
-  entities: ExtractedEntities;
-  corrections: Record<string, unknown>;
-  persona: PersonaInference;
+  entities: any;
+  corrections: any;
+  persona: any;
   processingTime: number;
 }
 
-/** Complete chatbot interaction processing context
- */
+/** Complete chatbot interaction processing context */
 export interface ChatbotProcessingContext {
   messageHistory: ChatMessage[];
   sessionId: string;
   organizationId?: string;
-  userData?: Record<string, unknown>;
+  userData?: any;
   systemPrompt?: string;
   sharedLogFile?: string;
 }
 
-/** Complete chatbot interaction result
- */
+/** Complete chatbot interaction result */
 export interface ChatbotProcessingResult {
   analysis: {
     primaryIntent: string;
     primaryConfidence: number;
-    entities: ExtractedEntities;
-    personaInference?: PersonaInference;
-    corrections?: Record<string, unknown>;
+    entities: any;
+    personaInference?: any;
+    corrections?: any;
     reasoning: string;
   };
   leadScore: {
@@ -73,8 +68,7 @@ export interface ChatbotProcessingResult {
   };
 }
 
-/** Message analysis context for detailed analysis
- */
+/** Message analysis context for detailed analysis */
 export interface MessageAnalysisContext {
   messageHistory?: ChatMessage[];
   defaultConfidence?: number;

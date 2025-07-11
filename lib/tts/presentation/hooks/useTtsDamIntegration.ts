@@ -48,7 +48,7 @@ export function useTtsDamIntegration({
         setDamErrorMessage(errorMsg);
         toast({ title: 'Error Loading Text', description: errorMsg, variant: 'destructive' });
       }
-    } catch {
+    } catch (error) {
       const errorMsg = 'An unexpected error occurred while loading content.';
       setDamErrorMessage(errorMsg);
       toast({ title: 'Error Loading Text', description: errorMsg, variant: 'destructive' });
@@ -72,7 +72,7 @@ export function useTtsDamIntegration({
         setDamErrorMessage(errorMsg);
         toast({ title: 'Save Failed', description: errorMsg, variant: 'destructive' });
       }
-    } catch {
+    } catch (error) {
       const errorMsg = 'An unexpected error occurred while saving.';
       setDamErrorMessage(errorMsg);
       toast({ title: 'Error Saving Text', description: errorMsg, variant: 'destructive' });
@@ -96,7 +96,7 @@ export function useTtsDamIntegration({
         setDamErrorMessage(errorMsg);
         toast({ title: 'Save As Failed', description: errorMsg, variant: 'destructive' });
       }
-    } catch {
+    } catch (error) {
       const errorMsg = 'An unexpected error occurred during Save As.';
       setDamErrorMessage(errorMsg);
       toast({ title: 'Error Saving Text As', description: errorMsg, variant: 'destructive' });
@@ -135,18 +135,14 @@ export function useTtsDamIntegration({
         setOutputAssetId(result.assetId);
         toast({ title: 'Success', description: 'Audio saved to DAM library.' });
       } else {
-        // AI: Extract error message from domain error object or use string
-        const errorMessage = typeof result.error === 'string' 
-          ? result.error 
-          : result.error?.message || 'Failed to save audio to DAM.';
-        setDamErrorMessage(errorMessage);
-        toast({ title: 'Save Failed', description: errorMessage, variant: 'destructive' });
+        const errorMsg = result.error || 'Failed to save audio to DAM.';
+        setDamErrorMessage(errorMsg);
+        toast({ title: 'Save Failed', description: errorMsg, variant: 'destructive' });
       }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      console.error('Error saving TTS audio to DAM:', errorMessage);
-      setDamErrorMessage(errorMessage);
-      toast({ title: 'Error Saving Audio', description: errorMessage, variant: 'destructive' });
+    } catch (error) {
+      const errorMsg = 'An unexpected error occurred while saving audio.';
+      setDamErrorMessage(errorMsg);
+      toast({ title: 'Error Saving Audio', description: errorMsg, variant: 'destructive' });
     } finally {
       setIsSavingToDam(false);
     }
@@ -174,8 +170,8 @@ export function useTtsDamIntegration({
         throw new Error('No audio available to download.');
       }
       return { url: urlToDownload, filename };
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Could not determine download URL.';
+    } catch (error: any) {
+      const errorMsg = error.message || 'Could not determine download URL.';
       setDamErrorMessage(errorMsg);
       toast({ title: 'Download Failed', description: errorMsg, variant: 'destructive' });
       return { url: null, filename };

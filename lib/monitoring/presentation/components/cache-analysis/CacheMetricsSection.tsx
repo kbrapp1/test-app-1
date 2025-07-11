@@ -1,12 +1,3 @@
-/**
- * Cache Metrics Section Component
- * 
- * AI INSTRUCTIONS:
- * - Always add displayName to memoized components for debugging
- * - Follow single responsibility principle for component logic
- * - Use proper TypeScript interfaces for props
- */
-
 'use client';
 
 import React from 'react';
@@ -51,7 +42,4 @@ export const CacheMetricsSection: React.FC<CacheMetricsSectionProps> = React.mem
       </div>
     </div>
   );
-});
-
-// AI: Add displayName for better debugging support
-CacheMetricsSection.displayName = 'CacheMetricsSection'; 
+}); 

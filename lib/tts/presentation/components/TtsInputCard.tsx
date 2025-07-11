@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from "@/lib/utils";
 import { Loader2, Library, Save, SaveAll } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { z } from 'zod';
@@ -12,10 +13,10 @@ import { ttsProvidersConfig, ProviderConfig } from '../../infrastructure/provide
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-import { TextInput, VoiceId } from '../../domain';
+import { TextInput, VoiceId, type TtsVoice } from '../../domain';
 
 // Using domain objects for validation
-export const TtsInputSchema = z.object({
+const TtsInputSchema = z.object({
   inputText: z.string().refine(
     (text) => TextInput.isValid(text),
     (text) => ({ message: TextInput.getValidationError(text) || 'Invalid text input' })

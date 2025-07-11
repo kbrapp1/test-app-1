@@ -3,7 +3,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { TtsHistoryItem, TtsHistoryActionCallbacks, TtsAudioPlayerState } from '../types/TtsPresentation';
-import { TtsHistoryItem as TtsHistoryItemComponent } from './TtsHistoryItem';
+import { TtsHistoryItem as TtsHistoryItemComponent, TtsHistoryItemProps } from './TtsHistoryItem';
 import { Button } from '@/components/ui/button';
 import { isPredictionLinkLikelyExpired } from './ttsHistoryUtils';
 
@@ -110,7 +110,7 @@ export function TtsHistoryList({
           </Button>
         )}
         {allItemsLoaded && ( // Show "End of history" only if all items are loaded.
-          <p className="text-sm text-gray-500 text-center py-4 mt-4">You&apos;ve reached the end of the history.</p>
+          <p className="text-sm text-gray-500 text-center py-4 mt-4">You've reached the end of the history.</p>
         )}
       </>
     );

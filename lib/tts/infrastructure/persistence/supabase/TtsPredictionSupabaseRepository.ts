@@ -56,13 +56,11 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Find a prediction by its unique identifier within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Find a prediction by its unique identifier
    */
   async findById(id: string): Promise<TtsPrediction | null> {
     const supabase = createClient();
     
-    // AI: RLS policies automatically filter by organization context
     const { data, error } = await supabase
       .from('TtsPrediction')
       .select('*')
@@ -71,7 +69,7 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
     
     if (error) {
       if (error.code === 'PGRST116') {
-        return null; // Not found or not in user's organization
+        return null; // Not found
       }
       throw new Error(`Failed to find TTS prediction by ID: ${error.message}`);
     }
@@ -80,15 +78,12 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Find all predictions for a specific user within their active organization
-   * AI: CRITICAL - This method was missing organization context filtering (security issue)
+   * Find all predictions for a specific user
    */
   async findByUserId(userId: string, options?: FindOptions): Promise<TtsPrediction[]> {
     const supabase = createClient();
     const mappedOptions = TtsPredictionMapper.mapFindOptions(options || {});
     
-    // AI: RLS policies will handle organization filtering automatically
-    // but we rely on them being properly configured
     let query = supabase
       .from('TtsPrediction')
       .select('*')
@@ -157,14 +152,12 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Find predictions by status within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Find predictions by status
    */
   async findByStatus(status: string, options?: FindOptions): Promise<TtsPrediction[]> {
     const supabase = createClient();
     const mappedOptions = TtsPredictionMapper.mapFindOptions(options || {});
     
-    // AI: RLS policies automatically filter by organization context
     let query = supabase
       .from('TtsPrediction')
       .select('*')
@@ -196,13 +189,11 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Find predictions by external provider ID within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Find predictions by external provider ID
    */
   async findByExternalProviderId(externalProviderId: string): Promise<TtsPrediction | null> {
     const supabase = createClient();
     
-    // AI: RLS policies automatically filter by organization context
     // Check both replicate_prediction_id and external_provider_id for compatibility
     const { data, error } = await supabase
       .from('TtsPrediction')
@@ -212,7 +203,7 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
     
     if (error) {
       if (error.code === 'PGRST116') {
-        return null; // Not found or not in user's organization
+        return null; // Not found
       }
       throw new Error(`Failed to find TTS prediction by external provider ID: ${error.message}`);
     }
@@ -221,13 +212,11 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Delete a prediction within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Delete a prediction
    */
   async delete(id: string): Promise<void> {
     const supabase = createClient();
     
-    // AI: RLS policies ensure only predictions in user's organization can be deleted
     const { error } = await supabase
       .from('TtsPrediction')
       .delete()
@@ -239,14 +228,12 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Count total predictions for a user within their organization with optional filters
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Count total predictions for a user with optional filters
    */
   async countByUserId(userId: string, filters?: CountFilters): Promise<number> {
     const supabase = createClient();
     const mappedFilters = TtsPredictionMapper.mapCountFilters(filters || {});
     
-    // AI: RLS policies automatically filter by organization context
     let query = supabase
       .from('TtsPrediction')
       .select('*', { count: 'exact', head: true })
@@ -280,13 +267,11 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Mark a prediction URL as problematic within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Mark a prediction URL as problematic
    */
   async markUrlProblematic(id: string, errorMessage: string): Promise<void> {
     const supabase = createClient();
     
-    // AI: RLS policies ensure only predictions in user's organization can be updated
     const { error } = await supabase
       .from('TtsPrediction')
       .update({
@@ -302,13 +287,11 @@ export class TtsPredictionSupabaseRepository implements TtsPredictionRepository 
   }
 
   /**
-   * Link a prediction to a DAM asset within user's organization
-   * AI: CRITICAL - Organization context enforced by RLS policies
+   * Link a prediction to a DAM asset
    */
   async linkToAsset(id: string, assetId: string): Promise<void> {
     const supabase = createClient();
     
-    // AI: RLS policies ensure only predictions in user's organization can be updated
     const { error } = await supabase
       .from('TtsPrediction')
       .update({

@@ -73,10 +73,9 @@ export async function getTtsHistory(
     });
 
     return { success: true, data: predictions, count };
-      } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      return { success: false, error: errorMessage };
-    }
+  } catch (error: any) {
+    return { success: false, error: error.message || 'An unexpected error occurred' };
+  }
 }
 
 // Alias export to maintain compatibility

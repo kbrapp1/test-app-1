@@ -1,8 +1,5 @@
 import { TtsPrediction } from '../../domain/entities/TtsPrediction';
 import { TtsPredictionDto, TtsPredictionDisplayDto } from '../dto/TtsPredictionDto';
-import { TextInput } from '../../domain/value-objects/TextInput';
-import { PredictionStatus } from '../../domain/value-objects/PredictionStatus';
-import { VoiceId } from '../../domain/value-objects/VoiceId';
 
 /**
  * Mapper for converting TtsPrediction entities to DTOs for server/client boundary
@@ -95,6 +92,11 @@ export class TtsPredictionMapper {
    * Note: This recreates the entity from serialized data
    */
   static fromDto(dto: TtsPredictionDto): TtsPrediction {
+    // Import value objects
+    const { TextInput } = require('../../domain/value-objects/TextInput');
+    const { PredictionStatus } = require('../../domain/value-objects/PredictionStatus');
+    const { VoiceId } = require('../../domain/value-objects/VoiceId');
+    
     // Create entity using proper value objects
     return new TtsPrediction({
       id: dto.id,
@@ -131,7 +133,7 @@ export class TtsPredictionMapper {
     outputUrl: string | null;
     status: string;
     createdAt: Date;
-    [key: string]: unknown;
+    [key: string]: any;
   } {
     return {
       id: dto.id,

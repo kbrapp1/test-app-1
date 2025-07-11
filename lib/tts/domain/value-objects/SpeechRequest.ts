@@ -16,7 +16,7 @@ export interface ProviderSettings {
   use_speaker_boost?: boolean;
   
   // Common settings
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 /**

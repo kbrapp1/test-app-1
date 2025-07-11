@@ -6,6 +6,7 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { DeleteFolderUseCase, UpdateFolderUseCase } from '@/lib/dam/application/use-cases/folders';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { ValidationError, NotFoundError, ConflictError, AppError } from '@/lib/errors/base';
+import { Folder } from '@/lib/dam/domain/entities/Folder';
 
 interface PatchRequestBody {
   name?: string;
@@ -60,7 +61,7 @@ export const PATCH = async (request: NextRequest, context: RouteContext) => {
   let body: PatchRequestBody;
   try {
     body = await request.json();
-  } catch {
+  } catch (error) {
     return NextResponse.json({ message: 'Invalid request body: Must be valid JSON.' }, { status: 400 });
   }
 

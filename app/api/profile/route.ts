@@ -2,38 +2,23 @@
  * Authenticated Next.js API route handlers for managing user profiles stored in Supabase.
  * Handles GET requests to retrieve the user's profile and PUT requests to update it,
  * using middleware for authentication and error handling.
- * 
- * AI INSTRUCTIONS:
- * - Profiles are USER-SCOPED, not organization-scoped
- * - Use SystemQueryOptions for user profile operations
- * - User profiles exist across organizations (same user, multiple orgs)
- * - Follow golden-rule security patterns for different data scopes
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
-import { User, SupabaseClient } from '@supabase/supabase-js';
-import { queryDataSystem, insertDataSystem } from '@/lib/supabase/db-queries';
+import { User } from '@supabase/supabase-js';
+import { queryData, insertData } from '@/lib/supabase/db-queries';
+import { handleSupabaseError } from '@/lib/supabase/db';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { NotFoundError, DatabaseError, ValidationError } from '@/lib/errors/base';
-
-// AI: Define interface for profile data with explicit types
-interface ProfileUpdateData {
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  website?: string;
-  bio?: string;
-}
 
 // Handler for GET requests - retrieves user profile
 async function getHandler(
   req: NextRequest,
   user: User,
-  supabase: SupabaseClient
+  supabase: any
 ) {
-  // AI: Use system query for user-scoped data (profiles are not organization-scoped)
-  const { data, error } = await queryDataSystem(
+  const { data, error } = await queryData(
     supabase,
     'profiles',
     'id, username, full_name, avatar_url, website, bio',
@@ -58,12 +43,12 @@ async function getHandler(
 async function putHandler(
   req: NextRequest,
   user: User,
-  supabase: SupabaseClient
+  supabase: any
 ) {
   const body = await req.json();
     
-  const allowedFields: (keyof ProfileUpdateData)[] = ['username', 'full_name', 'avatar_url', 'website', 'bio'];
-  const profileData: ProfileUpdateData = {};
+  const allowedFields = ['username', 'full_name', 'avatar_url', 'website', 'bio'];
+  const profileData: Record<string, any> = {};
     
   allowedFields.forEach(field => {
     if (field in body) {
@@ -75,8 +60,7 @@ async function putHandler(
     throw new ValidationError('No valid fields to update');
   }
     
-  // AI: Use system insert for user-scoped data (profiles are not organization-scoped)
-  const { data, error } = await insertDataSystem(
+  const { data, error } = await insertData(
     supabase,
     'profiles',
     {

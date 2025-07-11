@@ -3,8 +3,6 @@
  * Following DDD principles: Separate type definitions for clarity
  */
 
-import { ChatSessionMetadata, EntityValue, EntityChange } from '../../types/ChatbotTypes';
-
 export interface ChatSessionProps {
   id: string;
   chatbotConfigId: string;
@@ -47,7 +45,7 @@ export interface SessionContext {
   journeyState?: {
     stage: string;
     confidence: number;
-    metadata: ChatSessionMetadata;
+    metadata: any;
   };
   accumulatedEntities?: {
     // ARRAY ENTITIES (accumulative across conversation)
@@ -189,12 +187,12 @@ export interface SessionContext {
     // NEW: Complete Entity History (2025 Best Practice)
     entityHistory?: {
       [entityName: string]: Array<{
-        value: EntityValue;
+        value: any;
         confidence: number;
         timestamp: string;
         sourceMessageId: string;
         changeType: 'created' | 'updated' | 'corrected' | 'confirmed';
-        previousValue?: EntityValue;
+        previousValue?: any;
       }>;
     };
     

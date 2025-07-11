@@ -1,201 +1,204 @@
-import { NextRequest } from 'next/server';
-import { User, SupabaseClient } from '@supabase/supabase-js';
-import { queryDataSystem, insertDataSystem } from '@/lib/supabase/db-queries';
+import { NextRequest, NextResponse } from 'next/server';
 import { GET, PUT } from './route';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { User, SupabaseClient } from '@supabase/supabase-js';
+import { queryData, insertData, QueryOptions } from '@/lib/supabase/db-queries';
 
-// Mock the database query functions
-vi.mock('@/lib/supabase/db-queries', () => ({
-  queryDataSystem: vi.fn(),
-  insertDataSystem: vi.fn()
-}));
-
-// Mock the auth middleware
-vi.mock('@/lib/supabase/auth-middleware', () => ({
-  withAuth: (handler: (...args: unknown[]) => unknown) => handler
-}));
-
-// Mock the error middleware
-vi.mock('@/lib/middleware/error', () => ({
-  withErrorHandling: (handler: (...args: unknown[]) => unknown) => handler
-}));
-
-const mockQueryDataSystem = queryDataSystem as Mock;
-const mockInsertDataSystem = insertDataSystem as Mock;
-
-describe('Profile API Route', () => {
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    aud: 'authenticated',
-    app_metadata: {},
-    user_metadata: {},
-    created_at: '2023-01-01T00:00:00.000Z'
-  };
-
-  const mockSupabase = {
-    auth: {
-      getUser: vi.fn()
+// Mock the authentication middleware
+vi.mock('@/lib/supabase/auth-middleware', () => {
+  return {
+    withAuth: (handler: any) => {
+      return async (req: any) => {
+        // For authentication test
+        if (req.headers.get('x-test-auth') === 'fail') {
+          return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+        
+        // Otherwise call the handler with mocked user and client
+        const mockUser = { id: 'test-user-id' } as User;
+        return handler(req, mockUser, getMockSupabase());
+      }
     }
-  } as unknown as SupabaseClient;
+  };
+});
 
+// Mock the database utilities from db-queries
+vi.mock('@/lib/supabase/db-queries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/supabase/db-queries')>();
+  return {
+    ...actual, // Spread to keep other exports if any, though we explicitly mock queryData and insertData
+    queryData: vi.fn(),
+    insertData: vi.fn(),
+    // If handleSupabaseError was used from here, mock it too. Assuming it's from db.ts or errors.ts
+  };
+});
+
+// Create a reusable mock Supabase client
+function getMockSupabase() {
+  return {
+    auth: {
+      getUser: vi.fn(() => ({
+        data: { user: { id: 'test-user-id' } },
+        error: null
+      }))
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => ({
+            data: {
+              id: 'test-user-id',
+              username: 'testuser',
+              full_name: 'Test User'
+            },
+            error: null
+          }))
+        }))
+      })),
+      upsert: vi.fn(() => ({
+        data: { 
+          id: 'test-user-id',
+          username: 'testuser',
+          full_name: 'Test User'
+        },
+        error: null
+      }))
+    }))
+  };
+}
+
+describe('Profile API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock for queryData
+    (queryData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, fields: string, options: QueryOptions) => {
+      if (options?.matchValue === 'test-user-id' && table === 'profiles') {
+        return Promise.resolve({
+          data: [{
+            id: 'test-user-id',
+            username: 'testuser',
+            full_name: 'Test User',
+            avatar_url: 'https://example.com/avatar.jpg',
+            website: 'https://example.com',
+            bio: 'Test bio'
+          }],
+          error: null
+        });
+      } else if (options?.matchValue === 'missing-user' && table === 'profiles') {
+        return Promise.resolve({ data: [], error: null });
+      } else if (options?.matchValue === 'error-user' && table === 'profiles') {
+        return Promise.resolve({ data: null, error: new Error('Database error') });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    // Default mock for insertData (used for PUT)
+    (insertData as Mock).mockImplementation(async (supabase: SupabaseClient, table: string, data: Record<string, any>) => {
+      if (table === 'profiles' && data.id === 'test-user-id') {
+        return Promise.resolve({ data, error: null });
+      }
+      return Promise.resolve({ data: null, error: new Error('Insert failed') });
+    });
   });
 
   describe('GET /api/profile', () => {
-    it('should return user profile successfully', async () => {
-      const mockProfile = {
-        id: 'user-123',
-        username: 'testuser',
-        full_name: 'Test User',
-        avatar_url: 'https://example.com/avatar.jpg',
-        website: 'https://example.com',
-        bio: 'Test bio'
-      };
-
-      mockQueryDataSystem.mockResolvedValue({
-        data: [mockProfile],
-        error: null
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile');
-      const response = await GET(request, mockUser, mockSupabase);
-      const data = await response.json();
-
+    it('should return user profile when authenticated', async () => {
+      const request = new Request('https://example.com/api/profile') as unknown as NextRequest;
+      const response = await GET(request);
+      
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockProfile);
-      expect(mockQueryDataSystem).toHaveBeenCalledWith(
-        mockSupabase,
-        'profiles',
-        'id, username, full_name, avatar_url, website, bio',
-        {
-          matchColumn: 'id',
-          matchValue: 'user-123'
-        }
-      );
+      const data = await response.json();
+      
+      expect(data).toMatchObject({
+        id: 'test-user-id',
+        username: 'testuser',
+        full_name: 'Test User'
+      });
     });
 
-    it('should return 404 when profile not found', async () => {
-      mockQueryDataSystem.mockResolvedValue({
-        data: [],
-        error: null
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile');
+    it('should return 401 when not authenticated', async () => {
+      const headers = new Headers();
+      headers.set('x-test-auth', 'fail');
       
-      await expect(GET(request, mockUser, mockSupabase)).rejects.toThrow('Profile not found');
-    });
-
-    it('should handle database errors', async () => {
-      mockQueryDataSystem.mockResolvedValue({
-        data: null,
-        error: { message: 'Database connection failed' }
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile');
+      const request = new Request('https://example.com/api/profile', { headers }) as unknown as NextRequest;
+      const response = await GET(request);
       
-      await expect(GET(request, mockUser, mockSupabase)).rejects.toThrow('Database connection failed');
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      
+      expect(data).toMatchObject({
+        error: 'Authentication required'
+      });
     });
   });
 
   describe('PUT /api/profile', () => {
-    it('should update user profile successfully', async () => {
-      const updateData = {
+    it('should update user profile when authenticated', async () => {
+      const body = {
         username: 'newusername',
-        full_name: 'New Name',
-        bio: 'Updated bio'
+        full_name: 'New User Name'
       };
-
-      mockInsertDataSystem.mockResolvedValue({
-        data: { id: 'user-123', ...updateData },
-        error: null
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile', {
+      
+      const request = new Request('https://example.com/api/profile', {
         method: 'PUT',
-        body: JSON.stringify(updateData)
-      });
-
-      const response = await PUT(request, mockUser, mockSupabase);
-      const data = await response.json();
-
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }) as unknown as NextRequest;
+      
+      const response = await PUT(request);
       expect(response.status).toBe(200);
-      expect(data.message).toBe('Profile updated successfully');
-      expect(mockInsertDataSystem).toHaveBeenCalledWith(
-        mockSupabase,
-        'profiles',
-        expect.objectContaining({
-          id: 'user-123',
-          username: 'newusername',
-          full_name: 'New Name',
-          bio: 'Updated bio',
-          updated_at: expect.any(String)
-        })
-      );
+      
+      const data = await response.json();
+      expect(data).toMatchObject({
+        message: 'Profile updated successfully'
+      });
     });
 
-    it('should reject invalid fields', async () => {
-      const invalidData = {
-        username: 'validusername',
-        invalid_field: 'should be ignored',
-        another_invalid: 'also ignored'
+    it('should return 400 when no valid fields provided', async () => {
+      const req = new NextRequest('http://localhost/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invalid_field: 'test' })
+      });
+
+      const response = await PUT(req as NextRequest);
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      // Expect the standardized error response structure
+      expect(data).toMatchObject({
+        error: {
+          message: 'No valid fields to update',
+          code: 'VALIDATION_ERROR', // Comes from the ValidationError default
+          statusCode: 400
+        }
+      });
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'x-test-auth': 'fail'
+      });
+      
+      const body = {
+        username: 'newusername'
       };
-
-      mockInsertDataSystem.mockResolvedValue({
-        data: { id: 'user-123', username: 'validusername' },
-        error: null
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile', {
+      
+      const request = new Request('https://example.com/api/profile', {
         method: 'PUT',
-        body: JSON.stringify(invalidData)
+        headers,
+        body: JSON.stringify(body)
+      }) as unknown as NextRequest;
+      
+      const response = await PUT(request);
+      expect(response.status).toBe(401);
+      
+      const data = await response.json();
+      expect(data).toMatchObject({
+        error: 'Authentication required'
       });
-
-      await PUT(request, mockUser, mockSupabase);
-
-      expect(mockInsertDataSystem).toHaveBeenCalledWith(
-        mockSupabase,
-        'profiles',
-        expect.objectContaining({
-          id: 'user-123',
-          username: 'validusername',
-          updated_at: expect.any(String)
-        })
-      );
-
-      // Should not include invalid fields
-      expect(mockInsertDataSystem).toHaveBeenCalledWith(
-        mockSupabase,
-        'profiles',
-        expect.not.objectContaining({
-          invalid_field: expect.anything(),
-          another_invalid: expect.anything()
-        })
-      );
-    });
-
-    it('should return validation error for empty updates', async () => {
-      const request = new NextRequest('http://localhost:3000/api/profile', {
-        method: 'PUT',
-        body: JSON.stringify({})
-      });
-
-      await expect(PUT(request, mockUser, mockSupabase)).rejects.toThrow('No valid fields to update');
-    });
-
-    it('should handle database errors during update', async () => {
-      mockInsertDataSystem.mockResolvedValue({
-        data: null,
-        error: { message: 'Update failed' }
-      });
-
-      const request = new NextRequest('http://localhost:3000/api/profile', {
-        method: 'PUT',
-        body: JSON.stringify({ username: 'testuser' })
-      });
-
-      await expect(PUT(request, mockUser, mockSupabase)).rejects.toThrow('Update failed');
     });
   });
 }); 

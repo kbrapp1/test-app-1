@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, Mock, MockedFunction } from 'vitest';
 import { VoiceSelector } from './VoiceSelector';
+import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
 import { getTtsVoices } from '../actions/tts';
 import { type TtsVoice } from '../../domain';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -23,7 +24,7 @@ vi.mock('lucide-react', () => ({
 // Mocks for ShadCN UI components
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({ children }: { children: React.ReactNode }) => <div data-testid="popover">{children}</div>,
-  PopoverTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+  PopoverTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
     <div data-testid="popover-trigger">{children}</div>
   ),
   PopoverContent: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (

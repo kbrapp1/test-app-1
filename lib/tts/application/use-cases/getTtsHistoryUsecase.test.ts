@@ -60,14 +60,8 @@ const mockAuthClient = {
   },
 };
 
-// Mock repository interface
-interface MockRepository {
-  findByUserId: ReturnType<typeof vi.fn>;
-  countByUserId: ReturnType<typeof vi.fn>;
-}
-
 describe('getTtsHistoryUsecase', () => {
-  let mockRepository: MockRepository;
+  let mockRepository: any;
 
   beforeEach(() => {
     vi.clearAllMocks();

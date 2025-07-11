@@ -11,10 +11,9 @@ describe('SpeechResult', () => {
   describe('fromReplicate', () => {
     it('should create successful result for succeeded status with output', () => {
       const prediction = {
-        status: 'succeeded' as const,
+        status: 'succeeded',
         output: 'https://example.com/audio.wav',
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -27,10 +26,9 @@ describe('SpeechResult', () => {
 
     it('should create successful result for completed status with output', () => {
       const prediction = {
-        status: 'completed' as const, // This is what kokoro-82m model uses
+        status: 'completed', // This is what kokoro-82m model uses
         output: 'https://example.com/audio.wav',
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -43,9 +41,8 @@ describe('SpeechResult', () => {
 
     it('should create processing result for other statuses', () => {
       const prediction = {
-        status: 'processing' as const,
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        status: 'processing',
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -58,10 +55,9 @@ describe('SpeechResult', () => {
 
     it('should create failed result for failed status', () => {
       const prediction = {
-        status: 'failed' as const,
+        status: 'failed',
         error: 'Generation failed',
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -74,10 +70,9 @@ describe('SpeechResult', () => {
 
     it('should handle array output format', () => {
       const prediction = {
-        status: 'succeeded' as const,
+        status: 'succeeded',
         output: ['https://example.com/audio.wav'],
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -88,10 +83,9 @@ describe('SpeechResult', () => {
 
     it('should handle object output format with url property', () => {
       const prediction = {
-        status: 'completed' as const,
-        output: 'https://example.com/audio.wav',
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        status: 'completed',
+        output: { url: 'https://example.com/audio.wav' },
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);
@@ -102,10 +96,9 @@ describe('SpeechResult', () => {
 
     it('should return processing if status is succeeded but no output', () => {
       const prediction = {
-        status: 'succeeded' as const,
+        status: 'succeeded',
         // No output provided
-        id: 'test-prediction-id',
-        created_at: '2025-01-01T00:00:00Z'
+        id: 'test-prediction-id'
       };
 
       const result = SpeechResult.fromReplicate(prediction);

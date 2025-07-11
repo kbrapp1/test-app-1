@@ -68,7 +68,7 @@ export interface WebsiteSourceDto {
   readonly crawlSettings: WebsiteCrawlSettingsDto;
   readonly lastCrawled?: string; // ISO string for serialization
   readonly pageCount?: number;
-  readonly status: 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error';
+  readonly status: 'pending' | 'crawling' | 'completed' | 'error';
   readonly errorMessage?: string;
 }
 

@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
 export async function completeOnboardingMembership(supabase: SupabaseClient): Promise<void> {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();

@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic'; // REINSTATED
 export default async function DamGalleryPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: any; // Forcing type to any for diagnostic purposes
 }) {
   // Feature flag check - server-side
   const supabase = createSupabaseServerClient();

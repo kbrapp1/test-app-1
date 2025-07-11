@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
+import React, { useState, useEffect, useRef } from 'react';
+import { UseFormReturn, ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
@@ -13,17 +14,19 @@ import { FormControl } from '@/components/ui/form'; // Import FormControl
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { getTtsVoices } from '../actions/tts';
+import { z } from 'zod';
 import { REPLICATE_MODELS } from '../../infrastructure/providers/ttsProviderConfig'; // <-- Import REPLICATE_MODELS
 import { Input } from "@/components/ui/input"; // Import Input for the search field
 
 import { VoiceId, type TtsVoice } from '../../domain';
 
 // Updated schema to match the one in TtsInputCard
-type TtsInputFormValues = {
-  inputText: string;
-  voiceId: string;
-  provider: string;
-};
+const TtsInputSchema = z.object({
+  inputText: z.string(),
+  voiceId: z.string(),
+  provider: z.string(), // Added provider to match the form's full schema
+});
+type TtsInputFormValues = z.infer<typeof TtsInputSchema>;
 
 interface VoiceSelectorProps {
   field: ControllerRenderProps<TtsInputFormValues, 'voiceId'>;
@@ -36,6 +39,7 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
   const [availableVoices, setAvailableVoices] = useState<TtsVoice[]>([]);
   const [voiceLoadingError, setVoiceLoadingError] = useState<string | null>(null);
   const [voicePopoverOpen, setVoicePopoverOpen] = useState(false);
+  const prevProviderRef = useRef<string | undefined>(undefined); // Ref to store the previous provider
   const [voiceSearchTerm, setVoiceSearchTerm] = useState(""); // State for voice search
 
   useEffect(() => {
@@ -57,9 +61,9 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
         
     
         const result = await getTtsVoices(selectedProvider, modelIdToPass);
-        if (result.success && result.voices) {
+        if (result.success && result.data) {
           // Use VoiceId domain logic for sorting
-          const sortedVoices = VoiceId.sortVoices(result.voices as TtsVoice[]);
+          const sortedVoices = VoiceId.sortVoices(result.data);
           setAvailableVoices(sortedVoices);
           if (sortedVoices.length === 0 && !result.error) {
             setVoiceLoadingError(`No voices available for provider: ${selectedProvider}`);
@@ -139,7 +143,7 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
           </div>
           <CommandList>
             {voiceLoadingError && <CommandEmpty>{voiceLoadingError}</CommandEmpty>}
-            {!voiceLoadingError && filteredVoices.length === 0 && voiceSearchTerm && <CommandEmpty>No voices match &quot;{voiceSearchTerm}&quot;.</CommandEmpty>}
+            {!voiceLoadingError && filteredVoices.length === 0 && voiceSearchTerm && <CommandEmpty>No voices match "{voiceSearchTerm}".</CommandEmpty>}
             {!voiceLoadingError && availableVoices.length > 0 && filteredVoices.length === 0 && !voiceSearchTerm && <CommandEmpty>No voices available.</CommandEmpty>}
             {!voiceLoadingError && availableVoices.length === 0 && !voiceSearchTerm && <CommandEmpty>Loading voices...</CommandEmpty>}
             {filteredVoices.length > 0 && (

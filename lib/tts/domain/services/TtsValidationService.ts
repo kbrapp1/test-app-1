@@ -71,13 +71,13 @@ export class TtsValidationService {
   }
   
   /**
-   * Validate a complete TTS request with all parameters
+   * Validate complete TTS generation request
    */
   public static validateTtsRequest(params: {
     text: string;
     voiceId: string;
     provider: string;
-    settings?: TtsProviderSettings;
+    settings?: Record<string, any>;
   }): TtsRequestValidationResult {
     const errors: string[] = [];
     
@@ -160,49 +160,6 @@ export class TtsValidationService {
   }
   
   /**
-   * Validate if user can generate TTS with the given parameters
-   */
-  static validateTtsGenerationPermissions(
-    organizationId: string,
-    textLength: number,
-    provider: string
-  ): PermissionValidationResult {
-    // Basic validation - can be extended with more sophisticated logic
-    if (textLength > 10000) {
-      return {
-        isValid: false,
-        errors: ['Text input exceeds maximum length of 10,000 characters']
-      };
-    }
-
-    if (!['elevenlabs', 'replicate'].includes(provider)) {
-      return {
-        isValid: false,
-        errors: ['Provider not supported']
-      };
-    }
-
-    return { isValid: true, errors: [] };
-  }
-
-  /**
-   * Validate if user can save TTS audio to DAM
-   */
-  static validateSaveToDamPermissions(
-    organizationId: string,
-    audioUrl: string
-  ): PermissionValidationResult {
-    if (!audioUrl || !audioUrl.startsWith('http')) {
-      return {
-        isValid: false,
-        errors: ['Valid audio URL is required']
-      };
-    }
-
-    return { isValid: true, errors: [] };
-  }
-  
-  /**
    * Check if content contains inappropriate material
    */
   private static containsInappropriateContent(text: string): boolean {
@@ -255,7 +212,7 @@ export class TtsValidationService {
    */
   private static validateProviderSettings(
     provider: string, 
-    settings: TtsProviderSettings
+    settings: Record<string, any>
   ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
     
@@ -326,15 +283,4 @@ export interface TtsRequestValidationResult {
 export interface PermissionValidationResult {
   isValid: boolean;
   errors: string[];
-} 
-
-// TTS Provider Settings interface
-interface TtsProviderSettings {
-  // ElevenLabs settings
-  stability?: number;
-  similarity_boost?: number;
-  // Replicate settings
-  speed?: number;
-  // Common settings
-  [key: string]: unknown;
 } 

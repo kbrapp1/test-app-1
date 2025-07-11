@@ -33,6 +33,7 @@ export class ConcreteTtsGenerationService implements TtsGenerationService {
       const prediction = await createReplicatePrediction(input, replicateModelId);
       return {
         predictionId: prediction.predictionId,
+        outputUrl: prediction.outputUrl,
       };
     } else if (provider === 'elevenlabs') {
       // ElevenLabs returns raw audio buffer synchronously

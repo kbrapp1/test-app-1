@@ -1,6 +1,23 @@
 "use client"
 
 import type * as React from "react"
+import {
+  ArrowUpCircleIcon,
+  BarChartIcon,
+  CameraIcon,
+  ClipboardListIcon,
+  DatabaseIcon,
+  FileCodeIcon,
+  FileIcon,
+  FileTextIcon,
+  FolderIcon,
+  HelpCircleIcon,
+  LayoutDashboardIcon,
+  ListIcon,
+  SearchIcon,
+  SettingsIcon,
+  UsersIcon,
+} from "lucide-react"
 import Image from "next/image"
 
 import {
@@ -16,6 +33,9 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

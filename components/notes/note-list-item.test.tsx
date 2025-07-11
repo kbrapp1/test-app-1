@@ -9,15 +9,6 @@ import type { Note } from "@/types/notes";
 
 // --- Mocks ---
 
-// Mock the permissions hook
-vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
-  useNotesPermissions: () => ({
-    canUpdate: true,
-    canDelete: true,
-    isLoading: false,
-  }),
-}));
-
 // Mock Server Actions from the new path
 vi.mock('@/app/(protected)/documents/notes/actions', () => ({
     addNote: vi.fn(), // Mock even if not directly used here
@@ -230,8 +221,7 @@ describe('NoteListItem', () => {
     });
 
     it('disables the button for the current color', () => {
-        const noteWithPinkColor = { ...mockNote, color_class: 'bg-pink-200' };
-        render(<NoteListItem {...defaultProps} note={noteWithPinkColor} />);
+        render(<NoteListItem {...defaultProps} note={{ ...mockNote, color_class: 'bg-pink-200' }} />);
         expect(screen.getByRole('button', { name: /set color to yellow/i })).not.toBeDisabled();
         expect(screen.getByRole('button', { name: /set color to pink/i })).toBeDisabled();
         expect(screen.getByRole('button', { name: /set color to blue/i })).not.toBeDisabled();

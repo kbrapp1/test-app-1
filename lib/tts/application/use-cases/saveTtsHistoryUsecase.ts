@@ -1,15 +1,10 @@
-import { TtsHistorySaveInput } from '../../domain/types/DatabaseTypes';
+// import type { SaveHistoryInput } from '@/lib/schemas/ttsSchemas'; // If using Zod validation
 
 /**
  * Usecase: Saves TTS generation history.
- * 
- * AI INSTRUCTIONS:
- * - Follow @golden-rule DDD patterns exactly
- * - Security-critical: organizationId must be preserved for multi-tenant isolation
- * - Single responsibility: Save TTS history data only
- * - Keep under 250 lines - focused use case responsibility
+ * (Currently a stub - needs implementation)
  */
-export async function saveTtsHistory(input: TtsHistorySaveInput): Promise<{ success: boolean; error?: string }> {
+export async function saveTtsHistory(input: any): Promise<{ success: boolean; error?: string }> {
   // TODO: Implement logic to save relevant TTS prediction details to a database table (e.g., 'tts_predictions').
   // This would likely involve:
   // - Defining a Zod schema for the input (e.g., SaveHistoryInput from ttsSchemas.ts).

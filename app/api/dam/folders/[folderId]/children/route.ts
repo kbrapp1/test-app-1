@@ -6,6 +6,8 @@ import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { ListFolderChildrenUseCase } from '@/lib/dam/application/use-cases/folders';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { ValidationError, NotFoundError, AppError } from '@/lib/errors/base';
+import { Folder } from '@/lib/dam/domain/entities/Folder';
+import { Asset } from '@/lib/dam/domain/entities/Asset';
 
 interface RouteContext {
   params: Promise<{

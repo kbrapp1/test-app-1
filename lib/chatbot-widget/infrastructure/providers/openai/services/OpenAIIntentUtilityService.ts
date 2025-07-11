@@ -24,13 +24,13 @@ export class OpenAIIntentUtilityService {
    * - Provide clear error reasoning for debugging
    */
   static handleClassificationError(
-    error: unknown,
+    error: any,
     message: string,
     messageHistory: ChatMessage[],
     config: OpenAIIntentConfig
   ): IntentResult {
     // Return unknown intent with error details instead of rule-based fallback
-    const errorMessage = `OpenAI API error: ${error instanceof Error ? error.message : 'Classification service unavailable'}. Error type: ${error instanceof Error ? error.name : 'APIError'}`;
+    const errorMessage = `OpenAI API error: ${error.message || 'Classification service unavailable'}. Error type: ${error.name || 'APIError'}`;
     
     return IntentResult.create(
       'unknown',
@@ -71,8 +71,7 @@ export class OpenAIIntentUtilityService {
     );
   }
 
-  /** Get valid intent types
- */
+  /** Get valid intent types */
   static getValidIntents(): IntentType[] {
     return [
       'greeting', 'faq_general', 'faq_pricing', 'faq_features',
@@ -81,8 +80,7 @@ export class OpenAIIntentUtilityService {
     ];
   }
 
-  /** Validate and map intent
- */
+  /** Validate and map intent */
   static validateAndMapIntent(intentText: string): IntentType {
     const validIntents = this.getValidIntents();
     return validIntents.includes(intentText as IntentType) ? intentText as IntentType : 'unknown';

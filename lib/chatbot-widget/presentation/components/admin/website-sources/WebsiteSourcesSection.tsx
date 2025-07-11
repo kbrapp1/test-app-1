@@ -12,6 +12,7 @@
  * - Coordinate state and actions, delegate rendering
  */
 
+import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useOrganization } from '../../../../../organization/application/providers/OrganizationProvider';
@@ -54,9 +55,7 @@ export interface CrawledPageInfo {
 }
 
 export function WebsiteSourcesSection() {
-  // ALL HOOKS MUST BE AT THE TOP - React Rules of Hooks
-  const { activeOrganizationId, isLoading: isLoadingOrg } = useOrganization();
-  
+  const { activeOrganizationId } = useOrganization();
   const { config: existingConfig, isLoading, error } = useChatbotConfiguration({ 
     enableFormState: false 
   });
@@ -93,33 +92,9 @@ export function WebsiteSourcesSection() {
   } = useWebsiteSourcesState(
     activeOrganizationId || '', 
     existingConfig?.id || '', 
-    existingConfig
+    existingConfig, 
+    activeOrganizationId
   );
-
-  // EARLY RETURNS AFTER ALL HOOKS - React Rules of Hooks
-  // AI: Handle loading state
-  if (isLoadingOrg) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 mx-auto bg-blue-100 rounded-full animate-pulse" />
-          <p className="text-muted-foreground">Loading organization context...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // AI: Handle missing organization assignment - this shouldn't happen in normal flow
-  if (!activeOrganizationId) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          No organization assigned to your account. Please contact support to resolve this issue.
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   if (isLoading) {
     return (

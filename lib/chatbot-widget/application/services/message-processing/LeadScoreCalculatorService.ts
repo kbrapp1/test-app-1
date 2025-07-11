@@ -13,7 +13,6 @@ import { AccumulatedEntities } from '../../../domain/value-objects/context/Accum
 import { DomainConstants } from '../../../domain/value-objects/ai-configuration/DomainConstants';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { LeadScoringEntities } from '../../../domain/types/ChatbotTypes';
 
 export class LeadScoreCalculatorService {
   private readonly loggingService: IChatbotLoggingService;
@@ -58,37 +57,26 @@ export class LeadScoreCalculatorService {
   }
 
   /** Convert accumulated entities to lead scoring format */
-  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: any): LeadScoringEntities {
-    const leadScoringEntities: LeadScoringEntities = {
-      contactInfo: {
-        email: accumulatedEntities.email?.value,
-        phone: accumulatedEntities.phone?.value || accumulatedEntities.contactMethod?.value,
-        name: accumulatedEntities.name?.value
-      },
-      businessInfo: {
-        company: accumulatedEntities.company?.value,
-        industry: accumulatedEntities.industry?.value,
-        size: accumulatedEntities.teamSize?.value
-      },
-      intentSignals: {
-        urgency: accumulatedEntities.urgency?.value,
-        budget: accumulatedEntities.budget?.value,
-        timeline: accumulatedEntities.timeline?.value
-      },
-      engagementMetrics: {
-        messageCount: accumulatedEntities.messageCount?.value,
-        sessionDuration: accumulatedEntities.sessionDuration?.value,
-        responseTime: accumulatedEntities.responseTime?.value
-      },
-      role: accumulatedEntities.role?.value
-    };
+  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: any): Partial<Record<string, any>> {
+    const leadScoringEntities: Partial<Record<string, any>> = {};
+    
+    const scoringEntityTypes = [
+      'budget', 'timeline', 'company', 'industry', 'teamSize', 
+      'urgency', 'contactMethod', 'role'
+    ];
+    
+    scoringEntityTypes.forEach(entityType => {
+      if (accumulatedEntities[entityType]?.value) {
+        leadScoringEntities[entityType] = accumulatedEntities[entityType].value;
+      }
+    });
     
     return leadScoringEntities;
   }
 
   /** Log detailed lead score calculation */
   private logLeadScoreCalculation(
-    leadScoreEntities: LeadScoringEntities,
+    leadScoreEntities: any,
     calculatedLeadScore: number,
     logger: ISessionLogger
   ): void {

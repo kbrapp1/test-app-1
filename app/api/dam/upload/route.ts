@@ -9,17 +9,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
-import { ValidationError, ExternalServiceError } from '@/lib/errors/base';
+import { ValidationError, DatabaseError, ExternalServiceError } from '@/lib/errors/base';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { UploadAssetUseCase } from '@/lib/dam/application/use-cases/assets';
 import { UploadAssetDTO } from '@/lib/dam/application/dto/UploadAssetDTO';
 
-// Type definitions removed as they were unused in the implementation
+// Simple type for upload result items (different from Asset)
+interface UploadResultItem {
+    name: string;
+    storagePath: string;
+    size: number;
+    type: string;
+}
+
+// Define specific error types for better error handling
+interface StorageError extends Error {
+    message: string;
+    status?: number;
+    details?: string;
+}
+
+interface DatabaseQueryError extends Error {
+    message: string;
+    code?: string;
+    details?: string;
+}
 
 // Define the actual handler function that will be wrapped with auth middleware
-async function postHandler(request: NextRequest, user: User) {
+async function postHandler(request: NextRequest, user: User, _supabase: SupabaseClient) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     const folderIdInput = typeof (formData as any).get === 'function'

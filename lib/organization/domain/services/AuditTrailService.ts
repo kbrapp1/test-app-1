@@ -9,7 +9,7 @@ export interface AuditLogEntry {
   user_id: string;
   organization_id: string | null;
   action: string;
-  details: Record<string, unknown>;
+  details: any;
   ip_address: string | null;
   user_agent: string | null;
   session_id: string | null;
@@ -42,7 +42,7 @@ export class AuditTrailService {
   async logAccess(
     action: string,
     organizationId: string | null,
-    details: Record<string, unknown> = {},
+    details: any = {},
     metadata?: AuditMetadata
   ): Promise<void> {
     if (!action?.trim()) {
@@ -79,7 +79,7 @@ export class AuditTrailService {
       if (insertError) {
         throw new Error(`Audit logging failed: ${insertError.message}`);
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       // Don't throw audit errors to avoid breaking main operations
     }
   }
@@ -189,7 +189,7 @@ export class AuditTrailService {
         }
       }
 
-      const filters: Record<string, unknown> = { 
+      const filters: any = { 
         limit: 10000, // Large limit for export
         offset: 0 
       };
@@ -352,7 +352,7 @@ export class AuditTrailService {
   private createError(
     code: AuditTrailError['code'], 
     message: string, 
-    context?: Record<string, unknown>
+    context?: any
   ): AuditTrailError {
     const error = new Error(message) as AuditTrailError;
     error.code = code;

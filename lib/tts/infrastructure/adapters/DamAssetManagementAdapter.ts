@@ -14,7 +14,8 @@ import {
 } from '../../application/contracts/AssetManagementContract';
 
 // DAM imports are isolated to this adapter
-import { getAssetContent, updateAssetText, saveAsNewTextAsset, getAssetDownloadUrl } from '../../../dam';
+import { getAssetContent, updateAssetText, saveAsNewTextAsset } from '@/lib/dam';
+import { getAssetDownloadUrl } from '@/lib/dam';
 
 /**
  * DAM implementation of asset management contract
@@ -113,9 +114,6 @@ export class DamAssetManagementAdapter implements AssetManagementContract {
    * application layer through server actions.
    */
   async saveAudioAsset(request: AudioAssetSaveRequest): Promise<AssetSaveResult> {
-    // TODO: Implement when moving audio saving to domain layer
-    console.warn('saveAudioAsset called with:', request.desiredName);
-    
     return {
       success: false,
       error: 'Audio saving not implemented in DAM adapter. Use TTS server actions instead.'
