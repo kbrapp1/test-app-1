@@ -55,7 +55,7 @@ export function useFeatureAccess({
   const { activeOrganizationId, isLoading: isLoadingOrg } = useOrganizationContext();
   
   // AI: Get user authentication and role information
-  const { isLoading: isLoadingUser, auth } = useUser();
+  const { isLoading: isLoadingUser, hasAnyRole, hasAnyPermission } = useUser();
   
   // AI: Check feature flag
   const isFeatureEnabled = useFeatureFlag(featureName);
@@ -99,7 +99,7 @@ export function useFeatureAccess({
     
     // AI: Check role requirements
     if (requiredRoles.length > 0) {
-      const hasRequiredRole = auth.hasAnyRole(requiredRoles);
+      const hasRequiredRole = hasAnyRole(requiredRoles);
       if (!hasRequiredRole) {
         return {
           hasAccess: false,
@@ -114,7 +114,7 @@ export function useFeatureAccess({
     
     // AI: Check permission requirements
     if (requiredPermissions.length > 0) {
-      const hasRequiredPermissions = auth.hasAnyPermission(requiredPermissions);
+      const hasRequiredPermissions = hasAnyPermission(requiredPermissions);
       if (!hasRequiredPermissions) {
         return {
           hasAccess: false,
@@ -135,7 +135,7 @@ export function useFeatureAccess({
       hasOrganization: !!activeOrganizationId,
       isFeatureEnabled: true
     };
-  }, [activeOrganizationId, isLoadingOrg, isLoadingUser, isFeatureEnabled, requireOrganization, requiredRoles, requiredPermissions, auth]);
+  }, [activeOrganizationId, isLoadingOrg, isLoadingUser, isFeatureEnabled, requireOrganization, requiredRoles, requiredPermissions, hasAnyRole, hasAnyPermission]);
   
   return accessResult;
 } 

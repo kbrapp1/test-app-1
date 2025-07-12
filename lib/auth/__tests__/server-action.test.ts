@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getSessionUser } from '../server-action';
 import { withAuthAction } from '..';
 import { UserRole, Permission } from '../roles';
-import { AuthorizationError } from '@/lib/errors/base';
+import { AuthorizationError } from '../../errors/base';
 import type { User } from '@supabase/supabase-js';
 
 // Default mock user
@@ -26,6 +26,17 @@ vi.mock('@/lib/supabase/server', () => ({
   }))
 }));
 
+vi.mock('@/lib/shared/infrastructure/GlobalAuthenticationService', () => ({
+  GlobalAuthenticationService: {
+    getInstance: vi.fn().mockReturnValue({
+      getAuthenticatedUser: vi.fn().mockResolvedValue({
+        isValid: true,
+        user: defaultUser
+      })
+    })
+  }
+}));
+
 vi.mock('@/lib/logging');
 vi.mock('@/lib/errors/base', () => ({
   AuthorizationError: class AuthorizationError extends Error {
@@ -38,6 +49,7 @@ vi.mock('@/lib/errors/base', () => ({
 
 describe('Server Action Auth Utilities', () => {
   let mockAction: any;
+  let mockGlobalAuth: any;
   
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,6 +62,21 @@ describe('Server Action Auth Utilities', () => {
       },
       error: null
     });
+    
+    // Set up GlobalAuthenticationService mock
+    mockGlobalAuth = {
+      getAuthenticatedUser: vi.fn().mockResolvedValue({
+        isValid: true,
+        user: defaultUser
+      })
+    };
+    
+    // Mock the GlobalAuthenticationService
+    vi.doMock('@/lib/shared/infrastructure/GlobalAuthenticationService', () => ({
+      GlobalAuthenticationService: {
+        getInstance: vi.fn().mockReturnValue(mockGlobalAuth)
+      }
+    }));
   });
 
   describe('getSessionUser', () => {
@@ -91,131 +118,126 @@ describe('Server Action Auth Utilities', () => {
   });
 
   describe('withAuthAction', () => {
-    it('calls the action with the original arguments', async () => {
+    it('calls the action with the authenticated user', async () => {
       const mockUser = { 
         id: 'user-1',
         app_metadata: { role: 'admin' },
       };
       
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
       });
       
-      const wrappedAction = withAuthAction(mockAction);
-      await wrappedAction();
+      const result = await withAuthAction(mockAction);
       
+      expect(result.success).toBe(true);
       expect(mockAction).toHaveBeenCalled();
-      // The original function is called with the same arguments passed to the wrapped function
-      expect(mockAction.mock.calls[0]).toEqual([]);
+      // The function is called with the authenticated user
+      expect(mockAction.mock.calls[0]).toEqual([mockUser]);
     });
 
-    it('throws AuthorizationError when no session exists', async () => {
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: null },
-        error: null
+    it('returns error when no session exists', async () => {
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: false,
+        user: null
       });
       
-      const wrappedAction = withAuthAction(mockAction);
+      const result = await withAuthAction(mockAction);
       
-      await expect(wrappedAction()).rejects.toThrow('Authentication required');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Authentication required');
       expect(mockAction).not.toHaveBeenCalled();
     });
 
-    it('checks for required role when specified', async () => {
+    it('successfully executes action with authenticated user', async () => {
       const mockUser = { 
         id: 'user-1',
         app_metadata: { role: 'viewer' },
       };
       
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
       });
       
-      const wrappedAction = withAuthAction(mockAction, { 
-        requiredRole: UserRole.ADMIN 
-      });
+      const result = await withAuthAction(mockAction);
       
-      await expect(wrappedAction()).rejects.toThrow(`Requires role: ${UserRole.ADMIN}`);
-      expect(mockAction).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(mockAction).toHaveBeenCalledWith(mockUser);
     });
 
-    it('allows access when user has the required role', async () => {
+    it('handles action execution errors', async () => {
       const mockUser = { 
         id: 'user-1',
         app_metadata: { role: 'admin' },
       };
       
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
       });
       
-      const wrappedAction = withAuthAction(mockAction, { 
-        requiredRole: UserRole.ADMIN 
-      });
+      const errorAction = vi.fn().mockRejectedValue(new Error('Action failed'));
+      const result = await withAuthAction(errorAction);
       
-      await wrappedAction();
-      expect(mockAction).toHaveBeenCalled();
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Action failed');
     });
 
-    it('checks for required permission when specified', async () => {
+    it('returns user data in successful result', async () => {
+      const mockUser = { 
+        id: 'user-1',
+        email: 'test@example.com',
+        app_metadata: { role: 'viewer' },
+      };
+      
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
+      });
+      
+      const result = await withAuthAction(mockAction);
+      
+      expect(result.success).toBe(true);
+      expect(result.user).toEqual(mockUser);
+    });
+
+    it('executes action with return value', async () => {
       const mockUser = { 
         id: 'user-1',
         app_metadata: { role: 'viewer' },
       };
       
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
       });
       
-      const wrappedAction = withAuthAction(mockAction, { 
-        requiredPermission: Permission.DELETE_USER 
-      });
+      const actionWithReturnValue = vi.fn().mockResolvedValue({ result: 'success' });
+      const result = await withAuthAction(actionWithReturnValue);
       
-      await expect(wrappedAction()).rejects.toThrow(`Requires permission: ${Permission.DELETE_USER}`);
-      expect(mockAction).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({ result: 'success' });
+      expect(actionWithReturnValue).toHaveBeenCalledWith(mockUser);
     });
 
-    it('handles multiple required permissions with anyPermission=true', async () => {
-      const mockUser = { 
-        id: 'user-1',
-        app_metadata: { role: 'viewer' },
-      };
-      
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
-      });
-      
-      const wrappedAction = withAuthAction(mockAction, { 
-        requiredPermissions: [Permission.DELETE_USER, Permission.VIEW_ASSET],
-        anyPermission: true
-      });
-      
-      await wrappedAction();
-      expect(mockAction).toHaveBeenCalled();
-    });
-
-    it('passes arguments to the action function', async () => {
+    it('calls action with authenticated user only', async () => {
       const mockUser = { 
         id: 'user-1',
         app_metadata: { role: 'admin' },
       };
       
-      mockGetUser.mockResolvedValueOnce({ 
-        data: { user: mockUser },
-        error: null
+      mockGlobalAuth.getAuthenticatedUser.mockResolvedValueOnce({
+        isValid: true,
+        user: mockUser
       });
       
-      const wrappedAction = withAuthAction(mockAction);
-      await wrappedAction('arg1', 'arg2');
+      const result = await withAuthAction(mockAction);
       
       expect(mockAction).toHaveBeenCalled();
-      // The original arguments are passed through
-      expect(mockAction.mock.calls[0]).toEqual(['arg1', 'arg2']);
+      expect(mockAction.mock.calls[0]).toEqual([mockUser]);
+      expect(result.success).toBe(true);
     });
   });
 }); 

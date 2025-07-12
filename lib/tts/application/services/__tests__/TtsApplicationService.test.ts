@@ -121,10 +121,10 @@ describe('TtsApplicationService', () => {
 
   describe('startSpeechGeneration', () => {
     it('should check feature flag and delegate to use case', async () => {
-      const result = await service.startSpeechGeneration('Hello world', 'voice-1', 'elevenlabs');
+      const result = await service.startSpeechGeneration('Hello world', 'voice-1', 'elevenlabs', 'test-user-id', 'test-org-id');
 
       expect(mockFeatureFlagService.checkTtsFeatureFlag).toHaveBeenCalled();
-      expect(startSpeechGeneration).toHaveBeenCalledWith('Hello world', 'voice-1', 'elevenlabs', mockTtsGenerationService);
+      expect(startSpeechGeneration).toHaveBeenCalledWith('Hello world', 'voice-1', 'elevenlabs', mockTtsGenerationService, 'test-user-id', 'test-org-id');
       expect(result).toEqual({
         success: true,
         predictionId: 'test-prediction-id',
@@ -136,7 +136,7 @@ describe('TtsApplicationService', () => {
       const featureFlagError = new Error('Feature disabled');
       vi.mocked(mockFeatureFlagService.checkTtsFeatureFlag).mockRejectedValueOnce(featureFlagError);
 
-      const result = await service.startSpeechGeneration('Hello world', 'voice-1', 'elevenlabs');
+      const result = await service.startSpeechGeneration('Hello world', 'voice-1', 'elevenlabs', 'test-user-id', 'test-org-id');
 
       expect(result).toEqual({
         success: false,
@@ -185,7 +185,9 @@ describe('TtsApplicationService', () => {
         'https://example.com/audio.mp3',
         'test-audio',
         'prediction-id',
-        mockTtsGenerationService
+        mockTtsGenerationService,
+        undefined,
+        undefined
       );
       expect(mockPredictionService.linkToAsset).toHaveBeenCalledWith('prediction-id', 'test-asset-id');
       expect(result).toEqual({
@@ -250,7 +252,7 @@ describe('TtsApplicationService', () => {
         limit: 10,
         sortBy: 'createdAt',
         sortOrder: 'desc'
-      });
+      }, undefined, undefined);
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]); // Empty array for null data
       expect(result.count).toBe(0);

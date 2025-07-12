@@ -4,14 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { TeamMember } from '@/types/team';
-import { apiDeduplicationService } from '@/lib/dam/application/services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 import { getActiveOrganizationId } from '@/lib/auth/server-action';
-import { 
-  checkViewTeamMemberAccess,
-  checkCreateTeamMemberAccess,
-  checkUpdateTeamMemberAccess,
-  checkDeleteTeamMemberAccess
-} from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { checkFeatureAccess } from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { Permission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/authorization';
 
 // Organization context validation - ensures team member belongs to current org
 async function validateOrganizationContext(teamMemberId: string): Promise<void> {
@@ -40,7 +37,17 @@ async function validateOrganizationContext(teamMemberId: string): Promise<void> 
 export async function getTeamMembers(): Promise<TeamMember[]> {
   try {
     // AI: Check permission first
-    await checkViewTeamMemberAccess();
+    const accessResult = await checkFeatureAccess('team', {
+      requireAuth: true,
+      requireOrganization: true,
+      customValidation: async (user) => {
+        return hasPermission(user, Permission.VIEW_TEAM_MEMBER);
+      }
+    });
+    
+    if (!accessResult.hasAccess) {
+      throw new Error(accessResult.error || 'Access denied');
+    }
   } catch (error) {
     // AI: Fail-secure - return empty array if no permission
     console.warn('User lacks permission to view team members:', error);
@@ -53,7 +60,7 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
     async () => {
       return await executeGetTeamMembers();
     },
-    1500 // 1.5 second deduplication window
+    'default' // Use default domain timeout
   );
 }
 
@@ -123,7 +130,20 @@ export async function addTeamMember(formData: FormData): Promise<{
 
   // AI: Check permission first
   try {
-    await checkCreateTeamMemberAccess();
+    const accessResult = await checkFeatureAccess('team', {
+      requireAuth: true,
+      requireOrganization: true,
+      customValidation: async (user) => {
+        return hasPermission(user, Permission.CREATE_TEAM_MEMBER);
+      }
+    });
+    
+    if (!accessResult.hasAccess) {
+      return { 
+        success: false, 
+        error: accessResult.error || 'Insufficient permissions to add team members' 
+      };
+    }
   } catch (error) {
     return { 
       success: false, 
@@ -253,7 +273,20 @@ export async function updateTeamMember(
 
   // AI: Check permission first
   try {
-    await checkUpdateTeamMemberAccess();
+    const accessResult = await checkFeatureAccess('team', {
+      requireAuth: true,
+      requireOrganization: true,
+      customValidation: async (user) => {
+        return hasPermission(user, Permission.UPDATE_TEAM_MEMBER);
+      }
+    });
+    
+    if (!accessResult.hasAccess) {
+      return { 
+        success: false, 
+        error: accessResult.error || 'Insufficient permissions to update team members' 
+      };
+    }
   } catch (error) {
     return { 
       success: false, 
@@ -386,7 +419,20 @@ export async function deleteTeamMember(id: string): Promise<{
 
   // AI: Check permission first
   try {
-    await checkDeleteTeamMemberAccess();
+    const accessResult = await checkFeatureAccess('team', {
+      requireAuth: true,
+      requireOrganization: true,
+      customValidation: async (user) => {
+        return hasPermission(user, Permission.DELETE_TEAM_MEMBER);
+      }
+    });
+    
+    if (!accessResult.hasAccess) {
+      return { 
+        success: false, 
+        error: accessResult.error || 'Insufficient permissions to delete team members' 
+      };
+    }
   } catch (error) {
     return { 
       success: false, 

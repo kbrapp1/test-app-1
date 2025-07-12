@@ -8,7 +8,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { apiDeduplicationService } from '@/lib/dam/application/services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 
 /**
  * Utility to get the current user in a server action
@@ -23,7 +23,7 @@ export async function getSessionUser() {
     async () => {
       return await executeGetSessionUser();
     },
-    1500 // 1.5 second deduplication window
+    'getUser' // Use user validation domain timeout
   );
 }
 
@@ -53,7 +53,7 @@ export async function getActiveOrganizationId(): Promise<string | null> {
     async () => {
       return await executeGetActiveOrganizationId();
     },
-    1500 // 1.5 second deduplication window
+    'getActiveOrganizationId' // Use organization context domain timeout
   );
 }
 

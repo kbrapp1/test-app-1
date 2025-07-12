@@ -8,7 +8,7 @@ import type { TextAssetSummaryDto } from '../use-cases/assets/ListTextAssetsUseC
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../infrastructure/storage/SupabaseStorageService';
 import { AppError } from '@/lib/errors/base';
-import { apiDeduplicationService } from '../services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
@@ -26,7 +26,7 @@ export async function listTextAssets(): Promise<{ success: boolean; data?: TextA
     async () => {
       return await executeListTextAssets();
     },
-    1500 // 1.5 second deduplication window
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 

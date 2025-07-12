@@ -1,7 +1,9 @@
 import { getTeamMembers } from '@/lib/auth';
 import { TeamMemberList } from '@/components/team/TeamMemberList';
 import { AddTeamMemberDialog } from '@/components/team/AddTeamMemberDialog';
-import { checkViewTeamAccess } from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { checkFeatureAccess } from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { Permission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/authorization';
 import { FeatureNotAvailable, NoOrganizationAccess, InsufficientPermissions } from '@/components/access-guards';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +20,17 @@ export const dynamic = 'force-dynamic';
 export default async function TeamPage() {
   try {
     // AI: Check team viewing permissions first
-    await checkViewTeamAccess();
+    const accessResult = await checkFeatureAccess('team', {
+      requireAuth: true,
+      requireOrganization: true,
+      customValidation: async (user) => {
+        return hasPermission(user, Permission.VIEW_TEAM_MEMBER);
+      }
+    });
+    
+    if (!accessResult.hasAccess) {
+      throw new Error(accessResult.error || 'Access denied');
+    }
     
     // AI: Fetch team members only after permission check
     const members = await getTeamMembers();

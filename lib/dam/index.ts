@@ -62,7 +62,7 @@ export {
 export { 
   ApiDeduplicationService,
   apiDeduplicationService 
-} from './application/services/ApiDeduplicationService';
+} from '@/lib/shared/infrastructure/ApiDeduplicationService';
 
 // Export feature flag services
 export { 

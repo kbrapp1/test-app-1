@@ -6,23 +6,25 @@ import { TtsHistoryItem } from '@/lib/tts/presentation/types/TtsPresentation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/lib/organization/application/hooks/useOrganizationContext';
+import { TtsErrorBoundary } from './TtsErrorBoundary';
 
 /**
  * TTS Page Client Component
  * 
  * AI INSTRUCTIONS:
  * - Uses organization context hook for automatic organization scoping
- * - SECURITY: All operations automatically scoped to active organization
+ * - SECURITY: All operations automatically scoped to active organization via server actions
+ * - Server actions handle all validation with security-aware caching
  * - Handles TTS interface and history management within organization boundaries
- * - Follows established pattern from other domain modules
+ * - Follows DDD optimization patterns with error boundaries
  * - ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS (React rules)
  */
 
 interface TtsPageClientProps {
-  organizationId: string; // Server-side validation ensures access
+  // No props needed - server actions handle all validation and organization context
 }
 
-export function TtsPageClient({ organizationId }: TtsPageClientProps) {
+export function TtsPageClient({}: TtsPageClientProps = {}) {
   // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
   // SECURITY: Get active organization context for all operations
   const { activeOrganizationId, isLoading: isLoadingOrganization } = useOrganizationContext();
@@ -131,7 +133,7 @@ export function TtsPageClient({ organizationId }: TtsPageClientProps) {
     return !!item.outputUrl;
   }, [openSaveAsDialog]);
 
-  // SECURITY: Wait for organization context to load before validation
+  // SECURITY: Wait for organization context to load before rendering
   if (isLoadingOrganization) {
     return (
       <div className="container mx-auto p-4">
@@ -143,67 +145,70 @@ export function TtsPageClient({ organizationId }: TtsPageClientProps) {
     );
   }
 
-  // SECURITY VALIDATION: After context loads, validate organization context
-  if (activeOrganizationId !== organizationId) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Organization Context Mismatch</h2>
-          <p className="text-gray-600">Please refresh the page or switch to the correct organization.</p>
-        </div>
-      </div>
-    );
-  }
+  // SECURITY: Server actions handle all validation with organization context
+  // No client-side validation needed since TTS operations are secured at server level
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">AI Playground: Text to Speech</h1>
-        <Button variant="outline" size="icon" onClick={toggleHistoryPanel} className="ml-auto">
-          <Clock className="h-4 w-4" />
-        </Button>
+    <TtsErrorBoundary 
+      fallbackTitle="TTS Service Error"
+      onRetry={() => window.location.reload()}
+    >
+      <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">AI Playground: Text to Speech</h1>
+          <Button variant="outline" size="icon" onClick={toggleHistoryPanel} className="ml-auto">
+            <Clock className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* TTS Interface wrapped with error boundary */}
+        <TtsErrorBoundary fallbackTitle="TTS Interface Error">
+          <TtsInterface
+            key={formInitialValues?.key ?? 'default'}
+            remountKey={formInitialValues?.key ?? 'default'}
+            formInitialValues={formInitialValues}
+            onGenerationComplete={handleTtsGenerationComplete}
+          />
+        </TtsErrorBoundary>
+
+        {isHistoryOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={toggleHistoryPanel}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* TTS History Panel wrapped with error boundary */}
+        <TtsErrorBoundary fallbackTitle="TTS History Error">
+          <TtsHistoryPanel
+            isOpen={isHistoryOpen}
+            onClose={toggleHistoryPanel}
+            onReloadInputFromItem={handleReloadInputFromItem}
+            onReplayItem={handleReplayItem}
+            onViewInDamItem={() => {}}
+            onDeleteItem={() => {}}
+            onSaveToDam={handleSaveToDam}
+            onSaveAsToDam={handleSaveAsToDam}
+            headlessPlayerCurrentlyPlayingUrl={headlessPlayerUrl}
+            isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
+            isHeadlessPlayerLoading={isHeadlessPlayerLoading}
+            headlessPlayerError={headlessPlayerError}
+            shouldRefresh={shouldRefreshHistory}
+            onRefreshComplete={() => setShouldRefreshHistory(false)}
+          />
+        </TtsErrorBoundary>
+
+        {/* Save As Dialog wrapped with error boundary */}
+        <TtsErrorBoundary fallbackTitle="Save Dialog Error">
+          <SaveAsDialog
+            isOpen={isSaveAsDialogOpen}
+            onOpenChange={setIsSaveAsDialogOpen}
+            onSubmit={submitSaveAsDialog}
+            defaultAssetName={defaultSaveAsName}
+          />
+        </TtsErrorBoundary>
       </div>
-      {/* NOTE: TtsInterface should use useOrganizationContext() internally */}
-      <TtsInterface
-        key={formInitialValues?.key ?? 'default'}
-        remountKey={formInitialValues?.key ?? 'default'}
-        formInitialValues={formInitialValues}
-        onGenerationComplete={handleTtsGenerationComplete}
-      />
-
-      {isHistoryOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40"
-          onClick={toggleHistoryPanel}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* NOTE: TtsHistoryPanel should use useOrganizationContext() internally */}
-      <TtsHistoryPanel
-        isOpen={isHistoryOpen}
-        onClose={toggleHistoryPanel}
-        onReloadInputFromItem={handleReloadInputFromItem}
-        onReplayItem={handleReplayItem}
-        onViewInDamItem={() => {}}
-        onDeleteItem={() => {}}
-        onSaveToDam={handleSaveToDam}
-        onSaveAsToDam={handleSaveAsToDam}
-        headlessPlayerCurrentlyPlayingUrl={headlessPlayerUrl}
-        isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
-        isHeadlessPlayerLoading={isHeadlessPlayerLoading}
-        headlessPlayerError={headlessPlayerError}
-        shouldRefresh={shouldRefreshHistory}
-        onRefreshComplete={() => setShouldRefreshHistory(false)}
-      />
-
-      {/* NOTE: SaveAsDialog should use useOrganizationContext() internally */}
-      <SaveAsDialog
-        isOpen={isSaveAsDialogOpen}
-        onOpenChange={setIsSaveAsDialogOpen}
-        onSubmit={submitSaveAsDialog}
-        defaultAssetName={defaultSaveAsName}
-      />
-    </div>
+    </TtsErrorBoundary>
   );
 } 

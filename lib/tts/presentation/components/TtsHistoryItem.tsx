@@ -1,10 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// import { Button } from '@/components/ui/button'; // No longer directly used
-// import { Play, RefreshCcw, Trash2, Database as DatabaseIcon, Save, CopyPlus, ExternalLink } from 'lucide-react'; // Moved to subcomponents
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Moved to subcomponents
-// import { PlayIcon, PauseIcon, ExternalLinkIcon, AlertTriangleIcon, CheckCircle2Icon, CircleSlashIcon, Loader2Icon, RefreshCcw as RefreshCcwIcon } from 'lucide-react'; // Moved to subcomponents
 import { TtsHistoryItem as TtsHistoryItemType, TtsAudioPlayerState } from '../types/TtsPresentation';
 import { TtsHistoryItemActions } from './TtsHistoryItemActions';
 import { TtsHistoryItemInfo } from './TtsHistoryItemInfo';
@@ -50,12 +46,10 @@ export function TtsHistoryItem({
 }: TtsHistoryItemProps) {
   // Temporarily reference onViewInDam to avoid unused variable warning
   // TODO: Remove when View in DAM functionality is implemented
-  void onViewInDam; // Suppress unused variable warning
-  // const [isDeleting, setIsDeleting] = useState(false); // isDeleting seems unused
+  void onViewInDam;
+  
   const [isSavingToDam, setIsSavingToDam] = useState(false);
   const [isSavingAsToDam, setIsSavingAsToDam] = useState(false);
-  // const [showPlayer, setShowPlayer] = useState(false); // showPlayer seems unused
-  // const [playerError, setPlayerError] = useState<string | null>(null); // playerError seems unused
   const [linkDownloadFailed, setLinkDownloadFailed] = useState(false);
 
   useEffect(() => {
@@ -67,7 +61,7 @@ export function TtsHistoryItem({
     inputTextSnippet,
     voiceIdDisplay,
     statusDisplay,
-    audioUrl, // Used in handlePlayPause
+    audioUrl,
     isCurrentItemPlaying,
     isCurrentItemLoading,
     isLinkEffectivelyUnusable,
@@ -88,13 +82,13 @@ export function TtsHistoryItem({
     headlessPlayerError,
     isProblematicFromDb,
     dbProblematicMessage,
-    isSavingToDam, // Pass local state to hook
-    isSavingAsToDam, // Pass local state to hook
-    linkDownloadFailed, // Pass local state to hook
+    isSavingToDam,
+    isSavingAsToDam,
+    linkDownloadFailed,
   });
 
   const handlePlayPause = () => {
-    if (audioUrl && !hasActualPlaybackError) { // audioUrl comes from the hook now
+    if (audioUrl && !hasActualPlaybackError) {
       onReplay(item); 
     }
   };
@@ -130,39 +124,39 @@ export function TtsHistoryItem({
   };
 
   return (
-    <div className="p-3 mb-2 border rounded-lg hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 bg-card">
       <TtsHistoryItemInfo 
         item={item}
-        statusDisplay={statusDisplay}
         formattedDate={formattedDate}
         inputTextSnippet={inputTextSnippet}
         voiceIdDisplay={voiceIdDisplay}
+        statusDisplay={statusDisplay}
       />
       
-      <TtsHistoryItemActions
-        item={item}
-        onPlayPause={handlePlayPause}
-        onReloadInput={handleReloadInput}
-        onSave={handleSave}
-        onSaveAs={handleSaveAs}
-        onDelete={handleDelete}
-        isSavingToDam={isSavingToDam}
-        isSavingAsToDam={isSavingAsToDam}
-        isCurrentItemLoading={isCurrentItemLoading}
-        isCurrentItemPlaying={isCurrentItemPlaying}
-        isLinkEffectivelyUnusable={isLinkEffectivelyUnusable}
-        isEffectivelySaved={isEffectivelySaved}
-        playButtonTooltip={playButtonTooltip}
-        reloadInputTooltip={reloadInputTooltip}
-        saveButtonTooltip={saveButtonTooltip}
-        saveAsButtonTooltip={saveAsButtonTooltip}
-      />
-
       <TtsHistoryItemErrorDisplay 
         statusDisplay={statusDisplay}
         errorMessage={item.errorMessage}
         isLinkEffectivelyUnusable={isLinkEffectivelyUnusable}
         unusableLinkMessage={unusableLinkMessage}
+      />
+      
+      <TtsHistoryItemActions
+        item={item}
+        isCurrentItemPlaying={isCurrentItemPlaying}
+        isCurrentItemLoading={isCurrentItemLoading}
+        isLinkEffectivelyUnusable={isLinkEffectivelyUnusable}
+        playButtonTooltip={playButtonTooltip}
+        reloadInputTooltip={reloadInputTooltip}
+        saveButtonTooltip={saveButtonTooltip}
+        saveAsButtonTooltip={saveAsButtonTooltip}
+        isEffectivelySaved={isEffectivelySaved}
+        isSavingToDam={isSavingToDam}
+        isSavingAsToDam={isSavingAsToDam}
+        onPlayPause={handlePlayPause}
+        onReloadInput={handleReloadInput}
+        onSave={handleSave}
+        onSaveAs={handleSaveAs}
+        onDelete={handleDelete}
       />
     </div>
   );

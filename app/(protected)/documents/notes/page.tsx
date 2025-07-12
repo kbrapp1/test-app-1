@@ -21,7 +21,23 @@ export const dynamic = 'force-dynamic';
 export default async function NotesPage() {
   try {
     // AI: Check feature access with permissions on server-side
-    const accessResult = await checkNotesAccess([Permission.VIEW_NOTE]); // AI: Use note-specific viewing permissions
+    const accessResult = await checkNotesAccess(); // AI: Check notes feature access
+
+    // AI: Handle access denial
+    if (!accessResult.hasAccess) {
+      if (accessResult.error?.includes('Organization context required')) {
+        return <NoOrganizationAccess />;
+      }
+      if (accessResult.error?.includes('not enabled')) {
+        return <FeatureNotAvailable feature="Notes" />;
+      }
+      throw new Error(accessResult.error || 'Access denied');
+    }
+
+    // AI: Ensure organizationId exists (should be guaranteed by access control)
+    if (!accessResult.organizationId) {
+      return <NoOrganizationAccess />;
+    }
 
     // AI: Fetch notes data on server side
     const supabase = createClient();

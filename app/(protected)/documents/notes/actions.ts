@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { ErrorCodes } from '@/lib/errors/constants';
-import { checkNotesAccess } from '@/lib/shared/access-control';
+import { checkFeatureAccess } from '@/lib/shared/access-control';
 import { Permission } from '@/lib/auth/roles';
+import { hasPermission } from '@/lib/auth/authorization';
 
 // Import helpers from the new file
 import { getAuthContext, handleDatabaseError, ActionResult } from './helpers';
@@ -12,7 +13,21 @@ import { getAuthContext, handleDatabaseError, ActionResult } from './helpers';
 export async function addNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
     try {
         // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.CREATE_NOTE]); // AI: Use note-specific permissions
+        const accessResult = await checkFeatureAccess('notes', {
+            requireAuth: true,
+            requireOrganization: true,
+            customValidation: async (user) => {
+                return hasPermission(user, Permission.CREATE_NOTE);
+            }
+        });
+        
+        if (!accessResult.hasAccess) {
+            return {
+                success: false,
+                message: accessResult.error || 'Access denied',
+                code: ErrorCodes.UNAUTHORIZED
+            };
+        }
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Access denied';
         return {
@@ -84,7 +99,21 @@ export async function addNote(prevState: unknown, formData: FormData): Promise<A
 export async function deleteNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
     try {
         // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.DELETE_NOTE]); // AI: Use note-specific permissions
+        const accessResult = await checkFeatureAccess('notes', {
+            requireAuth: true,
+            requireOrganization: true,
+            customValidation: async (user) => {
+                return hasPermission(user, Permission.DELETE_NOTE);
+            }
+        });
+        
+        if (!accessResult.hasAccess) {
+            return {
+                success: false,
+                message: accessResult.error || 'Access denied',
+                code: ErrorCodes.UNAUTHORIZED
+            };
+        }
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Access denied';
         return {
@@ -125,7 +154,21 @@ export async function deleteNote(prevState: unknown, formData: FormData): Promis
 export async function editNote(prevState: unknown, formData: FormData): Promise<ActionResult> {
     try {
         // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.UPDATE_NOTE]); // AI: Use note-specific permissions
+        const accessResult = await checkFeatureAccess('notes', {
+            requireAuth: true,
+            requireOrganization: true,
+            customValidation: async (user) => {
+                return hasPermission(user, Permission.UPDATE_NOTE);
+            }
+        });
+        
+        if (!accessResult.hasAccess) {
+            return {
+                success: false,
+                message: accessResult.error || 'Access denied',
+                code: ErrorCodes.UNAUTHORIZED
+            };
+        }
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Access denied';
         return {
@@ -176,7 +219,21 @@ export async function editNote(prevState: unknown, formData: FormData): Promise<
 export async function updateNoteOrder(orderedNoteIds: string[]): Promise<ActionResult> {
     try {
         // AI: Check feature access with permissions
-        await checkNotesAccess([Permission.UPDATE_NOTE]); // AI: Use note-specific permissions
+        const accessResult = await checkFeatureAccess('notes', {
+            requireAuth: true,
+            requireOrganization: true,
+            customValidation: async (user) => {
+                return hasPermission(user, Permission.UPDATE_NOTE);
+            }
+        });
+        
+        if (!accessResult.hasAccess) {
+            return {
+                success: false,
+                message: accessResult.error || 'Access denied',
+                code: ErrorCodes.UNAUTHORIZED
+            };
+        }
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Access denied';
         return {

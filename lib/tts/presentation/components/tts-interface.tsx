@@ -187,12 +187,11 @@ export function TtsInterface({ formInitialValues, onGenerationComplete, remountK
         />
 
         <TtsOutputCard
-          isLoading={isGenerating} 
-          isPollingLoading={isGenerating}
+          isLoading={isGenerating} // Simplified - React Query handles all loading states
           isSavingToDam={isAudioActionLoading} 
           isDeleting={isDeleting} 
           audioUrl={activeAudioUrl}
-          predictionStatus={predictionStatus}
+          predictionStatus={predictionStatus || null}
           errorMessage={ttsErrorMessage} 
           currentPredictionId={null}
           currentTtsPredictionDbId={ttsPredictionDbId} 

@@ -6,7 +6,7 @@ import { createClient as createSupabaseServerClient } from '@/lib/supabase/serve
 import { UpdateFolderUseCase, DeleteFolderUseCase, CreateFolderUseCase } from '../use-cases/folders';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { AppError } from '@/lib/errors/base';
-import { apiDeduplicationService } from '../services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
@@ -98,7 +98,7 @@ export async function renameFolderAction(
         return { success: false, error: err.message || 'Failed to rename folder.' };
       }
     },
-    2000 // 2 second window for rename actions
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -161,7 +161,7 @@ export async function deleteFolderAction(
         return { success: false, error: err.message || 'Failed to delete folder.' };
       }
     },
-    3000 // 3 second window for delete actions (safety)
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -221,7 +221,7 @@ export async function createFolderAction(
         return { success: false, error: err.message || 'Failed to create folder.' };
       }
     },
-    1500 // 1.5 second window for create actions
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 

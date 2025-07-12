@@ -1,6 +1,4 @@
 import { type StartSpeechInput } from '../schemas/ttsSchemas';
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { TextInput } from '../../domain/value-objects/TextInput';
 import { VoiceId } from '../../domain/value-objects/VoiceId';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
@@ -13,21 +11,14 @@ export async function startSpeechGeneration(
   inputText: string, 
   voiceId: string, 
   provider: string,
-  ttsGenerationService: TtsGenerationService
+  ttsGenerationService: TtsGenerationService,
+  userId: string,
+  organizationId: string
 ): Promise<{ success: boolean; predictionId?: string; ttsPredictionDbId?: string; error?: string; }> {
   
   try {
-    const supabase = createSupabaseServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return { success: false, error: 'User not authenticated.' };
-    }
-
-    const organizationId = await getActiveOrganizationId();
-    if (!organizationId) {
-      return { success: false, error: 'Active organization not found.' };
-    }
+    // Use pre-validated context instead of independent validation
+    // This eliminates redundant auth calls and improves performance
 
     // Initialize services - note: TtsPredictionService needs repository
     const repository = new TtsPredictionSupabaseRepository();
@@ -58,7 +49,7 @@ export async function startSpeechGeneration(
       ttsInput,
       provider,
       organizationId,
-      user.id
+      userId
     );
 
     // Create domain entity using domain service
@@ -66,7 +57,7 @@ export async function startSpeechGeneration(
       externalProviderId: generationResult.predictionId,
       textInput: textInputVO,
       voiceId: voiceIdVO,
-      userId: user.id,
+      userId: userId,
       organizationId: organizationId,
       provider: provider,
     });

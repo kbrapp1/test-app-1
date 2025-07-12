@@ -14,8 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface TtsOutputCardProps {
   audioUrl: string | null;
   predictionStatus: string | null;
-  isLoading: boolean;
-  isPollingLoading: boolean;
+  isLoading: boolean; // Single loading state - React Query handles this
   isSavingToDam: boolean;
   isDeleting: boolean;
   errorMessage: string | null;
@@ -28,8 +27,7 @@ interface TtsOutputCardProps {
 export function TtsOutputCard({ 
   audioUrl, 
   predictionStatus, 
-  isLoading,
-  isPollingLoading,
+  isLoading, // Simplified - React Query handles polling vs initial loading
   isSavingToDam,
   isDeleting,
   errorMessage,
@@ -72,7 +70,7 @@ export function TtsOutputCard({
     });
   };
 
-  const showLoadingState = isLoading || isPollingLoading;
+  const showLoadingState = isLoading; // Simplified
   const hasAudio = !!audioUrl && (predictionStatus === 'succeeded' || predictionStatus === 'processing_succeeded_locally');
 
   return (
@@ -90,7 +88,7 @@ export function TtsOutputCard({
               {predictionStatus === 'starting' && 'Starting generation...'}
               {predictionStatus === 'processing' && 'Processing audio...'}
               {(isLoading && (!predictionStatus || predictionStatus === 'starting')) && 'Initializing...'}
-              {isPollingLoading && currentPredictionId && predictionStatus !== 'starting' && 'Fetching results...'}
+              {isLoading && currentPredictionId && predictionStatus !== 'starting' && 'Fetching results...'}
             </p>
             <p className="text-sm text-muted-foreground">Please wait.</p>
           </div>
@@ -114,101 +112,87 @@ export function TtsOutputCard({
           />
         )}
       </CardContent>
-      {hasAudio && !errorMessage && (
-        <CardFooter className="flex flex-row justify-end gap-2 pt-0 -mt-4 items-center">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={handleCopyToClipboard} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
-                >
-                  <CopyIcon className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy URL</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={handleDownloadClick} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  size="icon"
-                  onClick={onSaveToLibrary} 
-                  disabled={showLoadingState || isSavingToDam || isDeleting || !currentTtsPredictionDbId || !!playbackError}
-                >
-                  {isSavingToDam ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isSavingToDam ? "Saving..." : "Save to Library"}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {currentTtsPredictionDbId && (
-              <AlertDialog>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive" 
-                        size="icon"
-                        disabled={showLoadingState || isSavingToDam || isDeleting || !!playbackError}
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2Icon className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete</p>
-                  </TooltipContent>
-                </Tooltip>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will delete the generated audio prediction. If the audio has been saved to the DAM, that saved asset will NOT be deleted by this action. This only deletes the TTS prediction record.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={onDeletePrediction} disabled={isDeleting}>
-                      {isDeleting ? "Deleting..." : "Delete Prediction"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </TooltipProvider>
-        </CardFooter>
-      )}
+      <CardFooter className="flex justify-between items-center">
+        <div className="flex space-x-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownloadClick}
+                disabled={!hasAudio || isDeleting}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Download Audio</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopyToClipboard}
+                disabled={!hasAudio || isDeleting}
+              >
+                <CopyIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Copy URL</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="flex space-x-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onSaveToLibrary}
+                disabled={!hasAudio || isSavingToDam || isDeleting}
+              >
+                {isSavingToDam ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save to DAM</p>
+            </TooltipContent>
+          </Tooltip>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={!hasAudio || isDeleting || isSavingToDam}
+                  >
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2Icon className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete Prediction</p>
+                </TooltipContent>
+              </Tooltip>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the prediction.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onDeletePrediction}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardFooter>
     </Card>
   );
 } 

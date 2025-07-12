@@ -52,9 +52,12 @@ export class LeadExtractionService {
     'consultation', 'service', 'product', 'solution', 'plan'
   ];
 
-  /** Extract lead information from conversation history */
+  /** Extract lead information from conversation history
+ */
   extractLeadInformation(messageHistory: ChatMessage[]): ExtractedLeadInfo {
-    const userMessages = messageHistory.filter(msg => msg.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messageHistory.filter(msg => msg && typeof msg.isFromUser === 'function');
+    const userMessages = validMessages.filter(msg => msg.isFromUser());
     const allText = userMessages.map(msg => msg.content).join(' ');
     
     const extractedInfo: ExtractedLeadInfo = {
@@ -89,7 +92,8 @@ export class LeadExtractionService {
     return extractedInfo;
   }
 
-  /** Check if message contains contact information patterns */
+  /** Check if message contains contact information patterns
+ */
   containsContactInfo(message: string): boolean {
     const text = message.toLowerCase();
     
@@ -103,7 +107,8 @@ export class LeadExtractionService {
            this.phoneRegex.test(message);
   }
 
-  /** Extract person's name from text using various patterns */
+  /** Extract person's name from text using various patterns
+ */
   private extractName(text: string): string | undefined {
     for (const pattern of this.namePatterns) {
       const match = pattern.exec(text);
@@ -118,7 +123,8 @@ export class LeadExtractionService {
     return undefined;
   }
 
-  /** Extract company name from text */
+  /** Extract company name from text
+ */
   private extractCompany(text: string): string | undefined {
     for (const pattern of this.companyPatterns) {
       const match = pattern.exec(text);
@@ -132,7 +138,8 @@ export class LeadExtractionService {
     return undefined;
   }
 
-  /** Extract interests and topics discussed */
+  /** Extract interests and topics discussed
+ */
   private extractInterests(text: string): string[] {
     const lowerText = text.toLowerCase();
     const foundInterests: string[] = [];
@@ -147,7 +154,8 @@ export class LeadExtractionService {
     return Array.from(new Set(foundInterests));
   }
 
-  /** Normalize phone number format */
+  /** Normalize phone number format
+ */
   private normalizePhoneNumber(phone: string): string {
     // Remove all non-digits except +
     const cleaned = phone.replace(/[^\d+]/g, '');
@@ -160,7 +168,8 @@ export class LeadExtractionService {
     return cleaned;
   }
 
-  /** Capitalize name properly */
+  /** Capitalize name properly
+ */
   private capitalizeName(name: string): string {
     return name
       .split(' ')
@@ -168,7 +177,8 @@ export class LeadExtractionService {
       .join(' ');
   }
 
-  /** Calculate confidence score for extracted information */
+  /** Calculate confidence score for extracted information
+ */
   private calculateExtractionConfidence(info: ExtractedLeadInfo): number {
     let score = 0;
     

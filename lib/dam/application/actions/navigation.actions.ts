@@ -18,7 +18,7 @@ import { ListFoldersUseCase, NavigateToFolderUseCase } from '../use-cases/folder
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { NotFoundError } from '@/lib/errors/base';
 import type { PlainFolder } from '../../types/dam.types';
-import { apiDeduplicationService } from '../services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**
@@ -71,7 +71,7 @@ export async function getRootFolders(): Promise<PlainFolder[]> {
         return [];
       }
     },
-    1500 // 1.5 second deduplication window for root folders
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -171,6 +171,6 @@ export async function getFolderNavigation(folderId: string | null): Promise<{
         return { breadcrumbs: fallbackBreadcrumbs };
       }
     },
-    1000 // 1 second deduplication window for navigation
+    'dam-operations' // Use DAM operations domain timeout
   );
 } 

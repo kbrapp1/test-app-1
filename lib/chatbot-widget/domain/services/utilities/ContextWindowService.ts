@@ -117,8 +117,10 @@ export class ContextWindowService {
   ): Promise<string> {
     if (messages.length === 0) return '';
 
-    const userMessages = messages.filter(m => m.isFromUser());
-    const botMessages = messages.filter(m => !m.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    const userMessages = validMessages.filter(m => m.isFromUser());
+    const botMessages = validMessages.filter(m => !m.isFromUser());
 
     // Create a structured summary prompt
     const summaryPrompt = `Summarize this conversation in ${maxTokens} tokens or less. Focus on:

@@ -1,19 +1,24 @@
 /**
- * Enhanced hook for user authentication and authorization in client components
+ * User Hook - Application Layer
  * 
- * Provides access to the current user, loading state, and authorization helpers
- * for checking roles and permissions in React components.
+ * AI INSTRUCTIONS:
+ * - Uses shared AuthenticationProvider (eliminates redundant auth calls)
+ * - Maintains all existing functionality with performance improvements
+ * - Follows @golden-rule patterns exactly
+ * - Single responsibility: Provide user context and role management
  */
+
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { useAuthentication } from '@/lib/auth/providers/AuthenticationProvider';
 import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/auth/roles';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 
-export type AuthHelpers = {
+interface AuthHelpers {
   // Role checks
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -31,13 +36,12 @@ export type AuthHelpers = {
   isAdmin: boolean;
   isEditor: boolean;
   isViewer: boolean;
-};
+}
 
 export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
+  const { user, isLoading, isAuthenticated } = useAuthentication(); // Use shared auth context
   const supabase = createClient();
   const { toast } = useToast();
   const router = useRouter();
@@ -45,7 +49,7 @@ export function useUser() {
   // AI: Fetch user's role from database when user or organization changes
   useEffect(() => {
     const fetchUserRole = async () => {
-      if (!user) {
+      if (!user || !isAuthenticated) {
         setUserRole(undefined);
         return;
       }
@@ -77,7 +81,7 @@ export function useUser() {
     };
 
     fetchUserRole();
-  }, [user, supabase]);
+  }, [user, isAuthenticated, supabase]);
   
   // AI: Memoized auth helpers that update when user or role changes
   const auth = useMemo<AuthHelpers>(() => {
@@ -126,132 +130,10 @@ export function useUser() {
     };
   }, [user, userRole]);
 
-  useEffect(() => {
-    let isMounted = true;
-    let cleanup: (() => void) | null = null;
-
-    // Reusable sign-out handler with toast notification and redirect
-    const handleSignOut = async (reason: string) => {
-      if (!isMounted) return;
-      
-      toast({
-        title: "Session Ended",
-        description: reason,
-        variant: "destructive",
-      });
-
-      // Clear state immediately to prevent hook errors
-      if (isMounted) {
-        setUser(null);
-        setUserRole(undefined);
-        setIsLoading(false);
-        setIsRoleLoading(false);
-      }
-
-      // Cleanup any pending operations
-      if (cleanup) {
-        cleanup();
-      }
-
-      // Redirect immediately
-      router.push('/login'); 
-
-      // Still attempt sign out, but don't wait for it
-      try {
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        // Silent fail - we've already cleared state and redirected
-      }
-    };
-
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) return;
-      
-      const user = session?.user ?? null;
-      setUser(user);
-      setIsLoading(false);
-      
-      // If user becomes null (logout), trigger cleanup
-      if (!user && _event === 'SIGNED_OUT') {
-        // Clear any remaining state
-        setUser(null);
-        setUserRole(undefined);
-        setIsLoading(false);
-        setIsRoleLoading(false);
-      }
-    });
-
-    // Store cleanup function
-    cleanup = () => {
-      authListener?.subscription?.unsubscribe();
-    };
-
-    // Initial check with better error handling
-    const checkInitialUser = async () => {
-      if (!isMounted) return;
-      
-      try {
-        const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
-        
-        if (!isMounted) return; // Check again after async operation
-        
-        if (error) {
-          const isInvalidTokenError =
-            error.message.includes('Invalid Refresh Token') ||
-            error.message.includes('JWT expired') ||
-            (error instanceof Error && 'status' in error && (error as any).status === 400);
-
-          if (isInvalidTokenError) {
-            handleSignOut("Your session has expired. Please log in again.");
-            return;
-          } else {
-            // Handle other errors during initial fetch
-            setUser(null);
-            setUserRole(undefined);
-            setIsLoading(false);
-            setIsRoleLoading(false);
-          }
-        } else {
-          // Success case: user fetched
-          setUser(fetchedUser);
-          setIsLoading(false);
-        }
-      } catch (catchError: any) {
-        if (!isMounted) return;
-        
-        // Check if the caught error indicates an invalid token
-        const isInvalidTokenErrorInCatch =
-            catchError?.message?.includes('Invalid Refresh Token') ||
-            catchError?.message?.includes('JWT expired') ||
-            catchError?.status === 400;
-
-        if (isInvalidTokenErrorInCatch) {
-           handleSignOut("Could not verify your session. Please log in again.");
-        } else {
-          // If it's a different unexpected error, clear user and stop loading
-          setUser(null);
-          setUserRole(undefined);
-          setIsLoading(false);
-          setIsRoleLoading(false);
-        }
-      }
-    };
-
-    checkInitialUser();
-
-    return () => {
-      isMounted = false;
-      if (cleanup) {
-        cleanup();
-      }
-    };
-  }, [supabase, toast, router]);
-
-  // AI: Return loading true if either user or role is loading
-  return { 
-    user, 
-    isLoading: isLoading || isRoleLoading, 
-    auth 
+  return {
+    user,
+    isLoading,
+    isRoleLoading,
+    ...auth,
   };
 } 

@@ -121,9 +121,9 @@ describe('NotesPage', () => {
   it('renders list when notes exist', async () => {
     // Mock successful access check
     mockCheckNotesAccess.mockResolvedValueOnce({
+      hasAccess: true,
       organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
+      user: mockUser,
     });
 
     // Mock successful user fetch
@@ -155,9 +155,9 @@ describe('NotesPage', () => {
   it('renders empty state when no notes', async () => {
     // Mock successful access check
     mockCheckNotesAccess.mockResolvedValueOnce({
+      hasAccess: true,
       organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
+      user: mockUser,
     });
 
     // Mock successful user fetch
@@ -215,9 +215,9 @@ describe('NotesPage', () => {
   it('shows error when notes fetching fails in content component', async () => {
     // Mock successful access check
     mockCheckNotesAccess.mockResolvedValueOnce({
+      hasAccess: true,
       organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
+      user: mockUser,
     });
 
     // Mock successful user fetch
@@ -241,9 +241,9 @@ describe('NotesPage', () => {
   it('shows error when user fetch fails in content component', async () => {
     // Mock successful access check
     mockCheckNotesAccess.mockResolvedValueOnce({
+      hasAccess: true,
       organizationId: mockOrg,
-      userId: mockUser.id,
-      userRole: undefined,
+      user: mockUser,
     });
 
     // Mock failed user fetch

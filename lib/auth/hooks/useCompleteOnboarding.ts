@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuthentication } from '@/lib/auth/providers/AuthenticationProvider'
 import { useToast } from '@/components/ui/use-toast'
 
 /**
  * This hook checks if a logged-in user needs to complete their application-level onboarding.
+ * 
+ * Uses shared AuthenticationProvider (eliminates redundant auth calls)
  * 
  * Specifically, it looks for users who:
  * 1. Have a confirmed email (via clicking an invite link or password reset)
@@ -25,6 +28,7 @@ import { useToast } from '@/components/ui/use-toast'
 export function useCompleteOnboarding() {
   const supabase = createClient()
   const { toast } = useToast()
+  const { user, isAuthenticated } = useAuthentication() // Use shared auth context
   const [isCompleting, setIsCompleting] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
 
@@ -32,17 +36,14 @@ export function useCompleteOnboarding() {
     const finalizeAppOnboarding = async () => {
       // Check if already completed to avoid unnecessary reruns
       if (isCompleting || isCompleted) return
+      
+      // Wait for authentication to be resolved
+      if (!isAuthenticated || !user) {
+        return
+      }
 
       try {
         setIsCompleting(true)
-        
-        // Get current user
-        const { data: { user }, error: getUserError } = await supabase.auth.getUser()
-        
-        if (getUserError || !user) {
-          // AI: Removed console.log - use proper logging service in production
-          return
-        }
 
         // Check conditions for onboarding completion
         const needsOnboardingCompletion = 
@@ -129,7 +130,7 @@ export function useCompleteOnboarding() {
 
     // Run the onboarding completion check
     finalizeAppOnboarding()
-  }, [supabase, toast, isCompleting, isCompleted])
+  }, [supabase, toast, user, isAuthenticated, isCompleting, isCompleted])
 
   return { isCompleting, isCompleted }
 } 

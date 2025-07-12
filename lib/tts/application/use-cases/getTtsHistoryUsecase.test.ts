@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getTtsHistoryUsecase } from './getTtsHistoryUsecase';
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { TtsPrediction } from '../../domain/entities/TtsPrediction';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TextInput } from '../../domain/value-objects/TextInput';
@@ -41,24 +39,9 @@ function createMockTtsPrediction(overrides: Partial<{
 }
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
-}));
-
-vi.mock('@/lib/auth/server-action', () => ({
-  getActiveOrganizationId: vi.fn(),
-}));
-
 vi.mock('../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository', () => ({
   TtsPredictionSupabaseRepository: vi.fn(),
 }));
-
-// Mock auth client
-const mockAuthClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
-};
 
 // Mock repository interface
 interface MockRepository {
@@ -68,6 +51,8 @@ interface MockRepository {
 
 describe('getTtsHistoryUsecase', () => {
   let mockRepository: MockRepository;
+  const TEST_USER_ID = 'test-user-id';
+  const TEST_ORG_ID = 'test-org-id';
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,54 +63,44 @@ describe('getTtsHistoryUsecase', () => {
       countByUserId: vi.fn(),
     };
     (TtsPredictionSupabaseRepository as any).mockImplementation(() => mockRepository);
-
-    // Setup default successful mock states
-    (createClient as any).mockReturnValue(mockAuthClient);
-    (mockAuthClient.auth.getUser as any).mockResolvedValue({
-      data: { user: { id: 'test-user-id' } },
-      error: null,
-    });
-    (getActiveOrganizationId as any).mockResolvedValue('test-org-id');
     
     // Default repository responses
     mockRepository.findByUserId.mockResolvedValue([]);
     mockRepository.countByUserId.mockResolvedValue(0);
   });
 
-  it('should return success: false if user is not authenticated', async () => {
-    (mockAuthClient.auth.getUser as any).mockResolvedValueOnce({ data: {}, error: { message: 'Auth error' } });
-    const result = await getTtsHistoryUsecase();
+  it('should return success: false if userId is not provided', async () => {
+    const result = await getTtsHistoryUsecase(undefined, undefined, TEST_ORG_ID);
     expect(result.success).toBe(false);
-    expect(result.error).toBe('User not authenticated');
+    expect(result.error).toBe('Pre-validated context required for optimized TTS operations');
   });
 
-  it('should return success: false if active organization is not found', async () => {
-    (getActiveOrganizationId as any).mockResolvedValueOnce(null);
-    const result = await getTtsHistoryUsecase();
+  it('should return success: false if organizationId is not provided', async () => {
+    const result = await getTtsHistoryUsecase(undefined, TEST_USER_ID, undefined);
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Active organization not found');
+    expect(result.error).toBe('Pre-validated context required for optimized TTS operations');
   });
 
   it('should call repository with correct options for default parameters', async () => {
-    await getTtsHistoryUsecase();
+    await getTtsHistoryUsecase(undefined, TEST_USER_ID, TEST_ORG_ID);
 
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.findByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       page: 1,
       limit: 10,
       sortBy: 'createdAt',
       sortOrder: 'desc',
       searchQuery: undefined
     });
-    expect(mockRepository.countByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.countByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       searchQuery: undefined
     });
   });
 
   it('should use provided pagination parameters', async () => {
     const params = { page: 2, limit: 5 };
-    await getTtsHistoryUsecase(params);
+    await getTtsHistoryUsecase(params, TEST_USER_ID, TEST_ORG_ID);
     
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.findByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       page: 2,
       limit: 5,
       sortBy: 'createdAt',
@@ -136,9 +111,9 @@ describe('getTtsHistoryUsecase', () => {
 
   it('should use provided sorting parameters', async () => {
     const params = { sortBy: 'inputText' as const, sortOrder: 'asc' as const };
-    await getTtsHistoryUsecase(params);
+    await getTtsHistoryUsecase(params, TEST_USER_ID, TEST_ORG_ID);
     
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.findByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       page: 1,
       limit: 10,
       sortBy: 'inputText',
@@ -149,16 +124,16 @@ describe('getTtsHistoryUsecase', () => {
 
   it('should use provided search query', async () => {
     const params = { searchQuery: 'hello world' };
-    await getTtsHistoryUsecase(params);
+    await getTtsHistoryUsecase(params, TEST_USER_ID, TEST_ORG_ID);
     
-    expect(mockRepository.findByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.findByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       page: 1,
       limit: 10,
       sortBy: 'createdAt',
       sortOrder: 'desc',
       searchQuery: 'hello world'
     });
-    expect(mockRepository.countByUserId).toHaveBeenCalledWith('test-user-id', {
+    expect(mockRepository.countByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
       searchQuery: 'hello world'
     });
   });
@@ -173,7 +148,7 @@ describe('getTtsHistoryUsecase', () => {
     mockRepository.findByUserId.mockResolvedValueOnce(mockPredictions);
     mockRepository.countByUserId.mockResolvedValueOnce(2);
 
-    const result = await getTtsHistoryUsecase();
+    const result = await getTtsHistoryUsecase(undefined, TEST_USER_ID, TEST_ORG_ID);
 
     expect(result.success).toBe(true);
     expect(result.count).toBe(2);
@@ -194,7 +169,7 @@ describe('getTtsHistoryUsecase', () => {
     const repositoryError = new Error('Repository query failed');
     mockRepository.findByUserId.mockRejectedValueOnce(repositoryError);
 
-    const result = await getTtsHistoryUsecase();
+    const result = await getTtsHistoryUsecase(undefined, TEST_USER_ID, TEST_ORG_ID);
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Repository query failed');
@@ -202,8 +177,10 @@ describe('getTtsHistoryUsecase', () => {
   });
 
   it('should return success: false on unexpected error', async () => {
-    (getActiveOrganizationId as any).mockRejectedValueOnce(new Error('Unexpected problem'));
-    const result = await getTtsHistoryUsecase();
+    const repositoryError = new Error('Unexpected problem');
+    mockRepository.countByUserId.mockRejectedValueOnce(repositoryError);
+    
+    const result = await getTtsHistoryUsecase(undefined, TEST_USER_ID, TEST_ORG_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Unexpected problem');
   });

@@ -4,7 +4,6 @@ const mockRandomUUIDSpy = vi.fn(() => mockGeneratedAssetId);
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveTtsAudioToDam } from './saveTtsAudioToDamUsecase';
 import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsPrediction } from '../../domain/entities/TtsPrediction';
@@ -50,10 +49,6 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock('@/lib/auth/server-action', () => ({
-  getActiveOrganizationId: vi.fn(),
-}));
-
 // Mock TTS Generation Service
 const mockTtsGenerationService = {
   getProviderConfig: vi.fn(),
@@ -84,7 +79,8 @@ vi.mock('crypto', async (importOriginal) => {
   };
 });
 
-// Mock Supabase client for auth
+
+// Mock Supabase client
 const mockSupabaseClient = {
   auth: {
     getUser: vi.fn(),
@@ -121,11 +117,6 @@ describe('saveTtsAudioToDamUsecase', () => {
     mockRandomUUIDSpy.mockClear();
 
     (createClient as any).mockReturnValue(mockSupabaseClient);
-    (mockSupabaseClient.auth.getUser as any).mockResolvedValue({
-      data: { user: { id: testUserId } },
-      error: null,
-    });
-    (getActiveOrganizationId as any).mockResolvedValue(testOrgId);
     mockTtsGenerationService.downloadAndUploadAudio.mockResolvedValue(mockDownloadUploadResponse);
     
     // Set up the asset repository mock
@@ -148,11 +139,9 @@ describe('saveTtsAudioToDamUsecase', () => {
     });
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockReplicatePrediction);
 
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
 
     expect(mockTtsRepositoryInstance.findById).toHaveBeenCalledWith(testSourcePredictionId);
-    expect(getActiveOrganizationId).toHaveBeenCalledTimes(1);
-    expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledTimes(1);
     expect(mockTtsGenerationService.downloadAndUploadAudio).toHaveBeenCalledWith(testAudioUrl, testOrgId, testUserId);
     
     expect(SupabaseAssetRepository).toHaveBeenCalledWith(mockSupabaseClient);
@@ -183,7 +172,7 @@ describe('saveTtsAudioToDamUsecase', () => {
     });
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockElevenlabsPrediction);
 
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
 
     expect(mockTtsRepositoryInstance.findById).toHaveBeenCalledWith(testSourcePredictionId);
     expect(mockTtsGenerationService.downloadAndUploadAudio).not.toHaveBeenCalled(); 
@@ -216,7 +205,7 @@ describe('saveTtsAudioToDamUsecase', () => {
     });
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockElevenlabsPrediction);
 
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('ElevenLabs prediction is missing necessary stored asset details (path, type, or size).');
@@ -226,25 +215,23 @@ describe('saveTtsAudioToDamUsecase', () => {
 
   it('should return error if TtsPrediction record not found', async () => {
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(null);
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Failed to retrieve TTS prediction details.');
   });
 
-  it('should return auth error if user is not authenticated', async () => {
-    (mockSupabaseClient.auth.getUser as any).mockResolvedValueOnce({ data: { user: null }, error: { message: 'Auth error'} });
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+  it('should return error if userId is not provided', async () => {
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, undefined, testOrgId);
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Authentication failed.');
+    expect(result.error).toBe('Pre-validated context required for optimized TTS operations');
     expect(mockTtsGenerationService.downloadAndUploadAudio).not.toHaveBeenCalled();
     expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
   });
 
-  it('should return error if active organization is not found', async () => {
-    (getActiveOrganizationId as any).mockResolvedValueOnce(null);
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+  it('should return error if organizationId is not provided', async () => {
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, undefined);
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Active organization context is missing.');
+    expect(result.error).toBe('Pre-validated context required for optimized TTS operations');
     expect(mockTtsGenerationService.downloadAndUploadAudio).not.toHaveBeenCalled();
     expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
   });
@@ -257,7 +244,7 @@ describe('saveTtsAudioToDamUsecase', () => {
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockReplicatePrediction);
     const serviceErrorMessage = 'Failed to download or upload audio';
     mockTtsGenerationService.downloadAndUploadAudio.mockRejectedValueOnce(new Error(serviceErrorMessage));
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
     expect(result.success).toBe(false);
     expect(result.error).toBe(serviceErrorMessage);
     expect(mockAssetRepositoryInstance.save).not.toHaveBeenCalled();
@@ -271,19 +258,15 @@ describe('saveTtsAudioToDamUsecase', () => {
     mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockReplicatePrediction);
     const dbErrorMessage = 'DB insert failed';
     mockAssetRepositoryInstance.save.mockRejectedValueOnce(new Error(dbErrorMessage));
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
     expect(result.success).toBe(false);
     expect(result.error).toBe(`Database error: ${dbErrorMessage}`);
   });
 
   it('should return a generic error for unexpected issues', async () => {
-    const mockReplicatePrediction = createMockTtsPrediction({
-      id: testSourcePredictionId,
-      predictionProvider: 'replicate'
-    });
-    mockTtsRepositoryInstance.findById.mockResolvedValueOnce(mockReplicatePrediction);
-    (getActiveOrganizationId as any).mockRejectedValueOnce(new Error('Very unexpected problem'));
-    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService);
+    // Simulate an unexpected error in the TTS repository
+    mockTtsRepositoryInstance.findById.mockRejectedValueOnce(new Error('Very unexpected problem'));
+    const result = await saveTtsAudioToDam(testAudioUrl, testDesiredAssetName, testSourcePredictionId, mockTtsGenerationService, testUserId, testOrgId);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Very unexpected problem');
   });

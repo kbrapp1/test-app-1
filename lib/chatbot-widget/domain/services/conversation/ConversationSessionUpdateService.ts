@@ -91,14 +91,21 @@ export class ConversationSessionUpdateService {
    * AI INSTRUCTIONS: Simple summary without complex business rule dependencies
    */
   private createSimpleConversationSummary(messages: ChatMessage[]): string {
-    const userMessages = messages.filter(m => m.isFromUser());
-    const botMessages = messages.filter(m => !m.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    
+    if (validMessages.length === 0) {
+      return 'No valid messages yet';
+    }
+    
+    const userMessages = validMessages.filter(m => m.isFromUser());
+    const botMessages = validMessages.filter(m => !m.isFromUser());
     
     if (userMessages.length === 0) {
       return 'No user messages yet';
     }
     
-    const totalMessages = messages.length;
+    const totalMessages = validMessages.length;
     const conversationLength = userMessages.length;
     
     // Simple summary based on message count and basic patterns

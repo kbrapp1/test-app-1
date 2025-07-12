@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { TtsOutputCard } from './TtsOutputCard';
 
 // Mock WaveformAudioPlayer
@@ -16,11 +18,23 @@ vi.mock('@/components/ui/use-toast', () => ({
 vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
 
 describe('TtsOutputCard', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+    vi.clearAllMocks();
+  });
+
   const defaultProps = {
     audioUrl: null,
     predictionStatus: null,
     isLoading: false,
-    isPollingLoading: false,
     isSavingToDam: false,
     isDeleting: false,
     errorMessage: null,
@@ -30,24 +44,36 @@ describe('TtsOutputCard', () => {
     onDeletePrediction: vi.fn(),
   };
 
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        {children}
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(ui, { wrapper: TestWrapper });
+  };
+
   it('shows placeholder when no audio and not loading or error', () => {
-    render(<TtsOutputCard {...defaultProps} />);
+    renderWithProviders(<TtsOutputCard {...defaultProps} />);
     expect(screen.getByText(/Your generated audio will appear here\./)).toBeInTheDocument();
   });
 
   it('shows loading message when isLoading true', () => {
-    render(<TtsOutputCard {...defaultProps} isLoading={true} predictionStatus="starting" />);
+    renderWithProviders(<TtsOutputCard {...defaultProps} isLoading={true} predictionStatus="starting" />);
     expect(screen.getByText(/Starting generation/)).toBeInTheDocument();
   });
 
   it('shows error alert when errorMessage present', () => {
-    render(<TtsOutputCard {...defaultProps} errorMessage="Failed to generate" />);
+    renderWithProviders(<TtsOutputCard {...defaultProps} errorMessage="Failed to generate" />);
     expect(screen.getByText(/Generation Failed/)).toBeInTheDocument();
     expect(screen.getByText(/Failed to generate/)).toBeInTheDocument();
   });
 
   it('renders waveform when audioUrl and succeeded status', () => {
-    render(
+    renderWithProviders(
       <TtsOutputCard
         {...defaultProps}
         audioUrl="http://audio"

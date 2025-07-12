@@ -33,7 +33,9 @@ export class ConversationEnhancedAnalysisService {
     session?: ChatSession,
     sharedLogFile?: string
   ): Promise<ContextAnalysis> {
-    const userMessages = messages.filter(m => m.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    const userMessages = validMessages.filter(m => m.isFromUser());
     
     if (userMessages.length === 0) {
       return baseAnalysis;

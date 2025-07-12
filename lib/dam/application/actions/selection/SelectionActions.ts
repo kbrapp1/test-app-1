@@ -10,7 +10,7 @@
 
 import { SelectionUpdateHandler } from './handlers/SelectionUpdateHandler';
 import { BulkOperationHandler } from './handlers/BulkOperationHandler';
-import { apiDeduplicationService } from '../../services/ApiDeduplicationService';
+import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
 import type { 
   SelectionActionResult,
   ActionResult,
@@ -28,7 +28,7 @@ export async function updateSelection(formData: FormData): Promise<SelectionActi
     'updateSelection',
     [Array.from(formData.entries())],
     () => SelectionUpdateHandler.handle(formData),
-    500 // 500ms window for selection updates
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -43,7 +43,7 @@ export async function bulkMoveItems(formData: FormData): Promise<ActionResult> {
     'bulkMoveItems',
     [Array.from(formData.entries())],
     () => BulkOperationHandler.handleBulkMove(formData),
-    2000 // 2 second window for bulk operations
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -58,7 +58,7 @@ export async function bulkDeleteItems(formData: FormData): Promise<ActionResult>
     'bulkDeleteItems',
     [Array.from(formData.entries())],
     () => BulkOperationHandler.handleBulkDelete(formData),
-    3000 // 3 second window for delete operations (safety)
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -73,7 +73,7 @@ export async function bulkTagItems(formData: FormData): Promise<ActionResult> {
     'bulkTagItems',
     [Array.from(formData.entries())],
     () => BulkOperationHandler.handleBulkTag(formData),
-    1000 // 1 second window for tag operations
+    'dam-operations' // Use DAM operations domain timeout
   );
 }
 
@@ -88,6 +88,6 @@ export async function bulkDownloadItems(formData: FormData): Promise<DownloadAct
     'bulkDownloadItems',
     [Array.from(formData.entries())],
     () => BulkOperationHandler.handleBulkDownload(formData),
-    2000 // 2 second window for download operations
+    'dam-operations' // Use DAM operations domain timeout
   );
 } 

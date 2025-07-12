@@ -27,7 +27,7 @@ export interface UsePermissionsResult {
  * @returns Permission checking functions and user role info
  */
 export function usePermissions(): UsePermissionsResult {
-  const { user, isLoading, auth } = useUser();
+  const { user, isLoading, hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole, role, permissions } = useUser();
   
   const permissionCheckers = useMemo(() => {
     if (isLoading || !user) {
@@ -42,14 +42,14 @@ export function usePermissions(): UsePermissionsResult {
     }
     
     return {
-      hasPermission: (permission: Permission) => auth.hasPermission(permission),
-      hasAnyPermission: (permissions: Permission[]) => auth.hasAnyPermission(permissions),
-      hasRole: (role: UserRole) => auth.hasRole(role),
-      hasAnyRole: (roles: UserRole[]) => auth.hasAnyRole(roles),
-      userRole: auth.role,
+      hasPermission: (permission: Permission) => hasPermission(permission),
+      hasAnyPermission: (permissions: Permission[]) => hasAnyPermission(permissions),
+      hasRole: (role: UserRole) => hasRole(role),
+      hasAnyRole: (roles: UserRole[]) => hasAnyRole(roles),
+      userRole: role,
       isLoading: false
     };
-  }, [user, isLoading, auth]);
+  }, [user, isLoading, hasPermission, hasAnyPermission, hasRole, hasAnyRole, role]);
   
   return permissionCheckers;
 }

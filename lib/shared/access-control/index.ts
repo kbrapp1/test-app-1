@@ -10,7 +10,7 @@
 
 // Client-side hooks
 export { useFeatureAccess } from './hooks/useFeatureAccess';
-export type { FeatureAccessResult, UseFeatureAccessOptions } from './hooks/useFeatureAccess';
+export type { UseFeatureAccessOptions } from './hooks/useFeatureAccess';
 
 // Higher-order components
 export { withFeatureGuard, createFeatureGuard } from './components/withFeatureGuard';
@@ -21,12 +21,12 @@ export {
   checkDamAccess, 
   checkChatbotAccess, 
   checkTtsAccess,
-  checkNotesAccess,
-  checkTeamAccess
+  checkImageGenAccess,
+  checkNotesAccess
 } from './server/checkFeatureAccess';
 export type { 
-  ServerFeatureAccessOptions, 
-  ServerFeatureAccessResult 
+  FeatureAccessOptions, 
+  FeatureAccessResult 
 } from './server/checkFeatureAccess';
 
 // Guard components (re-export from shared location)

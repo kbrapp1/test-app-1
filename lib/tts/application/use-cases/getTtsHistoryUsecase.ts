@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { TtsPrediction } from '../../domain/entities/TtsPrediction';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { FindOptions } from '../../domain/repositories/TtsPredictionRepository';
@@ -24,7 +22,9 @@ interface GetTtsHistoryParams {
  * Now using repository pattern for proper DDD compliance.
  */
 export async function getTtsHistory(
-  params?: GetTtsHistoryParams
+  params?: GetTtsHistoryParams,
+  userId?: string,
+  organizationId?: string
 ): Promise<{
   success: boolean;
   data?: TtsPrediction[];
@@ -32,20 +32,13 @@ export async function getTtsHistory(
   count?: number | null; // Total count for pagination
 }> {
   try {
-    const supabase = createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return { success: false, error: 'User not authenticated' };
+    // Use pre-validated context (optimization eliminates redundant validation)
+    if (!userId || !organizationId) {
+      return { success: false, error: 'Pre-validated context required for optimized TTS operations' };
     }
-
-    const activeOrgId = await getActiveOrganizationId();
-    if (!activeOrgId) {
-      return { success: false, error: 'Active organization not found' };
-    }
+    
+    const finalUserId = userId;
+    const finalOrgId = organizationId;
 
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : DEFAULT_PAGE_LIMIT;
@@ -65,10 +58,10 @@ export async function getTtsHistory(
     };
 
     // Repository handles both user filtering and organization filtering
-    const predictions = await repository.findByUserId(user.id, findOptions);
+    const predictions = await repository.findByUserId(finalUserId, findOptions);
     
     // Get count for pagination (repository should handle this)
-    const count = await repository.countByUserId(user.id, {
+    const count = await repository.countByUserId(finalUserId, {
       searchQuery: findOptions.searchQuery
     });
 

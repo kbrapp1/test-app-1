@@ -1,5 +1,4 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
 import { TtsGenerationService } from '../services/TtsGenerationService';
@@ -16,19 +15,18 @@ export async function saveTtsAudioToDam(
   audioUrl: string, // For Replicate, this is external. For ElevenLabs, this is the publicUrl from our storage.
   desiredAssetName: string,
   ttsPredictionId: string,
-  ttsGenerationService: TtsGenerationService
+  ttsGenerationService: TtsGenerationService,
+  userId?: string,
+  organizationId?: string
 ): Promise<{ success: boolean; assetId?: string; error?: string }> {
   try {
-    const supabase = createSupabaseServerClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return { success: false, error: 'Authentication failed.' };
+    // Use pre-validated context (optimization eliminates redundant validation)
+    if (!userId || !organizationId) {
+      return { success: false, error: 'Pre-validated context required for optimized TTS operations' };
     }
-    const userId = user.id;
-    const organizationId = await getActiveOrganizationId();
-    if (!organizationId) {
-      return { success: false, error: 'Active organization context is missing.' };
-    }
+    
+    const finalUserId = userId;
+    const finalOrganizationId = organizationId;
 
     // Initialize repositories
     const ttsRepository = new TtsPredictionSupabaseRepository();
@@ -51,7 +49,7 @@ export async function saveTtsAudioToDam(
       contentTypeValue = ttsPrediction.outputContentType;
       blobSizeValue = ttsPrediction.outputFileSize;
     } else {
-      const uploadResult = await ttsGenerationService.downloadAndUploadAudio(audioUrl, organizationId, userId);
+      const uploadResult = await ttsGenerationService.downloadAndUploadAudio(audioUrl, finalOrganizationId, finalUserId);
       storagePathValue = uploadResult.storagePath;
       contentTypeValue = uploadResult.contentType;
       blobSizeValue = uploadResult.blobSize;
@@ -60,7 +58,8 @@ export async function saveTtsAudioToDam(
     const { randomUUID } = await import('crypto');
     const newAssetId = randomUUID();
     
-    // Initialize the DAM asset repository
+    // Initialize the DAM asset repository - need supabase client
+    const supabase = createSupabaseServerClient();
     const assetRepository = new SupabaseAssetRepository(supabase);
     
     // Create asset using the repository
@@ -71,8 +70,8 @@ export async function saveTtsAudioToDam(
         storagePath: storagePathValue,
         mimeType: contentTypeValue,
         size: blobSizeValue,
-        userId: userId,
-        organizationId: organizationId,
+        userId: finalUserId,
+        organizationId: finalOrganizationId,
         folderId: null,
         createdAt: new Date(),
       });

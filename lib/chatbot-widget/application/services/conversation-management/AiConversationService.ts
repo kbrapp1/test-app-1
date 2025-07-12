@@ -149,8 +149,9 @@ export class AiConversationService implements IAIConversationService {
     messageHistory: ChatMessage[],
     userMessage: string
   ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-    // Filter out current message to avoid duplication
-    const filteredHistory = messageHistory.filter(msg => 
+    // Safety check: Filter out any non-ChatMessage objects and current message to avoid duplication
+    const validHistory = messageHistory.filter(msg => msg && typeof msg.isFromUser === 'function');
+    const filteredHistory = validHistory.filter(msg => 
       !(msg.isFromUser() && msg.content.trim() === userMessage.trim())
     );
     

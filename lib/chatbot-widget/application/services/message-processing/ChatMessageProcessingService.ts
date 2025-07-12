@@ -107,11 +107,15 @@ export class ChatMessageProcessingService {
       throw new Error('Unified processing service not available - chatbot cannot process messages without unified intent classification service');
     }
 
-    // Check if userMessage is already in contextResult.messages to avoid duplication
-    const isUserMessageInContext = contextResult.messages.some((msg: ChatMessage) => msg.id === userMessage.id);
+    // AI: Convert plain message objects to ChatMessage entities using repository
+    // This follows @golden-rule.mdc by maintaining proper domain boundaries
+    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages, sharedLogFile);
+    
+    // Check if userMessage is already in context messages to avoid duplication
+    const isUserMessageInContext = contextMessages.some((msg: ChatMessage) => msg.id === userMessage.id);
     const allMessages = isUserMessageInContext 
-      ? contextResult.messages 
-      : [...contextResult.messages, userMessage];
+      ? contextMessages 
+      : [...contextMessages, userMessage];
 
     // Use the required shared log file for all logging
     const logFileName = sharedLogFile;
@@ -120,7 +124,7 @@ export class ChatMessageProcessingService {
     const conversationContext = await this.conversationContextBuilder.buildConversationContext(
       config,
       session,
-      contextResult.messages,
+      contextMessages, // Use converted entities
       userMessage,
       contextResult.summary,
       enhancedContext,
@@ -263,5 +267,48 @@ export class ChatMessageProcessingService {
     }
     
     return 'low'; // Safe fallback
+  }
+
+  /**
+   * Converts an array of plain message objects to ChatMessage entities using the repository.
+   * This ensures proper domain boundaries and consistency.
+   * 
+   * AI INSTRUCTIONS:
+   * - Uses repository to fetch existing entities when possible
+   * - Follows @golden-rule.mdc domain boundary patterns
+   * - Maintains type safety between application and domain layers
+   */
+  private async convertPlainMessagesToEntities(messages: any[], logFileName: string): Promise<ChatMessage[]> {
+    const chatMessages: ChatMessage[] = [];
+    
+    for (const msg of messages) {
+      if (!msg.id) {
+        console.warn('Skipping message with missing ID:', msg);
+        continue;
+      }
+      
+      try {
+        // First try to get the entity from repository (preferred approach)
+        const existingMessage = await this.messageRepository.findById(msg.id);
+        if (existingMessage) {
+          chatMessages.push(existingMessage);
+          continue;
+        }
+        
+        // If not found in repository, check if it's already a ChatMessage entity
+        if (msg.isFromUser && typeof msg.isFromUser === 'function') {
+          chatMessages.push(msg as ChatMessage);
+          continue;
+        }
+        
+        // Log warning for missing messages that should exist
+        console.warn(`Message ${msg.id} not found in repository and not a valid ChatMessage entity`);
+        
+      } catch (error) {
+        console.error(`Error converting message ${msg.id}:`, error);
+      }
+    }
+    
+    return chatMessages;
   }
 } 

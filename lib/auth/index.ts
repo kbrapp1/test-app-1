@@ -27,4 +27,10 @@ export { withAuth, type AuthenticatedHandler, type AuthOptions } from './middlew
 
 // Server action wrappers
 export { getSessionUser } from './server-action';
-export { withAuthAction, type AuthActionOptions } from './action-wrapper'; 
+export { 
+  withAuth as withAuthAction, 
+  withAuthAndOrg as withAuthAndOrgAction, 
+  getCurrentUser, 
+  isAuthenticated 
+} from './action-wrapper';
+export type { AuthenticatedUser, AuthActionResult } from './action-wrapper'; 

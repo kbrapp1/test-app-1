@@ -97,11 +97,13 @@ export class TtsApplicationService {
   async startSpeechGeneration(
     inputText: string,
     voiceId: string,
-    provider: string
+    provider: string,
+    userId: string,
+    organizationId: string
   ): Promise<StartSpeechGenerationResult> {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
-      return await startSpeechGenerationUsecase(inputText, voiceId, provider, this.ttsGenerationService);
+      return await startSpeechGenerationUsecase(inputText, voiceId, provider, this.ttsGenerationService, userId, organizationId);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       return { success: false, error: errorMessage };
@@ -128,11 +130,13 @@ export class TtsApplicationService {
     audioUrl: string,
     desiredAssetName: string,
     ttsPredictionId: string,
-    linkToPrediction: boolean = true
+    linkToPrediction: boolean = true,
+    userId?: string,
+    organizationId?: string
   ): Promise<SaveToDamResult> {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
-      const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId, this.ttsGenerationService);
+      const result = await saveTtsAudioToDamUsecase(audioUrl, desiredAssetName, ttsPredictionId, this.ttsGenerationService, userId, organizationId);
 
       if (result.success && result.assetId && linkToPrediction) {
         try {
@@ -191,10 +195,10 @@ export class TtsApplicationService {
   /**
    * Get TTS history with proper DTO mapping
    */
-  async getTtsHistory(params?: GetTtsHistoryParams): Promise<GetTtsHistoryResponseDto> {
+  async getTtsHistory(params?: GetTtsHistoryParams, userId?: string, organizationId?: string): Promise<GetTtsHistoryResponseDto> {
     try {
       await this.featureFlagService.checkTtsFeatureFlag();
-      const result = await getTtsHistoryUsecase(params);
+      const result = await getTtsHistoryUsecase(params, userId, organizationId);
       
       if (!result.success) {
         return { success: false, error: result.error, count: undefined };

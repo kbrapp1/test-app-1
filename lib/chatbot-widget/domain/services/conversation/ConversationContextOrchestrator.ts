@@ -223,7 +223,9 @@ export class ConversationContextOrchestrator {
     session?: ChatSession,
     apiAnalysisData?: ApiAnalysisData
   ): ContextAnalysis {
-    const userMessages = messages.filter(m => m.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    const userMessages = validMessages.filter(m => m.isFromUser());
     
     if (userMessages.length === 0) {
       return ContextAnalysisValueObject.createDefault().toPlainObject();
@@ -332,7 +334,9 @@ export class ConversationContextOrchestrator {
 
   /** Create simple overview from messages */
   private createSimpleOverview(messages: ChatMessage[], context: any): string {
-    const userMessages = messages.filter(m => m.isFromUser());
+    // Safety check: Filter out any non-ChatMessage objects
+    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    const userMessages = validMessages.filter(m => m.isFromUser());
     
     if (userMessages.length === 0) {
       return 'No user interaction yet';

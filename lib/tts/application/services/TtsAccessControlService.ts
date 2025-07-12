@@ -10,14 +10,14 @@
  */
 
 import { Permission } from '@/lib/auth/roles';
-import { checkTtsAccess as checkBaseTtsAccess, ServerFeatureAccessResult } from '@/lib/shared/access-control/server/checkFeatureAccess';
+import { checkTtsAccess as checkBaseTtsAccess, FeatureAccessResult } from '@/lib/shared/access-control/server/checkFeatureAccess';
 import { TtsPermissionDeniedError, TtsFeatureNotAvailableError, TtsOrganizationAccessError } from '../../domain/common/TtsError';
 
 export class TtsAccessControlService {
   // Check basic TTS feature access - defaults to enabled when flag missing
-  static async checkTtsAccess(requiredPermissions?: Permission[]): Promise<ServerFeatureAccessResult> {
+  static async checkTtsAccess(requiredPermissions?: Permission[]): Promise<FeatureAccessResult> {
     try {
-      return await checkBaseTtsAccess(requiredPermissions);
+      return await checkBaseTtsAccess();
     } catch (error: unknown) {
       // Transform generic errors to TTS-specific errors
       if (error instanceof Error) {
@@ -47,32 +47,32 @@ export class TtsAccessControlService {
   }
 
   // Check speech generation permissions - core TTS functionality
-  static async checkSpeechGenerationAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkSpeechGenerationAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.GENERATE_SPEECH]);
   }
 
   // Check TTS history access permissions - includes viewing and managing personal history
-  static async checkHistoryAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkHistoryAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.VIEW_TTS_HISTORY]);
   }
 
   // Check history deletion permissions - granular control separate from view
-  static async checkHistoryDeleteAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkHistoryDeleteAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.DELETE_TTS_HISTORY]);
   }
 
   // Check DAM integration permissions - cross-domain operation
-  static async checkDamIntegrationAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkDamIntegrationAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.SAVE_TTS_TO_DAM]);
   }
 
   // Check audio export permissions - separate from generation for granular control
-  static async checkAudioExportAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkAudioExportAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.EXPORT_AUDIO]);
   }
 
   // Check voice configuration permissions - advanced feature for power users
-  static async checkVoiceConfigurationAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkVoiceConfigurationAccess(): Promise<FeatureAccessResult> {
     // AI: Voice loading is needed for basic TTS functionality, not just configuration
     // Users need to see available voices to generate speech
     // Use VIEW_TTS permission instead of CONFIGURE_VOICES for voice loading
@@ -80,22 +80,22 @@ export class TtsAccessControlService {
   }
 
   // Check administrative permissions - admin-only system configuration
-  static async checkAdminAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkAdminAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.MANAGE_TTS_SETTINGS]);
   }
 
   // Check usage statistics permissions - business intelligence and monitoring
-  static async checkUsageStatsAccess(): Promise<ServerFeatureAccessResult> {
+  static async checkUsageStatsAccess(): Promise<FeatureAccessResult> {
     return this.checkTtsAccess([Permission.VIEW_TTS_USAGE]);
   }
 
   // Check multiple permissions at once - user must have ALL specified permissions
-  static async checkMultiplePermissions(permissions: Permission[]): Promise<ServerFeatureAccessResult> {
+  static async checkMultiplePermissions(permissions: Permission[]): Promise<FeatureAccessResult> {
     return this.checkTtsAccess(permissions);
   }
 
   // Check if user has any of the specified permissions - returns true if user has ANY
-  static async checkAnyPermission(permissions: Permission[]): Promise<ServerFeatureAccessResult> {
+  static async checkAnyPermission(permissions: Permission[]): Promise<FeatureAccessResult> {
     // Try each permission individually and return success on first match
     for (const permission of permissions) {
       try {
@@ -162,8 +162,8 @@ export class TtsAccessControlService {
     };
 
     return {
-      organizationId: basicAccess.organizationId,
-      userId: basicAccess.userId,
+      organizationId: basicAccess.organizationId || '',
+      userId: basicAccess.user?.id || '',
       permissions,
     };
   }

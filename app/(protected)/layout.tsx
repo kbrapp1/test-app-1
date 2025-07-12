@@ -4,6 +4,7 @@ import * as React from 'react';
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AuthenticationProvider } from '@/lib/auth/providers/AuthenticationProvider';
 import { useCompleteOnboarding } from '@/lib/auth/hooks/useCompleteOnboarding';
 import { OrganizationProvider } from '@/lib/organization/application/providers/OrganizationProvider';
 import { UserProfileProvider } from "@/lib/auth/providers/UserProfileProvider";
@@ -11,7 +12,7 @@ import { TeamMembersProvider } from "@/lib/auth/providers/TeamMembersProvider";
 import { IdleTimeoutProvider } from "@/lib/auth/providers/IdleTimeoutProvider";
 import ReactScanIntegration from '@/lib/monitoring/infrastructure/development/ReactScanIntegration';
 
-export default function ProtectedLayout({
+function ProtectedLayoutContent({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -43,5 +44,19 @@ export default function ProtectedLayout({
         </UserProfileProvider>
       </OrganizationProvider>
     </IdleTimeoutProvider>
+  );
+}
+
+export default function ProtectedLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <AuthenticationProvider>
+      <ProtectedLayoutContent>
+        {children}
+      </ProtectedLayoutContent>
+    </AuthenticationProvider>
   );
 } 
