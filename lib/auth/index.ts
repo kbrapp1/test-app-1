@@ -5,32 +5,45 @@
  * functionality throughout the application.
  */
 
-// Role and permission definitions
-export * from './roles';
+// Role and permission definitions (from new DDD structure)
+export * from './domain/value-objects/UserRole';
+export * from './domain/value-objects/Permission';
 
-// Authorization utilities
-export * from './authorization';
+// Authorization utilities (from enhanced PermissionService)
+export { PermissionService } from './domain/services/PermissionService';
+
+// Backward compatibility exports for existing authorization patterns
+export {
+  PermissionService as AuthorizationService // Alias for backward compatibility
+} from './domain/services/PermissionService';
+
+// Authorization compatibility functions (deprecated - use PermissionService instead)
+export * from './infrastructure/adapters/AuthorizationCompatibilityAdapter';
+
+// Onboarding utilities (moved to infrastructure)
+export * from './infrastructure/utilities/OnboardingUtils';
 
 // Super Admin functionality
 export * from './super-admin';
 
-// Services
-export { updateUserProfile } from './services/profileService';
-export { completeOnboardingMembership } from './services/onboardingService';
+// Services (moved to infrastructure layer)
+export { updateUserProfile } from './infrastructure/persistence/supabase/ProfileRepository';
+export { completeOnboardingMembership } from './infrastructure/services/OnboardingService';
 
-// Actions
-export { inviteMemberToOrganization } from './actions/members';
-export { getTeamMembers, addTeamMember } from './actions/team';
+// Presentation Layer Exports
+export * from './presentation';
 
-// Middleware for API routes
-export { withAuth, type AuthenticatedHandler, type AuthOptions } from './middleware';
+// Middleware for API routes (moved to infrastructure layer)
+export { withAuth, type AuthenticatedHandler, type AuthOptions } from './infrastructure/middleware/AuthMiddleware';
 
-// Server action wrappers
-export { getSessionUser } from './server-action';
+// Server action wrappers (moved to infrastructure layer)
 export { 
   withAuth as withAuthAction, 
   withAuthAndOrg as withAuthAndOrgAction, 
   getCurrentUser, 
   isAuthenticated 
-} from './action-wrapper';
-export type { AuthenticatedUser, AuthActionResult } from './action-wrapper'; 
+} from './infrastructure/wrappers/ActionWrapper';
+export type { AuthenticatedUser, AuthActionResult } from './infrastructure/wrappers/ActionWrapper';
+
+// Organization context utilities (from presentation layer)
+export { getActiveOrganizationId } from './presentation/actions/serverActions'; 

@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { PerformanceMonitorProvider } from '@/lib/monitoring/presentation/providers/performance-analysis/PerformanceMonitorProvider';
 
 // Mock only what we need - the user profile hook
-vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({
+vi.mock('@/lib/auth', () => ({
   useUserProfile: vi.fn(),
 }));
 
@@ -44,7 +44,7 @@ Object.defineProperty(window, 'localStorage', {
   },
 });
 
-import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
+import { useUserProfile } from '@/lib/auth';
 
 describe('NavUser', () => {
   const renderNavUser = () => {

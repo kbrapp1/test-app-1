@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTeamMemberPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
-import { deleteTeamMember } from '@/lib/auth/actions/team';
+import { deleteTeamMember } from '@/lib/auth';
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 

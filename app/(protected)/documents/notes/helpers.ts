@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { ErrorCodes } from '@/lib/errors/constants';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 
 // Type for Server Action Response (consider moving to a shared types file if used elsewhere)

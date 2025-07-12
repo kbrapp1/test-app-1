@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { ErrorCodes } from '@/lib/errors/constants';
 import { checkFeatureAccess } from '@/lib/shared/access-control';
-import { Permission } from '@/lib/auth/roles';
-import { hasPermission } from '@/lib/auth/authorization';
+import { Permission, hasPermission } from '@/lib/auth';
 
 // Import helpers from the new file
 import { getAuthContext, handleDatabaseError, ActionResult } from './helpers';

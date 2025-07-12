@@ -13,7 +13,7 @@
 import { useOrganizationContext } from '@/lib/organization/application/hooks/useOrganizationContext';
 import { useFeatureFlag } from '@/lib/organization/presentation/hooks/useFeatureFlag';
 import { useUser } from '@/lib/hooks/useUser';
-import { UserRole, Permission } from '@/lib/auth/roles';
+import { UserRole, Permission } from '@/lib/auth';
 import { useMemo } from 'react';
 
 export interface FeatureAccessResult {

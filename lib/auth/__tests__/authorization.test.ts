@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { hasRole, hasAnyRole, hasPermission, hasAnyPermission, getUserPermissions } from '../authorization';
-import { UserRole, Permission } from '../roles';
+import { hasRole, hasAnyRole, hasPermission, hasAnyPermission, getUserPermissions } from '../infrastructure/adapters/AuthorizationCompatibilityAdapter';
+import { UserRole } from '../domain/value-objects/UserRole';
+import { Permission } from '../domain/value-objects/Permission';
 
 describe('Authorization Utilities', () => {
   // Mock user with admin role

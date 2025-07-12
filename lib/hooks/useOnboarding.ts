@@ -7,7 +7,7 @@ import { SupabaseClient, User, UserIdentity } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 
 // Import helpers from their new locations
-import { processAuthFromUrlHelper, handleOnboardingError } from '@/lib/auth/onboardingAuthUtils';
+import { processAuthFromUrlHelper, handleOnboardingError } from '@/lib/auth';
 import { validateOnboardingForm } from '@/lib/forms/onboardingValidation';
 
 // Auth services - updated imports

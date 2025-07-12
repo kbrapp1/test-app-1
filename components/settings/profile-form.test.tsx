@@ -10,7 +10,7 @@ vi.mock('@/components/ui/use-toast', () => ({
 }));
 
 // Mock UserProfileProvider to return controlled data
-vi.mock('@/lib/auth/providers/UserProfileProvider', () => ({
+vi.mock('@/lib/auth', () => ({
   useUserProfile: vi.fn(),
 }));
 
@@ -45,7 +45,7 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
+import { useUserProfile } from '@/lib/auth';
 
 describe('ProfileForm', () => {
   const mockUser = {

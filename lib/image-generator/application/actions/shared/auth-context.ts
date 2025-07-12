@@ -1,4 +1,4 @@
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 
 /**

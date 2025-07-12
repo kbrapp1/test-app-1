@@ -4,7 +4,7 @@ import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 // getActiveOrganizationId might not be strictly needed if getPath doesn't require orgId for validation here
 // but it's good practice for consistency or if the use case/repo evolves to need it.
-import { getActiveOrganizationId } from '@/lib/auth/server-action'; 
+import { getActiveOrganizationId } from '@/lib/auth'; 
 import { GetFolderPathUseCase } from '@/lib/dam/application/use-cases/folders';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { ValidationError, NotFoundError, AppError } from '@/lib/errors/base';

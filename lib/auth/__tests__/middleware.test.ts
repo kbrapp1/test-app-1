@@ -1,12 +1,60 @@
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '../middleware';
-import { UserRole, Permission } from '../roles';
+import { withAuth } from '../infrastructure/middleware/AuthMiddleware';
+import { UserRole } from '../domain/value-objects/UserRole';
+import { Permission } from '../domain/value-objects/Permission';
 import { AuthorizationError } from '@/lib/errors/base';
 import { checkAuth } from '@/lib/supabase/db-auth';
 
+// Mock Supabase client creation to prevent initialization errors
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      onAuthStateChange: vi.fn(),
+    },
+    from: vi.fn(),
+  })),
+}));
+
+// Mock Supabase server client
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      refreshSession: vi.fn(),
+    },
+    rpc: vi.fn(),
+    from: vi.fn(),
+  })),
+}));
+
+// Mock organization service to prevent Supabase client creation
+vi.mock('@/lib/auth/services/organization-service', () => ({
+  OrganizationService: vi.fn(() => ({
+    getOrganizations: vi.fn(),
+    switchOrganization: vi.fn(),
+  })),
+}));
+
+// Mock the useUser hook to prevent Supabase client creation
+vi.mock('@/lib/hooks/useUser', () => ({
+  useUser: vi.fn(() => ({
+    user: null,
+    isLoading: false,
+    hasPermission: vi.fn(() => false),
+    hasAnyPermission: vi.fn(() => false),
+    hasAllPermissions: vi.fn(() => false),
+    hasRole: vi.fn(() => false),
+    hasAnyRole: vi.fn(() => false),
+    role: undefined,
+    permissions: [],
+  })),
+}));
+
 // Mock dependencies
-vi.mock('@/lib/supabase/server');
 vi.mock('@/lib/logging');
 vi.mock('@/lib/errors/base', () => ({
   AuthorizationError: class AuthorizationError extends Error {

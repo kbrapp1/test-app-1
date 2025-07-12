@@ -2,8 +2,41 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { NextRequest } from 'next/server';
 
+// Mock Supabase client creation to prevent initialization errors
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      onAuthStateChange: vi.fn(),
+    },
+    from: vi.fn(),
+  })),
+}));
+
+// Mock Supabase server client
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      refreshSession: vi.fn(),
+    },
+    rpc: vi.fn(),
+    from: vi.fn(),
+  })),
+}));
+
+// Mock organization service to prevent Supabase client creation
+vi.mock('@/lib/auth/services/organization-service', () => ({
+  OrganizationService: vi.fn(() => ({
+    getOrganizations: vi.fn(),
+    switchOrganization: vi.fn(),
+  })),
+}));
+
 // Mock getActiveOrganizationId to control auth behavior
-vi.mock('@/lib/auth/server-action', () => ({
+vi.mock('@/lib/auth/presentation/actions/serverActions', () => ({
   getActiveOrganizationId: vi.fn(),
 }));
 
@@ -96,7 +129,7 @@ vi.mock('@/lib/dam/application/use-cases/search', () => ({
 vi.mock('@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository');
 vi.mock('@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository');
 
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth/presentation/actions/serverActions';
 import { GET } from './route';
 
 describe('DAM API Route', () => {

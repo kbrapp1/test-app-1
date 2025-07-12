@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 
 // interface Profile { // No longer directly needed here
 //   id: string;

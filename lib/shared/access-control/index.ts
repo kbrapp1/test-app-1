@@ -22,7 +22,8 @@ export {
   checkChatbotAccess, 
   checkTtsAccess,
   checkImageGenAccess,
-  checkNotesAccess
+  checkNotesAccess,
+  checkTeamAccess
 } from './server/checkFeatureAccess';
 export type { 
   FeatureAccessOptions, 

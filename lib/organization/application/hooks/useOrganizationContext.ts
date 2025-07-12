@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useAuthentication } from '@/lib/auth/providers/AuthenticationProvider';
+import { useAuthentication } from '@/lib/auth';
 import { OrganizationContext, OrganizationContextService } from '../../domain/services/OrganizationContextService';
 import { OrganizationPermission } from '../../domain/services/PermissionValidationService';
 import { AuditTrailService } from '../../domain/services/AuditTrailService';

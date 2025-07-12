@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { ListTextAssetsUseCase, GetAssetContentUseCase, UpdateAssetTextUseCase, CreateTextAssetUseCase } from '../use-cases/assets';
 import type { TextAssetSummaryDto } from '../use-cases/assets/ListTextAssetsUseCase';

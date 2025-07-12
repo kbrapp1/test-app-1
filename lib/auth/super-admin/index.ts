@@ -54,13 +54,13 @@ export type {
   MutationOptions,
 } from './mutations';
 
-// Server Actions (client-safe wrappers for caching)
+// Server Actions (client-safe wrappers for caching) - now in presentation layer
 export {
   invalidateDamCacheAction,
   invalidateTeamCacheAction,
   invalidateOrganizationCacheAction,
   invalidateAllOrganizationsCacheAction,
-} from './server-actions';
+} from '../presentation/actions/super-admin/serverActions';
 
 // Server-only caching functions are NOT exported here
 // Import directly from './caching' in server components/actions only 

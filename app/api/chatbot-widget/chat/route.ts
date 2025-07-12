@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { withErrorHandling } from '@/lib/middleware/error';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { DebugInfoMapper } from '@/lib/chatbot-widget/application/mappers/DebugInfoMapper';
 import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/services/ChatbotWidgetFeatureFlagService';

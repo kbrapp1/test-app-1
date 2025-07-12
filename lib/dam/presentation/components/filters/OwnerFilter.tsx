@@ -18,7 +18,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
-import { useTeamMembers } from '@/lib/auth/providers/TeamMembersProvider';
+import { useTeamMembers } from '@/lib/auth';
 
 interface OwnerFilterProps {
   selectedOwnerId: string | undefined;

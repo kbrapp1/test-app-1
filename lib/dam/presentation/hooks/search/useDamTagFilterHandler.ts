@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { useDamUrlManager } from '../navigation/useDamUrlManager';
 
 interface UseDamTagFilterHandlerProps {

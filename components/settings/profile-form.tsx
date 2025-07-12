@@ -26,7 +26,7 @@ import { OrganizationSwitcher } from "@/lib/organization/presentation/components
 import { SuperAdminBadge } from "@/components/auth/SuperAdminBadge";
 import { Mail, User as UserIcon, Building2, Shield, Crown, Users } from 'lucide-react';
 import { useOrganization } from "@/lib/organization/application/providers/OrganizationProvider";
-import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider";
+import { useUserProfile } from "@/lib/auth";
 import { createClient } from '@/lib/supabase/client';
 
 /**

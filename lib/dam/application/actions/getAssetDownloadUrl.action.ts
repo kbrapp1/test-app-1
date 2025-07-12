@@ -1,6 +1,6 @@
 'use server';
 
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { GetAssetDownloadUrlUseCase } from '../use-cases/assets';
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';

@@ -3,6 +3,54 @@ import { describe, it, expect, vi } from 'vitest';
 import { TeamMemberCard } from './TeamMemberCard';
 import type { TeamMember } from '@/types/team';
 
+// Mock Supabase client creation to prevent initialization errors
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      onAuthStateChange: vi.fn(),
+    },
+    from: vi.fn(),
+  })),
+}));
+
+// Mock Supabase server client
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getSession: vi.fn(),
+      getUser: vi.fn(),
+      refreshSession: vi.fn(),
+    },
+    rpc: vi.fn(),
+    from: vi.fn(),
+  })),
+}));
+
+// Mock organization service to prevent Supabase client creation
+vi.mock('@/lib/auth/services/organization-service', () => ({
+  OrganizationService: vi.fn(() => ({
+    getOrganizations: vi.fn(),
+    switchOrganization: vi.fn(),
+  })),
+}));
+
+// Mock the useUser hook to prevent Supabase client creation
+vi.mock('@/lib/hooks/useUser', () => ({
+  useUser: vi.fn(() => ({
+    user: null,
+    isLoading: false,
+    hasPermission: vi.fn(() => false),
+    hasAnyPermission: vi.fn(() => false),
+    hasAllPermissions: vi.fn(() => false),
+    hasRole: vi.fn(() => false),
+    hasAnyRole: vi.fn(() => false),
+    role: undefined,
+    permissions: [],
+  })),
+}));
+
 // Mock the permissions hook
 vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
   useTeamMemberPermissions: () => ({
@@ -10,6 +58,11 @@ vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
     canDelete: true,
     isLoading: false,
   }),
+}));
+
+// Mock the auth actions
+vi.mock('@/lib/auth', () => ({
+  deleteTeamMember: vi.fn(),
 }));
 
 // Mock next/image

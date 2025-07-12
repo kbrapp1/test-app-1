@@ -13,8 +13,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { useAuthentication } from '@/lib/auth/providers/AuthenticationProvider';
-import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/auth/roles';
+import { useAuthentication } from '@/lib/auth';
+import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 

@@ -29,7 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useUserProfile } from "@/lib/auth/providers/UserProfileProvider"
+import { useUserProfile } from "@/lib/auth"
 import { usePerformanceMonitor } from "@/lib/monitoring/presentation/providers/performance-analysis/PerformanceMonitorProvider"
 
 /**

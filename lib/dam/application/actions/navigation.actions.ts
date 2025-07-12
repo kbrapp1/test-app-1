@@ -13,7 +13,7 @@
 
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { ListFoldersUseCase, NavigateToFolderUseCase } from '../use-cases/folders';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { NotFoundError } from '@/lib/errors/base';

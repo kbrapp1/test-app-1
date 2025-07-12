@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { UpdateFolderUseCase, DeleteFolderUseCase, CreateFolderUseCase } from '../use-cases/folders';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';

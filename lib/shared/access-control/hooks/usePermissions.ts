@@ -9,7 +9,7 @@
  */
 
 import { useUser } from '@/lib/hooks/useUser';
-import { Permission, UserRole } from '@/lib/auth/roles';
+import { Permission, UserRole } from '@/lib/auth';
 import { useMemo } from 'react';
 
 export interface UsePermissionsResult {

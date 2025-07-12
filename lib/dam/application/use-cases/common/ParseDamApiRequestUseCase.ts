@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { ValidationError } from '@/lib/errors/base';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { DamApiRequestDto } from '../../dto/DamApiRequestDto';
 import { DamFilterParameters, DamSortParameters, LimitOptions } from '../../dto/SearchCriteriaDTO';
 

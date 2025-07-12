@@ -9,7 +9,7 @@
  * - Follow DDD application layer patterns
  */
 
-import { Permission } from '@/lib/auth/roles';
+import { Permission } from '@/lib/auth';
 import { checkTtsAccess as checkBaseTtsAccess, FeatureAccessResult } from '@/lib/shared/access-control/server/checkFeatureAccess';
 import { TtsPermissionDeniedError, TtsFeatureNotAvailableError, TtsOrganizationAccessError } from '../../domain/common/TtsError';
 

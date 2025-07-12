@@ -12,7 +12,7 @@ import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { AuthContextType, Profile } from './types';
 import { SuperAdminPermissionService } from './permissions';
-import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
+import { useUserProfile } from '../presentation/providers/UserProfileProvider';
 
 /**
  * Enhanced auth hook with super admin support

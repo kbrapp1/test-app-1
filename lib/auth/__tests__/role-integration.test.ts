@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { UserRole, Permission, ROLE_PERMISSIONS } from '../roles';
+import { UserRole } from '../domain/value-objects/UserRole';
+import { Permission, ROLE_PERMISSIONS } from '../domain/value-objects/Permission';
 
 // Test role-based permission integration
 describe('Role-Based Permission Integration', () => {

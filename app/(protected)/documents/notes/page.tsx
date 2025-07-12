@@ -9,7 +9,7 @@
  */
 
 import { checkNotesAccess } from '@/lib/shared/access-control';
-import { Permission } from '@/lib/auth/roles';
+import { Permission } from '@/lib/auth';
 import NotesPageContent from './NotesPageContent';
 import { NoOrganizationAccess, FeatureNotAvailable, InsufficientPermissions } from '@/components/access-guards';
 import { createClient } from '@/lib/supabase/server';

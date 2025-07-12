@@ -8,7 +8,7 @@ import type { ListSavedSearchesRequest } from '../use-cases/search/ListSavedSear
 import type { ExecuteSavedSearchRequest } from '../use-cases/search/ExecuteSavedSearchUseCase';
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { checkDamFeatureFlag } from '../services/DamFeatureFlagService';
 
 /**

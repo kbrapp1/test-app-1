@@ -10,7 +10,7 @@ import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { ValidationError, ExternalServiceError } from '@/lib/errors/base';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { SupabaseStorageService } from '@/lib/dam/infrastructure/storage/SupabaseStorageService';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { UploadAssetUseCase } from '@/lib/dam/application/use-cases/assets';

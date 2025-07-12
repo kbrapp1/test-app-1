@@ -3,7 +3,7 @@ import { withAuth, AuthenticatedHandler } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { NotFoundError } from '@/lib/errors/base';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { GetAssetDetailsUseCase, UpdateAssetMetadataUseCase, DeleteAssetUseCase } from '@/lib/dam/application/use-cases/assets';

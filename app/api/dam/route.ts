@@ -3,7 +3,7 @@ import { withAuth } from '@/lib/supabase/auth-middleware';
 import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { DatabaseError, ValidationError } from '@/lib/errors/base';
-import { getActiveOrganizationId } from '@/lib/auth/server-action';
+import { getActiveOrganizationId } from '@/lib/auth';
 
 // DDD imports - delegate to use cases
 import { GetDamDataUseCase } from '@/lib/dam/application/use-cases/search';

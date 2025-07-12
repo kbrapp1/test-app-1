@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useOrganizationSelector } from '@/lib/auth/hooks/use-organization-selector';
+import { useOrganizationSelector } from '@/lib/auth';
 import { OrganizationSelectorDropdown } from './OrganizationSelectorDropdown';
 import type { Profile } from '@/lib/auth';
 

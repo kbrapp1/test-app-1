@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useUserProfile } from '@/lib/auth/providers/UserProfileProvider';
+import { useUserProfile } from '@/lib/auth';
 import { isSuperAdmin } from '@/lib/auth/super-admin';
 import { PerformanceMonitor } from '../performance-analysis/PerformanceMonitor';
 import { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';

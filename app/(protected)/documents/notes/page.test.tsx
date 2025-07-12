@@ -195,8 +195,8 @@ describe('NotesPage', () => {
     const Page = await NotesPage();
     render(Page);
     
-    // Verify the mock was called
-    expect(mockCheckNotesAccess).toHaveBeenCalledWith(['view:note']);
+    // Verify the mock was called (no arguments expected)
+    expect(mockCheckNotesAccess).toHaveBeenCalledWith();
     
     expect(screen.getByTestId('feature-not-available')).toBeInTheDocument();
     expect(screen.getByText('Notes feature is not available.')).toBeInTheDocument();
