@@ -29,6 +29,10 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
   const [currentPredictionId, setCurrentPredictionId] = useState<string | null>(null);
   const [ttsPredictionDbId, setTtsPredictionDbId] = useState<string | null>(null);
   const [ttsErrorMessage, setTtsErrorMessage] = useState<string | null>(null);
+  
+  // State for loaded predictions (from history)
+  const [loadedAudioUrl, setLoadedAudioUrl] = useState<string | null>(null);
+  const [loadedStatus, setLoadedStatus] = useState<string | null>(null);
 
   // React Query for polling generation result
   const {
@@ -78,8 +82,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
   });
 
   // Handle generation completion
-  const predictionStatus = (generationResult?.success && 'status' in generationResult) ? generationResult.status : null;
-  const audioUrl = (generationResult?.success && 'audioUrl' in generationResult) ? generationResult.audioUrl : null;
+  const predictionStatus = loadedStatus || ((generationResult?.success && 'status' in generationResult) ? generationResult.status : null);
+  const audioUrl = loadedAudioUrl || ((generationResult?.success && 'audioUrl' in generationResult) ? generationResult.audioUrl : null);
 
   // Effect to handle completion
   useEffect(() => {
@@ -114,6 +118,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     setCurrentPredictionId(null);
     setTtsPredictionDbId(null);
     setTtsErrorMessage(null);
+    setLoadedAudioUrl(null);
+    setLoadedStatus(null);
     queryClient.removeQueries({ queryKey: ['tts-generation-result'] });
   }, [queryClient]);
 
@@ -160,6 +166,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
   }) => {
     resetTtsState();
     setTtsPredictionDbId(data.dbId);
+    setLoadedAudioUrl(data.audioUrl);
+    setLoadedStatus(data.status || null);
     // Don't set currentPredictionId to avoid polling for already completed predictions
   }, [resetTtsState]);
 

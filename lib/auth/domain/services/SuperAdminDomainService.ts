@@ -8,7 +8,7 @@
  * - Single responsibility: Super admin domain operations
  */
 
-import { SuperAdminRole } from '../value-objects/SuperAdminRole';
+
 import { UserId } from '../value-objects/UserId';
 import { OrganizationId } from '../value-objects/OrganizationId';
 import { UserAggregate } from '../aggregates/UserAggregate';

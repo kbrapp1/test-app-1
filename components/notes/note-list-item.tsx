@@ -24,7 +24,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { NoteEditForm } from './note-edit-form'; // Import the new form component
 import type { ColorOption } from '@/types/notes'; // Import central ColorOption
-import { useNotesPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
+// Removed useNotesUnifiedContext import - now receives props from parent
 
 // Type for the Server Action function signatures
 type DeleteNoteAction = (prevState: any, formData: FormData) => Promise<{
@@ -63,6 +63,10 @@ interface NoteListItemProps {
     editNoteAction: EditNoteAction;
     rotationClass?: string;
     availableColors: ColorOption[];
+    // Add unified context props
+    canUpdate: boolean;
+    canDelete: boolean;
+    isLoading: boolean;
 }
 
 export function NoteListItem({ 
@@ -71,12 +75,16 @@ export function NoteListItem({
     deleteNoteAction, 
     editNoteAction, 
     rotationClass,
-    availableColors
+    availableColors,
+    canUpdate,
+    canDelete,
+    isLoading
 }: NoteListItemProps) {
   const [deleteState, deleteFormAction] = useActionState(deleteNoteAction, initialActionState);
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const { canUpdate, canDelete, isLoading } = useNotesPermissions();
+  
+  // Permissions now come from props instead of individual hook calls
 
   // dnd-kit hook
   const { 

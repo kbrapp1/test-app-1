@@ -37,9 +37,12 @@ export class ApiDeduplicationService {
   private readonly domainTimeouts: Record<string, number> = {
     'getUser': 8000,           // 8 seconds for user validation
     'getActiveOrganizationId': 10000, // 10 seconds for org context
-    'tts-operations': 5000,    // 5 seconds for TTS workflows
+    'tts-operations': 1500,    // 1.5 seconds for TTS workflows (reduced from 5s)
     'dam-operations': 6000,    // 6 seconds for DAM operations
+    'notes-operations': 3000,  // 3 seconds for Notes unified context (rapid refresh protection)
     'organization-switch': 2000, // 2 seconds for context switches (security-sensitive)
+    'saveTtsAudioToDam': 800,  // 800ms for save operations (unique per asset name)
+    'markTtsUrlProblematic': 500, // 500ms for marking operations
     'default': 1500           // Default for other operations
   };
 
@@ -170,7 +173,21 @@ export class ApiDeduplicationService {
    * Generate unique key for request deduplication
    */
   private generateKey(actionId: string, parameters: any[]): string {
-    const paramHash = JSON.stringify(parameters);
+    // For save operations, include timestamp to make them more unique
+    // This prevents legitimate save operations from being deduplicated
+    const saveOperations = ['saveTtsAudioToDam', 'saveAsNewTextAsset', 'updateAssetText'];
+    const shouldIncludeTimestamp = saveOperations.some(op => actionId.includes(op));
+    
+    let paramHash = JSON.stringify(parameters);
+    
+    // Add timestamp for save operations to prevent over-aggressive deduplication
+    if (shouldIncludeTimestamp) {
+      // Round to nearest 100ms to allow very rapid duplicate clicks to be caught
+      // but allow legitimate saves with different asset names
+      const roundedTimestamp = Math.floor(Date.now() / 100) * 100;
+      paramHash += `:${roundedTimestamp}`;
+    }
+    
     return `${actionId}:${this.hashString(paramHash)}`;
   }
 

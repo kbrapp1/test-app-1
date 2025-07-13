@@ -17,7 +17,7 @@ export default async function ChatbotWidgetLayout({ children }: { children: Reac
   // Feature flag check - server-side
   const supabase = createSupabaseServerClient();
   const organization = await getActiveOrganizationWithFlags(supabase);
-  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+  const flags = organization?.featureFlags as Record<string, boolean> | undefined;
   
   // Default to true if flag is missing, but respect explicit false values
   const isChatbotEnabled = flags ? (flags.hasOwnProperty('chatbot_widget') ? flags['chatbot_widget'] : true) : true;

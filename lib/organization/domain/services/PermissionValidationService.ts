@@ -7,10 +7,13 @@
  * - Integrates with optimized validation chain
  * - Maintains all existing functionality with performance improvements
  * - Single responsibility: Organization permission validation
+ * - NOW SUPPORTS: Both client-side and server-side usage via dependency injection
+ * - CONTEXT AWARE: Uses appropriate auth method based on Supabase client type
  */
 
-import { createClient } from '@/lib/supabase/client';
-import { GlobalAuthenticationService } from '@/lib/shared/infrastructure/GlobalAuthenticationService';
+import { createClient as createClientSide } from '@/lib/supabase/client';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getGlobalAuthenticationService } from '@/lib/auth';
 
 export interface OrganizationPermission {
   organization_id: string;
@@ -26,16 +29,29 @@ export interface PermissionValidationError extends Error {
 }
 
 export class PermissionValidationService {
-  private supabase = createClient();
-  private globalAuth = GlobalAuthenticationService.getInstance();
+  private supabase: SupabaseClient;
+  private globalAuth = getGlobalAuthenticationService();
+  private isServerContext: boolean;
 
   /**
-   * Get current user with cached validation
+   * Constructor accepting Supabase client for server/client compatibility
+   * @param supabaseClient - Optional Supabase client (defaults to client-side)
+   */
+  constructor(supabaseClient?: SupabaseClient) {
+    this.supabase = supabaseClient || createClientSide();
+    // Detect if we're in server context by checking if we received a server client
+    this.isServerContext = !!supabaseClient;
+  }
+
+  /**
+   * Get current user with cached validation - context aware
    */
   async getCurrentUser() {
     try {
-      // Use cached validation instead of direct supabase.auth.getUser()
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()      // Server context
+        : await this.globalAuth.getAuthenticatedUserClient(); // Client context
       
       if (!authResult.isValid || !authResult.user) {
         throw new Error('User not authenticated');
@@ -52,8 +68,10 @@ export class PermissionValidationService {
    */
   async hasOrganizationPermission(organizationId: string, permission?: string): Promise<boolean> {
     try {
-      // Use cached validation
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         return false;
@@ -91,8 +109,10 @@ export class PermissionValidationService {
    */
   async getUserAccessibleOrganizations(): Promise<OrganizationPermission[]> {
     try {
-      // Use cached validation instead of direct supabase.auth.getUser()
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         throw new Error('User not authenticated');
@@ -119,8 +139,10 @@ export class PermissionValidationService {
    */
   async getUserRoleInOrganization(organizationId: string): Promise<string | null> {
     try {
-      // Use cached validation
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         return null;
@@ -150,8 +172,10 @@ export class PermissionValidationService {
    */
   async getActiveOrganizationId(): Promise<string | null> {
     try {
-      // Use cached validation
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         return null;
@@ -180,8 +204,10 @@ export class PermissionValidationService {
     }
 
     try {
-      // Use cached validation
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         return false;
@@ -210,8 +236,10 @@ export class PermissionValidationService {
     requiredPermission?: string
   ): Promise<{ isValid: boolean; error?: string; userId?: string }> {
     try {
-      // Use cached validation
-      const authResult = await this.globalAuth.getAuthenticatedUserClient();
+      // Use appropriate auth method based on context
+      const authResult = this.isServerContext 
+        ? await this.globalAuth.getAuthenticatedUser()
+        : await this.globalAuth.getAuthenticatedUserClient();
       
       if (!authResult.isValid || !authResult.user) {
         return { isValid: false, error: 'User not authenticated' };

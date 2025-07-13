@@ -12,14 +12,14 @@
 export { UserId } from './value-objects/UserId';
 export { OrganizationId } from './value-objects/OrganizationId';
 export { Email } from './value-objects/Email';
-export { TokenHash } from './value-objects/TokenHash';
+
 
 // Domain Entities (Aggregate Roots)
 export { UserAggregate } from './aggregates/UserAggregate';
 export { OrganizationAggregate } from './aggregates/OrganizationAggregate';
 
 // Domain Services
-export { AuthenticationDomainService } from './services/AuthenticationDomainService';
+
 export { PermissionService } from './services/PermissionService';
 export { TokenService } from './services/TokenService';
 export { PasswordService } from './services/PasswordService';
@@ -80,7 +80,4 @@ export type {
   PasswordRequirements 
 } from './services/PasswordService';
 
-export type { 
-  AuthenticationContext,
-  LoginAttempt
-} from './services/AuthenticationDomainService'; 
+ 

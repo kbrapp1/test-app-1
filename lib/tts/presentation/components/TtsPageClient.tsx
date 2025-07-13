@@ -1,24 +1,12 @@
 'use client';
 import React, { useState, useCallback } from 'react';
 import { Clock } from 'lucide-react';
-import { TtsHistoryPanel, TtsInterface, type TtsFormInitializationData, SaveAsDialog, useHeadlessAudioPlayer, useTtsSaveAsDialog, saveTtsAudioToDam } from '@/lib/tts';
+import { TtsHistoryPanel, TtsInterface, type TtsFormInitializationData, SaveAsDialog, useHeadlessAudioPlayer, useTtsSaveAsDialog, useTtsOperations } from '@/lib/tts';
 import { TtsHistoryItem } from '@/lib/tts/presentation/types/TtsPresentation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useOrganizationContext } from '@/lib/organization/application/hooks/useOrganizationContext';
+import { useTtsUnifiedContext } from '../hooks/useTtsUnifiedContext';
 import { TtsErrorBoundary } from './TtsErrorBoundary';
-
-/**
- * TTS Page Client Component
- * 
- * AI INSTRUCTIONS:
- * - Uses organization context hook for automatic organization scoping
- * - SECURITY: All operations automatically scoped to active organization via server actions
- * - Server actions handle all validation with security-aware caching
- * - Handles TTS interface and history management within organization boundaries
- * - Follows DDD optimization patterns with error boundaries
- * - ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS (React rules)
- */
 
 interface TtsPageClientProps {
   // No props needed - server actions handle all validation and organization context
@@ -26,8 +14,14 @@ interface TtsPageClientProps {
 
 export function TtsPageClient({}: TtsPageClientProps = {}) {
   // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
-  // SECURITY: Get active organization context for all operations
-  const { activeOrganizationId, isLoading: isLoadingOrganization } = useOrganizationContext();
+  // OPTIMIZATION: Use unified context to reduce API calls from 3 to 1
+  const { 
+    organizationId: activeOrganizationId, 
+    isLoading,
+    isTtsEnabled,
+    error,
+    fromCache 
+  } = useTtsUnifiedContext();
   
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [formInitialValues, setFormInitialValues] = useState<TtsFormInitializationData | undefined>(undefined);
@@ -44,6 +38,21 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
     error: headlessPlayerError,
   } = useHeadlessAudioPlayer();
 
+  // UNIFIED OPERATIONS: Use the TTS operations hook for all CRUD operations
+  const {
+    saveToDam,
+    saveAudioToDam,
+    isSavingToDam,
+    saveError
+  } = useTtsOperations({
+    organizationId: activeOrganizationId,
+    isHistoryOpen,
+    headlessPlayerError,
+    headlessPlayerCurrentlyPlayingUrl: headlessPlayerUrl,
+    shouldRefreshHistory,
+    onRefreshComplete: () => setShouldRefreshHistory(false),
+  });
+
   const {
     isSaveAsDialogOpen,
     openSaveAsDialog,
@@ -52,7 +61,6 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
     setIsSaveAsDialogOpen,
   } = useTtsSaveAsDialog({
     onSaveComplete: () => setShouldRefreshHistory(true)
-    // NOTE: useTtsSaveAsDialog should use useOrganizationContext() internally
   });
 
   const toggleHistoryPanel = useCallback(() => {
@@ -67,7 +75,7 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
     if (item.inputText && item.voiceDisplayName) {
       setFormInitialValues({
         inputText: item.inputText,
-        voiceId: item.voiceDisplayName, // Note: This might need adjustment based on how voiceId mapping works
+        voiceId: item.voiceDisplayName,
         provider: item.providerDisplayName?.toLowerCase() || undefined,
         key: Date.now(),
         outputUrl: item.outputUrl,
@@ -98,56 +106,86 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
     }
   }, [headlessPlayAudio, headlessPauseAudio, headlessResumeAudio, headlessStopAudio, isHeadlessPlayerPlaying, headlessPlayerUrl]);
 
-  const handleSaveToDam = async (item: TtsHistoryItem): Promise<boolean> => {
-    const predictionId = item.id;
-    const audioUrl = item.outputUrl;
-    if (!audioUrl) {
-      toast.error('No audio output URL found for this item.');
+  const handleSaveToDam = useCallback(async (item: TtsHistoryItem): Promise<boolean> => {
+    if (!item.outputUrl) {
+      console.warn('History item is missing outputUrl for save to DAM', item);
       return false;
     }
-    const assetName = item.inputText
-      ? `${item.inputText.substring(0, 30).trim().replace(/[^a-zA-Z0-9_\s-]/g, '')}_tts_audio`
-      : `tts_audio_${new Date().toISOString()}`;
-
-    const toastId = toast.loading("Saving to DAM...");
+    
     try {
-      // NOTE: saveTtsAudioToDam should use useOrganizationContext() internally for organization scoping
-      const result = await saveTtsAudioToDam(audioUrl, assetName, predictionId, true);
+      const assetName = item.inputText 
+        ? `${item.inputText.substring(0, 30).trim().replace(/[^a-zA-Z0-9_\s-]/g, '')}_tts_audio`
+        : `tts_audio_${new Date().toISOString()}`;
       
-      if (result.success && result.assetId) {
-        toast.success(`Saved to DAM with ID: ${result.assetId}`, { id: toastId });
-        setShouldRefreshHistory(true);
-        return true;
-      } else {
-        toast.error(`Failed to save to DAM: ${result.error || 'Unknown error'}`, { id: toastId });
-        return false;
-      }
-    } catch (error: any) {
-      toast.error(`Error saving to DAM: ${error.message || 'Unknown error'}`, { id: toastId });
+      await saveToDam({
+        audioUrl: item.outputUrl,
+        assetName,
+        predictionId: item.id,
+        linkToPrediction: true
+      });
+      
+      setShouldRefreshHistory(true);
+      return true;
+    } catch (error) {
+      console.error('Save to DAM failed:', error);
       return false;
     }
-  };
+  }, [saveToDam]);
 
   const handleSaveAsToDam = useCallback(async (item: TtsHistoryItem): Promise<boolean> => {
     openSaveAsDialog(item);
     return !!item.outputUrl;
   }, [openSaveAsDialog]);
 
+  // OPTIMIZATION: Log cache performance in development
+  if (fromCache && process.env.NODE_ENV === 'development') {
+    console.log('[TTS_OPTIMIZATION] Using cached unified context - no API calls needed');
+  }
+
+  // Handle TTS feature access error
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center py-8">
+          <div className="text-red-600 mb-4">
+            <h2 className="text-xl font-semibold">TTS Access Error</h2>
+            <p className="text-sm mt-2">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle TTS feature disabled (business feature flag)
+  if (!isTtsEnabled) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center py-8">
+          <div className="text-yellow-600 mb-4">
+            <h2 className="text-xl font-semibold">TTS Feature Disabled</h2>
+            <p className="text-sm mt-2">Text-to-Speech is not enabled for your organization.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // SECURITY: Wait for organization context to load before rendering
-  if (isLoadingOrganization) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4">
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading organization context...</p>
+          {process.env.NODE_ENV === 'development' && (
+            <p className="text-xs text-gray-400 mt-2">Optimized (1 API call)</p>
+          )}
         </div>
       </div>
     );
   }
 
   // SECURITY: Server actions handle all validation with organization context
-  // No client-side validation needed since TTS operations are secured at server level
-
   return (
     <TtsErrorBoundary 
       fallbackTitle="TTS Service Error"
@@ -171,43 +209,65 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
           />
         </TtsErrorBoundary>
 
-        {isHistoryOpen && (
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={toggleHistoryPanel}
-            aria-hidden="true"
-          />
+        {/* History Panel */}
+        <TtsHistoryPanel
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          onReloadInputFromItem={handleReloadInputFromItem}
+          onReplayItem={handleReplayItem}
+          onDeleteItem={() => {}}
+          onViewInDamItem={() => {}}
+          onSaveToDam={handleSaveToDam}
+          onSaveAsToDam={handleSaveAsToDam}
+          headlessPlayerCurrentlyPlayingUrl={headlessPlayerUrl}
+          isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
+          isHeadlessPlayerLoading={isHeadlessPlayerLoading}
+          headlessPlayerError={headlessPlayerError}
+          shouldRefresh={shouldRefreshHistory}
+          onRefreshComplete={() => setShouldRefreshHistory(false)}
+        />
+
+        {/* Save As Dialog */}
+        {isSaveAsDialogOpen && (
+          <TtsErrorBoundary fallbackTitle="Save As Dialog Error">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                <h3 className="text-lg font-semibold mb-4">Save Audio to DAM</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="asset-name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Asset Name
+                    </label>
+                    <input
+                      id="asset-name"
+                      type="text"
+                      defaultValue={defaultSaveAsName}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter asset name..."
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsSaveAsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const input = document.getElementById('asset-name') as HTMLInputElement;
+                        const assetName = input?.value || defaultSaveAsName;
+                        submitSaveAsDialog(assetName);
+                      }}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TtsErrorBoundary>
         )}
-
-        {/* TTS History Panel wrapped with error boundary */}
-        <TtsErrorBoundary fallbackTitle="TTS History Error">
-          <TtsHistoryPanel
-            isOpen={isHistoryOpen}
-            onClose={toggleHistoryPanel}
-            onReloadInputFromItem={handleReloadInputFromItem}
-            onReplayItem={handleReplayItem}
-            onViewInDamItem={() => {}}
-            onDeleteItem={() => {}}
-            onSaveToDam={handleSaveToDam}
-            onSaveAsToDam={handleSaveAsToDam}
-            headlessPlayerCurrentlyPlayingUrl={headlessPlayerUrl}
-            isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
-            isHeadlessPlayerLoading={isHeadlessPlayerLoading}
-            headlessPlayerError={headlessPlayerError}
-            shouldRefresh={shouldRefreshHistory}
-            onRefreshComplete={() => setShouldRefreshHistory(false)}
-          />
-        </TtsErrorBoundary>
-
-        {/* Save As Dialog wrapped with error boundary */}
-        <TtsErrorBoundary fallbackTitle="Save Dialog Error">
-          <SaveAsDialog
-            isOpen={isSaveAsDialogOpen}
-            onOpenChange={setIsSaveAsDialogOpen}
-            onSubmit={submitSaveAsDialog}
-            defaultAssetName={defaultSaveAsName}
-          />
-        </TtsErrorBoundary>
       </div>
     </TtsErrorBoundary>
   );

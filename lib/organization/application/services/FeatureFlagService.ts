@@ -18,7 +18,7 @@ export async function checkFeatureFlag(flagName: string, featureName: string): P
   try {
     const supabase = createSupabaseServerClient();
     const organization = await getActiveOrganizationWithFlags(supabase);
-    const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+    const flags = organization?.featureFlags as Record<string, boolean> | undefined;
 
     // Default to true if flag is missing, but respect explicit false values
     const isEnabled = flags ? (flags.hasOwnProperty(flagName) ? flags[flagName] : true) : true;
@@ -46,7 +46,7 @@ export async function isFeatureEnabled(flagName: string): Promise<boolean> {
   try {
     const supabase = createSupabaseServerClient();
     const organization = await getActiveOrganizationWithFlags(supabase);
-    const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+    const flags = organization?.featureFlags as Record<string, boolean> | undefined;
     
     // Default to true if flag is missing, but respect explicit false values
     return flags ? (flags.hasOwnProperty(flagName) ? flags[flagName] : true) : true;
@@ -66,7 +66,7 @@ export async function getEnabledFeatures(): Promise<string[]> {
   try {
     const supabase = createSupabaseServerClient();
     const organization = await getActiveOrganizationWithFlags(supabase);
-    const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+    const flags = organization?.featureFlags as Record<string, boolean> | undefined;
     
     if (!flags) return [];
     

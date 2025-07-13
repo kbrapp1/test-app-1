@@ -8,6 +8,7 @@
 // Role and permission definitions (from new DDD structure)
 export * from './domain/value-objects/UserRole';
 export * from './domain/value-objects/Permission';
+export { Organization } from './domain/value-objects/Organization';
 
 // Authorization utilities (from enhanced PermissionService)
 export { PermissionService } from './domain/services/PermissionService';
@@ -29,6 +30,10 @@ export * from './super-admin';
 // Services (moved to infrastructure layer)
 export { updateUserProfile } from './infrastructure/persistence/supabase/ProfileRepository';
 export { completeOnboardingMembership } from './infrastructure/services/OnboardingService';
+export { OrganizationApplicationService } from './application/services/OrganizationApplicationService';
+
+// Infrastructure Services
+export { getGlobalAuthenticationService } from './infrastructure/composition/AuthCompositionRoot';
 
 // Presentation Layer Exports
 export * from './presentation';
@@ -47,3 +52,13 @@ export type { AuthenticatedUser, AuthActionResult } from './infrastructure/wrapp
 
 // Organization context utilities (from presentation layer)
 export { getActiveOrganizationId } from './presentation/actions/serverActions'; 
+
+// Export authorization functions
+export {
+  hasRole,
+  hasAnyRole,
+  hasPermission,
+  hasPermissionWithSuperAdminCheck,
+  hasAnyPermission,
+  getUserPermissions
+} from './infrastructure/adapters/AuthorizationCompatibilityAdapter'; 

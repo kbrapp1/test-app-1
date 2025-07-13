@@ -23,7 +23,7 @@ export default async function DamGalleryPage({
   // Feature flag check - server-side
   const supabase = createSupabaseServerClient();
   const organization = await getActiveOrganizationWithFlags(supabase);
-  const flags = organization?.feature_flags as Record<string, boolean> | undefined;
+  const flags = organization?.featureFlags as Record<string, boolean> | undefined;
   const isDamEnabled = flags?.dam ?? false;
 
   // If DAM feature is not enabled, show feature not enabled message

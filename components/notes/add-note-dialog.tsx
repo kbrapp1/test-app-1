@@ -6,7 +6,7 @@
  * - Shows dialog only if user has CREATE_NOTE permission
  * - Follows fail-secure principles (hide if no permission)
  * - Single responsibility: note creation dialog
- * - Imports server actions directly instead of receiving as props
+ * - Uses callback prop for note creation to support optimistic updates
  */
 
 'use client';
@@ -20,63 +20,97 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter, // If needed for custom footer buttons
-  DialogClose, // To close dialog from within
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
-import { AddNoteForm } from './add-note-form'; // Import the actual form
+import { AddNoteForm } from './add-note-form';
 import { PlusCircleIcon } from 'lucide-react';
-import { useNotesPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
-import { addNote } from '@/app/(protected)/documents/notes/actions';
 
 interface AddNoteDialogProps {
-    triggerButtonText?: string; // Optional custom text for the trigger
+    triggerButtonText?: string;
+    canCreate: boolean;
+    isLoading: boolean;
+    organizationId: string | null;
+    onAddNote?: (noteData: { title: string; content: string; color_class?: string }) => Promise<void>; // ✅ OPTIMIZATION: Callback for optimistic updates
 }
 
-export function AddNoteDialog({ triggerButtonText = "Add Note" }: AddNoteDialogProps) {
+export function AddNoteDialog({ 
+  triggerButtonText = "Add Note", 
+  canCreate, 
+  isLoading, 
+  organizationId,
+  onAddNote 
+}: AddNoteDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const { canCreate, isLoading } = useNotesPermissions();
-
+    
     // AI: Don't render if no permission or still loading (fail-secure)
     if (isLoading || !canCreate) {
         return null;
     }
 
-    // We need a way for AddNoteForm to tell us it succeeded so we can close the dialog.
-    // We can modify AddNoteForm to accept an onFormSuccess callback.
-    const handleFormSuccess = () => {
-        setIsOpen(false); // Close the dialog
+    // ✅ OPTIMIZATION: Handle note creation with callback or fallback
+    const handleCreateNote = async (prevState: any, formData: FormData) => {
+        const title = formData.get('title')?.toString() || '';
+        const content = formData.get('content')?.toString() || '';
+        const color_class = formData.get('color_class')?.toString() || 'bg-yellow-200';
+
+        if (!title.trim()) {
+            return { success: false, message: 'Title is required' };
+        }
+
+        try {
+            if (onAddNote) {
+                // ✅ OPTIMIZATION: Use callback for optimistic updates
+                await onAddNote({ title, content, color_class });
+                setIsOpen(false); // Close dialog on success
+                return { success: true, message: 'Note added successfully' };
+            } else {
+                // ✅ FALLBACK: Use direct server action if no callback provided
+                const { createNote } = await import('@/lib/notes/presentation/actions/notesUnifiedActions');
+                const result = await createNote({ title, content, color_class });
+                
+                if (result.success) {
+                    setIsOpen(false); // Close dialog on success
+                    // Note: Without callback, UI won't update optimistically
+                    return { success: true, message: 'Note added successfully' };
+                } else {
+                    return { success: false, message: result.error || 'Failed to add note' };
+                }
+            }
+        } catch (error) {
+            console.error('Error creating note:', error);
+            return { 
+                success: false, 
+                message: error instanceof Error ? error.message : 'Failed to add note' 
+            };
+        }
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                 <Button>
-                     <PlusCircleIcon className="mr-2 h-4 w-4" />
-                     {triggerButtonText}
-                 </Button>
+                <Button 
+                    variant="default" 
+                    size="sm"
+                    disabled={isLoading || !canCreate}
+                >
+                    <PlusCircleIcon className="mr-2 h-4 w-4" />
+                    {triggerButtonText}
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Add New Note</DialogTitle>
                     <DialogDescription>
-                       Enter the content for your new note below. Click save when you're done.
+                        Create a new note to organize your thoughts and ideas.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    {/* Pass the success callback to the form */}
-                    <AddNoteForm addNoteAction={addNote} onFormSuccess={handleFormSuccess} />
-                </div>
-                {/* 
-                    Note: The AddNoteForm now contains its own submit button.
-                    We don't need a separate DialogFooter with save/cancel unless 
-                    we restructure AddNoteForm.
-                 */}
-                 {/* <DialogFooter>
-                     <DialogClose asChild>
-                         <Button type="button" variant="secondary">Cancel</Button>
-                     </DialogClose>
-                     <Button type="submit" form="add-note-form-id">Save</Button> // Need form ID 
-                 </DialogFooter> */}
+                
+                {/* ✅ OPTIMIZATION: Pass optimistic update handler to form */}
+                <AddNoteForm 
+                    addNoteAction={handleCreateNote}
+                    onFormSuccess={() => setIsOpen(false)}
+                />
             </DialogContent>
         </Dialog>
     );

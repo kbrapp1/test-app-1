@@ -1,13 +1,11 @@
 /**
- * Global Authentication Service - Shared Infrastructure
+ * Global Authentication Service - Auth Domain Infrastructure
  * 
  * AI INSTRUCTIONS:
- * - Single source of truth for all user authentication across the application
- * - Consolidates all supabase.auth.getUser() calls into one cached service
- * - Eliminates redundant validation calls from DAM, organization, and other domains
- * - Uses 5-second cache TTL with token hash security validation
- * - Provides both client-side and server-side authentication methods
- * - Follows @golden-rule patterns exactly
+ * - Auth domain service for eliminating redundant supabase.auth.getUser() calls
+ * - 5-second cache TTL with token hash security validation
+ * - Single source of truth for user authentication across all domains
+ * - Keep under 250 lines following @golden-rule patterns
  */
 
 import { createClient as createServerClient } from '@/lib/supabase/server';

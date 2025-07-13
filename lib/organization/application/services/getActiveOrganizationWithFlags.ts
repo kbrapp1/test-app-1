@@ -1,5 +1,5 @@
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import type { Organization } from '@/lib/auth/services/organization-service';
+import { Organization } from '@/lib/auth/domain/value-objects/Organization';
 
 /**
  * Fetches the full active organization entity, including feature flags.
@@ -35,7 +35,6 @@ export async function getActiveOrganizationWithFlags(supabase: ReturnType<typeof
     return null;
   }
 
-  // We can assume the shape matches the Organization entity for simplicity here.
-  // In a stricter setup, we would use a mapper.
-  return orgData as Organization;
+  // Use the Organization value object factory method
+  return Organization.fromDatabase(orgData);
 } 

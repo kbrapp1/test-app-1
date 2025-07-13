@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { SuperAdminIcon } from './SuperAdminBadge';
-import type { Organization } from '@/lib/auth/services/organization-service';
+import { Organization } from '@/lib/auth/domain/value-objects/Organization';
 import type { Profile } from '@/lib/auth';
 
 interface OrganizationSelectorDropdownProps {

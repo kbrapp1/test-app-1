@@ -11,7 +11,7 @@
 import { BusinessRuleViolationError } from '../errors/AuthDomainError';
 import { OrganizationId } from '../value-objects/OrganizationId';
 import { UserId } from '../value-objects/UserId';
-import { TokenHash } from '../value-objects/TokenHash';
+
 
 export interface TokenValidationResult {
   isValid: boolean;
@@ -42,10 +42,10 @@ export class TokenService {
   /**
    * Validates JWT token and extracts claims
    */
-  static validateToken(tokenHash: TokenHash): TokenValidationResult {
+  static validateToken(tokenHash: string): TokenValidationResult {
     try {
       // Basic token format validation
-      if (tokenHash.isEmpty()) {
+      if (!tokenHash || tokenHash.trim() === '') {
         return {
           isValid: false,
           reason: 'Invalid token format'
@@ -104,7 +104,7 @@ export class TokenService {
    * Validates organization context from token
    */
   static validateOrganizationContext(
-    tokenHash: TokenHash, 
+    tokenHash: string, 
     expectedOrganizationId: OrganizationId
   ): boolean {
     const validation = this.validateToken(tokenHash);
@@ -119,7 +119,7 @@ export class TokenService {
   /**
    * Checks if token is expired
    */
-  static isTokenExpired(tokenHash: TokenHash): boolean {
+  static isTokenExpired(tokenHash: string): boolean {
     const validation = this.validateToken(tokenHash);
     return !validation.isValid && validation.reason === 'Token has expired';
   }
@@ -128,7 +128,7 @@ export class TokenService {
    * Extracts basic claims from token
    * Note: In real app, this would use proper JWT library
    */
-  private static extractClaims(tokenHash: TokenHash): TokenClaims | null {
+  private static extractClaims(tokenHash: string): TokenClaims | null {
     try {
       // This is a simplified version - in real app, Supabase handles JWT parsing
       // We're just defining the interface for business logic

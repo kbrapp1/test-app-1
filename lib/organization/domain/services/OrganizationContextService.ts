@@ -2,7 +2,8 @@
 // Single Responsibility: Handle user organization context operations
 // DDD: Clean domain logic separation with proper error handling
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient as createClientSide } from '@/lib/supabase/client';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface OrganizationContext {
   id?: string;
@@ -21,7 +22,18 @@ export interface OrganizationContextError extends Error {
 }
 
 export class OrganizationContextService {
-  private supabase = createClient();
+  private supabase: SupabaseClient;
+
+  /**
+   * AI INSTRUCTIONS:
+   * - Accept Supabase client to support both client-side and server-side usage
+   * - Client-side: pass createClient() from @/lib/supabase/client
+   * - Server-side: pass createClient() from @/lib/supabase/server
+   * - This fixes 'Auth session missing!' error in server actions
+   */
+  constructor(supabaseClient?: SupabaseClient) {
+    this.supabase = supabaseClient || createClientSide();
+  }
 
   // Get current user's organization context
   async getCurrentContext(): Promise<OrganizationContext | null> {

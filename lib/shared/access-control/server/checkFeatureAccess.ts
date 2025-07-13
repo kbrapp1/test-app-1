@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { GlobalAuthenticationService } from '@/lib/shared/infrastructure/GlobalAuthenticationService';
+import { getGlobalAuthenticationService } from '@/lib/auth';
 
 export interface FeatureAccessResult {
   hasAccess: boolean;
@@ -41,7 +41,7 @@ export async function checkFeatureAccess(
     // Check authentication if required
     if (requireAuth) {
       // Use cached validation instead of direct supabase.auth.getUser()
-      const globalAuth = GlobalAuthenticationService.getInstance();
+      const globalAuth = getGlobalAuthenticationService();
       const authResult = await globalAuth.getAuthenticatedUser();
       
       if (!authResult.isValid || !authResult.user) {
@@ -222,9 +222,9 @@ export async function checkNotesAccess(): Promise<FeatureAccessResult> {
     requireAuth: true,
     requireOrganization: true,
     customValidation: async (user, organizationId) => {
-      // Check if user has VIEW_NOTE permission
-      const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewNotePermission = await hasPermission(user.id, Permission.VIEW_NOTE);
+      // Check if user has VIEW_NOTE permission with super admin bypass
+      const { hasPermissionWithSuperAdminCheck, Permission } = await import('@/lib/auth');
+      const hasViewNotePermission = await hasPermissionWithSuperAdminCheck(user, Permission.VIEW_NOTE);
       
       if (!hasViewNotePermission) {
         throw new Error('Insufficient permissions: [view:note] required');

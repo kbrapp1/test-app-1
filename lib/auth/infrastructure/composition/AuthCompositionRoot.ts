@@ -16,7 +16,7 @@ import { createClient } from '@/lib/supabase/client';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { IOrganizationRepository } from '../../domain/repositories/IOrganizationRepository';
 import { IProfileRepository } from '../../domain/repositories/IProfileRepository';
-import { AuthenticationDomainService } from '../../domain/services/AuthenticationDomainService';
+
 import { PermissionService } from '../../domain/services/PermissionService';
 import { TokenService } from '../../domain/services/TokenService';
 import { SuperAdminDomainService } from '../../domain/services/SuperAdminDomainService';
@@ -34,17 +34,20 @@ import { SuperAdminApplicationService } from '../../application/services/SuperAd
 
 // Infrastructure Layer
 import { UserRepository } from '../persistence/supabase/UserRepository';
-import { SupabaseOrganizationRepository } from '../persistence/supabase/OrganizationRepository';
+import { OrganizationRepository } from '../persistence/supabase/OrganizationRepository';
 import { ProfileRepository } from '../persistence/supabase/ProfileRepository';
 import { OnboardingService } from '../services/OnboardingService';
-import { OrganizationQueryService } from '../services/OrganizationQueryService';
-import { OrganizationMemberService } from '../services/OrganizationMemberService';
+import { OrganizationApplicationService } from '../../application/services/OrganizationApplicationService';
 
 // Adapters
 import { SupabaseAuthAdapter } from '../adapters/SupabaseAuthAdapter';
 import { JwtTokenAdapter } from '../adapters/JwtTokenAdapter';
 import { DatabaseUserAdapter } from '../adapters/DatabaseUserAdapter';
 import { OnboardingAdapter } from '../adapters/OnboardingAdapter';
+
+// Infrastructure Services
+import { GlobalAuthenticationService } from '../services/GlobalAuthenticationService';
+import { SimpleCacheService } from '../services/SimpleCacheService';
 
 /**
  * Auth Composition Root - Singleton dependency injection container
@@ -55,13 +58,12 @@ export class AuthCompositionRoot {
 
   // Repository instances
   private _userRepository?: IUserRepository;
-  private _organizationRepository?: IOrganizationRepository;
+  private _organizationRepository?: OrganizationRepository;
   private _profileRepository?: IProfileRepository;
 
   // Service instances
   private _onboardingService?: OnboardingService;
-  private _organizationQueryService?: OrganizationQueryService;
-  private _organizationMemberService?: OrganizationMemberService;
+  private _organizationApplicationService?: OrganizationApplicationService;
   private _superAdminDomainService?: SuperAdminDomainService;
   private _superAdminApplicationService?: SuperAdminApplicationService;
 
@@ -70,6 +72,9 @@ export class AuthCompositionRoot {
   private _jwtTokenAdapter?: JwtTokenAdapter;
   private _databaseUserAdapter?: DatabaseUserAdapter;
   private _onboardingAdapter?: OnboardingAdapter;
+
+  // Infrastructure service instances
+  private _globalAuthenticationService?: GlobalAuthenticationService;
 
   private constructor() {
     this.supabase = createClient();
@@ -93,11 +98,11 @@ export class AuthCompositionRoot {
     return this._userRepository;
   }
 
-  public getOrganizationRepository(): IOrganizationRepository {
+  public getOrganizationRepository(): OrganizationRepository {
     if (!this._organizationRepository) {
-      this._organizationRepository = new SupabaseOrganizationRepository(this.supabase);
+      this._organizationRepository = new OrganizationRepository();
     }
-    return this._organizationRepository;
+    return this._organizationRepository as OrganizationRepository;
   }
 
   public getProfileRepository(): IProfileRepository {
@@ -108,9 +113,7 @@ export class AuthCompositionRoot {
   }
 
   // Domain Service Factories (static classes)
-  public getAuthenticationDomainService(): typeof AuthenticationDomainService {
-    return AuthenticationDomainService;
-  }
+
 
   public getPermissionService(): typeof PermissionService {
     return PermissionService;
@@ -128,18 +131,11 @@ export class AuthCompositionRoot {
     return this._onboardingService;
   }
 
-  public getOrganizationQueryService(): OrganizationQueryService {
-    if (!this._organizationQueryService) {
-      this._organizationQueryService = new OrganizationQueryService(this.supabase);
+  public getOrganizationApplicationService(): OrganizationApplicationService {
+    if (!this._organizationApplicationService) {
+      this._organizationApplicationService = new OrganizationApplicationService();
     }
-    return this._organizationQueryService;
-  }
-
-  public getOrganizationMemberService(): OrganizationMemberService {
-    if (!this._organizationMemberService) {
-      this._organizationMemberService = new OrganizationMemberService(this.supabase);
-    }
-    return this._organizationMemberService;
+    return this._organizationApplicationService;
   }
 
   // Adapter Factories
@@ -171,6 +167,18 @@ export class AuthCompositionRoot {
     return this._onboardingAdapter;
   }
 
+  // Infrastructure Service Factories
+  public getGlobalAuthenticationService(): GlobalAuthenticationService {
+    if (!this._globalAuthenticationService) {
+      this._globalAuthenticationService = GlobalAuthenticationService.getInstance();
+    }
+    return this._globalAuthenticationService;
+  }
+
+  public getSimpleCacheService(): typeof SimpleCacheService {
+    return SimpleCacheService;
+  }
+
   // Use Case Factories
   public getLoginUserUseCase(): LoginUserUseCase {
     return new LoginUserUseCase(
@@ -181,7 +189,7 @@ export class AuthCompositionRoot {
   public getRegisterUserUseCase(): RegisterUserUseCase {
     return new RegisterUserUseCase(
       this.getUserRepository(),
-      this.getOrganizationRepository()
+      this.getOrganizationRepository() as any // TODO: Update RegisterUserUseCase to use OrganizationApplicationService
     );
   }
 
@@ -194,7 +202,7 @@ export class AuthCompositionRoot {
   public getChangeUserRoleUseCase(): ChangeUserRoleUseCase {
     return new ChangeUserRoleUseCase(
       this.getUserRepository(),
-      this.getOrganizationRepository()
+      this.getOrganizationRepository() as any // TODO: Update ChangeUserRoleUseCase to use OrganizationApplicationService
     );
   }
 
@@ -209,7 +217,7 @@ export class AuthCompositionRoot {
     if (!this._superAdminApplicationService) {
       this._superAdminApplicationService = new SuperAdminApplicationService(
         this.getUserRepository(),
-        this.getOrganizationRepository(),
+        this.getOrganizationRepository() as any, // TODO: Update SuperAdminApplicationService to use OrganizationApplicationService
         this.getSuperAdminDomainService()
       );
     }
@@ -245,4 +253,8 @@ export const getSwitchOrganizationUseCase = () => AuthCompositionRoot.getInstanc
 export const getChangeUserRoleUseCase = () => AuthCompositionRoot.getInstance().getChangeUserRoleUseCase();
 export const getGrantSuperAdminUseCase = () => AuthCompositionRoot.getInstance().getGrantSuperAdminUseCase();
 export const getRevokeSuperAdminUseCase = () => AuthCompositionRoot.getInstance().getRevokeSuperAdminUseCase();
-export const getSuperAdminApplicationService = () => AuthCompositionRoot.getInstance().getSuperAdminApplicationService(); 
+export const getSuperAdminApplicationService = () => AuthCompositionRoot.getInstance().getSuperAdminApplicationService();
+
+// Infrastructure service exports
+export const getGlobalAuthenticationService = () => AuthCompositionRoot.getInstance().getGlobalAuthenticationService();
+export const getSimpleCacheService = () => AuthCompositionRoot.getInstance().getSimpleCacheService(); 

@@ -1,7 +1,7 @@
 'use server';
 
 import { TtsCompositionRoot } from '../../infrastructure/composition/TtsCompositionRoot';
-import { TtsContextService } from '../../application/services/TtsContextService';
+import { TtsUnifiedContextService } from '../../application/services/TtsUnifiedContextService';
 import { TtsErrorHandler } from '../../domain/common/TtsError';
 import { TtsHistorySaveInput } from '../../domain/types/DatabaseTypes';
 import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
@@ -24,9 +24,9 @@ export async function getTtsVoices(provider?: string, modelId?: string) {
     [provider, modelId],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -59,9 +59,9 @@ export async function startSpeechGeneration(inputText: string, voiceId: string, 
     [inputText, voiceId, provider],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -102,9 +102,9 @@ export async function getSpeechGenerationResult(ttsPredictionDbId: string) {
     [ttsPredictionDbId],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -142,9 +142,9 @@ export async function saveTtsAudioToDam(
     [audioUrl, desiredAssetName, ttsPredictionId, linkToPrediction],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -178,9 +178,9 @@ export async function saveTtsHistory(input: TtsHistorySaveInput) {
     [input],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -213,9 +213,9 @@ export async function getTtsHistory(params?: GetTtsHistoryActionParams) {
     [params],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
@@ -252,9 +252,9 @@ export async function markTtsUrlProblematic(
     [ttsPredictionId, errorMessage],
     async () => {
       try {
-        // Single validation point with security context
-        const ttsContextService = TtsContextService.getInstance();
-        const context = await ttsContextService.validateTtsOperation();
+        // ✅ OPTIMIZED: Use unified context service directly (1 API call vs 3+)
+        const unifiedService = TtsUnifiedContextService.getInstance();
+        const context = await unifiedService.getUnifiedTtsContext();
         
         if (!context.isValid) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));

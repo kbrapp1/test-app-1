@@ -127,6 +127,32 @@ export function useOrganizationContext(): UseOrganizationContextResult {
       // Perform the switch with timeout
       await switchWithTimeout;
 
+      // ✅ SECURITY FIX: Clear unified context cache after org switch
+      // This prevents stale organization data for super admin users
+      try {
+        // Clear all unified context caches for this user
+        if (typeof window !== 'undefined') {
+          // Dispatch custom event to notify unified context services
+          window.dispatchEvent(new CustomEvent('organizationSwitched', {
+            detail: { 
+              userId: user?.id, 
+              newOrganizationId: organizationId,
+              previousOrganizationId: currentContext?.active_organization_id 
+            }
+          }));
+          
+          // ✅ SIMPLE & RELIABLE: Force page refresh after org switch
+          // This ensures complete context reset and prevents any cache issues
+          // Most enterprise apps do this for organization switches
+          setTimeout(() => {
+            window.location.reload();
+          }, 500); // Small delay to show success toast first
+        }
+      } catch (cacheError) {
+        console.warn('Unified context cache invalidation failed (non-critical):', cacheError);
+        // Don't fail the org switch if cache invalidation fails
+      }
+
       // Log the action for audit trail (with timeout)
       try {
         const auditWithTimeout = Promise.race([

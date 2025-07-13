@@ -85,8 +85,8 @@ export function UserProfileProvider({ children }: UserProfileProviderProps) {
 
       const previousUserId = previousUserIdRef.current;
       
-      // Only fetch profile if user changed
-      if (previousUserId === user.id) {
+      // Only fetch profile if user changed OR if we don't have a profile yet
+      if (previousUserId === user.id && profile !== null) {
         setIsLoading(false);
         return;
       }

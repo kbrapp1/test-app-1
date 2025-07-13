@@ -9,33 +9,24 @@ import type { Note } from "@/types/notes";
 
 // --- Mocks ---
 
-// Mock the permissions hook
-vi.mock('@/lib/shared/access-control/hooks/usePermissions', () => ({
-  useNotesPermissions: () => ({
-    canUpdate: true,
-    canDelete: true,
-    isLoading: false,
-  }),
-}));
+// Note: Updated to use unified context pattern
 
-// Mock Server Actions from the new path
-vi.mock('@/app/(protected)/documents/notes/actions', () => ({
-    addNote: vi.fn(), // Mock even if not directly used here
+// Mock Server Actions from the unified actions
+vi.mock('@/lib/notes/presentation/actions/notesUnifiedActions', () => ({
+    createNote: vi.fn(),
     deleteNote: vi.fn(),
-    editNote: vi.fn(),
-    updateNoteOrder: vi.fn(), // Mock even if not directly used here
+    updateNote: vi.fn(),
+    updateNoteOrder: vi.fn(),
+    getNotesData: vi.fn(),
+    getNotesUnifiedContext: vi.fn(),
 }));
 
 // Import the mocked actions *after* the mock setup
-import { deleteNote, editNote } from '@/app/(protected)/documents/notes/actions';
+import { deleteNote, updateNote } from '@/lib/notes/presentation/actions/notesUnifiedActions';
 const mockDeleteNoteAction = deleteNote as Mock;
-const mockEditNoteAction = editNote as Mock;
+const mockUpdateNoteAction = updateNote as Mock;
 
-// Mock the server action
-vi.mock("@/lib/actions/notes", () => ({
-  deleteNoteAction: vi.fn(),
-  updateNoteColorAction: vi.fn(),
-}));
+// Note: Removed old @/lib/actions/notes mock as we're using the new actions path
 
 // Mock the toast hook from the correct path
 const mockToastFn = vi.fn();
@@ -96,7 +87,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Reset server action mocks to resolve successfully by default for some tests
   mockDeleteNoteAction.mockResolvedValue({ success: true, message: 'Deleted' });
-  mockEditNoteAction.mockResolvedValue({ success: true, message: 'Updated' });
+  mockUpdateNoteAction.mockResolvedValue({ success: true, message: 'Updated' });
 });
 
 // Default props for rendering
@@ -104,9 +95,12 @@ const defaultProps = {
     id: mockNote.id, // Add id prop
     note: mockNote,
     deleteNoteAction: mockDeleteNoteAction,
-    editNoteAction: mockEditNoteAction,
+    editNoteAction: mockUpdateNoteAction,
     availableColors: mockAvailableColors, // Add availableColors prop
     rotationClass: 'rotate-1', // Provide a default rotation for consistency
+    canUpdate: true, // Add permission props
+    canDelete: true,
+    isLoading: false,
 };
 
 // --- Tests ---
@@ -155,7 +149,7 @@ describe('NoteListItem', () => {
          // This test implicitly relies on NoteEditForm calling onSaveSuccess
          // We need to ensure our mock/setup allows for this callback trigger
          const user = userEvent.setup();
-         mockEditNoteAction.mockResolvedValueOnce({ success: true, message: 'Edited OK' });
+         mockUpdateNoteAction.mockResolvedValueOnce({ success: true, message: 'Edited OK' });
          
          // We need NoteEditForm to be rendered and for its internal useEffect to run
          // and call the onSaveSuccess prop.
@@ -217,6 +211,29 @@ describe('NoteListItem', () => {
         });
     });
 
+    // --- Permission Tests ---
+    it('hides edit button when canUpdate is false', () => {
+        render(<NoteListItem {...defaultProps} canUpdate={false} />);
+        expect(screen.queryByRole('button', { name: /edit note/i })).not.toBeInTheDocument();
+    });
+
+    it('hides delete button when canDelete is false', () => {
+        render(<NoteListItem {...defaultProps} canDelete={false} />);
+        expect(screen.queryByRole('button', { name: /delete note/i })).not.toBeInTheDocument();
+    });
+
+    it('hides color picker when canUpdate is false', () => {
+        render(<NoteListItem {...defaultProps} canUpdate={false} />);
+        expect(screen.queryByRole('button', { name: /set color to/i })).not.toBeInTheDocument();
+    });
+
+    it('hides all action buttons when isLoading is true', () => {
+        render(<NoteListItem {...defaultProps} isLoading={true} />);
+        expect(screen.queryByRole('button', { name: /edit note/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /delete note/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /set color to/i })).not.toBeInTheDocument();
+    });
+
     // --- Color Picker Tests ---
     it('renders color picker dots', () => {
         render(<NoteListItem {...defaultProps} />);
@@ -249,10 +266,10 @@ describe('NoteListItem', () => {
             await user.click(pinkButton);
         });
 
-        expect(mockEditNoteAction).toHaveBeenCalledTimes(1);
+        expect(mockUpdateNoteAction).toHaveBeenCalledTimes(1);
         // Cannot reliably check FormData when action fn is called directly
         // We already tested that handleColorChange creates the correct FormData before calling.
-        // const formData = mockEditNoteAction.mock.calls[0][0] as FormData; // FIX: Get formData from index 0
+        // const formData = mockUpdateNoteAction.mock.calls[0][0] as FormData; // FIX: Get formData from index 0
         // expect(formData.get('note_id')).toBe(mockNote.id);
         // expect(formData.get('title')).toBe(mockNote.title); // Should use original title
         // expect(formData.get('content')).toBe(mockNote.content); // Should use original content

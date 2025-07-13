@@ -48,6 +48,36 @@ export function hasPermission(user: User | null, permission: Permission): boolea
 }
 
 /**
+ * Async version that checks super admin status from database
+ * Use this for server-side permission checks that need super admin bypass
+ */
+export async function hasPermissionWithSuperAdminCheck(user: User | null, permission: Permission): Promise<boolean> {
+  if (!user) return false;
+  
+  // Super admin bypass - check if user is super admin from database
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile?.is_super_admin === true) {
+      return true;
+    }
+  } catch (error) {
+    // If we can't check super admin status, continue with normal permission check
+    console.error('Error checking super admin status:', error);
+  }
+  
+  // Fall back to normal permission check
+  return hasPermission(user, permission);
+}
+
+/**
  * Check if a user has all of the specified permissions
  * @deprecated Use PermissionService.hasAllPermissions instead
  */

@@ -18,6 +18,8 @@ export { useTtsGeneration } from './presentation/hooks/useTtsGeneration';
 export { useTtsDamIntegration } from './presentation/hooks/useTtsDamIntegration';
 export { useHeadlessAudioPlayer } from './presentation/hooks/useHeadlessAudioPlayer';
 export { useTtsSaveAsDialog } from './presentation/hooks/useTtsSaveAsDialog';
+export { useTtsOperations } from './presentation/hooks/useTtsOperations';
+export * from './presentation/hooks/useTtsMutations';
 
 // Re-export schemas for external use
 export * from './application/schemas/ttsSchemas';

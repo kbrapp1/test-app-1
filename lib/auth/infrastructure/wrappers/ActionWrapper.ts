@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { GlobalAuthenticationService } from '@/lib/shared/infrastructure/GlobalAuthenticationService';
+import { getGlobalAuthenticationService } from '../composition/AuthCompositionRoot';
 import { AuthCompositionRoot } from '../composition/AuthCompositionRoot';
 import { BusinessRuleViolationError, AuthDomainError } from '../../domain/errors/AuthDomainError';
 
@@ -38,7 +38,7 @@ export interface AuthActionResult<T = any> {
  */
 export class ActionWrapper {
   constructor(
-    private globalAuth: GlobalAuthenticationService = GlobalAuthenticationService.getInstance(),
+    private globalAuth = getGlobalAuthenticationService(),
     private compositionRoot: AuthCompositionRoot = AuthCompositionRoot.getInstance()
   ) {}
 

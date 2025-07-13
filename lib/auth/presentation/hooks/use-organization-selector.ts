@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import { organizationService, type Organization } from '@/lib/auth/services/organization-service';
+import { Organization } from '@/lib/auth/domain/value-objects/Organization';
+import { OrganizationApplicationService } from '@/lib/auth/application/services/OrganizationApplicationService';
 import type { Profile } from '@/lib/auth';
 
 export interface UseOrganizationSelectorState {
@@ -33,6 +34,7 @@ export function useOrganizationSelector(
 ): UseOrganizationSelectorState & UseOrganizationSelectorActions {
   const router = useRouter();
   const { toast } = useToast();
+  const organizationService = new OrganizationApplicationService();
   
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +59,7 @@ export function useOrganizationSelector(
 
       try {
         setIsLoading(true);
-        const orgs = await organizationService.getUserOrganizations(profile);
+        const orgs = await organizationService.getUserOrganizations(profile as any);
         setOrganizations(orgs);
       } catch (error) {
         console.error('Error loading organizations:', error);

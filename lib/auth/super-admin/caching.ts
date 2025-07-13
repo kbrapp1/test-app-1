@@ -2,21 +2,18 @@
  * Application Service: Super Admin Caching - Public API
  * 
  * Single Responsibility: Provide public interface for cache invalidation
- * Delegates to specialized domain services while maintaining backward compatibility
+ * Simplified to use unified SimpleCacheService instead of specialized services
  * 
  * NOTE: This file contains server-only functions (revalidatePath, revalidateTag)
  * and should only be imported in server components or server actions.
  */
 
-import { AssetCacheService } from './asset-cache-service';
-import { FolderCacheService } from './folder-cache-service';
-import { MemberCacheService } from './member-cache-service';
-import { SuperAdminCacheOrchestrator } from './cache-orchestrator';
+import { SimpleCacheService, invalidateDamCache as simpleDamCache, invalidateTeamCache as simpleTeamCache } from '../infrastructure/services/SimpleCacheService';
 import type { Profile } from './types';
 
 /**
- * Main cache service - delegates to specialized services
- * Maintains backward compatibility while providing improved architecture
+ * Main cache service - simplified to use unified SimpleCacheService
+ * Maintains backward compatibility while removing over-abstraction
  */
 export class SuperAdminCacheService {
   /**
@@ -28,7 +25,7 @@ export class SuperAdminCacheService {
     profile: Profile | null,
     cacheType: 'assets' | 'folders' | 'members' | 'all' = 'all'
   ): void {
-    SuperAdminCacheOrchestrator.invalidateOrganizationCache(
+    SimpleCacheService.invalidateOrganizationCache(
       organizationIds,
       profile,
       cacheType
@@ -44,12 +41,9 @@ export class SuperAdminCacheService {
     folderIds: (string | null)[] = [],
     profile: Profile | null
   ): void {
-    AssetCacheService.invalidateAssetCache(
-      assetIds,
-      organizationIds,
-      folderIds,
-      profile
-    );
+    const assetIdArray = Array.isArray(assetIds) ? assetIds : [assetIds];
+    const orgIdArray = Array.isArray(organizationIds) ? organizationIds : [organizationIds];
+    SimpleCacheService.invalidateDamCache('asset', assetIdArray, orgIdArray, profile);
   }
 
   /**
@@ -61,12 +55,9 @@ export class SuperAdminCacheService {
     parentFolderIds: (string | null)[] = [],
     profile: Profile | null
   ): void {
-    FolderCacheService.invalidateFolderCache(
-      folderIds,
-      organizationIds,
-      parentFolderIds,
-      profile
-    );
+    const folderIdArray = Array.isArray(folderIds) ? folderIds : [folderIds];
+    const orgIdArray = Array.isArray(organizationIds) ? organizationIds : [organizationIds];
+    SimpleCacheService.invalidateDamCache('folder', folderIdArray, orgIdArray, profile);
   }
 
   /**
@@ -77,37 +68,15 @@ export class SuperAdminCacheService {
     userIds: string[] = [],
     profile: Profile | null
   ): void {
-    MemberCacheService.invalidateMemberCache(
-      organizationIds,
-      userIds,
-      profile
-    );
-  }
-
-  /**
-   * Invalidate cache after cross-organization transfer (super admin only)
-   */
-  static invalidateTransferCache(
-    entityType: 'asset' | 'folder' | 'member',
-    entityIds: string[],
-    fromOrganizationId: string,
-    toOrganizationId: string,
-    profile: Profile | null
-  ): void {
-    SuperAdminCacheOrchestrator.invalidateTransferCache(
-      entityType,
-      entityIds,
-      fromOrganizationId,
-      toOrganizationId,
-      profile
-    );
+    const orgIdArray = Array.isArray(organizationIds) ? organizationIds : [organizationIds];
+    SimpleCacheService.invalidateTeamCache(orgIdArray, userIds, profile);
   }
 
   /**
    * Invalidate all organization cache for super admin
    */
   static invalidateAllOrganizationsCache(profile: Profile | null): void {
-    SuperAdminCacheOrchestrator.invalidateAllOrganizationsCache(profile);
+    SimpleCacheService.invalidateAllOrganizationsCache(profile);
   }
 }
 
@@ -129,21 +98,7 @@ export function invalidateDamCache(
     parentFolderIds?: (string | null)[];
   }
 ): void {
-  if (operationType === 'asset') {
-    SuperAdminCacheService.invalidateAssetCache(
-      entityIds,
-      organizationIds,
-      additionalContext?.folderIds,
-      profile
-    );
-  } else {
-    SuperAdminCacheService.invalidateFolderCache(
-      entityIds,
-      organizationIds,
-      additionalContext?.parentFolderIds,
-      profile
-    );
-  }
+  SimpleCacheService.invalidateDamCache(operationType, entityIds, organizationIds, profile);
 }
 
 /**
@@ -154,21 +109,5 @@ export function invalidateTeamCache(
   userIds: string[],
   profile: Profile | null
 ): void {
-  SuperAdminCacheService.invalidateMemberCache(organizationIds, userIds, profile);
-}
-
-/**
- * Invalidate cache after bulk operations
- */
-export function invalidateBulkOperationCache(
-  operations: Array<{
-    type: 'asset' | 'folder' | 'member';
-    operation: 'create' | 'update' | 'delete' | 'transfer';
-    entityIds: string[];
-    organizationIds: string[];
-    additionalData?: any;
-  }>,
-  profile: Profile | null
-): void {
-  SuperAdminCacheOrchestrator.invalidateBulkOperationCache(operations, profile);
+  SimpleCacheService.invalidateTeamCache(organizationIds, userIds, profile);
 } 

@@ -91,6 +91,7 @@ export function ProfileForm() {
       const currentOrg = accessibleOrganizations.find(org => org.organization_id === activeOrganizationId);
       setOrganizationName(currentOrg?.organization_name || 'Unknown Organization');
 
+      // Always check super admin status first, regardless of organization
       if (profile?.is_super_admin) {
         setUserRole('Super Admin');
       } else {
@@ -98,7 +99,12 @@ export function ProfileForm() {
       }
     } else {
       setOrganizationName('No Active Organization');
-      setUserRole('N/A');
+      // Still check super admin status even when no active organization
+      if (profile?.is_super_admin) {
+        setUserRole('Super Admin');
+      } else {
+        setUserRole('N/A');
+      }
     }
   }, [activeOrganizationId, currentContext, accessibleOrganizations, isOrgLoading, profile]);
 

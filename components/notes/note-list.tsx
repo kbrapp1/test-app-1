@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 // Import Note type from note-list-item
 import { NoteListItem } from './note-list-item'; 
 import type { Note } from '@/types/notes'; // Import central type
-import { updateNoteOrder, deleteNote, editNote } from '@/app/(protected)/documents/notes/actions'; // Import the server actions
+import { updateNote } from '@/lib/notes/presentation/actions/notesUnifiedActions';
+import { useUpdateNoteMutation, useDeleteNoteMutation, useUpdateNoteOrderMutation } from '@/lib/notes/presentation/hooks/useNotesMutations';
 import { useToast } from '@/components/ui/use-toast';
 
 // dnd-kit imports
@@ -25,7 +26,14 @@ import {
 } from '@dnd-kit/sortable';
 
 interface NoteListProps {
-    initialNotes: Note[]; // Rename prop
+    initialNotes: Note[]; // Notes from unified context
+    canUpdate: boolean;
+    canDelete: boolean;
+    isLoading: boolean;
+    organizationId: string | null;
+    onUpdateNote?: (noteId: string, updates: Partial<Note>) => Promise<void>; // ✅ Optimistic update callback
+    onDeleteNote?: (noteId: string) => Promise<void>; // ✅ Optimistic delete callback
+    onReorderNotes?: (orderedNoteIds: string[]) => Promise<void>; // ✅ Optimistic reorder callback
 }
 
 // Define sticky note color class pairs
@@ -55,14 +63,87 @@ function getStableIndex(id: string, arrayLength: number): number {
     return index;
 }
 
-export function NoteList({ initialNotes }: NoteListProps) {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+export function NoteList({ 
+  initialNotes, 
+  canUpdate, 
+  canDelete, 
+  isLoading, 
+  organizationId,
+  onUpdateNote,
+  onDeleteNote,
+  onReorderNotes
+}: NoteListProps) {
+  // ✅ OPTIMIZATION: Use notes directly from unified context (no local state)
+  const notes = initialNotes;
   const { toast } = useToast();
 
-  // Update local state if initialNotes prop changes (e.g., after adding/deleting)
-  useEffect(() => {
-    setNotes(initialNotes);
-  }, [initialNotes]);
+  // ✅ OPTIMIZATION: Use callback props for optimistic updates
+  const handleDeleteNote = async (prevState: any, formData: FormData) => {
+    const noteId = formData.get('note_id') as string;
+    
+    try {
+      if (onDeleteNote) {
+        // Use optimistic delete callback
+        await onDeleteNote(noteId);
+        return { success: true, message: 'Note deleted successfully!' };
+      } else {
+        // Fallback to direct server action
+        const { deleteNote } = await import('@/lib/notes/presentation/actions/notesUnifiedActions');
+        const result = await deleteNote(noteId);
+        if (result.success) {
+          toast({
+            title: 'Success',
+            description: 'Note deleted successfully!',
+            variant: 'default',
+          });
+          return { success: true, message: 'Note deleted successfully!' };
+        } else {
+          return { success: false, message: result.error || 'Failed to delete note' };
+        }
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Failed to delete note' 
+      };
+    }
+  };
+
+  const handleEditNote = async (prevState: any, formData: FormData) => {
+    const noteId = formData.get('note_id') as string;
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const colorClass = formData.get('color_class') as string;
+    
+    try {
+      if (onUpdateNote) {
+        // Use optimistic update callback
+        await onUpdateNote(noteId, { title, content, color_class: colorClass });
+        return { success: true, message: 'Note updated successfully!' };
+      } else {
+        // Fallback to direct server action
+        const { updateNote } = await import('@/lib/notes/presentation/actions/notesUnifiedActions');
+        const result = await updateNote({ 
+          id: noteId, 
+          title, 
+          content,
+          color_class: colorClass 
+        });
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update note');
+        }
+        return { success: true, message: 'Note updated successfully!' };
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Failed to update note' 
+      };
+    }
+  };
+
+  // ✅ OPTIMIZATION: No local state needed - using notes directly from unified context
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -78,34 +159,27 @@ export function NoteList({ initialNotes }: NoteListProps) {
       const oldIndex = notes.findIndex((note) => note.id === active.id);
       const newIndex = notes.findIndex((note) => note.id === over.id);
 
-      // Update local state immediately for smooth UI
+      // Calculate new order
       const reorderedNotes = arrayMove(notes, oldIndex, newIndex);
-      setNotes(reorderedNotes);
-
-      // Prepare data for server action (array of IDs in the new order)
       const orderedIds = reorderedNotes.map(note => note.id);
 
-      // Call server action to persist the new order
       try {
-        const result = await updateNoteOrder(orderedIds);
-        if (!result.success) {
-          // Revert local state if server update fails
-          setNotes(notes);
-          toast({
-            title: 'Error Updating Order',
-            description: result.message || 'Could not save the new note order.',
-            variant: 'destructive',
-          });
+        if (onReorderNotes) {
+          // Use optimistic reorder callback
+          await onReorderNotes(orderedIds);
         } else {
-          // Optionally show success toast (maybe too noisy)
-          // toast({ title: 'Success', description: 'Note order saved.' });
+          // Fallback to direct server action
+          const { updateNoteOrder } = await import('@/lib/notes/presentation/actions/notesUnifiedActions');
+          const result = await updateNoteOrder(orderedIds);
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to reorder notes');
+          }
         }
       } catch (error) {
         console.error("Drag end error:", error);
-        setNotes(notes); // Revert on unexpected error
         toast({
           title: 'Error',
-          description: 'An unexpected error occurred while saving note order.',
+          description: error instanceof Error ? error.message : 'An unexpected error occurred while saving note order.',
           variant: 'destructive',
         });
       }
@@ -136,12 +210,15 @@ export function NoteList({ initialNotes }: NoteListProps) {
                   key={note.id} 
                   id={note.id} // Pass ID for dnd-kit
                   note={note} 
-                  deleteNoteAction={deleteNote} 
-                  editNoteAction={editNote}
+                  deleteNoteAction={handleDeleteNote} 
+                  editNoteAction={handleEditNote}
                   // Remove colorClasses prop:
                   // colorClasses={color} 
                   rotationClass={rotation}
                   availableColors={noteColors} // Pass available colors for picker
+                  canUpdate={canUpdate}
+                  canDelete={canDelete}
+                  isLoading={isLoading}
                 />
             );
           })}
