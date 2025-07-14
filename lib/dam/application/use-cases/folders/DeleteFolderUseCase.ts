@@ -1,5 +1,5 @@
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
-import { ValidationError, NotFoundError, ConflictError } from '@/lib/errors/base'; // Assuming DatabaseError might be thrown from repo
+import { ValidationError, NotFoundError, ConflictError as _ConflictError } from '@/lib/errors/base'; // Assuming DatabaseError might be thrown from repo
 
 interface DeleteFolderUseCaseParams {
   folderId: string;

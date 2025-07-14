@@ -77,7 +77,7 @@ export class ProfileRepository implements IProfileRepository {
   /**
    * Save profile changes
    */
-  async save(profile: UserProfile): Promise<void> {
+  async save(_profile: UserProfile): Promise<void> {
     throw new BusinessRuleViolationError(
       'ProfileRepository.save() not implemented - use updateProfile() instead',
       { method: 'save' }
@@ -88,7 +88,7 @@ export class ProfileRepository implements IProfileRepository {
    * Update profile information
    */
   async updateProfile(userId: UserId, updates: Partial<UserProfile>): Promise<void> {
-    const profileData: any = {};
+    const profileData: Record<string, unknown> = {};
 
     if (updates.firstName || updates.lastName) {
       const firstName = updates.firstName || '';

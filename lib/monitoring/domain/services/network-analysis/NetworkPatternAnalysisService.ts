@@ -1,3 +1,5 @@
+import { RedundantCall } from '../../network-efficiency/entities/NetworkCall';
+
 export interface NetworkIssueAnalysis {
   issue: string;
   suggestedFix: string;
@@ -5,7 +7,7 @@ export interface NetworkIssueAnalysis {
 }
 
 export class NetworkPatternAnalysisService {
-  static analyzeNetworkPattern(pattern: any): NetworkIssueAnalysis | null {
+  static analyzeNetworkPattern(pattern: RedundantCall): NetworkIssueAnalysis | null {
     const duplicateCount = pattern.duplicateCalls.length;
     
     if (pattern.pattern === 'rapid-fire') {
@@ -35,7 +37,7 @@ export class NetworkPatternAnalysisService {
       const hasReasonableTiming = pattern.timeWindow >= 3000; // 3+ seconds
       
       if (hasPaginationParams || (hasReasonableTiming && pattern.timeWindow >= 5000)) {
-        const reason = hasPaginationParams 
+        const _reason = hasPaginationParams 
           ? 'Pagination parameters detected' 
           : 'Manual interaction timing (5+ seconds)';
           
@@ -50,7 +52,7 @@ export class NetworkPatternAnalysisService {
     };
   }
 
-  static generateQueryKey(call: any): string {
+  static generateQueryKey(call: RedundantCall['originalCall']): string {
     if (call.url) {
       // Extract meaningful parts from URL
       const urlParts = call.url.split('/').filter((part: string) => part && !part.match(/^[a-f0-9-]{36}$/)); // Remove UUIDs
@@ -58,7 +60,11 @@ export class NetworkPatternAnalysisService {
     }
     
     if (call.type === 'server-action') {
-      return `server-action-${call.payload?.actionId?.substring(0, 8) || 'unknown'}`;
+      const actionId = call.payload && typeof call.payload === 'object' && 'actionId' in call.payload 
+        ? call.payload.actionId 
+        : undefined;
+      const actionIdStr = typeof actionId === 'string' ? actionId.substring(0, 8) : 'unknown';
+      return `server-action-${actionIdStr}`;
     }
     
     return 'unknown-endpoint';
@@ -67,7 +73,7 @@ export class NetworkPatternAnalysisService {
   /**
    * Detect pagination patterns in network calls
    */
-  private static detectPaginationInCalls(pattern: any): boolean {
+  private static detectPaginationInCalls(pattern: RedundantCall): boolean {
     try {
       const calls = [pattern.originalCall, ...pattern.duplicateCalls];
       const payloads = calls
@@ -81,15 +87,17 @@ export class NetworkPatternAnalysisService {
         const prev = payloads[i - 1];
         const curr = payloads[i];
 
+        if (!prev || !curr) continue;
+
         // Check for offset increments (0, 20, 40...)
         if (typeof prev.offset === 'number' && typeof curr.offset === 'number') {
-          const expectedIncrement = prev.offset + (prev.limit || 20);
+          const expectedIncrement = prev.offset + (typeof prev.limit === 'number' ? prev.limit : 20);
           if (curr.offset === expectedIncrement) {
             return true; // Found pagination pattern
           }
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore parsing errors
     }
 

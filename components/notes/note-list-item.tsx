@@ -10,13 +10,11 @@
 
 'use client';
 
-import React, { useEffect, useActionState, useState, useRef } from 'react';
+import React, { useActionState, useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Trash2Icon, Loader2, PencilIcon, XIcon, CheckIcon } from 'lucide-react';
+import { Trash2Icon, Loader2, PencilIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from 'date-fns';
 import type { Note } from '@/types/notes'; // Import central type
@@ -27,11 +25,13 @@ import type { ColorOption } from '@/types/notes'; // Import central ColorOption
 // Removed useNotesUnifiedContext import - now receives props from parent
 
 // Type for the Server Action function signatures
-type DeleteNoteAction = (prevState: any, formData: FormData) => Promise<{
-    success: boolean;
-    message: string;
-}>;
-type EditNoteAction = (prevState: any, formData: FormData) => Promise<{ success: boolean; message: string; }>;
+interface ActionState {
+  success: boolean;
+  message: string;
+}
+
+type DeleteNoteAction = (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+type EditNoteAction = (prevState: ActionState, formData: FormData) => Promise<ActionState>;
 
 const initialActionState = {
   success: false,
@@ -142,7 +142,7 @@ export function NoteListItem({
     // Need to call the original editNoteAction prop within a transition
     // We don't have useActionState here, so use startTransition directly
     React.startTransition(() => {
-        editNoteAction(null, formData) // Pass null for prevState
+        editNoteAction(initialActionState, formData) // Pass initial state for prevState
             .then(result => {
                  // Handle toast feedback directly here if needed
                 if (result?.message) {

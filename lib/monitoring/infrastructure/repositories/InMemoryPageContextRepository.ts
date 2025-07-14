@@ -65,7 +65,7 @@ export class InMemoryPageContextRepository implements PageContextRepository {
       }
       
       this.initialized = true;
-    } catch (error) {
+    } catch {
       // Graceful degradation - empty contexts if generation fails
       this.initialized = true;
     }

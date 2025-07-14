@@ -8,7 +8,7 @@
  * - No over-engineering - align with existing validation
  */
 
-import { BusinessRuleViolationError } from '../errors/AuthDomainError';
+// BusinessRuleViolationError available for future use
 
 export interface PasswordValidationResult {
   isValid: boolean;

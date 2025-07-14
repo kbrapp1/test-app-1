@@ -8,7 +8,7 @@
  * and should only be imported in server components or server actions.
  */
 
-import { SimpleCacheService, invalidateDamCache as simpleDamCache, invalidateTeamCache as simpleTeamCache } from '../infrastructure/services/SimpleCacheService';
+import { SimpleCacheService } from '../infrastructure/services/SimpleCacheService';
 import type { Profile } from './types';
 
 /**
@@ -38,7 +38,7 @@ export class SuperAdminCacheService {
   static invalidateAssetCache(
     assetIds: string | string[],
     organizationIds: string | string[],
-    folderIds: (string | null)[] = [],
+    _folderIds: (string | null)[] = [],
     profile: Profile | null
   ): void {
     const assetIdArray = Array.isArray(assetIds) ? assetIds : [assetIds];
@@ -52,7 +52,7 @@ export class SuperAdminCacheService {
   static invalidateFolderCache(
     folderIds: string | string[],
     organizationIds: string | string[],
-    parentFolderIds: (string | null)[] = [],
+    _parentFolderIds: (string | null)[] = [],
     profile: Profile | null
   ): void {
     const folderIdArray = Array.isArray(folderIds) ? folderIds : [folderIds];
@@ -93,7 +93,7 @@ export function invalidateDamCache(
   entityIds: string[],
   organizationIds: string[],
   profile: Profile | null,
-  additionalContext?: {
+  _additionalContext?: {
     folderIds?: (string | null)[];
     parentFolderIds?: (string | null)[];
   }

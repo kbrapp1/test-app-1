@@ -1,5 +1,8 @@
 import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
 import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
+import { Folder } from '../entities/Folder';
+import { Asset } from '../entities/Asset';
+import { Tag } from '../entities/Tag';
 
 /**
  * Domain service for mapping search results to DTOs
@@ -11,13 +14,13 @@ export class SearchMapper {
    */
   static mapDomainResultToGalleryItems(result: GetDamDataResult): GalleryItemDto[] {
     return [
-      ...result.folders.map((folder: any) => ({
+      ...result.folders.map((folder: Folder) => ({
         id: folder.id,
         name: folder.name,
         type: 'folder' as const,
         createdAt: folder.createdAt,
       })),
-      ...result.assets.map((asset: any) => ({
+      ...result.assets.map((asset: Asset) => ({
         id: asset.id,
         name: asset.name,
         type: 'asset' as const,
@@ -27,7 +30,7 @@ export class SearchMapper {
         size: asset.size,
         userId: asset.userId,
         userFullName: asset.userFullName,
-        tags: asset.tags?.map((tag: any) => ({ id: tag.id, name: tag.name })) || [],
+        tags: asset.tags?.map((tag: Tag) => ({ id: tag.id, name: tag.name, color: '#666666' })) || [],
         folderName: asset.folderName,
       })),
     ];
@@ -37,7 +40,7 @@ export class SearchMapper {
    * Map folders only to GalleryItemDto format
    */
   static mapFoldersToGalleryItems(folders: GetDamDataResult['folders']): GalleryItemDto[] {
-    return folders.map((folder: any) => ({
+    return folders.map((folder: Folder) => ({
       id: folder.id,
       name: folder.name,
       type: 'folder' as const,
@@ -49,7 +52,7 @@ export class SearchMapper {
    * Map assets only to GalleryItemDto format
    */
   static mapAssetsToGalleryItems(assets: GetDamDataResult['assets']): GalleryItemDto[] {
-    return assets.map((asset: any) => ({
+    return assets.map((asset: Asset) => ({
       id: asset.id,
       name: asset.name,
       type: 'asset' as const,
@@ -59,7 +62,7 @@ export class SearchMapper {
       size: asset.size,
       userId: asset.userId,
       userFullName: asset.userFullName,
-      tags: asset.tags?.map((tag: any) => ({ id: tag.id, name: tag.name })) || [],
+      tags: asset.tags?.map((tag: Tag) => ({ id: tag.id, name: tag.name, color: '#666666' })) || [],
       folderName: asset.folderName,
     }));
   }

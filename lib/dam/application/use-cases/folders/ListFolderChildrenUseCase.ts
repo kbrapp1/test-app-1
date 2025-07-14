@@ -1,7 +1,7 @@
 import { Folder } from '../../../domain/entities/Folder';
 import { Asset } from '../../../domain/entities/Asset';
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
-import { ValidationError, NotFoundError } from '@/lib/errors/base';
+import { ValidationError, NotFoundError as _NotFoundError } from '@/lib/errors/base';
 
 interface ListFolderChildrenUseCaseParams {
   folderId: string; // ID of the parent folder whose children are to be listed

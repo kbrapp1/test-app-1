@@ -1,4 +1,33 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+
+// Type definitions for test scenarios
+interface TestProfile {
+  id: string;
+  is_super_admin?: boolean;
+}
+
+interface TestMembership {
+  user_id: string;
+  organization_id: string;
+  role?: string;
+}
+
+interface TestOrganization {
+  id: string;
+  name: string;
+  accessLevel?: string;
+  canManage?: boolean;
+}
+
+interface TestAuditContext {
+  organizationId?: string;
+  targetUserId?: string;
+  action?: string;
+  reason?: string;
+  target_org?: string;
+  asset_id?: string;
+  org?: string;
+}
 
 // Test super admin API integration logic
 describe('Super Admin API Integration - Core Logic', () => {
@@ -26,7 +55,7 @@ describe('Super Admin API Integration - Core Logic', () => {
     });
 
     it('should handle organization membership bypass for super admins', () => {
-      const getMembershipStatus = (isSuperAdmin: boolean, userId: string, orgId: string, memberships: any[]) => {
+      const getMembershipStatus = (isSuperAdmin: boolean, userId: string, orgId: string, memberships: TestMembership[]) => {
         if (isSuperAdmin) {
           return {
             isMember: true,
@@ -76,7 +105,7 @@ describe('Super Admin API Integration - Core Logic', () => {
   describe('RLS Policy Simulation', () => {
     it('should simulate asset access with super admin bypass', () => {
       // Simulate RLS policy: "Users can access assets in their organization OR super admin can access all"
-      const canAccessAsset = (profile: any, assetOrgId: string, userOrgId: string | null) => {
+      const canAccessAsset = (profile: TestProfile, assetOrgId: string, userOrgId: string | null) => {
         // Super admin bypass
         if (profile?.is_super_admin === true) {
           return true;
@@ -101,7 +130,7 @@ describe('Super Admin API Integration - Core Logic', () => {
     });
 
     it('should simulate folder management with super admin bypass', () => {
-      const canManageFolder = (profile: any, folderOrgId: string, userActiveOrgId: string | null) => {
+      const canManageFolder = (profile: TestProfile, folderOrgId: string, userActiveOrgId: string | null) => {
         // Super admin can manage all folders
         if (profile?.is_super_admin === true) {
           return { canManage: true, reason: 'super-admin' };
@@ -136,7 +165,7 @@ describe('Super Admin API Integration - Core Logic', () => {
 
   describe('API Response Transformation', () => {
     it('should transform data based on super admin context', () => {
-      const transformOrgData = (organizations: any[], isSuperAdmin: boolean, userOrgIds: string[]) => {
+      const transformOrgData = (organizations: TestOrganization[], isSuperAdmin: boolean, userOrgIds: string[]) => {
         if (isSuperAdmin) {
           // Super admin sees all organizations with special flag
           return organizations.map(org => ({
@@ -180,7 +209,7 @@ describe('Super Admin API Integration - Core Logic', () => {
 
   describe('Audit Trail for Super Admin Actions', () => {
     it('should create proper audit entries for super admin actions', () => {
-      const createAuditEntry = (action: string, userId: string, isSuperAdmin: boolean, context: any) => {
+      const createAuditEntry = (action: string, userId: string, isSuperAdmin: boolean, context: TestAuditContext) => {
         return {
           id: `audit-${Date.now()}`,
           action,

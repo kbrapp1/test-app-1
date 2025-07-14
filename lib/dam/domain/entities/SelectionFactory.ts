@@ -39,7 +39,7 @@ export class SelectionFactory {
     const validFolderIds = [...new Set(folderIds.filter(id => id && id.trim().length > 0))];
 
     // Check for overlap between asset and folder IDs
-    const assetIdSet = new Set(validAssetIds);
+    const _assetIdSet = new Set(validAssetIds);
     const folderIdSet = new Set(validFolderIds);
     const overlap = validAssetIds.some(id => folderIdSet.has(id));
     
@@ -150,7 +150,7 @@ export class SelectionFactory {
     }
 
     // Check for overlap between asset and folder IDs
-    const assetIdSet = new Set(assetIds);
+    const _assetIdSet = new Set(assetIds);
     const folderIdSet = new Set(folderIds);
     const overlap = assetIds.some(id => folderIdSet.has(id));
     

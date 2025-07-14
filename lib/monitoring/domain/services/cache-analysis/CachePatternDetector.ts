@@ -121,7 +121,7 @@ export class CachePatternDetector {
     return timestamps[timestamps.length - 1] - timestamps[0];
   }
 
-  private isLegitimateInfiniteScroll(calls: ReactQueryCallAnalysis[], timeDiff: number): boolean {
+  private isLegitimateInfiniteScroll(calls: ReactQueryCallAnalysis[], _timeDiff: number): boolean {
     // Use comprehensive infinite scroll detection
     const infiniteScrollPattern = this.detectInfiniteScrollPattern(calls);
     return infiniteScrollPattern !== null;
@@ -192,9 +192,12 @@ export class CachePatternDetector {
         const prev = payloads[i - 1];
         const curr = payloads[i];
 
+        // Ensure both payloads exist
+        if (!prev || !curr) continue;
+
         // Look for standard pagination pattern
         if (typeof prev.offset === 'number' && typeof curr.offset === 'number') {
-          const expectedIncrement = prev.offset + (prev.limit || 20);
+          const expectedIncrement = prev.offset + (typeof prev.limit === 'number' ? prev.limit : 20);
           if (curr.offset === expectedIncrement) {
             return true;
           }
@@ -207,7 +210,7 @@ export class CachePatternDetector {
           }
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore parsing errors
     }
 

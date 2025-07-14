@@ -36,7 +36,7 @@ export class SuperAdminQueryService {
    * Query data with super admin organization bypass
    * If user is super admin, organization filtering can be bypassed
    */
-  async queryData<T = any>(
+  async queryData<T = Record<string, unknown>>(
     table: string,
     selectFields: string,
     options: SuperAdminQueryOptions = {}
@@ -97,7 +97,7 @@ export class SuperAdminQueryService {
   async getAccessibleOrganizations(
     profile: Profile | null,
     userId?: string
-  ): Promise<{ data: any[] | null; error: Error | null }> {
+  ): Promise<{ data: Record<string, unknown>[] | null; error: Error | null }> {
     try {
       if (SuperAdminPermissionService.isSuperAdmin(profile)) {
         // Super admin can see all organizations
@@ -127,8 +127,8 @@ export class SuperAdminQueryService {
         }
 
         const organizations = (data || [])
-          .map(membership => membership.organizations)
-          .filter(Boolean);
+          .map((membership: Record<string, unknown>) => membership.organizations)
+          .filter(Boolean) as Record<string, unknown>[];
 
         return { data: organizations, error: null };
       }
@@ -177,7 +177,7 @@ export function createSuperAdminQueryOptions(
 /**
  * Enhanced version of the standard queryData function with super admin support
  */
-export async function queryDataWithSuperAdmin<T = any>(
+export async function queryDataWithSuperAdmin<T = Record<string, unknown>>(
   supabase: SupabaseClient,
   table: string,
   selectFields: string,

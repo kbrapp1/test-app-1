@@ -174,7 +174,7 @@ export class NetworkPerformanceThrottler {
     if (!this.config.monitoringEnabled) return;
     
     const now = Date.now();
-    const oneSecondAgo = now - 1000;
+    const _oneSecondAgo = now - 1000;
     
     // This is a simplified throughput calculation
     // In practice, you'd track requests per time window more precisely

@@ -1,8 +1,8 @@
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
-import { IssueAnalysisService, IssueAnalysisResult, IssueClassification } from '../../domain/services/business-impact/IssueAnalysisService';
+import { NetworkCall, RedundantCall } from '../../domain/network-efficiency/entities/NetworkCall';
+import { IssueAnalysisService, IssueAnalysisResult } from '../../domain/services/business-impact/IssueAnalysisService';
 import { CacheFixRecommendationService } from './CacheFixRecommendationService';
 import { ReportTemplateService } from './ReportTemplateService';
-import { NetworkAnalysisService } from '../../domain/services/network-analysis/NetworkAnalysisService';
 import { NetworkIssuesReportService } from './NetworkIssuesReportService';
 
 /**
@@ -33,7 +33,7 @@ export class ReportGenerationService {
    * Application Use Case: Generate report from redundant patterns (main use case)
    */
   async generateFromRedundantPatterns(
-    patterns: any[], 
+    patterns: RedundantCall[], 
     pageContext?: string
   ): Promise<string> {
     // Use case step 1: Analyze patterns using domain service
@@ -77,7 +77,7 @@ export class ReportGenerationService {
   /**
    * Private: Analyze patterns using domain service
    */
-  private analyzePatterns(patterns: any[]): (IssueAnalysisResult | null)[] {
+  private analyzePatterns(patterns: RedundantCall[]): (IssueAnalysisResult | null)[] {
     return patterns.map(pattern => 
       this.issueAnalysisService.analyzeRedundantPattern(pattern)
     );
@@ -119,11 +119,11 @@ export class ReportGenerationService {
   /**
    * Public: Format endpoint display for readability
    */
-  public formatEndpointDisplay(call: any): string {
+  public formatEndpointDisplay(call: NetworkCall): string {
     if (call.url) return call.url;
     
     if (call.type === 'server-action') {
-      return `[Server Action: ${call.payload?.actionId?.substring(0, 8) || 'unknown'}...]`;
+      return `[Server Action: ${(call.payload?.actionId as string)?.substring(0, 8) || 'unknown'}...]`;
     }
     
     return '[Unknown Endpoint]';
@@ -158,8 +158,8 @@ export class ReportGenerationService {
     reportLines.push(`**Solution**: ${analysis.solution.suggestedFix}`);
     
     // Generate code example for React Query issues
-    if (analysis.classification.isReactQueryRelated && analysis.analysisSource === 'cache-analysis') {
-      const codeExample = this.fixRecommendationService.generateSpecificFix(analysis.originalPattern);
+    if (analysis.classification.isReactQueryRelated && analysis.analysisSource === 'cache-analysis' && analysis.cacheAnalysis) {
+      const codeExample = this.fixRecommendationService.generateSpecificFix(analysis.cacheAnalysis);
       if (codeExample) {
         reportLines.push('', '**Code Example:**');
         reportLines.push('```typescript');
@@ -172,10 +172,10 @@ export class ReportGenerationService {
   /**
    * Public: Add performance timeline
    */
-  public addPerformanceTimeline(reportLines: string[], pattern: any): void {
+  public addPerformanceTimeline(reportLines: string[], pattern: RedundantCall): void {
     if (pattern.duplicateCalls.length > 0) {
       reportLines.push('', '#### ⏱️ Performance Timeline:');
-      pattern.duplicateCalls.forEach((call: any, i: number) => {
+      pattern.duplicateCalls.forEach((call: NetworkCall, i: number) => {
         const timeFromOriginal = call.timestamp - pattern.originalCall.timestamp;
         reportLines.push(`- **Call ${i + 1}**: +${timeFromOriginal}ms after original`);
       });

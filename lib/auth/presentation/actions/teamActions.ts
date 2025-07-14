@@ -18,7 +18,7 @@ import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplic
 import { getActiveOrganizationId } from './serverActions';
 import { checkFeatureAccess } from '@/lib/shared/access-control/server/checkFeatureAccess';
 import { Permission, hasPermission } from '../../index';
-import { AuthCompositionRoot } from '../../infrastructure/composition/AuthCompositionRoot';
+// AuthCompositionRoot available for future use
 
 // Organization context validation - ensures team member belongs to current org
 async function validateOrganizationContext(teamMemberId: string): Promise<void> {
@@ -58,9 +58,9 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
     if (!accessResult.hasAccess) {
       throw new Error(accessResult.error || 'Access denied');
     }
-  } catch (error) {
+  } catch (err) {
     // AI: Fail-secure - return empty array if no permission
-    console.warn('User lacks permission to view team members:', error);
+    console.warn('User lacks permission to view team members:', err);
     return [];
   }
   
@@ -154,7 +154,7 @@ export async function addTeamMember(formData: FormData): Promise<{
         error: accessResult.error || 'Insufficient permissions to add team members' 
       };
     }
-  } catch (error) {
+  } catch {
     return { 
       success: false, 
       error: 'Insufficient permissions to add team members' 
@@ -270,11 +270,11 @@ export async function addTeamMember(formData: FormData): Promise<{
     revalidatePath('/team');
 
     return { success: true, data: teamMemberWithUrls };
-  } catch (error) {
-    console.error('Error adding team member:', error);
+  } catch (err) {
+    console.error('Error adding team member:', err);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+      error: err instanceof Error ? err.message : 'An unexpected error occurred' 
     };
   }
 }
@@ -306,7 +306,7 @@ export async function updateTeamMember(
         error: accessResult.error || 'Insufficient permissions to update team members' 
       };
     }
-  } catch (error) {
+  } catch {
     return { 
       success: false, 
       error: 'Insufficient permissions to update team members' 
@@ -316,10 +316,10 @@ export async function updateTeamMember(
   try {
     // AI: Organization context validation
     await validateOrganizationContext(id);
-  } catch (error) {
+  } catch (err) {
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Organization context validation failed' 
+      error: err instanceof Error ? err.message : 'Organization context validation failed' 
     };
   }
 
@@ -443,11 +443,11 @@ export async function updateTeamMember(
     revalidatePath('/team');
 
     return { success: true, data: teamMemberWithUrls };
-  } catch (error) {
-    console.error('Error updating team member:', error);
+  } catch (err) {
+    console.error('Error updating team member:', err);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+      error: err instanceof Error ? err.message : 'An unexpected error occurred' 
     };
   }
 }
@@ -475,7 +475,7 @@ export async function deleteTeamMember(id: string): Promise<{
         error: accessResult.error || 'Insufficient permissions to delete team members' 
       };
     }
-  } catch (error) {
+  } catch {
     return { 
       success: false, 
       error: 'Insufficient permissions to delete team members' 
@@ -485,10 +485,10 @@ export async function deleteTeamMember(id: string): Promise<{
   try {
     // AI: Organization context validation
     await validateOrganizationContext(id);
-  } catch (error) {
+  } catch (err) {
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Organization context validation failed' 
+      error: err instanceof Error ? err.message : 'Organization context validation failed' 
     };
   }
 
@@ -527,11 +527,11 @@ export async function deleteTeamMember(id: string): Promise<{
     revalidatePath('/team');
 
     return { success: true };
-  } catch (error) {
-    console.error('Error deleting team member:', error);
+  } catch (err) {
+    console.error('Error deleting team member:', err);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+      error: err instanceof Error ? err.message : 'An unexpected error occurred' 
     };
   }
 } 

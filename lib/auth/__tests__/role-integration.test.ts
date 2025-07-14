@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { UserRole } from '../domain/value-objects/UserRole';
 import { Permission, ROLE_PERMISSIONS } from '../domain/value-objects/Permission';
 
@@ -310,9 +310,9 @@ describe('Role-Based Permission Integration', () => {
       expect(checkAnyPermission([Permission.VIEW_ASSET], [])).toBe(true);
 
       // Test with invalid permissions
-      const validatePermissions = (permissions: any[]) => {
+      const validatePermissions = (permissions: unknown[]) => {
         const validPermissions = Object.values(Permission);
-        return permissions.filter(p => validPermissions.includes(p));
+        return permissions.filter(p => validPermissions.includes(p as Permission));
       };
 
       const mixedPermissions = [Permission.VIEW_ASSET, 'invalid_permission', Permission.CREATE_ASSET, null];

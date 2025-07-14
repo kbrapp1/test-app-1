@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/client';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 export interface AuthContext {
-  supabase: any;
-  user: any;
+  supabase: SupabaseClient;
+  user: User | null;
   activeOrgId: string;
 }
 

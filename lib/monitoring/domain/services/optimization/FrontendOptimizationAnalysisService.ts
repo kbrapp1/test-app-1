@@ -32,7 +32,7 @@ export class FrontendOptimizationAnalysisService {
     issue: OptimizationGap, 
     trackingState: PerformanceTrackingState, 
     metrics: PerformanceMetrics,
-    index: number
+    _index: number
   ): FrontendIssueAnalysis {
     const priority = this.priorityAssessment.assessPriority(issue, trackingState, metrics);
     const timeToFix = this.businessImpactCalculator.estimateTimeToFix(issue, priority);

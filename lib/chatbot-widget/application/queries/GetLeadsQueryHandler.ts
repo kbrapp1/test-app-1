@@ -19,7 +19,7 @@ export class GetLeadsQueryHandler {
   async handle(query: GetLeadsQuery): Promise<GetLeadsResult> {
     try {
       // 1. Build filters from query
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
       if (query.status) {
         filters.qualificationStatus = query.status.toLowerCase();
       }

@@ -25,7 +25,7 @@ export interface EntityExtractionDebugDto {
   extractionMode: 'basic' | 'comprehensive' | 'custom';
   
   extractionDetails?: {
-    rawExtractionResult?: any;
+    rawExtractionResult?: Record<string, unknown>;
     processingTime?: number;
     patternsMatched?: string[];
     modelUsed?: string;

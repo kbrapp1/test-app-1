@@ -74,12 +74,13 @@ export function TeamMembersProvider({ children }: TeamMembersProviderProps) {
       membersCache.set(cacheKey, { members: fetchedMembers, timestamp: now });
       
       return fetchedMembers;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if this looks like a session/auth error and we haven't retried too many times
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (retryCount < MAX_RETRIES && (
-        error.message?.includes('401') ||
-        error.message?.includes('unauthorized') ||
-        error.message?.includes('JWT')
+        errorMessage.includes('401') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('JWT')
       )) {
         console.log(`Retrying team members fetch after session refresh (attempt ${retryCount + 1}/${MAX_RETRIES})`);
         
@@ -99,7 +100,7 @@ export function TeamMembersProvider({ children }: TeamMembersProviderProps) {
     }
   }, [withTimeout, supabase]);
 
-  const fetchMembers = async (organizationId: string): Promise<Member[]> => {
+  const fetchMembers = useCallback(async (organizationId: string): Promise<Member[]> => {
     // Check cache first
     const cacheKey = organizationId;
     const cached = membersCache.get(cacheKey);
@@ -110,9 +111,9 @@ export function TeamMembersProvider({ children }: TeamMembersProviderProps) {
     }
 
     return await withSessionRefresh(organizationId);
-  };
+  }, [withSessionRefresh]);
 
-  const refreshMembers = async (): Promise<void> => {
+  const refreshMembers = useCallback(async (): Promise<void> => {
     if (!activeOrganizationId) return;
 
     setIsLoading(true);
@@ -132,7 +133,7 @@ export function TeamMembersProvider({ children }: TeamMembersProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeOrganizationId, fetchMembers]);
 
   useEffect(() => {
     if (!activeOrganizationId) {
@@ -142,7 +143,7 @@ export function TeamMembersProvider({ children }: TeamMembersProviderProps) {
     }
 
     refreshMembers();
-  }, [activeOrganizationId]);
+  }, [activeOrganizationId, refreshMembers]);
 
   const contextValue: TeamMembersContextType = {
     members,

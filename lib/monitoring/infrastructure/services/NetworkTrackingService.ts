@@ -228,7 +228,7 @@ export class NetworkTrackingService {
     }
     
     // Find redundant requests within time windows
-    for (const [endpoint, requests] of requestGroups) {
+    for (const [_endpoint, requests] of requestGroups) {
       const sorted = requests.sort((a, b) => a.startTime - b.startTime);
       
       for (let i = 0; i < sorted.length - 1; i++) {

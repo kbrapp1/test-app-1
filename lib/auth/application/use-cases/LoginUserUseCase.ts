@@ -9,7 +9,6 @@
  */
 
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { UserAggregate } from '../../domain/aggregates/UserAggregate';
 import { Email } from '../../domain/value-objects/Email';
 import { 
   UserNotFoundError,
@@ -30,7 +29,7 @@ export interface LoginUserResult {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 

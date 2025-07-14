@@ -1,3 +1,5 @@
+import { NetworkCall } from '../network-efficiency/entities/NetworkCall';
+
 export interface CacheKeyMismatchAnalysis {
   severity: 'critical' | 'high' | 'medium' | 'low';
   issue: string;
@@ -14,7 +16,7 @@ export interface ReactQueryCallAnalysis {
   isInfiniteQuery?: boolean;
   hasSharedDataIntent?: boolean;
   dataType?: string;
-  originalCall?: any;
+  originalCall?: NetworkCall;
 }
 
 /**

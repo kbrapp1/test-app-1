@@ -99,7 +99,7 @@ export function RenameFolderDialog({
         <DialogHeader>
           <DialogTitle>Rename Folder</DialogTitle>
           <DialogDescription>
-            Enter the new name for the folder below. The current name is "{currentName}".
+            Enter the new name for the folder below. The current name is &ldquo;{currentName}&rdquo;.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

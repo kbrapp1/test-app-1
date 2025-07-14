@@ -8,7 +8,7 @@ export class TagValidation {
   private static readonly MAX_NAME_LENGTH = 50;
   private static readonly MIN_NAME_LENGTH = 2;
 
-  static validateRequiredFields(data: any): void {
+  static validateRequiredFields(data: Record<string, unknown>): void {
     const requiredFields = ['id', 'name', 'userId', 'organizationId', 'createdAt'];
     
     for (const field of requiredFields) {

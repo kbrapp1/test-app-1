@@ -72,17 +72,18 @@ export async function processAuthFromUrlHelper(supabase: SupabaseClient): Promis
  * Provides consistent error handling across onboarding flows
  */
 export function handleOnboardingError(
-  err: any, 
+  err: unknown, 
   context: string, 
   toast: ToastFunction,
   setFormValidationError?: (message: string | null) => void,
   toastTitle?: string
 ): void {
   console.error(`Error during ${context}:`, err);
-  const message = err.message || `An unexpected error occurred during ${context}.`;
+  const message = (err instanceof Error ? err.message : String(err)) || `An unexpected error occurred during ${context}.`;
 
   // If a specific setter for form validation errors is provided and context matches, use it
-  if (setFormValidationError && (context === 'form validation' || err.code === 'VALIDATION_ERROR')) {
+  const errorCode = err instanceof Error && 'code' in err ? (err as Error & { code: string }).code : undefined;
+  if (setFormValidationError && (context === 'form validation' || errorCode === 'VALIDATION_ERROR')) {
     setFormValidationError(message);
     // Don't show toast for pure form validation errors handled inline
     // unless explicitly requested or if it's a general error presented as validation

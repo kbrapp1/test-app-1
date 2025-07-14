@@ -1,5 +1,25 @@
 import { BundleAnalysis, ChunkInfo, ImportInfo, ModuleInfo } from '../../domain/entities/DetailedPerformanceMetrics';
 
+interface WebpackChunk {
+  id?: string | number;
+  names?: string[];
+  size?: number;
+  files?: string[];
+  modules?: WebpackModule[];
+}
+
+interface WebpackModule {
+  id?: string | number;
+  name?: string;
+  size?: number;
+  reasons?: Array<{ moduleName?: string }>;
+}
+
+interface WebpackStats {
+  chunks?: WebpackChunk[];
+  modules?: WebpackModule[];
+}
+
 export class BundleAnalysisService {
   private static readonly LARGE_MODULE_THRESHOLD = 50000; // 50KB
   private static readonly LAZY_LOADABLE_PATTERNS = [
@@ -22,12 +42,12 @@ export class BundleAnalysisService {
 
       // Fallback to performance API analysis
       return this.analyzeFromPerformanceAPI();
-    } catch (error) {
+    } catch {
       return this.getEmptyAnalysis();
     }
   }
 
-  private static async getWebpackStats(): Promise<any> {
+  private static async getWebpackStats(): Promise<Record<string, unknown> | null> {
     try {
       // Try to access webpack stats from dev server
       const response = await fetch('/_next/static/chunks/webpack-stats.json');
@@ -40,7 +60,7 @@ export class BundleAnalysisService {
     return null;
   }
 
-  private static analyzeWebpackStats(stats: any): BundleAnalysis {
+  private static analyzeWebpackStats(stats: Record<string, unknown>): BundleAnalysis {
     const chunks = this.extractChunks(stats);
     const largestImports = this.findLargestImports(stats);
     const unusedImports = this.detectUnusedImports(stats);
@@ -56,7 +76,7 @@ export class BundleAnalysisService {
   }
 
   private static analyzeFromPerformanceAPI(): BundleAnalysis {
-    const entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+    const _entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
     const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
 
     const scriptResources = resources.filter(r => 
@@ -81,42 +101,42 @@ export class BundleAnalysisService {
     };
   }
 
-  private static extractChunks(stats: any): ChunkInfo[] {
+  private static extractChunks(stats: WebpackStats): ChunkInfo[] {
     if (!stats.chunks) return [];
 
-    return stats.chunks.map((chunk: any) => ({
-      name: chunk.names?.[0] || chunk.id,
+    return stats.chunks.map((chunk: WebpackChunk) => ({
+      name: chunk.names?.[0] || String(chunk.id),
       size: chunk.size || 0,
       files: chunk.files || [],
       modules: this.extractModules(chunk.modules || [])
     }));
   }
 
-  private static extractModules(modules: any[]): ModuleInfo[] {
+  private static extractModules(modules: WebpackModule[]): ModuleInfo[] {
     return modules
-      .filter(mod => mod.size > 1000) // Only modules > 1KB
+      .filter(mod => (mod.size || 0) > 1000) // Only modules > 1KB
       .map(mod => ({
-        name: mod.name || mod.id,
+        name: mod.name || String(mod.id),
         size: mod.size || 0,
-        reasons: (mod.reasons || []).map((r: any) => r.moduleName).filter(Boolean)
+        reasons: mod.reasons?.map(r => r.moduleName).filter((name): name is string => Boolean(name)) || []
       }))
       .sort((a, b) => b.size - a.size)
       .slice(0, 20); // Top 20 modules
   }
 
-  private static findLargestImports(stats: any): ImportInfo[] {
+  private static findLargestImports(stats: WebpackStats): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
     if (stats.modules) {
       stats.modules
-        .filter((mod: any) => mod.size > this.LARGE_MODULE_THRESHOLD)
-        .forEach((mod: any) => {
+        .filter((mod: WebpackModule) => (mod.size || 0) > this.LARGE_MODULE_THRESHOLD)
+        .forEach((mod: WebpackModule) => {
           const isLazyLoadable = this.LAZY_LOADABLE_PATTERNS.some(pattern => 
             pattern.test(mod.name || '')
           );
 
           imports.push({
-            module: mod.name || mod.id,
+            module: mod.name || String(mod.id),
             size: mod.size || 0,
             component: this.extractComponentName(mod.name || ''),
             isLazyLoadable
@@ -127,7 +147,7 @@ export class BundleAnalysisService {
     return imports.sort((a, b) => b.size - a.size).slice(0, 10);
   }
 
-  private static detectUnusedImports(stats: any): string[] {
+  private static detectUnusedImports(stats: WebpackStats): string[] {
     // Simplified unused import detection
     // In a real implementation, this would use webpack-bundle-analyzer data
     const unusedPatterns = [
@@ -138,10 +158,10 @@ export class BundleAnalysisService {
 
     const modules = stats.modules || [];
     return modules
-      .filter((mod: any) => 
+      .filter((mod: WebpackModule) => 
         unusedPatterns.some(pattern => (mod.name || '').includes(pattern))
       )
-      .map((mod: any) => mod.name || mod.id)
+      .map((mod: WebpackModule) => mod.name || String(mod.id))
       .slice(0, 5);
   }
 

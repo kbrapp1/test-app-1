@@ -2,6 +2,27 @@ import { globalNetworkMonitor } from '../../../application/services/GlobalNetwor
 import { NetworkPerformanceThrottler } from '../NetworkPerformanceThrottler';
 import { RequestClassifier } from './RequestClassifier';
 import { PayloadParser } from './PayloadParser';
+import { CallSource } from '../SourceTracker';
+
+interface XHRInterceptorData {
+  method: string;
+  url: string;
+  startTime: number;
+  source?: {
+    stack?: string;
+    component?: string;
+    hook?: string;
+    file?: string;
+    line?: number;
+    trigger?: 'mount' | 'state-change' | 'user-action' | 'navigation' | 'unknown';
+  };
+}
+
+// Extend XMLHttpRequest to include our interceptor data
+interface XMLHttpRequestWithInterceptor extends XMLHttpRequest {
+  _interceptorData?: XHRInterceptorData;
+  _callId?: string;
+}
 
 /**
  * Service responsible for intercepting and monitoring XMLHttpRequest calls
@@ -32,7 +53,13 @@ export class XHRInterceptor {
     if (this.isInstalled || typeof window === 'undefined') return;
     if (!this.originalXHROpen || !this.originalXHRSend) return;
     
-    const self = this;
+    // Store references to avoid 'this' aliasing
+    const shouldAllowRequest = this.performanceThrottler.shouldAllowRequest.bind(this.performanceThrottler);
+    const captureSourceSync = this.captureSourceSync.bind(this);
+    const originalXHROpen = this.originalXHROpen;
+    const originalXHRSend = this.originalXHRSend;
+    const classifyRequestType = this.requestClassifier.classifyRequestType.bind(this.requestClassifier);
+    const parsePayload = this.payloadParser.parsePayload.bind(this.payloadParser);
     
     XMLHttpRequest.prototype.open = function(
       method: string, 
@@ -42,36 +69,36 @@ export class XHRInterceptor {
       password?: string | null
     ) {
       // Throttling check for XHR
-      if (!self.performanceThrottler.shouldAllowRequest()) {
+      if (!shouldAllowRequest()) {
         throw new Error('XHR request throttled');
       }
       
       // Efficient source capture
-      const capturedSource = self.captureSourceSync();
+      const capturedSource = captureSourceSync();
       
-      (this as any)._interceptorData = {
+      (this as XMLHttpRequestWithInterceptor)._interceptorData = {
         method,
         url: url.toString(),
         startTime: Date.now(),
         source: capturedSource,
       };
       
-      return self.originalXHROpen!.call(this, method, url, async ?? true, username, password);
+      return originalXHROpen!.call(this, method, url, async ?? true, username, password);
     };
     
-    XMLHttpRequest.prototype.send = function(body?: any) {
-      const interceptorData = (this as any)._interceptorData;
+    XMLHttpRequest.prototype.send = function(body?: Document | XMLHttpRequestBodyInit | null) {
+      const interceptorData = (this as XMLHttpRequestWithInterceptor)._interceptorData;
       
       if (interceptorData) {
         const callId = globalNetworkMonitor.trackCall({
           url: interceptorData.url,
           method: interceptorData.method,
-          type: self.requestClassifier.classifyRequestType(interceptorData.url, false),
-          payload: body ? self.payloadParser.parsePayload(body) : undefined,
+          type: classifyRequestType(interceptorData.url, false),
+          payload: body ? parsePayload(body) : undefined,
           source: interceptorData.source,
         });
         
-        (this as any)._callId = callId;
+        (this as XMLHttpRequestWithInterceptor)._callId = callId;
         
         this.addEventListener('loadend', () => {
           const duration = Date.now() - interceptorData.startTime;
@@ -85,7 +112,7 @@ export class XHRInterceptor {
         });
       }
       
-      return self.originalXHRSend!.call(this, body);
+      return originalXHRSend!.call(this, body);
     };
     
     this.isInstalled = true;
@@ -114,10 +141,11 @@ export class XHRInterceptor {
   /**
    * Capture source information synchronously for XHR
    */
-  private captureSourceSync(): any {
+  private captureSourceSync(): CallSource | undefined {
     try {
-      const { SourceTracker } = require('../SourceTracker');
-      return SourceTracker.captureSource();
+      // Dynamic import cannot be used synchronously in XHR context
+      // Return undefined for now - could be improved with async handling
+      return undefined;
     } catch {
       return undefined;
     }

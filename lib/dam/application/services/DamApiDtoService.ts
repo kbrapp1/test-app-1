@@ -120,8 +120,8 @@ export class DamApiDtoService {
     // Apply sorting if specified
     if (sortParams?.sortBy && sortParams?.sortOrder) {
       combinedData.sort((a, b) => {
-        let aValue: any;
-        let bValue: any;
+        let aValue: string | number | Date | null | undefined;
+        let bValue: string | number | Date | null | undefined;
         
         switch (sortParams.sortBy) {
           case 'name':

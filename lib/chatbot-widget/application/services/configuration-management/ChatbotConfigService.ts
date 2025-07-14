@@ -84,7 +84,7 @@ export class ChatbotConfigService {
       if (updateDto.personalitySettings) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentPersonality = ChatbotConfigMapper.personalityToDto(updatedConfig.personalitySettings.toPlainObject());
+        const currentPersonality = ChatbotConfigMapper.personalityToDto(updatedConfig.personalitySettings);
         const mergedPersonalityDto = {
           tone: updateDto.personalitySettings.tone ?? currentPersonality.tone,
           communicationStyle: updateDto.personalitySettings.communicationStyle ?? currentPersonality.communicationStyle,
@@ -101,7 +101,7 @@ export class ChatbotConfigService {
       if (updateDto.knowledgeBase) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentKb = ChatbotConfigMapper.knowledgeBaseToDto(updatedConfig.knowledgeBase.toPlainObject());
+        const currentKb = ChatbotConfigMapper.knowledgeBaseToDto(updatedConfig.knowledgeBase);
         const mergedKbDto = {
           companyInfo: updateDto.knowledgeBase.companyInfo ?? currentKb.companyInfo,
           productCatalog: updateDto.knowledgeBase.productCatalog ?? currentKb.productCatalog,
@@ -118,7 +118,7 @@ export class ChatbotConfigService {
       if (updateDto.operatingHours) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentOperatingHours = ChatbotConfigMapper.operatingHoursToDto(updatedConfig.operatingHours.toPlainObject());
+        const currentOperatingHours = ChatbotConfigMapper.operatingHoursToDto(updatedConfig.operatingHours);
         const mergedOperatingHoursDto = {
           timezone: updateDto.operatingHours.timezone ?? currentOperatingHours.timezone,
           businessHours: updateDto.operatingHours.businessHours ?? currentOperatingHours.businessHours,

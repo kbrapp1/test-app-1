@@ -28,7 +28,7 @@ export interface RegisterUserResult {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 

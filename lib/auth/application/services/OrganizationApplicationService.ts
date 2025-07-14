@@ -93,7 +93,7 @@ export class OrganizationApplicationService {
       // Refresh session and page
       await this.refreshSessionAndPage(organizationId);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error switching organization:', error);
       
       this.showErrorNotification('Switch Failed', 'Please try again');
@@ -222,6 +222,11 @@ export class OrganizationApplicationService {
   private async refreshSessionAndPage(organizationId: string): Promise<void> {
     if (typeof window === 'undefined') return;
 
+    // Security validation: Ensure organizationId is provided for session refresh
+    if (!organizationId) {
+      throw new Error('Organization ID required for secure session refresh');
+    }
+
     try {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Session refresh timeout')), 5000);
@@ -231,7 +236,7 @@ export class OrganizationApplicationService {
       
       try {
         await Promise.race([refreshPromise, timeoutPromise]);
-      } catch (timeoutError) {
+      } catch {
         // Force page refresh as fallback
         window.location.reload();
         return;
@@ -242,7 +247,7 @@ export class OrganizationApplicationService {
         window.location.reload();
       }, 500);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Unexpected error in session refresh:', error);
       // Fallback to logout if anything goes wrong
       await this.supabase.auth.signOut();

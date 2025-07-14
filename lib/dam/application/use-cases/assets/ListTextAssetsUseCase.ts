@@ -1,5 +1,5 @@
 import { IAssetRepository } from '../../../domain/repositories/IAssetRepository';
-import { Asset } from '../../../domain/entities/Asset';
+import { Asset as _Asset } from '../../../domain/entities/Asset';
 import { AppError, ValidationError, DatabaseError } from '@/lib/errors/base';
 
 // Define text MIME types, consider moving to a shared location if used elsewhere
@@ -78,15 +78,16 @@ export class ListTextAssetsUseCase {
       });
 
       return { assets: assetSummaries };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in ListTextAssetsUseCase:', error);
       if (error instanceof AppError) {
         throw error;
       }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DatabaseError(
         'An unexpected error occurred while listing text assets.',
         'LIST_TEXT_ASSETS_FAILED',
-        { originalError: error.message }
+        { originalError: errorMessage }
       );
     }
   }

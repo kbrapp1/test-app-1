@@ -47,11 +47,11 @@ export class FolderService {
       });
 
       return { success: true, data: { folder: newFolder } };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('createFolder: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }
@@ -116,11 +116,11 @@ export class FolderService {
       }
 
       return { success: true, data: { folder: updatedFolder } };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('updateFolder: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }
@@ -165,11 +165,11 @@ export class FolderService {
           parentFolderId
         }
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('deleteFolder: Unexpected Error', err);
 
       // Handle specific error cases
-      if (err.message && (
+      if (err instanceof Error && (
         err.message.includes('contains sub-folders') || 
         err.message.includes('contains assets')
       )) {
@@ -182,7 +182,7 @@ export class FolderService {
 
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }

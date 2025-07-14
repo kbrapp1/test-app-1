@@ -7,6 +7,7 @@ import { SearchDamItemsUseCase, SearchDamItemsResult } from './SearchDamItemsUse
 import { ListAssetsByFolderUseCase } from '../assets/ListAssetsByFolderUseCase';
 import { ListFoldersUseCase } from '../folders/ListFoldersUseCase';
 import { DatabaseError } from '@/lib/errors/base';
+import { DamFilterParameters, DamSortParameters, LimitOptions } from '../../dto/SearchCriteriaDTO';
 
 export interface GetDamDataResult {
   assets: DomainAsset[];
@@ -81,9 +82,9 @@ export class GetDamDataUseCase {
       organizationId: string;
       searchTerm?: string;
       tagIds?: string[];
-      filters: any;
-      sortParams: any;
-      limitOptions: any;
+      filters: DamFilterParameters;
+      sortParams: DamSortParameters;
+      limitOptions: LimitOptions;
       currentFolderIdForContext: string | null;
     },
     assetsOutput: DomainAsset[],
@@ -108,8 +109,8 @@ export class GetDamDataUseCase {
     params: {
       folderId: string | null;
       organizationId: string;
-      filters: any;
-      sortParams: any;
+      filters: DamFilterParameters;
+      sortParams: DamSortParameters;
       tagIds?: string[];
     },
     assetsOutput: DomainAsset[],

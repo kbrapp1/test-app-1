@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfileProvider, useUserProfile } from '../UserProfileProvider';
 import { AuthenticationProvider } from '../AuthenticationProvider';

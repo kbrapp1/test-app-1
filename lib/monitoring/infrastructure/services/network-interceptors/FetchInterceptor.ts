@@ -2,6 +2,7 @@ import { globalNetworkMonitor } from '../../../application/services/GlobalNetwor
 import { NetworkPerformanceThrottler } from '../NetworkPerformanceThrottler';
 import { RequestClassifier } from './RequestClassifier';
 import { PayloadParser } from './PayloadParser';
+import { CallSource } from '../SourceTracker';
 
 /**
  * Service responsible for intercepting and monitoring fetch() calls
@@ -29,18 +30,16 @@ export class FetchInterceptor {
   install(): void {
     if (this.isInstalled || typeof window === 'undefined' || !this.originalFetch) return;
     
-    const self = this;
-    
-    window.fetch = async function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const processingStart = performance.now();
       
       // Check throttling first
-      if (!self.performanceThrottler.shouldAllowRequest()) {
+      if (!this.performanceThrottler.shouldAllowRequest()) {
         throw new Error('Request throttled');
       }
       
       const startTime = Date.now();
-      const url = self.extractUrl(input);
+      const url = this.extractUrl(input);
       const method = init?.method || 'GET';
       
       // Efficient header parsing
@@ -49,29 +48,29 @@ export class FetchInterceptor {
       const isServerAction = !!nextAction;
       
       // Handle Server Actions and relative URLs
-      const normalizedUrl = self.normalizeUrl(url, nextAction, isServerAction);
+      const normalizedUrl = this.normalizeUrl(url, nextAction, isServerAction);
       
       // Optimized source capture with early exit
-      const capturedSource = await self.captureSource();
+      const capturedSource = await this.captureSource();
       
       // Efficient payload parsing
-      const payload = self.payloadParser.parseRequestPayload(init, nextAction, isServerAction);
+      const payload = this.payloadParser.parseRequestPayload(init, nextAction, isServerAction);
       
       // Track performance overhead
-      self.performanceThrottler.trackProcessingTime(processingStart);
+      this.performanceThrottler.trackProcessingTime(processingStart);
       
       // Track the call
       const callId = globalNetworkMonitor.trackCall({
         url: normalizedUrl,
         method,
-        type: self.requestClassifier.classifyRequestType(normalizedUrl, isServerAction),
+        type: this.requestClassifier.classifyRequestType(normalizedUrl, isServerAction),
         payload,
-        headers: init?.headers ? self.payloadParser.parseHeaders(init.headers) : undefined,
+        headers: init?.headers ? this.payloadParser.parseHeaders(init.headers) : undefined,
         source: capturedSource,
       });
       
       try {
-        const response = await self.originalFetch!.call(this, input, init);
+        const response = await this.originalFetch!.call(window, input, init);
         const duration = Date.now() - startTime;
         
         globalNetworkMonitor.completeCall(callId, {
@@ -151,7 +150,7 @@ export class FetchInterceptor {
   /**
    * Capture source information with error handling
    */
-  private async captureSource(): Promise<any> {
+  private async captureSource(): Promise<CallSource | undefined> {
     try {
       const { SourceTracker } = await import('../SourceTracker');
       return SourceTracker.captureSource();

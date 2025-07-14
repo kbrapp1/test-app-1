@@ -6,6 +6,7 @@
  */
 
 import type { Tables } from '@/types/supabase';
+import type { User } from '@supabase/supabase-js';
 
 // Core Profile Type with Super Admin
 export interface Profile extends Tables<'profiles'> {
@@ -33,7 +34,7 @@ export interface SuperAdminContext {
 
 // Enhanced Auth Context with Super Admin
 export interface AuthContextType {
-  readonly user: any;
+  readonly user: User | null;
   readonly profile: Profile | null;
   readonly activeOrgId: string | null;
   readonly isSuperAdmin: boolean;

@@ -4,7 +4,7 @@ import { OrganizationContextService } from '@/lib/organization/domain/services/O
 import { PermissionValidationService } from '@/lib/organization/domain/services/PermissionValidationService';
 import { AuditTrailService } from '@/lib/organization/domain/services/AuditTrailService';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const contextService = new OrganizationContextService();
     const permissionService = new PermissionValidationService();
-    const auditService = new AuditTrailService();
+    const _auditService = new AuditTrailService();
 
     // Run all service tests
     const results = {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      results.tests.getAuditSummary = await auditService.getAuditSummary();
+      results.tests.getAuditSummary = await _auditService.getAuditSummary();
     } catch (error: any) {
       results.tests.getAuditSummary = { error: error.message, code: error.code };
     }

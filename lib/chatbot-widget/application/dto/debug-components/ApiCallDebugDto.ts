@@ -20,17 +20,17 @@ export interface ApiCallDebugDto {
     userMessage: string;
     fullPrompt?: string;
     requestHeaders?: Record<string, string>;
-    requestPayload?: any;
-    fullRequestPayload?: any;
+    requestPayload?: Record<string, unknown>;
+    fullRequestPayload?: Record<string, unknown>;
     apiEndpoint?: string;
     requestSize?: number;
     userAgent?: string;
     functionsProvided?: Array<{
       name: string;
       description: string;
-      parameters: any;
+      parameters: Record<string, unknown>;
     }>;
-    enhancedContext?: any;
+    enhancedContext?: Record<string, unknown>;
     additionalInstructions?: string[];
   };
   
@@ -46,7 +46,7 @@ export interface ApiCallDebugDto {
     processingTime: number;
     fullResponse?: string;
     responseHeaders?: Record<string, string>;
-    responsePayload?: any;
+    responsePayload?: Record<string, unknown>;
     responseSize?: number;
     statusCode?: number;
     rateLimitInfo?: {
@@ -56,8 +56,8 @@ export interface ApiCallDebugDto {
     };
     functionCallsExecuted?: Array<{
       name: string;
-      arguments: any;
-      result: any;
+      arguments: Record<string, unknown>;
+      result: unknown;
       executionTime: number;
       success: boolean;
       error?: string;

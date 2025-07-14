@@ -16,42 +16,55 @@ describe('IssueAnalysisService', () => {
 
   beforeEach(() => {
     mockCacheAnalysisService = {
-      analyzeReactQueryPattern: vi.fn()
-    } as any;
+      analyzeReactQueryPattern: vi.fn(),
+      detectInfiniteScrollPattern: vi.fn(),
+      calculateTimeDifference: vi.fn()
+    } as unknown as ReactQueryCacheAnalysisService;
     service = new IssueAnalysisService(mockCacheAnalysisService);
   });
 
   // Test data factories following DDD patterns
-  const createMockRedundantPattern = (overrides: any = {}) => ({
+  const createMockRedundantPattern = (overrides: Record<string, unknown> = {}) => ({
+    pattern: 'rapid-fire' as const,
     originalCall: {
+      id: 'test-call-1',
+      method: 'GET',
+      url: '/api/test',
+      type: 'api-route' as const,
+      timestamp: Date.now(),
       source: {
         component: 'TestComponent',
         hook: 'useTestQuery',
         file: 'TestComponent.tsx',
         line: 25,
-        trigger: 'user-interaction'
+        trigger: 'user-action' as const
       },
       payload: { endpoint: '/api/test', params: { page: 0 } },
-      timestamp: Date.now(),
-      ...overrides.originalCall
+      ...(overrides.originalCall as Record<string, unknown> || {})
     },
     duplicateCalls: [
       {
+        id: 'test-call-2',
+        method: 'GET',
+        url: '/api/test',
+        type: 'api-route' as const,
+        timestamp: Date.now() + 1000,
         source: {
           component: 'TestComponent',
           hook: 'useTestQuery',
           file: 'TestComponent.tsx',
           line: 25,
-          trigger: 'user-interaction'
+          trigger: 'user-action' as const
         },
         payload: { endpoint: '/api/test', params: { page: 0 } },
-        timestamp: Date.now() + 1000,
-        ...overrides.duplicateCall
+        ...(overrides.duplicateCall as Record<string, unknown> || {})
       }
     ],
     timeWindow: 5000,
     ...overrides
   });
+
+  const createMockPattern = () => createMockRedundantPattern();
 
   describe('analyzeRedundantPattern', () => {
     it('should return null for legitimate infinite scroll patterns detected by cache analysis', () => {
@@ -97,7 +110,7 @@ describe('IssueAnalysisService', () => {
           hook: 'useTestQuery',
           file: 'TestComponent.tsx:25',
           line: 25,
-          trigger: 'user-interaction'
+          trigger: 'user-action'
         },
         classification: {
           issue: 'React Query cache not preventing redundant server actions',
@@ -116,7 +129,8 @@ describe('IssueAnalysisService', () => {
           priority: 'medium'
         },
         originalPattern: pattern,
-        analysisSource: 'cache-analysis'
+        analysisSource: 'cache-analysis' as const,
+        cacheAnalysis: cacheAnalysisResult
       });
     });
 
@@ -170,27 +184,27 @@ describe('IssueAnalysisService', () => {
       const analysisResults: IssueAnalysisResult[] = [
         {
           source: { component: 'Test1' },
-          classification: { issue: 'Test1', severity: 'critical', category: 'cache-optimization', isReactQueryRelated: true },
+          classification: { issue: 'Test1', severity: 'critical' as const, category: 'cache-optimization' as const, isReactQueryRelated: true },
           solution: { suggestedFix: 'Fix1', estimatedImpact: '1h', businessImpact: 'High' },
-          performance: { duplicateCount: 5, timeWindow: 1000, priority: 'critical' },
-          originalPattern: {},
-          analysisSource: 'cache-analysis'
+          performance: { duplicateCount: 5, timeWindow: 1000, priority: 'critical' as const },
+          originalPattern: createMockPattern(),
+          analysisSource: 'cache-analysis' as const
         },
         {
           source: { component: 'Test2' },
-          classification: { issue: 'Test2', severity: 'high', category: 'redundancy-elimination', isReactQueryRelated: false },
+          classification: { issue: 'Test2', severity: 'high' as const, category: 'redundancy-elimination' as const, isReactQueryRelated: false },
           solution: { suggestedFix: 'Fix2', estimatedImpact: '2h', businessImpact: 'Medium' },
-          performance: { duplicateCount: 3, timeWindow: 2000, priority: 'high' },
-          originalPattern: {},
-          analysisSource: 'network-pattern'
+          performance: { duplicateCount: 3, timeWindow: 2000, priority: 'high' as const },
+          originalPattern: createMockPattern(),
+          analysisSource: 'network-pattern' as const
         },
         {
           source: { component: 'Test3' },
-          classification: { issue: 'Test3', severity: 'medium', category: 'performance-optimization', isReactQueryRelated: true },
+          classification: { issue: 'Test3', severity: 'medium' as const, category: 'performance-optimization' as const, isReactQueryRelated: true },
           solution: { suggestedFix: 'Fix3', estimatedImpact: '3h', businessImpact: 'Low' },
-          performance: { duplicateCount: 2, timeWindow: 3000, priority: 'medium' },
-          originalPattern: {},
-          analysisSource: 'cache-analysis'
+          performance: { duplicateCount: 2, timeWindow: 3000, priority: 'medium' as const },
+          originalPattern: createMockPattern(),
+          analysisSource: 'cache-analysis' as const
         }
       ];
 
@@ -218,11 +232,11 @@ describe('IssueAnalysisService', () => {
       const analysisResults: IssueAnalysisResult[] = [
         {
           source: { component: 'Test' },
-          classification: { issue: 'Test', severity: 'medium', category: 'cache-optimization', isReactQueryRelated: false },
+          classification: { issue: 'Test', severity: 'medium' as const, category: 'cache-optimization' as const, isReactQueryRelated: false },
           solution: { suggestedFix: 'Fix', estimatedImpact: '1h', businessImpact: 'Medium' },
-          performance: { duplicateCount: 2, timeWindow: 1000, priority: 'medium' },
-          originalPattern: {},
-          analysisSource: 'network-pattern'
+          performance: { duplicateCount: 2, timeWindow: 1000, priority: 'medium' as const },
+          originalPattern: createMockPattern(),
+          analysisSource: 'network-pattern' as const
         }
       ];
 

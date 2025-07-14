@@ -21,7 +21,7 @@ export class DomainOrchestrationService {
           domains.push(context);
         }
       }
-    } catch (error) {
+    } catch {
       // Graceful fallback in development
     }
     
@@ -40,7 +40,7 @@ export class DomainOrchestrationService {
           domains.push(context);
         }
       }
-    } catch (error) {
+    } catch {
       // Continue if can't read global components
     }
 
@@ -76,7 +76,7 @@ export class DomainOrchestrationService {
         optimizationTargets: OptimizationTargetGenerationService.generateTargets(components, endpoints, pages),
         cacheableEndpoints: EndpointDiscoveryService.identifyCacheableEndpoints(endpoints)
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -102,7 +102,7 @@ export class DomainOrchestrationService {
           cacheableEndpoints: EndpointDiscoveryService.identifyCacheableEndpoints(endpoints)
         };
       }
-    } catch (error) {
+    } catch {
       // Continue if can't analyze domain
     }
 

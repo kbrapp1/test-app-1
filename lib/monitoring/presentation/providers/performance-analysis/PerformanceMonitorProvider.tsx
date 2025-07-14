@@ -14,7 +14,7 @@ const PerformanceMonitorContext = createContext<PerformanceMonitorContextType | 
 export function PerformanceMonitorProvider({ children }: { children: React.ReactNode }) {
   // Always start with false to prevent hydration mismatch
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [_isHydrated, setIsHydrated] = useState(false);
 
   // Update state after hydration to avoid SSR/client mismatch
   useEffect(() => {
@@ -54,9 +54,9 @@ export function PerformanceMonitorProvider({ children }: { children: React.React
   // Expose to window for console access
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      (window as any).togglePerfMonitor = toggle;
-      (window as any).enablePerfMonitor = enable;
-      (window as any).disablePerfMonitor = disable;
+      (window as Window & { togglePerfMonitor?: () => void; enablePerfMonitor?: () => void; disablePerfMonitor?: () => void }).togglePerfMonitor = toggle;
+      (window as Window & { togglePerfMonitor?: () => void; enablePerfMonitor?: () => void; disablePerfMonitor?: () => void }).enablePerfMonitor = enable;
+      (window as Window & { togglePerfMonitor?: () => void; enablePerfMonitor?: () => void; disablePerfMonitor?: () => void }).disablePerfMonitor = disable;
     }
   }, []);
 

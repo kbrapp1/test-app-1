@@ -32,15 +32,7 @@ export async function getTtsVoices(provider?: string, modelId?: string) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
         }
 
-        // Log security context for monitoring
-        console.log('[TTS_SECURITY]', {
-          action: 'getTtsVoices',
-          userId: context.user.id,
-          organizationId: context.organizationId,
-          fromCache: context.securityContext.fromCache,
-          validationMethod: context.securityContext.validationMethod,
-          timestamp: context.securityContext.timestamp
-        });
+        // Security context validated
 
         const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
         return ttsAppService.getVoices(provider, modelId);
@@ -67,22 +59,7 @@ export async function startSpeechGeneration(inputText: string, voiceId: string, 
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
         }
 
-        // Log security context for monitoring
-        console.log('[TTS_SECURITY]', {
-          action: 'startSpeechGeneration',
-          userId: context.user.id,
-          organizationId: context.organizationId,
-          fromCache: context.securityContext.fromCache,
-          validationMethod: context.securityContext.validationMethod,
-          timestamp: context.securityContext.timestamp
-        });
-
-        // Log deduplication stats for monitoring
-        console.log('[TTS_DEDUPLICATION]', {
-          action: 'startSpeechGeneration',
-          pendingRequests: apiDeduplicationService.getPendingCount(),
-          recentDeduplications: apiDeduplicationService.getRecentDeduplications(3)
-        });
+        // Security context validated and deduplication service ready
 
         // Pass context to application service instead of re-validating
         const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
@@ -110,15 +87,7 @@ export async function getSpeechGenerationResult(ttsPredictionDbId: string) {
           return TtsErrorHandler.errorResponse(TtsErrorHandler.standardizeError(new Error(context.error || 'TTS validation failed')));
         }
 
-        // Log security context for monitoring
-        console.log('[TTS_SECURITY]', {
-          action: 'getSpeechGenerationResult',
-          userId: context.user.id,
-          organizationId: context.organizationId,
-          fromCache: context.securityContext.fromCache,
-          validationMethod: context.securityContext.validationMethod,
-          timestamp: context.securityContext.timestamp
-        });
+        // Security context validated
 
         const ttsAppService = TtsCompositionRoot.getTtsApplicationService();
         return ttsAppService.getSpeechGenerationResult(ttsPredictionDbId);

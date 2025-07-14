@@ -45,7 +45,7 @@ export class CreateTagUseCase { // Removed implements Usecase<CreateTagInput, Ta
       
       const newTag = await this.tagRepository.save(tagData);
       return newTag;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) { // Re-throw known AppErrors
         throw error;
       }

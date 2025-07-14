@@ -14,7 +14,7 @@ interface UseComponentTrackerReturn {
 /**
  * Hook to track component performance metrics
  */
-export function useComponentTracker(componentName: string): UseComponentTrackerReturn {
+export function useComponentTracker(_componentName: string): UseComponentTrackerReturn {
   const metrics = useRef<ComponentMetrics>({
     mountTime: 0,
     renderTime: 0,
@@ -51,7 +51,7 @@ export function useComponentTracker(componentName: string): UseComponentTrackerR
       // Performance data is now tracked via metrics object
       // Removed console.log for production readiness
     }, 0);
-  }, [componentName]);
+  }, []);
 
   // Memoize return object to prevent recreation
   const returnValue = useMemo(() => ({

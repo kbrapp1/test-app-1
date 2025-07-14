@@ -80,7 +80,7 @@ export class SearchDamItemsUseCase {
       limitOptions: params.limitOptions,
     };
 
-    const folderSearchCriteria: FolderSearchCriteria = {
+    const _folderSearchCriteria: FolderSearchCriteria = {
       organizationId: params.organizationId,
       searchTerm: params.searchTerm,
       parentFolderId: folderParentContextId,

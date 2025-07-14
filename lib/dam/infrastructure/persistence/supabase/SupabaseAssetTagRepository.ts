@@ -18,7 +18,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     this.supabase = supabaseClient || createSupabaseServerClient();
   }
 
-  async linkTagToAsset(assetId: string, tagId: string, organizationId: string, userId?: string): Promise<boolean> {
+  async linkTagToAsset(assetId: string, tagId: string, _organizationId: string, _userId?: string): Promise<boolean> {
     const linkData: AssetTagLink = {
       asset_id: assetId,
       tag_id: tagId,
@@ -36,7 +36,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     return true;
   }
 
-  async unlinkTagFromAsset(assetId: string, tagId: string, organizationId: string): Promise<boolean> {
+  async unlinkTagFromAsset(assetId: string, tagId: string, _organizationId: string): Promise<boolean> {
     const { error } = await this.supabase
       .from('asset_tags')
       .delete()
@@ -52,7 +52,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     return true;
   }
 
-  async findTagsByAssetId(assetId: string, organizationId: string): Promise<Tag[]> {
+  async findTagsByAssetId(assetId: string, _organizationId: string): Promise<Tag[]> {
     const { data, error } = await this.supabase
       .from('asset_tags')
       .select(`
@@ -77,7 +77,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     return tags;
   }
 
-  async findAssetIdsByTagId(tagId: string, organizationId: string): Promise<string[]> {
+  async findAssetIdsByTagId(tagId: string, _organizationId: string): Promise<string[]> {
     const { data, error } = await this.supabase
       .from('asset_tags')
       .select('asset_id')
@@ -90,7 +90,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     return data ? data.map(link => link.asset_id) : [];
   }
 
-  async updateTagsForAsset(assetId: string, tagIds: string[], organizationId: string, userId: string): Promise<boolean> {
+  async updateTagsForAsset(assetId: string, tagIds: string[], _organizationId: string, _userId: string): Promise<boolean> {
     // 1. Delete existing tag links for the asset
     const { error: deleteError } = await this.supabase
       .from('asset_tags')
@@ -120,7 +120,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     return true;
   }
 
-  async isTagLinked(tagId: string, organizationId: string): Promise<boolean> {
+  async isTagLinked(tagId: string, _organizationId: string): Promise<boolean> {
     // We only need to check if at least one link exists for the tag within the organization.
     // RLS should handle organization scoping if asset_tags table is linked to assets/tags that have org_id.
     // For a direct check, we can count.

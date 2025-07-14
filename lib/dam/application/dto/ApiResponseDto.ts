@@ -55,7 +55,7 @@ export interface DamGalleryApiResponse {
   metadata?: {
     searchTerm?: string;
     currentFolder?: string;
-    appliedFilters?: Record<string, any>;
+    appliedFilters?: Record<string, unknown>;
   };
 }
 

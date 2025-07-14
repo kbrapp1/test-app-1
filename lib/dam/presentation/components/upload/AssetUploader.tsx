@@ -221,7 +221,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
               <div className="flex items-center gap-2 text-blue-800">
                 <Clock className="w-4 h-4 animate-spin" />
                 <span className="text-sm font-medium">
-                  Uploading files... Please don't close this page.
+                  Uploading files... Please don&apos;t close this page.
                 </span>
               </div>
             </div>

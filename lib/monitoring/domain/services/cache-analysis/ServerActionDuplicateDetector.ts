@@ -21,7 +21,7 @@ export class ServerActionDuplicateDetector {
    * @param analyses - Array of React Query call analyses
    * @returns Duplicate detection result or null if no issues found
    */
-  detectDuplicates(analyses: ReactQueryCallAnalysis[]): any | null {
+  detectDuplicates(analyses: ReactQueryCallAnalysis[]): ServerActionDuplicateResult | null {
     const serverActions = this.filterServerActions(analyses);
     const sameDataType = this.groupByDataType(serverActions);
     
@@ -69,7 +69,7 @@ export class ServerActionDuplicateDetector {
   /**
    * Build the duplicate detection result
    */
-  private buildDuplicateResult(calls: ReactQueryCallAnalysis[], timeDiff: number, dataType: string): any {
+  private buildDuplicateResult(calls: ReactQueryCallAnalysis[], timeDiff: number, dataType: string): ServerActionDuplicateResult {
     return {
       severity: this.determineSeverity(timeDiff),
       issue: 'SERVER_ACTION_CACHE_BYPASS: React Query cache not preventing redundant server actions',
@@ -119,4 +119,14 @@ export class ServerActionDuplicateDetector {
 
     return locationMap[dataType] || `lib/${dataType}/presentation/hooks/queries/use${dataType}.ts`;
   }
+}
+
+export interface ServerActionDuplicateResult {
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  issue: string;
+  rootCause: string;
+  specificFix: string;
+  codeLocation: string;
+  estimatedImpact: string;
+  dataType?: string;
 } 

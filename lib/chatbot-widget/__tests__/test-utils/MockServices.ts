@@ -19,7 +19,6 @@ import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { Lead } from '../../domain/entities/Lead';
 import { IntentResult } from '../../domain/value-objects/message-processing/IntentResult';
-import { ConversationContextOrchestrator } from '../../domain/services/conversation/ConversationContextOrchestrator';
 
 // AI Service Mocks
 export class MockOpenAIProvider implements IAIConversationService {
@@ -41,7 +40,7 @@ export class MockOpenAIProvider implements IAIConversationService {
 
   async generateResponse(
     userMessage: string,
-    context: ConversationContext
+    _context: ConversationContext
   ): Promise<AIResponse> {
     this.callCount++;
 
@@ -66,19 +65,19 @@ export class MockOpenAIProvider implements IAIConversationService {
     };
   }
 
-  buildSystemPrompt(chatbotConfig: ChatbotConfig, session: ChatSession, messageHistory: ChatMessage[]): string {
+  buildSystemPrompt(_chatbotConfig: ChatbotConfig, _session: ChatSession, _messageHistory: ChatMessage[]): string {
     return 'Mock system prompt';
   }
 
-  async analyzeSentiment(userMessage: string): Promise<'positive' | 'neutral' | 'negative'> {
+  async analyzeSentiment(_userMessage: string): Promise<'positive' | 'neutral' | 'negative'> {
     return 'neutral';
   }
 
-  async analyzeUrgency(userMessage: string): Promise<'low' | 'medium' | 'high'> {
+  async analyzeUrgency(_userMessage: string): Promise<'low' | 'medium' | 'high'> {
     return 'medium';
   }
 
-  async analyzeEngagement(userMessage: string, conversationHistory?: ChatMessage[]): Promise<'low' | 'medium' | 'high'> {
+  async analyzeEngagement(_userMessage: string, _conversationHistory?: ChatMessage[]): Promise<'low' | 'medium' | 'high'> {
     return 'medium';
   }
 

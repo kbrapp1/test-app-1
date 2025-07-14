@@ -89,7 +89,7 @@ export class ResourceTimingService {
 
     // Analyze resource loading patterns
     const scriptResources = resources.filter(r => r.type === 'script');
-    const cssResources = resources.filter(r => r.type === 'stylesheet');
+    const _cssResources = resources.filter(r => r.type === 'stylesheet');
     const imageResources = resources.filter(r => r.type === 'image');
 
     if (scriptResources.length > 20) {

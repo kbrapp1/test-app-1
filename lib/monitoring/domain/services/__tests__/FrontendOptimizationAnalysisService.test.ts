@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FrontendOptimizationAnalysisService, FrontendIssueAnalysis } from '../optimization/FrontendOptimizationAnalysisService';
-import { OptimizationGap } from '../../value-objects/OptimizationGap';
+import { FrontendOptimizationAnalysisService } from '../optimization/FrontendOptimizationAnalysisService';
+import { OptimizationGap, OptimizationType } from '../../value-objects/OptimizationGap';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { PerformanceTrackingState, PageContext } from '../../../application/dto/PerformanceTrackingDTO';
 
 /**
  * Unit Tests for FrontendOptimizationAnalysisService (Domain Service)
@@ -223,7 +223,7 @@ describe('FrontendOptimizationAnalysisService', () => {
     it('should handle unknown issue types gracefully', () => {
       // Arrange
       const issue = createMockOptimizationGap({
-        type: 'unknown-type' as any,
+        type: 'unknown-type' as 'caching',
         title: 'Unknown optimization'
       });
       const trackingState = createMockTrackingState();
@@ -316,7 +316,7 @@ describe('FrontendOptimizationAnalysisService', () => {
       ];
 
       contexts.forEach(({ context, expected }) => {
-        const trackingState = createMockTrackingState({ pageContext: context as any });
+        const trackingState = createMockTrackingState({ pageContext: context as PageContext });
         const result = service.analyzeOptimizationGap(issue, trackingState, metrics, 0);
         expect(result.suggestedFix).toBe(expected);
       });
@@ -335,7 +335,7 @@ describe('FrontendOptimizationAnalysisService', () => {
       ];
 
       issueTypes.forEach(({ type, expected }) => {
-        const issue = createMockOptimizationGap({ type: type as any });
+        const issue = createMockOptimizationGap({ type: type as OptimizationType });
         const result = service.analyzeOptimizationGap(issue, trackingState, metrics, 0);
         expect(result.suggestedFix).toBe(expected);
       });
@@ -410,7 +410,7 @@ describe('FrontendOptimizationAnalysisService', () => {
 
       const issueTypes = ['debouncing', 'batching'];
       issueTypes.forEach(type => {
-        const issue = createMockOptimizationGap({ type: type as any });
+        const issue = createMockOptimizationGap({ type: type as OptimizationType });
         const result = service.analyzeOptimizationGap(issue, trackingState, metrics, 0);
         expect(result.webVitalImpact).toBeUndefined();
       });
@@ -466,7 +466,7 @@ describe('FrontendOptimizationAnalysisService', () => {
 
       // Test with null webVitals
       const nullVitalsState = createMockTrackingState({
-        webVitals: null as any
+        webVitals: undefined
       });
 
       expect(() => {
@@ -475,7 +475,7 @@ describe('FrontendOptimizationAnalysisService', () => {
 
       // Undefined LCP specifically
       const undefinedLcpState = createMockTrackingState({
-        webVitals: { LCP: undefined as any, CLS: 0.1 }
+        webVitals: { LCP: undefined, CLS: 0.1 }
       });
 
       expect(() => {

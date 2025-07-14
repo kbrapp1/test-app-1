@@ -228,13 +228,13 @@ export class BundleMonitoringService {
           });
         });
         observer.observe({ entryTypes: ['measure', 'mark'] });
-      } catch (error) {
+      } catch {
         // PerformanceObserver not supported, monitoring will be manual
       }
     }
   }
 
-  private handlePerformanceEntry(entry: PerformanceEntry): void {
+  private handlePerformanceEntry(_entry: PerformanceEntry): void {
     // Process performance entries related to bundle loading
     // This integrates with Performance API marks we set in LazyProviderLoader
   }
@@ -278,13 +278,11 @@ export class BundleMonitoringService {
     return Math.round(totalLoadTime / BundleMonitoringService.globalLoadMetrics.length);
   }
 
-  private calculateOverallHealth(stats: GlobalBundleStats): 'excellent' | 'good' | 'needs-improvement' | 'poor' {
+  private calculateOverallHealth(stats: GlobalBundleStats): 'excellent' | 'good' | 'poor' {
     if (stats.averagePerformanceScore >= 90 && stats.totalCacheHitRatio >= 0.85) {
       return 'excellent';
-    } else if (stats.averagePerformanceScore >= 75 && stats.totalCacheHitRatio >= 0.7) {
+    } else if (stats.averagePerformanceScore >= 60 && stats.totalCacheHitRatio >= 0.7) {
       return 'good';
-    } else if (stats.averagePerformanceScore >= 60) {
-      return 'needs-improvement';
     } else {
       return 'poor';
     }

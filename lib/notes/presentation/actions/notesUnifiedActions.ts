@@ -13,8 +13,11 @@
 
 import { NotesUnifiedContextService, NotesUnifiedContext } from '../../application/services/NotesUnifiedContextService';
 import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
-import { createClient } from '@/lib/supabase/server';
 import { Note } from '@/types/notes';
+import { User } from '@supabase/supabase-js';
+import { NotesCompositionRoot } from '../../infrastructure/composition/NotesCompositionRoot';
+import { CreateNoteCommand, UpdateNoteCommand, ReorderNotesCommand } from '../../application/services/NotesApplicationService';
+// TODO: Implement proper audit trail service following comprehensive-security-design.md
 
 export interface NotesUnifiedContextResult {
   success: boolean;
@@ -25,7 +28,7 @@ export interface NotesUnifiedContextResult {
 export interface NotesDataResult {
   success: boolean;
   notes?: Note[];
-  user?: any; // User from context
+  user?: User; // User from context
   organizationId?: string; // Organization ID from context
   isNotesEnabled?: boolean; // Feature flag from context
   error?: string;
@@ -122,30 +125,39 @@ export async function getNotesData(): Promise<NotesDataResult> {
           };
         }
 
-        // Fetch notes from database
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('notes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('organization_id', organizationId)
-          .order('position', { ascending: true });
+        // Fetch notes using application service with permission validation
+        try {
+          const compositionRoot = NotesCompositionRoot.getInstance();
+          const applicationService = compositionRoot.getNotesApplicationService();
+          const noteAggregates = await applicationService.getNotes(user.id, organizationId);
+          
+          // Convert domain aggregates to presentation format
+          const notes: Note[] = noteAggregates.map((aggregate) => ({
+            id: aggregate.id.value,
+            user_id: aggregate.userId,
+            organization_id: aggregate.organizationId,
+            title: aggregate.title,
+            content: aggregate.content,
+            color_class: aggregate.colorClass,
+            position: aggregate.position,
+            created_at: aggregate.createdAt.toISOString(),
+            updated_at: aggregate.updatedAt?.toISOString() || null
+          }));
 
-        if (error) {
-          console.error('[NOTES_DATA_ACTION] Database error:', error);
+          return {
+            success: true,
+            notes,
+            user: user,
+            organizationId: organizationId,
+            isNotesEnabled: true
+          };
+        } catch (error) {
+          console.error('[NOTES_DATA_ACTION] Application service error:', error);
           return {
             success: false,
-            error: 'Failed to fetch notes from database'
+            error: error instanceof Error ? error.message : 'Failed to fetch notes'
           };
         }
-
-        return {
-          success: true,
-          notes: (data as Note[]) || [],
-          user: user,
-          organizationId: organizationId,
-          isNotesEnabled: contextResult.data.isNotesEnabled
-        };
 
       } catch (error) {
         console.error('[NOTES_DATA_ACTION] Error:', error);
@@ -164,7 +176,7 @@ export async function getNotesData(): Promise<NotesDataResult> {
  * Reuses unified context service for consistent validation
  */
 async function validateNotesAccess(): Promise<
-  | { success: true; user: any; organizationId: string }
+  | { success: true; user: User; organizationId: string }
   | { success: false; error: string }
 > {
   try {
@@ -216,63 +228,49 @@ export async function createNote(noteData: {
         
         const { user, organizationId } = validation;
 
-        // Validate input
-        if (!noteData.title?.trim()) {
-          return { success: false, error: 'Note title is required' };
-        }
-
-        const supabase = createClient();
+        // ✅ PERMISSION: Use application service with permission validation
+        const applicationService = NotesCompositionRoot.getInstance().getNotesApplicationService();
         
-        // Get the highest current position if not provided
-        let position = noteData.position;
-        if (position === undefined) {
-          const { data: maxPosData, error: maxPosError } = await supabase
-            .from('notes')
-            .select('position')
-            .eq('user_id', user.id)
-            .eq('organization_id', organizationId)
-            .order('position', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        const command: CreateNoteCommand = {
+          title: noteData.title?.trim() || null,
+          content: noteData.content || null,
+          userId: user.id,
+          organizationId,
+          position: noteData.position,
+          colorClass: noteData.color_class || 'bg-yellow-100'
+        };
 
-          if (maxPosError) {
-            console.error('[CREATE_NOTE] Error fetching max position:', maxPosError);
-            position = 0;
-          } else {
-            position = (maxPosData?.position || 0) + 1;
+        const noteAggregate = await applicationService.createNote(command);
+        const data = noteAggregate.toDatabaseFormat();
+
+        // ✅ SECURITY: Log audit trail for note creation
+        // TODO: Implement proper audit trail service
+        console.log('[NOTES_AUDIT]', JSON.stringify({
+          timestamp: new Date().toISOString(),
+          user_id: user.id,
+          organization_id: organizationId,
+          action: 'note_created',
+          details: {
+            note_id: data.id,
+            title: command.title,
+            feature: 'notes'
           }
-        }
+        }));
 
-        // Create the note
-        const { data, error } = await supabase
-          .from('notes')
-          .insert({
-            title: noteData.title.trim(),
-            content: noteData.content || '',
-            position: position,
-            color_class: noteData.color_class || 'bg-yellow-100',
-            user_id: user.id,
-            organization_id: organizationId
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('[CREATE_NOTE] Database error:', error);
-          return { success: false, error: 'Failed to create note' };
-        }
-
-        // ✅ OPTIMIZATION: Invalidate unified context cache after successful creation
+        // ✅ CRITICAL: Invalidate unified context cache after successful mutation
         const unifiedService = NotesUnifiedContextService.getInstance();
         unifiedService.invalidateCacheAfterMutation(user.id, organizationId);
 
-        return { success: true, note: data as Note };
+        return { 
+          success: true, 
+          data: data as Note 
+        };
 
       } catch (error) {
-        console.error('[CREATE_NOTE] Unexpected error:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Failed to create note' 
+        console.error('[CREATE_NOTE] Error:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to create note'
         };
       }
     },
@@ -303,46 +301,23 @@ export async function updateNote(noteUpdate: {
         
         const { user, organizationId } = validation;
 
-        // Validate note ID
-        if (!noteUpdate.id?.trim()) {
-          return { success: false, error: 'Note ID is required' };
-        }
+        // ✅ PERMISSION: Use application service with permission validation
+        const applicationService = NotesCompositionRoot.getInstance().getNotesApplicationService();
+        
+        const command: UpdateNoteCommand = {
+          id: noteUpdate.id,
+          title: noteUpdate.title,
+          content: noteUpdate.content,
+          position: noteUpdate.position,
+          colorClass: noteUpdate.color_class,
+          userId: user.id,
+          organizationId
+        };
 
-        // Validate title if provided
-        if (noteUpdate.title !== undefined && !noteUpdate.title?.trim()) {
-          return { success: false, error: 'Note title cannot be empty' };
-        }
+        const noteAggregate = await applicationService.updateNote(command);
+        const data = noteAggregate.toDatabaseFormat();
 
-        const supabase = createClient();
-
-        // Build update object with only provided fields
-        const updateData: any = {};
-        if (noteUpdate.title !== undefined) updateData.title = noteUpdate.title.trim();
-        if (noteUpdate.content !== undefined) updateData.content = noteUpdate.content;
-        if (noteUpdate.position !== undefined) updateData.position = noteUpdate.position;
-        if (noteUpdate.color_class !== undefined) updateData.color_class = noteUpdate.color_class;
-        updateData.updated_at = new Date().toISOString();
-
-        // Update the note
-        const { data, error } = await supabase
-          .from('notes')
-          .update(updateData)
-          .eq('id', noteUpdate.id)
-          .eq('user_id', user.id)
-          .eq('organization_id', organizationId)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('[UPDATE_NOTE] Database error:', error);
-          return { success: false, error: 'Failed to update note' };
-        }
-
-        if (!data) {
-          return { success: false, error: 'Note not found or access denied' };
-        }
-
-        return { success: true, note: data as Note };
+        return { success: true, note: data };
 
       } catch (error) {
         console.error('[UPDATE_NOTE] Unexpected error:', error);
@@ -373,33 +348,12 @@ export async function deleteNote(noteId: string): Promise<NoteActionResult> {
         
         const { user, organizationId } = validation;
 
-        // Validate note ID
-        if (!noteId?.trim()) {
-          return { success: false, error: 'Note ID is required' };
-        }
+        // ✅ PERMISSION: Use application service with permission validation
+        const applicationService = NotesCompositionRoot.getInstance().getNotesApplicationService();
+        
+        await applicationService.deleteNote(noteId, user.id, organizationId);
 
-        const supabase = createClient();
-
-        // Delete the note
-        const { data, error } = await supabase
-          .from('notes')
-          .delete()
-          .eq('id', noteId)
-          .eq('user_id', user.id)
-          .eq('organization_id', organizationId)
-          .select()
-          .single();
-
-        if (error) {
-          console.error('[DELETE_NOTE] Database error:', error);
-          return { success: false, error: 'Failed to delete note' };
-        }
-
-        if (!data) {
-          return { success: false, error: 'Note not found or access denied' };
-        }
-
-        return { success: true, note: data as Note };
+        return { success: true };
 
       } catch (error) {
         console.error('[DELETE_NOTE] Unexpected error:', error);
@@ -430,50 +384,22 @@ export async function updateNoteOrder(orderedNoteIds: string[]): Promise<NotesAc
         
         const { user, organizationId } = validation;
 
-        // Validate input
-        if (!Array.isArray(orderedNoteIds) || orderedNoteIds.length === 0) {
-          return { success: false, error: 'Valid note order array is required' };
-        }
-
-        const supabase = createClient();
-
-        // Update positions for all notes in a transaction
-        const updates = orderedNoteIds.map((noteId, index) => 
-          supabase
-            .from('notes')
-            .update({ 
-              position: index,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', noteId)
-            .eq('user_id', user.id)
-            .eq('organization_id', organizationId)
-        );
-
-        // Execute all updates
-        const results = await Promise.all(updates);
+        // ✅ PERMISSION: Use application service with permission validation
+        const applicationService = NotesCompositionRoot.getInstance().getNotesApplicationService();
         
-        // Check for any errors
-        const errors = results.filter(result => result.error);
-        if (errors.length > 0) {
-          console.error('[UPDATE_NOTE_ORDER] Database errors:', errors);
-          return { success: false, error: 'Failed to update note order' };
-        }
+        const command: ReorderNotesCommand = {
+          orderedNoteIds,
+          userId: user.id,
+          organizationId
+        };
+
+        await applicationService.reorderNotes(command);
 
         // Fetch updated notes
-        const { data: updatedNotes, error: fetchError } = await supabase
-          .from('notes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('organization_id', organizationId)
-          .order('position', { ascending: true });
+        const updatedNotes = await applicationService.getNotes(user.id, organizationId);
+        const notesData = updatedNotes.map(note => note.toDatabaseFormat());
 
-        if (fetchError) {
-          console.error('[UPDATE_NOTE_ORDER] Fetch error:', fetchError);
-          return { success: false, error: 'Failed to fetch updated notes' };
-        }
-
-        return { success: true, notes: (updatedNotes as Note[]) || [] };
+        return { success: true, notes: notesData || [] };
 
       } catch (error) {
         console.error('[UPDATE_NOTE_ORDER] Unexpected error:', error);

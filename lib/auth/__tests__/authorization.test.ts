@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import type { User } from '@supabase/supabase-js';
 import { hasRole, hasAnyRole, hasPermission, hasAnyPermission, getUserPermissions } from '../infrastructure/adapters/AuthorizationCompatibilityAdapter';
 import { UserRole } from '../domain/value-objects/UserRole';
 import { Permission } from '../domain/value-objects/Permission';
@@ -8,19 +9,28 @@ describe('Authorization Utilities', () => {
   const adminUser = {
     id: 'admin-id',
     app_metadata: { role: 'admin' },
-  } as any;
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  } as User;
 
   // Mock user with editor role
   const editorUser = {
     id: 'editor-id',
     app_metadata: { role: 'editor' },
-  } as any;
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  } as User;
 
   // Mock user with viewer role
   const viewerUser = {
     id: 'viewer-id',
     app_metadata: { role: 'viewer' },
-  } as any;
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  } as User;
 
   describe('hasRole', () => {
     it('returns true when user has the specified role', () => {

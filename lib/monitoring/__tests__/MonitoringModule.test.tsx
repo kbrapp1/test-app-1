@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorHandlingService } from '../infrastructure/services/ErrorHandlingService';
 import { MonitoringErrorBoundary, withMonitoringErrorBoundary } from '../presentation/components/error/MonitoringErrorBoundary';
@@ -153,7 +153,7 @@ describe('Monitoring Module', () => {
         return <div>No error</div>;
       };
 
-      const { rerender } = render(
+      render(
         <MonitoringErrorBoundary componentName="TestComponent">
           <ControllableError />
         </MonitoringErrorBoundary>
@@ -217,7 +217,7 @@ describe('Monitoring Module', () => {
         webVitals: {}
       };
 
-      let hookResult: any;
+      let hookResult!: ReturnType<typeof usePerformanceTracking>;
       
       function TestComponent() {
         hookResult = usePerformanceTracking(mockMetrics);
@@ -239,7 +239,7 @@ describe('Monitoring Module', () => {
 
   describe('useNetworkMonitoring', () => {
     it('should provide network monitoring functionality', () => {
-      let hookResult: any;
+      let hookResult!: ReturnType<typeof useNetworkMonitoring>;
       
       function TestComponent() {
         hookResult = useNetworkMonitoring();
@@ -260,7 +260,7 @@ describe('Monitoring Module', () => {
 
   describe('useComponentTracker', () => {
     it('should track component performance', () => {
-      let hookResult: any;
+      let hookResult!: ReturnType<typeof useComponentTracker>;
       
       function TestComponent() {
         hookResult = useComponentTracker('TestComponent');
@@ -276,8 +276,8 @@ describe('Monitoring Module', () => {
     });
 
     it('should memoize trackRender function', () => {
-      let trackRenderRef1: any;
-      let trackRenderRef2: any;
+      let trackRenderRef1!: ReturnType<typeof useComponentTracker>['trackRender'];
+      let trackRenderRef2!: ReturnType<typeof useComponentTracker>['trackRender'];
       
       function TestComponent({ prop }: { prop: number }) {
         const { trackRender } = useComponentTracker('TestComponent');
@@ -312,8 +312,8 @@ describe('Monitoring Module', () => {
       
       function TestComponent({ metrics }: { metrics: PerformanceMetrics }) {
         renderCount++;
-        const { state } = usePerformanceTracking(metrics);
-        const { networkStats } = useNetworkMonitoring();
+        const { state: _state } = usePerformanceTracking(metrics);
+        const { networkStats: _networkStats } = useNetworkMonitoring();
         return <div>Renders: {renderCount}</div>;
       }
 

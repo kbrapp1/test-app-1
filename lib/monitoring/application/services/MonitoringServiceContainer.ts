@@ -9,13 +9,19 @@ import { DynamicContextUpdateService } from '../../domain/services/context-analy
 import { CauseAnalysisService } from '../../domain/services/business-impact/CauseAnalysisService';
 import { PageContextRepository } from '../../domain/repositories/PageContextRepository';
 
+interface ServiceRegistration {
+  factory: () => unknown;
+  instance: unknown;
+  lifetime: 'singleton' | 'transient';
+}
+
 /**
  * Service container implementing dependency injection pattern
  * Manages service lifetimes and dependency resolution
  */
 export class MonitoringServiceContainer {
   private static instance: MonitoringServiceContainer;
-  private services = new Map<string, any>();
+  private services = new Map<string, ServiceRegistration>();
 
   private constructor() {
     this.registerDependencies();
@@ -69,11 +75,11 @@ export class MonitoringServiceContainer {
   }
 
   private registerSingleton<T>(key: string, factory: () => T): void {
-    this.services.set(key, { factory, instance: null, lifetime: 'singleton' });
+    this.services.set(key, { factory: factory as () => unknown, instance: null, lifetime: 'singleton' });
   }
 
   private registerTransient<T>(key: string, factory: () => T): void {
-    this.services.set(key, { factory, instance: null, lifetime: 'transient' });
+    this.services.set(key, { factory: factory as () => unknown, instance: null, lifetime: 'transient' });
   }
 
   get<T>(key: string): T {
@@ -86,11 +92,11 @@ export class MonitoringServiceContainer {
       if (!service.instance) {
         service.instance = service.factory();
       }
-      return service.instance;
+      return service.instance as T;
     }
 
     // Transient - always create new instance
-    return service.factory();
+    return service.factory() as T;
   }
 
   /**

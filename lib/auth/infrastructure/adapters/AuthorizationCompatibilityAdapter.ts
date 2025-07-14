@@ -12,7 +12,7 @@ import { User } from '@supabase/supabase-js';
 import { InsufficientPermissionsError } from '../../domain/errors/AuthDomainError';
 import { UserRole, getUserRole } from '../../domain/value-objects/UserRole';
 import { Permission, ROLE_PERMISSIONS } from '../../domain/value-objects/Permission';
-import { PermissionService } from '../../domain/services/PermissionService';
+// PermissionService available for future use
 
 /**
  * Type guard to check if a user has a specific role

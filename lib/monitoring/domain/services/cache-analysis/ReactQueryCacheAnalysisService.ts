@@ -5,6 +5,7 @@ import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../../value-objects
 import { CacheKeyMismatchDetector } from './CacheKeyMismatchDetector';
 import { CachePatternDetector } from './CachePatternDetector';
 import { ReactQueryCallAnalyzer } from '../../../infrastructure/analysis/ReactQueryCallAnalyzer';
+import { NetworkCall } from '../../network-efficiency/entities/NetworkCall';
 
 /**
  * Domain Service: React Query Cache Analysis Orchestrator
@@ -23,7 +24,7 @@ export class ReactQueryCacheAnalysisService {
    * Analyze React Query patterns for architectural issues
    * Main business logic: Orchestrate different types of cache analysis
    */
-  analyzeReactQueryPattern(calls: any[]): CacheAnalysisResult | null {
+  analyzeReactQueryPattern(calls: NetworkCall[]): CacheAnalysisResult | null {
     // Step 1: Extract React Query related calls (Infrastructure concern)
     const cacheRelatedCalls = this.callAnalyzer.identifyAllCacheRelatedCalls(calls);
     

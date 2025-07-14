@@ -11,16 +11,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { getGlobalAuthenticationService } from '../composition/AuthCompositionRoot';
 import { AuthCompositionRoot } from '../composition/AuthCompositionRoot';
-import { BusinessRuleViolationError, AuthDomainError } from '../../domain/errors/AuthDomainError';
+import { AuthDomainError } from '../../domain/errors/AuthDomainError';
 
 export interface AuthenticatedUser {
   id: string;
   email?: string;
-  user_metadata?: any;
-  app_metadata?: any;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
 }
 
-export interface AuthActionResult<T = any> {
+export interface AuthActionResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

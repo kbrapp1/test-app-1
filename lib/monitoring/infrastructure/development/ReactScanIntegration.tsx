@@ -28,7 +28,7 @@ export function ReactScanIntegration() {
           dangerouslyForceRunInProduction: false, // Safety check
         });
 
-          } catch (error) {
+          } catch {
       // Silent fail for development tool
     }
     };

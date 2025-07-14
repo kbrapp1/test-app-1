@@ -297,13 +297,12 @@ export class AuditTrailService {
       if (!user) return false;
 
       const { data, error } = await this.supabase
-        .from('user_organization_permissions')
+        .from('organization_memberships')
         .select(`
           roles!inner(name)
         `)
         .eq('user_id', user.id)
         .eq('organization_id', organizationId)
-        .is('revoked_at', null)
         .single();
 
       if (error) return false;

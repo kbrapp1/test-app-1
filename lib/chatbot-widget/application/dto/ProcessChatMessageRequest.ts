@@ -16,37 +16,39 @@ export interface ProcessChatMessageRequest {
   readonly metadata?: {
     readonly userId?: string;
     readonly timestamp?: string;
-    readonly clientInfo?: Record<string, any>;
+    readonly clientInfo?: Record<string, unknown>;
   };
 }
 
 export class ProcessChatMessageRequestValidator {
   
-  static validate(input: any): ProcessChatMessageRequest {
+  static validate(input: unknown): ProcessChatMessageRequest {
+    const inputObj = input as Record<string, any>;
+    
     // AI: Validate required string fields
-    if (!input.userMessage?.trim()) {
+    if (!inputObj.userMessage?.trim()) {
       throw new Error('User message is required and cannot be empty');
     }
     
-    if (!input.sessionId?.trim()) {
+    if (!inputObj.sessionId?.trim()) {
       throw new Error('Session ID is required and cannot be empty');
     }
     
-    if (!input.organizationId?.trim()) {
+    if (!inputObj.organizationId?.trim()) {
       throw new Error('Organization ID is required and cannot be empty');
     }
     
     // AI: Sanitize user input
-    const sanitizedMessage = this.sanitizeUserInput(input.userMessage);
+    const sanitizedMessage = this.sanitizeUserInput(inputObj.userMessage);
     
     return {
       userMessage: sanitizedMessage,
-      sessionId: input.sessionId.trim(),
-      organizationId: input.organizationId.trim(),
-      metadata: input.metadata ? {
-        userId: input.metadata.userId?.trim(),
-        timestamp: input.metadata.timestamp,
-        clientInfo: input.metadata.clientInfo
+      sessionId: inputObj.sessionId.trim(),
+      organizationId: inputObj.organizationId.trim(),
+      metadata: inputObj.metadata ? {
+        userId: inputObj.metadata.userId?.trim(),
+        timestamp: inputObj.metadata.timestamp,
+        clientInfo: inputObj.metadata.clientInfo
       } : undefined
     };
   }

@@ -60,7 +60,7 @@ export class EndpointDiscoveryService {
         const newPath = currentPath ? `${currentPath}/${routeSegment}` : routeSegment;
         routes.push(...this.scanApiDirectory(fullPath, baseDomain, newPath));
       }
-    } catch (error) {
+    } catch {
       // Continue if can't read directory
     }
     

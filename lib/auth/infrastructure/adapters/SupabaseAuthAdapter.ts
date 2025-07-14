@@ -14,7 +14,7 @@ import { UserAggregate, UserStatus, UserProfile } from '../../domain/aggregates/
 import { UserId } from '../../domain/value-objects/UserId';
 import { Email } from '../../domain/value-objects/Email';
 import { OrganizationId } from '../../domain/value-objects/OrganizationId';
-import { BusinessRuleViolationError, InvalidCredentialsError } from '../../domain/errors/AuthDomainError';
+import { BusinessRuleViolationError } from '../../domain/errors/AuthDomainError';
 
 export interface AuthenticationResult {
   success: boolean;
@@ -128,7 +128,7 @@ export class SupabaseAuthAdapter {
       }
 
       return await this.transformToUserAggregate(user);
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -236,7 +236,7 @@ export class SupabaseAuthAdapter {
   /**
    * Update user metadata in Supabase
    */
-  async updateUserMetadata(userId: UserId, metadata: Record<string, any>): Promise<void> {
+  async updateUserMetadata(userId: UserId, metadata: Record<string, unknown>): Promise<void> {
     const { error } = await this.supabase.auth.admin.updateUserById(
       userId.value,
       { user_metadata: metadata }
@@ -253,7 +253,7 @@ export class SupabaseAuthAdapter {
   /**
    * Update user app metadata (requires admin privileges)
    */
-  async updateUserAppMetadata(userId: UserId, metadata: Record<string, any>): Promise<void> {
+  async updateUserAppMetadata(userId: UserId, metadata: Record<string, unknown>): Promise<void> {
     const { error } = await this.supabase.auth.admin.updateUserById(
       userId.value,
       { app_metadata: metadata }

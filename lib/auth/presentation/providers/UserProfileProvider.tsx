@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthentication } from './AuthenticationProvider';
@@ -36,7 +36,7 @@ export function UserProfileProvider({ children }: UserProfileProviderProps) {
   const previousUserIdRef = useRef<string | null>(null);
   const activeRequestRef = useRef<Promise<Profile | null> | null>(null);
 
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     if (activeRequestRef.current && previousUserIdRef.current === userId) {
       return activeRequestRef.current;
     }
@@ -64,7 +64,7 @@ export function UserProfileProvider({ children }: UserProfileProviderProps) {
     })();
 
     return activeRequestRef.current;
-  };
+  }, [supabase]);
 
   const refreshProfile = async (): Promise<void> => {
     if (!user?.id) return;
@@ -116,7 +116,7 @@ export function UserProfileProvider({ children }: UserProfileProviderProps) {
     return () => {
       isMounted = false;
     };
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, fetchProfile, profile]);
 
   const contextValue: UserProfileContextType = {
     user,

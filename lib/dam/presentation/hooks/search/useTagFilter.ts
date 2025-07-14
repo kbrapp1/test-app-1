@@ -5,6 +5,7 @@ import type { PlainTag } from '../../../application/dto/DamApiRequestDto';
 import { ListTagsUseCase } from '../../../application/use-cases/tags/ListTagsUseCase';
 import { SupabaseTagRepository } from '../../../infrastructure/persistence/supabase/SupabaseTagRepository';
 import { createClient } from '@/lib/supabase/client';
+import { Tag } from '../../../domain/entities/Tag';
 
 export interface UseTagFilterParams {
   organizationId: string | null;
@@ -70,10 +71,10 @@ export function useTagFilter({
 
           // Convert domain entities to PlainTag DTOs
           const tagsDto: PlainTag[] = tags
-            .map((tag: any) => ({
+            .map((tag: Tag) => ({
               id: tag.id,
               name: tag.name,
-              color: tag.color || tag.colorName || 'blue', // Handle different color property names
+              color: tag.color.toString(), // Convert TagColor to string
               userId: tag.userId,
               organizationId: tag.organizationId,
               createdAt: tag.createdAt,

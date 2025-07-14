@@ -106,7 +106,7 @@ export class CrossDomainAnalysisService {
     return 'No optimization gaps detected';
   }
 
-  private static generateCorrelationCodeExample(pageContext?: string): string {
+  private static generateCorrelationCodeExample(_pageContext?: string): string {
     return `// Fix both domains together for compound effect
 // 1. Add React Query caching
 const { data, isLoading } = useQuery({

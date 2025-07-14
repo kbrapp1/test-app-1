@@ -1,8 +1,7 @@
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event"; // For better interaction simulation
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { NoteListItem } from "./note-list-item"; // Removed NoteListItemProps
-import type { Note } from "@/types/notes";
 // Removed problematic imports, actions are mocked below
 // import { deleteNoteAction, updateNoteColorAction } from "@/lib/actions/notes";
 // import { editNote } from "@/lib/actions/notes";
@@ -256,7 +255,6 @@ describe('NoteListItem', () => {
 
     it('calls editNoteAction with correct data when a color dot is clicked', async () => {
         const user = userEvent.setup();
-        const targetColor = mockAvailableColors[1]; // Pink
         render(<NoteListItem {...defaultProps} />); // Starts with yellow
 
         const pinkButton = screen.getByRole('button', { name: /set color to pink/i });

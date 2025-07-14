@@ -20,7 +20,7 @@ export class BusinessImpactCalculationService {
   private static determineImpactLevel(
     renderCount: number,
     cacheHitRate: number,
-    webVitals: any,
+    webVitals: import('../../../application/dto/PerformanceTrackingDTO').WebVitalsMetrics | null,
     metrics: PerformanceMetrics,
     trackingState: PerformanceTrackingState
   ): string {

@@ -1,5 +1,6 @@
 import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
+import { DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
 import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
 
 // Presentation Layer Interfaces for DAM Components
@@ -55,7 +56,7 @@ export interface DamEventHandlers {
   onRenameAsset: (assetId: string, newName: string) => Promise<void>;
   onRenameFolder: (folderId: string, newName: string) => Promise<void>;
   onSearch: (searchTerm: string) => Promise<void>;
-  onFilterChange: (filters: any) => Promise<void>;
+  onFilterChange: (filters: DamFilterParameters) => Promise<void>;
 }
 
 // View models for transforming domain data for UI
@@ -83,7 +84,7 @@ export interface DamGalleryState {
   viewMode: 'grid' | 'list';
   sortBy: string;
   sortOrder: 'asc' | 'desc';
-  filters: Record<string, any>;
+  filters: DamFilterParameters;
 }
 
 // View mode for gallery display

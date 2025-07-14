@@ -66,7 +66,7 @@ export interface ChatbotErrorContext {
     memoryUsage: number;
     cpuUsage: number;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ErrorTrackingFacade {
@@ -252,7 +252,7 @@ export class ErrorTrackingFacade {
 
   // ===== PRIVATE HELPER METHODS =====
 
-  private async trackError(error: any, context: ChatbotErrorContext): Promise<void> {
+  private async trackError(error: Error & { code: string; context?: unknown; timestamp?: Date }, context: ChatbotErrorContext): Promise<void> {
     try {
       // Use domain service to categorize error
       const categorization = this.categorizationService.categorizeError(error.code);
@@ -268,8 +268,8 @@ export class ErrorTrackingFacade {
         const persistenceData: ErrorPersistenceData = {
           errorCode: error.code,
           errorMessage: error.message,
-          errorContext: { ...error.context, ...sanitizedContext },
-          timestamp: error.timestamp,
+          errorContext: { ...(error.context || {}), ...sanitizedContext },
+          timestamp: error.timestamp || new Date(),
           stack: error.stack
         };
 
@@ -298,7 +298,7 @@ export class ErrorTrackingFacade {
     }
   }
 
-  private logError(error: any, severity: string, context: ChatbotErrorContext): void {
+  private logError(error: Error & { code: string; timestamp?: Date }, severity: string, context: ChatbotErrorContext): void {
     const logData = {
       errorCode: error.code,
       errorMessage: error.message,
@@ -306,7 +306,7 @@ export class ErrorTrackingFacade {
       sessionId: context.sessionId,
       userId: context.userId,
       organizationId: context.organizationId,
-      timestamp: error.timestamp.toISOString()
+      timestamp: error.timestamp?.toISOString() || new Date().toISOString()
     };
 
     switch (severity) {
@@ -328,17 +328,19 @@ export class ErrorTrackingFacade {
     }
   }
 
-  private sanitizeUnifiedResult(result: any): any {
+  private sanitizeUnifiedResult(result: unknown): Record<string, unknown> | null {
     if (!result) return null;
     
+    const resultObj = result as Record<string, any>;
+    
     return {
-      hasAnalysis: !!result.analysis,
-      hasResponse: !!result.analysis?.response,
-      hasContent: !!result.analysis?.response?.content,
-      contentLength: result.analysis?.response?.content?.length || 0,
-      structure: Object.keys(result).join(', '),
-      analysisKeys: result.analysis ? Object.keys(result.analysis).join(', ') : null,
-      responseKeys: result.analysis?.response ? Object.keys(result.analysis.response).join(', ') : null
+      hasAnalysis: !!resultObj.analysis,
+      hasResponse: !!resultObj.analysis?.response,
+      hasContent: !!resultObj.analysis?.response?.content,
+      contentLength: resultObj.analysis?.response?.content?.length || 0,
+      structure: Object.keys(resultObj).join(', '),
+      analysisKeys: resultObj.analysis ? Object.keys(resultObj.analysis).join(', ') : null,
+      responseKeys: resultObj.analysis?.response ? Object.keys(resultObj.analysis.response).join(', ') : null
     };
   }
 } 

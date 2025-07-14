@@ -1,5 +1,6 @@
 import { ReactQueryCallAnalysis } from '../../domain/value-objects/CacheAnalysisResult';
 import { ErrorHandlingService } from '../services/ErrorHandlingService';
+import { NetworkCall } from '../../domain/network-efficiency/entities/NetworkCall';
 
 /**
  * Infrastructure Service: React Query Call Analysis
@@ -15,8 +16,8 @@ export class ReactQueryCallAnalyzer {
   /**
    * Identify all cache-related calls from network calls
    */
-  identifyAllCacheRelatedCalls(calls: any[]): ReactQueryCallAnalysis[] {
-    return calls.map((call, index) => {
+  identifyAllCacheRelatedCalls(calls: NetworkCall[]): ReactQueryCallAnalysis[] {
+    return calls.map((call, _index) => {
       const stack = call.source?.stack || '';
       const url = call.url || '';
       const hookMatch = ReactQueryCallAnalyzer.HOOK_REGEX.exec(stack);
@@ -85,7 +86,7 @@ export class ReactQueryCallAnalyzer {
   /**
    * Extract data type from hook name, URL, or server action context
    */
-  private extractDataType(hookName: string, url: string, call?: any): string {
+  private extractDataType(hookName: string, url: string, call?: NetworkCall): string {
     const hookTypeMatch = hookName.match(/use(\w+)/i);
     if (hookTypeMatch) {
       return hookTypeMatch[1].toLowerCase();
@@ -126,8 +127,10 @@ export class ReactQueryCallAnalyzer {
         const prev = payloads[i - 1];
         const curr = payloads[i];
 
+        if (!prev || !curr) continue;
+
         if (typeof prev.offset === 'number' && typeof curr.offset === 'number') {
-          const expectedIncrement = prev.offset + (prev.limit || 20);
+          const expectedIncrement = prev.offset + (typeof prev.limit === 'number' ? prev.limit : 20);
           if (curr.offset === expectedIncrement) {
             return true;
           }

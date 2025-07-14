@@ -128,7 +128,7 @@ export class TokenService {
    * Extracts basic claims from token
    * Note: In real app, this would use proper JWT library
    */
-  private static extractClaims(tokenHash: string): TokenClaims | null {
+  private static extractClaims(_tokenHash: string): TokenClaims | null {
     try {
       // This is a simplified version - in real app, Supabase handles JWT parsing
       // We're just defining the interface for business logic

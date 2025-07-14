@@ -1,4 +1,4 @@
-import { OptimizationOpportunity } from '../../../domain/entities/DetailedPerformanceMetrics';
+import { OptimizationOpportunity, BundleAnalysis, ComponentPerformance, ResourceTiming } from '../../../domain/entities/DetailedPerformanceMetrics';
 
 /**
  * Service responsible for generating optimization opportunities from performance data
@@ -13,15 +13,15 @@ export class OptimizationOpportunityGenerator {
    * Examines bundle analysis, component performance, and resource timing
    * to identify specific areas for optimization with effort estimates.
    * 
-   * @param {any} bundleAnalysis - Bundle analysis results
-   * @param {any[]} componentPerformance - Component performance data
-   * @param {any[]} resourceTiming - Resource timing data
+   * @param {BundleAnalysis} bundleAnalysis - Bundle analysis results
+   * @param {ComponentPerformance[]} componentPerformance - Component performance data
+   * @param {ResourceTiming[]} resourceTiming - Resource timing data
    * @returns {OptimizationOpportunity[]} Array of optimization opportunities
    */
   static generateOpportunities(
-    bundleAnalysis: any,
-    componentPerformance: any[],
-    resourceTiming: any[]
+    bundleAnalysis: BundleAnalysis,
+    componentPerformance: ComponentPerformance[],
+    resourceTiming: ResourceTiming[]
   ): OptimizationOpportunity[] {
     const opportunities: OptimizationOpportunity[] = [];
 
@@ -43,14 +43,14 @@ export class OptimizationOpportunityGenerator {
   /**
    * Analyzes bundle data for lazy loading and code splitting opportunities
    * 
-   * @param {any} bundleAnalysis - Bundle analysis results
+   * @param {BundleAnalysis} bundleAnalysis - Bundle analysis results
    * @returns {OptimizationOpportunity[]} Bundle optimization opportunities
    */
-  private static analyzeBundleOptimizations(bundleAnalysis: any): OptimizationOpportunity[] {
+  private static analyzeBundleOptimizations(bundleAnalysis: BundleAnalysis): OptimizationOpportunity[] {
     const opportunities: OptimizationOpportunity[] = [];
 
     if (bundleAnalysis.largestImports) {
-      bundleAnalysis.largestImports.forEach((imp: any) => {
+      bundleAnalysis.largestImports.forEach((imp) => {
         if (imp.isLazyLoadable && imp.size > 100000) {
           opportunities.push({
             type: 'lazy-loading',
@@ -70,10 +70,10 @@ export class OptimizationOpportunityGenerator {
   /**
    * Analyzes component performance for optimization opportunities
    * 
-   * @param {any[]} componentPerformance - Component performance data
+   * @param {ComponentPerformance[]} componentPerformance - Component performance data
    * @returns {OptimizationOpportunity[]} Component optimization opportunities
    */
-  private static analyzeComponentOptimizations(componentPerformance: any[]): OptimizationOpportunity[] {
+  private static analyzeComponentOptimizations(componentPerformance: ComponentPerformance[]): OptimizationOpportunity[] {
     const opportunities: OptimizationOpportunity[] = [];
 
     const slowComponents = componentPerformance
@@ -98,10 +98,10 @@ export class OptimizationOpportunityGenerator {
   /**
    * Analyzes resource timing for optimization opportunities
    * 
-   * @param {any[]} resourceTiming - Resource timing data
+   * @param {ResourceTiming[]} resourceTiming - Resource timing data
    * @returns {OptimizationOpportunity[]} Resource optimization opportunities
    */
-  private static analyzeResourceOptimizations(resourceTiming: any[]): OptimizationOpportunity[] {
+  private static analyzeResourceOptimizations(resourceTiming: ResourceTiming[]): OptimizationOpportunity[] {
     const opportunities: OptimizationOpportunity[] = [];
 
     const slowResources = resourceTiming.filter(r => r.duration > 1000);

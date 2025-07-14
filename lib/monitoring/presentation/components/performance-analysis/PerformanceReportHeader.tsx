@@ -13,7 +13,7 @@ interface PerformanceReportHeaderProps {
   frontendOptimizations: OptimizationGap[];
 }
 
-export const PerformanceReportHeader: React.FC<PerformanceReportHeaderProps> = React.memo(({
+const PerformanceReportHeaderComponent: React.FC<PerformanceReportHeaderProps> = ({
   metrics,
   trackingState,
   frontendOptimizations
@@ -32,7 +32,7 @@ export const PerformanceReportHeader: React.FC<PerformanceReportHeaderProps> = R
       await navigator.clipboard.writeText(enhancedReport);
       setCopyButtonState('success');
       setTimeout(() => setCopyButtonState('default'), 2000);
-    } catch (error) {
+    } catch {
       // Silent fail for copy operation
     }
   }, [enhancedReport]);
@@ -59,4 +59,8 @@ export const PerformanceReportHeader: React.FC<PerformanceReportHeaderProps> = R
       </button>
     </div>
   );
-}); 
+};
+
+PerformanceReportHeaderComponent.displayName = 'PerformanceReportHeader';
+
+export const PerformanceReportHeader = React.memo(PerformanceReportHeaderComponent);

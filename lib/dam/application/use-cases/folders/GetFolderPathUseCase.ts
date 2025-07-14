@@ -6,7 +6,7 @@ interface GetFolderPathUseCaseParams {
   organizationId: string; // Required for security and validation
 }
 
-interface PathSegment {
+interface _PathSegment {
   id: string;
   name: string;
 }

@@ -16,8 +16,8 @@ interface NetworkMonitorTabsProps {
   onClear: () => void;
 }
 
-export const NetworkMonitorTabs = React.memo<NetworkMonitorTabsProps>(({ stats, onClear }) => {
-  const handleClear = useCallback(() => {
+export const NetworkMonitorTabs = React.memo<NetworkMonitorTabsProps>(({ stats: _stats, onClear }) => {
+  const _handleClear = useCallback(() => {
     onClear();
   }, [onClear]);
 

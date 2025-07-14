@@ -9,8 +9,6 @@
  */
 
 
-import { UserId } from '../value-objects/UserId';
-import { OrganizationId } from '../value-objects/OrganizationId';
 import { UserAggregate } from '../aggregates/UserAggregate';
 import { OrganizationAggregate } from '../aggregates/OrganizationAggregate';
 import { BusinessRuleViolationError, InsufficientPermissionsError } from '../errors/AuthDomainError';

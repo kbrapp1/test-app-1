@@ -27,7 +27,7 @@ export class BatchDeleteOperation {
 
     try {
       // Try batch delete first (Supabase supports this)
-      const { data, error } = await this.supabase.storage
+      const { data: _data, error } = await this.supabase.storage
         .from('assets')
         .remove(filePaths);
 

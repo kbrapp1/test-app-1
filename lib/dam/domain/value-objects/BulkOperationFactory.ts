@@ -1,5 +1,5 @@
 import {
-  BulkOperation,
+  BulkOperation as _BulkOperation,
   BulkMoveOperation,
   BulkDeleteOperation,
   BulkTagOperation,

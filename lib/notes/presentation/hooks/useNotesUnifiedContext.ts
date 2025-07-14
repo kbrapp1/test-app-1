@@ -93,7 +93,7 @@ export function useNotesUnifiedContext(): NotesUnifiedContextData {
           organizations: result.data!.organizations,
           featureFlags: result.data!.featureFlags,
           isNotesEnabled: result.data!.isNotesEnabled,
-          notes: result.data!.notes, // ✅ CRITICAL: Include notes data
+          notes: Array.isArray(result.data!.notes) ? result.data!.notes : [], // ✅ CRITICAL: Ensure notes is always an array
           isLoading: false,
           error: null,
           fromCache: result.data!.fromCache
@@ -102,6 +102,12 @@ export function useNotesUnifiedContext(): NotesUnifiedContextData {
       } else {
         setState(prev => ({
           ...prev,
+          user: null,
+          organizationId: null,
+          organizations: [],
+          featureFlags: {},
+          isNotesEnabled: false,
+          notes: [], // ✅ CRITICAL: Always ensure notes is an empty array on error
           isLoading: false,
           error: result.error || 'Failed to load Notes context',
           fromCache: false
@@ -110,6 +116,12 @@ export function useNotesUnifiedContext(): NotesUnifiedContextData {
     } catch (error) {
       setState(prev => ({
         ...prev,
+        user: null,
+        organizationId: null,
+        organizations: [],
+        featureFlags: {},
+        isNotesEnabled: false,
+        notes: [], // ✅ CRITICAL: Always ensure notes is an empty array on error
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to load Notes context',
         fromCache: false

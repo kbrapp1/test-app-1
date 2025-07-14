@@ -47,11 +47,11 @@ export async function getAssetDownloadUrl(
 
     return { success: true, downloadUrl: result.downloadUrl };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('getAssetDownloadUrl action error:', error);
     return { 
       success: false, 
-      error: error.message || 'Failed to get asset download URL.' 
+      error: error instanceof Error ? error.message : 'Failed to get asset download URL.' 
     };
   }
 } 

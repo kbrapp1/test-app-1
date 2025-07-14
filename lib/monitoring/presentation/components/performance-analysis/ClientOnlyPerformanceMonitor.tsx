@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, Mutation } from '@tanstack/react-query';
+import { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';
 
 interface ClientOnlyPerformanceMonitorProps {
   isEnabled: boolean;
@@ -9,7 +10,12 @@ interface ClientOnlyPerformanceMonitorProps {
 
 export function ClientOnlyPerformanceMonitor({ isEnabled }: ClientOnlyPerformanceMonitorProps) {
   const [isClient, setIsClient] = useState(false);
-  const [PerformanceMonitor, setPerformanceMonitor] = useState<React.ComponentType<any> | null>(null);
+  const [PerformanceMonitor, setPerformanceMonitor] = useState<React.ComponentType<{ 
+    metrics: PerformanceMetrics; 
+    className?: string; 
+    isOpen: boolean; 
+    autoRefresh: boolean; 
+  }> | null>(null);
   const queryClient = useQueryClient();
 
   // Only render on client after hydration
@@ -22,7 +28,7 @@ export function ClientOnlyPerformanceMonitor({ isEnabled }: ClientOnlyPerformanc
         .then(module => {
           setPerformanceMonitor(() => module.PerformanceMonitor);
         })
-        .catch(error => {
+        .catch(() => {
           // Silent fail for development tool
         });
     }
@@ -36,7 +42,7 @@ export function ClientOnlyPerformanceMonitor({ isEnabled }: ClientOnlyPerformanc
   const metrics = {
     cacheSize: queryClient.getQueryCache().getAll().length,
     activeMutations: queryClient.getMutationCache().getAll().filter(
-      (mutation: any) => mutation.state.status === 'pending'
+      (mutation: Mutation) => mutation.state.status === 'pending'
     ).length,
     isOptimized: true,
     lastUpdate: new Date().toISOString(),

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { onCLS, onLCP, onFCP, onINP, onTTFB, type Metric } from 'web-vitals';
-import type { InputPerformanceMetrics, WebVitalsMetrics, RenderMetrics, PageContext, PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import type { InputPerformanceMetrics, WebVitalsMetrics, PageContext, PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
 
 export function usePerformanceTracking(metrics: InputPerformanceMetrics) {
   const [cacheHitRate, setCacheHitRate] = useState(0);

@@ -83,7 +83,7 @@ export function DeleteFolderDialog({
         <DialogHeader>
           <DialogTitle>Delete Folder</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the folder "{folderName}"? This action cannot be undone.
+            Are you sure you want to delete the folder &ldquo;{folderName}&rdquo;? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

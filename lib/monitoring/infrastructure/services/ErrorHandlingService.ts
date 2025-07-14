@@ -11,7 +11,7 @@ export class ErrorHandlingService {
   static handleRepositoryError(
     operation: string,
     error: unknown,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const errorObj = error instanceof Error ? error : new Error(String(error));
     
@@ -37,7 +37,7 @@ export class ErrorHandlingService {
   static handleComponentError(
     componentName: string,
     error: Error,
-    errorInfo?: any
+    errorInfo?: Record<string, unknown>
   ): void {
     this.errors.push(error);
     
@@ -60,8 +60,8 @@ export class ErrorHandlingService {
     serviceName: string,
     operation: string,
     error: unknown,
-    fallbackValue?: any
-  ): any {
+    fallbackValue?: unknown
+  ): unknown {
     const errorObj = error instanceof Error ? error : new Error(String(error));
     this.errors.push(errorObj);
     

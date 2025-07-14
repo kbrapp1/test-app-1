@@ -95,8 +95,15 @@ export class AssetQueryExecutor {
   /**
    * Execute update operation
    */
-  async executeUpdate(assetId: string, updateData: UpdateAssetData): Promise<any | null> {
-    const persistenceData: any = {};
+  async executeUpdate(assetId: string, updateData: UpdateAssetData): Promise<Record<string, unknown> | null> {
+    const persistenceData: {
+      name?: string;
+      folder_id?: string | null;
+      storage_path?: string;
+      mime_type?: string;
+      size?: number;
+      updated_at?: string;
+    } = {};
     if (updateData.name !== undefined) persistenceData.name = updateData.name;
     if (updateData.folderId !== undefined) persistenceData.folder_id = updateData.folderId;
     if (updateData.storagePath !== undefined) persistenceData.storage_path = updateData.storagePath;

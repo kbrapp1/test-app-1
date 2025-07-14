@@ -19,7 +19,7 @@ export class ListTagsUseCase {
       // The includeOrphaned flag defaults to true in the repository if not provided
       const tags = await this.tagRepository.findByOrganizationId(input.organizationId, input.includeOrphaned);
       return tags;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }

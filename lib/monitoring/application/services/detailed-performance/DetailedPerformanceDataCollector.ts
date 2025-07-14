@@ -1,11 +1,12 @@
 import { BundleAnalysisService } from '../../../infrastructure/services/BundleAnalysisService';
 import { ComponentProfilerService } from '../../../infrastructure/services/ComponentProfilerService';
 import { ResourceTimingService } from '../../../infrastructure/services/ResourceTimingService';
+import { BundleAnalysis, ComponentPerformance, ResourceTiming } from '../../../domain/entities/DetailedPerformanceMetrics';
 
 export interface PerformanceData {
-  bundleAnalysis: any;
-  componentPerformance: any[];
-  resourceTiming: any[];
+  bundleAnalysis: BundleAnalysis;
+  componentPerformance: ComponentPerformance[];
+  resourceTiming: ResourceTiming[];
 }
 
 /**

@@ -7,17 +7,11 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CaptureLeadUseCase, CaptureLeadRequest } from '../../../application/use-cases/CaptureLeadUseCase';
-import { Lead } from '../../../domain/entities/Lead';
-import { 
-  BusinessRuleViolationError, 
-  ResourceNotFoundError 
-} from '../../../domain/errors/ChatbotWidgetDomainErrors';
+import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { 
   MockLeadRepository
 } from '../../test-utils/MockServices';
 import { ChatbotTestDataFactory } from '../../test-utils/ChatbotTestDataFactory';
-import { LeadCaptureService } from '../../../application/services/lead-management/LeadCaptureService';
-import { LeadMapper } from '../../../application/mappers/LeadMapper';
 
 // Mock the complex dependencies
 const mockLeadCaptureService = {

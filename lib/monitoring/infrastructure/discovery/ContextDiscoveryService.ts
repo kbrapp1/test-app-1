@@ -41,15 +41,17 @@ export class ContextDiscoveryService {
     return analysis;
   }
 
-  private static analyzePageContext(pageContext: string, issueType: string): {
+  private static analyzePageContext(pageContext: string, _issueType: string): {
     likelyComponents: string[];
     likelyHooks: string[];
   } {
     // Use auto-discovered contexts from generated file
     try {
       // Import discovered contexts dynamically to avoid bundling in client
+      // Dynamic import would be preferred, but using require for sync compatibility
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { DISCOVERED_CONTEXTS } = require('../generated/DiscoveredContexts');
-      const context = DISCOVERED_CONTEXTS.find((ctx: any) => ctx.domain === pageContext);
+      const context = DISCOVERED_CONTEXTS.find((ctx: { domain: string; components?: string[]; queryKeys?: string[] }) => ctx.domain === pageContext);
       
       if (context) {
         return {
@@ -59,7 +61,7 @@ export class ContextDiscoveryService {
       }
       
       return { likelyComponents: [], likelyHooks: [] };
-    } catch (error) {
+    } catch {
       // Graceful fallback if generation hasn't run yet
       return { likelyComponents: [], likelyHooks: [] };
     }

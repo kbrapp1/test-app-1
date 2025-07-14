@@ -45,7 +45,7 @@ export const TagCreationOption: React.FC<TagCreationOptionProps> = ({
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-2">
             <PlusCircle className="h-4 w-4 text-green-600" />
-            <span className="font-medium">Create "{inputValue.trim()}"</span>
+            <span className="font-medium">Create &ldquo;{inputValue.trim()}&rdquo;</span>
           </div>
           <Badge 
             variant="outline" 

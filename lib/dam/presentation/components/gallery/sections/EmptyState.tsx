@@ -24,7 +24,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     return (
       <div className="text-center p-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50">
         <div className="text-4xl mb-4">🔍</div>
-        <p className="text-gray-600 mb-2">No results found for "{searchTerm}"</p>
+        <p className="text-gray-600 mb-2">No results found for &ldquo;{searchTerm}&rdquo;</p>
         <p className="text-sm text-gray-500">Try adjusting your search terms or filters</p>
       </div>
     );

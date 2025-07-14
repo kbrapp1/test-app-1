@@ -7,8 +7,8 @@ export interface NetworkCall {
   status?: number;
   duration?: number;
   error?: string;
-  payload?: any;
-  response?: any;
+  payload?: Record<string, unknown>;
+  response?: Record<string, unknown>;
   headers?: Record<string, string>;
   // Enhanced source tracking
   source?: {

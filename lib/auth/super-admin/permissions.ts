@@ -36,7 +36,7 @@ export class SuperAdminPermissionService {
    * @param organizationId Optional organization ID (super admin bypasses)
    * @returns boolean indicating management permissions
    */
-  static canManageOrganization(profile: Profile | null, organizationId?: string): boolean {
+  static canManageOrganization(profile: Profile | null, _organizationId?: string): boolean {
     return this.isSuperAdmin(profile);
   }
 

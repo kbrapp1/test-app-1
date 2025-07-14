@@ -1,4 +1,4 @@
-import { PerformanceIssue } from '../../../domain/entities/DetailedPerformanceMetrics';
+import { PerformanceIssue, BundleAnalysis, ComponentPerformance, ResourceTiming } from '../../../domain/entities/DetailedPerformanceMetrics';
 import { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';
 import { OptimizationGap } from '../../../domain/value-objects/OptimizationGap';
 
@@ -16,17 +16,17 @@ export class PerformanceIssueAnalyzer {
    * optimization gaps to generate prioritized issue reports.
    * 
    * @param {PerformanceMetrics} basicMetrics - Basic performance metrics
-   * @param {any} bundleAnalysis - Bundle analysis results
-   * @param {any[]} componentPerformance - Component performance data
-   * @param {any[]} resourceTiming - Resource timing data
+   * @param {BundleAnalysis} bundleAnalysis - Bundle analysis results
+   * @param {ComponentPerformance[]} componentPerformance - Component performance data
+   * @param {ResourceTiming[]} resourceTiming - Resource timing data
    * @param {OptimizationGap[]} optimizations - Existing optimization gaps
    * @returns {PerformanceIssue[]} Array of critical performance issues
    */
   static analyzeCriticalIssues(
     basicMetrics: PerformanceMetrics,
-    bundleAnalysis: any,
-    componentPerformance: any[],
-    resourceTiming: any[],
+    bundleAnalysis: BundleAnalysis,
+    componentPerformance: ComponentPerformance[],
+    resourceTiming: ResourceTiming[],
     optimizations: OptimizationGap[]
   ): PerformanceIssue[] {
     const issues: PerformanceIssue[] = [];
@@ -45,10 +45,10 @@ export class PerformanceIssueAnalyzer {
   /**
    * Analyzes bundle analysis data for size-related performance issues
    * 
-   * @param {any} bundleAnalysis - Bundle analysis results
+   * @param {BundleAnalysis} bundleAnalysis - Bundle analysis results
    * @returns {PerformanceIssue[]} Bundle-related performance issues
    */
-  private static analyzeBundleSizeIssues(bundleAnalysis: any): PerformanceIssue[] {
+  private static analyzeBundleSizeIssues(bundleAnalysis: BundleAnalysis): PerformanceIssue[] {
     const issues: PerformanceIssue[] = [];
 
     if (bundleAnalysis.totalSize > 1000000) {

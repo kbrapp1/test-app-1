@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PlusCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Note } from '@/types/notes';
+import { InsufficientPermissions, FeatureNotAvailable } from '@/components/access-guards';
 
 export function NotesPageClient() {
   // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
@@ -43,6 +44,9 @@ export function NotesPageClient() {
   const canCreate = Boolean(user && !isLoading && isNotesEnabled);
   const canUpdate = Boolean(user && !isLoading && isNotesEnabled);
   const canDelete = Boolean(user && !isLoading && isNotesEnabled);
+
+  // ✅ CRITICAL: Ensure notes is always an array to prevent "filter is not a function" errors
+  const safeNotes = Array.isArray(notes) ? notes : [];
 
   // OPTIMIZATION: Log cache performance in development
   if (fromCache && process.env.NODE_ENV === 'development') {
@@ -201,30 +205,30 @@ export function NotesPageClient() {
 
   // Handle Notes feature access error
   if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
-          <div className="text-red-600 mb-4">
-            <h2 className="text-xl font-semibold">Notes Access Error</h2>
-            <p className="text-sm mt-2">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
+    // Check if it's a permission error vs other errors
+    if (error.includes('permission') || error.includes('access denied')) {
+      return <InsufficientPermissions 
+        feature="Notes" 
+        title="Notes Access Error"
+        description={error}
+      />;
+    }
+    
+    // Generic error fallback
+    return <FeatureNotAvailable 
+      feature="Notes" 
+      description={error}
+      showUpgrade={false}
+      showContact={true}
+    />;
   }
 
   // Handle Notes feature disabled (business feature flag) - only after loading completes
   if (!isNotesEnabled) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
-          <div className="text-yellow-600 mb-4">
-            <h2 className="text-xl font-semibold">Notes Feature Disabled</h2>
-            <p className="text-sm mt-2">Notes feature is not enabled for your organization.</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <FeatureNotAvailable 
+      feature="Notes" 
+      description="Notes feature is not enabled for your organization. Contact your administrator to enable this feature."
+    />;
   }
 
   // SECURITY: Server actions handle all validation with organization context
@@ -233,7 +237,7 @@ export function NotesPageClient() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">My Notes</h1>
         {/* Show Add button only if there are notes already */}
-        {notes.length > 0 && (
+        {safeNotes.length > 0 && (
           <AddNoteDialog 
             triggerButtonText="Add New Note"
             canCreate={canCreate}
@@ -245,7 +249,7 @@ export function NotesPageClient() {
       </div>
       
       <div className="mt-4">
-        {notes.length === 0 ? (
+        {safeNotes.length === 0 ? (
           <EmptyState 
             icon={PlusCircleIcon} 
             title="No Notes Yet"
@@ -262,7 +266,7 @@ export function NotesPageClient() {
           />
         ) : (
           <NoteList 
-            initialNotes={notes}
+            initialNotes={safeNotes}
             canUpdate={canUpdate}
             canDelete={canDelete}
             isLoading={isLoading}
@@ -277,7 +281,7 @@ export function NotesPageClient() {
       {/* Development info */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-2 rounded text-xs">
-          <div>Notes: {notes.length}</div>
+          <div>Notes: {safeNotes.length}</div>
           <div>Context Cache: {fromCache ? 'HIT' : 'MISS'}</div>
           <div>Loading: {isLoading ? 'YES' : 'NO'}</div>
           <div>API Calls: 1 (Unified)</div>

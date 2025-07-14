@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
 /**
  * Folder Query Builder Service

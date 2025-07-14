@@ -1,4 +1,5 @@
 import { PlainTag } from '../../../application/dto/DamApiRequestDto';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 
 // Domain interfaces for tag editor management
 export interface UseTagEditorProps {
@@ -34,7 +35,7 @@ export interface TagEditorComputedData {
 export interface UseTagEditorReturn extends TagEditorState, TagEditorActions, TagEditorComputedData {}
 
 export interface AuthContext {
-  supabase: any;
-  user: any;
+  supabase: SupabaseClient;
+  user: User | null;
   activeOrgId: string;
 } 

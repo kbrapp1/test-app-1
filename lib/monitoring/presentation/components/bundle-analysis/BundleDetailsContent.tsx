@@ -3,6 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { BundleMonitoringService, GlobalBundleStats } from '../../../application/services/BundleMonitoringService';
 
+interface DetailedBundleStats {
+  bundle: GlobalBundleStats;
+  session: {
+    duration: number;
+    modulesTracked: number;
+    totalMetricsCollected: number;
+    averageLoadTime: number;
+  };
+  performance: {
+    criticalPathOptimized: boolean;
+    lazyLoadingCoverage: number;
+    overallHealth: 'excellent' | 'good' | 'poor';
+  };
+}
+
 interface BundleDetailsContentProps {
   bundleStats: GlobalBundleStats | null;
   bundleScore: number;
@@ -11,10 +26,10 @@ interface BundleDetailsContentProps {
 
 export const BundleDetailsContent = React.memo<BundleDetailsContentProps>(({
   bundleStats,
-  bundleScore,
+  bundleScore: _bundleScore,
   isPaused = false
 }) => {
-  const [detailedStats, setDetailedStats] = useState<any>(null);
+  const [detailedStats, setDetailedStats] = useState<DetailedBundleStats | null>(null);
   const [bundleMonitoring] = useState(() => new BundleMonitoringService());
 
   useEffect(() => {
@@ -22,7 +37,7 @@ export const BundleDetailsContent = React.memo<BundleDetailsContentProps>(({
       try {
         const performanceMetrics = bundleMonitoring.getPerformanceMetrics();
         setDetailedStats(performanceMetrics);
-      } catch (error) {
+      } catch {
         // Silent fail - bundle monitoring is optional
       }
     };

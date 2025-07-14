@@ -54,12 +54,13 @@ export class DeleteTagUseCase {
         throw new DatabaseError(`Failed to delete tag "${existingTag.name}" for an unspecified reason.`);
       }
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) { // Re-throw known AppErrors (like ConflictError from above)
         throw error;
       }
       console.error('DeleteTagUseCase - Unexpected error:', error);
-      throw new DatabaseError('An unexpected error occurred while deleting the tag.', (error as Error).message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new DatabaseError('An unexpected error occurred while deleting the tag.', errorMessage);
     }
   }
 }

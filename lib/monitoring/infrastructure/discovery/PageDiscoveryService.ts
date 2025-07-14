@@ -126,7 +126,7 @@ export class PageDiscoveryService {
           await this.searchDomainPagesRecursively(fullPath, domain, entryPath, pages, depth + 1);
         }
       }
-    } catch (error) {
+    } catch {
       // Continue if can't read directory
     }
   }

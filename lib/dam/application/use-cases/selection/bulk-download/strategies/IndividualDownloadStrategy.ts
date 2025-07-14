@@ -29,7 +29,7 @@ export class IndividualDownloadStrategy {
           asset.name
         );
         downloadUrls.push(downloadUrl);
-      } catch (error) {
+      } catch {
         // Error generating download URL - continue with other assets
         // Errors are handled at the application service level
       }

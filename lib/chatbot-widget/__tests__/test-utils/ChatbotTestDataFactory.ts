@@ -309,7 +309,7 @@ export class ChatbotTestDataFactory {
     });
   }
 
-  static createOperatingHours(overrides?: Partial<any>) {
+  static createOperatingHours(_overrides?: Partial<any>) {
     // Default to 24x7 for chatbot availability
     return OperatingHours.create24x7('UTC');
   }
@@ -438,19 +438,19 @@ export class ChatbotTestDataFactory {
   }
 
   // Helper methods for value objects
-  static createAIMetadata(overrides?: Partial<any>) {
+  static createAIMetadata(_overrides?: Partial<any>) {
     return MessageAIMetadata.createEmpty();
   }
 
-  static createContextMetadata(overrides?: Partial<any>) {
+  static createContextMetadata(_overrides?: Partial<any>) {
     return MessageContextMetadata.createEmpty();
   }
 
-  static createProcessingMetrics(overrides?: Partial<any>) {
+  static createProcessingMetrics(_overrides?: Partial<any>) {
     return MessageProcessingMetrics.createEmpty();
   }
 
-  static createCostTracking(overrides?: Partial<any>) {
+  static createCostTracking(_overrides?: Partial<any>) {
     return MessageCostTracking.createZeroCost();
   }
 }

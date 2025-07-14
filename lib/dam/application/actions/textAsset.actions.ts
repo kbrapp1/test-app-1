@@ -54,12 +54,12 @@ async function executeListTextAssets(): Promise<{ success: boolean; data?: TextA
 
     return { success: true, data: result.assets };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('listTextAssets Action: Error', err);
     if (err instanceof AppError) {
       return { success: false, error: err.message };
     }
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' };
   }
 }
 
@@ -94,12 +94,12 @@ export async function getAssetContent(assetId: string): Promise<{ success: boole
 
     return { success: true, content: result.content };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('getAssetContent Action: Error', err);
     if (err instanceof AppError) {
       return { success: false, error: err.message };
     }
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' };
   }
 }
 
@@ -140,12 +140,12 @@ export async function updateAssetText(
     // revalidatePath('/dam', 'layout'); // REMOVED - causes unnecessary POST /dam calls
     return { success: true };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('updateAssetText Action: Error', err);
     if (err instanceof AppError) {
       return { success: false, error: err.message };
     }
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' };
   }
 }
 
@@ -189,12 +189,12 @@ export async function saveAsNewTextAsset(
 
     return { success: true, data: { newAssetId: result.newAssetId } };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('saveAsNewTextAsset Action: Error', err);
     if (err instanceof AppError) {
       return { success: false, error: err.message };
     }
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
+    return { success: false, error: err instanceof Error ? err.message : 'An unexpected error occurred.' };
   }
 }
 

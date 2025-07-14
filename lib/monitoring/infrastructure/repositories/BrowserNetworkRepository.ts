@@ -1,5 +1,5 @@
 import { NetworkMonitoringRepository } from '../../domain/repositories/NetworkMonitoringRepository';
-import { NetworkStats } from '../../domain/network-efficiency/entities/NetworkCall';
+import { NetworkStats, NetworkCall, RedundantCall } from '../../domain/network-efficiency/entities/NetworkCall';
 import { ErrorHandlingService } from '../services/ErrorHandlingService';
 
 /**
@@ -25,7 +25,7 @@ export class BrowserNetworkRepository implements NetworkMonitoringRepository {
     }
   }
 
-  async storeNetworkCall(callData: any): Promise<void> {
+  async storeNetworkCall(callData: NetworkCall): Promise<void> {
     try {
       // Store call data in session storage for current session analysis
       const existing = await this.getNetworkStats();
@@ -59,7 +59,7 @@ export class BrowserNetworkRepository implements NetworkMonitoringRepository {
     }
   }
 
-  async getRedundantPatterns(): Promise<any[]> {
+  async getRedundantPatterns(): Promise<RedundantCall[]> {
     try {
       const stats = await this.getNetworkStats();
       return stats.redundantPatterns || [];
@@ -83,7 +83,7 @@ export class BrowserNetworkRepository implements NetworkMonitoringRepository {
     };
   }
 
-  private addCallToStats(stats: NetworkStats, callData: any): NetworkStats {
+  private addCallToStats(stats: NetworkStats, callData: NetworkCall): NetworkStats {
     // Simple implementation - would be enhanced with real pattern detection
     return {
       ...stats,

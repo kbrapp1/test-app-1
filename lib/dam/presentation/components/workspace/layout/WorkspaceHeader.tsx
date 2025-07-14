@@ -30,7 +30,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       <div className="flex-grow min-w-0">
         {gallerySearchTerm && gallerySearchTerm.trim() !== '' ? (
           <div className="text-sm text-muted-foreground">
-            Showing search results for "<strong>{gallerySearchTerm}</strong>". 
+            Showing search results for &ldquo;<strong>{gallerySearchTerm}</strong>&rdquo;. 
             <Link 
               href={`/dam${currentFolderId ? '?folderId='+currentFolderId : ''}`} 
               className="text-primary hover:underline ml-1"

@@ -7,6 +7,4 @@
  * - Follow @golden-rule unified context patterns exactly
  */
 
-export * from './useNotesQuery';
-export * from './useNotesMutations';
 export * from './useNotesUnifiedContext'; 

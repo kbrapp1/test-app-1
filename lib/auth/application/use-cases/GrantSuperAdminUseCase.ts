@@ -12,9 +12,7 @@ import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { SuperAdminDomainService } from '../../domain/services/SuperAdminDomainService';
 import { UserId } from '../../domain/value-objects/UserId';
 import { 
-  BusinessRuleViolationError, 
-  UserNotFoundError,
-  InsufficientPermissionsError 
+  UserNotFoundError
 } from '../../domain/errors/AuthDomainError';
 
 export interface GrantSuperAdminRequest {

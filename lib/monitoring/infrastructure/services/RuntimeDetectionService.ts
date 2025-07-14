@@ -3,6 +3,16 @@ import { PerformanceTrackingState } from '../../application/dto/PerformanceTrack
 import { SpecificCauseAnalysis } from '../../domain/value-objects/SpecificCauseAnalysis';
 import { IRuntimeDetectionService } from '../../domain/services/interfaces/IRuntimeDetectionService';
 
+interface ComponentPerformanceData {
+  name: string;
+  renderCount: number;
+  // Add other properties as needed
+}
+
+interface WindowWithComponentPerformance extends Window {
+  __COMPONENT_PERFORMANCE__?: Map<string, ComponentPerformanceData>;
+}
+
 export class RuntimeDetectionService implements IRuntimeDetectionService {
   detectActualCulprit(
     issue: OptimizationGap, 
@@ -21,7 +31,7 @@ export class RuntimeDetectionService implements IRuntimeDetectionService {
       const componentCulprit = RuntimeDetectionService.detectComponentCulprit(issue);
       if (componentCulprit) return componentCulprit;
       
-    } catch (error) {
+    } catch {
       // Graceful fallback for any detection errors
     }
     
@@ -71,16 +81,16 @@ export class RuntimeDetectionService implements IRuntimeDetectionService {
   }
 
   private static detectComponentCulprit(issue: OptimizationGap): SpecificCauseAnalysis | null {
-    if (typeof window === 'undefined' || !(window as any).__COMPONENT_PERFORMANCE__) {
+    const windowWithPerf = window as WindowWithComponentPerformance;
+    if (typeof window === 'undefined' || !windowWithPerf.__COMPONENT_PERFORMANCE__) {
       return null;
     }
-
-    const componentData = Array.from((window as any).__COMPONENT_PERFORMANCE__.values());
+    const componentData = Array.from(windowWithPerf.__COMPONENT_PERFORMANCE__?.values() || []);
     
     if (issue.type === 'memoization') {
       const worstRenderer = componentData
-        .filter((c: any) => c.renderCount > 10)
-        .sort((a: any, b: any) => b.renderCount - a.renderCount)[0] as any;
+        .filter((c: ComponentPerformanceData) => c.renderCount > 10)
+        .sort((a: ComponentPerformanceData, b: ComponentPerformanceData) => b.renderCount - a.renderCount)[0];
         
       if (worstRenderer) {
         return {
@@ -99,7 +109,8 @@ export class RuntimeDetectionService implements IRuntimeDetectionService {
     if (issue.type !== 'caching') return null;
     
     try {
-      const NetworkInterceptors = (window as any).__NETWORK_INTERCEPTORS__;
+      const windowWithInterceptors = window as typeof window & { __NETWORK_INTERCEPTORS__?: unknown };
+      const NetworkInterceptors = windowWithInterceptors.__NETWORK_INTERCEPTORS__;
       if (!NetworkInterceptors) return null;
       
       // Note: New NetworkInterceptors doesn't have getWorstApiUsers/getDetectionStats methods
@@ -112,7 +123,7 @@ export class RuntimeDetectionService implements IRuntimeDetectionService {
         querySource: 'Network Interceptors monitoring system'
       };
       
-    } catch (error) {
+    } catch {
       // Network detection failed, continue to fallback
     }
     

@@ -25,7 +25,7 @@ export function useTtsHistoryItemState({
   headlessPlayerCurrentlyPlayingUrl,
   isHeadlessPlayerPlaying,
   isHeadlessPlayerLoading,
-  headlessPlayerError,
+  headlessPlayerError: _headlessPlayerError,
   isProblematicFromDb,
   dbProblematicMessage,
   isSavingToDam,

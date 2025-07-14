@@ -1,6 +1,6 @@
 import { OptimizationGap } from '../../value-objects/OptimizationGap';
 import { NetworkIssue } from '../../network-efficiency/value-objects/NetworkIssue';
-import { PerformanceMetrics, RenderMetrics } from '../../entities/PerformanceMetrics';
+import { RenderMetrics } from '../../entities/PerformanceMetrics';
 import { NetworkStats } from '../../network-efficiency/entities/NetworkCall';
 
 export interface CrossDomainInsight {

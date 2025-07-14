@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useTtsUnifiedContext } from '../hooks/useTtsUnifiedContext';
 import { TtsErrorBoundary } from './TtsErrorBoundary';
+import { InsufficientPermissions, FeatureNotAvailable } from '@/components/access-guards';
 
-interface TtsPageClientProps {
-  // No props needed - server actions handle all validation and organization context
-}
+// No props needed - server actions handle all validation and organization context
+type TtsPageClientProps = Record<string, never>;
 
 export function TtsPageClient({}: TtsPageClientProps = {}) {
   // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
@@ -144,30 +144,30 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
 
   // Handle TTS feature access error
   if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
-          <div className="text-red-600 mb-4">
-            <h2 className="text-xl font-semibold">TTS Access Error</h2>
-            <p className="text-sm mt-2">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
+    // Check if it's a permission error vs other errors
+    if (error.includes('permission') || error.includes('access denied')) {
+      return <InsufficientPermissions 
+        feature="Text-to-Speech" 
+        title="TTS Access Error"
+        description={error}
+      />;
+    }
+    
+    // Generic error fallback
+    return <FeatureNotAvailable 
+      feature="Text-to-Speech" 
+      description={error}
+      showUpgrade={false}
+      showContact={true}
+    />;
   }
 
   // Handle TTS feature disabled (business feature flag)
   if (!isTtsEnabled) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-center py-8">
-          <div className="text-yellow-600 mb-4">
-            <h2 className="text-xl font-semibold">TTS Feature Disabled</h2>
-            <p className="text-sm mt-2">Text-to-Speech is not enabled for your organization.</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <FeatureNotAvailable 
+      feature="Text-to-Speech" 
+      description="Text-to-Speech is not enabled for your organization. Contact your administrator to enable this feature."
+    />;
   }
 
   // SECURITY: Wait for organization context to load before rendering

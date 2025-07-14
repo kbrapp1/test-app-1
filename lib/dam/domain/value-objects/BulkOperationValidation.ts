@@ -56,7 +56,7 @@ export class BulkOperationValidation {
         break;
 
       default:
-        errors.push(`Unknown operation type: ${(operation as any).type}`);
+        errors.push(`Unknown operation type: ${(operation as BulkOperation & { type: string }).type}`);
     }
 
     return {
@@ -116,7 +116,7 @@ export class BulkOperationValidation {
         break;
 
       default:
-        errors.push(`Unknown operation type: ${(operation as any).type}`);
+        errors.push(`Unknown operation type: ${(operation as BulkOperation & { type: string }).type}`);
     }
 
     return {

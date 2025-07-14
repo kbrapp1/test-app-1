@@ -45,7 +45,7 @@ export class ListFolderContentsUseCase {
   public async execute(
     request: ListFolderContentsUseCaseRequest
   ): Promise<ListFolderContentsUseCaseResponse> {
-    const { organizationId, currentFolderId, forceRefresh } = request;
+    const { organizationId, currentFolderId, forceRefresh: _forceRefresh } = request;
 
     if (!organizationId) {
       throw new ValidationError('Organization ID is required.');
@@ -100,12 +100,13 @@ export class ListFolderContentsUseCase {
       ];
 
       return { items: combinedItems };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DatabaseError(
-        `An unexpected error occurred while listing folder contents: ${error.message}`,
+        `An unexpected error occurred while listing folder contents: ${errorMessage}`,
         'LIST_FOLDER_CONTENTS_FAILED'
       );
     }

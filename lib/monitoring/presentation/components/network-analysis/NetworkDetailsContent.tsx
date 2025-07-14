@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { NetworkStats } from '../../../domain/network-efficiency/entities/NetworkCall';
 import { Copy, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button as _Button } from '@/components/ui/button';
 import { NetworkReportFormattingService } from './NetworkReportFormattingService';
 
 interface NetworkDetailsContentProps {
@@ -45,7 +45,7 @@ export const NetworkDetailsContent = React.memo<NetworkDetailsContentProps>(({
       await navigator.clipboard.writeText(report);
       setCopyButtonState('success');
       setTimeout(() => setCopyButtonState('default'), 2000);
-    } catch (error) {
+    } catch {
       // Silent fail for copy operation
     }
   }, [networkStats]);

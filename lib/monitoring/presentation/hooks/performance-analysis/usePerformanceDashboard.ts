@@ -61,7 +61,7 @@ export function usePerformanceDashboard(performanceMetrics: PerformanceMetrics) 
   const { 
     networkStats: networkMonitoringStats, 
     clearNetworkData: clearAllNetworkData, 
-    justReset: networkJustReset, 
+    justReset: _networkJustReset, 
     isPaused: isMonitoringPaused 
   } = useNetworkMonitoring();
 
@@ -95,7 +95,7 @@ export function usePerformanceDashboard(performanceMetrics: PerformanceMetrics) 
       performFullReset();
       clearAllNetworkData();
     });
-  }, [uiState.handleResetConfirmation, performFullReset, clearAllNetworkData]);
+  }, [uiState, performFullReset, clearAllNetworkData]);
 
   // Unified Dashboard Interface (Backward Compatibility)
   return {

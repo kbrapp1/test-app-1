@@ -13,11 +13,7 @@ import { OrganizationAggregate } from '../../domain/aggregates/OrganizationAggre
 import { UserId } from '../../domain/value-objects/UserId';
 import { OrganizationId } from '../../domain/value-objects/OrganizationId';
 import { Email } from '../../domain/value-objects/Email';
-import { 
-  UserDTO, 
-  CreateUserDTO, 
-  UpdateUserProfileDTO
-} from '../dto/UserDTO';
+import { UserDTO } from '../dto/UserDTO';
 import { UserRole } from '../../domain/value-objects/UserRole';
 
 export class UserMapper {

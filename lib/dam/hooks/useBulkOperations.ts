@@ -56,11 +56,11 @@ export function useBulkMove() {
               try {
                 const { refetchFolderData } = useFolderStore.getState();
                 await refetchFolderData();
-              } catch (error) {
+              } catch {
                 // Silently handle folder tree refresh failure
               }
             }, 100);
-          } catch (error) {
+          } catch {
             // Silently handle folder tree refresh failure
           }
         }
@@ -144,11 +144,11 @@ export function useBulkAssetOperations() {
                 try {
                   const { refetchFolderData } = useFolderStore.getState();
                   await refetchFolderData();
-                } catch (error) {
+                } catch {
                   // Silently handle folder tree refresh failure
                 }
               }, 100);
-            } catch (error) {
+            } catch {
               // Silently handle folder tree refresh failure
             }
           }

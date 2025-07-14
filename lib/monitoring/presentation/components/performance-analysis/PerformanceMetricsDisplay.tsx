@@ -67,7 +67,7 @@ export const PerformanceMetricsDisplay = withMonitoringErrorBoundary(
   {
     componentName: 'PerformanceMetricsDisplay',
     retryable: true,
-    onError: (error, errorInfo) => {
+    onError: (error, _errorInfo) => {
       // Additional error handling for performance metrics display
       if (process.env.NODE_ENV === 'development') {
         console.warn('[PerformanceMetricsDisplay] Error in performance metrics display:', error.message);

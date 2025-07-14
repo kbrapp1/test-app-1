@@ -8,7 +8,7 @@ export class AssetValidation {
   private static readonly MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
   private static readonly MAX_NAME_LENGTH = 255;
 
-  static validateRequiredFields(data: any): void {
+  static validateRequiredFields(data: Record<string, unknown>): void {
     const requiredFields = ['id', 'userId', 'name', 'storagePath', 'mimeType', 'size', 'createdAt', 'organizationId'];
     
     for (const field of requiredFields) {

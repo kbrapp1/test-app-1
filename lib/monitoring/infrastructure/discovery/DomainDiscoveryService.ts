@@ -15,7 +15,7 @@ export class DomainDiscoveryService implements IContextDiscoveryService {
       ]);
 
       return [...libDomains, ...globalDomains];
-    } catch (error) {
+    } catch {
       // Graceful fallback in development
       return [];
     }
@@ -28,7 +28,7 @@ export class DomainDiscoveryService implements IContextDiscoveryService {
     try {
       const allDomains = await this.discoverDomains();
       return allDomains.find(domain => domain.domain === domainName) || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

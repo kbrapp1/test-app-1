@@ -180,7 +180,7 @@ export const TestAssertions = {
 
   /** Assert that entity follows DDD patterns */
   assertDomainEntityInvariants<T>(entity: T, invariantChecks: ((entity: T) => boolean)[]): void {
-    invariantChecks.forEach((check, index) => {
+    invariantChecks.forEach((check, _index) => {
       expect(check(entity)).toBe(true);
     });
   },
@@ -226,7 +226,7 @@ export const PerformanceHelpers = {
   async assertPerformance<T>(
     operation: () => Promise<T>,
     maxDurationMs: number,
-    description?: string
+    _description?: string
   ): Promise<T> {
     const { result, duration } = await this.measureExecutionTime(operation);
     

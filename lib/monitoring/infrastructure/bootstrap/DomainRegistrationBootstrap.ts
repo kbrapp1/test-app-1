@@ -19,7 +19,8 @@ export class DomainRegistrationBootstrap {
   // Force refresh all discovered contexts
   static async refreshContexts(): Promise<void> {
     if (this.instance && 'refresh' in this.instance) {
-      await (this.instance as any).refresh();
+      const refreshableInstance = this.instance as PageContextRepository & { refresh(): Promise<void> };
+      await refreshableInstance.refresh();
     }
   }
 } 

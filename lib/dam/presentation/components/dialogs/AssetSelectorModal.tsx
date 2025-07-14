@@ -99,7 +99,7 @@ export const AssetSelectorModal: React.FC<AssetSelectorModalProps> = ({
       return (
         <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
           <SearchIcon className="h-12 w-12 mb-2" />
-          <p>No assets found matching "{debouncedSearchTerm}".</p>
+                          <p>No assets found matching &ldquo;{debouncedSearchTerm}&rdquo;.</p>
         </div>
       );
     }

@@ -14,14 +14,14 @@ export interface FunctionCallsDebugDto {
     functions: Array<{
       name: string;
       description: string;
-      parameters: any;
+      parameters: Record<string, unknown>;
       category?: string;
       version?: string;
     }>;
     functionCallsMade: Array<{
       name: string;
-      arguments: any;
-      result: any;
+      arguments: Record<string, unknown>;
+      result: unknown;
       executionTime: number;
       success: boolean;
       error?: string;
@@ -37,7 +37,7 @@ export interface FunctionCallsDebugDto {
   };
   
   secondApiCall?: {
-    contextFromFunctions: any;
+    contextFromFunctions: Record<string, unknown>;
     enhancedPrompt: string;
     additionalInstructions: string[];
     contextEnrichment?: {

@@ -55,8 +55,8 @@ export class CauseAnalysisService {
   analyzeSpecificCause(
     optimizationGap: OptimizationGap, 
     trackingState: PerformanceTrackingState, 
-    performanceMetrics: PerformanceMetrics,
-    analysisIndex: number
+    _performanceMetrics: PerformanceMetrics,
+    _analysisIndex: number
   ): SpecificCauseAnalysis {
     // Try to get actual runtime data first
     const actualCulprit = this.runtimeDetectionService.detectActualCulprit(

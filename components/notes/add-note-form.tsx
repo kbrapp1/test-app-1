@@ -15,14 +15,16 @@ import { isRetriableError } from '@/lib/errors/factory';
 // For this example, let's assume it's passed as a prop `serverAction`
 
 // Type for the Server Action function signature expected by useFormState
+interface ActionState {
+  success: boolean;
+  message: string;
+  code?: string;
+}
+
 type AddNoteAction = (
-    prevState: any, 
+    prevState: ActionState, 
     formData: FormData
-) => Promise<{
-    success: boolean;
-    message: string;
-    code?: string;
-}>;
+) => Promise<ActionState>;
 
 const initialState: Awaited<ReturnType<AddNoteAction>> = {
   success: false,

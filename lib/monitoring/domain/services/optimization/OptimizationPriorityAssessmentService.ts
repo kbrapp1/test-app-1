@@ -93,7 +93,7 @@ export class OptimizationPriorityAssessmentService {
   private isMediumPriorityIssue(
     issue: OptimizationGap, 
     trackingState: PerformanceTrackingState, 
-    metrics: PerformanceMetrics
+    _metrics: PerformanceMetrics
   ): boolean {
     // Any debouncing or batching opportunities
     if (issue.type === 'debouncing' || issue.type === 'batching') {

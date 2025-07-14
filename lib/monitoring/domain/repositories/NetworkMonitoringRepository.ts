@@ -1,4 +1,4 @@
-import { NetworkStats } from '../network-efficiency/entities/NetworkCall';
+import { NetworkStats, NetworkCall, RedundantCall } from '../network-efficiency/entities/NetworkCall';
 
 /**
  * Repository interface for network monitoring operations
@@ -14,7 +14,7 @@ export interface NetworkMonitoringRepository {
   /**
    * Store network call data for analysis
    */
-  storeNetworkCall(callData: any): Promise<void>;
+  storeNetworkCall(callData: NetworkCall): Promise<void>;
 
   /**
    * Get network performance history
@@ -29,5 +29,5 @@ export interface NetworkMonitoringRepository {
   /**
    * Get redundant patterns for optimization analysis
    */
-  getRedundantPatterns(): Promise<any[]>;
+  getRedundantPatterns(): Promise<RedundantCall[]>;
 } 

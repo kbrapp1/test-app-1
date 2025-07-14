@@ -47,9 +47,9 @@ export class AssetCollectionService {
           name: asset.name
         });
 
-      } catch (error) {
+      } catch (_error) {
         result.failedAssetIds.push(assetId);
-        result.errors.push(`Failed to validate asset ${assetId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        result.errors.push(`Failed to validate asset ${assetId}: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       }
     }
 
@@ -82,7 +82,7 @@ export class AssetCollectionService {
         });
       }
 
-    } catch (error) {
+          } catch (_error) {
       // Error collecting assets from folder - return empty array
       // Errors are handled at the caller level
     }

@@ -150,8 +150,9 @@ export function useAssetItemActions({
         link.click();
         document.body.removeChild(link);
         sonnerToast.success(`Downloading ${item.name}...`);
-      } catch (error: any) {
-        sonnerToast.error(error.message || 'An unexpected error occurred while trying to download.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while trying to download.';
+        sonnerToast.error(errorMessage);
       }
     });
   };
@@ -178,8 +179,9 @@ export function useAssetItemActions({
         sonnerToast.success(`Asset "${item.name}" renamed to "${newName}".`);
         await onDataChange(); // Refresh the asset list
         closeRenameDialog?.(); // Close the rename dialog
-      } catch (error: any) {
-        sonnerToast.error(error.message || 'Failed to rename asset.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to rename asset.';
+        sonnerToast.error(errorMessage);
       }
     });
   };
@@ -213,8 +215,9 @@ export function useAssetItemActions({
 
         sonnerToast.success(`Asset "${item.name}" moved successfully.`);
         await onDataChange(); // Refresh the asset list
-      } catch (error: any) {
-        sonnerToast.error(error.message || 'Failed to move asset.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to move asset.';
+        sonnerToast.error(errorMessage);
       } finally {
         closeMoveDialog?.(); // Always close dialog after move attempt
       }

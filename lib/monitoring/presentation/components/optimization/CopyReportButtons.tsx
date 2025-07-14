@@ -51,7 +51,7 @@ export const CopyReportButtons = React.memo<CopyReportButtonsProps>(({
       await navigator.clipboard.writeText(report);
       onCopyStateChange({ ...copyButtonState, frontend: 'success' });
       setTimeout(() => onCopyStateChange({ ...copyButtonState, frontend: 'default' }), 2000);
-    } catch (error) {
+    } catch {
       // Error handling
     }
   }, [metrics, trackingState, frontendIssues, copyButtonState, onCopyStateChange]);
@@ -65,7 +65,7 @@ export const CopyReportButtons = React.memo<CopyReportButtonsProps>(({
       await navigator.clipboard.writeText(report);
       onCopyStateChange({ ...copyButtonState, crossDomain: 'success' });
       setTimeout(() => onCopyStateChange({ ...copyButtonState, crossDomain: 'default' }), 2000);
-    } catch (error) {
+    } catch {
       // Error handling
     }
   }, [crossDomainInsights, trackingState, copyButtonState, onCopyStateChange]);
@@ -80,7 +80,7 @@ export const CopyReportButtons = React.memo<CopyReportButtonsProps>(({
       await navigator.clipboard.writeText(report);
       onCopyStateChange({ ...copyButtonState, backend: 'success' });
       setTimeout(() => onCopyStateChange({ ...copyButtonState, backend: 'default' }), 2000);
-    } catch (error) {
+    } catch {
       // Error handling
     }
   }, [networkIssues, trackingState, copyButtonState, onCopyStateChange]);

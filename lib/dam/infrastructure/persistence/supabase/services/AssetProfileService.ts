@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { RawAssetDbRecord } from '../mappers/AssetMapper';
+import { RawAssetDbRecord as _RawAssetDbRecord } from '../mappers/AssetMapper';
 
 /**
  * Asset Profile Service
@@ -11,7 +11,7 @@ export class AssetProfileService {
   /**
    * Enrich a single asset with user profile data
    */
-  async enrichAssetWithProfile(asset: any): Promise<any> {
+  async enrichAssetWithProfile(asset: Record<string, unknown>): Promise<Record<string, unknown>> {
     if (!asset.user_id) {
       return asset;
     }
@@ -37,7 +37,7 @@ export class AssetProfileService {
   /**
    * Enrich multiple assets with user profile data (batch operation)
    */
-  async enrichAssetsWithProfiles(assets: any[]): Promise<any[]> {
+  async enrichAssetsWithProfiles(assets: Record<string, unknown>[]): Promise<Record<string, unknown>[]> {
     if (!assets || assets.length === 0) {
       return assets;
     }

@@ -125,7 +125,7 @@ export class Tag {
    * Changes the tag color
    */
   changeColor(newColor: TagColorName): Tag {
-    const newTagColor = TagColor.fromString(newColor);
+    const _newTagColor = TagColor.fromString(newColor);
     return new Tag({
       id: this.id,
       name: this._name,

@@ -1,4 +1,4 @@
-import React from 'react';
+// React available for future use
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useOrgMembers } from '../useOrgMembers';
@@ -75,7 +75,7 @@ describe('useOrgMembers', () => {
         { initialProps: { searchTerm: '' } }
       );
 
-      const initialMembers = result.current.members;
+      const _initialMembers = result.current.members;
 
       // Change search term
       rerender({ searchTerm: 'john' });

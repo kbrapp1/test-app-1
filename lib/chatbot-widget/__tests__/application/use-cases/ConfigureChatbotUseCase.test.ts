@@ -6,12 +6,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ConfigureChatbotUseCase, ConfigureChatbotRequest, ConfigureChatbotResult } from '../../../application/use-cases/ConfigureChatbotUseCase';
-import { ChatbotConfig, LeadQualificationQuestion } from '../../../domain/entities/ChatbotConfig';
+import { ConfigureChatbotUseCase, ConfigureChatbotRequest } from '../../../application/use-cases/ConfigureChatbotUseCase';
+import { LeadQualificationQuestion } from '../../../domain/entities/ChatbotConfig';
 import { PersonalitySettings } from '../../../domain/value-objects/ai-configuration/PersonalitySettings';
 import { KnowledgeBase } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { OperatingHours } from '../../../domain/value-objects/session-management/OperatingHours';
-import { BusinessRuleViolationError, ResourceNotFoundError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { MockChatbotConfigRepository } from '../../test-utils/MockServices';
 import { ChatbotTestDataFactory } from '../../test-utils/ChatbotTestDataFactory';
 

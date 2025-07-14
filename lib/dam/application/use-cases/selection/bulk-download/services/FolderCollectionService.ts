@@ -156,7 +156,7 @@ export class FolderCollectionService {
         assets.push(...subfolderAssets);
       }
 
-    } catch (error) {
+          } catch {
       // Error collecting assets from folder - continue with other folders
     }
 

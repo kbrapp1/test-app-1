@@ -15,7 +15,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { AuthCompositionRoot } from '../../infrastructure/composition/AuthCompositionRoot';
+// AuthCompositionRoot available for future use
 
 interface AuthenticationContextType {
   user: User | null;

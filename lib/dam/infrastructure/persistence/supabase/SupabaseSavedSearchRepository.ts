@@ -8,13 +8,33 @@ import { SavedSearch, SavedSearchProps } from '../../../domain/entities/SavedSea
 import { createClient } from '@/lib/supabase/client';
 import { DatabaseError } from '@/lib/errors/base';
 
+interface SavedSearchCriteria {
+  searchTerm?: string;
+  folderId?: string | null;
+  tagIds?: string[];
+  filters?: {
+    type?: string;
+    creationDateOption?: string;
+    dateStart?: string;
+    dateEnd?: string;
+    ownerId?: string;
+    sizeOption?: string;
+    sizeMin?: string;
+    sizeMax?: string;
+  };
+  sortParams?: {
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  };
+}
+
 interface RawSavedSearchDbRecord {
   id: string;
   name: string;
   description: string | null;
   user_id: string;
   organization_id: string;
-  search_criteria: any; // JSON column
+  search_criteria: SavedSearchCriteria; // JSON column
   is_global: boolean;
   created_at: string;
   updated_at: string;
@@ -126,7 +146,13 @@ export class SupabaseSavedSearchRepository implements ISavedSearchRepository {
   }
 
   async update(id: string, data: UpdateSavedSearchData): Promise<SavedSearch | null> {
-    const updateData: any = {
+    const updateData: {
+      updated_at: string;
+      name?: string;
+      description?: string;
+      search_criteria?: SavedSearchCriteria;
+      is_global?: boolean;
+    } = {
       updated_at: new Date().toISOString(),
     };
 

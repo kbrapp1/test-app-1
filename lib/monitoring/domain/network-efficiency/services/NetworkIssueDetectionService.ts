@@ -1,45 +1,46 @@
-import { NetworkStats, NetworkCall } from '../entities/NetworkCall';
+import { NetworkCall } from '../entities/NetworkCall';
 import { NetworkIssue } from '../value-objects/NetworkIssue';
 
+/**
+ * Domain Service: Network Issue Detection Service
+ * Responsibility: Detect performance issues in network calls
+ */
 export class NetworkIssueDetectionService {
-  static detectIssues(stats: NetworkStats): NetworkIssue[] {
+  
+  static detectIssues(calls: NetworkCall[]): NetworkIssue[] {
     const issues: NetworkIssue[] = [];
     
-    // Redundancy issues
-    if (stats.redundantCalls > 0) {
-      issues.push(NetworkIssue.createRedundancyIssue(stats.redundantCalls));
+    // Detect slow calls
+    const slowCalls = calls.filter(call => call.duration && call.duration > 3000);
+    if (slowCalls.length > 0) {
+      issues.push(new NetworkIssue(
+        'slow-response',
+        'Slow Network Requests',
+        `${slowCalls.length} slow network requests detected`,
+        'high',
+        slowCalls.length,
+        false
+      ));
     }
     
-    // Slow response issues
-    const avgResponseTime = this.calculateAverageResponseTime(stats.recentCalls);
-    if (avgResponseTime > 1000) {
-      issues.push(NetworkIssue.createSlowResponseIssue(avgResponseTime));
+    // Detect failed calls
+    const failedCalls = calls.filter(call => call.status && call.status >= 400);
+    if (failedCalls.length > 0) {
+      issues.push(new NetworkIssue(
+        'failed-request',
+        'Failed Network Requests',
+        `${failedCalls.length} failed network requests detected`,
+        'high',
+        failedCalls.length,
+        false
+      ));
     }
     
-    // Failed request issues
-    const failedCount = stats.recentCalls.filter(call => 
-      call.status && call.status >= 400
-    ).length;
-    if (failedCount > 0) {
-      issues.push(NetworkIssue.createFailedRequestIssue(failedCount));
-    }
-    
-    // High volume issues (more than 15 calls in recent window)
-    if (stats.recentCalls.length > 15) {
-      issues.push(NetworkIssue.createHighVolumeIssue(stats.recentCalls.length));
-    }
-    
-    return issues.sort((a, b) => {
-      const severityOrder = { high: 3, medium: 2, low: 1 };
-      return severityOrder[b.severity] - severityOrder[a.severity];
-    });
+    return issues;
   }
   
-  private static calculateAverageResponseTime(calls: NetworkCall[]): number {
-    const callsWithDuration = calls.filter(call => call.duration !== undefined);
-    if (callsWithDuration.length === 0) return 0;
-    
-    const totalTime = callsWithDuration.reduce((sum, call) => sum + (call.duration || 0), 0);
-    return Math.round(totalTime / callsWithDuration.length);
+  static analyzeNetworkPatterns(_calls: NetworkCall[]): string[] {
+    // TODO: Implement pattern analysis
+    return [];
   }
-} 
+}

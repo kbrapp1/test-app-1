@@ -14,9 +14,9 @@ export class PayloadParser {
    * @param {RequestInit} init - Request initialization options
    * @param {string | null} nextAction - Next.js server action identifier
    * @param {boolean} isServerAction - Whether this is a server action
-   * @returns {any} Parsed payload data or undefined
+   * @returns {Record<string, unknown> | undefined} Parsed payload data or undefined
    */
-  parseRequestPayload(init: RequestInit | undefined, nextAction: string | null, isServerAction: boolean): any {
+  parseRequestPayload(init: RequestInit | undefined, nextAction: string | null, isServerAction: boolean): Record<string, unknown> | undefined {
     if (isServerAction && nextAction) {
       return { actionId: nextAction };
     }
@@ -34,10 +34,10 @@ export class PayloadParser {
    * Handles parsing of different body formats with efficient
    * truncation for large payloads to prevent memory issues.
    * 
-   * @param {any} body - Request body to parse
-   * @returns {any} Parsed payload data or metadata
+   * @param {unknown} body - Request body to parse
+   * @returns {Record<string, unknown> | undefined} Parsed payload data or metadata
    */
-  parsePayload(body: any): any {
+  parsePayload(body: unknown): Record<string, unknown> | undefined {
     if (!body) return undefined;
     
     if (typeof body === 'string') {
@@ -78,9 +78,9 @@ export class PayloadParser {
    * Parse JSON body with error handling and truncation
    * 
    * @param {string} body - JSON string to parse
-   * @returns {any} Parsed JSON or truncated raw string
+   * @returns {Record<string, unknown> | undefined} Parsed JSON or truncated raw string
    */
-  private parseJsonBody(body: string): any {
+  private parseJsonBody(body: string): Record<string, unknown> | undefined {
     try {
       return JSON.parse(body);
     } catch {

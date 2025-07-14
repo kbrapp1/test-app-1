@@ -15,7 +15,6 @@ import { User } from '@supabase/supabase-js';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { OrganizationContextService } from '@/lib/organization/domain/services/OrganizationContextService';
 import { PermissionValidationService } from '@/lib/organization/domain/services/PermissionValidationService';
-import { ClientSideOrganizationCache } from '@/lib/organization/infrastructure/ClientSideOrganizationCache';
 
 // Note interface matching database structure
 export interface Note {
@@ -50,7 +49,7 @@ export interface NotesUnifiedContextResult {
 // Compatible with existing NotesValidationResult interface
 export interface NotesValidationResult {
   isValid: boolean;
-  user: User;
+  user: User | null;
   organizationId: string;
   error?: string;
   unifiedContext?: NotesUnifiedContext;
@@ -91,7 +90,7 @@ export class NotesUnifiedContextService {
       window.addEventListener('organizationSwitched', this.handleOrganizationSwitch.bind(this) as EventListener);
       
       // Expose service instance for direct cache invalidation
-      (window as any).notesUnifiedContextService = this;
+      (window as typeof window & { notesUnifiedContextService?: NotesUnifiedContextService }).notesUnifiedContextService = this;
     }
   }
 
@@ -129,7 +128,6 @@ export class NotesUnifiedContextService {
       // Initialize services with server-side client
       const organizationService = new OrganizationContextService(supabaseServer);
       const permissionService = new PermissionValidationService(supabaseServer);
-      const cacheService = new ClientSideOrganizationCache();
 
       // Execute all services in parallel (was 3+ separate API calls)
       const [
@@ -185,11 +183,12 @@ export class NotesUnifiedContextService {
 
       const featureFlags = organizationContext.feature_flags || {};
 
-      // Check Notes access via feature flags
+      // Check Notes access via feature flags AND user permissions
       // AI: Universal rule - all features default to enabled when flag missing
-      const hasNotesAccess = featureFlags.NOTES_ENABLED !== false; // Default enabled
+      const featureEnabled = featureFlags.NOTES_ENABLED !== false; // Default enabled
       
-      if (!hasNotesAccess) {
+      // First check if feature is disabled at organization level
+      if (!featureEnabled) {
         // Transform organizations to match expected interface
         const transformedOrganizations = userOrganizations.map(org => ({
           organization_id: org.organization_id,
@@ -197,7 +196,7 @@ export class NotesUnifiedContextService {
           role: org.role_name
         }));
 
-        // Create unified context even when Notes is disabled
+        // Create unified context when feature is disabled
         const unifiedContext: NotesUnifiedContext = {
           user: currentUser,
           organizationId,
@@ -212,36 +211,98 @@ export class NotesUnifiedContextService {
           isValid: false,
           user: currentUser,
           organizationId,
-          error: 'Notes feature disabled for this organization',
+          error: 'Notes feature is not enabled for this organization',
           unifiedContext,
           securityContext: {
             fromCache: false,
             timestamp: new Date(),
-            validationMethod: 'UNIFIED_NOTES_DISABLED'
+            validationMethod: 'UNIFIED_FEATURE_DISABLED'
+          }
+        };
+      }
+      
+      // Feature is enabled, now check user permissions
+      let hasNotesAccess = false;
+      let permissionError = '';
+      
+      if (currentUser && organizationId) {
+        try {
+          // Use application service to check permissions
+          const { NotesCompositionRoot } = await import('../../infrastructure/composition/NotesCompositionRoot');
+          const compositionRoot = NotesCompositionRoot.getInstance();
+          const applicationService = compositionRoot.getNotesApplicationService();
+          
+          // Try to get notes - this will validate permissions
+          await applicationService.getNotes(currentUser.id, organizationId);
+          hasNotesAccess = true;
+        } catch (error) {
+          // If permission validation fails, user doesn't have access
+          hasNotesAccess = false;
+          permissionError = error instanceof Error ? error.message : 'Permission denied';
+          console.log('[NOTES_UNIFIED_CONTEXT] Notes permission denied:', permissionError);
+        }
+      }
+      
+      if (!hasNotesAccess) {
+        // Transform organizations to match expected interface
+        const transformedOrganizations = userOrganizations.map(org => ({
+          organization_id: org.organization_id,
+          organization_name: org.organization_name,
+          role: org.role_name
+        }));
+
+        // Create unified context when permissions are insufficient
+        const unifiedContext: NotesUnifiedContext = {
+          user: currentUser,
+          organizationId,
+          organizations: transformedOrganizations,
+          featureFlags,
+          isNotesEnabled: false,
+          notes: [], // Empty notes when no access
+          fromCache: false
+        };
+
+        return {
+          isValid: false,
+          user: currentUser,
+          organizationId,
+          error: permissionError.includes('permission') || permissionError.includes('access denied') 
+            ? permissionError 
+            : 'You do not have permission to access notes',
+          unifiedContext,
+          securityContext: {
+            fromCache: false,
+            timestamp: new Date(),
+            validationMethod: 'UNIFIED_PERMISSION_DENIED'
           }
         };
       }
 
-      // ✅ CRITICAL: Fetch notes data as part of unified context
+      // ✅ CRITICAL: Fetch notes data (already validated permissions above)
       let notes: Note[] = [];
-      if (currentUser && organizationId) {
+      if (hasNotesAccess && currentUser && organizationId) {
         try {
-          const { data: notesData, error: notesError } = await supabaseServer
-            .from('notes')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .eq('organization_id', organizationId)
-            .order('position', { ascending: true });
-
-          if (notesError) {
-            console.error('[NOTES_UNIFIED_CONTEXT] Notes fetch error:', notesError);
-            // Continue with empty notes rather than failing entire context
-            notes = [];
-          } else {
-            notes = (notesData as Note[]) || [];
-          }
+          // Use application service for notes fetching (permissions already validated)
+          const { NotesCompositionRoot } = await import('../../infrastructure/composition/NotesCompositionRoot');
+          const compositionRoot = NotesCompositionRoot.getInstance();
+          const applicationService = compositionRoot.getNotesApplicationService();
+          
+          const noteAggregates = await applicationService.getNotes(currentUser.id, organizationId);
+          
+          // Convert domain aggregates to presentation format
+          notes = noteAggregates.map(aggregate => ({
+            id: aggregate.id.value,
+            user_id: aggregate.userId,
+            organization_id: aggregate.organizationId,
+            title: aggregate.title,
+            content: aggregate.content,
+            color_class: aggregate.colorClass,
+            position: aggregate.position,
+            created_at: aggregate.createdAt.toISOString(),
+            updated_at: aggregate.updatedAt?.toISOString() || null
+          }));
         } catch (notesError) {
-          console.error('[NOTES_UNIFIED_CONTEXT] Notes fetch exception:', notesError);
+          console.error('[NOTES_UNIFIED_CONTEXT] Notes fetch failed:', notesError);
           // Continue with empty notes rather than failing entire context
           notes = [];
         }
@@ -305,7 +366,7 @@ export class NotesUnifiedContextService {
       // Return error state compatible with NotesValidationResult
       return {
         isValid: false,
-        user: null as any, // Match existing interface pattern
+        user: null, // Error case - no user available
         organizationId: '',
         error: error instanceof Error ? error.message : 'Unknown error',
         securityContext: {

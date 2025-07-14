@@ -12,7 +12,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { apiDeduplicationService } from '@/lib/shared/infrastructure/ApiDeduplicationService';
-import { AuthCompositionRoot } from '../../infrastructure/composition/AuthCompositionRoot';
+// AuthCompositionRoot available for future use
 
 /**
  * Utility to get the current user in a server action
@@ -81,7 +81,7 @@ async function executeGetActiveOrganizationId(): Promise<string | null> {
     }
 
     return data.active_organization_id;
-  } catch (e) {
+  } catch {
     return null;
   }
 } 

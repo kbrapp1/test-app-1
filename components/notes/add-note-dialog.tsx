@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,8 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { AddNoteForm } from './add-note-form';
 import { PlusCircleIcon } from 'lucide-react';
@@ -38,10 +36,13 @@ export function AddNoteDialog({
   triggerButtonText = "Add Note", 
   canCreate, 
   isLoading, 
-  organizationId,
+  organizationId: _organizationId,
   onAddNote 
 }: AddNoteDialogProps) {
+    // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
     const [isOpen, setIsOpen] = useState(false);
+    
+    // NOTE: Organization context validation is handled by parent NotesPageClient
     
     // AI: Don't render if no permission or still loading (fail-secure)
     if (isLoading || !canCreate) {
@@ -49,7 +50,7 @@ export function AddNoteDialog({
     }
 
     // ✅ OPTIMIZATION: Handle note creation with callback or fallback
-    const handleCreateNote = async (prevState: any, formData: FormData) => {
+    const handleCreateNote = async (prevState: unknown, formData: FormData) => {
         const title = formData.get('title')?.toString() || '';
         const content = formData.get('content')?.toString() || '';
         const color_class = formData.get('color_class')?.toString() || 'bg-yellow-200';

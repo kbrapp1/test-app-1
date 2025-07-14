@@ -18,8 +18,8 @@ export class SpecificCauseAnalyzerService {
   analyzeSpecificCause(
     issue: OptimizationGap, 
     trackingState: PerformanceTrackingState, 
-    metrics: PerformanceMetrics,
-    index: number
+    _metrics: PerformanceMetrics,
+    _index: number
   ): SpecificCauseAnalysis {
     switch (issue.type) {
       case 'memoization':

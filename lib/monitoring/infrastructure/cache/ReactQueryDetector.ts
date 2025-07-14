@@ -1,7 +1,22 @@
+interface QueryClient {
+  getQueryCache(): QueryCache;
+  // Add other QueryClient methods as needed
+}
+
+interface QueryCache {
+  getAll(): Query[];
+  // Add other QueryCache methods as needed
+}
+
+interface Query {
+  queryKey: unknown[];
+  // Add other Query properties as needed
+}
+
 interface ReactQueryStatus {
   isInstalled: boolean;
   isConfigured: boolean;
-  queryClient: any;
+  queryClient: QueryClient | null;
   activeQueries: number;
   cachedQueries: string[];
   missingCacheKeys: string[];
@@ -23,9 +38,14 @@ export class ReactQueryDetector {
       // Check if React Query is installed
       if (typeof window !== 'undefined') {
         // Look for QueryClient in window context
+        const windowWithRQ = window as typeof window & {
+          __REACT_QUERY_CLIENT__?: QueryClient;
+          queryClient?: QueryClient;
+        };
+        
         const possibleClients = [
-          (window as any).__REACT_QUERY_CLIENT__,
-          (window as any).queryClient,
+          windowWithRQ.__REACT_QUERY_CLIENT__,
+          windowWithRQ.queryClient,
           this.findQueryClientInReactDevTools(),
           this.findQueryClientInDOM()
         ];
@@ -50,66 +70,77 @@ export class ReactQueryDetector {
           const queries = queryCache.getAll();
           
           status.activeQueries = queries.length;
-          status.cachedQueries = queries.map((q: any) => JSON.stringify(q.queryKey));
+          status.cachedQueries = queries.map((q: Query) => JSON.stringify(q.queryKey));
           
           // Check for common missing cache keys
           status.missingCacheKeys = this.detectMissingCacheKeys(status.cachedQueries);
         }
       }
-    } catch (error) {
+    } catch {
       // Detection failed, assume not configured
     }
 
     return status;
   }
 
-  private static findQueryClientInReactDevTools(): any {
+  private static findQueryClientInReactDevTools(): QueryClient | null {
     try {
       // Look for React DevTools data
       const reactRoot = document.querySelector('[data-reactroot]');
-      if (reactRoot && (reactRoot as any)._reactInternalFiber) {
+      const elementWithFiber = reactRoot as Element & {
+        _reactInternalFiber?: unknown;
+      };
+      if (reactRoot && elementWithFiber._reactInternalFiber) {
         // Traverse React fiber tree looking for QueryClient
-        return this.traverseFiberForQueryClient((reactRoot as any)._reactInternalFiber);
+        return this.traverseFiberForQueryClient(elementWithFiber._reactInternalFiber);
       }
-    } catch (error) {
+    } catch {
       // Continue with other detection methods
     }
     return null;
   }
 
-  private static findQueryClientInDOM(): any {
+  private static findQueryClientInDOM(): QueryClient | null {
     try {
       // Look for QueryClient in React component props/context
       const scripts = document.querySelectorAll('script');
       for (const script of scripts) {
         if (script.innerHTML.includes('QueryClient') || script.innerHTML.includes('queryClient')) {
-          // Found evidence of QueryClient usage
-          return true;
+          // Found evidence of QueryClient usage - return null since we can't extract the actual client
+          return null;
         }
       }
-    } catch (error) {
+    } catch {
       // Continue
     }
     return null;
   }
 
-  private static traverseFiberForQueryClient(fiber: any): any {
+  private static traverseFiberForQueryClient(fiber: unknown): QueryClient | null {
     if (!fiber) return null;
     
     try {
+      const fiberNode = fiber as {
+        memoizedProps?: { client?: QueryClient };
+        memoizedState?: { queryClient?: QueryClient };
+        child?: unknown;
+        sibling?: unknown;
+      };
+      
       // Check current fiber's context/props for QueryClient
-      if (fiber.memoizedProps?.client || fiber.memoizedState?.queryClient) {
-        return fiber.memoizedProps?.client || fiber.memoizedState?.queryClient;
+      if (fiberNode.memoizedProps?.client || fiberNode.memoizedState?.queryClient) {
+        return fiberNode.memoizedProps?.client || fiberNode.memoizedState?.queryClient || null;
       }
       
       // Recursively check children
-      let child = fiber.child;
+      let child = fiberNode.child;
       while (child) {
         const result = this.traverseFiberForQueryClient(child);
         if (result) return result;
-        child = child.sibling;
+        const childNode = child as { sibling?: unknown };
+        child = childNode.sibling;
       }
-    } catch (error) {
+    } catch {
       // Continue traversal
     }
     
@@ -119,13 +150,18 @@ export class ReactQueryDetector {
   private static checkForReactQueryPackage(): boolean {
     try {
       // Check if the package is loaded in any way
+      const windowWithLibs = window as typeof window & {
+        TanStackQuery?: unknown;
+        ReactQuery?: unknown;
+      };
+      
       return !!(
-        (window as any).TanStackQuery ||
-        (window as any).ReactQuery ||
+        windowWithLibs.TanStackQuery ||
+        windowWithLibs.ReactQuery ||
         document.querySelector('script[src*="@tanstack/react-query"]') ||
         document.querySelector('script[src*="react-query"]')
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -190,7 +226,7 @@ export class ReactQueryDetector {
         document.querySelector('script[src*="_app"]') ||
         document.querySelector('script[src*="main"]')
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }

@@ -71,13 +71,13 @@ export interface AiResponseDto {
 
 export interface FunctionCallDto {
   readonly name: string;
-  readonly arguments: Record<string, any>;
+  readonly arguments: Record<string, unknown>;
 }
 
 /** DTO for conversation context */
 export interface ConversationContextDto {
   readonly messages: ChatMessageDto[];
-  readonly sessionContext: any;
-  readonly botPersonality: any;
-  readonly knowledgeBase: any;
+  readonly sessionContext: Record<string, unknown>;
+  readonly botPersonality: Record<string, unknown>;
+  readonly knowledgeBase: Record<string, unknown>;
 } 

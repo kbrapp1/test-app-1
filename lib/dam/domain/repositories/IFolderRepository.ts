@@ -1,6 +1,6 @@
 import type { Folder } from '../entities/Folder';
 import { Asset } from '../entities/Asset';
-import type { DamSortParameters, DamFilterParameters, FolderSearchCriteria } from '../../application/dto/SearchCriteriaDTO';
+import type { DamSortParameters, DamFilterParameters, FolderSearchCriteria as _FolderSearchCriteria } from '../../application/dto/SearchCriteriaDTO';
 
 // Define interfaces for repository input data
 export interface CreateFolderData {

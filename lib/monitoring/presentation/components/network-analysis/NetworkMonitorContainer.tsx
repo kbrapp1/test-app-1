@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Activity, X } from 'lucide-react';
+import { Card, CardContent, CardHeader as _CardHeader } from '@/components/ui/card';
+import { Button as _Button } from '@/components/ui/button';
+import { Activity, X as _X } from 'lucide-react';
 import { withMonitoringErrorBoundary } from '../error/MonitoringErrorBoundary';
 import { NetworkMonitorHeader } from '../network-analysis/NetworkMonitorHeader';
 import { NetworkStatsOverview } from '../network-analysis/NetworkStatsOverview';
@@ -126,7 +126,7 @@ export const NetworkMonitorContainer = withMonitoringErrorBoundary(
   {
     componentName: 'NetworkMonitorContainer',
     retryable: true,
-    onError: (error, errorInfo) => {
+    onError: (error, _errorInfo) => {
       // Additional error handling for network monitoring
       if (process.env.NODE_ENV === 'development') {
         console.warn('[NetworkMonitorContainer] Error in network monitoring:', error.message);

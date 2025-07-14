@@ -15,7 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import type { OrgMember } from '@/types/settings';
-import { AuthCompositionRoot } from '../../infrastructure/composition/AuthCompositionRoot';
+// AuthCompositionRoot available for future use
 
 interface UseOrgMemberActionsProps {
   activeOrganizationId: string | null;

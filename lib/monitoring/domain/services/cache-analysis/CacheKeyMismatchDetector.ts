@@ -1,5 +1,5 @@
-import { CacheAnalysisResult, ReactQueryCallAnalysis } from '../../value-objects/CacheAnalysisResult';
-import { ServerActionDuplicateDetector } from './ServerActionDuplicateDetector';
+import { CacheAnalysisResult, ReactQueryCallAnalysis, CacheKeyMismatchAnalysis } from '../../value-objects/CacheAnalysisResult';
+import { ServerActionDuplicateDetector, ServerActionDuplicateResult } from './ServerActionDuplicateDetector';
 import { ServerActionLegitimacyAnalyzer } from './ServerActionLegitimacyAnalyzer';
 import { PaginationPatternDetector } from './PaginationPatternDetector';
 
@@ -71,7 +71,7 @@ export class CacheKeyMismatchDetector {
    * 2. Legitimacy analysis to filter out valid patterns
    * 3. Enhanced result generation with context
    */
-  private analyzeServerActionDuplicates(analyses: ReactQueryCallAnalysis[]): any | null {
+  private analyzeServerActionDuplicates(analyses: ReactQueryCallAnalysis[]): ServerActionDuplicateResult | null {
     // Delegate duplicate detection to specialized service
     const duplicateResult = this.serverActionDetector.detectDuplicates(analyses);
     if (!duplicateResult) {
@@ -111,7 +111,7 @@ export class CacheKeyMismatchDetector {
    * 
    * Business Rule: Related hooks sharing similar data should use compatible cache keys
    */
-  private findCacheKeyMismatch(analyses: ReactQueryCallAnalysis[]): any | null {
+  private findCacheKeyMismatch(analyses: ReactQueryCallAnalysis[]): CacheKeyMismatchAnalysis | null {
     const hookGroups = this.groupSimilarHooks(analyses);
     
     for (const group of hookGroups) {

@@ -98,7 +98,7 @@ describe('ApiDrivenCompressionService', () => {
       }
 
              // Check if the messages will actually trigger compression
-       const analysis = ApiDrivenCompressionService.analyzeTokenUsage(messages, {
+       const _analysis = ApiDrivenCompressionService.analyzeTokenUsage(messages, {
          maxTokenLimit: 1000,
          tokenThresholdPercentage: 85
        });

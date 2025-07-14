@@ -11,8 +11,8 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { AuthCompositionRoot } from '../../infrastructure/composition/AuthCompositionRoot';
-import { AuthDomainError } from '../../domain/errors/AuthDomainError';
+// AuthCompositionRoot available for future use
+// AuthDomainError available for future use
 
 interface InviteMemberParams {
   email: string;

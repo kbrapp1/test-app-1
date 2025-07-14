@@ -62,10 +62,11 @@ export class UpdateAssetTextUseCase {
 
       try {
         await this.storageService.uploadFile(fileToUpload, asset.storagePath, true); // upsert = true
-      } catch (storageError: any) {
+      } catch (storageError: unknown) {
         console.error(`Storage error updating asset ${assetId} at ${asset.storagePath}:`, storageError);
+        const errorMessage = storageError instanceof Error ? storageError.message : 'Unknown storage error';
         throw new ExternalServiceError(
-          `Failed to upload updated asset content to storage: ${storageError.message}`,
+          `Failed to upload updated asset content to storage: ${errorMessage}`,
           'STORAGE_UPLOAD_FAILED',
           { assetId, storagePath: asset.storagePath }
         );
@@ -86,13 +87,14 @@ export class UpdateAssetTextUseCase {
         );
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
       console.error(`Unexpected error in UpdateAssetTextUseCase for asset ${assetId}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new AppError(
-        `An unexpected error occurred while updating asset text: ${error.message}`,
+        `An unexpected error occurred while updating asset text: ${errorMessage}`,
         'UPDATE_ASSET_TEXT_UNEXPECTED_ERROR'
       );
     }

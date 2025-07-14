@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath as _revalidatePath, revalidateTag } from 'next/cache';
 import { getActiveOrganizationId } from '@/lib/auth';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { UpdateFolderUseCase, DeleteFolderUseCase, CreateFolderUseCase } from '../use-cases/folders';
@@ -21,7 +21,16 @@ export interface FolderActionResult {
   error?: string;
   folderId?: string;
   parentFolderId?: string | null;
-  folder?: any; // Plain folder object for serialization
+  folder?: {
+    id: string;
+    name: string;
+    parentFolderId?: string | null;
+    organizationId: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt?: Date;
+    has_children?: boolean;
+  }; // Plain folder object for serialization
 }
 
 function revalidatePathsAfterFolderMutation(
@@ -90,12 +99,12 @@ export async function renameFolderAction(
           parentFolderId: updatedFolder.parentFolderId
         };
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('renameFolderAction Error:', err);
         if (err instanceof AppError) {
           return { success: false, error: err.message };
         }
-        return { success: false, error: err.message || 'Failed to rename folder.' };
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to rename folder.' };
       }
     },
     'dam-operations' // Use DAM operations domain timeout
@@ -153,12 +162,12 @@ export async function deleteFolderAction(
           parentFolderId: parentIdForReval 
         };
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('deleteFolderAction Error:', err);
         if (err instanceof AppError) {
           return { success: false, error: err.message };
         }
-        return { success: false, error: err.message || 'Failed to delete folder.' };
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to delete folder.' };
       }
     },
     'dam-operations' // Use DAM operations domain timeout
@@ -213,12 +222,12 @@ export async function createFolderAction(
           parentFolderId: newFolder.parentFolderId
         };
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('createFolderAction Error:', err);
         if (err instanceof AppError) {
           return { success: false, error: err.message };
         }
-        return { success: false, error: err.message || 'Failed to create folder.' };
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to create folder.' };
       }
     },
     'dam-operations' // Use DAM operations domain timeout

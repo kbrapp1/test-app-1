@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { withMonitoringErrorBoundary } from '../error/MonitoringErrorBoundary';
 
 import { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';
+import { GlobalBundleStats } from '../../../application/services/BundleMonitoringService';
 import { usePerformanceDashboard } from '../../hooks/performance-analysis/usePerformanceDashboard';
 import { PerformanceDashboardHeader } from '../performance-analysis/PerformanceDashboardHeader';
 import { PerformanceIssueSummary } from '../business-impact/PerformanceIssueSummary';
@@ -40,7 +41,7 @@ const PerformanceMonitorComponent = ({
   });
 
   // Bundle monitoring state
-  const [bundleStats, setBundleStats] = useState<any>(null);
+  const [bundleStats, setBundleStats] = useState<GlobalBundleStats | null>(null);
   const [bundleScore, setBundleScore] = useState(100);
 
   // Initialize bundle monitoring
@@ -55,7 +56,7 @@ const PerformanceMonitorComponent = ({
           const stats = bundleMonitoring.getGlobalBundleStats();
           setBundleStats(stats);
           setBundleScore(stats.averagePerformanceScore);
-        } catch (error) {
+        } catch {
           // Bundle monitoring is optional - fail silently
         }
       };
@@ -82,7 +83,7 @@ const PerformanceMonitorComponent = ({
       // Initialize component profiler when monitoring starts
       try {
         ComponentProfilerService.enable();
-      } catch (error) {
+      } catch {
         // ComponentProfilerService not available, continue without it
       }
       
@@ -98,7 +99,7 @@ const PerformanceMonitorComponent = ({
       // Disable component profiler when monitoring stops
       try {
         ComponentProfilerService.disable();
-      } catch (error) {
+      } catch {
         // ComponentProfilerService not available, ignore
       }
     }
@@ -236,7 +237,7 @@ export const PerformanceMonitor = withMonitoringErrorBoundary(
   {
     componentName: 'PerformanceMonitor',
     retryable: true,
-    onError: (error, errorInfo) => {
+    onError: (error, _errorInfo) => {
       // Additional error handling for performance monitoring
       if (process.env.NODE_ENV === 'development') {
         console.warn('[PerformanceMonitor] Error in performance monitoring:', error.message);

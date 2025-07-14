@@ -1,4 +1,4 @@
-import { Asset } from '../entities/Asset';
+import { Asset as _Asset } from '../entities/Asset';
 import { Tag } from '../entities/Tag';
 
 /**

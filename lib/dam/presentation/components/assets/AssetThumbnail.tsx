@@ -8,7 +8,7 @@ import { DeleteAssetUseCase } from '../../../application/use-cases/assets/Delete
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@/lib/supabase/client';
-import { CircleX, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
+import { CircleX as _CircleX, CheckCircle as _CheckCircle, AlertTriangle as _AlertTriangle, Loader as _Loader } from 'lucide-react';
 import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 import {
@@ -137,9 +137,10 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
 
         toast.success(`Asset "${alt}" deleted successfully.`);
         await onDataChange();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Delete action failed:", error);
-        toast.error(error.message || 'An unexpected error occurred during deletion.');
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during deletion.';
+        toast.error(errorMessage);
       } finally {
         setIsAlertOpen(false);
       }

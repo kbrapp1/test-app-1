@@ -33,7 +33,7 @@ export function SearchDropdownMenu({
     return (
       <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border shadow-lg rounded-md z-50 p-4">
         <p className="text-sm text-center text-muted-foreground">
-          No results found for "<span className='font-semibold'>{searchTermForDisplay}</span>".
+                          No results found for &ldquo;<span className='font-semibold'>{searchTermForDisplay}</span>&rdquo;.
         </p>
       </div>
     );
@@ -78,7 +78,7 @@ export function SearchDropdownMenu({
               onViewAllResults();
             }}
           >
-            Search for "<span className="font-semibold">{searchTermForDisplay}</span>"
+            Search for &ldquo;<span className="font-semibold">{searchTermForDisplay}</span>&rdquo;
           </button>
         </div>
       )}

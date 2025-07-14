@@ -1,6 +1,6 @@
 import { CrossDomainInsight } from '../../domain/cross-domain/services/PerformanceCorrelationService';
-import { CrossDomainAnalysisService } from '../../domain/services/context-analysis/CrossDomainAnalysisService';
-import { PageContextAnalysisService } from '../../domain/services/context-analysis/PageContextAnalysisService';
+import { CrossDomainAnalysisService, CrossDomainAnalysis } from '../../domain/services/context-analysis/CrossDomainAnalysisService';
+import { PageContextAnalysisService, PageContextAnalysis } from '../../domain/services/context-analysis/PageContextAnalysisService';
 import { PageContextRepository } from '../../domain/repositories/PageContextRepository';
 import { DomainRegistrationBootstrap } from '../../infrastructure/bootstrap/DomainRegistrationBootstrap';
 
@@ -104,8 +104,8 @@ export class CrossDomainReportGenerationService {
   private static async addAnalysisDetails(
     reportLines: string[], 
     insight: CrossDomainInsight, 
-    analysis: any, 
-    pageAnalysis: any
+    analysis: CrossDomainAnalysis, 
+    pageAnalysis: PageContextAnalysis
   ): Promise<void> {
     reportLines.push(`- **Issue Type**: \`${insight.type}\``);
     reportLines.push(`- **Severity**: ${insight.severity}`);
@@ -113,7 +113,9 @@ export class CrossDomainReportGenerationService {
     
     if (pageAnalysis.likelyFiles.length > 0) {
       reportLines.push(``, `#### 🔍 Page-Specific Root Cause Analysis:`);
-      reportLines.push(`- **Likely Components**: ${pageAnalysis.likelyComponents.map((c: string) => `\`${c}\``).join(', ')}`);
+      if (pageAnalysis.likelyComponents.length > 0) {
+        reportLines.push(`- **Likely Components**: ${pageAnalysis.likelyComponents.map((c: string) => `\`${c}\``).join(', ')}`);
+      }
       reportLines.push(`- **Likely Files to Modify:**`);
       pageAnalysis.likelyFiles.forEach((file: string) => {
         reportLines.push(`  - \`${file}\``);
@@ -121,7 +123,7 @@ export class CrossDomainReportGenerationService {
     }
   }
 
-  private static addCodeExample(reportLines: string[], analysis: any): void {
+  private static addCodeExample(reportLines: string[], analysis: { codeExample?: string; issue?: string; suggestedFix?: string }): void {
     if (analysis.codeExample) {
       reportLines.push(``, `#### 🛠️ IMMEDIATE FIX (Copy/Paste Ready):`);
       reportLines.push(`**Problem**: ${analysis.issue}`);
@@ -133,7 +135,7 @@ export class CrossDomainReportGenerationService {
     }
   }
 
-  private static addImplementationSteps(reportLines: string[], analysis: any): void {
+  private static addImplementationSteps(reportLines: string[], analysis: { implementationSteps: string[] }): void {
     reportLines.push(``, `#### 📋 Implementation Steps:`);
     analysis.implementationSteps.forEach((step: string, i: number) => {
       reportLines.push(`${i + 1}. ${step}`);

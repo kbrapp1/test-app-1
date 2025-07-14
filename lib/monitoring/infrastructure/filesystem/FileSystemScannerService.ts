@@ -8,7 +8,7 @@ export class FileSystemScannerService {
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name)
         .filter(name => !name.startsWith('_')); // Exclude private dirs
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -32,7 +32,7 @@ export class FileSystemScannerService {
           files.push(fullPath);
         }
       }
-    } catch (error) {
+    } catch {
       // Directory doesn't exist or no permission
     }
     
@@ -54,7 +54,7 @@ export class FileSystemScannerService {
           files.push(fullPath);
         }
       }
-    } catch (error) {
+    } catch {
       // Directory doesn't exist or no permission
     }
     
@@ -64,7 +64,7 @@ export class FileSystemScannerService {
   static readFileContent(filePath: string): string {
     try {
       return fs.readFileSync(filePath, 'utf-8');
-    } catch (error) {
+    } catch {
       return '';
     }
   }
@@ -88,7 +88,7 @@ export class FileSystemScannerService {
           results.add(entryRelativePath);
         }
       }
-    } catch (error) {
+    } catch {
       // Continue if can't read directory
     }
   }

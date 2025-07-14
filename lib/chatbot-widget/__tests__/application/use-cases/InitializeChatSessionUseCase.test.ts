@@ -5,12 +5,10 @@
  * Covers orchestration logic, validation, error handling, and domain event publishing.
  */
 
-import { describe, it, expect, beforeEach, vi, MockedFunction } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InitializeChatSessionUseCase, InitializeSessionRequest } from '../../../application/use-cases/InitializeChatSessionUseCase';
-import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { BusinessRuleViolationError, ResourceNotFoundError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
-import { SessionInitializedEvent } from '../../../domain/events/SessionInitializedEvent';
 import { 
   MockChatSessionRepository, 
   MockChatbotConfigRepository, 
@@ -190,7 +188,7 @@ describe('InitializeChatSessionUseCase', () => {
         warmKnowledgeCache: true
       };
 
-      const result = await useCase.execute(request);
+      const _result = await useCase.execute(request);
 
       expect(mockSearchKnowledge).toHaveBeenCalledWith({
         userQuery: 'initialization dummy query',

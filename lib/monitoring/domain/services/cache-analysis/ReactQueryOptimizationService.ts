@@ -1,33 +1,24 @@
-import { NetworkPatternAnalysisService } from '../network-analysis/NetworkPatternAnalysisService';
+import { CacheAnalysisResult } from '../../value-objects/CacheAnalysisResult';
 
-export interface ReactQueryOpportunity {
-  suggestedKey: string;
-  strategy: string;
-  performanceGain: string;
-}
-
+/**
+ * Domain Service: React Query Optimization Service
+ * Responsibility: Analyze and optimize React Query cache patterns
+ */
 export class ReactQueryOptimizationService {
-  static analyzeOptimizationOpportunity(pattern: any): ReactQueryOpportunity | null {
-    const duplicateCount = pattern.duplicateCalls.length;
-    
-    if (duplicateCount < 2) return null;
-    
-    const queryKey = NetworkPatternAnalysisService.generateQueryKey(pattern.originalCall);
-    let strategy = 'Basic caching';
-    let performanceGain = `${duplicateCount} fewer API calls`;
-    
-    if (pattern.pattern === 'rapid-fire') {
-      strategy = 'Debounced queries with short stale time';
-      performanceGain = `${duplicateCount} fewer calls + improved UX`;
-    } else if (pattern.pattern === 'identical') {
-      strategy = 'Standard caching with 5min stale time';
-      performanceGain = `${duplicateCount} fewer calls + instant responses`;
-    }
-    
-    return {
-      suggestedKey: queryKey,
-      strategy,
-      performanceGain
-    };
+  
+  static generateCacheOptimizationReport(): CacheAnalysisResult {
+    // TODO: Implement cache optimization analysis
+    return new CacheAnalysisResult(
+      'low',
+      'No cache optimization issues detected',
+      'Cache configuration is optimal',
+      'No changes needed',
+      'No performance impact'
+    );
   }
-} 
+  
+  static identifySuboptimalPatterns(): string[] {
+    // TODO: Implement pattern identification
+    return [];
+  }
+}

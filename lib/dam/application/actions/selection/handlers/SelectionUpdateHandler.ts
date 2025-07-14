@@ -41,7 +41,7 @@ export class SelectionUpdateHandler {
       }
 
       // 3. Get authenticated context
-      const context = await AuthenticationService.getAuthenticatedContext();
+      const _context = await AuthenticationService.getAuthenticatedContext();
 
       // 4. Create use case and execute
       const supabase = AuthenticationService.createSupabaseClient();
@@ -50,7 +50,7 @@ export class SelectionUpdateHandler {
 
       const result = await useCase.execute({
         selection: currentSelection,
-        action: request.action as any,
+        action: request.action as 'add' | 'remove' | 'toggle' | 'clear',
         itemId: request.itemId,
         itemType: request.itemType,
       });

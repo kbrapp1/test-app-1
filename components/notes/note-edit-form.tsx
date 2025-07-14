@@ -12,8 +12,13 @@ import type { Note } from '@/types/notes';
 
 // --- Action Type --- 
 // Define explicitly here or import if centralized
-type EditNoteAction = (prevState: any, formData: FormData) => Promise<{ success: boolean; message: string; }>;
-const initialActionState = {
+interface ActionState {
+  success: boolean;
+  message: string;
+}
+
+type EditNoteAction = (prevState: ActionState, formData: FormData) => Promise<ActionState>;
+const initialActionState: ActionState = {
   success: false,
   message: '',
 };

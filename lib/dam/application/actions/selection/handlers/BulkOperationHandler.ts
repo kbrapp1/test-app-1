@@ -5,7 +5,7 @@
  * Orchestrates bulk operations with proper revalidation following DDD principles
  */
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath as _revalidatePath } from 'next/cache';
 import { AuthenticationService } from '../services/AuthenticationService';
 import { FormDataExtractionService } from '../services/FormDataExtractionService';
 import { RepositoryFactoryService } from '../services/RepositoryFactoryService';

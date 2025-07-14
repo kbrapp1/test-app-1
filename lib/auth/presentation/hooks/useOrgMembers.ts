@@ -8,6 +8,33 @@ import type { OrgMember, RoleOption } from '@/types/settings'; // Import from ne
 const REQUEST_TIMEOUT = 8000; // 8 seconds timeout - normal ops complete in 1-5s, this is just a safety net
 const MAX_RETRIES = 1; // Reduced retries - fail fast and redirect to login
 
+// Type guard for error objects
+function isErrorWithMessage(error: unknown): error is Error & { message: string } {
+    return error instanceof Error && typeof error.message === 'string';
+}
+
+// Type guard for errors with code property
+function isErrorWithCode(error: unknown): error is Error & { code: string } {
+    return error instanceof Error && 'code' in error && typeof (error as Error & { code: unknown }).code === 'string';
+}
+
+// Database row types
+interface MembershipRow {
+    user_id: string;
+    role_id: string;
+    roles?: {
+        id: string;
+        name: string;
+    } | null;
+}
+
+interface ProfileRow {
+    id: string;
+    full_name?: string | null;
+    email?: string | null;
+    avatar_url?: string | null;
+}
+
 export function useOrgMembers(organizationId: string | null, debouncedSearchTerm: string) {
     const supabase = createClient();
     const { toast } = useToast();
@@ -20,23 +47,25 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
     const withSessionRefresh = useCallback(async <T>(operation: () => Promise<T>, retryCount = 0): Promise<T> => {
         try {
             return await operation();
-        } catch (error: any) {
+        } catch (error: unknown) {
             
             // Check if this looks like a session/auth error and we haven't retried too many times
             if (retryCount < MAX_RETRIES && (
-                error.message?.includes('JWT') || 
-                error.message?.includes('session') ||
-                error.message?.includes('unauthorized') ||
-                error.message?.includes('invalid claim') ||
-                error.code === 'PGRST301' // PostgREST auth error
+                (isErrorWithMessage(error) && (
+                    error.message.includes('JWT') || 
+                    error.message.includes('session') ||
+                    error.message.includes('unauthorized') ||
+                    error.message.includes('invalid claim')
+                )) ||
+                (isErrorWithCode(error) && error.code === 'PGRST301') // PostgREST auth error
             )) {
                 
                 // First, let's see what the current session looks like
-                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                const { data: _sessionData, error: _sessionError } = await supabase.auth.getSession();
                 
                 try {
                     // Attempt to refresh the session
-                    const { data, error: refreshError } = await supabase.auth.refreshSession();
+                    const { data: _data, error: refreshError } = await supabase.auth.refreshSession();
                     if (refreshError) {
                         console.warn('Session refresh failed:', refreshError);
                         
@@ -63,10 +92,12 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
             }
             
             // If it's a session error but we've exceeded retries, redirect to login
-            if (error.message?.includes('JWT') || 
-                error.message?.includes('session') ||
-                error.message?.includes('unauthorized') ||
-                error.message?.includes('invalid claim')) {
+            if (isErrorWithMessage(error) && (
+                error.message.includes('JWT') || 
+                error.message.includes('session') ||
+                error.message.includes('unauthorized') ||
+                error.message.includes('invalid claim')
+            )) {
                 setTimeout(() => {
                     window.location.href = '/login';
                 }, 500);
@@ -113,14 +144,14 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                             .eq('organization_id', organizationId);
 
                         if (membershipError) throw new Error(`Error loading members: ${membershipError.message}`);
-                        return membershipRows;
+                        return (membershipRows as unknown) as MembershipRow[];
                     };
 
                     const membershipRows = await withTimeout(membershipOperation(), REQUEST_TIMEOUT);
                     if (!isMounted) return;
 
-                    const userIds = (membershipRows || []).map((row: any) => row.user_id);
-                    let profileRows: any[] = [];
+                    const userIds = (membershipRows || []).map((row) => row.user_id);
+                    let profileRows: ProfileRow[] = [];
 
                     if (userIds.length > 0) {
                         // Fetch User Profiles with timeout (includes email)
@@ -131,7 +162,7 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                                 .in('id', userIds);
 
                             if (profileError) throw new Error(`Error loading profiles: ${profileError.message}`);
-                            return profiles || [];
+                            return ((profiles || []) as unknown) as ProfileRow[];
                         };
 
                         profileRows = await withTimeout(profileOperation(), REQUEST_TIMEOUT);
@@ -139,12 +170,12 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                     }
 
                     // Map to combined members
-                    const mappedMembers: OrgMember[] = (membershipRows || []).map((membership: any) => {
+                    const mappedMembers: OrgMember[] = (membershipRows || []).map((membership) => {
                         const profile = profileRows.find(p => p.id === membership.user_id);
 
                         const displayName = profile?.full_name
                             ? profile.full_name
-                            : profile?.email?.split('@')[0] || 'Unknown User';
+                            : (profile?.email ? profile.email.split('@')[0] : 'Unknown User');
 
                         // Filter based on search term if provided
                         if (debouncedSearchTerm && !displayName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) && 
@@ -172,33 +203,35 @@ export function useOrgMembers(organizationId: string | null, debouncedSearchTerm
                             .neq('name', 'super-admin');
 
                         if (roleError) throw new Error(`Error loading roles: ${roleError.message}`);
-                        return roleRows || [];
+                        return ((roleRows || []) as unknown) as RoleOption[];
                     };
 
                     const roleRows = await withTimeout(rolesOperation(), REQUEST_TIMEOUT);
                     if (isMounted) setRoles(roleRows);
                 });
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Error fetching org members/roles:", err);
                 if (isMounted) {
                     let errorMessage = 'An unexpected error occurred';
                     
-                    if (err.message === 'Request timeout') {
-                        errorMessage = 'The request is taking longer than expected. This might be due to session refresh after being idle. Please try again.';
-                    } else if (err.message?.includes('Session expired - redirecting to login')) {
-                        // Don't show toast for session errors - user will be redirected
-                        return;
-                    } else if (err.message?.includes('JWT') || err.message?.includes('session') || err.message?.includes('unauthorized')) {
-                        errorMessage = 'Authentication issue detected. Redirecting to login...';
-                    } else {
-                        errorMessage = err.message;
+                    if (isErrorWithMessage(err)) {
+                        if (err.message === 'Request timeout') {
+                            errorMessage = 'The request is taking longer than expected. This might be due to session refresh after being idle. Please try again.';
+                        } else if (err.message.includes('Session expired - redirecting to login')) {
+                            // Don't show toast for session errors - user will be redirected
+                            return;
+                        } else if (err.message.includes('JWT') || err.message.includes('session') || err.message.includes('unauthorized')) {
+                            errorMessage = 'Authentication issue detected. Redirecting to login...';
+                        } else {
+                            errorMessage = err.message;
+                        }
                     }
                     
                     setError(errorMessage);
                     
                     // Only show toast for non-session errors
-                    if (!err.message?.includes('Session expired - redirecting to login')) {
+                    if (!isErrorWithMessage(err) || !err.message.includes('Session expired - redirecting to login')) {
                         toast({ 
                             variant: 'destructive', 
                             title: 'Error Loading Organization Data', 

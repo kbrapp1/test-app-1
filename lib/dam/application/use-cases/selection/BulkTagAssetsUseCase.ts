@@ -115,7 +115,7 @@ export class BulkTagAssetsUseCase {
     }
   }
 
-  private async validateTagIds(tagIds: string[], organizationId: string): Promise<void> {
+  private async validateTagIds(tagIds: string[], _organizationId: string): Promise<void> {
     // This would typically validate that all tag IDs exist and belong to the organization
     // For now, we'll do basic validation
     for (const tagId of tagIds) {
@@ -125,7 +125,7 @@ export class BulkTagAssetsUseCase {
     }
   }
 
-  private async addTagsToAsset(assetId: string, tagIds: string[], organizationId: string): Promise<void> {
+  private async addTagsToAsset(_assetId: string, _tagIds: string[], _organizationId: string): Promise<void> {
     // This would typically use a dedicated asset-tag repository or service
     // For now, we'll simulate the operation
     // In a real implementation, this might involve:
@@ -137,7 +137,7 @@ export class BulkTagAssetsUseCase {
     
   }
 
-  private async removeTagsFromAsset(assetId: string, tagIds: string[], organizationId: string): Promise<void> {
+  private async removeTagsFromAsset(_assetId: string, _tagIds: string[], _organizationId: string): Promise<void> {
     // This would typically use a dedicated asset-tag repository or service
     // For now, we'll simulate the operation
     // In a real implementation, this might involve:

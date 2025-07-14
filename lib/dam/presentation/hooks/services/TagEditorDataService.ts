@@ -6,6 +6,7 @@ import { SupabaseTagRepository } from '../../../infrastructure/persistence/supab
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseAssetTagRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetTagRepository';
 import { TagEditorAuthService } from './TagEditorAuthService';
+import { Tag } from '../../../domain/entities/Tag';
 
 /**
  * Service responsible for tag data operations using DDD use cases
@@ -42,7 +43,7 @@ export class TagEditorDataService {
     });
 
     // Convert domain entities to PlainTag DTOs
-    const allTags: PlainTag[] = allTagsEntities.map((tag: any) => ({
+    const allTags: PlainTag[] = allTagsEntities.map((tag: Tag) => ({
       id: tag.id,
       name: tag.name,
       color: tag.colorName,
@@ -52,7 +53,7 @@ export class TagEditorDataService {
       updatedAt: tag.updatedAt,
     }));
 
-    const usedTags: PlainTag[] = usedTagsEntities.map((tag: any) => ({
+    const usedTags: PlainTag[] = usedTagsEntities.map((tag: Tag) => ({
       id: tag.id,
       name: tag.name,
       color: tag.colorName,
@@ -70,6 +71,11 @@ export class TagEditorDataService {
    */
   async createTag(tagName: string): Promise<PlainTag> {
     const { supabase, user, activeOrgId } = await this.authService.getAuthContext();
+    
+    if (!user) {
+      throw new Error('User must be authenticated to create tags');
+    }
+    
     const tagRepository = new SupabaseTagRepository(supabase);
     const createTagUseCase = new CreateTagUseCase(tagRepository);
 
@@ -96,6 +102,11 @@ export class TagEditorDataService {
    */
   async addTagToAsset(assetId: string, tagId: string): Promise<void> {
     const { supabase, user, activeOrgId } = await this.authService.getAuthContext();
+    
+    if (!user) {
+      throw new Error('User must be authenticated to add tags to assets');
+    }
+    
     const assetRepository = new SupabaseAssetRepository(supabase);
     const tagRepository = new SupabaseTagRepository(supabase);
     const assetTagRepository = new SupabaseAssetTagRepository(supabase);

@@ -55,8 +55,9 @@ export const useTagEditor = ({
       setAllOrgTags(allTags);
       setAvailableActiveTags(usedTags);
 
-    } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred during tag data fetch.');
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred during tag data fetch.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -81,8 +82,9 @@ export const useTagEditor = ({
 
       onTagAdded(tag, [...currentTags, tag]);
       success = true;
-    } catch (e: any) {
-      setError(e.message || 'Failed to add tag.');
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to add tag.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       if (success) {
@@ -118,8 +120,9 @@ export const useTagEditor = ({
         const dataService = new TagEditorDataService();
         const newTagDto = await dataService.createTag(trimmedTagName);
         await handleSelectSuggestion(newTagDto);
-      } catch (e: any) {
-        setError(e.message || 'Failed to create new tag.');
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to create new tag.';
+        setError(errorMessage);
         setIsLoading(false);
       }
     }

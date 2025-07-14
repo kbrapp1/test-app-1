@@ -8,7 +8,7 @@ interface RenderMetricsSectionProps {
   trackingState: PerformanceTrackingState;
 }
 
-export const RenderMetricsSection: React.FC<RenderMetricsSectionProps> = React.memo(({
+const RenderMetricsSectionComponent: React.FC<RenderMetricsSectionProps> = ({
   trackingState
 }) => {
   return (
@@ -29,4 +29,8 @@ export const RenderMetricsSection: React.FC<RenderMetricsSectionProps> = React.m
       </div>
     </div>
   );
-}); 
+};
+
+RenderMetricsSectionComponent.displayName = 'RenderMetricsSection';
+
+export const RenderMetricsSection = React.memo(RenderMetricsSectionComponent);

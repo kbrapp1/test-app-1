@@ -1,6 +1,8 @@
 import { ReactQueryCacheAnalysisService } from '../cache-analysis/ReactQueryCacheAnalysisService';
 import { NetworkPatternAnalysisService } from '../network-analysis/NetworkPatternAnalysisService';
+import { RedundantCall } from '../../network-efficiency/entities/NetworkCall';
 import { NetworkBusinessImpactService } from '../network-analysis/NetworkBusinessImpactService';
+import { CacheAnalysisResult } from '../../value-objects/CacheAnalysisResult';
 
 /**
  * Domain Service: Pure business logic for analyzing network redundancy issues
@@ -16,7 +18,7 @@ export class IssueAnalysisService {
    * Business Rule: Analyze if a redundant pattern represents a real issue
    * Returns null for legitimate behavior that should not be reported
    */
-  analyzeRedundantPattern(pattern: any): IssueAnalysisResult | null {
+  analyzeRedundantPattern(pattern: RedundantCall): IssueAnalysisResult | null {
     const source = pattern.originalCall.source;
     const duplicateCount = pattern.duplicateCalls.length;
     
@@ -26,18 +28,24 @@ export class IssueAnalysisService {
       ...pattern.duplicateCalls
     ]);
     
-    // Business Rule 2: Only use network analysis if we have a valid pattern type
-    let networkAnalysis = null;
-    if (!reactQueryAnalysis && pattern.pattern) {
-      networkAnalysis = NetworkPatternAnalysisService.analyzeNetworkPattern(pattern);
-    }
-    
-    // Business Rule 3: If both analyses return null, this is legitimate behavior
-    if (!reactQueryAnalysis && !networkAnalysis) {
+    // Business Rule 2: If cache analysis returns null, this indicates legitimate behavior
+    // Do not fall back to network analysis in this case
+    if (reactQueryAnalysis === null) {
       return null; // Skip legitimate infinite scroll, user interactions, etc.
     }
     
-    // Business Rule 4: Determine priority and impact
+    // Business Rule 3: Only use network analysis if cache analysis returns undefined (not performed)
+    let networkAnalysis = null;
+    if (reactQueryAnalysis === undefined && pattern.pattern) {
+      networkAnalysis = NetworkPatternAnalysisService.analyzeNetworkPattern(pattern);
+    }
+    
+    // Business Rule 4: If both analyses return null/undefined, this is legitimate behavior
+    if (!reactQueryAnalysis && !networkAnalysis) {
+      return null;
+    }
+    
+    // Business Rule 5: Determine priority and impact
     const priorityInfo = NetworkBusinessImpactService.determineIssuePriority(
       duplicateCount, 
       pattern.timeWindow
@@ -55,7 +63,7 @@ export class IssueAnalysisService {
         },
         classification: {
           issue: reactQueryAnalysis.issue,
-          severity: reactQueryAnalysis.severity as any,
+          severity: reactQueryAnalysis.severity as 'critical' | 'high' | 'medium' | 'low',
           category: this.categorizeIssue(reactQueryAnalysis.issue),
           isReactQueryRelated: true
         },
@@ -67,10 +75,11 @@ export class IssueAnalysisService {
         performance: {
           duplicateCount,
           timeWindow: pattern.timeWindow,
-          priority: reactQueryAnalysis.severity as any
+          priority: reactQueryAnalysis.severity as 'critical' | 'high' | 'medium' | 'low'
         },
         originalPattern: pattern,
-        analysisSource: 'cache-analysis' as const
+        analysisSource: 'cache-analysis' as const,
+        cacheAnalysis: reactQueryAnalysis
       };
     } else {
       // NetworkIssueAnalysis case
@@ -203,8 +212,9 @@ export interface IssueAnalysisResult {
     readonly timeWindow: number;
     readonly priority: 'critical' | 'high' | 'medium' | 'low';
   };
-  readonly originalPattern: any;
+  readonly originalPattern: RedundantCall;
   readonly analysisSource: 'cache-analysis' | 'network-pattern';
+  readonly cacheAnalysis?: CacheAnalysisResult;
 }
 
 /**

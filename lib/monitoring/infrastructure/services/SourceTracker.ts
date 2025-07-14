@@ -53,7 +53,7 @@ export class SourceTracker {
         
 
       }
-    } catch (error) {
+    } catch {
       // Silent fail - don't break the app for monitoring
     }
 
@@ -207,20 +207,22 @@ export class SourceTracker {
     isHydrating?: boolean;
     routePath?: string;
   } {
-    const context: any = {};
+    const context: Record<string, unknown> = {};
 
     try {
       // Try to get current route if possible
       if (typeof window !== 'undefined') {
         context.routePath = window.location.pathname;
-        context.isHydrating = !(window as any).__NEXT_HYDRATED;
+        const windowWithNext = window as typeof window & { __NEXT_HYDRATED?: boolean };
+        context.isHydrating = !windowWithNext.__NEXT_HYDRATED;
       }
 
       // Try to detect render count (very basic)
-      const renderCounter = (window as any).__REACT_RENDER_COUNT || 0;
+      const windowWithReact = window as typeof window & { __REACT_RENDER_COUNT?: number };
+      const renderCounter = windowWithReact.__REACT_RENDER_COUNT || 0;
       context.renderCount = renderCounter;
 
-    } catch (error) {
+    } catch {
       // Silent fail
     }
 

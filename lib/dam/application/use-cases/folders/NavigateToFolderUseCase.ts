@@ -1,6 +1,6 @@
 import { Folder } from '../../../domain/entities';
 import { IFolderRepository } from '../../../domain/repositories';
-import { NotFoundError, ValidationError } from '@/lib/errors/base';
+import { NotFoundError as _NotFoundError, ValidationError } from '@/lib/errors/base';
 
 /**
  * NavigateToFolderUseCase - Domain-Driven Folder Navigation

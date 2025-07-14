@@ -11,7 +11,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { User } from '@supabase/supabase-js';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 
 interface UserValidationResult {
   user: User;
@@ -81,7 +81,7 @@ export class SecurityAwareUserValidationService {
         });
         
         return {
-          user: null as any,
+          user: null as unknown as User,
           organizationId: '',
           isValid: false,
           fromCache: false,
@@ -138,11 +138,11 @@ export class SecurityAwareUserValidationService {
   /**
    * Get current token hash for security comparison
    */
-  private async getCurrentTokenHash(supabase: any): Promise<string> {
+  private async getCurrentTokenHash(supabase: SupabaseClient): Promise<string> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       return session?.access_token ? this.hashToken(session.access_token) : '';
-    } catch (error) {
+    } catch {
       return '';
     }
   }
@@ -171,7 +171,7 @@ export class SecurityAwareUserValidationService {
   /**
    * Get organization ID for user
    */
-  private async getOrganizationId(supabase: any, userId: string): Promise<string | null> {
+  private async getOrganizationId(supabase: SupabaseClient, userId: string): Promise<string | null> {
     try {
       const { data, error } = await supabase
         .from('user_organization_context')
@@ -184,7 +184,7 @@ export class SecurityAwareUserValidationService {
       }
 
       return data.active_organization_id;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -212,7 +212,7 @@ export class SecurityAwareUserValidationService {
   /**
    * Enhanced audit logging for security monitoring
    */
-  private logValidationEvent(userId: string | null, event: string, context: Record<string, any> = {}): void {
+  private logValidationEvent(userId: string | null, event: string, context: Record<string, unknown> = {}): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       userId,

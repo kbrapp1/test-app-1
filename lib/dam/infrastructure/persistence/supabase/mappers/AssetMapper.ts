@@ -1,5 +1,5 @@
 import { Asset } from '../../../../domain/entities/Asset';
-import { AssetFactory } from '../../../../domain/entities/AssetFactory';
+import { AssetFactory as _AssetFactory } from '../../../../domain/entities/AssetFactory';
 import { Tag } from '../../../../domain/entities/Tag';
 import { TagFactory } from '../../../../domain/entities/TagFactory';
 
@@ -35,27 +35,35 @@ export class AssetMapper {
     // Convert raw tag database records to Tag domain entities
     const tags: Tag[] = (raw.asset_tags || [])
       .map(at => at.tags)
-      .filter(Boolean)
-      .map(rawTag => TagFactory.fromDatabaseRow(rawTag));
+      .filter((rawTag): rawTag is RawTagDbRecord => rawTag !== null)
+      .map(rawTag => TagFactory.fromDatabaseRow({
+        id: rawTag.id,
+        name: rawTag.name,
+        user_id: rawTag.user_id,
+        organization_id: rawTag.organization_id,
+        created_at: rawTag.created_at,
+        updated_at: rawTag.updated_at || undefined
+      }));
 
     // Sanitize the asset name to handle existing data that might have invalid characters
     const sanitizedName = this.sanitizeAssetName(raw.name);
 
-    // Use AssetFactory to create domain instance from database data
-    return AssetFactory.fromDatabaseRow({
+    // Create Asset using constructor directly since we need to pass tags
+    return new Asset({
       id: raw.id,
-      user_id: raw.user_id,
+      userId: raw.user_id,
       name: sanitizedName,
-      storage_path: raw.storage_path,
-      mime_type: raw.mime_type,
+      storagePath: raw.storage_path,
+      mimeType: raw.mime_type,
       size: raw.size,
-      created_at: raw.created_at,
-      updated_at: raw.updated_at,
-      folder_id: raw.folder_id,
-      folder_name: raw.folder_name,
-      organization_id: raw.organization_id,
+      createdAt: new Date(raw.created_at),
+      updatedAt: raw.updated_at ? new Date(raw.updated_at) : undefined,
+      folderId: raw.folder_id,
+      organizationId: raw.organization_id,
       tags: tags.length > 0 ? tags : undefined,
-      user_full_name: raw.user?.full_name || null,
+      publicUrl: undefined, // Will be computed elsewhere
+      folderName: raw.folder_name || undefined,
+      userFullName: raw.user?.full_name || undefined,
     });
   }
 

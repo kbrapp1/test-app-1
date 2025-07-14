@@ -9,7 +9,7 @@ interface WebVitalsSectionProps {
   webVitals: WebVitalsMetrics;
 }
 
-export const WebVitalsSection: React.FC<WebVitalsSectionProps> = React.memo(({
+const WebVitalsSectionComponent: React.FC<WebVitalsSectionProps> = ({
   webVitals
 }) => {
   // Memoize expensive web vitals calculations
@@ -55,4 +55,8 @@ export const WebVitalsSection: React.FC<WebVitalsSectionProps> = React.memo(({
       </div>
     </div>
   );
-}); 
+};
+
+WebVitalsSectionComponent.displayName = 'WebVitalsSection';
+
+export const WebVitalsSection = React.memo(WebVitalsSectionComponent);

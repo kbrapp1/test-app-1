@@ -9,7 +9,7 @@
  * - Follow @golden-rule patterns exactly
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useTtsHistory } from './useTtsHistory';
 import { useTtsGeneration } from './useTtsGeneration';
 import { 
@@ -47,7 +47,7 @@ export function useTtsOperations({
   onGenerationComplete
 }: UseTtsOperationsProps) {
   
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   
   // React Query mutations for CRUD operations
   const startGenerationMutation = useStartGenerationMutation(organizationId);

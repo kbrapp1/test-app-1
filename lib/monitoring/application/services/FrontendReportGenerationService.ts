@@ -129,7 +129,7 @@ export class FrontendReportGenerationService {
     return reportLines;
   }
 
-  private static generateFixSection(analysis: any): string[] {
+  private static generateFixSection(analysis: { issue: string; suggestedFix: string; codeExample?: string }): string[] {
     const reportLines = [``, `#### 🛠️ IMMEDIATE FIX (Copy/Paste Ready):`];
     reportLines.push(`**Problem**: ${analysis.issue}`);
     reportLines.push(`**Solution**: ${analysis.suggestedFix}`);
@@ -144,7 +144,7 @@ export class FrontendReportGenerationService {
     return reportLines;
   }
 
-  private static generateActionPlan(issues: OptimizationGap[], pageContext: string): string[] {
+  private static generateActionPlan(issues: OptimizationGap[], _pageContext: string): string[] {
     const reportLines = [``, `## 🎯 Production Action Plan`, `### Immediate Actions (This Sprint):`];
     
     const criticalIssues = issues.filter(issue => issue.severity === 'high');

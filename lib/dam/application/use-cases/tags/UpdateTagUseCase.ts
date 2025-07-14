@@ -60,7 +60,7 @@ export class UpdateTagUseCase {
         throw new DatabaseError(`Failed to update tag with ID ${tagId}.`);
       }
       return updatedTag;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) { // Re-throw known AppErrors
         throw error;
       }

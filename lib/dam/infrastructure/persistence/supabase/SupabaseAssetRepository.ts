@@ -1,10 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IAssetRepository, CreateAssetData, UpdateAssetData } from '../../../domain/repositories/IAssetRepository';
 import { Asset } from '../../../domain/entities/Asset';
-import { AssetMapper, RawAssetDbRecord } from './mappers/AssetMapper';
+import { AssetMapper as _AssetMapper, RawAssetDbRecord as _RawAssetDbRecord } from './mappers/AssetMapper';
 import { createClient } from '@/lib/supabase/client';
 import type { AssetSearchCriteria, DamFilterParameters, DamSortParameters } from '../../../application/dto/SearchCriteriaDTO';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError as _DatabaseError } from '@/lib/errors/base';
 import { 
   AssetQueryBuilder, 
   AssetDateFilter, 

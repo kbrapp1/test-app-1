@@ -224,7 +224,7 @@ describe('CauseAnalysisService', () => {
         vi.mocked(mockRuntimeDetectionService.detectActualCulprit).mockClear();
         
         const optimizationGap = createMockOptimizationGap({ 
-          type: type as any,
+          type: type as 'caching' | 'memoization' | 'lazy-loading',
           title: `Missing ${type} optimization`
         });
 
@@ -328,7 +328,7 @@ describe('CauseAnalysisService', () => {
 
       // Act
       const result = causeAnalysisService.analyzeSpecificCause(
-        null as any, 
+        null as unknown as OptimizationGap, 
         trackingState, 
         performanceMetrics, 
         0
@@ -352,7 +352,7 @@ describe('CauseAnalysisService', () => {
       // Act
       const result = causeAnalysisService.analyzeSpecificCause(
         optimizationGap, 
-        null as any, 
+        null as unknown as PerformanceTrackingState, 
         performanceMetrics, 
         0
       );

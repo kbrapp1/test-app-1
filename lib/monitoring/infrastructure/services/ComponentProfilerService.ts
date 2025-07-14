@@ -85,7 +85,7 @@ export class ComponentProfilerService {
       });
 
       observer.observe({ entryTypes: ['mark', 'measure'] });
-    } catch (error) {
+    } catch {
       // PerformanceObserver not supported
     }
 
@@ -112,11 +112,13 @@ export class ComponentProfilerService {
 
     const checkMemory = () => {
       if ('memory' in performance) {
-        const memory = (performance as any).memory;
+        const performanceWithMemory = performance as Performance & { memory?: { usedJSHeapSize: number } };
+        const memory = performanceWithMemory.memory;
+        if (!memory) return;
         const currentUsage = memory.usedJSHeapSize;
 
         // Update memory usage for all tracked components
-        this.performanceData.forEach((data, componentName) => {
+        this.performanceData.forEach((data, _componentName) => {
           data.memoryUsage = Math.max(data.memoryUsage, currentUsage);
         });
       }

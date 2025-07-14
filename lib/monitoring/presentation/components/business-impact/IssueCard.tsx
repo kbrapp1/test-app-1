@@ -9,7 +9,7 @@ interface IssueCardProps {
   index: number;
 }
 
-const IssueCardComponent: React.FC<IssueCardProps> = ({ issue, index }) => {
+const IssueCardComponent: React.FC<IssueCardProps> = ({ issue, index: _index }) => {
   const getSeverityStyles = (severity: string) => {
     switch (severity) {
       case 'high': 

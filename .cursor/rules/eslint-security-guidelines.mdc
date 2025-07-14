@@ -84,13 +84,20 @@ LINT FIX PRIORITY:
 4. Type safety issues ('any' types)
 5. React best practices (escaped entities, dependencies)
 
+UNIFIED CONTEXT DETECTION:
+- Check if parent component uses useXXXUnifiedContext() pattern
+- If YES: Child components should use underscore prefix for organizationId
+- If NO: Child components should use useOrganizationContext() validation
+- Never add redundant context calls to children in unified context architecture
+
 SECURITY PATTERN:
-- Use useOrganizationContext() hook for client-side organization context
+- In unified context: Trust parent validation, use underscore prefix
+- In standard context: Use useOrganizationContext() hook for validation
 - Validate activeOrganizationId matches server-provided organizationId
 - Show security error UI if context mismatch
 - All hooks called before any conditional returns
 
-Please analyze each "unused variable" carefully - if it's organization/security related, implement proper validation instead of removal.
+Please analyze each "unused variable" carefully - if it's organization/security related, implement proper validation instead of removal. Check for unified context patterns to avoid performance regressions.
 ```
 
 ## 🔒 Security Patterns
@@ -222,7 +229,67 @@ export function GoodComponent({ organizationId }: Props) {
 }
 ```
 
-### 2. Conditional Hook Calls
+### 2. Redundant Context Calls in Unified Context Architecture
+```typescript
+// ❌ DON'T: Add context hooks to child components in unified context pattern
+export function BadNotesPage() {
+  // Parent uses unified context (1 API call)
+  const { organizationId, notes, user } = useNotesUnifiedContext();
+  
+  return (
+    <div>
+      <NoteList organizationId={organizationId} notes={notes} />
+      <AddNoteDialog organizationId={organizationId} />
+    </div>
+  );
+}
+
+export function BadNoteList({ organizationId, notes }: Props) {
+  // ❌ WRONG: Redundant context call creates performance regression
+  const { activeOrganizationId } = useOrganizationContext(); // Extra API call!
+  
+  if (activeOrganizationId !== organizationId) {
+    return <SecurityErrorUI />;
+  }
+  
+  return <div>{notes.map(note => <Note key={note.id} {...note} />)}</div>;
+}
+
+// ✅ DO: Use underscore prefix for unused organizationId in unified context
+export function GoodNotesPage() {
+  // Parent uses unified context (1 API call total)
+  const { organizationId, notes, user } = useNotesUnifiedContext();
+  
+  return (
+    <div>
+      <NoteList organizationId={organizationId} notes={notes} />
+      <AddNoteDialog organizationId={organizationId} />
+    </div>
+  );
+}
+
+export function GoodNoteList({ organizationId: _organizationId, notes }: Props) {
+  // ✅ CORRECT: Trust parent's unified context validation
+  // ✅ Use underscore prefix to satisfy ESLint without extra API calls
+  // Parent already validated organization context via unified context
+  
+  return <div>{notes.map(note => <Note key={note.id} {...note} />)}</div>;
+}
+```
+
+**Why This Matters:**
+- Unified context patterns consolidate multiple API calls into one
+- Adding `useOrganizationContext()` to child components creates duplicate API calls
+- Performance regression: 1 API call → 3+ API calls
+- Violates the unified context architecture principle
+- Parent already validates organization context for all children
+
+**Detection Pattern:**
+- Look for `useXXXUnifiedContext()` in parent components
+- Check if child components also call `useOrganizationContext()`
+- If yes, remove redundant calls and use underscore prefix for organizationId
+
+### 3. Conditional Hook Calls
 ```typescript
 // ❌ DON'T: Call hooks conditionally
 export function BadComponent({ organizationId }: Props) {
@@ -338,6 +405,40 @@ function goodSecurityCheck(user: User, permissions: Permission[]) {
 - `role` / `userRole` / `currentRole`
 - Any variable ending in `Context`, `Auth`, `Permission`, `Access`
 
+### Unified Context Pattern Detection
+**Before adding organization context validation, check:**
+
+1. **Look for unified context in parent components:**
+   ```typescript
+   // Unified context patterns to detect:
+   const { organizationId, ... } = useNotesUnifiedContext();
+   const { organizationId, ... } = useDamUnifiedContext();
+   const { organizationId, ... } = useChatbotUnifiedContext();
+   ```
+
+2. **If unified context found in parent:**
+   ```typescript
+   // ✅ DO: Use underscore prefix in child components
+   export function ChildComponent({ organizationId: _organizationId }: Props) {
+     // No additional context calls needed
+     return <div>Content</div>;
+   }
+   ```
+
+3. **If NO unified context in parent:**
+   ```typescript
+   // ✅ DO: Add organization context validation
+   export function ChildComponent({ organizationId }: Props) {
+     const { activeOrganizationId } = useOrganizationContext();
+     
+     if (activeOrganizationId !== organizationId) {
+       return <SecurityErrorUI />;
+     }
+     
+     return <div>Content</div>;
+   }
+   ```
+
 ### Safe Variables to Remove (if truly unused)
 - UI state variables (`isOpen`, `isVisible`, `isLoading`)
 - Temporary calculation variables
@@ -407,17 +508,57 @@ export async function setActiveOrganizationClaim(organizationId: string) {
 - [Comprehensive Security Design](../permissions/comprehensive-security-design.md)
 - [Golden Rule DDD Guidelines](../../@golden-rule.mdc)
 
+## ⚙️ ESLint Configuration for Unified Context
+
+Add this to your `eslint.config.js` to help detect unified context patterns:
+
+```javascript
+// Custom rule for unified context pattern detection
+{
+  files: ['**/*.tsx', '**/*.ts'],
+  rules: {
+    // Allow organizationId with underscore prefix in unified context
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        // Custom patterns for organization context
+        argsIgnorePattern: '^(_|organizationId$)',
+      }
+    ],
+  },
+},
+
+// Specific rules for components that might use unified context
+{
+  files: ['**/presentation/components/**/*.tsx', '**/components/**/*.tsx'],
+  rules: {
+    // More lenient for presentation layer components
+    '@typescript-eslint/no-unused-vars': [
+      'warn', // Warning instead of error for components
+      {
+        argsIgnorePattern: '^(_|organizationId$|activeOrganizationId$)',
+        varsIgnorePattern: '^_',
+      }
+    ],
+  },
+},
+```
+
 ## 🎯 Quick Checklist
 
 Before fixing any "unused variable" warning:
 
 - [ ] Is this variable organization/auth/permission related?
+- [ ] Does the parent component use a unified context pattern?
 - [ ] Does removing it create a security vulnerability?
 - [ ] Should I implement validation instead of removal?
 - [ ] Are all hooks called before conditional returns?
 - [ ] Does the fix maintain defense-in-depth security?
+- [ ] Will this create redundant API calls in unified context?
 
-**Remember:** It's better to have a lint warning than a security vulnerability!
+**Remember:** It's better to have a lint warning than a security vulnerability or performance regression!
 
 ## 🔄 Security Architecture Summary
 

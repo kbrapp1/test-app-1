@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '../infrastructure/middleware/AuthMiddleware';
 import { UserRole } from '../domain/value-objects/UserRole';
 import { Permission } from '../domain/value-objects/Permission';
-import { AuthorizationError } from '@/lib/errors/base';
+import { AuthorizationError as _AuthorizationError } from '@/lib/errors/base';
 import { checkAuth } from '@/lib/supabase/db-auth';
 
 // Mock Supabase client creation to prevent initialization errors
@@ -72,7 +72,7 @@ vi.mock('@/lib/supabase/db-auth', () => ({
 
 describe('Auth Middleware', () => {
   const mockRequest = new NextRequest('https://example.com/api/test');
-  let mockHandler: any;
+  let mockHandler: Mock;
   
   beforeEach(() => {
     vi.clearAllMocks();

@@ -197,7 +197,7 @@ export async function invalidateDamCache(
   entityIds: string[],
   organizationIds: string[],
   profile: Profile | null,
-  additionalContext?: {
+  _additionalContext?: {
     folderIds?: (string | null)[];
     parentFolderIds?: (string | null)[];
   }

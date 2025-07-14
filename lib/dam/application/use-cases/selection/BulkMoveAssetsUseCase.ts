@@ -103,7 +103,7 @@ export class BulkMoveAssetsUseCase {
     }
   }
 
-  private async validateTargetFolder(targetFolderId: string, organizationId: string, userId: string): Promise<void> {
+  private async validateTargetFolder(targetFolderId: string, organizationId: string, _userId: string): Promise<void> {
     const targetFolder = await this.folderRepository.findById(targetFolderId, organizationId);
     if (!targetFolder) {
       throw new ValidationError('Target folder not found');
@@ -150,8 +150,8 @@ export class BulkMoveAssetsUseCase {
   private async moveAssets(
     assetIds: string[], 
     targetFolderId: string | null, 
-    organizationId: string, 
-    userId: string
+    _organizationId: string, 
+    _userId: string
   ): Promise<{ moved: string[]; failed: string[]; errors: string[] }> {
     const moved: string[] = [];
     const failed: string[] = [];
@@ -182,8 +182,8 @@ export class BulkMoveAssetsUseCase {
   private async moveFolders(
     folderIds: string[], 
     targetFolderId: string | null, 
-    organizationId: string, 
-    userId: string
+    _organizationId: string, 
+    _userId: string
   ): Promise<{ moved: string[]; failed: string[]; errors: string[] }> {
     const moved: string[] = [];
     const failed: string[] = [];
@@ -191,7 +191,7 @@ export class BulkMoveAssetsUseCase {
 
     for (const folderId of folderIds) {
       try {
-        const folder = await this.folderRepository.findById(folderId, organizationId);
+        const folder = await this.folderRepository.findById(folderId, _organizationId);
         if (!folder) {
           failed.push(folderId);
           errors.push(`Folder ${folderId} not found`);
@@ -199,7 +199,7 @@ export class BulkMoveAssetsUseCase {
         }
 
         // Update folder parent using repository
-        await this.folderRepository.update(folderId, { parentFolderId: targetFolderId }, organizationId);
+        await this.folderRepository.update(folderId, { parentFolderId: targetFolderId }, _organizationId);
         moved.push(folderId);
 
       } catch (error) {

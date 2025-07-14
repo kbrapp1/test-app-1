@@ -8,7 +8,7 @@
 import { NetworkCall, NetworkStats, RedundantCall } from '../../domain/network-efficiency/entities/NetworkCall';
 import { RedundancyDetector } from '../../domain/network-efficiency/services/RedundancyDetector';
 import { NetworkCallTracker } from '../../infrastructure/services/NetworkCallTracker';
-import { SourceTracker, CallSource } from '../../infrastructure/services/SourceTracker';
+import { SourceTracker } from '../../infrastructure/services/SourceTracker';
 import { NetworkIssueDetectionService } from '../../domain/network-efficiency/services/NetworkIssueDetectionService';
 import { NetworkIssue } from '../../domain/network-efficiency/value-objects/NetworkIssue';
 import { NetworkPerformanceThrottler } from '../../infrastructure/services/NetworkPerformanceThrottler';
@@ -71,7 +71,7 @@ export class NetworkMonitoringService {
    */
   completeCall(
     callId: string, 
-    data: { duration?: number; status?: number; response?: any; error?: string }
+    data: { duration?: number; status?: number; response?: unknown; error?: string }
   ): void {
     this.callTracker.completeCall(callId, data);
     
@@ -95,7 +95,7 @@ export class NetworkMonitoringService {
       return acc;
     }, {} as Record<string, number>);
 
-    const avgDuration = allCalls
+    const _avgDuration = allCalls
       .filter(call => call.duration)
       .reduce((sum, call) => sum + (call.duration || 0), 0) / Math.max(1, allCalls.length);
 
@@ -221,7 +221,7 @@ export class NetworkMonitoringService {
     );
     
     // Create temporary stats for issue detection using FILTERED data
-    const tempStats = {
+    const _tempStats = {
       totalCalls: allCalls.length,
       redundantCalls: actualRedundantCalls, // ✅ Use filtered count
       redundancyRate: 0,
@@ -232,7 +232,7 @@ export class NetworkMonitoringService {
       callsByType: {}
     };
     
-    const newIssues = NetworkIssueDetectionService.detectIssues(tempStats);
+    const newIssues = NetworkIssueDetectionService.detectIssues(allCalls);
     
     // Add new issues that haven't been detected before
     newIssues.forEach(newIssue => {

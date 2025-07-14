@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,6 +14,11 @@ interface IdleTimeoutContextType {
 }
 
 const IdleTimeoutContext = createContext<IdleTimeoutContextType | undefined>(undefined);
+
+// Activity events to monitor - defined outside component to prevent re-creation
+const ACTIVITY_EVENTS = [
+  'mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'
+] as const;
 
 export function useIdleTimeout() {
   const context = useContext(IdleTimeoutContext);
@@ -63,12 +68,41 @@ export function IdleTimeoutProvider({
   const IDLE_TIMEOUT_MS = idleTimeoutMinutes * 60 * 1000;
   const WARNING_TIMEOUT_MS = (idleTimeoutMinutes - warningTimeoutMinutes) * 60 * 1000;
 
-  // Activity events to monitor
-  const ACTIVITY_EVENTS = [
-    'mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'
-  ] as const;
 
-  const resetIdleTimer = () => {
+  const handleLogout = useCallback(async (reason: 'automatic' | 'manual') => {
+    setIsIdle(true);
+    
+    // Clear all timers
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+
+    // Show appropriate message
+    const message = reason === 'automatic' 
+      ? 'You were automatically logged out due to inactivity'
+      : 'Session extended successfully';
+
+    if (reason === 'automatic') {
+      toast({
+        title: "Session Expired",
+        description: message,
+        variant: "destructive",
+        duration: 4000,
+      });
+    }
+
+    try {
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force redirect even if signOut fails
+      router.push('/login');
+    }
+  }, [router, supabase, toast]);
+
+  const resetIdleTimer = useCallback(() => {
     lastActivityRef.current = Date.now();
     setIsIdle(false);
     setShowWarning(false);
@@ -103,40 +137,7 @@ export function IdleTimeoutProvider({
     idleTimerRef.current = setTimeout(() => {
       handleLogout('automatic');
     }, IDLE_TIMEOUT_MS);
-  };
-
-  const handleLogout = async (reason: 'automatic' | 'manual') => {
-    setIsIdle(true);
-    
-    // Clear all timers
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-
-    // Show appropriate message
-    const message = reason === 'automatic' 
-      ? 'You were automatically logged out due to inactivity'
-      : 'Session extended successfully';
-
-    if (reason === 'automatic') {
-      toast({
-        title: "Session Expired",
-        description: message,
-        variant: "destructive",
-        duration: 4000,
-      });
-    }
-
-    try {
-      // Sign out and redirect
-      await supabase.auth.signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Force redirect even if signOut fails
-      router.push('/login');
-    }
-  };
+  }, [warningTimeoutMinutes, WARNING_TIMEOUT_MS, IDLE_TIMEOUT_MS, handleLogout]);
 
   const extendSession = () => {
     setShowWarning(false);
@@ -178,7 +179,7 @@ export function IdleTimeoutProvider({
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
-  }, []); // ← Keep empty dependency array
+  }, [resetIdleTimer]);
 
   // Listen for auth state changes to detect if user is logged out externally
   useEffect(() => {
@@ -198,7 +199,7 @@ export function IdleTimeoutProvider({
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resetIdleTimer, supabase.auth]);
 
   const contextValue: IdleTimeoutContextType = {
     isIdle,

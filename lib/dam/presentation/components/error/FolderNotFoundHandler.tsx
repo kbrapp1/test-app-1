@@ -45,7 +45,7 @@ export const FolderNotFoundHandler: React.FC<FolderNotFoundHandlerProps> = ({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Folder Not Found</AlertTitle>
           <AlertDescription>
-            The folder you're looking for (ID: {folderId}) could not be found. 
+            The folder you&apos;re looking for (ID: {folderId}) could not be found. 
             It may have been deleted or moved.
           </AlertDescription>
         </Alert>

@@ -68,7 +68,7 @@ export function useTtsHistory({
     data: historyData,
     isLoading,
     error: queryError,
-    refetch
+    refetch: _refetch
   } = useQuery({
     queryKey,
     queryFn: async () => {

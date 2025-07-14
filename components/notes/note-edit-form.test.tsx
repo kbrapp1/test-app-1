@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NoteEditForm } from "./note-edit-form";
 import type { Note } from "@/types/notes";
 

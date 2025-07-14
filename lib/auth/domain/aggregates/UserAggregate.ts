@@ -191,7 +191,7 @@ export class UserAggregate extends AggregateRoot<UserId> {
     // Update only provided fields
     Object.entries(newProfile).forEach(([key, value]) => {
       if (value !== undefined && value !== oldProfile[key as keyof UserProfile]) {
-        (this._profile as any)[key] = value;
+        (this._profile as Record<string, unknown>)[key] = value;
         updatedFields.push(key);
       }
     });

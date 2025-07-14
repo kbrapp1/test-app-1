@@ -1,8 +1,8 @@
-import { Asset } from '../../domain/entities/Asset';
+import { Asset as _Asset } from '../../domain/entities/Asset';
 import { IAssetRepository } from '../../domain/repositories/IAssetRepository';
 import { IFolderRepository } from '../../domain/repositories/IFolderRepository'; 
 import { IStorageService } from '../../domain/repositories/IStorageService';
-import { ValidationError, NotFoundError, DatabaseError } from '@/lib/errors/base';
+import { ValidationError as _ValidationError, NotFoundError as _NotFoundError, DatabaseError as _DatabaseError } from '@/lib/errors/base';
 import { ErrorCodes } from '@/lib/errors/constants';
 import type { ServiceResult } from '@/types/services';
 
@@ -51,11 +51,11 @@ export class AssetService {
       // Update the asset's folder
       await this.assetRepository.update(assetId, { folderId: targetFolderId });
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('moveAsset: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }
@@ -107,11 +107,11 @@ export class AssetService {
           folderId: folderId || null
         } 
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('deleteAsset: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }
@@ -120,7 +120,7 @@ export class AssetService {
   async getAssetDownloadUrl(
     organizationId: string,
     assetId: string,
-    forceDownload: boolean = true
+    _forceDownload: boolean = true
   ): Promise<ServiceResult<{ downloadUrl: string }>> {
     if (!assetId) {
       return { success: false, error: 'Asset ID is required.', errorCode: ErrorCodes.VALIDATION_ERROR };
@@ -149,11 +149,11 @@ export class AssetService {
       }
 
       return { success: true, data: { downloadUrl } };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('getAssetDownloadUrl: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }
@@ -190,17 +190,17 @@ export class AssetService {
         }
 
         return { success: true, data: { id: updatedAsset.id, name: updatedAsset.name } };
-      } catch (error: any) {
-        if (error.message && error.message.includes('duplicate')) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('duplicate')) {
           return { success: false, error: 'An asset with this name already exists in this folder/organization.', errorCode: ErrorCodes.DUPLICATE_ENTRY };
         }
         throw error; // Re-throw for the outer catch
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('renameAsset: Unexpected Error', err);
       return { 
         success: false, 
-        error: err.message || 'An unexpected error occurred during asset rename.', 
+        error: err instanceof Error ? err.message : 'An unexpected error occurred during asset rename.', 
         errorCode: ErrorCodes.UNEXPECTED_ERROR 
       };
     }

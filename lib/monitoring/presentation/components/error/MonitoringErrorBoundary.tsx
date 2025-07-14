@@ -276,6 +276,6 @@ export const useMonitoringErrorBoundary = (
   return React.useCallback(
     <P extends object>(Component: React.ComponentType<P>) => 
       withMonitoringErrorBoundary(Component, { componentName, ...options }),
-    [componentName, options.retryable, options.showDetails, options.onError]
+    [componentName, options]
   );
 }; 

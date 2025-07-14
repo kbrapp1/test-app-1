@@ -1,6 +1,6 @@
 import { IAssetRepository } from '../../../domain/repositories/IAssetRepository';
 import { IStorageService } from '../../../domain/repositories/IStorageService';
-import { Asset } from '../../../domain/entities/Asset';
+import { Asset as _Asset } from '../../../domain/entities/Asset';
 import { AppError, ValidationError, NotFoundError, ExternalServiceError } from '@/lib/errors/base';
 
 // Copied from ListTextAssetsUseCase - consider centralizing
@@ -70,10 +70,11 @@ export class GetAssetContentUseCase {
       let blob: Blob;
       try {
         blob = await this.storageService.downloadFileAsBlob(asset.storagePath);
-      } catch (storageError: any) {
+      } catch (storageError: unknown) {
         console.error(`Storage error downloading asset ${assetId} from ${asset.storagePath}:`, storageError);
+        const errorMessage = storageError instanceof Error ? storageError.message : 'Unknown storage error';
         throw new ExternalServiceError(
-          `Failed to download asset content from storage: ${storageError.message}`,
+          `Failed to download asset content from storage: ${errorMessage}`,
           'STORAGE_DOWNLOAD_FAILED',
           { assetId, storagePath: asset.storagePath }
         );
@@ -82,13 +83,14 @@ export class GetAssetContentUseCase {
       const content = await blob.text();
       return { content };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof AppError) { // Re-throw known app errors
         throw error;
       }
       console.error(`Unexpected error in GetAssetContentUseCase for asset ${assetId}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new AppError(
-        `An unexpected error occurred while getting asset content: ${error.message}`,
+        `An unexpected error occurred while getting asset content: ${errorMessage}`,
         'GET_ASSET_CONTENT_UNEXPECTED_ERROR'
       );
     }

@@ -1,11 +1,9 @@
 'use client'; // Or server if no client interaction needed beyond passing props
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // Import Note type from note-list-item
 import { NoteListItem } from './note-list-item'; 
 import type { Note } from '@/types/notes'; // Import central type
-import { updateNote } from '@/lib/notes/presentation/actions/notesUnifiedActions';
-import { useUpdateNoteMutation, useDeleteNoteMutation, useUpdateNoteOrderMutation } from '@/lib/notes/presentation/hooks/useNotesMutations';
 import { useToast } from '@/components/ui/use-toast';
 
 // dnd-kit imports
@@ -68,17 +66,28 @@ export function NoteList({
   canUpdate, 
   canDelete, 
   isLoading, 
-  organizationId,
+  organizationId: _organizationId,
   onUpdateNote,
   onDeleteNote,
   onReorderNotes
 }: NoteListProps) {
-  // ✅ OPTIMIZATION: Use notes directly from unified context (no local state)
-  const notes = initialNotes;
+  // CRITICAL: ALL HOOKS MUST BE CALLED FIRST - React's Rules of Hooks
   const { toast } = useToast();
+  
+  // ALL DND HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  // ✅ OPTIMIZATION: Use notes directly from unified context (no local state)
+  // NOTE: Organization context validation is handled by parent NotesPageClient
+  const notes = initialNotes;
 
   // ✅ OPTIMIZATION: Use callback props for optimistic updates
-  const handleDeleteNote = async (prevState: any, formData: FormData) => {
+  const handleDeleteNote = async (prevState: unknown, formData: FormData) => {
     const noteId = formData.get('note_id') as string;
     
     try {
@@ -109,7 +118,7 @@ export function NoteList({
     }
   };
 
-  const handleEditNote = async (prevState: any, formData: FormData) => {
+  const handleEditNote = async (prevState: unknown, formData: FormData) => {
     const noteId = formData.get('note_id') as string;
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
@@ -144,13 +153,6 @@ export function NoteList({
   };
 
   // ✅ OPTIMIZATION: No local state needed - using notes directly from unified context
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   async function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event;

@@ -1,6 +1,6 @@
-import { Asset } from './Asset';
-import { Folder } from './Folder';
-import { BulkOperation } from '../value-objects/BulkOperation';
+import { Asset as _Asset } from './Asset';
+import { Folder as _Folder } from './Folder';
+import { BulkOperation as _BulkOperation } from '../value-objects/BulkOperation';
 
 export type SelectionMode = 'none' | 'single' | 'multiple';
 export type ItemType = 'asset' | 'folder';

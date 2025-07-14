@@ -1,4 +1,5 @@
 import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
+import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
 /**
  * SavedSearchHandler Service
@@ -52,8 +53,8 @@ export class SavedSearchHandler {
     gallerySearchTerm: string,
     currentFolderId: string | null,
     currentTagIds?: string[],
-    currentFilters?: any,
-    currentSortParams?: any
+    currentFilters?: Record<string, unknown>,
+    currentSortParams?: Record<string, unknown>
   ): CurrentSearchCriteria {
     return {
       searchTerm: gallerySearchTerm,

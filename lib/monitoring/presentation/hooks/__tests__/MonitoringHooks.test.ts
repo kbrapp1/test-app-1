@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { usePerformanceTracking } from '../performance-analysis/usePerformanceTracking';
 import { useNetworkMonitoring } from '../network-analysis/useNetworkMonitoring';
 import { useComponentTracker } from '../performance-analysis/useComponentTracker';

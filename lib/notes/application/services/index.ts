@@ -6,4 +6,5 @@
  * - Follow @golden-rule patterns exactly
  */
 
-export * from './NotesUnifiedContextService'; 
+export * from './NotesUnifiedContextService';
+export * from './NotesApplicationService'; 

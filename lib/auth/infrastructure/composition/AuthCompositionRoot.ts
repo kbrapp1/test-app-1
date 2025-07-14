@@ -189,7 +189,7 @@ export class AuthCompositionRoot {
   public getRegisterUserUseCase(): RegisterUserUseCase {
     return new RegisterUserUseCase(
       this.getUserRepository(),
-      this.getOrganizationRepository() as any // TODO: Update RegisterUserUseCase to use OrganizationApplicationService
+      this.getOrganizationRepository() as unknown as IOrganizationRepository
     );
   }
 
@@ -202,7 +202,7 @@ export class AuthCompositionRoot {
   public getChangeUserRoleUseCase(): ChangeUserRoleUseCase {
     return new ChangeUserRoleUseCase(
       this.getUserRepository(),
-      this.getOrganizationRepository() as any // TODO: Update ChangeUserRoleUseCase to use OrganizationApplicationService
+      this.getOrganizationRepository() as unknown as IOrganizationRepository
     );
   }
 
@@ -217,7 +217,7 @@ export class AuthCompositionRoot {
     if (!this._superAdminApplicationService) {
       this._superAdminApplicationService = new SuperAdminApplicationService(
         this.getUserRepository(),
-        this.getOrganizationRepository() as any, // TODO: Update SuperAdminApplicationService to use OrganizationApplicationService
+        this.getOrganizationRepository() as unknown as IOrganizationRepository,
         this.getSuperAdminDomainService()
       );
     }

@@ -32,9 +32,9 @@ export function useOrganizationSelector(
   activeOrganizationId: string | null,
   onOrganizationChange?: (organizationId: string | null) => void
 ): UseOrganizationSelectorState & UseOrganizationSelectorActions {
-  const router = useRouter();
+  const _router = useRouter();
   const { toast } = useToast();
-  const organizationService = new OrganizationApplicationService();
+  const organizationService = useMemo(() => new OrganizationApplicationService(), []);
   
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +59,7 @@ export function useOrganizationSelector(
 
       try {
         setIsLoading(true);
-        const orgs = await organizationService.getUserOrganizations(profile as any);
+        const orgs = await organizationService.getUserOrganizations(profile);
         setOrganizations(orgs);
       } catch (error) {
         console.error('Error loading organizations:', error);
@@ -75,7 +75,7 @@ export function useOrganizationSelector(
     };
 
     loadOrganizations();
-  }, [profile, toast]);
+  }, [profile, toast, organizationService]);
 
   // Handle organization switching
   const switchToOrganization = async (organizationId: string | null) => {

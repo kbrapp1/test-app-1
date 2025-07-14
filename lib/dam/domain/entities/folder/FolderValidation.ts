@@ -25,7 +25,7 @@ export class FolderValidation {
   /**
    * Validates required fields for folder creation
    */
-  static validateRequiredFields(data: any): void {
+  static validateRequiredFields(data: Record<string, unknown>): void {
     const requiredFields = ['id', 'name', 'userId', 'createdAt', 'organizationId'];
     
     for (const field of requiredFields) {

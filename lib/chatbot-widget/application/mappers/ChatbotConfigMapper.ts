@@ -106,7 +106,7 @@ export class ChatbotConfigMapper {
     });
   }
 
-  static personalityToDto(personality: any): PersonalitySettingsDto {
+  static personalityToDto(personality: PersonalitySettings): PersonalitySettingsDto {
     return {
       tone: personality.tone,
       communicationStyle: personality.communicationStyle,
@@ -144,21 +144,21 @@ export class ChatbotConfigMapper {
     });
   }
 
-  static knowledgeBaseToDto(kb: any): KnowledgeBaseDto {
+  static knowledgeBaseToDto(kb: KnowledgeBase): KnowledgeBaseDto {
     return {
       companyInfo: kb.companyInfo,
       productCatalog: kb.productCatalog,
-      faqs: kb.faqs.map((faq: any) => ({
+      faqs: kb.faqs.map((faq) => ({
         id: faq.id,
         question: faq.question,
         answer: faq.answer,
         category: faq.category,
-        keywords: faq.keywords,
-        priority: faq.priority,
+        keywords: [], // TODO: Extract from FAQ content or add to domain
+        priority: 1, // TODO: Add priority to domain or derive from category
       })),
       supportDocs: kb.supportDocs,
       complianceGuidelines: kb.complianceGuidelines,
-      websiteSources: kb.websiteSources.map((ws: any) => ({
+      websiteSources: kb.websiteSources.map((ws) => ({
         id: ws.id,
         url: ws.url,
         name: ws.name,
@@ -219,16 +219,16 @@ export class ChatbotConfigMapper {
     });
   }
 
-  static operatingHoursToDto(oh: any): OperatingHoursDto {
+  static operatingHoursToDto(oh: OperatingHours): OperatingHoursDto {
     return {
       timezone: oh.timezone,
-      businessHours: oh.businessHours.map((bh: any) => ({
+      businessHours: oh.businessHours.map((bh) => ({
         dayOfWeek: bh.dayOfWeek,
         startTime: bh.startTime,
         endTime: bh.endTime,
-        isOpen: bh.isOpen,
+        isOpen: bh.isActive, // Map isActive to isOpen for DTO
       })),
-      holidaySchedule: oh.holidaySchedule.map((h: any) => ({
+      holidaySchedule: oh.holidaySchedule.map((h) => ({
         date: h.date,
         name: h.name,
         isRecurring: h.isRecurring,
@@ -244,41 +244,41 @@ export class ChatbotConfigMapper {
         dayOfWeek: bh.dayOfWeek,
         startTime: bh.startTime,
         endTime: bh.endTime,
-        isActive: bh.isOpen,
+        isActive: bh.isOpen, // Map isOpen from DTO to isActive for domain
       })),
       holidaySchedule: dto.holidaySchedule,
       outsideHoursMessage: dto.outsideHoursMessage,
     });
   }
 
-  private static aiConfigurationToDto(aiConfig: any): AIConfigurationDto {
+  private static aiConfigurationToDto(aiConfig: AIConfiguration): AIConfigurationDto {
     return {
-      openaiModel: aiConfig.openaiModel,
+      openaiModel: aiConfig.openAI.model,
       openaiTemperature: aiConfig.openaiTemperature,
       openaiMaxTokens: aiConfig.openaiMaxTokens,
       contextMaxTokens: aiConfig.contextMaxTokens,
-      contextSystemPromptTokens: aiConfig.contextSystemPromptTokens,
-      contextResponseReservedTokens: aiConfig.contextResponseReservedTokens,
-      contextSummaryTokens: aiConfig.contextSummaryTokens,
+      contextSystemPromptTokens: aiConfig.context.systemPromptTokens,
+      contextResponseReservedTokens: aiConfig.context.responseReservedTokens,
+      contextSummaryTokens: aiConfig.context.summaryTokens,
       intentConfidenceThreshold: aiConfig.intentConfidenceThreshold,
-      intentAmbiguityThreshold: aiConfig.intentAmbiguityThreshold,
-      enableMultiIntentDetection: aiConfig.enableMultiIntentDetection,
-      enablePersonaInference: aiConfig.enablePersonaInference,
-      enableAdvancedEntities: aiConfig.enableAdvancedEntities,
-      entityExtractionMode: aiConfig.entityExtractionMode,
-      customEntityTypes: aiConfig.customEntityTypes,
-      maxConversationTurns: aiConfig.maxConversationTurns,
-      inactivityTimeoutSeconds: aiConfig.inactivityTimeoutSeconds,
-      enableJourneyRegression: aiConfig.enableJourneyRegression,
-      enableContextSwitchDetection: aiConfig.enableContextSwitchDetection,
+      intentAmbiguityThreshold: aiConfig.intent.ambiguityThreshold,
+      enableMultiIntentDetection: aiConfig.intent.enableMultiIntentDetection,
+      enablePersonaInference: aiConfig.intent.enablePersonaInference,
+      enableAdvancedEntities: aiConfig.entity.enableAdvancedEntities,
+      entityExtractionMode: aiConfig.entity.extractionMode,
+      customEntityTypes: aiConfig.entity.customEntityTypes,
+      maxConversationTurns: aiConfig.conversation.maxConversationTurns,
+      inactivityTimeoutSeconds: aiConfig.conversation.inactivityTimeoutSeconds,
+      enableJourneyRegression: aiConfig.conversation.enableJourneyRegression,
+      enableContextSwitchDetection: aiConfig.conversation.enableContextSwitchDetection,
       enableAdvancedScoring: aiConfig.enableAdvancedScoring,
-      entityCompletenessWeight: aiConfig.entityCompletenessWeight,
-      personaConfidenceWeight: aiConfig.personaConfidenceWeight,
-      journeyProgressionWeight: aiConfig.journeyProgressionWeight,
-      enablePerformanceLogging: aiConfig.enablePerformanceLogging,
-      enableIntentAnalytics: aiConfig.enableIntentAnalytics,
-      enablePersonaAnalytics: aiConfig.enablePersonaAnalytics,
-      responseTimeThresholdMs: aiConfig.responseTimeThresholdMs,
+      entityCompletenessWeight: aiConfig.leadScoring.entityCompletenessWeight,
+      personaConfidenceWeight: aiConfig.leadScoring.personaConfidenceWeight,
+      journeyProgressionWeight: aiConfig.leadScoring.journeyProgressionWeight,
+      enablePerformanceLogging: aiConfig.monitoring.enablePerformanceLogging,
+      enableIntentAnalytics: aiConfig.monitoring.enableIntentAnalytics,
+      enablePersonaAnalytics: aiConfig.monitoring.enablePersonaAnalytics,
+      responseTimeThresholdMs: aiConfig.monitoring.responseTimeThresholdMs,
     };
   }
 

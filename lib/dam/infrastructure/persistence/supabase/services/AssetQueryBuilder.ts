@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
 /**
  * Asset Query Builder Service
@@ -19,7 +19,7 @@ export class AssetQueryBuilder {
     // Add cache busting when force refresh is requested
     if (forceRefresh) {
       // Add a timestamp comment to force a new query plan
-      const timestamp = Date.now();
+      const _timestamp = Date.now();
   
     }
     

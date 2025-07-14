@@ -16,12 +16,12 @@ export class AssetDataProcessor {
   /**
    * Process raw database data for findById operation
    */
-  async processRawDataForFindById(data: any): Promise<Asset> {
-    const rawDataForMapper: any = { ...data };
+  async processRawDataForFindById(data: Record<string, unknown>): Promise<Asset> {
+    const rawDataForMapper: Record<string, unknown> = { ...data };
     
     // Handle folder name mapping
-    if (data.folder && data.folder.name) {
-      rawDataForMapper.folder_name = data.folder.name;
+    if (data.folder && typeof data.folder === 'object' && data.folder !== null && 'name' in data.folder) {
+      rawDataForMapper.folder_name = (data.folder as { name: string }).name;
     }
     delete rawDataForMapper.folder;
     
@@ -36,14 +36,14 @@ export class AssetDataProcessor {
   /**
    * Process array of raw database records
    */
-  async processRawDataArray(rawData: any[]): Promise<Asset[]> {
+  async processRawDataArray(rawData: Record<string, unknown>[]): Promise<Asset[]> {
     // Handle folder name mapping for each record
     const processedData = rawData.map(data => {
-      const rawDataForMapper: any = { ...data };
+      const rawDataForMapper: Record<string, unknown> = { ...data };
       
       // Handle folder name mapping
-      if (data.folder && data.folder.name) {
-        rawDataForMapper.folder_name = data.folder.name;
+      if (data.folder && typeof data.folder === 'object' && data.folder !== null && 'name' in data.folder) {
+        rawDataForMapper.folder_name = (data.folder as { name: string }).name;
       }
       delete rawDataForMapper.folder;
       
@@ -68,7 +68,7 @@ export class AssetDataProcessor {
   /**
    * Process single raw record for operations like save/update
    */
-  async processSingleRawRecord(data: any): Promise<Asset> {
+  async processSingleRawRecord(data: Record<string, unknown>): Promise<Asset> {
     // Enrich with user profile
     const enrichedData = await this.profileService.enrichAssetWithProfile(data);
     

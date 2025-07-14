@@ -132,11 +132,11 @@ export class UserRepository implements IUserRepository {
   }
 
   // Minimal implementations for interface compliance - not used in current codebase
-  async delete(id: UserId): Promise<void> {
+  async delete(_id: UserId): Promise<void> {
     throw new Error('Delete operation not implemented - not used in current codebase');
   }
 
-  async findByOrganization(organizationId: OrganizationId): Promise<UserAggregate[]> {
+  async findByOrganization(_organizationId: OrganizationId): Promise<UserAggregate[]> {
     throw new Error('FindByOrganization not implemented - not used in current codebase');
   }
 
@@ -148,19 +148,19 @@ export class UserRepository implements IUserRepository {
     throw new Error('FindPendingVerification not implemented - not used in current codebase');
   }
 
-  async saveMany(users: UserAggregate[]): Promise<void> {
+  async saveMany(_users: UserAggregate[]): Promise<void> {
     throw new Error('SaveMany not implemented - not used in current codebase');
   }
 
-  async findManyById(ids: UserId[]): Promise<UserAggregate[]> {
+  async findManyById(_ids: UserId[]): Promise<UserAggregate[]> {
     throw new Error('FindManyById not implemented - not used in current codebase');
   }
 
-  async findByOrganizationMembership(organizationId: OrganizationId): Promise<UserAggregate[]> {
+  async findByOrganizationMembership(_organizationId: OrganizationId): Promise<UserAggregate[]> {
     throw new Error('FindByOrganizationMembership not implemented - not used in current codebase');
   }
 
-  async countByOrganization(organizationId: OrganizationId): Promise<number> {
+  async countByOrganization(_organizationId: OrganizationId): Promise<number> {
     throw new Error('CountByOrganization not implemented - not used in current codebase');
   }
 

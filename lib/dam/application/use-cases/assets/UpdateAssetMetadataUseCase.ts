@@ -51,7 +51,11 @@ export class UpdateAssetMetadataUseCase {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      folderId?: string | null;
+      updatedAt?: Date;
+    } = {};
     let changeDescription = '';
 
     if (updates.name !== undefined && updates.name !== currentAsset.name) {

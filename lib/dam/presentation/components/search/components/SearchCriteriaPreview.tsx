@@ -18,7 +18,7 @@ export function SearchCriteriaPreview({ searchCriteria }: SearchCriteriaPreviewP
       <h4 className="font-medium mb-2">Current Search Preview</h4>
       <div className="text-sm text-muted-foreground space-y-1">
         {hasSearchTerm && (
-          <div>Search: "{searchCriteria.searchTerm}"</div>
+          <div>Search: &ldquo;{searchCriteria.searchTerm}&rdquo;</div>
         )}
         {hasTypeFilter && (
           <div>Type: {searchCriteria.filters?.type}</div>

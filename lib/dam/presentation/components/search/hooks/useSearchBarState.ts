@@ -10,12 +10,13 @@ import { useDamTagFilterHandler } from '../../../hooks/search/useDamTagFilterHan
 import { SearchInputHandler } from '../services/SearchInputHandler';
 import { SavedSearchHandler } from '../services/SavedSearchHandler';
 import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
+import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
 interface UseSearchBarStateProps {
   currentFolderId: string | null;
   gallerySearchTerm: string;
-  currentFilters?: any;
-  currentSortParams?: any;
+  currentFilters?: Record<string, unknown>;
+  currentSortParams?: Record<string, unknown>;
   currentTagIds?: string[];
 }
 

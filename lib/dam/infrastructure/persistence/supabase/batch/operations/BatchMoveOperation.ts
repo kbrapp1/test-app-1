@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { DatabaseError } from '@/lib/errors/base';
+import { DatabaseError as _DatabaseError } from '@/lib/errors/base';
 import { BatchValidationService } from '../services/BatchValidationService';
 import type { BatchOperationResult } from '../types';
 

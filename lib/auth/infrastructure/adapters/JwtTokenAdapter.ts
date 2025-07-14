@@ -9,11 +9,11 @@
  * - Keep under 200 lines following @golden-rule
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 import { UserId } from '../../domain/value-objects/UserId';
 import { OrganizationId } from '../../domain/value-objects/OrganizationId';
 import { TokenClaims } from '../../domain/services/TokenService';
-import { BusinessRuleViolationError, SessionExpiredError } from '../../domain/errors/AuthDomainError';
+import { BusinessRuleViolationError } from '../../domain/errors/AuthDomainError';
 
 export interface TokenValidationResult {
   isValid: boolean;
@@ -73,7 +73,7 @@ export class JwtTokenAdapter {
       }
 
       return session.access_token;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -132,7 +132,7 @@ export class JwtTokenAdapter {
       }
 
       return !data.user;
-    } catch (error) {
+    } catch {
       return true;
     }
   }
@@ -149,7 +149,7 @@ export class JwtTokenAdapter {
       }
 
       return data.session.access_token;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -157,7 +157,7 @@ export class JwtTokenAdapter {
   /**
    * Extract token claims from Supabase user
    */
-  private extractClaims(user: any): TokenClaims {
+  private extractClaims(user: User): TokenClaims {
     return {
       sub: user.id,
       custom_claims: {
@@ -171,7 +171,7 @@ export class JwtTokenAdapter {
   /**
    * Extract permissions from user metadata
    */
-  private extractPermissions(user: any): string[] {
+  private extractPermissions(user: User): string[] {
     // Get permissions from app_metadata or user role
     const permissions = user.app_metadata?.permissions || [];
     const role = user.app_metadata?.role;
@@ -231,7 +231,7 @@ export class JwtTokenAdapter {
       }
 
       return context.organizationId.equals(organizationId);
-    } catch (error) {
+    } catch {
       return false;
     }
   }

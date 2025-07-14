@@ -9,7 +9,6 @@
  */
 
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
-import { UserAggregate } from '../../domain/aggregates/UserAggregate';
 import { UserId } from '../../domain/value-objects/UserId';
 import { OrganizationId } from '../../domain/value-objects/OrganizationId';
 import { 
@@ -30,7 +29,7 @@ export interface SwitchOrganizationResult {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 

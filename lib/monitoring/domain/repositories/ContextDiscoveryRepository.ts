@@ -19,10 +19,10 @@ export interface ContextDiscoveryRepository {
   /**
    * Store context data for analysis
    */
-  storeContextData(context: PageContext, data: any): Promise<void>;
+  storeContextData(context: PageContext, data: Record<string, unknown>): Promise<void>;
 
   /**
    * Get context-specific optimization opportunities
    */
-  getContextOptimizations(context: PageContext): Promise<any[]>;
+  getContextOptimizations(context: PageContext): Promise<Array<Record<string, unknown>>>;
 } 

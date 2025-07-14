@@ -8,8 +8,8 @@
  * - Keep under 150 lines following @golden-rule
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { UserAggregate } from '../../domain/aggregates/UserAggregate';
+import { SupabaseClient, User } from '@supabase/supabase-js';
+// UserAggregate available for future use
 import { OrganizationId } from '../../domain/value-objects/OrganizationId';
 import { UserId } from '../../domain/value-objects/UserId';
 import { BusinessRuleViolationError } from '../../domain/errors/AuthDomainError';
@@ -20,7 +20,7 @@ export interface OnboardingContext {
   invitedByUserId?: UserId;
   invitationToken?: string;
   completedSteps: string[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface OnboardingResult {
@@ -111,7 +111,7 @@ export class OnboardingAdapter {
   /**
    * Check if user requires onboarding completion
    */
-  private checkOnboardingRequirements(user: any): { required: boolean; reason?: string } {
+  private checkOnboardingRequirements(user: User): { required: boolean; reason?: string } {
     // Check if email is confirmed
     if (!user.email_confirmed_at) {
       return { required: false, reason: 'Email not confirmed' };
@@ -133,7 +133,7 @@ export class OnboardingAdapter {
   /**
    * Extract onboarding context from user
    */
-  private extractOnboardingContext(user: any): OnboardingContext {
+  private extractOnboardingContext(user: User): OnboardingContext {
     const userId = UserId.create(user.id);
     const organizationId = OrganizationId.create(
       user.app_metadata?.active_organization_id || user.user_metadata?.invited_to_org_id
@@ -153,7 +153,7 @@ export class OnboardingAdapter {
   async updateOnboardingProgress(
     userId: UserId,
     step: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
       const { data: { user }, error: userError } = await this.supabase.auth.getUser();
@@ -213,7 +213,7 @@ export class OnboardingAdapter {
 
       const requirements = this.checkOnboardingRequirements(user);
       return !requirements.required;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

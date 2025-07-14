@@ -64,7 +64,7 @@ export class PaginationPatternDetector {
     try {
       const payloads = calls
         .map(call => call.originalCall?.payload)
-        .filter(payload => payload && typeof payload === 'object');
+        .filter((payload): payload is Record<string, unknown> => payload !== null && payload !== undefined && typeof payload === 'object');
 
       if (payloads.length < 2) {
         return { isDetected: false, pattern: 'none', reason: 'Insufficient payloads for analysis' };
@@ -82,7 +82,7 @@ export class PaginationPatternDetector {
         return pagePattern;
       }
 
-    } catch (error) {
+    } catch {
       // Ignore parsing errors
     }
 
@@ -92,13 +92,13 @@ export class PaginationPatternDetector {
   /**
    * Check for offset-based pagination progression
    */
-  private checkOffsetProgression(payloads: any[]): PaginationDetectionResult {
+  private checkOffsetProgression(payloads: Record<string, unknown>[]): PaginationDetectionResult {
     for (let i = 1; i < payloads.length; i++) {
       const prev = payloads[i - 1];
       const curr = payloads[i];
 
       if (typeof prev.offset === 'number' && typeof curr.offset === 'number') {
-        const expectedIncrement = prev.offset + (prev.limit || 20);
+        const expectedIncrement = prev.offset + (typeof prev.limit === 'number' ? prev.limit : 20);
         if (curr.offset === expectedIncrement) {
           return {
             isDetected: true,
@@ -115,7 +115,7 @@ export class PaginationPatternDetector {
   /**
    * Check for page-based pagination progression
    */
-  private checkPageProgression(payloads: any[]): PaginationDetectionResult {
+  private checkPageProgression(payloads: Record<string, unknown>[]): PaginationDetectionResult {
     for (let i = 1; i < payloads.length; i++) {
       const prev = payloads[i - 1];
       const curr = payloads[i];

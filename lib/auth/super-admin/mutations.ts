@@ -26,9 +26,9 @@ export class SuperAdminMutationService {
   /**
    * Insert data with super admin organization handling
    */
-  async insertData<T = any>(
+  async insertData<T = Record<string, unknown>>(
     table: string,
-    insertValues: Record<string, any>,
+    insertValues: Record<string, unknown>,
     options: MutationOptions = {}
   ): Promise<{ data: T | null; error: Error | null }> {
     try {
@@ -62,9 +62,9 @@ export class SuperAdminMutationService {
   /**
    * Update data with super admin cross-organization support
    */
-  async updateData<T = any>(
+  async updateData<T = Record<string, unknown>>(
     table: string,
-    updateValues: Record<string, any>,
+    updateValues: Record<string, unknown>,
     matchColumn: string,
     matchValue: string | number,
     options: MutationOptions = {}
@@ -137,7 +137,7 @@ export class SuperAdminMutationService {
   /**
    * Transfer entity between organizations (super admin only)
    */
-  async transferBetweenOrganizations<T = any>(
+  async transferBetweenOrganizations<T = Record<string, unknown>>(
     table: string,
     entityId: string,
     fromOrganizationId: string,
@@ -198,10 +198,10 @@ export class SuperAdminMutationService {
 /**
  * Enhanced insert with super admin support
  */
-export async function insertDataWithSuperAdmin<T = any>(
+export async function insertDataWithSuperAdmin<T = Record<string, unknown>>(
   supabase: SupabaseClient,
   table: string,
-  insertValues: Record<string, any>,
+  insertValues: Record<string, unknown>,
   options: MutationOptions = {}
 ): Promise<{ data: T | null; error: Error | null }> {
   const mutationService = new SuperAdminMutationService(supabase);
@@ -211,10 +211,10 @@ export async function insertDataWithSuperAdmin<T = any>(
 /**
  * Enhanced update with super admin support
  */
-export async function updateDataWithSuperAdmin<T = any>(
+export async function updateDataWithSuperAdmin<T = Record<string, unknown>>(
   supabase: SupabaseClient,
   table: string,
-  updateValues: Record<string, any>,
+  updateValues: Record<string, unknown>,
   matchColumn: string,
   matchValue: string | number,
   options: MutationOptions = {}

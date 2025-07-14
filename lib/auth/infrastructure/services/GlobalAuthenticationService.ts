@@ -10,7 +10,7 @@
 
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient as createClientSide } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { User, SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthenticationResult {
   user: User | null;
@@ -190,7 +190,7 @@ export class GlobalAuthenticationService {
 
   // Private helper methods
 
-  private async getCurrentTokenHash(supabase: any): Promise<string> {
+  private async getCurrentTokenHash(supabase: SupabaseClient): Promise<string> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       return session?.access_token ? 
@@ -201,7 +201,7 @@ export class GlobalAuthenticationService {
     }
   }
 
-  private async getCurrentTokenHashClient(supabase: any): Promise<string> {
+  private async getCurrentTokenHashClient(supabase: SupabaseClient): Promise<string> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       return session?.access_token ? 
@@ -237,7 +237,7 @@ export class GlobalAuthenticationService {
     });
   }
 
-  private logAuthEvent(event: string, context: Record<string, any>): void {
+  private logAuthEvent(event: string, context: Record<string, unknown>): void {
     console.log('[GLOBAL_AUTH]', {
       timestamp: new Date().toISOString(),
       event,

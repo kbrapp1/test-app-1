@@ -3,6 +3,10 @@ import { CopyReportButtons } from './CopyReportButtons';
 import { useState } from 'react';
 import { OptimizationGap } from '../../../domain/value-objects/OptimizationGap';
 import { NetworkIssue } from '../../../domain/network-efficiency/value-objects/NetworkIssue';
+import type { CrossDomainInsight } from '../../../domain/cross-domain/services/PerformanceCorrelationService';
+import type { PerformanceMetrics } from '../../../domain/entities/PerformanceMetrics';
+import type { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import type { CopyButtonStateDto } from '../../../application/dto/UnifiedIssueDto';
 
 // Mock data for different types of issues
 const mockFrontendIssues: OptimizationGap[] = [
@@ -27,7 +31,7 @@ const mockNetworkIssues: NetworkIssue[] = [
   NetworkIssue.createSlowResponseIssue(2500)
 ];
 
-const mockCrossDomainInsights = [
+const mockCrossDomainInsights: CrossDomainInsight[] = [
   {
     type: 'correlation' as const,
     title: 'Database Query Optimization',
@@ -44,7 +48,7 @@ const mockCrossDomainInsights = [
   }
 ];
 
-const mockMetrics = {
+const mockMetrics: PerformanceMetrics = {
   cacheSize: 150,
   activeMutations: 3,
   isOptimized: false,
@@ -58,7 +62,7 @@ const mockMetrics = {
   },
 };
 
-const mockTrackingState = {
+const mockTrackingState: PerformanceTrackingState = {
   renderMetrics: {
     count: 25,
     rapidCount: 8,
@@ -77,18 +81,28 @@ const mockTrackingState = {
 };
 
 // Component wrapper to handle state
-const CopyReportButtonsWithState = (props: any) => {
-  const [copyButtonState, setCopyButtonState] = useState({
-    frontend: 'default' as const,
-    crossDomain: 'default' as const,
-    backend: 'default' as const,
+const CopyReportButtonsWithState = (props: {
+  frontendIssues: OptimizationGap[];
+  networkIssues: NetworkIssue[];
+  crossDomainInsights: CrossDomainInsight[];
+  metrics?: PerformanceMetrics;
+  trackingState?: PerformanceTrackingState;
+}) => {
+  const [copyButtonState, setCopyButtonState] = useState<CopyButtonStateDto>({
+    frontend: 'default',
+    crossDomain: 'default',
+    backend: 'default',
   });
+
+  const handleCopyStateChange = (state: CopyButtonStateDto) => {
+    setCopyButtonState(state);
+  };
 
   return (
     <CopyReportButtons
       {...props}
       copyButtonState={copyButtonState}
-      onCopyStateChange={setCopyButtonState}
+      onCopyStateChange={handleCopyStateChange}
     />
   );
 };

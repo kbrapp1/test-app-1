@@ -5,6 +5,7 @@ import { PerformanceCorrelationService } from '../../../domain/cross-domain/serv
 import { OptimizationGap } from '../../../domain/value-objects/OptimizationGap';
 import { RenderMetrics } from '../../../domain/entities/PerformanceMetrics';
 import { NetworkStats } from '../../../domain/network-efficiency/entities/NetworkCall';
+import { NetworkIssue } from '../../../domain/network-efficiency/value-objects/NetworkIssue';
 
 /**
  * Cross-Domain Performance Insights Hook (Presentation Layer)
@@ -23,7 +24,7 @@ import { NetworkStats } from '../../../domain/network-efficiency/entities/Networ
  */
 export function useCrossDomainInsights(
   frontendOptimizations: OptimizationGap[],
-  networkIssues: any[],
+  networkIssues: NetworkIssue[],
   renderMetrics: RenderMetrics,
   networkStats: NetworkStats | null,
   isPaused: boolean

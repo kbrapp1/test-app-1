@@ -10,7 +10,6 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 import { startSpeechGeneration, saveTtsAudioToDam, markTtsUrlProblematic } from '../actions/tts';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
 
@@ -61,10 +60,10 @@ export function useStartGenerationMutation(organizationId: string | null) {
       // Return context for rollback
       return { request };
     },
-    onError: (error, request, context) => {
+    onError: (error, _request, _context) => {
       console.error('TTS generation failed:', error);
     },
-    onSuccess: (result, request) => {
+    onSuccess: (_result, _request) => {
       // Invalidate history to show new generation in progress
       queryClient.invalidateQueries({ queryKey: ['tts-history', organizationId] });
     }
@@ -231,7 +230,7 @@ export function useDeletePredictionMutation(organizationId: string | null) {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (predictionId: string) => {
+    mutationFn: async (_predictionId: string) => {
       if (!organizationId) {
         throw new Error('Organization context required');
       }

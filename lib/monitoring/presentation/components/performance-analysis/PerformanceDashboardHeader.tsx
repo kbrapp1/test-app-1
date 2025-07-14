@@ -17,7 +17,7 @@ export const PerformanceDashboardHeader: React.FC<PerformanceDashboardHeaderProp
   overallScore,
   scoreColor,
   onCollapse,
-  pageContext
+  pageContext: _pageContext
 }) => {
   return (
     <CardHeader className="pb-3">

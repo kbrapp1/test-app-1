@@ -7,10 +7,9 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { User } from '@supabase/supabase-js';
+import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { AuthContextType, Profile } from './types';
+import { AuthContextType } from './types';
 import { SuperAdminPermissionService } from './permissions';
 import { useUserProfile } from '../presentation/providers/UserProfileProvider';
 
@@ -80,7 +79,7 @@ export function useAuthWithSuperAdmin(): AuthContextType {
  * Returns super admin permissions and context
  */
 export function useSuperAdminContext() {
-  const { profile, isSuperAdmin } = useAuthWithSuperAdmin();
+  const { profile, isSuperAdmin: _isSuperAdmin } = useAuthWithSuperAdmin();
   
   const context = useMemo(() => {
     return SuperAdminPermissionService.createContext(profile);

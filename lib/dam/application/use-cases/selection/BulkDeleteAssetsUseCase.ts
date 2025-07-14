@@ -118,7 +118,7 @@ export class BulkDeleteAssetsUseCase {
   private async deleteAssets(
     assetIds: string[], 
     organizationId: string, 
-    userId: string
+    _userId: string
   ): Promise<{ deleted: string[]; failed: string[]; errors: string[] }> {
     const deleted: string[] = [];
     const failed: string[] = [];
@@ -169,7 +169,7 @@ export class BulkDeleteAssetsUseCase {
   private async deleteFolders(
     folderIds: string[], 
     organizationId: string, 
-    userId: string
+    _userId: string
   ): Promise<{ deleted: string[]; failed: string[]; errors: string[] }> {
     const deleted: string[] = [];
     const failed: string[] = [];

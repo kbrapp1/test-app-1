@@ -218,7 +218,7 @@ describe('BusinessImpactCalculationService', () => {
       const trackingState = createMockTrackingState({
         renderMetrics: { count: 8, rapidCount: 1, lastReset: Date.now() },
         cacheHitRate: 80,
-        webVitals: undefined as any
+        webVitals: undefined
       });
       const metrics = createMockPerformanceMetrics();
 

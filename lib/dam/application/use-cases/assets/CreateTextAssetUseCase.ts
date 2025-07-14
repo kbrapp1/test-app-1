@@ -73,14 +73,14 @@ export class CreateTextAssetUseCase {
 
       return { newAssetId: savedAsset.id.toString() };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error in CreateTextAssetUseCase for "${finalName}":`, error);
       // Attempt to clean up uploaded file if DB insert fails or other errors occur after upload
       if (uploadedPath) {
         try {
           await this.storageService.removeFile(uploadedPath);
           console.info(`Cleaned up stored file ${uploadedPath} after error.`);
-        } catch (cleanupError: any) {
+        } catch (cleanupError: unknown) {
           console.error(`Failed to clean up stored file ${uploadedPath} after error:`, cleanupError);
           // Potentially log this to an error monitoring service as it indicates an orphaned file
         }
@@ -89,10 +89,11 @@ export class CreateTextAssetUseCase {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error.message.includes('upload')) { // Crude check, make more specific if possible
-         throw new ExternalServiceError(`Storage upload failed: ${error.message}`, 'STORAGE_UPLOAD_FAILED');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('upload')) { // Crude check, make more specific if possible
+         throw new ExternalServiceError(`Storage upload failed: ${errorMessage}`, 'STORAGE_UPLOAD_FAILED');
       }
-      throw new DatabaseError(`Failed to create text asset record: ${error.message}`, 'CREATE_ASSET_RECORD_FAILED');
+      throw new DatabaseError(`Failed to create text asset record: ${errorMessage}`, 'CREATE_ASSET_RECORD_FAILED');
     }
   }
 } 

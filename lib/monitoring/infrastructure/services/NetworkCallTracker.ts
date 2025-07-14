@@ -11,7 +11,7 @@ import { NetworkCall } from '../../domain/network-efficiency/entities/NetworkCal
  * Circular buffer for efficient call storage
  */
 class CircularCallBuffer {
-  private buffer: NetworkCall[];
+  private buffer: (NetworkCall | undefined)[];
   private head = 0;
   private size = 0;
   private readonly capacity: number;
@@ -32,13 +32,16 @@ class CircularCallBuffer {
   getAll(): NetworkCall[] {
     if (this.size === 0) return [];
     
-    const result = new Array(this.size);
+    const result: NetworkCall[] = [];
     let bufferIndex = this.size === this.capacity 
       ? this.head 
       : 0;
     
     for (let i = 0; i < this.size; i++) {
-      result[i] = this.buffer[bufferIndex];
+      const call = this.buffer[bufferIndex];
+      if (call) {
+        result.push(call);
+      }
       bufferIndex = (bufferIndex + 1) % this.capacity;
     }
     
@@ -58,7 +61,7 @@ class CircularCallBuffer {
   clear(): void {
     this.head = 0;
     this.size = 0;
-    this.buffer.fill(undefined as any);
+    this.buffer.fill(undefined);
   }
   
   getSize(): number {
@@ -104,7 +107,7 @@ export class NetworkCallTracker {
    */
   completeCall(
     callId: string, 
-    data: { duration?: number; status?: number; response?: any; error?: string }
+    data: { duration?: number; status?: number; response?: unknown; error?: string }
   ): void {
     const call = this.callLookup.get(callId);
     if (call) {
