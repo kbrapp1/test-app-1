@@ -1,17 +1,41 @@
 import React from 'react';
-import { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+export interface SelectableFolderProps {
+  folder: GalleryItemDto & { type: 'folder' };
+  isSelected?: boolean;
+  onSelect?: (folder: GalleryItemDto) => void;
+  onDoubleClick?: (folder: GalleryItemDto) => void;
+  onContextMenu?: (event: React.MouseEvent, folder: GalleryItemDto) => void;
+  className?: string;
+  disabled?: boolean;
+  showCheckbox?: boolean;
+  dragListeners?: Record<string, (event: React.SyntheticEvent) => void>;
+  dragAttributes?: Record<string, unknown>;
+  isDragging?: boolean;
+  style?: React.CSSProperties;
+}
 
 export interface SelectableFolderItemProps {
   folder: GalleryItemDto & { type: 'folder' };
-  onClick: () => void;
-  enableNavigation: boolean;
+  isSelected?: boolean;
+  onSelect?: (folder: GalleryItemDto) => void;
+  onDoubleClick?: (folder: GalleryItemDto) => void;
+  onContextMenu?: (event: React.MouseEvent, folder: GalleryItemDto) => void;
+  className?: string;
+  disabled?: boolean;
+  showCheckbox?: boolean;
+  dragListeners?: Record<string, (event: React.SyntheticEvent) => void>;
+  dragAttributes?: Record<string, unknown>;
+  isDragging?: boolean;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  enableNavigation?: boolean;
   onAction?: (action: 'rename' | 'delete', folderId: string, folderName: string) => void;
+  isSelecting?: boolean;
+  onSelectionChange?: (selected: boolean) => void;
   variant?: 'grid' | 'list';
   isOptimisticallyHidden?: boolean;
-  // Selection props
-  isSelected: boolean;
-  isSelecting?: boolean;
-  onSelectionChange: (selected: boolean) => void;
 }
 
 export interface SelectableFolderState {

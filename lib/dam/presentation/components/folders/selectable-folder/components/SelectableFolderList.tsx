@@ -43,7 +43,7 @@ export const SelectableFolderList: React.FC<FolderComponentProps> = ({
       }`}
     >
       <SelectionOverlay
-        isSelected={isSelected}
+        isSelected={isSelected ?? false}
         isSelecting={isSelecting}
         onSelectionChange={onSelectionChange}
       >

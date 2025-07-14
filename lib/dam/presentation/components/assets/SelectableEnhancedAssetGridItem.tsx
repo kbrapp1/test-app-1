@@ -183,8 +183,11 @@ export const SelectableEnhancedAssetGridItem: React.FC<SelectableEnhancedAssetGr
           
           {/* Enhanced Asset Thumbnail */}
           <AssetThumbnail 
-            asset={asset}
-            dragListeners={undefined}
+            item={asset}
+            isSelected={isSelected}
+            onSelect={(id) => onSelectionChange(!isSelected)}
+            _dragListeners={undefined}
+            _dragAttributes={undefined}
             isDragging={isDragging}
           />
 

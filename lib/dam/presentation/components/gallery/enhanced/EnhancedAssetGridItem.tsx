@@ -194,8 +194,11 @@ export const EnhancedAssetGridItem: React.FC<EnhancedAssetGridItemProps> = ({
       
       {/* Enhanced Asset Thumbnail */}
       <AssetThumbnail 
-        asset={asset}
-        dragListeners={undefined}
+        item={asset}
+        isSelected={false}
+        onSelect={() => {}}
+        _dragListeners={undefined}
+        _dragAttributes={undefined}
         isDragging={isDragging}
       />
 

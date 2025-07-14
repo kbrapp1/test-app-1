@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { AssetDetailsDto } from '../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { DeleteAssetConfirmation } from './ConfirmationDialog';
 import { AssetDetailsHeader } from './sections/AssetDetailsHeader';
 import { AssetPreviewSection } from './sections/AssetPreviewSection';

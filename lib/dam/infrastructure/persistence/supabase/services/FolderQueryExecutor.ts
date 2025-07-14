@@ -3,7 +3,7 @@ import { DatabaseError, NotFoundError } from '@/lib/errors/base';
 import { CreateFolderData, UpdateFolderData } from '../../../../domain/repositories/IFolderRepository';
 import { FolderMapper, RawFolderDbRecord } from '../mappers/FolderMapper';
 
-type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']> | any;
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']> | unknown;
 
 /**
  * Folder Query Executor Service
@@ -16,7 +16,7 @@ export class FolderQueryExecutor {
    * Execute query and handle errors
    */
   async executeQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord[]> {
-    const { data, error } = await query;
+    const { data, error } = await (query as any);
     
     if (error) {
       console.error(`Error ${errorContext}:`, error.message);
@@ -30,7 +30,7 @@ export class FolderQueryExecutor {
    * Execute single record query
    */
   async executeSingleQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord | null> {
-    const { data, error } = await query;
+    const { data, error } = await (query as any);
     
     if (error) {
       console.error(`Error ${errorContext}:`, error.message);
@@ -108,8 +108,8 @@ export class FolderQueryExecutor {
       throw new DatabaseError('Could not verify child folders for deletion.', childFoldersError.message);
     }
     
-    const childFolderCount = (childFoldersResult as any)?.count;
-    if (childFolderCount > 0) {
+    const childFolderCount = (childFoldersResult as unknown as { count: number } | null)?.count;
+    if (childFolderCount && childFolderCount > 0) {
        throw new DatabaseError('Folder cannot be deleted because it contains sub-folders.');
     }
     
@@ -125,8 +125,8 @@ export class FolderQueryExecutor {
       throw new DatabaseError('Could not verify child assets for deletion.', childAssetsError.message);
     }
     
-    const childAssetCount = (childAssetsResult as any)?.count;
-    if (childAssetCount > 0) {
+    const childAssetCount = (childAssetsResult as unknown as { count: number } | null)?.count;
+    if (childAssetCount && childAssetCount > 0) {
        throw new DatabaseError('Folder cannot be deleted because it contains assets.');
     }
 

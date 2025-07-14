@@ -1,5 +1,19 @@
 import { type CollisionDetection } from '@dnd-kit/core';
 
+interface DragItem {
+  type: 'asset' | 'folder';
+  id: string;
+}
+
+interface DragEventData {
+  active?: {
+    id: string;
+    data?: {
+      current?: DragItem;
+    };
+  };
+}
+
 /**
  * Custom collision detection that activates drop zones when the top edge
  * of the dragged item breaches the drop zone boundaries.
@@ -56,15 +70,16 @@ export const topEdgeCollisionDetection: CollisionDetection = (args) => {
 };
 
 /**
- * Hook for drag and drop validation utilities
+ * Drag and Drop Validation Hook
  * 
- * Single Responsibility: Validation logic for drag and drop operations
+ * Provides validation logic for drag and drop operations in the DAM system.
+ * Ensures that only valid drag and drop operations are allowed based on business rules.
  */
-export function useDragDropValidation() {
+export const useDragDropValidation = () => {
   /**
    * Validates if a drag operation can be performed
    */
-  const validateDragStart = (draggedItem: any): boolean => {
+  const validateDragStart = (draggedItem: DragItem | null): boolean => {
     if (!draggedItem || (!draggedItem.type || (draggedItem.type !== 'asset' && draggedItem.type !== 'folder'))) {
       return false;
     }
@@ -74,7 +89,7 @@ export function useDragDropValidation() {
   /**
    * Validates if a drop operation can be performed
    */
-  const validateDrop = (draggedItem: any, dropTarget: any): boolean => {
+  const validateDrop = (draggedItem: DragItem | null, dropTarget: DragItem | null): boolean => {
     if (!draggedItem || !dropTarget) return false;
     
     // Add specific validation logic here based on business rules
@@ -86,10 +101,10 @@ export function useDragDropValidation() {
   /**
    * Extracts item type and ID from drag event data
    */
-  const extractDragData = (eventData: any) => {
+  const extractDragData = (eventData: DragEventData) => {
     const activeItemType = eventData?.active?.data?.current?.type;
     const activeItemId = (activeItemType === 'asset' || activeItemType === 'folder') ? 
-      String(eventData.active.id) : null;
+      String(eventData.active?.id) : null;
     
     return { activeItemType, activeItemId };
   };
@@ -100,4 +115,4 @@ export function useDragDropValidation() {
     extractDragData,
     topEdgeCollisionDetection
   };
-} 
+}; 

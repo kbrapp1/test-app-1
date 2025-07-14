@@ -21,7 +21,7 @@ export class DragValidationService {
    * @returns Validation result with success/failure and reason
    */
   static validate(operation: DragOperation, overData: DropZoneData): DragValidationResult {
-    const { itemType, targetId, sourceItem } = operation;
+    const { itemType, targetId, sourceItem: _sourceItem } = operation;
     
     // Check drop zone compatibility
     const acceptsAssets = overData?.accepts?.includes('asset');
@@ -43,6 +43,21 @@ export class DragValidationService {
       return { isValid: false, reason: 'Cannot move a folder into itself' };
     }
 
+    return { isValid: true };
+  }
+
+  static validateMove(operation: DragOperation): DragValidationResult {
+    const { itemId, itemType, targetId, sourceItem: _sourceItem } = operation;
+    
+    // Basic validation - can't move item to itself
+    if (itemId === targetId) {
+      return {
+        isValid: false,
+        reason: 'Cannot move item to itself'
+      };
+    }
+
+    // Additional move validations can be added here
     return { isValid: true };
   }
 } 

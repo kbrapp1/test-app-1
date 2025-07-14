@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IFolderRepository, FolderTreeNode, CreateFolderData, UpdateFolderData } from '../../../domain/repositories/IFolderRepository';
 import { Folder } from '../../../domain/entities/Folder';
+import { Asset } from '../../../domain/entities/Asset';
 import { FolderMapper, RawFolderDbRecord } from './mappers/FolderMapper';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { ValidationError } from '@/lib/errors/base';
@@ -102,7 +103,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     return FolderMapper.toDomain(data as RawFolderDbRecord);
   }
 
-  async findChildren(folderId: string, organizationId: string): Promise<(Folder | any)[]> {
+  async findChildren(folderId: string, organizationId: string): Promise<(Folder | Asset)[]> {
     return await this.treeService.getFolderChildren(folderId, organizationId);
   }
 

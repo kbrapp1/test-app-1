@@ -1,17 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Image, Video, Music, FileText, File, GripVertical } from 'lucide-react';
+import React from 'react';
+import { File, Folder, Image as ImageIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AssetThumbnailProps {
-  asset: {
+  item: {
     id: string;
     name: string;
+    type: 'asset' | 'folder';
     mimeType?: string;
+    thumbnailUrl?: string;
     publicUrl?: string;
   };
-  dragListeners: any;
-  isDragging: boolean;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+  _dragListeners?: Record<string, unknown>;
+  _dragAttributes?: Record<string, unknown>;
+  isDragging?: boolean;
 }
 
 /**
@@ -21,31 +27,34 @@ interface AssetThumbnailProps {
  * Follows SRP by focusing solely on thumbnail presentation and interaction hints.
  */
 export const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
-  asset,
-  dragListeners,
+  item,
+  isSelected,
+  onSelect,
+  _dragListeners,
+  _dragAttributes,
   isDragging
 }) => {
-  const [imageError, setImageError] = useState(false);
-  const isImage = asset.mimeType?.toLowerCase().startsWith('image/');
+  const [imageError, setImageError] = React.useState(false);
+  const isImage = item.mimeType?.toLowerCase().startsWith('image/');
 
   const getAssetIcon = () => {
-    const mimeType = asset.mimeType?.toLowerCase() || '';
+    const mimeType = item.mimeType?.toLowerCase() || '';
     
-    if (mimeType.startsWith('image/')) return <Image className="w-9 h-9 text-green-600" />;
-    if (mimeType.startsWith('video/')) return <Video className="w-9 h-9 text-purple-600" />;
-    if (mimeType.startsWith('audio/')) return <Music className="w-9 h-9 text-orange-600" />;
-    if (mimeType.includes('text')) return <FileText className="w-9 h-9 text-gray-600" />;
+    if (mimeType.startsWith('image/')) return <ImageIcon className="w-9 h-9 text-green-600" />;
+    if (mimeType.startsWith('video/')) return <Folder className="w-9 h-9 text-purple-600" />;
+    if (mimeType.startsWith('audio/')) return <Folder className="w-9 h-9 text-orange-600" />;
+    if (mimeType.includes('text')) return <File className="w-9 h-9 text-gray-600" />;
     
-    return <File className="w-9 h-9 text-gray-500" />;
+    return <Folder className="w-9 h-9 text-gray-500" />;
   };
 
   return (
     <div className="aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden relative group">
         {/* Main clickable preview area */}
-        {isImage && asset.publicUrl && !imageError ? (
+        {isImage && item.publicUrl && !imageError ? (
           <img
-            src={asset.publicUrl}
-            alt={asset.name}
+            src={item.publicUrl}
+            alt={item.name}
             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
             onError={() => setImageError(true)}
             loading="lazy"
@@ -59,7 +68,7 @@ export const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
         
         {/* File type badge - only visible on hover */}
         <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          {asset.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
+          {item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
         
         {/* Drag overlay for visual feedback */}

@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import React, { useState, useTransition, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { DeleteAssetUseCase } from '../../../application/use-cases/assets/DeleteAssetUseCase';
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';

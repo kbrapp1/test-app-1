@@ -18,7 +18,7 @@ import { useFolderStore } from '@/lib/store/folderStore';
 import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 
 export function useDragEndHandler({
-  onItemsUpdate,
+  onItemsUpdate: _onItemsUpdate,
   onToast,
   onRefreshData
 }: UseDamDragAndDropProps) {
