@@ -10,6 +10,7 @@ import { SupabaseAssetRepository } from '../../../../infrastructure/persistence/
 import { SupabaseFolderRepository } from '../../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { SupabaseStorageService } from '../../../../infrastructure/storage/SupabaseStorageService';
 import { SupabaseBatchStorageService } from '../../../../infrastructure/storage/SupabaseBatchStorageService';
+import type { IStorageService } from '../../../../domain/repositories/IStorageService';
 import { UpdateSelectionUseCase } from '../../../use-cases/selection/UpdateSelectionUseCase';
 import { BulkMoveAssetsUseCase } from '../../../use-cases/selection/BulkMoveAssetsUseCase';
 import { BulkDeleteAssetsUseCase } from '../../../use-cases/selection/BulkDeleteAssetsUseCase';
@@ -54,7 +55,7 @@ export class RepositoryFactoryService {
    * Creates composite storage service with ZIP functionality
    * @returns Composite storage service
    */
-  createCompositeStorageService() {
+  createCompositeStorageService(): IStorageService & { createZipArchive: (assetData: Array<{ id: string; name: string; storagePath: string; folderPath?: string }>, organizationId: string, options?: { folderNames?: string[]; selectionType?: 'assets' | 'folders' | 'mixed' }) => Promise<{ success: boolean; zipBlob?: Blob; zipFileName?: string; error?: string }> } {
     const storageService = this.createStorageService();
     const batchStorageService = this.createBatchStorageService();
 
@@ -106,6 +107,6 @@ export class RepositoryFactoryService {
     const assetRepository = this.createAssetRepository();
     const folderRepository = this.createFolderRepository();
     const compositeStorageService = this.createCompositeStorageService();
-    return new BulkDownloadAssetsUseCase(assetRepository, folderRepository, compositeStorageService as any);
+    return new BulkDownloadAssetsUseCase(assetRepository, folderRepository, compositeStorageService);
   }
 } 

@@ -58,7 +58,7 @@ export class ListTextAssetsUseCase {
 
       // Filter assets to only include text types
       const textAssets = assets.filter(asset => 
-        TEXT_MIME_TYPES.includes(asset.mimeType as any)
+        (TEXT_MIME_TYPES as readonly string[]).includes(asset.mimeType)
       );
 
       const assetSummaries: TextAssetSummaryDto[] = textAssets.map((asset) => {

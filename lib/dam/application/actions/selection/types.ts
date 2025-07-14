@@ -12,7 +12,7 @@ export interface ActionResult {
 }
 
 export interface SelectionActionResult extends ActionResult {
-  readonly selection?: any;
+  readonly selection?: { selectedAssets: string[]; selectedFolders: string[] };
 }
 
 export interface DownloadActionResult extends ActionResult {
@@ -55,7 +55,7 @@ export interface BulkDownloadRequest extends BulkOperationRequest {
 
 // Authentication Context
 export interface AuthenticatedContext {
-  readonly user: any;
+  readonly user: { id: string; email: string };
   readonly organizationId: string;
 }
 

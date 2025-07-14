@@ -145,15 +145,29 @@ export class Folder {
   /**
    * Creates a Folder instance from database data
    */
-  static fromDatabaseRow(row: any): Folder {
+  static fromDatabaseRow(row: {
+    id: string;
+    name: string;
+    user_id?: string;
+    userId?: string;
+    created_at?: string;
+    createdAt?: Date;
+    updated_at?: string;
+    updatedAt?: Date;
+    parent_folder_id?: string | null;
+    parentFolderId?: string | null;
+    organization_id?: string;
+    organizationId?: string;
+    has_children?: boolean;
+  }): Folder {
     return new Folder({
       id: row.id,
       name: row.name,
-      userId: row.user_id || row.userId,
-      createdAt: new Date(row.created_at || row.createdAt),
-      updatedAt: row.updated_at || row.updatedAt ? new Date(row.updated_at || row.updatedAt) : undefined,
-      parentFolderId: row.parent_folder_id || row.parentFolderId,
-      organizationId: row.organization_id || row.organizationId,
+      userId: row.user_id || row.userId || '',
+      createdAt: new Date(row.created_at || row.createdAt || new Date()),
+      updatedAt: row.updated_at || row.updatedAt ? new Date(row.updated_at || row.updatedAt || new Date()) : undefined,
+      parentFolderId: row.parent_folder_id !== undefined ? row.parent_folder_id : row.parentFolderId,
+      organizationId: row.organization_id || row.organizationId || '',
       has_children: row.has_children
     });
   }

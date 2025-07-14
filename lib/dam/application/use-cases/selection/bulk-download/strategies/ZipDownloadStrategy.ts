@@ -28,7 +28,7 @@ export class ZipDownloadStrategy {
   ): Promise<ZipCreationResult> {
     try {
       // Use storage service to create ZIP
-      const storageService = this.storageService as any;
+      const storageService = this.storageService as IStorageService & { createZipArchive?: (assetData: Array<{ id: string; name: string; storagePath: string; folderPath?: string }>, organizationId: string, options?: { folderNames?: string[]; selectionType?: 'assets' | 'folders' | 'mixed' }) => Promise<{ success: boolean; zipBlob?: Blob; zipFileName?: string; error?: string }> };
       if (storageService.createZipArchive) {
         const result = await storageService.createZipArchive(assets, organizationId, options);
         if (result.success) {
@@ -64,7 +64,7 @@ export class ZipDownloadStrategy {
    * @returns True if ZIP creation is supported
    */
   static isSupported(storageService: IStorageService): boolean {
-    const storageServiceAny = storageService as any;
-    return typeof storageServiceAny.createZipArchive === 'function';
+    const storageServiceExtended = storageService as IStorageService & { createZipArchive?: (...args: unknown[]) => Promise<unknown> };
+    return typeof storageServiceExtended.createZipArchive === 'function';
   }
 } 
