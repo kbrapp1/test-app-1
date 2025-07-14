@@ -37,7 +37,7 @@ describe('SignUpForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Spy on createClient to return mockSupabase instance
-    vi.spyOn(supabaseClient, 'createClient').mockReturnValue({ auth: { signUp: mockSignUp } } as any)
+    vi.spyOn(supabaseClient, 'createClient').mockReturnValue({ auth: { signUp: mockSignUp } } as unknown as ReturnType<typeof supabaseClient.createClient>)
   })
 
   it('should render the signup form elements', () => {

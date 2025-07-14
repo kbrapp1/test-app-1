@@ -49,7 +49,7 @@ export const useMultiSelectState = (options: UseMultiSelectOptions): MultiSelect
         setSelection(result.selection);
         onSelectionChange?.(result.selection);
       }
-    } catch (error) {
+    } catch {
       // Selection update failed - handled gracefully
     }
   }, [selection, updateSelectionUseCase, onSelectionChange]);

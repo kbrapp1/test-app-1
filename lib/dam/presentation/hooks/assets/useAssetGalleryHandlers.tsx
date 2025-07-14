@@ -32,7 +32,7 @@ interface UseAssetGalleryHandlersProps {
 export const useAssetGalleryHandlers = ({
   activeFolderId,
   enableNavigation,
-  items,
+  items: _items,
   folderNavigation,
   dialogManager,
   moveDialog,
@@ -50,7 +50,7 @@ export const useAssetGalleryHandlers = ({
   
   // React Query mutations
   const deleteAssetMutation = useAssetDelete();
-  const updateAssetMutation = useAssetUpdate();
+  const _updateAssetMutation = useAssetUpdate();
 
   // Simplified auth function - no more RPC calls
   const getAuthContext = useCallback(async () => {
@@ -125,7 +125,7 @@ export const useAssetGalleryHandlers = ({
     refreshGalleryData(true); // Force refresh to update folder names
   }, [refreshGalleryData]);
   
-  const handleAssetDeleted = useCallback((assetId: string) => {
+  const handleAssetDeleted = useCallback((_assetId: string) => {
     refreshGalleryData(true);
   }, [refreshGalleryData]);
 

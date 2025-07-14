@@ -18,12 +18,12 @@ interface GalleryDataProps {
   sortOrder?: string;
 }
 
-interface OptimisticHidingState {
-  optimisticallyHiddenItemIds: Set<string>;
-  addOptimisticallyHiddenItem: (itemId: string) => void;
-  removeOptimisticallyHiddenItem: (itemId: string) => void;
-  clearOptimisticallyHiddenItems: () => void;
-}
+// interface OptimisticHidingState {
+//   optimisticallyHiddenItemIds: Set<string>;
+//   addOptimisticallyHiddenItem: (itemId: string) => void;
+//   removeOptimisticallyHiddenItem: (itemId: string) => void;
+//   clearOptimisticallyHiddenItems: () => void;
+// }
 
 /**
  * useGalleryData - Presentation Layer State Hook

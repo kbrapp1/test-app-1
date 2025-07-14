@@ -37,5 +37,5 @@ export interface SwitchFieldProps<T extends FieldValues> extends BaseFieldProps<
 
 // Props for custom form fields
 export interface CustomFieldProps<T extends FieldValues> extends BaseFieldProps<T> {
-  render: (field: any) => ReactNode;
+  render: (field: { value: unknown; onChange: (value: unknown) => void; disabled?: boolean; error?: boolean }) => ReactNode;
 } 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Trash2Icon, LoaderIcon, Send, Key } from "lucide-react";
+import { Trash2Icon, LoaderIcon, Key } from "lucide-react";
 
 // Assuming OrgMember and RoleOption interfaces are defined similarly to OrgRoleManager
 // If they are in a shared types file, import them. Otherwise, redefine:

@@ -7,7 +7,7 @@
 
 import type { BulkMoveSelection, DragOperation, DragEndResult } from '../types';
 import { useFolderStore } from '@/lib/store/folderStore';
-import { useBulkMove } from '@/lib/dam/hooks/useAssets';
+// import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 
 export interface BulkMoveCallbacks {
   onToast: (toast: { title: string; description?: string; variant?: 'default' | 'destructive' }) => void;

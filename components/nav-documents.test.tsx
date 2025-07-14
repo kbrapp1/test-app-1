@@ -1,11 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Link from 'next/link';
 import { NavDocuments } from './nav-documents';
 import type { LucideIcon, LucideProps } from 'lucide-react';
 
 // Define mock icons BEFORE the lucide-react mock that uses them
-const MockDynamicIcon = (props: LucideProps) => <div data-testid="icon-dynamic">DocIcon</div>;
+const MockDynamicIcon = (_props: LucideProps) => <div data-testid="icon-dynamic">DocIcon</div>;
 
 // Mock next/link to inspect its props
 vi.mock('next/link', () => ({
@@ -21,10 +20,10 @@ vi.mock('lucide-react', async (importOriginal) => {
   const mod = await importOriginal<typeof import('lucide-react')>();
   return {
     ...mod,
-    MoreHorizontalIcon: (props: LucideProps) => <div data-testid="icon-more">MoreIcon</div>,
+    MoreHorizontalIcon: (_props: LucideProps) => <div data-testid="icon-more">MoreIcon</div>,
     // Other icons used in dropdown can be mocked if dropdown testing is added
-    FolderIcon: (props: LucideProps) => <div data-testid="icon-folder">FolderIcon</div>,
-    ShareIcon: (props: LucideProps) => <div data-testid="icon-share">ShareIcon</div>,
+    FolderIcon: (_props: LucideProps) => <div data-testid="icon-folder">FolderIcon</div>,
+    ShareIcon: (_props: LucideProps) => <div data-testid="icon-share">ShareIcon</div>,
   };
 });
 

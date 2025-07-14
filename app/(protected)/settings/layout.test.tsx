@@ -29,19 +29,19 @@ vi.mock('@/components/ui/button', () => ({
 
 // Mock cn utility
 vi.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: (string | undefined | null | boolean)[]) => args.filter(Boolean).join(' '),
 }));
 
 // Mock Badge component
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, variant, className }: any) => (
+  Badge: ({ children, variant, className }: { children: React.ReactNode; variant?: string; className?: string }) => (
     <span className={`badge ${variant} ${className || ''}`}>{children}</span>
   )
 }));
 
 // Mock lucide-react icons
 vi.mock('lucide-react', () => ({
-  Shield: ({ className }: any) => (
+  Shield: ({ className }: { className?: string }) => (
     <span className={`shield-icon ${className || ''}`}>🛡</span>
   )
 }));

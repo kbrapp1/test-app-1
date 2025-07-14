@@ -5,7 +5,7 @@ import {
   TouchSensor,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { useCallback } from 'react';
+// import { useCallback } from 'react';
 import { useAssetMove } from '@/lib/dam/hooks/useAssets';
 import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import type { useToast } from '@/components/ui/use-toast'; // Import type

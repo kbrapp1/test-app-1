@@ -13,7 +13,6 @@
 import { SanitizedContent } from '../../domain/value-objects/content/SanitizedContent';
 import { ContentValidationResult } from '../../domain/value-objects/content/ContentValidationResult';
 import { ValidationSummary } from '../../domain/value-objects/content/ValidationSummary';
-import { ContentType } from '../../domain/value-objects/content/ContentType';
 import { SanitizedContentDTO, ContentValidationDTO, ValidationSummaryDTO } from '../dto/SanitizedContentDTO';
 import { PromptSectionDTO, AssembledPromptDTO, PromptSummaryDTO, PromptEstimationDTO } from '../dto/PromptTemplateDTO';
 import { PromptSection, AssembledPrompt } from '../services/PromptAssemblyApplicationService';

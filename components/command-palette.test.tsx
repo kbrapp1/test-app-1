@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event' // Use userEvent for interactions
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CommandPalette } from './command-palette';
 
 // --- Mock Dependencies ---
@@ -42,12 +42,12 @@ vi.mock('@/components/ui/command', async (importOriginal) => {
   return {
     ...mod,
     // Mock CommandDialog to just render children when open
-    CommandDialog: ({ open, children, onOpenChange }: { open: boolean; children: React.ReactNode; onOpenChange: (open: boolean)=>void }) => {
+    CommandDialog: ({ open, children, onOpenChange: _ }: { open: boolean; children: React.ReactNode; onOpenChange: (open: boolean)=>void }) => {
       // Need to simulate the dialog being present in the DOM when open
       return open ? <div data-testid="command-dialog">{children}</div> : null;
     },
     // Mock others to simply render children or act as placeholders
-    CommandInput: (props: any) => <input data-testid="command-input" {...props} />,
+    CommandInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input data-testid="command-input" {...props} />,
     CommandList: ({ children }: { children: React.ReactNode }) => <div data-testid="command-list">{children}</div>,
     CommandEmpty: ({ children }: { children: React.ReactNode }) => <div data-testid="command-empty">{children}</div>,
     CommandGroup: ({ heading, children }: { heading?: string; children: React.ReactNode }) => (
@@ -56,7 +56,7 @@ vi.mock('@/components/ui/command', async (importOriginal) => {
         {children}
       </div>
     ),
-    CommandItem: ({ children, onSelect, ...props }: { children: React.ReactNode; onSelect?: () => void; [key: string]: any }) => (
+    CommandItem: ({ children, onSelect, ...props }: { children: React.ReactNode; onSelect?: () => void; [key: string]: unknown }) => (
       // Simulate item click calling onSelect
       (<button data-testid="command-item" onClick={onSelect} {...props}>
         {children}

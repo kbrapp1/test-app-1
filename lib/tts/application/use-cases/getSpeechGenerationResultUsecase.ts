@@ -1,6 +1,4 @@
 import { getReplicatePrediction } from '../../infrastructure/providers/ttsService';
-import { TtsPredictionSupabaseRepository } from '../../infrastructure/persistence/supabase/TtsPredictionSupabaseRepository';
-import { TtsPredictionService } from '../../domain/services/TtsPredictionService';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { PredictionStatus } from '../../domain';
 

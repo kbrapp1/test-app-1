@@ -11,10 +11,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WebsiteKnowledgeApplicationService } from '../WebsiteKnowledgeApplicationService';
-import { CrawlOrchestrationService } from '../CrawlOrchestrationService';
-import { BatchProcessingService } from '../BatchProcessingService';
-import { CrawledPagesQueryService } from '../CrawledPagesQueryService';
-import { WebsiteValidationService } from '../WebsiteValidationService';
+import { CrawlOrchestrationService as _CrawlOrchestrationService } from '../CrawlOrchestrationService';
+import { BatchProcessingService as _BatchProcessingService } from '../BatchProcessingService';
+import { CrawledPagesQueryService as _CrawledPagesQueryService } from '../CrawledPagesQueryService';
+import { WebsiteValidationService as _WebsiteValidationService } from '../WebsiteValidationService';
 import { TestDataFactory } from '../../../__tests__/test-utilities/TestDataFactory';
 import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 

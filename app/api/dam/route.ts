@@ -158,10 +158,10 @@ async function getHandler(
     size: asset.size,
     userId: asset.userId,
     userFullName: asset.userFullName,
-    tags: asset.tags?.map((tag: any) => ({ 
+    tags: asset.tags?.map((tag) => ({ 
       id: tag.id, 
       name: tag.name,
-      color: tag.colorName || tag.color || 'blue' // Access colorName property from Tag domain entity
+      color: tag.colorName || 'blue' // Access colorName property from Tag domain entity
     })) || [],
     folderName: asset.folderName,
   }));

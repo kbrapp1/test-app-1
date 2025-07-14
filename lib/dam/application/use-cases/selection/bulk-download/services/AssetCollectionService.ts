@@ -82,7 +82,7 @@ export class AssetCollectionService {
         });
       }
 
-          } catch (_error) {
+          } catch {
       // Error collecting assets from folder - return empty array
       // Errors are handled at the caller level
     }

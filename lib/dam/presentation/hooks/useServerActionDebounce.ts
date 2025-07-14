@@ -24,7 +24,7 @@ interface ServerActionState<T> {
 export function useServerActionDebounce<T = any, P extends any[] = any[]>(
   action: (...args: P) => Promise<T>,
   actionId: string,
-  options: UseServerActionDebounceOptions = {}
+  _options: UseServerActionDebounceOptions = {}
 ) {
   // Use React Query mutation for server actions
   const mutation = useApiMutation<T, any>(

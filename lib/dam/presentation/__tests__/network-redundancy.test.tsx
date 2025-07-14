@@ -179,7 +179,7 @@ describe('DAM Network Redundancy Tests', () => {
     
     // Mock fetch to avoid real HTTP requests
     originalFetch = global.fetch;
-    global.fetch = vi.fn().mockImplementation(async (url: string, options: any = {}) => {
+    global.fetch = vi.fn().mockImplementation(async (url: string, _options: any = {}) => {
       return Promise.resolve({
         ok: true,
         status: 200,

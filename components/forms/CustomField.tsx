@@ -20,8 +20,8 @@ interface CustomFieldProps<T extends FieldValues> {
   className?: string;
   hideError?: boolean;
   children: (field: { 
-    value: any; 
-    onChange: (value: any) => void; 
+    value: unknown; 
+    onChange: (value: unknown) => void; 
     disabled?: boolean;
     error?: boolean;
   }) => ReactNode;

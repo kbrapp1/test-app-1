@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import React, { useState } from 'react';
 import {
-    ColumnDef,
-    flexRender,
     getCoreRowModel,
     useReactTable,
     RowSelectionState,
 } from "@tanstack/react-table";
-import { LoaderIcon, Trash2Icon, Send, Key } from 'lucide-react';
 import { useIsMobile } from '@/components/ui/use-mobile';
 import { OrgMemberCard } from './OrgMemberCard'; // Assuming OrgMemberCard exists and accepts these props
 import type { OrgMember, RoleOption } from '@/types/settings';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useApiQuery, useSearchQuery } from '@/lib/infrastructure/query';
+import { useApiQuery } from '@/lib/infrastructure/query';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 

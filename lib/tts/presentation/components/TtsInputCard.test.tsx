@@ -9,7 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock VoiceSelector to simplify interaction
 vi.mock('./VoiceSelector', () => ({
-  VoiceSelector: ({ field }: { field: any }) => (
+  VoiceSelector: ({ field }: { field: { value: string; onChange: (value: string) => void } }) => (
     <input
       data-testid="voice-selector"
       value={field.value}

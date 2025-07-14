@@ -75,7 +75,7 @@ export function getOrgMembersTableColumns({
                 try {
                     const date = new Date(lastLogin);
                     return <span className="text-xs">{date.toLocaleString()}</span>;
-                } catch (e) {
+                } catch (_e) {
                     return <span className="text-xs text-destructive">Invalid Date</span>;
                 }
             },

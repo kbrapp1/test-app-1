@@ -76,7 +76,7 @@ export interface UseDamFiltersReturn extends DamFilterState {
  * }
  * ```
  */
-export function useDamFilters(currentFolderIdFromView: string | null): UseDamFiltersReturn {
+export function useDamFilters(_currentFolderIdFromView: string | null): UseDamFiltersReturn {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

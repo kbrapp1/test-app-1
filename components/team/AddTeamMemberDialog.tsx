@@ -22,7 +22,6 @@ import {
 import { AddTeamMemberForm } from './AddTeamMemberForm';
 import { useTeamMemberPermissions } from '@/lib/shared/access-control/hooks/usePermissions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { PlusCircle } from 'lucide-react';
 
 export function AddTeamMemberDialog() {
   const [open, setOpen] = useState(false);

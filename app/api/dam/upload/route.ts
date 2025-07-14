@@ -22,7 +22,7 @@ import { UploadAssetDTO } from '@/lib/dam/application/dto/UploadAssetDTO';
 async function postHandler(request: NextRequest, user: User) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
-    const folderIdInput = typeof (formData as any).get === 'function'
+    const folderIdInput = typeof formData.get === 'function'
         ? (formData.get('folderId') as string | null)
         : null;
     const folderId = folderIdInput === '' || folderIdInput === 'null' ? null : folderIdInput;

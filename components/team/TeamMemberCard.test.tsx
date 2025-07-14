@@ -68,10 +68,10 @@ vi.mock('@/lib/auth', () => ({
 // Mock next/image
 vi.mock('next/image', () => ({
     __esModule: true,
-    default: (props: any) => {
-        const { fill, priority, ...rest } = props;
+    default: (props: { src: string; alt: string; fill?: boolean; priority?: boolean }) => {
+        const { fill: _fill, priority: _priority, ...rest } = props;
         // eslint-disable-next-line @next/next/no-img-element
-        return <img {...rest} />;
+        return <img {...rest} alt={rest.alt || ""} />;
     },
 }));
 

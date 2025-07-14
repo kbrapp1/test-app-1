@@ -286,7 +286,7 @@ export class TtsValidationService {
   /**
    * Get maximum text length for a user (business rule)
    */
-  private static getMaxTextLengthForUser(userId: string): number {
+  private static getMaxTextLengthForUser(_userId: string): number {
     // This would typically check user's subscription tier
     // For now, return a default limit
     return 5000;
@@ -295,7 +295,7 @@ export class TtsValidationService {
   /**
    * Check if user is rate limited (business rule)
    */
-  private static isUserRateLimited(userId: string): boolean {
+  private static isUserRateLimited(_userId: string): boolean {
     // This would typically check against a rate limiting service
     // For now, always return false
     return false;

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProfileForm } from './profile-form';
+import type { User } from '@supabase/supabase-js';
 
 // Mock the toast hook
 const mockToast = vi.fn();
@@ -33,10 +34,7 @@ vi.mock('@/lib/organization/presentation/components/OrganizationSwitcher', () =>
 
 // Mock Supabase client for form submission
 const mockUpdate = vi.fn();
-const mockEq = vi.fn(() => ({ 
-  // Return a promise that resolves to success by default
-  then: (resolve: any) => resolve({ data: {}, error: null })
-}));
+const mockEq = vi.fn();
 mockUpdate.mockReturnValue({ eq: mockEq });
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -48,7 +46,7 @@ vi.mock('@/lib/supabase/client', () => ({
 import { useUserProfile } from '@/lib/auth';
 
 describe('ProfileForm', () => {
-  const mockUser = {
+  const mockUser: Partial<User> = {
     id: 'user-123',
     email: 'test@example.com',
     user_metadata: { name: 'Test User' },
@@ -59,6 +57,9 @@ describe('ProfileForm', () => {
     full_name: 'Test User',
     email: 'test@example.com',
     is_super_admin: false,
+    avatar_url: null,
+    created_at: '2023-01-01T00:00:00.000Z',
+    last_sign_in_at: '2023-01-01T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -66,16 +67,14 @@ describe('ProfileForm', () => {
     
     // Default mock: authenticated user with profile
     vi.mocked(useUserProfile).mockReturnValue({
-      user: mockUser as any,
-      profile: mockProfile as any,
+      user: mockUser as User,
+      profile: mockProfile,
       isLoading: false,
       refreshProfile: vi.fn(),
     });
 
     // Reset Supabase mocks
-    mockEq.mockImplementation(() => 
-      Promise.resolve({ data: {}, error: null })
-    );
+    mockEq.mockResolvedValue({ data: {}, error: null });
   });
 
   it('renders profile form with user data', async () => {
@@ -143,9 +142,7 @@ describe('ProfileForm', () => {
 
   it('handles form submission error', async () => {
     // Mock Supabase error
-    mockEq.mockImplementation(() => 
-      Promise.resolve({ data: null, error: { message: 'Database error' } })
-    );
+    mockEq.mockResolvedValueOnce({ data: null, error: { message: 'Database error' } });
 
     render(<ProfileForm />);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useApiQuery } from '@/lib/infrastructure/query';
 import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 

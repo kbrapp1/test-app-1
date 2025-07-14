@@ -5,7 +5,7 @@ export interface NetworkCall {
   url: string;
   method: string;
   timestamp: number;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
   stackTrace?: string;
 }
@@ -211,7 +211,7 @@ describe('NetworkCallMonitor', () => {
 
   beforeEach(() => {
     // Setup global fetch mock
-    vi.stubGlobal('fetch', mockFetch.mockImplementation(async (url: string, options: any = {}) => {
+    vi.stubGlobal('fetch', mockFetch.mockImplementation(async (url: string, options: RequestInit = {}) => {
       // Log options for mock fetch debugging when needed
       if (options && false) {
         console.log('Mock fetch options:', options);

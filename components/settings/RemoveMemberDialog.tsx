@@ -37,7 +37,7 @@ export function RemoveMemberDialog({
           <AlertDialogDescription>
             This action will remove{" "}
             <strong>{memberToRemove.name || memberToRemove.email}</strong>{" "}
-            from the organization. They will lose access to this organization's resources.
+            from the organization. They will lose access to this organization&apos;s resources.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

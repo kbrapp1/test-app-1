@@ -9,7 +9,6 @@ import { AssetSelectorModal } from '@/lib/dam/presentation/components/dialogs';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useTtsGeneration } from '../hooks/useTtsGeneration';
 import { useTtsDamIntegration } from '../hooks/useTtsDamIntegration';
-import { useTtsOperations } from '../hooks/useTtsOperations';
 import { DamAssetManagementAdapter } from '../../infrastructure/adapters/DamAssetManagementAdapter';
 import { TtsInputCard } from './TtsInputCard';
 import { TtsOutputCard } from './TtsOutputCard';

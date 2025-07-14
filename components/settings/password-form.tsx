@@ -48,7 +48,7 @@ export function PasswordForm() {
     mode: "onChange",
   });
 
-  const { reset: resetForm, formState: { isSubmitting, isLoading, isValid, errors }, handleSubmit, control } = form;
+  const { reset: resetForm, formState: { isSubmitting, isValid }, handleSubmit, control } = form;
 
   // Fetch user data on component mount
   useEffect(() => {

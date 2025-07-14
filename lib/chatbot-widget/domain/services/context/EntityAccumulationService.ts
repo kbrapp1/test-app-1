@@ -148,7 +148,7 @@ export class EntityAccumulationService {
     corrections: EntityCorrections,
     context: EntityMergeContext
   ): { updatedEntities: AccumulatedEntities; correctionsApplied: number; entitiesRemoved: number } {
-    let result = accumulated;
+    const result = accumulated;
     let correctionsApplied = 0;
     let entitiesRemoved = 0;
     

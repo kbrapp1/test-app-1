@@ -304,7 +304,7 @@ export type TtsResponse<T = any> = TtsSuccessResponse<T> | TtsErrorResponse;
 // Error handler utility functions
 export class TtsErrorHandler {
   // Convert any error to standardized TtsError
-  static standardizeError(error: unknown, context?: Record<string, unknown>): TtsError {
+  static standardizeError(error: unknown, _context?: Record<string, unknown>): TtsError {
     if (error instanceof TtsError) {
       return error;
     }

@@ -9,10 +9,10 @@ import { useCallback } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 
 import { DragOperationFactory } from './services/DragOperationFactory';
-import { DragValidationService } from './services/DragValidationService';
-import { SelectionStateService } from './services/SelectionStateService';
+// import { DragValidationService } from './services/DragValidationService';
+// import { SelectionStateService } from './services/SelectionStateService';
 import { MoveOperationsService } from './operations/MoveOperationsService';
-import type { DragEndParams, DragEndResult, UseDamDragAndDropProps } from './types';
+import type { DragEndResult, UseDamDragAndDropProps } from './types';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { useBulkMove } from '@/lib/dam/hooks/useAssets';
 

@@ -17,11 +17,9 @@ import { AIConfiguration } from '../../domain/value-objects/ai-configuration/AIC
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,
-  UpdateChatbotConfigDto,
   PersonalitySettingsDto,
   KnowledgeBaseDto,
   OperatingHoursDto,
-  LeadQualificationQuestionDto,
   AIConfigurationDto,
 } from '../dto/ChatbotConfigDto';
 

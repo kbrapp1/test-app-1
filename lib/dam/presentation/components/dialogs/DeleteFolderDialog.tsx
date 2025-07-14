@@ -42,11 +42,12 @@ export function DeleteFolderDialog({
   folderName, 
   onDeleted 
 }: DeleteFolderDialogProps) {
-  if (!isOpen) return null;
-  
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const router = useRouter();
   const { removeFolder, refetchFolderData } = useFolderStore();
   const folderDeleteMutation = useFolderDelete();
+  
+  if (!isOpen) return null;
 
   const handleConfirmDelete = async () => {
     try {

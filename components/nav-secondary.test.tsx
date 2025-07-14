@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
-import Link from 'next/link'
 import { NavSecondary } from './nav-secondary'
 import type { LucideIcon, LucideProps } from 'lucide-react'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -15,7 +14,7 @@ vi.mock('next/link', () => ({
 }));
 
 // Mock Lucide icons
-const MockDynamicIcon = (props: LucideProps) => <div data-testid="icon-dynamic">DynamicIcon</div>;
+const MockDynamicIcon = (_props: LucideProps) => <div data-testid="icon-dynamic">DynamicIcon</div>;
 vi.mock('lucide-react', async (importOriginal) => {
   const mod = await importOriginal<typeof import('lucide-react')>();
   return { ...mod };
@@ -26,7 +25,7 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@/components/ui/sidebar')>()
   return {
     ...mod,
-    SidebarGroup: ({ children, ...props }: { children: React.ReactNode, [key: string]: any }) => <div data-testid="sidebar-group-mock" {...props}>{children}</div>,
+    SidebarGroup: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => <div data-testid="sidebar-group-mock" {...props}>{children}</div>,
     SidebarGroupContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     SidebarMenu: ({ children }: { children: React.ReactNode }) => <ul>{children}</ul>,
     SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <li>{children}</li>,

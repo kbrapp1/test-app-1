@@ -36,6 +36,10 @@ export class PDFKnowledgeProcessor {
     chatbotConfigId: string
   ): Promise<KnowledgeItem[]> {
     try {
+      // SECURITY: Validate organization context for multi-tenant isolation
+      if (!organizationId || organizationId.trim().length === 0) {
+        throw new Error('Organization ID is required for PDF processing');
+      }
       // Step 1: Clean and normalize PDF content
       const cleanedContent = PDFChunkingService.cleanPDFContent(pdfContent);
       

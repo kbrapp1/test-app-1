@@ -49,9 +49,10 @@ describe('Team Members API Route - Core Logic', () => {
 
   describe('RPC Call Handling', () => {
     it('should handle successful member fetch', () => {
-      const processMembersResponse = (data: any, error: any) => {
+      const processMembersResponse = (data: unknown, error: unknown) => {
         if (error) {
-          throw new DatabaseError(`Failed to fetch organization members via RPC: ${error.message}`);
+          const errorObj = error as { message: string };
+          throw new DatabaseError(`Failed to fetch organization members via RPC: ${errorObj.message}`);
         }
         
         if (!data) {
@@ -71,9 +72,10 @@ describe('Team Members API Route - Core Logic', () => {
     });
 
     it('should handle RPC errors gracefully', () => {
-      const processMembersResponse = (data: any, error: any) => {
+      const processMembersResponse = (data: unknown, error: unknown) => {
         if (error) {
-          throw new DatabaseError(`Failed to fetch organization members via RPC: ${error.message}`);
+          const errorObj = error as { message: string };
+          throw new DatabaseError(`Failed to fetch organization members via RPC: ${errorObj.message}`);
         }
         return { members: data || [] };
       };
@@ -92,7 +94,7 @@ describe('Team Members API Route - Core Logic', () => {
 
   describe('Response Format Validation', () => {
     it('should return properly formatted response', () => {
-      const formatMembersResponse = (members: any[], organizationId: string) => {
+      const formatMembersResponse = (members: unknown[], organizationId: string) => {
         return {
           members,
           organizationId // Include for debugging
@@ -112,7 +114,7 @@ describe('Team Members API Route - Core Logic', () => {
     });
 
     it('should handle empty members list', () => {
-      const formatMembersResponse = (members: any[], organizationId: string) => {
+      const formatMembersResponse = (members: unknown[], organizationId: string) => {
         return {
           members: members || [],
           organizationId
@@ -127,8 +129,9 @@ describe('Team Members API Route - Core Logic', () => {
 
   describe('Authentication Context', () => {
     it('should validate user authentication requirements', () => {
-      const validateAuth = (user: any) => {
-        if (!user || !user.id) {
+      const validateAuth = (user: unknown) => {
+        const userObj = user as { id?: string } | null;
+        if (!userObj || !userObj.id) {
           throw new Error('Authentication required');
         }
         return user;
@@ -198,13 +201,16 @@ describe('Team Members API Route - Core Logic', () => {
 
   describe('Member Data Processing', () => {
     it('should process member data correctly', () => {
-      const processMemberData = (rawMembers: any[]) => {
-        return rawMembers.map(member => ({
-          id: member.id,
-          name: member.name || 'Unknown',
-          email: member.email || null,
+      const processMemberData = (rawMembers: unknown[]) => {
+        return rawMembers.map(member => {
+          const memberObj = member as { id: string; name?: string; email?: string };
+          return {
+            id: memberObj.id,
+            name: memberObj.name || 'Unknown',
+            email: memberObj.email || null,
           // Ensure required fields are present
-        }));
+          };
+        });
       };
 
       const rawMembers = [

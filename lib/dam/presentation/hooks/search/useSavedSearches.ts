@@ -163,7 +163,7 @@ export function useSavedSearches(): UseSavedSearchesReturn {
       } as SavedSearchProps);
       
       return new SavedSearch(result);
-    } catch (error) {
+    } catch {
       // Error is already handled by mutation's onError
       return null;
     }
@@ -171,11 +171,11 @@ export function useSavedSearches(): UseSavedSearchesReturn {
 
   const executeSearch = useCallback(async (
     savedSearchId: string, 
-    currentFolderId?: string | null
+    _currentFolderId?: string | null
   ) => {
     try {
       return await executeSearchMutation.mutateAsync(savedSearchId);
-    } catch (error) {
+    } catch {
       // Error is already handled by mutation's onError
       return null;
     }

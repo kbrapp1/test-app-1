@@ -1,5 +1,3 @@
-import { ProviderFactory } from '@/lib/infrastructure/providers/registry/ProviderFactory';
-import { ProviderType } from '@/lib/infrastructure/providers/registry/types';
 import { ReplicateProvider, ReplicatePrediction } from '@/lib/infrastructure/providers/replicate/ReplicateProvider';
 import { SpeechRequest, SpeechResult } from '../../../domain';
 

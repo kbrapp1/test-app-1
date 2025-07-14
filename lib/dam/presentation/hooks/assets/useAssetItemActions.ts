@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GetAssetDownloadUrlUseCase } from '../../../application/use-cases/assets/GetAssetDownloadUrlUseCase';
 import { SupabaseAssetRepository } from '../../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseStorageService } from '../../../infrastructure/storage/SupabaseStorageService';
-import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+// import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { type Asset as DomainAsset } from '@/lib/dam/domain/entities/Asset';
 import { RenameAssetUseCase } from '../../../application/use-cases/assets/RenameAssetUseCase';
 import { MoveAssetUseCase } from '../../../application/use-cases/assets/MoveAssetUseCase';

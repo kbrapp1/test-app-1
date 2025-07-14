@@ -106,7 +106,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     return await this.treeService.getFolderChildren(folderId, organizationId);
   }
 
-  async getPath(folderId: string, organizationId: string): Promise<string> {
+  async getPath(folderId: string, _organizationId: string): Promise<string> {
     return await this.treeService.getFolderPathString(folderId);
   }
 

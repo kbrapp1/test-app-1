@@ -8,7 +8,7 @@ import type { TeamMember } from '@/types/team';
 import { TeamMemberCard } from './TeamMemberCard';
 
 interface TeamMemberListProps {
-  members: TeamMember[];
+  members: TeamMember[] | null | undefined;
 }
 
 export function TeamMemberList({ members }: TeamMemberListProps) {

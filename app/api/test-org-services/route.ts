@@ -21,31 +21,35 @@ export async function GET(_request: NextRequest) {
     const results = {
       user_id: user.id,
       user_email: user.email,
-      tests: {} as any
+      tests: {} as Record<string, unknown>
     };
 
     try {
       results.tests.getCurrentContext = await contextService.getCurrentContext();
-    } catch (error: any) {
-      results.tests.getCurrentContext = { error: error.message, code: error.code };
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string };
+      results.tests.getCurrentContext = { error: err.message || 'Unknown error', code: err.code };
     }
 
     try {
       results.tests.getAccessibleOrganizations = await permissionService.getUserAccessibleOrganizations();
-    } catch (error: any) {
-      results.tests.getAccessibleOrganizations = { error: error.message, code: error.code };
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string };
+      results.tests.getAccessibleOrganizations = { error: err.message || 'Unknown error', code: err.code };
     }
 
     try {
       results.tests.getActiveOrganizationId = await permissionService.getActiveOrganizationId();
-    } catch (error: any) {
-      results.tests.getActiveOrganizationId = { error: error.message, code: error.code };
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string };
+      results.tests.getActiveOrganizationId = { error: err.message || 'Unknown error', code: err.code };
     }
 
     try {
       results.tests.getAuditSummary = await _auditService.getAuditSummary();
-    } catch (error: any) {
-      results.tests.getAuditSummary = { error: error.message, code: error.code };
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string };
+      results.tests.getAuditSummary = { error: err.message || 'Unknown error', code: err.code };
     }
 
     return NextResponse.json(results);
@@ -72,9 +76,8 @@ export async function POST(request: NextRequest) {
 
     const contextService = new OrganizationContextService();
     const permissionService = new PermissionValidationService();
-    const auditService = new AuditTrailService();
 
-    let result: any;
+    let result: unknown;
 
     switch (action) {
       case 'hasAccess':
@@ -108,12 +111,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ result });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Test API POST error:', error);
+    const err = error as { message?: string; code?: string };
     return NextResponse.json(
       { 
-        error: error.message || 'Internal server error',
-        code: error.code 
+        error: err.message || 'Internal server error',
+        code: err.code 
       },
       { status: 500 }
     );

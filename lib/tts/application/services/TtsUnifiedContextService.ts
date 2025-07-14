@@ -14,7 +14,6 @@ import { User } from '@supabase/supabase-js';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { OrganizationContextService } from '@/lib/organization/domain/services/OrganizationContextService';
 import { PermissionValidationService } from '@/lib/organization/domain/services/PermissionValidationService';
-import { ClientSideOrganizationCache } from '@/lib/organization/infrastructure/ClientSideOrganizationCache';
 
 // Internal interface for unified context result
 export interface TtsUnifiedContextResult {
@@ -98,7 +97,6 @@ export class TtsUnifiedContextService {
       // Initialize services with server-side client
       const organizationService = new OrganizationContextService(supabaseServer);
       const permissionService = new PermissionValidationService(supabaseServer);
-      const cacheService = new ClientSideOrganizationCache();
 
       // Execute all three services in parallel (was 3 separate API calls)
       const [

@@ -10,7 +10,7 @@ import { useDamTagFilterHandler } from '../../../hooks/search/useDamTagFilterHan
 import { SearchInputHandler } from '../services/SearchInputHandler';
 import { SavedSearchHandler } from '../services/SavedSearchHandler';
 import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
-import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+// import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
 interface UseSearchBarStateProps {
   currentFolderId: string | null;

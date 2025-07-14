@@ -37,7 +37,11 @@ export async function GET(request: NextRequest) {
         });
         
         // Cast to concrete implementation to access additional methods
-        const vectorService = knowledgeService as any;
+        const vectorService = knowledgeService as unknown as {
+          getVectorCacheStats(): unknown;
+          isVectorCacheReady(): boolean;
+          checkHealthStatus(): Promise<unknown>;
+        };
         
         const vectorStats = vectorService.getVectorCacheStats();
         const isReady = vectorService.isVectorCacheReady();
@@ -68,9 +72,9 @@ export async function GET(request: NextRequest) {
     const recommendations = [];
     
     if (vectorCacheHealth?.stats) {
-      const stats = vectorCacheHealth.stats;
+      const stats = vectorCacheHealth.stats as { memoryUtilization?: number; cacheHitRate?: number };
       
-      if (stats.memoryUtilization > 90) {
+      if (typeof stats.memoryUtilization === 'number' && stats.memoryUtilization > 90) {
         recommendations.push({
           type: 'memory',
           severity: 'high',
@@ -79,7 +83,7 @@ export async function GET(request: NextRequest) {
         });
       }
       
-      if (stats.cacheHitRate < 0.8) {
+      if (typeof stats.cacheHitRate === 'number' && stats.cacheHitRate < 0.8) {
         recommendations.push({
           type: 'performance',
           severity: 'medium',

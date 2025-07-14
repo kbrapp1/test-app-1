@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Mock } from 'vitest';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
 
 // Mock Supabase client creation to prevent initialization errors
@@ -42,38 +43,40 @@ vi.mock('@/lib/auth/presentation/actions/serverActions', () => ({
 
 // Mock dependencies
 vi.mock('@/lib/supabase/auth-middleware', () => ({
-  withAuth: (handler: any) => handler,
+  withAuth: (handler: (...args: unknown[]) => unknown) => handler,
 }));
 
 vi.mock('@/lib/middleware/error', () => ({
-  withErrorHandling: (handler: any) => {
-    return async (...args: any[]) => {
+  withErrorHandling: (handler: (...args: unknown[]) => unknown) => {
+    return async (...args: unknown[]) => {
       try {
         return await handler(...args);
-      } catch (error: any) {
+      } catch (error: unknown) {
         const { NextResponse } = await import('next/server');
         
+        const errorObj = error as { name?: string; message?: string; statusCode?: number; constructor: { name: string } };
+        
         // Handle ValidationError (400)
-        if (error.name === 'ValidationError' || error.constructor.name === 'ValidationError') {
+        if (errorObj.name === 'ValidationError' || errorObj.constructor.name === 'ValidationError') {
           return NextResponse.json(
-            { error: error.message },
+            { error: errorObj.message },
             { status: 400 }
           );
         }
         
         // Handle DatabaseError (500)
-        if (error.name === 'DatabaseError' || error.constructor.name === 'DatabaseError') {
+        if (errorObj.name === 'DatabaseError' || errorObj.constructor.name === 'DatabaseError') {
           return NextResponse.json(
-            { error: error.message },
+            { error: errorObj.message },
             { status: 500 }
           );
         }
         
         // Handle other AppErrors
-        if (error.statusCode) {
+        if (errorObj.statusCode) {
           return NextResponse.json(
-            { error: error.message },
-            { status: error.statusCode }
+            { error: errorObj.message },
+            { status: errorObj.statusCode }
           );
         }
         
@@ -133,8 +136,8 @@ import { getActiveOrganizationId } from '@/lib/auth/presentation/actions/serverA
 import { GET } from './route';
 
 describe('DAM API Route', () => {
-  const mockUser = { id: 'user-123', email: 'test@example.com' };
-  const mockSupabase = {};
+  const mockUser: User = { id: 'user-123', email: 'test@example.com' } as User;
+  const mockSupabase = {} as SupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -143,7 +146,7 @@ describe('DAM API Route', () => {
 
   it('should return basic data correctly', async () => {
     const request = new NextRequest('http://localhost:3000/api/dam');
-    const response = await GET(request, mockUser as any, mockSupabase as any);
+    const response = await GET(request, mockUser, mockSupabase);
     
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -152,13 +155,13 @@ describe('DAM API Route', () => {
 
   it('should include tag colors in asset responses', async () => {
     const request = new NextRequest('http://localhost:3000/api/dam');
-    const response = await GET(request, mockUser as any, mockSupabase as any);
+    const response = await GET(request, mockUser, mockSupabase);
     
     expect(response.status).toBe(200);
     const data = await response.json();
     
     // Find the asset in the response
-    const asset = data.data.find((item: any) => item.type === 'asset' && item.id === 'asset-1');
+    const asset = data.data.find((item: { type: string; id: string }) => item.type === 'asset' && item.id === 'asset-1');
     expect(asset).toBeDefined();
     
     // Check that tags include color property
@@ -177,7 +180,7 @@ describe('DAM API Route', () => {
 
   it('returns 400 error for negative limit', async () => {
     const request = new NextRequest('http://localhost:3000/api/dam?limit=-1');
-    const response = await GET(request, mockUser as any, mockSupabase as any);
+    const response = await GET(request, mockUser, mockSupabase);
     
     expect(response.status).toBe(400);
     const data = await response.json();
@@ -189,7 +192,7 @@ describe('DAM API Route', () => {
     (getActiveOrganizationId as Mock).mockResolvedValue(null);
 
     const request = new NextRequest('http://localhost:3000/api/dam');
-    const response = await GET(request, mockUser as any, mockSupabase as any);
+    const response = await GET(request, mockUser, mockSupabase);
     
     expect(response.status).toBe(500);
     const data = await response.json();

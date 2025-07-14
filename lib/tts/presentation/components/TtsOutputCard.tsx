@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WaveformAudioPlayer } from "@/components/ui/waveform-audio-player";
 import { saveAs } from 'file-saver';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TtsOutputCardProps {
   audioUrl: string | null;
@@ -37,7 +37,7 @@ export function TtsOutputCard({
   onDeletePrediction
 }: TtsOutputCardProps) {
   const { toast } = useToast();
-  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [_playbackError, setPlaybackError] = useState<string | null>(null);
 
   useEffect(() => {
     setPlaybackError(null);

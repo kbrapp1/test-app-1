@@ -110,7 +110,7 @@ export class TtsErrorBoundary extends Component<TtsErrorBoundaryProps, TtsErrorB
                   <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                     <p className="text-sm text-yellow-800">
                       <strong>Security Notice:</strong> This appears to be an authentication or authorization issue. 
-                      Please ensure you're logged in and have proper access to this organization.
+                      Please ensure you&apos;re logged in and have proper access to this organization.
                     </p>
                   </div>
                 )}

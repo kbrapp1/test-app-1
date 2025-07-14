@@ -15,7 +15,6 @@ import { ChatSession } from '../../domain/entities/ChatSession';
 import {
   ChatSessionDto,
   CreateChatSessionDto,
-  UpdateChatSessionDto,
   SessionContextDto,
   LeadQualificationStateDto,
 } from '../dto/ChatSessionDto';

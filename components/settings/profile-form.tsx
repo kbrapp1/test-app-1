@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OrganizationSwitcher } from "@/lib/organization/presentation/components/OrganizationSwitcher";
 import { SuperAdminBadge } from "@/components/auth/SuperAdminBadge";
-import { Mail, User as UserIcon, Building2, Shield, Crown, Users } from 'lucide-react';
+import { Mail, Building2, Shield, Users } from 'lucide-react';
 import { useOrganization } from "@/lib/organization/application/providers/OrganizationProvider";
 import { useUserProfile } from "@/lib/auth";
 import { createClient } from '@/lib/supabase/client';
@@ -130,7 +130,7 @@ export function ProfileForm() {
       await refreshProfile(); // Refresh the shared profile state
       form.reset({ name: data.name });
       
-    } catch (error) {
+    } catch (_error) {
       toast({ variant: "destructive", title: "Error", description: "Failed to update profile. Please try again." });
     } finally {
       setIsFormLoading(false);

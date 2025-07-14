@@ -59,7 +59,7 @@ export function useBulkDownloadHandler({
             const zipBlob = new Blob([bytes], { type: 'application/zip' });
             saveAs(zipBlob, result.zipFileName);
             
-          } catch (conversionError) {
+          } catch {
             toast.error('Download failed', {
               description: 'Failed to process ZIP file data. Please try again.'
             });
@@ -75,7 +75,7 @@ export function useBulkDownloadHandler({
         // Generate success message based on selection
         const assetCount = selectedAssets.length;
         const folderCount = selectedFolders.length;
-        const totalItems = assetCount + folderCount;
+        const _totalItems = assetCount + folderCount;
         const isSingleAsset = assetCount === 1 && folderCount === 0;
         
         let description = '';
@@ -97,7 +97,7 @@ export function useBulkDownloadHandler({
           description: result.error || 'Failed to download items. Please try again.'
         });
       }
-    } catch (error) {
+          } catch {
       toast.error('Download failed', {
         description: 'An unexpected error occurred. Please try again.'
       });

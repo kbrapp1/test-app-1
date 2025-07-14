@@ -1,9 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AddTeamMemberDialog } from './AddTeamMemberDialog';
-import { UserProfileProvider } from '@/lib/auth';
-import { OrganizationProvider } from '@/lib/organization/application/providers/OrganizationProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock Next.js router
@@ -22,7 +20,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock the permissions hook
-let mockPermissions = {
+const mockPermissions = {
   canCreate: true,
   canUpdate: true,
   canDelete: true,

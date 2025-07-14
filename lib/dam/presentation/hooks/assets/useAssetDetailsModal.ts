@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PlainTag } from '../../../application/dto/DamApiRequestDto';
-import { AssetDetailsDto } from '../../../application/use-cases/assets/GetAssetDetailsUseCase';
+// import { AssetDetailsDto } from '../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { AssetTagService } from '../../../application/services/AssetTagService';
 import { AssetOperationsService } from '../../../application/services/AssetOperationsService';
 import { useAssetDetails, useAssetDelete, useAssetUpdate } from '../../../hooks/useAssets';
@@ -103,7 +103,7 @@ export const useAssetDetailsModal = ({
       setState(prev => ({ ...prev, editMode: false, updating: false }));
       onAssetUpdated?.();
       AssetOperationsService.showRenameSuccess(state.editName.trim());
-    } catch (err) {
+    } catch {
       setState(prev => ({ ...prev, updating: false }));
       AssetOperationsService.showError('rename asset');
     }
@@ -117,7 +117,7 @@ export const useAssetDetailsModal = ({
       onAssetDeleted?.(asset.id);
       onOpenChange(false);
       AssetOperationsService.showDeleteSuccess();
-    } catch (err) {
+    } catch {
       AssetOperationsService.showError('delete asset');
     }
   }, [asset, deleteAssetMutation, onAssetDeleted, onOpenChange]);
@@ -128,7 +128,7 @@ export const useAssetDetailsModal = ({
     try {
       AssetOperationsService.downloadAsset(asset.downloadUrl, asset.name);
       AssetOperationsService.showDownloadSuccess(asset.name);
-    } catch (err) {
+    } catch {
       AssetOperationsService.showError('download');
     }
   }, [asset]);
@@ -141,7 +141,7 @@ export const useAssetDetailsModal = ({
       setState(prev => ({ ...prev, copiedUrl: true }));
       setTimeout(() => setState(prev => ({ ...prev, copiedUrl: false })), 2000);
       AssetOperationsService.showCopyUrlSuccess();
-    } catch (err) {
+    } catch {
       AssetOperationsService.showError('copy URL');
     }
   }, [asset]);

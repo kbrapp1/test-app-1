@@ -20,7 +20,7 @@ export function useBulkTagHandler({
   onClose
 }: UseBulkTagHandlerParams) {
 
-  const handleBulkTag = useCallback(async (tagIds: string[]) => {
+  const handleBulkTag = useCallback(async (_tagIds: string[]) => {
     try {
       // TODO: Implement bulk tag use case when available
       // For now, just complete the operation

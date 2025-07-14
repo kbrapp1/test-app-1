@@ -1,7 +1,7 @@
 import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
 import { DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
-import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
+// import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
 
 // Presentation Layer Interfaces for DAM Components
 // These define the contracts between the domain and UI layers

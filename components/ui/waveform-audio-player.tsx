@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { Button } from './button';
 import { Slider } from "@/components/ui/slider";
-import { PlayIcon, PauseIcon, Loader2Icon, Volume2Icon, VolumeXIcon } from 'lucide-react';
+import { PlayIcon, PauseIcon, Loader2Icon } from 'lucide-react';
 import { useWaveSurfer } from './useWaveSurfer';
 
 interface WaveformAudioPlayerProps {

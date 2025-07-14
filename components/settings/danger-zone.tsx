@@ -36,7 +36,7 @@ export function DangerZone() {
       // If successful, likely redirect or update UI state
       // router.push('/goodbye'); // Example redirect
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete account (placeholder):', error);
       toast({ variant: "destructive", title: "Error", description: "Could not delete account. Please try again." });
     } finally {

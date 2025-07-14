@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AddTeamMemberForm } from './AddTeamMemberForm';
@@ -8,12 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import React from 'react';
 // Import constants from the shared schema file
-import { ACCEPTED_IMAGE_TYPES, MAX_FILE_SIZE } from '@/lib/schemas/team';
+import { MAX_FILE_SIZE } from '@/lib/schemas/team';
 
 // --- Mocks ---
 // Mock the toast hook
@@ -60,7 +58,7 @@ global.fetch = mockFetch;
 
 // Mock next/image
 vi.mock('next/image', () => ({
-    default: (props: any) => <img {...props} />,
+    default: (props: { src: string; alt: string; width?: number; height?: number }) => <img src={props.src} alt={props.alt || ""} />,
 }));
 // --- End Mocks ---
 

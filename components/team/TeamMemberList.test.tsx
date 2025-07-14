@@ -53,12 +53,12 @@ describe('TeamMemberList', () => {
     });
 
     it('renders the empty state message when members is null', () => {
-        render(<TeamMemberList members={null as any} />); // Test null
+        render(<TeamMemberList members={null} />); // Test null
         expect(screen.getByText(/No team members found/i)).toBeInTheDocument();
     });
 
     it('renders the empty state message when members is undefined', () => {
-        render(<TeamMemberList members={undefined as any} />); // Test undefined
+        render(<TeamMemberList members={undefined} />); // Test undefined
         expect(screen.getByText(/No team members found/i)).toBeInTheDocument();
     });
 

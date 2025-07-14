@@ -38,7 +38,7 @@ export async function getTtsHistory(
     }
     
     const finalUserId = userId;
-    const finalOrgId = organizationId;
+    const _finalOrgId = organizationId;
 
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : DEFAULT_PAGE_LIMIT;

@@ -35,7 +35,7 @@ export class BusinessContextScoreService {
     conversationPhase: string
   ): number {
     // Start with lead score as primary business indicator (0-100 scale)
-    let businessScore = Math.min(1.0, leadScore / 100);
+    const businessScore = Math.min(1.0, leadScore / 100);
     
     // Conversation phase influence (business-critical phases get higher scores)
     const phaseScore = this.PHASE_SCORES[conversationPhase] || 0.5;

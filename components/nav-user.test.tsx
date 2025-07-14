@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { NavUser } from './nav-user';
+import type { User } from '@supabase/supabase-js';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { PerformanceMonitorProvider } from '@/lib/monitoring/presentation/providers/performance-analysis/PerformanceMonitorProvider';
 
@@ -97,7 +98,7 @@ describe('NavUser', () => {
     };
 
     vi.mocked(useUserProfile).mockReturnValue({
-      user: mockUser as any,
+      user: mockUser as unknown as User,
       profile: null,
       isLoading: false,
       refreshProfile: vi.fn(),

@@ -16,7 +16,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export async function retryAsyncFunction<T>(
   fn: () => Promise<T>,
-  shouldRetry: (error: any, attempt: number) => boolean,
+  shouldRetry: (error: unknown, attempt: number) => boolean,
   maxAttempts: number = 3,
   initialDelayMs: number = 100
 ): Promise<T> {
@@ -24,7 +24,7 @@ export async function retryAsyncFunction<T>(
   while (attempt <= maxAttempts) {
     try {
       return await fn(); // Attempt the operation
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (attempt === maxAttempts || !shouldRetry(error, attempt)) {
         // If it's the last attempt or shouldRetry returns false, throw the error
         throw error;
@@ -32,7 +32,8 @@ export async function retryAsyncFunction<T>(
 
       // Calculate delay using exponential backoff
       const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
-      console.warn(`Attempt ${attempt} failed. Retrying in ${delayMs}ms... Error: ${error?.message || error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Attempt ${attempt} failed. Retrying in ${delayMs}ms... Error: ${errorMessage}`);
       
       // Wait for the calculated delay
       await new Promise(resolve => setTimeout(resolve, delayMs));

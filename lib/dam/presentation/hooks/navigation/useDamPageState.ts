@@ -45,7 +45,7 @@ export function useDamPageState({
   const [currentFolderId, setCurrentFolderId] = useState(initialCurrentFolderId);
   const [gallerySearchTerm, setGallerySearchTerm] = useState(initialCurrentSearchTerm);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, _setRefreshKey] = useState(0);
 
   // Sync with initial props when they change
   useEffect(() => {

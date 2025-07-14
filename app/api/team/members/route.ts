@@ -71,7 +71,7 @@ async function getHandler(
   } catch (error) {
     console.error('[TEAM_MEMBERS_GET_RPC] CATCH_BLOCK_ERROR:', error);
     let errorMessage = 'Internal server error';
-    let errorDetails: any = {};
+    let errorDetails: Record<string, unknown> = {};
     if (error instanceof Error) {
       errorMessage = error.message;
       errorDetails = { name: error.name, message: error.message, stack: error.stack };

@@ -25,7 +25,7 @@ export class DateFormatters {
         day: 'numeric',
         year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
-    } catch (error) {
+    } catch {
       return 'Unknown date';
     }
   }
@@ -43,7 +43,7 @@ export class DateFormatters {
         month: 'long',
         day: 'numeric'
       });
-    } catch (error) {
+    } catch {
       return 'Invalid date';
     }
   }

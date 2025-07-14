@@ -33,7 +33,7 @@ vi.mock('@/components/ui/popover', () => ({
 
 vi.mock('@/components/ui/command', () => ({
   Command: ({ children, className }: { children: React.ReactNode; className?: string }) => <div data-testid="command" className={className}>{children}</div>,
-  CommandInput: (props: any) => <input data-testid="command-input" {...props} />,
+  CommandInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input data-testid="command-input" {...props} />,
   CommandEmpty: ({ children }: { children: React.ReactNode }) => <div data-testid="command-empty">{children}</div>,
   CommandGroup: ({ children, heading }: { children: React.ReactNode; heading?: string }) => (
     <div data-testid="command-group">
@@ -75,7 +75,7 @@ const mockField = {
   ref: () => {},
 };
 
-const mockSetValue = vi.fn() as MockedFunction<any>;
+const mockSetValue = vi.fn() as MockedFunction<(name: string, value: string) => void>;
 
 // Helper to reset mocks before each test
 const resetMocks = () => {
@@ -96,12 +96,12 @@ describe('VoiceSelector', () => {
     return <FormProvider {...methods}>{children}</FormProvider>;
   };
 
-  const renderComponent = (fieldOverrides = {}, formSetValueParam?: MockedFunction<any>, provider?: string) => {
+  const renderComponent = (fieldOverrides = {}, formSetValueParam?: MockedFunction<(name: string, value: string) => void>, provider?: string) => {
     const mergedField = { ...mockField, ...fieldOverrides };
     return render(
       <TestWrapper>
         <VoiceSelector
-          field={mergedField as any} 
+          field={mergedField} 
           setValue={formSetValueParam || mockSetValue}
           selectedProvider={provider || "test-provider"}
         />

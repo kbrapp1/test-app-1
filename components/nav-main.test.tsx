@@ -1,11 +1,10 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
-import Link from 'next/link'
 import { NavMain } from './nav-main'
-import type { LucideIcon, LucideProps } from 'lucide-react'
+import type { LucideProps } from 'lucide-react'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { MailIcon, PlusCircleIcon, LayoutDashboardIcon, FolderIcon, FileTextIcon, UploadCloudIcon, UsersIcon, FileCodeIcon, Volume2Icon, BookTextIcon } from 'lucide-react'
+import { LayoutDashboardIcon, FolderIcon, FileTextIcon, UploadCloudIcon, UsersIcon, FileCodeIcon, Volume2Icon, BookTextIcon } from 'lucide-react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import React from 'react'
 
@@ -36,22 +35,22 @@ vi.mock('@/lib/auth/super-admin', () => ({
 // Mock next/link to allow finding the inner button/content
 vi.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: any) => {
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => {
     // Use a span instead of an anchor to avoid nested anchors
     return <span className="next-link-mock" data-href={href} role="link">{children}</span>;
   },
 }));
 
 // Define a mock icon component *outside* the vi.mock factory
-const MockDynamicIcon = (props: LucideProps) => <div data-testid="icon-dynamic">DynamicIcon</div>;
+const _MockDynamicIcon = (_props: LucideProps) => <div data-testid="icon-dynamic">DynamicIcon</div>;
 
 vi.mock('lucide-react', async (importOriginal) => {
   const mod = await importOriginal<typeof import('lucide-react')>();
   return {
     ...mod,
     // Simplify mock to avoid prop conflicts
-    PlusCircleIcon: (props: LucideProps) => <div data-testid="icon-plus-circle">PlusCircleIcon</div>,
-    MailIcon: (props: LucideProps) => <div data-testid="icon-mail">MailIcon</div>,
+    PlusCircleIcon: (_props: LucideProps) => <div data-testid="icon-plus-circle">PlusCircleIcon</div>,
+    MailIcon: (_props: LucideProps) => <div data-testid="icon-mail">MailIcon</div>,
     // Export the mock component under a name if needed, but we'll use the direct reference
   };
 });
@@ -77,7 +76,7 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
 
 // Mock Button component from shadcn/ui
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: { children: React.ReactNode, [key: string]: any }) => <button {...props}>{children}</button>
+  Button: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => <button {...props}>{children}</button>
 }))
 
 // Unmock Accordion components explicitly

@@ -60,8 +60,8 @@ export function AddMemberDialog({ isOpen, onClose, roles, onMemberInvited, organ
         <DialogHeader>
           <DialogTitle>Add Organization Member</DialogTitle>
           <DialogDescription>
-            Invite someone to join your organization. If they don't have an account,
-            they'll be sent an invitation email.
+            Invite someone to join your organization. If they don&apos;t have an account,
+            they&apos;ll be sent an invitation email.
           </DialogDescription>
         </DialogHeader>
         

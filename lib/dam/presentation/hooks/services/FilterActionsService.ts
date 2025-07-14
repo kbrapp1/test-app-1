@@ -4,8 +4,7 @@ import {
   DateFilterConfig, 
   SizeFilterConfig, 
   SortByValue, 
-  SortOrderValue,
-  FilterUpdateParams 
+  SortOrderValue
 } from './FilterTypes';
 import { UrlParameterService } from './UrlParameterService';
 

@@ -1,10 +1,9 @@
 'use client';
 import React, { useState, useCallback } from 'react';
 import { Clock } from 'lucide-react';
-import { TtsHistoryPanel, TtsInterface, type TtsFormInitializationData, SaveAsDialog, useHeadlessAudioPlayer, useTtsSaveAsDialog, useTtsOperations } from '@/lib/tts';
+import { TtsHistoryPanel, TtsInterface, type TtsFormInitializationData, useHeadlessAudioPlayer, useTtsSaveAsDialog, useTtsOperations } from '@/lib/tts';
 import { TtsHistoryItem } from '@/lib/tts/presentation/types/TtsPresentation';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { useTtsUnifiedContext } from '../hooks/useTtsUnifiedContext';
 import { TtsErrorBoundary } from './TtsErrorBoundary';
 import { InsufficientPermissions, FeatureNotAvailable } from '@/components/access-guards';
@@ -41,9 +40,9 @@ export function TtsPageClient({}: TtsPageClientProps = {}) {
   // UNIFIED OPERATIONS: Use the TTS operations hook for all CRUD operations
   const {
     saveToDam,
-    saveAudioToDam,
-    isSavingToDam,
-    saveError
+    saveAudioToDam: _saveAudioToDam,
+    isSavingToDam: _isSavingToDam,
+    saveError: _saveError
   } = useTtsOperations({
     organizationId: activeOrganizationId,
     isHistoryOpen,

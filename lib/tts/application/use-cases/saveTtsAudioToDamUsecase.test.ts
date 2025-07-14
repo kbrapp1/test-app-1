@@ -72,9 +72,9 @@ vi.mock('../../infrastructure/persistence/supabase/TtsPredictionSupabaseReposito
 }));
 
 vi.mock('crypto', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal() as typeof import('node:crypto');
   return {
-    ...(actual as any),
+    ...actual,
     randomUUID: mockRandomUUIDSpy,
   };
 });
