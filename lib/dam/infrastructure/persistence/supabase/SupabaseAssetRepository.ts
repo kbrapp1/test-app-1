@@ -43,7 +43,7 @@ export class SupabaseAssetRepository implements IAssetRepository {
     const data = await this.queryExecutor.executeFindById(id);
     if (!data) return null;
     
-    return await this.dataProcessor.processRawDataForFindById(data);
+    return await this.dataProcessor.processRawDataForFindById(data as unknown as Record<string, unknown>);
   }
 
   async findByFolderId(
@@ -63,17 +63,58 @@ export class SupabaseAssetRepository implements IAssetRepository {
         return []; // No assets if type filter is 'folder'
       }
       
-             query = this.queryBuilder.applyTypeFilter(query, filters.type);
-       query = AssetDateFilter.applyDateFilters(query, filters);
-       query = this.queryBuilder.applyOwnerFilter(query, filters.ownerId);
-       query = this.queryBuilder.applySizeFilter(query, filters.sizeOption, filters.sizeMin, filters.sizeMax);
+      query = this.queryBuilder.applyTypeFilter(query, filters.type);
+      query = AssetDateFilter.applyDateFilters(query, filters);
+      query = this.queryBuilder.applyOwnerFilter(query, filters.ownerId);
+      query = this.queryBuilder.applySizeFilter(query, filters.sizeOption, filters.sizeMin, filters.sizeMax);
     }
 
     // Apply sorting
     query = this.queryBuilder.applySorting(query, sortParams);
 
     const data = await this.queryExecutor.executeQuery(query, `fetching assets for folder ${folderId} with filters/sort`);
-    return await this.dataProcessor.processRawDataArray(data);
+    return await this.dataProcessor.processRawDataArray(data as unknown as Record<string, unknown>[]);
+  }
+
+  async findBySearchCriteria(criteria: AssetSearchCriteria): Promise<Asset[]> {
+    // Build query using query builder service
+    let query = this.queryBuilder.buildBaseQuery();
+    query = this.queryBuilder.applyOrganizationFilter(query, criteria.organizationId);
+    query = this.queryBuilder.applySearchFilter(query, criteria.searchTerm);
+    query = this.queryBuilder.applyFolderFilter(query, criteria.folderId);
+
+    // Apply filters using services
+    if (criteria.filters?.type === 'folder') {
+      return [];
+    }
+    
+    query = this.queryBuilder.applyTypeFilter(query, criteria.filters?.type);
+
+    // Tag filtering
+    if (criteria.tagIds && criteria.tagIds.length > 0) {
+      const tagFilterResult = await this.tagService.getAssetIdsForTags(criteria.tagIds);
+      if (tagFilterResult === 'error') {
+        console.warn('Proceeding search without tag filter due to subquery error.');
+      } else if (tagFilterResult === 'no_match') {
+        return [];
+      } else if (tagFilterResult && tagFilterResult.length > 0) {
+        query = this.queryBuilder.applyTagFilter(query, tagFilterResult);
+      }
+    }
+
+    // Apply remaining filters
+    if (criteria.filters) {
+      query = AssetDateFilter.applyDateFilters(query, criteria.filters);
+      query = this.queryBuilder.applyOwnerFilter(query, criteria.filters.ownerId);
+      query = this.queryBuilder.applySizeFilter(query, criteria.filters.sizeOption, criteria.filters.sizeMin, criteria.filters.sizeMax);
+    }
+
+    // Apply sorting and limits
+    query = this.queryBuilder.applySorting(query, criteria.sortParams);
+    query = this.queryBuilder.applyLimit(query, criteria.limitOptions?.parsedLimit);
+
+    const data = await this.queryExecutor.executeQuery(query, 'searching assets');
+    return await this.dataProcessor.processRawDataArray(data as unknown as Record<string, unknown>[]);
   }
 
   async findByName(name: string, organizationId: string, folderId?: string | null): Promise<Asset[]> {
@@ -84,7 +125,7 @@ export class SupabaseAssetRepository implements IAssetRepository {
     query = this.queryBuilder.applyFolderFilter(query, folderId);
 
     const data = await this.queryExecutor.executeQuerySafe(query, `fetching assets by name ${name}`);
-    return await this.dataProcessor.processRawDataArray(data);
+    return await this.dataProcessor.processRawDataArray(data as unknown as Record<string, unknown>[]);
   }
 
   async search(criteria: AssetSearchCriteria): Promise<Asset[]> {
@@ -125,19 +166,19 @@ export class SupabaseAssetRepository implements IAssetRepository {
     query = this.queryBuilder.applyLimit(query, criteria.limitOptions?.parsedLimit);
 
     const data = await this.queryExecutor.executeQuery(query, 'searching assets');
-    return await this.dataProcessor.processRawDataArray(data);
+    return await this.dataProcessor.processRawDataArray(data as unknown as Record<string, unknown>[]);
   }
 
   async save(assetData: CreateAssetData): Promise<Asset> {
     const data = await this.queryExecutor.executeSave(assetData);
-    return await this.dataProcessor.processSingleRawRecord(data);
+    return await this.dataProcessor.processSingleRawRecord(data as unknown as Record<string, unknown>);
   }
 
   async update(assetId: string, data: UpdateAssetData): Promise<Asset | null> {
     const updatedData = await this.queryExecutor.executeUpdate(assetId, data);
     if (!updatedData) return null;
     
-    return await this.dataProcessor.processSingleRawRecord(updatedData);
+    return await this.dataProcessor.processSingleRawRecord(updatedData as unknown as Record<string, unknown>);
   }
 
   async delete(id: string): Promise<boolean> {

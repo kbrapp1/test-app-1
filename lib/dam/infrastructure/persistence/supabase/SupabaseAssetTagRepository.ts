@@ -11,6 +11,8 @@ interface AssetTagLink {
   tag_id: string;
 }
 
+
+
 export class SupabaseAssetTagRepository implements IAssetTagRepository {
   private supabase: SupabaseClient;
 
@@ -70,7 +72,7 @@ export class SupabaseAssetTagRepository implements IAssetTagRepository {
     }
 
     const tags = data
-      .map(assetTagLink => (assetTagLink as any).tags) // Extract the nested tag object
+      .map(assetTagLink => (assetTagLink as unknown as { tags: RawTagDbRecord | null }).tags) // Extract the nested tag object
       .filter(rawTag => rawTag !== null) // Filter out cases where the join might have resulted in a null tag
       .map(rawTag => TagMapper.toDomain(rawTag as RawTagDbRecord)); // Map to domain entity
     

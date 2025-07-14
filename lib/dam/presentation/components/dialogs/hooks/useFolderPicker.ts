@@ -34,17 +34,7 @@ export const useFolderPicker = ({ isOpen }: UseFolderPickerProps): UseFolderPick
   const [searchTerm, setSearchTerm] = useState('');
   const [isInitiallyLoading, setIsInitiallyLoading] = useState(false);
 
-  // Load root folders when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      loadRootFolders();
-      resetState();
-    } else {
-      storeSetInitialFolders([]);
-    }
-  }, [isOpen, storeSetInitialFolders]);
-
-  const loadRootFolders = async () => {
+  const loadRootFolders = useCallback(async () => {
     setIsInitiallyLoading(true);
     try {
       const rootDomainFolders = await FolderFetcher.fetchFolders(null);
@@ -55,7 +45,14 @@ export const useFolderPicker = ({ isOpen }: UseFolderPickerProps): UseFolderPick
       storeSetInitialFolders([]);
     }
     setIsInitiallyLoading(false);
-  };
+  }, [storeSetInitialFolders]);
+
+  // Load root folders when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      loadRootFolders();
+    }
+  }, [isOpen, loadRootFolders]);
 
   const handleToggleExpand = useCallback(async (folderId: string) => {
     storeToggleExpand(folderId);

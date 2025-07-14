@@ -41,7 +41,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({
 }) => {
   const {
     // State
-    asset,
+    asset: assetData,
     loading,
     error,
     editMode,
@@ -68,6 +68,9 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({
     onAssetDeleted,
     onOpenChange,
   });
+
+  // Convert undefined to null for child component compatibility
+  const asset = assetData ?? null;
 
   if (!open || !assetId) return null;
 
@@ -142,7 +145,7 @@ export const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({
                   <AssetTagsSection
                     asset={asset}
                     isUpdatingTag={isUpdatingTag}
-                            onTagAdded={handleLocalTagAdded} 
+                    onTagAdded={handleLocalTagAdded} 
                     onRemoveTag={handleLocalRemoveTag}
                   />
 

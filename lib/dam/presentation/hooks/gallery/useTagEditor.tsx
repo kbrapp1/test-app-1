@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlainTag } from '../../../application/dto/DamApiRequestDto';
 import {
   UseTagEditorProps,
@@ -32,7 +32,7 @@ export const useTagEditor = ({
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   // Service instances for data operations and computations
-  const computationService = new TagEditorComputationService();
+  const computationService = useMemo(() => new TagEditorComputationService(), []);
 
   // Popover handlers
   const handlePopoverOpenChange = useCallback((open: boolean) => {

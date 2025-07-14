@@ -1,12 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DatabaseError } from '@/lib/errors/base';
-import { Asset } from '../../../../domain/entities/Asset';
-import { AssetMapper } from '../mappers/AssetMapper';
 import { CreateAssetData, UpdateAssetData } from '../../../../domain/repositories/IAssetRepository';
+import { AssetMapper, RawAssetDbRecord } from '../mappers/AssetMapper';
+import { Asset } from '../../../../domain/entities/Asset';
 import * as crypto from 'crypto';
 
 type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
-type RawAssetDbRecord = Record<string, unknown>;
 
 /**
  * Asset Query Executor Service
@@ -64,7 +63,7 @@ export class AssetQueryExecutor {
   /**
    * Execute save operation
    */
-  async executeSave(assetData: CreateAssetData): Promise<any> {
+  async executeSave(assetData: CreateAssetData): Promise<RawAssetDbRecord> {
     // Create Asset instance from the data to use the mapper
     const asset = new Asset({
       id: assetData.id || crypto.randomUUID(),

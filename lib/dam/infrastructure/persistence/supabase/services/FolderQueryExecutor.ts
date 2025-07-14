@@ -1,7 +1,9 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DatabaseError, NotFoundError } from '@/lib/errors/base';
 import { CreateFolderData, UpdateFolderData } from '../../../../domain/repositories/IFolderRepository';
-import { FolderMapper } from '../mappers/FolderMapper';
+import { FolderMapper, RawFolderDbRecord } from '../mappers/FolderMapper';
+
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']> | any;
 
 /**
  * Folder Query Executor Service
@@ -13,7 +15,7 @@ export class FolderQueryExecutor {
   /**
    * Execute query and handle errors
    */
-  async executeQuery(query: any, errorContext: string): Promise<any[]> {
+  async executeQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord[]> {
     const { data, error } = await query;
     
     if (error) {
@@ -21,13 +23,13 @@ export class FolderQueryExecutor {
       throw new DatabaseError(`Failed to ${errorContext}.`, error.message);
     }
     
-    return data || [];
+    return (data as RawFolderDbRecord[]) || [];
   }
 
   /**
    * Execute single record query
    */
-  async executeSingleQuery(query: any, errorContext: string): Promise<any | null> {
+  async executeSingleQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord | null> {
     const { data, error } = await query;
     
     if (error) {
@@ -35,13 +37,13 @@ export class FolderQueryExecutor {
       throw new DatabaseError(`Failed to ${errorContext}.`, error.message);
     }
     
-    return data;
+    return data as unknown as RawFolderDbRecord | null;
   }
 
   /**
    * Execute folder creation
    */
-  async executeCreate(folderData: CreateFolderData): Promise<any> {
+  async executeCreate(folderData: CreateFolderData): Promise<RawFolderDbRecord> {
     const persistenceData = FolderMapper.toCreatePersistence(folderData);
     const { data, error } = await this.supabase
       .from('folders')
@@ -60,7 +62,7 @@ export class FolderQueryExecutor {
   /**
    * Execute folder update
    */
-  async executeUpdate(id: string, updates: UpdateFolderData, organizationId: string): Promise<any> {
+  async executeUpdate(id: string, updates: UpdateFolderData, organizationId: string): Promise<RawFolderDbRecord | null> {
     const persistenceData = FolderMapper.toUpdatePersistence(updates);
 
     if (Object.keys(persistenceData).length === 0) {
@@ -142,9 +144,9 @@ export class FolderQueryExecutor {
   }
 
   /**
-   * Execute RPC call for folder path
+   * Get folder path for breadcrumbs
    */
-  async executeGetFolderPath(folderId: string): Promise<any[]> {
+  async executeGetFolderPath(folderId: string): Promise<RawFolderDbRecord[]> {
     const { data, error } = await this.supabase.rpc('get_folder_path', {
       p_folder_id: folderId
     });

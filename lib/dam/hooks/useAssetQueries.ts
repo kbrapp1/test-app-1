@@ -1,5 +1,7 @@
 import { useApiQuery, useSearchQuery } from '@/lib/infrastructure/query';
 import { Asset } from '../domain/entities/Asset';
+import { Folder } from '../domain/entities/Folder';
+import { AssetDetailsDto } from '../application/use-cases/assets/GetAssetDetailsUseCase';
 
 /**
  * Asset Query Hooks
@@ -62,7 +64,7 @@ export function useAsset(assetId: string, enabled: boolean = true) {
  * Used by useAssetDetails React Query hook instead of deprecated AssetOperationsService.loadAssetDetails
  */
 export function useAssetDetails(assetId: string, enabled: boolean = true) {
-  return useApiQuery<any>(
+  return useApiQuery<AssetDetailsDto>(
     ['asset-details', assetId],
     `/api/dam/asset/${assetId}?details=true`,
     {},
@@ -74,7 +76,7 @@ export function useAssetDetails(assetId: string, enabled: boolean = true) {
  * Hook for fetching folders
  */
 export function useFolders(parentFolderId?: string, enabled: boolean = true) {
-  return useApiQuery<any[]>(
+  return useApiQuery<Folder[]>(
     ['folders', parentFolderId ?? 'root'],
     `/api/dam/folders${parentFolderId ? `?parentId=${parentFolderId}` : ''}`,
     {},

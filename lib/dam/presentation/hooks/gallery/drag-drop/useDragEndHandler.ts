@@ -160,7 +160,7 @@ export function useDragEndHandler({
       
       return { success: false, error: errorMessage };
     }
-  }, [onItemsUpdate, onToast, onRefreshData, moveFolder, bulkMoveMutation]);
+  }, [onToast, onRefreshData, moveFolder, bulkMoveMutation]);
 
   return { handleDragEnd };
 } 

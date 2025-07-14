@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { NavigateToFolderUseCase, FolderNavigationDto } from '../../../application/use-cases/folders/NavigateToFolderUseCase';
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
@@ -43,9 +43,11 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
   const { activeOrganizationId, isLoading: isOrgLoading } = useOrganization();
 
   // Initialize repositories and use case
-  const supabase = createClient();
-  const folderRepository = new SupabaseFolderRepository(supabase);
-  const navigateToFolderUseCase = new NavigateToFolderUseCase(folderRepository);
+  const navigateToFolderUseCase = useMemo(() => {
+    const supabase = createClient();
+    const folderRepository = new SupabaseFolderRepository(supabase);
+    return new NavigateToFolderUseCase(folderRepository);
+  }, []);
 
   const navigateToFolder = useCallback(async (folderId: string | null) => {
     // Don't navigate if organization is still loading
@@ -113,7 +115,7 @@ export const useFolderNavigation = (initialFolderId: string | null = null): UseF
     if (!isOrgLoading) {
       navigateToFolder(initialFolderId);
     }
-  }, [initialFolderId, isOrgLoading]); // Include isOrgLoading to trigger when org loads
+  }, [initialFolderId, isOrgLoading, navigateToFolder]);
 
   return {
     ...state,

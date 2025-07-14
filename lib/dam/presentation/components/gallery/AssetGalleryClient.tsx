@@ -116,6 +116,18 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     };
   }, [state]);
   
+  useEffect(() => {
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === 'dam-gallery-invalidate') {
+        invalidateByPattern('dam-assets');
+        invalidateByPattern('dam-folders');
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageEvent);
+    return () => window.removeEventListener('storage', handleStorageEvent);
+  }, [invalidateByPattern]);
+
   // Extract event handlers
   const handlers = useAssetGalleryHandlers({
     activeFolderId: state.activeFolderId,

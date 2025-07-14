@@ -54,7 +54,10 @@ export function useDamSearchInput({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchInputTerm, debounceMs]); // Removed debouncedSearchTerm and initialValue from deps to simplify
+     
+    // Note: debouncedSearchTerm and initialValue are intentionally omitted from deps to prevent infinite loops
+    // The conditional logic inside the effect handles synchronization correctly
+  }, [searchInputTerm, debounceMs]);
 
   return { searchInputTerm, setSearchInputTerm, debouncedSearchTerm, setDebouncedSearchTerm };
 } 

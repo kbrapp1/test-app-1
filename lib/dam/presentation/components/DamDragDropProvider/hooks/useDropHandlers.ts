@@ -1,9 +1,15 @@
 import { useCallback } from 'react';
 import { useDamDragAndDrop } from '../../../hooks/gallery/useDamDragAndDrop';
 import { DragDropOperations } from '../services/DragDropOperations';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+interface DragItem {
+  type: 'asset' | 'folder';
+  item: GalleryItemDto;
+}
 
 interface DropHandlersParams {
-  activeItem: any | null;
+  activeItem: DragItem | null;
   selectedAssets: string[];
   selectedFolders: string[];
   startProcessing: () => void;
@@ -80,7 +86,7 @@ export function useDropHandlers({
     const result: DragEndResult = await dragAndDrop.handleDragEnd(
       event, 
       { selectedAssets, selectedFolders }, 
-      activeItem
+      activeItem?.item
     );
     
     // Handle the result - only clear optimistic hiding if operation was successful

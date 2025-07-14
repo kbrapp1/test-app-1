@@ -1,9 +1,15 @@
 import { useCallback } from 'react';
 import { type DragStartEvent } from '@dnd-kit/core';
 import { DragDropOperations } from '../services/DragDropOperations';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+interface DragItem {
+  type: 'asset' | 'folder';
+  item: GalleryItemDto;
+}
 
 interface DragHandlersParams {
-  startDrag: (item: any) => void;
+  startDrag: (item: DragItem) => void;
   selectedAssets: string[];
   selectedFolders: string[];
 }
@@ -21,7 +27,9 @@ export function useDragHandlers({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const draggedItem = event.active.data.current;
-    startDrag(draggedItem);
+    if (draggedItem && typeof draggedItem === 'object' && 'type' in draggedItem && 'item' in draggedItem) {
+      startDrag(draggedItem as DragItem);
+    }
 
     // Get current selection state from the multi-select system
     DragDropOperations.requestCurrentSelection();

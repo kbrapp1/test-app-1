@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+interface DragItem {
+  type: 'asset' | 'folder';
+  item: GalleryItemDto;
+}
 
 interface DragDropState {
-  activeItem: any | null;
+  activeItem: DragItem | null;
   isProcessing: boolean;
   showOverlay: boolean;
   selectedAssets: string[];
@@ -23,7 +29,7 @@ export function useDragDropState() {
   });
 
   // Individual state setters for better control
-  const setActiveItem = useCallback((item: any | null) => {
+  const setActiveItem = useCallback((item: DragItem | null) => {
     setState(prev => ({ ...prev, activeItem: item }));
   }, []);
 
@@ -44,7 +50,7 @@ export function useDragDropState() {
   }, []);
 
   // Composite state setters for common operations
-  const startDrag = useCallback((item: any) => {
+  const startDrag = useCallback((item: DragItem) => {
     setState(prev => ({
       ...prev,
       activeItem: item,

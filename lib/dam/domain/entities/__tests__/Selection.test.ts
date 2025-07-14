@@ -3,6 +3,7 @@ import { Selection } from '../Selection';
 import { SelectionFactory } from '../SelectionFactory';
 import { BulkOperationFactory } from '../../value-objects/BulkOperationFactory';
 import { SelectionValidator, BulkOperationValidator, SelectionOperations } from '../../services';
+import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 describe('Selection Domain Entity', () => {
   describe('Creation', () => {
@@ -119,13 +120,13 @@ describe('Selection Domain Entity', () => {
   describe('Select All and Clear', () => {
     it('should select all items', () => {
       const mockAssets = [
-        { id: 'asset1', mimeType: 'image/jpeg' },
-        { id: 'asset2', mimeType: 'image/png' }
-      ] as any[];
+        { id: 'asset1', type: 'asset', name: 'Asset 1', createdAt: new Date(), mimeType: 'image/jpeg', size: 1000, userId: 'user1' },
+        { id: 'asset2', type: 'asset', name: 'Asset 2', createdAt: new Date(), mimeType: 'image/png', size: 2000, userId: 'user1' }
+      ] as GalleryItemDto[];
       
       const mockFolders = [
-        { id: 'folder1', name: 'Folder 1' }
-      ] as any[];
+        { id: 'folder1', type: 'folder', name: 'Folder 1', createdAt: new Date() }
+      ] as GalleryItemDto[];
       
       const items = [...mockAssets, ...mockFolders];
       const selection = Selection.createEmpty();

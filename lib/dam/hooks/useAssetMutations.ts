@@ -1,5 +1,6 @@
 import { useApiMutation, useCacheInvalidation } from '@/lib/infrastructure/query';
 import { Asset } from '../domain/entities/Asset';
+import { UpdateAssetData } from '../domain/repositories/IAssetRepository';
 
 /**
  * Asset Mutation Hooks
@@ -112,7 +113,7 @@ export function useAssetDelete() {
 export function useAssetUpdate() {
   const { invalidateByPattern } = useCacheInvalidation();
 
-  return useApiMutation<void, { assetId: string; updates: Record<string, any> }>(
+  return useApiMutation<void, { assetId: string; updates: UpdateAssetData }>(
     async ({ assetId, updates }) => {
       const response = await fetch(`/api/dam/asset/${assetId}`, {
         method: 'PATCH',

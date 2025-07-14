@@ -1,7 +1,13 @@
 import React from 'react';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+
+interface DragItem {
+  type: 'asset' | 'folder';
+  item: GalleryItemDto;
+}
 
 interface DragOverlayProps {
-  activeItem: any;
+  activeItem: DragItem | null;
   isProcessing: boolean;
   selectedAssets?: string[];
   selectedFolders?: string[];
@@ -30,10 +36,10 @@ export function DragOverlay({
   if (activeItem.type === 'folder') {
     return isDraggingMultiple ? 
       <MultipleFolderPreview totalCount={totalCount} isProcessing={isProcessing} /> :
-      <SingleFolderPreview folder={activeItem.item} isProcessing={isProcessing} />;
+      <SingleFolderPreview folder={activeItem.item as GalleryItemDto & { type: 'folder' }} isProcessing={isProcessing} />;
   }
 
-  const asset = activeItem.item;
+  const asset = activeItem.item as GalleryItemDto & { type: 'asset' };
   return isDraggingMultiple ? 
     <MultipleAssetPreview asset={asset} totalCount={totalCount} isProcessing={isProcessing} /> :
     <SingleAssetPreview asset={asset} isProcessing={isProcessing} />;
@@ -70,7 +76,7 @@ function MultipleFolderPreview({ totalCount, isProcessing }: { totalCount: numbe
   );
 }
 
-function SingleFolderPreview({ folder, isProcessing }: { folder: any; isProcessing: boolean }) {
+function SingleFolderPreview({ folder, isProcessing }: { folder: GalleryItemDto & { type: 'folder' }; isProcessing: boolean }) {
   return (
     <div className={`bg-white border border-gray-300 rounded-lg p-4 shadow-2xl rotate-3 cursor-grabbing max-w-[200px] transition-all duration-200 ${
       isProcessing ? 'opacity-70 scale-95' : 'opacity-90'
@@ -90,7 +96,7 @@ function SingleFolderPreview({ folder, isProcessing }: { folder: any; isProcessi
   );
 }
 
-function MultipleAssetPreview({ asset, totalCount, isProcessing }: { asset: any; totalCount: number; isProcessing: boolean }) {
+function MultipleAssetPreview({ asset, totalCount, isProcessing }: { asset: GalleryItemDto & { type: 'asset' }; totalCount: number; isProcessing: boolean }) {
   const isImage = asset.mimeType?.toLowerCase().startsWith('image/');
 
   return (
@@ -132,7 +138,7 @@ function MultipleAssetPreview({ asset, totalCount, isProcessing }: { asset: any;
   );
 }
 
-function SingleAssetPreview({ asset, isProcessing }: { asset: any; isProcessing: boolean }) {
+function SingleAssetPreview({ asset, isProcessing }: { asset: GalleryItemDto & { type: 'asset' }; isProcessing: boolean }) {
   const isImage = asset.mimeType?.toLowerCase().startsWith('image/');
 
   return (
