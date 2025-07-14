@@ -47,7 +47,7 @@ export class DragValidationService {
   }
 
   static validateMove(operation: DragOperation): DragValidationResult {
-    const { itemId, itemType, targetId, sourceItem: _sourceItem } = operation;
+    const { itemId, itemType: _itemType, targetId, sourceItem: _sourceItem } = operation;
     
     // Basic validation - can't move item to itself
     if (itemId === targetId) {

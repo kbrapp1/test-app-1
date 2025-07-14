@@ -103,7 +103,7 @@ export function DamWorkspaceView({
   useEffect(() => {
     const handleFolderUpdate = async (event: Event) => {
       const customEvent = event as CustomEvent;
-      const { type, folderId, newName } = customEvent.detail;
+      const { type, folderId, newName: _newName } = customEvent.detail;
       
       // If the renamed folder is in our current breadcrumb path, refresh breadcrumbs
       if (type === 'rename') {

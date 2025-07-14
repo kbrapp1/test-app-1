@@ -4,14 +4,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Navigation, CheckSquare } from 'lucide-react';
 import { FolderBreadcrumbs } from '../../navigation/FolderBreadcrumbs';
-import { NewFolderDialog } from '../../dialogs/NewFolderDialog';
+
 
 interface GalleryHeaderProps {
   showNavigationUI: boolean;
   enableNavigation: boolean;
   folderNavigation?: any;
-  activeFolderId: string | null;
-  onRefresh: () => void;
+  _activeFolderId: string | null;
+  _onRefresh: () => void;
   // Multi-select props
   enableMultiSelect?: boolean;
   multiSelect?: any;
@@ -21,8 +21,8 @@ export const GalleryHeader: React.FC<GalleryHeaderProps> = ({
   showNavigationUI,
   enableNavigation,
   folderNavigation,
-  activeFolderId,
-  onRefresh,
+  _activeFolderId,
+  _onRefresh,
   enableMultiSelect = true,
   multiSelect,
 }) => {

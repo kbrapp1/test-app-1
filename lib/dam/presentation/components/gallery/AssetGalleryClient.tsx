@@ -227,7 +227,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         dialogManager={state.dialogManager}
         moveDialog={state.assetItemDialogs.moveDialog}
         onCloseMoveDialog={state.assetItemDialogs.closeMoveDialog}
-        activeFolderId={state.activeFolderId}
+        _activeFolderId={state.activeFolderId}
         onMoveAssetConfirm={handlers.handleMoveAssetConfirm}
         onRenameAssetSubmit={handlers.handleRenameAssetSubmit}
         onDeleteAssetConfirm={handlers.handleDeleteAssetConfirm}
@@ -235,7 +235,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
           state.dialogManager.closeFolderAction();
           state.refreshGalleryData(true); // Force refresh after folder operations
         }}
-        onRefresh={state.refreshGalleryData}
+        _onRefresh={state.refreshGalleryData}
       />
 
       {/* Bulk Operation Dialogs */}

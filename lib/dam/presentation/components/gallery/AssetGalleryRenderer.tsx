@@ -62,7 +62,7 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
                   isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
                   isSelected={multiSelect.isSelected(asset.id, 'asset')}
                   isSelecting={multiSelect.isSelecting}
-                  onSelectionChange={(selected: boolean) => {
+                  onSelectionChange={(_selected: boolean) => {
                     // Always use toggleItem for consistent multi-select behavior
                       multiSelect.toggleItem(asset.id, 'asset');
                   }}
@@ -98,8 +98,8 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
               isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(asset.id) || false}
               // Selection props
               isSelected={enableMultiSelect && multiSelect ? multiSelect.isSelected(asset.id, 'asset') : false}
-              isSelecting={enableMultiSelect && multiSelect ? multiSelect.isSelecting : false}
-              onSelectionChange={enableMultiSelect && multiSelect ? (selected) => {
+              _isSelecting={enableMultiSelect && multiSelect ? multiSelect.isSelecting : false}
+              onSelectionChange={enableMultiSelect && multiSelect ? (_selected) => {
                 // Always use toggleItem for consistent multi-select behavior
                   multiSelect.toggleItem(asset.id, 'asset');
               } : undefined}
@@ -129,7 +129,7 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
                 isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
                 isSelected={multiSelect.isSelected(folder.id, 'folder')}
                 isSelecting={multiSelect.isSelecting}
-                onSelectionChange={(selected: boolean) => {
+                onSelectionChange={(_selected: boolean) => {
                   // Always use toggleItem for consistent multi-select behavior
                   multiSelect.toggleItem(folder.id, 'folder');
                 }}
@@ -170,7 +170,7 @@ export const AssetGalleryRenderer: React.FC<AssetGalleryRendererProps> = ({
               isOptimisticallyHidden={optimisticallyHiddenItemIds?.has(folder.id) || false}
               isSelected={multiSelect.isSelected(folder.id, 'folder')}
               isSelecting={multiSelect.isSelecting}
-              onSelectionChange={(selected: boolean) => {
+              onSelectionChange={(_selected: boolean) => {
                 // Always use toggleItem for consistent multi-select behavior
                 multiSelect.toggleItem(folder.id, 'folder');
               }}

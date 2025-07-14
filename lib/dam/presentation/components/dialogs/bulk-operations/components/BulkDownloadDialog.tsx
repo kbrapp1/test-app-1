@@ -32,7 +32,7 @@ export const BulkDownloadDialog: React.FC<BulkDownloadDialogProps> = ({
   isOpen,
   selectedAssets,
   selectedFolders,
-  selectedItems = [],
+  selectedItems: _selectedItems = [],
   isLoading,
   onClose,
   onOperationComplete

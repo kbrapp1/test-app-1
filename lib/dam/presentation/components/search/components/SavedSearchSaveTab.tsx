@@ -10,7 +10,7 @@ import { Loader2, Bookmark, Search } from 'lucide-react';
 import { 
   CurrentSearchCriteria, 
   SavedSearchFormData, 
-  useSavedSearches,
+
   UseSavedSearchesReturn 
 } from '../../../hooks/search/useSavedSearches';
 import { SearchCriteriaPreview } from './SearchCriteriaPreview';

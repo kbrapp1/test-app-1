@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
-import { CurrentSearchCriteria, useSavedSearches, UseSavedSearchesReturn } from '../../../hooks/search/useSavedSearches';
+import { CurrentSearchCriteria, UseSavedSearchesReturn } from '../../../hooks/search/useSavedSearches';
 import { SavedSearchBrowseTab } from './SavedSearchBrowseTab';
 import { SavedSearchSaveTab } from './SavedSearchSaveTab';
 

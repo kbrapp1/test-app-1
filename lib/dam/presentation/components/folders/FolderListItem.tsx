@@ -39,7 +39,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
   const { toast } = useToast();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [_isDeleting, setIsDeleting] = useState(false);
 
   const handleRenameSubmit = async (newName: string) => {
     try {
@@ -51,7 +51,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
       } else {
         toast({ title: 'Error Renaming', description: result.error || 'An unknown error occurred.' });
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Submit Error', description: 'An unexpected error occurred while submitting the new name.' });
     }
   };
@@ -67,7 +67,7 @@ export const FolderListItem: React.FC<FolderListItemProps> = ({ folder, onDataCh
       } else {
         toast({ title: 'Error Deleting Folder', description: result.error || 'An unknown error occurred.', variant: 'destructive' });
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Delete Error', description: 'An unexpected error occurred while deleting the folder.', variant: 'destructive' });
     } finally {
       setIsDeleting(false);

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { File, Folder, Image as ImageIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface AssetThumbnailProps {
   item: {
@@ -13,8 +12,8 @@ interface AssetThumbnailProps {
     thumbnailUrl?: string;
     publicUrl?: string;
   };
-  isSelected: boolean;
-  onSelect: (id: string) => void;
+  _isSelected: boolean;
+  _onSelect: (id: string) => void;
   _dragListeners?: Record<string, unknown>;
   _dragAttributes?: Record<string, unknown>;
   isDragging?: boolean;
@@ -28,8 +27,8 @@ interface AssetThumbnailProps {
  */
 export const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
   item,
-  isSelected,
-  onSelect,
+  _isSelected,
+  _onSelect,
   _dragListeners,
   _dragAttributes,
   isDragging

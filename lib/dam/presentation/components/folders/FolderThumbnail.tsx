@@ -19,7 +19,7 @@ export interface FolderThumbnailProps {
  */
 export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({ folder }) => {
   // Initialize router for prefetch on hover
-  const router = useRouter();
+  const _router = useRouter();
 
   // --- DND Setup ---
   const { 

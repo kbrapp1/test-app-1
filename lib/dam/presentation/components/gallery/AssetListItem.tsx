@@ -20,7 +20,7 @@ interface AssetListItemProps {
   isOptimisticallyHidden?: boolean;
   // Selection props
   isSelected?: boolean;
-  isSelecting?: boolean;
+  _isSelecting?: boolean;
   onSelectionChange?: (selected: boolean) => void;
 }
 
@@ -41,7 +41,7 @@ const formatDate = (date: Date | string): string => {
       day: 'numeric',
       year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
-  } catch (error) {
+  } catch {
     return 'Unknown date';
   }
 };
@@ -69,7 +69,7 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
   onClick,
   isOptimisticallyHidden = false,
   isSelected,
-  isSelecting,
+  _isSelecting,
   onSelectionChange
 }) => {
   const [imageError, setImageError] = useState(false);

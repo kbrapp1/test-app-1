@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Loader2, Bookmark } from 'lucide-react';
-import { CurrentSearchCriteria, useSavedSearches, UseSavedSearchesReturn } from '../../../hooks/search/useSavedSearches';
+import { CurrentSearchCriteria, UseSavedSearchesReturn } from '../../../hooks/search/useSavedSearches';
 import { SavedSearchList } from './SavedSearchList';
 
 interface SavedSearchBrowseTabProps {

@@ -3,14 +3,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
-import { NewFolderDialog } from '../../dialogs/NewFolderDialog';
+
 
 interface EmptyStateProps {
   searchTerm?: string;
   activeFolderId: string | null;
   enableNavigation: boolean;
   upload: any;
-  onRefresh: () => void;
+  _onRefresh: () => void;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -18,7 +18,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   activeFolderId,
   enableNavigation,
   upload,
-  onRefresh,
+  _onRefresh,
 }) => {
   if (searchTerm) {
     return (

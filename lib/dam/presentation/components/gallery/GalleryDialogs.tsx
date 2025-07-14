@@ -16,12 +16,12 @@ interface GalleryDialogsProps {
   dialogManager: any;
   moveDialog: any;
   onCloseMoveDialog: () => void;
-  activeFolderId: string | null;
+  _activeFolderId: string | null;
   onMoveAssetConfirm: (folderId: string | null) => void;
   onRenameAssetSubmit: (newName: string) => void;
   onDeleteAssetConfirm: () => void;
   onFolderActionComplete: () => void;
-  onRefresh: () => void;
+  _onRefresh: () => void;
 }
 
 export const GalleryDialogs: React.FC<GalleryDialogsProps> = ({
@@ -32,12 +32,12 @@ export const GalleryDialogs: React.FC<GalleryDialogsProps> = ({
   dialogManager,
   moveDialog,
   onCloseMoveDialog,
-  activeFolderId,
+  _activeFolderId,
   onMoveAssetConfirm,
   onRenameAssetSubmit,
   onDeleteAssetConfirm,
   onFolderActionComplete,
-  onRefresh,
+  _onRefresh,
 }) => {
   return (
     <>

@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useFolderStore } from '@/lib/store/folderStore';
-import { Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+
 import { useFolderRename } from '@/lib/dam/hooks/useAssets';
 import { Loader2 } from 'lucide-react';
 
@@ -44,7 +44,7 @@ export function RenameFolderDialog({
   currentName,
 }: RenameFolderDialogProps) {
   const folderRenameMutation = useFolderRename();
-  const { updateFolderNodeInStore, forceRefresh, refetchFolderData } = useFolderStore();
+  const { updateFolderNodeInStore: _updateFolderNodeInStore, forceRefresh, refetchFolderData } = useFolderStore();
   const [newName, setNewName] = useState(currentName || '');
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function RenameFolderDialog({
       // This ensures the tree view shows the renamed folder immediately
       try {
         await refetchFolderData();
-      } catch (error) {
+      } catch {
         // Silently handle folder tree refresh failure
         forceRefresh();
       }

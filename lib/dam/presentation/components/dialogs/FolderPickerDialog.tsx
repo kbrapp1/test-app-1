@@ -40,13 +40,13 @@ export const FolderPickerDialog: React.FC<FolderPickerDialogProps> = ({
   // Use domain hook for state management and business logic
   const {
     selectedFolderId,
-    searchTerm,
+    searchTerm: _searchTerm,
     isInitiallyLoading,
     rootFolders,
     setSelectedFolderId,
-    setSearchTerm,
+    setSearchTerm: _setSearchTerm,
     handleToggleExpand,
-    resetState,
+    resetState: _resetState,
   } = useFolderPicker({ isOpen });
 
   const handleConfirm = () => {

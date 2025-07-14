@@ -39,7 +39,7 @@ const formatDate = (date: Date | string): string => {
       day: 'numeric',
       year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
-  } catch (error) {
+  } catch {
     return 'Unknown date';
   }
 };
@@ -195,8 +195,8 @@ export const EnhancedAssetGridItem: React.FC<EnhancedAssetGridItemProps> = ({
       {/* Enhanced Asset Thumbnail */}
       <AssetThumbnail 
         item={asset}
-        isSelected={false}
-        onSelect={() => {}}
+        _isSelected={false}
+        _onSelect={() => {}}
         _dragListeners={undefined}
         _dragAttributes={undefined}
         isDragging={isDragging}

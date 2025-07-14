@@ -60,8 +60,8 @@ export const SelectionToolbar: React.FC<SelectionToolbarProps> = ({
   
   const hasAssets = selectedAssets.length > 0;
   const hasFolders = selectedFolders.length > 0;
-  const hasOnlyAssets = hasAssets && !hasFolders;
-  const hasOnlyFolders = hasFolders && !hasAssets;
+  const _hasOnlyAssets = hasAssets && !hasFolders;
+  const _hasOnlyFolders = hasFolders && !hasAssets;
 
   if (!isVisible || selectedCount === 0) {
     return null;

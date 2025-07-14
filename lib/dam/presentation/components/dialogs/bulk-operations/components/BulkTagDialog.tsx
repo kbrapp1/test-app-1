@@ -32,7 +32,7 @@ export const BulkTagDialog: React.FC<BulkTagDialogProps> = ({
   isOpen,
   selectedAssets,
   operation,
-  selectedItems = [],
+  selectedItems: _selectedItems = [],
   isLoading,
   onClose,
   onOperationComplete

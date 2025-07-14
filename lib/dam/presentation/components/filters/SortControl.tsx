@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronsUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDownWideNarrow, ArrowUpWideNarrow, FileText, CalendarClock, Combine, ToyBrick } from 'lucide-react'; // Example icons
+import { ChevronsUpDown, ArrowDownAZ, ArrowUpAZ, ArrowDownWideNarrow, ArrowUpWideNarrow, FileText, CalendarClock } from 'lucide-react'; // Example icons
 
 type SortByValue = 'name' | 'updated_at' | 'size' | 'mime_type';
 type SortOrderValue = 'asc' | 'desc';

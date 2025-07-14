@@ -7,7 +7,7 @@ import {
   SizeFilter, 
   SortControl 
 } from '../../filters';
-import { MultiSelectToggle } from '../../selection/MultiSelectToggle';
+
 import type { SortByValue, SortOrderValue } from '../../../hooks/search/useDamFilters';
 
 export interface WorkspaceFiltersProps {
@@ -36,7 +36,7 @@ export interface WorkspaceFiltersProps {
   clearAllFilters: () => void;
   
   // Multi-select handlers (optional)
-  onToggleMultiSelect?: () => void;
+  _onToggleMultiSelect?: () => void;
 }
 
 /**
@@ -71,7 +71,7 @@ export const WorkspaceFilters: React.FC<WorkspaceFiltersProps> = ({
   setFilterSizeOption,
   handleSortChange,
   clearAllFilters,
-  onToggleMultiSelect,
+  _onToggleMultiSelect,
 }) => {
   return (
     <div className="flex flex-wrap items-center gap-2 pb-2">
