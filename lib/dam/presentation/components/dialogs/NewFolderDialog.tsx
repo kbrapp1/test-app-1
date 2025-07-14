@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,14 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { FolderPlus, Loader2 } from 'lucide-react';
 import { useFolderStore } from '@/lib/store/folderStore';
-import { Folder } from '@/lib/dam/domain/entities/Folder';
-import { useRouter } from 'next/navigation';
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useFolderCreate } from '@/lib/dam/hooks/useAssets';
 
@@ -50,10 +47,9 @@ export function NewFolderDialog({
 }: NewFolderDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [folderName, setFolderName] = useState('');
-  const { addFolder, refetchFolderData } = useFolderStore();
+  const { refetchFolderData } = useFolderStore();
   const folderCreateMutation = useFolderCreate();
   const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +73,7 @@ export function NewFolderDialog({
       // Refetch the folder tree data from server to show the new folder immediately
       try {
         await refetchFolderData();
-      } catch (error) {
+      } catch {
         // Silently handle folder tree refresh failure
       }
       

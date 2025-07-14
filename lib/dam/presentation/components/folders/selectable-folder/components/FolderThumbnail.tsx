@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Folder, GripVertical } from 'lucide-react';
+import { Folder } from 'lucide-react';
 
 interface FolderThumbnailProps {
   isOver: boolean;
@@ -18,7 +18,7 @@ interface FolderThumbnailProps {
 export const FolderThumbnail: React.FC<FolderThumbnailProps> = ({
   isOver,
   variant,
-  dragListeners
+  dragListeners: _dragListeners
 }) => {
   if (variant === 'list') {
     return (

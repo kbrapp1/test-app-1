@@ -10,7 +10,7 @@ export interface RawFolderDbRecord {
   user_id: string;
   created_at: string; // ISO date string
   updated_at: string | null; // Changed from updated_at?: string | null;
-  has_children?: Array<{ count: number }> | any; // Flexible to handle Supabase count
+  has_children?: Array<{ count: number }> | boolean; // Flexible to handle Supabase count
   // Add any other direct column names from your 'folders' table or common views
   // path?: string; // Example, if path was directly on the table
 }
@@ -79,8 +79,8 @@ export class FolderMapper {
     return sanitized;
   }
 
-  static toPersistence(folder: Partial<Folder>): any {
-    const persistenceData: any = {};
+  static toPersistence(folder: Partial<Folder>): Partial<RawFolderDbRecord> {
+    const persistenceData: Partial<RawFolderDbRecord> = {};
 
     if (folder.id !== undefined) persistenceData.id = folder.id;
     if (folder.name !== undefined) persistenceData.name = folder.name;
@@ -96,14 +96,15 @@ export class FolderMapper {
 
   static toCreatePersistence(
     folderData: Pick<Folder, 'name' | 'organizationId' | 'userId'> & Partial<Pick<Folder, 'parentFolderId'>>
-  ): any {
-    const record: Partial<RawFolderDbRecord> = {
+  ): Omit<RawFolderDbRecord, 'id' | 'created_at' | 'updated_at' | 'has_children'> {
+    const record: Omit<RawFolderDbRecord, 'id' | 'created_at' | 'updated_at' | 'has_children'> = {
       name: folderData.name,
       organization_id: folderData.organizationId,
       user_id: folderData.userId,
+      parent_folder_id: null,
     };
     if (Object.prototype.hasOwnProperty.call(folderData, 'parentFolderId')) {
-      record.parent_folder_id = folderData.parentFolderId;
+      record.parent_folder_id = folderData.parentFolderId ?? null;
     }
     return record;
   }

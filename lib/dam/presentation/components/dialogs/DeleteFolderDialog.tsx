@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -8,11 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { useFolderStore } from '@/lib/store/folderStore';
 import { useFolderDelete } from '@/lib/dam/hooks/useAssets';
 import { Loader2 } from 'lucide-react';
@@ -43,7 +41,6 @@ export function DeleteFolderDialog({
   onDeleted 
 }: DeleteFolderDialogProps) {
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
-  const router = useRouter();
   const { removeFolder, refetchFolderData } = useFolderStore();
   const folderDeleteMutation = useFolderDelete();
   
@@ -61,7 +58,7 @@ export function DeleteFolderDialog({
       // Refetch folder tree data to ensure consistency
       try {
         await refetchFolderData();
-      } catch (error) {
+      } catch {
         // Silently handle folder tree refresh failure
       }
       

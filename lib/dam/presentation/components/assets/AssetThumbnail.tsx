@@ -63,8 +63,8 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
     src,
     alt,
     assetId,
-    folderId,
-    type,
+    folderId: _folderId,
+    type: _type,
     isPriority = false,
     mimeType,
     onDataChange
@@ -78,7 +78,6 @@ export const AssetThumbnail = forwardRef<AssetThumbnailRef, AssetThumbnailProps>
   });
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   
   // Use organization context to avoid duplicate RPC calls
   const { activeOrganizationId } = useOrganization();

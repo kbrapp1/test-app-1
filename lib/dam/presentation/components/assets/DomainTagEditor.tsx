@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/popover";
 import {
   Command,
-  CommandInput,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Tag as TagIcon } from "lucide-react";

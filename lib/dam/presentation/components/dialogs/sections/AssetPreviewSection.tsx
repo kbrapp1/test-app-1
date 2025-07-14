@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { AssetDetailsDto } from '../../../../application/use-cases/assets/GetAssetDetailsUseCase';
 
@@ -43,9 +44,11 @@ export const AssetPreviewSection: React.FC<AssetPreviewSectionProps> = ({ asset 
     switch (asset.preview?.previewType) {
       case 'image':
         return asset.publicUrl && (
-          <img
+          <Image
             src={asset.publicUrl}
             alt={asset.name}
+            width={800}
+            height={600}
             className="w-full h-full object-contain rounded-lg"
             style={{ maxHeight: '100%' }}
           />

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AssetDetailsDto } from '../../../../application/use-cases/assets/GetAssetDetailsUseCase';
 import { DomainTagEditor } from '../../assets/DomainTagEditor';
@@ -22,7 +21,7 @@ const formatDate = (date: Date | string): string => {
     } else {
       return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
     }
-  } catch (error) {
+  } catch {
     return 'Invalid date';
   }
 };

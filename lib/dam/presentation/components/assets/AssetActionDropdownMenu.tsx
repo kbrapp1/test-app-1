@@ -45,7 +45,7 @@ export interface AssetActionDropdownMenuProps {
  * Uses domain patterns for consistent action handling
  */
 export const AssetActionDropdownMenu: React.FC<AssetActionDropdownMenuProps> = ({
-  item,
+  item: _item,
   onViewDetails,
   onOpenRenameDialog,
   onOpenMoveDialog,

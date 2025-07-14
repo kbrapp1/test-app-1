@@ -1,5 +1,7 @@
 import type { DamFilterParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
+type SupabaseQueryBuilder = ReturnType<ReturnType<import('@supabase/supabase-js').SupabaseClient['from']>['select']>;
+
 /**
  * Asset Date Filter Service
  * Follows Single Responsibility Principle - only handles date filtering logic
@@ -8,7 +10,7 @@ export class AssetDateFilter {
   /**
    * Apply date filters to query based on filter parameters
    */
-  static applyDateFilters(query: any, filters: DamFilterParameters): any {
+  static applyDateFilters(query: SupabaseQueryBuilder, filters: DamFilterParameters): SupabaseQueryBuilder {
     if (!filters.creationDateOption) {
       return query;
     }

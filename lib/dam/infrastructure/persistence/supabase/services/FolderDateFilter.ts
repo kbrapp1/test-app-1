@@ -1,5 +1,7 @@
 import type { DamFilterParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
+type SupabaseQueryBuilder = ReturnType<ReturnType<import('@supabase/supabase-js').SupabaseClient['from']>['select']>;
+
 /**
  * Folder Date Filter Service
  * Follows Single Responsibility Principle - handles date filtering for folders
@@ -8,7 +10,7 @@ export class FolderDateFilter {
   /**
    * Apply date filters to folder query
    */
-  static applyDateFilters(query: any, filters: DamFilterParameters): any {
+  static applyDateFilters(query: SupabaseQueryBuilder, filters: DamFilterParameters): SupabaseQueryBuilder {
     if (!filters.creationDateOption) {
       return query;
     }
