@@ -11,7 +11,7 @@ import type { SortByValue, SortOrderValue } from '../search/useDamFilters';
 import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 export interface UseDamPageHandlersParams {
-  updateUrlParams: (params: any) => void;
+  updateUrlParams: (params: Record<string, unknown>) => void;
   handleGalleryRefresh: () => void;
   closeMoveDialog: () => void;
 }

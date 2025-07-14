@@ -2,6 +2,7 @@ import React from 'react';
 import { Selection } from '../../../../domain/entities/Selection';
 import { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
 import { BulkOperationType } from '../../../../domain/value-objects/BulkOperation';
+import { SelectionAction } from '../../../../application/use-cases/selection/UpdateSelectionUseCase';
 
 export type SelectionMode = 'none' | 'single' | 'multiple';
 export type ItemType = 'asset' | 'folder';
@@ -68,5 +69,5 @@ export interface MultiSelectState {
   options: UseMultiSelectOptions;
   
   // Internal method for operations
-  updateSelection: (action: any, params?: any) => Promise<void>;
+  updateSelection: (action: SelectionAction, params?: Record<string, unknown>) => Promise<void>;
 } 

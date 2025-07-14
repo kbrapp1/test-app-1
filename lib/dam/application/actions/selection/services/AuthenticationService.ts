@@ -23,13 +23,20 @@ export class AuthenticationService {
       throw new Error('Authentication required');
     }
 
+    if (!user.email) {
+      throw new Error('User email is required');
+    }
+
     const organizationId = await getActiveOrganizationId();
     if (!organizationId) {
       throw new Error('No active organization found');
     }
 
     return {
-      user,
+      user: {
+        id: user.id,
+        email: user.email
+      },
       organizationId
     };
   }

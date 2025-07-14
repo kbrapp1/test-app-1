@@ -7,6 +7,7 @@
 
 import type { DragEndEvent } from '@dnd-kit/core';
 import type { DragOperation } from '../types';
+import type { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 export class DragOperationFactory {
   /**
@@ -15,7 +16,7 @@ export class DragOperationFactory {
    * @param activeItemData - Optional item data from the active dragged element
    * @returns DragOperation or null if invalid
    */
-  static createFromEvent(event: DragEndEvent, activeItemData?: any): DragOperation | null {
+  static createFromEvent(event: DragEndEvent, activeItemData?: GalleryItemDto): DragOperation | null {
     const { active, over } = event;
     
     if (!active || !over) return null;
@@ -64,7 +65,7 @@ export class DragOperationFactory {
       itemId: active.id as string,
       itemType,
       targetId,
-      sourceItem: itemData?.item,
+      sourceItem: activeItemData || itemData,
     };
   }
 } 

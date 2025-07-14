@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
+
 /**
  * Asset Query Builder Service
  * Follows Single Responsibility Principle - only handles query building for assets
@@ -29,14 +31,14 @@ export class AssetQueryBuilder {
   /**
    * Apply organization filter to query
    */
-  applyOrganizationFilter(query: any, organizationId: string) {
+  applyOrganizationFilter(query: SupabaseQueryBuilder, organizationId: string): SupabaseQueryBuilder {
     return query.eq('organization_id', organizationId);
   }
 
   /**
    * Apply folder filter to query
    */
-  applyFolderFilter(query: any, folderId: string | null | undefined) {
+  applyFolderFilter(query: SupabaseQueryBuilder, folderId: string | null | undefined): SupabaseQueryBuilder {
     if (folderId === null) {
       return query.is('folder_id', null);
     } else if (folderId !== undefined) {
@@ -49,7 +51,7 @@ export class AssetQueryBuilder {
    * Apply search term filter to query
    * Enhanced to search across multiple fields for better results
    */
-  applySearchFilter(query: any, searchTerm?: string) {
+  applySearchFilter(query: SupabaseQueryBuilder, searchTerm?: string): SupabaseQueryBuilder {
     if (searchTerm && searchTerm.trim() !== '') {
       // Escape the search term to prevent SQL injection
       const escapedTerm = searchTerm.replace(/[%_\\]/g, '\\$&');
@@ -68,14 +70,14 @@ export class AssetQueryBuilder {
   /**
    * Apply name filter to query
    */
-  applyNameFilter(query: any, name: string) {
+  applyNameFilter(query: SupabaseQueryBuilder, name: string): SupabaseQueryBuilder {
     return query.eq('name', name);
   }
 
   /**
    * Apply type filter to query
    */
-  applyTypeFilter(query: any, type?: string | null) {
+  applyTypeFilter(query: SupabaseQueryBuilder, type?: string | null): SupabaseQueryBuilder {
     if (!type || type === 'folder') {
       return query;
     }
@@ -103,7 +105,7 @@ export class AssetQueryBuilder {
   /**
    * Apply owner filter to query
    */
-  applyOwnerFilter(query: any, ownerId?: string | null) {
+  applyOwnerFilter(query: SupabaseQueryBuilder, ownerId?: string | null): SupabaseQueryBuilder {
     if (ownerId) {
       return query.eq('user_id', ownerId);
     }
@@ -113,7 +115,7 @@ export class AssetQueryBuilder {
   /**
    * Apply size filter to query
    */
-  applySizeFilter(query: any, sizeOption?: string | null, sizeMin?: string | null, sizeMax?: string | null) {
+  applySizeFilter(query: SupabaseQueryBuilder, sizeOption?: string | null, sizeMin?: string | null, sizeMax?: string | null): SupabaseQueryBuilder {
     if (!sizeOption || sizeOption === 'any') {
       return query;
     }
@@ -139,7 +141,7 @@ export class AssetQueryBuilder {
   /**
    * Apply sorting to query
    */
-  applySorting(query: any, sortParams?: DamSortParameters) {
+  applySorting(query: SupabaseQueryBuilder, sortParams?: DamSortParameters): SupabaseQueryBuilder {
     const sortBy = sortParams?.sortBy || 'created_at';
     const sortOrderAsc = sortParams?.sortOrder === 'asc';
     const validSortColumns = ['name', 'created_at', 'updated_at', 'size', 'mime_type'];
@@ -154,7 +156,7 @@ export class AssetQueryBuilder {
   /**
    * Apply limit to query
    */
-  applyLimit(query: any, limit?: number) {
+  applyLimit(query: SupabaseQueryBuilder, limit?: number): SupabaseQueryBuilder {
     if (limit !== undefined && limit > 0) {
       return query.limit(limit);
     }
@@ -164,7 +166,7 @@ export class AssetQueryBuilder {
   /**
    * Apply tag filter to query
    */
-  applyTagFilter(query: any, assetIds: string[]) {
+  applyTagFilter(query: SupabaseQueryBuilder, assetIds: string[]): SupabaseQueryBuilder {
     return query.in('id', assetIds);
   }
 } 

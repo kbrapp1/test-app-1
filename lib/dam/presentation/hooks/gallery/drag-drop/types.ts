@@ -12,7 +12,7 @@ export interface DragOperation {
   readonly itemId: string;
   readonly itemType: 'asset' | 'folder';
   readonly targetId: string | null;
-  readonly sourceItem: any;
+  readonly sourceItem: GalleryItemDto | unknown;
 }
 
 export interface DragValidationResult {
@@ -40,7 +40,7 @@ export interface UseDamDragAndDropProps {
 }
 
 export interface DragEndParams {
-  event: any; // DragEndEvent from @dnd-kit/core
+  event: unknown; // DragEndEvent from @dnd-kit/core
   selectionState?: BulkMoveSelection;
-  activeItemData?: any;
+  activeItemData?: GalleryItemDto;
 } 

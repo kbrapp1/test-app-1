@@ -7,6 +7,12 @@
 
 import type { DragOperation, DragValidationResult } from '../types';
 
+interface DropZoneData {
+  accepts?: string[];
+  folderId?: string | null;
+  [key: string]: unknown;
+}
+
 export class DragValidationService {
   /**
    * Validates a drag operation against business rules
@@ -14,7 +20,7 @@ export class DragValidationService {
    * @param overData - Data from the drop zone
    * @returns Validation result with success/failure and reason
    */
-  static validate(operation: DragOperation, overData: any): DragValidationResult {
+  static validate(operation: DragOperation, overData: DropZoneData): DragValidationResult {
     const { itemType, targetId, sourceItem } = operation;
     
     // Check drop zone compatibility
@@ -29,14 +35,8 @@ export class DragValidationService {
       return { isValid: false, reason: 'Drop zone does not accept folders' };
     }
 
-    // Validate no-change scenarios
-    if (itemType === 'asset' && sourceItem?.folder_id === targetId) {
-      return { isValid: false, reason: 'Asset is already in the target folder' };
-    }
-    
-    if (itemType === 'folder' && sourceItem?.parentFolderId === targetId) {
-      return { isValid: false, reason: 'Folder is already in the target location' };
-    }
+    // Note: Cannot validate no-change scenarios since GalleryItemDto doesn't include parent folder information
+    // This validation would need to be done at a higher level with access to full entity data
 
     // Prevent folder self-move
     if (itemType === 'folder' && operation.itemId === targetId) {

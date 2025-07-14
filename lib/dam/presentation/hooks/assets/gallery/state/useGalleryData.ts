@@ -63,8 +63,8 @@ export const useGalleryData = (props: GalleryDataProps) => {
   }, []);
 
   // Filter visible items based on optimistic hiding
-  const visibleAssets = galleryData.assets.filter((asset: any) => !optimisticallyHiddenItemIds.has(asset.id));
-  const visibleFolders = galleryData.folders.filter((folder: any) => !optimisticallyHiddenItemIds.has(folder.id));
+  const visibleAssets = galleryData.assets.filter((asset) => !optimisticallyHiddenItemIds.has(asset.id));
+  const visibleFolders = galleryData.folders.filter((folder) => !optimisticallyHiddenItemIds.has(folder.id));
 
   return {
     // Core data

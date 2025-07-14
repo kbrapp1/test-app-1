@@ -37,7 +37,7 @@ export const useMultiSelectState = (options: UseMultiSelectOptions): MultiSelect
   const selectedFolders = selection.getSelectedFolders();
 
   // Update selection with use case
-  const updateSelection = useCallback(async (action: SelectionAction, params: any = {}) => {
+  const updateSelection = useCallback(async (action: SelectionAction, params: Record<string, unknown> = {}) => {
     try {
       const result = await updateSelectionUseCase.execute({
         selection,
@@ -91,7 +91,7 @@ export const useMultiSelectState = (options: UseMultiSelectOptions): MultiSelect
   }, [onModeChange, updateSelection]);
 
   // Internal selection update method for operations
-  const internalUpdateSelection = useCallback(async (action: SelectionAction, params: any = {}) => {
+  const internalUpdateSelection = useCallback(async (action: SelectionAction, params: Record<string, unknown> = {}) => {
     return updateSelection(action, params);
   }, [updateSelection]);
 

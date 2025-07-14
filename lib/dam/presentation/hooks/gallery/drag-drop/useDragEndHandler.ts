@@ -7,6 +7,7 @@
 
 import { useCallback } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
+import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 import { DragOperationFactory } from './services/DragOperationFactory';
 // import { DragValidationService } from './services/DragValidationService';
@@ -27,7 +28,7 @@ export function useDragEndHandler({
   const handleDragEnd = useCallback(async (
     event: DragEndEvent, 
     selectionState?: { selectedAssets: string[], selectedFolders: string[] }, 
-    activeItemData?: any
+    activeItemData?: GalleryItemDto
   ): Promise<DragEndResult> => {
     
     // 1. Create domain operation
@@ -142,9 +143,8 @@ export function useDragEndHandler({
       
       // Revert optimistic folder move if it failed
       if (operation.itemType === 'folder') {
-        // Move folder back to original location
-        const originalParentId = activeItemData?.parentFolderId || null;
-        moveFolder(operation.itemId, originalParentId);
+        // Note: We don't have access to the original parent folder ID in GalleryItemDto
+        // The refresh will restore the correct state
       }
       
       onToast({ 

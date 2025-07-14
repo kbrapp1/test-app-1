@@ -38,6 +38,8 @@ export const useGallerySelection = (props: GallerySelectionProps) => {
     if (enableMultiSelect) {
       multiSelect.clearSelection();
     }
+     
+    // Performance: multiSelect object changes frequently, adding it would cause clearSelection to run excessively
   }, [activeFolderId, enableMultiSelect]);
 
   // Auto-enter selection mode when multi-select is enabled
@@ -47,6 +49,8 @@ export const useGallerySelection = (props: GallerySelectionProps) => {
     } else if (!enableMultiSelect && multiSelect.isSelecting) {
       multiSelect.exitSelectionMode();
     }
+     
+    // Performance: multiSelect object recreated frequently, adding it would cause mode changes on every selection
   }, [enableMultiSelect, multiSelect.isSelecting]);
 
   // Handle item selection with keyboard modifiers
@@ -54,28 +58,28 @@ export const useGallerySelection = (props: GallerySelectionProps) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectItem(id, type, event);
-  }, [enableMultiSelect, multiSelect]);
+  }, [enableMultiSelect, multiSelect.selectItem]);
 
   // Toggle selection mode
   const toggleSelectionMode = useCallback(() => {
     if (!enableMultiSelect) return;
     
     multiSelect.toggleSelectionMode();
-  }, [enableMultiSelect, multiSelect]);
+  }, [enableMultiSelect, multiSelect.toggleSelectionMode]);
 
   // Select all files handler
   const handleSelectAllFiles = useCallback((items: any[]) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectAllFiles(items);
-  }, [enableMultiSelect, multiSelect]);
+  }, [enableMultiSelect, multiSelect.selectAllFiles]);
 
   // Select all folders handler
   const handleSelectAllFolders = useCallback((items: any[]) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectAllFolders(items);
-  }, [enableMultiSelect, multiSelect]);
+  }, [enableMultiSelect, multiSelect.selectAllFolders]);
 
   return {
     // Single selection state

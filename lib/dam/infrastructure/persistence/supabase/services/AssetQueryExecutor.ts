@@ -5,6 +5,9 @@ import { AssetMapper } from '../mappers/AssetMapper';
 import { CreateAssetData, UpdateAssetData } from '../../../../domain/repositories/IAssetRepository';
 import * as crypto from 'crypto';
 
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
+type RawAssetDbRecord = Record<string, unknown>;
+
 /**
  * Asset Query Executor Service
  * Follows Single Responsibility Principle - handles query execution and error handling
@@ -15,7 +18,7 @@ export class AssetQueryExecutor {
   /**
    * Execute findById query
    */
-  async executeFindById(id: string): Promise<any | null> {
+  async executeFindById(id: string): Promise<RawAssetDbRecord | null> {
     const { data, error } = await this.supabase
       .from('assets')
       .select('*, folder:folders(name), asset_tags(tags(*))')
@@ -33,7 +36,7 @@ export class AssetQueryExecutor {
   /**
    * Execute query and handle errors
    */
-  async executeQuery(query: any, errorContext: string): Promise<any[]> {
+  async executeQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawAssetDbRecord[]> {
     const { data, error } = await query;
     
     if (error) {
@@ -41,13 +44,13 @@ export class AssetQueryExecutor {
       throw new DatabaseError(`Failed to ${errorContext}.`, error.message);
     }
     
-    return data || [];
+    return (data as RawAssetDbRecord[]) || [];
   }
 
   /**
    * Execute query with simple error handling (returns empty array on error)
    */
-  async executeQuerySafe(query: any, errorContext: string): Promise<any[]> {
+  async executeQuerySafe(query: SupabaseQueryBuilder, errorContext: string): Promise<RawAssetDbRecord[]> {
     const { data, error } = await query;
     
     if (error) {
@@ -55,7 +58,7 @@ export class AssetQueryExecutor {
       return [];
     }
     
-    return data || [];
+    return (data as RawAssetDbRecord[]) || [];
   }
 
   /**

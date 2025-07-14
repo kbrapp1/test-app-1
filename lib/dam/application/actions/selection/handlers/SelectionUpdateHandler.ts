@@ -64,7 +64,10 @@ export class SelectionUpdateHandler {
 
       return {
         success: true,
-        selection: result.selection
+        selection: {
+          selectedAssets: result.selection.getSelectedAssets(),
+          selectedFolders: result.selection.getSelectedFolders()
+        }
       };
 
     } catch (error) {

@@ -49,6 +49,8 @@ export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
       window.removeEventListener('damClearSelection', handleClearSelection);
       window.removeEventListener('damExitSelectionMode', handleExitSelectionMode);
     };
+     
+    // Performance: multiSelect object changes frequently, adding it would cause excessive re-renders
   }, [enableMultiSelect, multiSelect?.selectedAssets, multiSelect?.selectedFolders, multiSelect?.clearSelection, multiSelect?.exitSelectionMode]);
 
   // Listen for folder updates
@@ -73,6 +75,8 @@ export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
     
     window.addEventListener('folderUpdated', handleFolderUpdate);
     return () => window.removeEventListener('folderUpdated', handleFolderUpdate);
+     
+    // Performance: galleryData object recreated on every render, adding it causes event listener thrashing
   }, [galleryData.fetchData, galleryData.folders, activeFolderId]);
 
   // Handle selection persistence during data refresh
@@ -98,6 +102,8 @@ export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
       }
     }
   }, [galleryData.items, enableMultiSelect, multiSelect]);
+   
+  // Performance: multiSelect object has many properties that change frequently, causes excessive validation runs
 
   return {
     // Event handlers are side effects only, no return values needed

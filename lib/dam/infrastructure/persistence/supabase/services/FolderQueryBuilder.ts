@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
 
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
+
 /**
  * Folder Query Builder Service
  * Follows Single Responsibility Principle - handles query construction for folders
@@ -21,7 +23,7 @@ export class FolderQueryBuilder {
   /**
    * Apply parent folder filter
    */
-  applyParentFilter(query: any, parentId: string | null) {
+  applyParentFilter(query: SupabaseQueryBuilder, parentId: string | null): SupabaseQueryBuilder {
     if (parentId === null) {
       return query.is('parent_folder_id', null);
     }
@@ -31,7 +33,7 @@ export class FolderQueryBuilder {
   /**
    * Apply owner filter
    */
-  applyOwnerFilter(query: any, ownerId?: string | null) {
+  applyOwnerFilter(query: SupabaseQueryBuilder, ownerId?: string | null): SupabaseQueryBuilder {
     if (ownerId) {
       return query.eq('user_id', ownerId);
     }
@@ -41,7 +43,7 @@ export class FolderQueryBuilder {
   /**
    * Apply type filter for folders
    */
-  applyTypeFilter(query: any, type?: string | null): any {
+  applyTypeFilter(query: SupabaseQueryBuilder, type?: string | null): SupabaseQueryBuilder | null {
     // If type is specified and it's not 'folder', return empty result
     // as this method only handles folders
     if (type && type !== 'folder') {
@@ -53,7 +55,7 @@ export class FolderQueryBuilder {
   /**
    * Apply search filter
    */
-  applySearchFilter(query: any, searchTerm?: string) {
+  applySearchFilter(query: SupabaseQueryBuilder, searchTerm?: string): SupabaseQueryBuilder {
     if (searchTerm && searchTerm.trim() !== '') {
       return query.ilike('name', `%${searchTerm}%`);
     }
@@ -64,14 +66,14 @@ export class FolderQueryBuilder {
   /**
    * Apply name filter
    */
-  applyNameFilter(query: any, name: string) {
+  applyNameFilter(query: SupabaseQueryBuilder, name: string): SupabaseQueryBuilder {
     return query.eq('name', name);
   }
 
   /**
    * Apply sorting
    */
-  applySorting(query: any, sortParams?: DamSortParameters) {
+  applySorting(query: SupabaseQueryBuilder, sortParams?: DamSortParameters): SupabaseQueryBuilder {
     const validSortColumns = ['name', 'created_at', 'updated_at'];
     let effectiveSortBy = sortParams?.sortBy || 'name';
     
@@ -87,7 +89,7 @@ export class FolderQueryBuilder {
   /**
    * Apply pagination
    */
-  applyPagination(query: any, limitOptions?: { offset?: number; limit?: number }) {
+  applyPagination(query: SupabaseQueryBuilder, limitOptions?: { offset?: number; limit?: number }): SupabaseQueryBuilder {
     if (limitOptions?.limit !== undefined && limitOptions.limit > 0) {
       const limit = limitOptions.limit;
       query = query.limit(limit);
