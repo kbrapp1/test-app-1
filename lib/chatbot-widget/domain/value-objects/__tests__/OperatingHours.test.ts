@@ -69,7 +69,7 @@ describe('OperatingHours Value Object', () => {
       expect(() => {
         OperatingHours.create({
           timezone: 'UTC',
-          // @ts-ignore - Testing runtime validation
+          // @ts-expect-error - Testing runtime validation by intentionally passing invalid type
           businessHours: 'invalid',
           holidaySchedule: validHolidaySchedule,
           outsideHoursMessage: 'Closed'

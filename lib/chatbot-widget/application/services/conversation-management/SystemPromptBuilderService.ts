@@ -10,7 +10,7 @@ import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
-import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService, ISessionLogger as _ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { SimplePromptService } from '../../../domain/services/ai-configuration/SimplePromptService';
 import { PromptGenerationInput } from '../../../domain/services/ai-configuration/types/SimplePromptTypes';

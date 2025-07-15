@@ -87,7 +87,6 @@ describe('NotesApplicationService', () => {
     service = new NotesApplicationService(mockRepository);
 
     // Mock the private validatePermissions method to always pass
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.spyOn(service as any, 'validatePermissions').mockResolvedValue(undefined);
   });
 

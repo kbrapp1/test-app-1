@@ -82,7 +82,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         try {
           const context = await contextService.getCurrentContext();
           setCurrentContext(context);
-        } catch (contextError) {
+        } catch (_contextError) {
           // Context is optional, don't fail the entire operation
           setCurrentContext(null);
         }
@@ -167,7 +167,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         ]);
         
         await auditWithTimeout;
-      } catch (auditError) {
+      } catch (_auditError) {
         // Don't fail the entire operation if audit fails
       }
 
@@ -194,7 +194,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         if (newActiveId.status === 'fulfilled' && newActiveId.value) {
           setActiveOrganizationId(newActiveId.value);
         }
-      } catch (refreshError) {
+      } catch (_refreshError) {
         // The switch succeeded, so don't fail the operation
       }
 
@@ -221,7 +221,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
     } finally {
       setIsSwitching(false);
     }
-  }, [accessibleOrganizations, currentContext, auditService, contextService, organizationCache]);
+  }, [accessibleOrganizations, currentContext, auditService, contextService, organizationCache, user]);
 
   // Refresh context data
   const refreshContext = useCallback(async () => {
@@ -241,7 +241,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
     } catch (err: any) {
       setError(err.message || 'Failed to refresh context');
     }
-  }, [contextService, organizationCache]);
+  }, [contextService, organizationCache, user]);
 
   // Clear context
   const clearContext = useCallback(async () => {
@@ -255,7 +255,7 @@ export function useOrganizationContext(): UseOrganizationContextResult {
   const checkAccess = useCallback(async (organizationId: string): Promise<boolean> => {
     try {
       return await organizationCache.hasOrganizationAccess(organizationId, user);
-    } catch (err) {
+    } catch (_err) {
       return false;
     }
   }, [organizationCache, user]);

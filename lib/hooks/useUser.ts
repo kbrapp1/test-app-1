@@ -128,7 +128,7 @@ export function useUser() {
       isEditor: hasRoleCheck(UserRole.EDITOR),
       isViewer: hasRoleCheck(UserRole.VIEWER),
     };
-  }, [user, userRole]);
+  }, [userRole]);
 
   return {
     user,

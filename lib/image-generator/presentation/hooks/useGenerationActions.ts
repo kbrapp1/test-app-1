@@ -33,7 +33,7 @@ export const useGenerationActions = ({
   const copyImageUrl = useCallback(async (imageUrl: string) => {
     try {
       await navigator.clipboard.writeText(imageUrl);
-    } catch (err) {
+    } catch (_err) {
       // Silent error handling
     }
   }, []);
@@ -50,7 +50,7 @@ export const useGenerationActions = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (_err) {
       // Silent error handling
     }
   }, []);

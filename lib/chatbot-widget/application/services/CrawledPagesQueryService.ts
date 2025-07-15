@@ -21,8 +21,7 @@ import {
   CrawledPagesQueryRequest, 
   CrawledPagesQueryResponse, 
   CrawledPagesStatsRequest, 
-  CrawledPagesStatsResponse,
-  CrawledPageData
+  CrawledPagesStatsResponse
 } from '../types/CrawledPagesTypes';
 
 export class CrawledPagesQueryService {

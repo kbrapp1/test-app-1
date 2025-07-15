@@ -13,8 +13,6 @@
 
 import React from 'react';
 import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
-import { Asset as DomainAsset } from '../../domain/entities/Asset';
-import { Folder as DomainFolder } from '../../domain/entities/Folder';
 
 // ===== CORE COMPONENT PROPS =====
 
@@ -177,8 +175,8 @@ export interface BulkOperationDialogProps extends BaseDialogProps {
  * Props for filter components
  */
 export interface FilterComponentProps extends BaseComponentProps {
-  value?: any;
-  onChange: (value: any) => void;
+  value?: string | number | boolean | string[] | number[];
+  onChange: (value: string | number | boolean | string[] | number[]) => void;
   disabled?: boolean;
   placeholder?: string;
 }

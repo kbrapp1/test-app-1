@@ -24,8 +24,8 @@ export class LeadLifecycleService {
   async updateFollowUpStatus(
     leadId: string,
     newStatus: FollowUpStatus,
-    notes?: string,
-    assignedTo?: string
+    _notes?: string,
+    _assignedTo?: string
   ): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
@@ -75,9 +75,9 @@ export class LeadLifecycleService {
   /** Schedule follow-up for lead */
   async scheduleFollowUp(
     leadId: string,
-    followUpDate: Date,
-    followUpType: string,
-    notes?: string
+    _followUpDate: Date,
+    _followUpType: string,
+    _notes?: string
   ): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {

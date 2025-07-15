@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { RefreshCw, Wand2, ArrowDownToLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -76,9 +77,11 @@ export const ImageDisplayArea: React.FC<ImageDisplayAreaProps> = ({
           </div>
         ) : currentGeneratedImage ? (
           <div className="relative max-w-full max-h-full group">
-            <img 
+            <Image 
               src={currentGeneratedImage} 
               alt="Generated image" 
+              width={800}
+              height={800}
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
             />
             {onMakeBaseImage && (

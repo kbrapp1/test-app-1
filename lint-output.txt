@@ -1,0 +1,1740 @@
+
+./components/settings/OrgMembersTable.columns.tsx
+78:26  Warning: '_e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/settings/profile-form.tsx
+133:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/team/TeamMemberCard.tsx
+62:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/ui/calendar.tsx
+67:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/ui/useWaveSurfer.ts
+79:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+124:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+144:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+144:92  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+146:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+147:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+148:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+186:6  Warning: React Hook useEffect has missing dependencies: 'duration' and 'isLoading'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/chatbot-widget/application/dto/debug-components/BusinessRulesDebugDto.ts
+53:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/dto/debug-components/IntentClassificationDebugDto.ts
+21:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/dto/debug-components/RequestDebugDto.ts
+24:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+25:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+43:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+45:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/dto/debug-components/SessionDebugDto.ts
+35:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/dto/ProcessChatMessageRequest.ts
+26:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/dto/ProcessChatMessageResult.ts
+26:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/mappers/ChatSessionMapper.ts
+96:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+128:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+164:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+175:77  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/mappers/DebugInfoMapper.ts
+14:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+16:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+82:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+115:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+127:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+128:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+148:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/analysis/ApiResponseExtractor.ts
+6:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+10:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+14:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+18:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+18:107  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+22:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+39:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+43:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:91  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:104  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+61:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/analysis/DebugDataEnricher.ts
+9:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+29:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/configuration-management/ChatSessionService.ts
+19:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+157:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ContextInjectionFacadeHelpers.ts
+95:16  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+115:16  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ContextInjectionFacadeValidation.ts
+75:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+76:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+109:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ContextInjectionValidation.ts
+58:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/conversation-management/AiConversationService.ts
+169:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+172:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+249:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/conversation-management/SystemPromptBuilderService.ts
+22:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/CrawlOrchestrationService.ts
+45:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:17  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+105:17  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+106:24  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+107:24  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+108:25  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+109:23  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+110:22  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+111:20  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+
+./lib/chatbot-widget/application/services/EmbeddingBatchApplicationService.ts
+21:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+28:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+167:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ErrorAnalyticsService.ts
+128:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+225:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ErrorTrackingFacade.ts
+327:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/KnowledgeBaseFormHelpers.ts
+134:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+156:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+162:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/KnowledgeBaseFormValidation.ts
+70:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+221:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/lead-management/LeadCaptureDecisionService.ts
+44:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/lead-management/LeadLifecycleService.ts
+44:11  Error: 'newState' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+97:37  Error: 'conversionNotes' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+109:36  Error: 'reason' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/lead-management/LeadManagementService.ts
+214:16  Error: 'id' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+214:28  Error: 'tag' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+223:19  Error: 'id' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+223:31  Error: 'tag' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/lead-management/LeadQueryService.ts
+164:91  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/ChatMessageProcessingService.ts
+12:10  Error: 'MessageProcessingWorkflowService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:34  Error: 'ConversationContext' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+31:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+38:11  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+39:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+43:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:11  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+49:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+53:11  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+90:5  Error: 'request' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+135:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+138:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+209:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+209:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+228:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+243:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+258:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+281:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+281:65  Error: 'logFileName' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/message-processing/ConversationContextBuilderService.ts
+45:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+157:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+189:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+239:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+240:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/ConversationFlowAnalyzerService.ts
+33:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+105:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+128:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+128:107  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+153:67  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+153:92  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+155:11  Error: 'leadData' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/message-processing/EntityMergeProcessorService.ts
+17:34  Error: 'ISessionLogger' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+30:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+36:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+130:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+144:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+154:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+155:6  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+161:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+162:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+163:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+164:82  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/LeadScoreCalculatorService.ts
+62:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/MessageProcessingWorkflowService.ts
+29:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+45:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+98:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+183:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+183:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+199:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+199:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+227:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+227:72  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+233:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+239:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/SessionContextUpdateService.ts
+14:10  Error: 'AccumulatedEntities' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+30:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+33:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:6  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/message-processing/UnifiedResponseProcessorService.ts
+26:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+27:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+29:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+41:16  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+72:16  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+86:16  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+98:16  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+134:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/ProcessChatMessageWorkflowOrchestrator.ts
+31:10  Error: 'DomainError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+132:105  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+135:21  Error: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+150:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+150:127  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+153:21  Error: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+167:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+167:98  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:21  Error: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+193:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+193:90  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+196:21  Error: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+210:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+210:107  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+213:21  Error: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+227:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+227:94  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+254:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+273:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+288:30  Error: 'event' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+288:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/services/PromptAssemblyApplicationService.ts
+18:10  Error: 'SanitizedContent' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+159:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/simulation/ChatSimulationService.ts
+3:33  Error: 'SimulatedUserProfile' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:10  Error: 'ChatbotConfig' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+129:55  Error: 'simulation' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/services/WebsiteValidationService.ts
+69:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+183:5  Error: 'warnings' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+232:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/types/CrawledPagesTypes.ts
+47:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+79:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/use-cases/CaptureLeadUseCase.ts
+175:93  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/use-cases/ConfigureChatbotUseCase.ts
+181:11  Error: 'maxScore' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/CrawlAndStoreWebsiteUseCase.ts
+160:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+161:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+163:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+251:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/CrawlWebsiteUseCase.ts
+64:13  Error: 'budget' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+81:19  Error: 'category' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/InitializeChatSessionUseCase.ts
+24:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+133:63  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+154:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+161:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:41  Error: 'event' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/lead-capture-components/LeadDataFactory.ts
+41:22  Error: 'config' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/lead-capture-components/LeadQualificationAnalyzer.ts
+13:10  Error: 'Lead' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/application/use-cases/lead-capture-components/QualificationProcessor.ts
+135:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/application/use-cases/ProcessChatMessageUseCase.ts
+25:10  Error: 'SessionUpdateService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+34:3  Error: 'ErrorSeverity' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/entities/ChatMessage.ts
+238:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+257:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/entities/Lead.ts
+17:10  Error: 'LeadLifecycleManager' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/errors/AIProcessingErrors.ts
+21:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+39:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+59:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+77:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+86:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+97:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+115:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+124:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+133:73  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+142:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+160:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+169:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/base/DomainErrorBase.ts
+36:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+57:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+74:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+91:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/BusinessDomainErrors.ts
+21:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:64  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/ChatbotWidgetDomainErrors.ts
+127:77  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+131:100  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+135:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+143:84  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+172:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+172:76  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+180:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+180:93  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+188:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+188:95  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/ChatMessageProcessingErrors.ts
+25:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:79  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+73:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+82:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+91:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+100:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/ContentSanitizationError.ts
+27:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+89:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/ContentValidationError.ts
+27:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:84  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+90:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/ConversationErrors.ts
+21:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+39:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+59:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+92:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:80  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+116:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+127:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:88  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+149:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+160:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+169:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+180:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+189:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/errors/InfrastructureErrors.ts
+21:79  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+41:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+60:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+89:73  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+100:90  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+123:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+132:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/events/SessionInitializedEvent.ts
+37:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/repositories/ILeadRepository.ts
+23:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+58:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/repositories/IVectorKnowledgeRepository.ts
+26:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/ai-configuration/BusinessGuidanceService.ts
+18:60  Error: 'leadScore' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/ai-configuration/ConversationAnalysisService.ts
+22:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+23:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+24:5  Error: 'leadScore' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+56:59  Error: 'topics' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+65:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:77  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+85:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+85:77  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+102:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+102:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+118:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+118:76  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+134:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+149:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/ai-configuration/KnowledgeBaseService.ts
+16:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/ai-configuration/PersonaGenerationService.ts
+33:5  Error: 'analysis' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/ai-configuration/SimplePromptService.ts
+7:3  Error: 'PromptSection' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+169:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+227:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/ContentCategorizationService.ts
+74:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+168:48  Error: 'title' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/ContentDeduplicationService.ts
+93:17  Error: 'normalizedUrl' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/ContentExtractionService.ts
+88:5  Error: 'maxDepth' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+109:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+227:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+240:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/context/EntityAccumulationService.ts
+149:5  Error: 'context' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+374:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/context-injection/ContextModuleGeneratorDomainService.ts
+156:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+221:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+230:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+260:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+266:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/context-injection/ContextModulePriorityDomainService.ts
+22:3  Error: 'CONTEXT_PRIORITY_WEIGHTS' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/context-injection/ContextTokenBudgetDomainService.ts
+43:10  Error: Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+154:10  Error: Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+260:10  Error: Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+
+./lib/chatbot-widget/domain/services/conversation/ConversationContextOrchestrator.ts
+18:10  Error: 'ChatbotConfig' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+209:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+279:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+282:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+304:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+336:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/conversation/ConversationEnhancedAnalysisService.ts
+63:11  Error: 'processingTime' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+102:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+142:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/conversation/ConversationSessionUpdateService.ts
+17:27  Error: 'ContextAnalysisValueObject' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+18:10  Error: 'ContactInfo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+102:11  Error: 'botMessages' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+131:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/conversation-management/ConversationFlowService.ts
+31:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+94:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+122:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/conversation-management/ReadinessIndicatorDomainService.ts
+25:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+88:73  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+111:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+145:79  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+207:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+247:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/EntityAccumulationStrategies.ts
+16:3  Error: 'AccumulatedEntitiesProps' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+157:64  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+190:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/EntitySerializationService.ts
+48:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+87:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+114:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+120:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+138:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+150:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+178:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/EntityUtilityService.ts
+175:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+200:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+207:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/ErrorCategorizationDomainService.ts
+181:65  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/interfaces/ContextInjectionTypes.ts
+60:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/interfaces/EmbeddingTypes.ts
+38:18  Error: An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowInterfaces' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.  @typescript-eslint/no-empty-object-type
+
+./lib/chatbot-widget/domain/services/interfaces/IAIConversationService.ts
+38:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/interfaces/IChatbotLoggingService.ts
+19:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+52:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+58:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+67:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+70:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+84:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+87:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+90:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/interfaces/IDebugInformationService.ts
+6:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+36:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/interfaces/IKnowledgeRetrievalService.ts
+25:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/knowledge-processing/KnowledgeBaseFormService.ts
+79:11  Error: 'sections' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/KnowledgeCacheWarmingService.ts
+2:3  Error: 'IKnowledgeRetrievalService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+4:3  Error: 'KnowledgeSearchResult' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:3  Error: 'KnowledgeRetrievalContext' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+10:10  Error: 'IEmbeddingService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/KnowledgeManagementService.ts
+7:34  Error: 'IOperationLogger' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/lead-management/LeadExportService.ts
+15:10  Error: 'ContactInfo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:10  Error: 'LeadMetadata' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:10  Error: 'LeadSource' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/lead-management/LeadQueryService.ts
+14:10  Error: 'Lead' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/lead-management/LeadScoreValidationService.ts
+67:69  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+67:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+89:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+95:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/session-management/ChatSessionFactory.ts
+72:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+95:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+124:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+156:65  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/session-management/IntentPersistenceService.ts
+2:10  Error: 'ChatMessage' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+19:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+169:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+186:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+206:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+224:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+232:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+233:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/session-management/SessionContextService.ts
+1:36  Error: 'ContactInfo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+104:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/UrlNormalizationService.ts
+136:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+173:16  Error: 'fallbackError' is defined but never used.  @typescript-eslint/no-unused-vars
+226:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/utilities/ChatMessageFactoryService.ts
+8:41  Error: 'MessageType' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+19:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/utilities/ContextWindowService.ts
+126:11  Error: 'summaryPrompt' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/utilities/EntityRelevanceScoreService.ts
+37:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+114:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/utilities/MessageCostCalculationService.ts
+74:11  Error: 'totalCostDollars' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/utilities/RetentionStrategyService.ts
+12:10  Error: 'ChatMessage' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:3  Error: 'ScoredMessage' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/utilities/types/RelevanceTypes.ts
+30:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/VectorCacheLoggingService.ts
+223:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/VectorCacheOrchestrationService.ts
+275:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/services/VectorKnowledgeRetrievalService.ts
+11:3  Error: 'KnowledgeRetrievalError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:3  Error: 'KnowledgeCacheError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:10  Error: 'IEmbeddingService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+92:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+147:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+148:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+149:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+150:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+339:29  Error: 'item' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+354:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/VectorMemoryManagementService.ts
+8:3  Error: 'VectorCacheEntry' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+144:5  Error: 'vectorCache' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+145:5  Error: 'config' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/services/VectorSimilarityService.ts
+49:17  Error: 'key' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/types/AccumulatedEntityTypes.ts
+85:10  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/value-objects/ai-configuration/AIConfiguration.ts
+22:10  Error: 'AIConfigurationComponent' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/value-objects/ai-configuration/DomainConstants.ts
+435:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/value-objects/ai-configuration/PromptSection.ts
+28:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+99:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/value-objects/context/AccumulatedEntities.ts
+41:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+152:5  Error: 'messageId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+210:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/value-objects/context/EntityCorrections.ts
+15:10  Error: 'EntityValue' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+15:23  Error: 'EntityChange' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+165:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/domain/value-objects/knowledge-processing/ProductSection.ts
+159:25  Error: 'fullCatalog' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/domain/value-objects/session-management/ChatSessionTypes.ts
+6:44  Error: 'EntityChange' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/ApplicationServiceCompositionService.ts
+15:10  Error: 'IKnowledgeRetrievalService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot.ts
+11:10  Error: 'IIntentClassificationService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:10  Error: 'ITokenCountingService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+166:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+166:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/composition/core/ConversationFlowCompositionService.ts
+34:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:6  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+134:76  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+163:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+198:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+199:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+295:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/core/CoreDomainServiceCompositionService.ts
+338:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+345:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+352:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+359:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+366:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/core/InfrastructureServiceCompositionService.ts
+131:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+132:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+137:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+138:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+143:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+144:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+201:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+209:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+219:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/core/KnowledgeServiceCompositionService.ts
+35:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+36:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+143:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+144:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+145:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/composition/DomainServiceCompositionService.ts
+31:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+115:84  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+135:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:92  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/composition/UseCaseCompositionService.ts
+58:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+66:66  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/ChatSessionSupabaseRepository.ts
+16:29  Error: 'RawChatSessionDbRecord' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/ErrorPersistenceService.ts
+33:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+39:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+83:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+107:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+126:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+146:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+149:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+174:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+203:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/errors/DatabaseError.ts
+12:72  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/LeadSupabaseRepository.ts
+21:28  Error: 'LeadFilters' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+99:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+178:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+192:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+198:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+267:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+285:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+359:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/mappers/ChatbotConfigMapper.ts
+1:25  Error: 'ChatbotConfigProps' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+16:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+18:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+31:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+33:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+34:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+45:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+63:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+82:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+134:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+161:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+165:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+174:73  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+181:23  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+182:23  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+183:30  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+184:30  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+185:31  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+186:29  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+187:28  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+188:26  Error: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong.  @typescript-eslint/no-non-null-asserted-optional-chain
+199:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+202:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+208:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+218:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+254:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+259:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+263:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/mappers/ChatMessageMapper.ts
+13:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+127:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/mappers/ChatSessionMapper.ts
+10:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+11:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+31:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+120:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+140:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/mappers/LeadMapper.ts
+17:10  Error: 'LeadMetadata' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/analytics/CostAnalyticsService.ts
+150:5  Error: 'projectionDays' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/chat-message-queries/ChatMessageSearchService.ts
+66:11  Error: 'searchPattern' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+197:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+197:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/ChatMessageAnalyticsService.ts
+15:10  Error: 'ChatMessageMapper' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+15:29  Error: 'RawChatMessageDbRecord' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:10  Error: 'DatabaseError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/ContentAnalyticsService.ts
+72:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+189:11  Error: 'totalTypes' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/ContentProcessingService.ts
+116:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/LeadAnalyticsService.ts
+14:10  Error: 'DatabaseError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:10  Error: 'FollowUpStatus' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/LeadOperationsService.ts
+152:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/services/LeadQueryService.ts
+14:10  Error: 'Lead' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:10  Error: 'LeadMapper' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:22  Error: 'RawLeadDbRecord' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+50:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/persistence/supabase/SupabaseVectorKnowledgeRepository.ts
+13:3  Error: 'VectorSearchResult' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:3  Error: 'VectorWithItem' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+15:3  Error: 'VectorKnowledgeStats' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:3  Error: 'CrawledPageInfo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+58:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/adapters/CheerioHtmlParserAdapter.ts
+18:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+43:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+77:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+77:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/crawling/CrawleeCrawlerProvider.ts
+13:10  Error: 'CheerioCrawler' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:10  Error: 'RobotsFile' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+63:15  Error: 'totalPages' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+166:26  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+173:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+241:16  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+270:20  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+287:22  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+294:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+313:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+322:23  Error: 'baseUrl' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/analytics/KnowledgeContentCoordinatorService.ts
+209:123  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/analytics/KnowledgeInsightsService.ts
+165:39  Error: 'items' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/analytics/KnowledgeOptimizationPlanningService.ts
+261:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/analytics/KnowledgeQualityAnalysisService.ts
+141:34  Error: 'content' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+166:40  Error: 'normalized' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/KnowledgeAnalyticsCoordinatorService.ts
+20:10  Error: 'KnowledgeContentCoordinatorService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/KnowledgeConverterService.ts
+12:3  Error: 'CategoryMapping' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+21:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+73:11  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/KnowledgeRelevanceService.ts
+14:34  Error: 'SimilarityMatch' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/KnowledgeSearchService.ts
+14:11  Error: 'SearchResult' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/KnowledgeStatisticsService.ts
+13:10  Error: 'KnowledgeUtilityService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/PDFKnowledgeProcessor.ts
+36:5  Error: 'chatbotConfigId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/processing/PDFChunkingService.ts
+179:5  Error: 'config' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/utilities/KnowledgeAnalysisService.ts
+13:3  Error: 'ChunkingStrategy' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:3  Error: 'DEFAULT_CHUNKING_STRATEGY' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/utilities/KnowledgeContentDistributionService.ts
+99:11  Error: 'uniqueTags' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+156:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+157:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/utilities/KnowledgeContentHashingService.ts
+200:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+201:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/utilities/KnowledgeFormatService.ts
+161:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/knowledge-services/utilities/KnowledgeReportingService.ts
+130:94  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/logging/ChatbotFileLoggingService.ts
+67:73  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+87:77  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+145:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+177:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+178:13  Error: 'path' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/logging/FileLogger.ts
+17:10  Error: 'LogEntry' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+21:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+24:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+91:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+103:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+103:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+111:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+111:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+120:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+137:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+157:81  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+161:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+165:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+165:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:65  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:78  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+186:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+192:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+202:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/logging/LoggingTypes.ts
+22:10  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/logging/NoOpLogger.ts
+12:3  Error: 'LogContext' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:3  Error: 'LogLevel' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:3  Error: 'LogMetrics' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/OpenAIIntentClassificationService.ts
+104:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+105:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/openai/OpenAIProvider.ts
+64:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+73:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+74:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+141:15  Error: 'costEstimate' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/OpenAITokenCountingService.ts
+46:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+52:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+56:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+60:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/ConversationAnalysisBuilder.ts
+225:11  Error: 'lowerContent' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/IntentInferenceService.ts
+254:11  Error: 'latestIntent' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+275:11  Error: 'contentLength' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIChatbotProcessingService.ts
+78:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+79:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+81:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+184:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+187:6  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+197:67  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+201:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+246:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIEmbeddingService.ts
+20:3  Error: 'CacheStats' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIFunctionSchemaBuilder.ts
+25:5  Error: 'existingEntities' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+26:5  Error: 'conversationPhase' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+27:5  Error: 'userMessage' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/providers/openai/services/OpenAIIntentUtilityService.ts
+57:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/services/DebugInformationService.ts
+8:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+9:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/infrastructure/services/VectorQueryService.ts
+19:3  Error: 'VectorValidationResult' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+160:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+217:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+225:16  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/services/VectorStatisticsQueryService.ts
+61:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+133:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/services/VectorStatisticsService.ts
+18:3  Error: 'SupabaseVectorRow' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/services/VectorStorageService.ts
+353:14  Error: 'trackingError' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/startup/AppStartupService.ts
+60:13  Error: 'totalTime' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+66:13  Error: 'totalTime' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/infrastructure/types/VectorRepositoryTypes.ts
+23:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+74:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+119:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+132:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/actions/configActions.ts
+158:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/actions/contentValidationActions.ts
+12:10  Error: 'SanitizeUserContentUseCase' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+13:10  Error: 'ValidateContentUseCase' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/actions/deduplicateWebsiteContentActions.ts
+31:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+99:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+162:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/actions/simulationActions.ts
+12:10  Error: 'ChatSession' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/actions/websiteSourcesActions.ts
+3:10  Error: 'revalidatePath' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+5:10  Error: 'WebsiteSource' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+6:10  Error: 'DomainError' is defined but never used. Allowed unused vars must match /^(organizationId|_)/u.  @typescript-eslint/no-unused-vars
+244:86  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/components/admin/configuration/BotIdentityForm.tsx
+24:3  Warning: 'BotConfigurationFormData' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:3  Warning: 'BotConfigurationViewState' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+26:3  Warning: 'BotConfigurationActions' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+31:11  Error: An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowInterfaces' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.  @typescript-eslint/no-empty-object-type
+58:33  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./lib/chatbot-widget/presentation/components/admin/configuration/OperatingHoursForm.tsx
+20:3  Warning: 'BotConfigurationFormData' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+21:3  Warning: 'BotConfigurationViewState' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+22:3  Warning: 'BotConfigurationActions' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+26:11  Error: An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowInterfaces' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.  @typescript-eslint/no-empty-object-type
+
+./lib/chatbot-widget/presentation/components/admin/parameter-sections/business-rules/LeadScoringDisplay.tsx
+9:10  Warning: 'DomainConstants' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+35:60  Error: Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+./lib/chatbot-widget/presentation/components/admin/simulation/ChatConfigurationPanel.tsx
+38:94  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/components/admin/website-sources/CrawledPagesDisplay.tsx
+22:3  Warning: 'Clock' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+53:3  Warning: 'sourceId' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+73:9  Warning: 'skippedPages' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/components/admin/website-sources/CrawlProgressTracker.tsx
+27:3  Warning: 'sourceId' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/components/admin/website-sources/WebsiteSourcesDialogs.tsx
+148:64  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./lib/chatbot-widget/presentation/components/admin/widget-management/embed-code-components/CodeDisplaySection.tsx
+42:14  Warning: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/components/admin/widget-management/embed-code-components/PlatformSelector.tsx
+3:10  Warning: 'Tabs' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+23:36  Warning: 'selectedPlatform' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/hooks/useAdvancedParameters.ts
+16:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/hooks/useChatbotConfiguration.ts
+24:3  Error: 'ChatbotConfigDto' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+50:11  Error: 'configId' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/hooks/useChatSimulation.ts
+46:24  Error: 'setTestingGoals' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+47:24  Error: 'setResponseMode' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/hooks/useKnowledgeBaseSettings.ts
+11:10  Error: 'updateChatbotConfig' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:10  Error: 'UpdateChatbotConfigDto' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:3  Error: 'FaqOperationDto' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/hooks/useWebsiteSourcesState.ts
+24:10  Error: 'simulateCrawlProgress' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+31:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+86:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+123:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+190:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/chatbot-widget/presentation/hooks/website-sources/useCrawledPagesData.ts
+17:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+53:12  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+60:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+100:102  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/hooks/website-sources/useCrawlProgress.ts
+82:90  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+83:82  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+92:88  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+93:80  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+149:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/hooks/__tests__/useKnowledgeBaseSettings.integration.test.tsx
+66:10  Error: Component definition is missing display name  react/display-name
+
+./lib/chatbot-widget/presentation/hooks/__tests__/useKnowledgeBaseSettings.simple.test.tsx
+30:10  Error: Component definition is missing display name  react/display-name
+
+./lib/chatbot-widget/presentation/types/debug-panel.ts
+112:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+116:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+117:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/types/response-generation.ts
+11:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+29:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/chatbot-widget/presentation/utils/websiteSourcesHelpers.ts
+27:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+169:29  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+
+./lib/chatbot-widget/__tests__/phase1-validation.test.ts
+178:45  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+190:33  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+203:24  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+216:30  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+227:25  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+
+./lib/config/navigation.ts
+10:5  Error: 'SearchIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:5  Error: 'DatabaseIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:5  Error: 'MegaphoneIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/errors/base.ts
+142:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+154:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+163:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+175:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/errors/client.tsx
+22:10  Error: 'ErrorCodes' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:30  Error: 'FC' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+72:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+116:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+116:79  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/errors/factory.ts
+26:3  Error: 'ErrorSeverity' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/forms/error-handling-utils.ts
+40:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+75:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/forms/error-handling.ts
+55:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+67:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+89:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+92:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+107:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+123:10  Error: 'isApiError' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+154:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/hooks/useOnboarding.ts
+6:10  Error: 'SupabaseClient' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+35:10  Error: 'invitationData' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+57:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+94:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:70  Error: 'currentFullName' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+113:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+156:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/hooks/useUser.ts
+14:10  Error: 'User' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+46:11  Error: 'toast' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+47:9  Error: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/application/commands/CommandBus.ts
+35:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/commands/GenerationCommands.ts
+21:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+60:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/commands/handlers/UpdateGenerationCommandHandler.ts
+5:16  Error: 'command' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/application/dto/ReplicateDto.ts
+40:25  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+41:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/mappers/GenerationMapper.ts
+4:10  Error: 'Prompt' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+44:25  Error: 'dto' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+61:29  Error: 'dtos' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/application/mappers/StatusMapper.ts
+36:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/queries/GenerationQueries.ts
+58:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/services/CostEstimationService.ts
+187:31  Error: 'userId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+187:47  Error: 'timeframe' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+207:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/services/GenerationOrchestrationService.ts
+53:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/services/GenerationStatusService.ts
+124:5  Error: 'authContext' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+135:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+164:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/application/services/StatusManagementService.ts
+1:10  Error: 'Generation' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+2:10  Error: 'GenerationStatusDomainService' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+3:10  Error: 'GenerationPollingSpecification' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:10  Error: 'StatusMapper' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+10:3  Error: 'DeduplicationKeyDto' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:10  Error: 'Result' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/application/use-cases/GenerateImageUseCase.ts
+8:10  Error: 'GenerationStatusManager' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+54:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+94:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+95:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+104:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/application/use-cases/GetGenerationsUseCase.ts
+5:18  Error: An interface declaring no members is equivalent to its supertype.  @typescript-eslint/no-empty-object-type
+
+./lib/image-generator/application/use-cases/ManageGenerationStatusUseCase.ts
+2:10  Error: 'StatusMapper' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+221:5  Error: 'options' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/domain/common/AggregateRoot.ts
+7:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+42:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/entities/Generation.ts
+25:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+51:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+84:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+131:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/entities/services/DAMIntegrationService.ts
+26:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/entities/services/GenerationSerializer.ts
+26:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/services/GenerationFailureHandler.ts
+33:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/domain/services/GenerationLifecycle.ts
+15:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+16:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+24:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+25:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+34:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+35:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+43:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+53:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+66:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+69:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/services/GenerationManagementService.ts
+110:68  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/services/GenerationSerializationService.ts
+31:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/domain/services/GenerationValidator.ts
+11:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+178:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/domain/services/ProviderRegistryService.ts
+1:31  Error: 'ProviderValueObject' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/infrastructure/factories/StatusManagementFactory.ts
+56:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+57:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+124:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+125:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/persistence/supabase/mappers/GenerationRowMapper.ts
+21:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/persistence/supabase/mappers/StatusCheckingMapper.ts
+9:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+22:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/persistence/supabase/services/GenerationQueryBuilder.ts
+4:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+83:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/persistence/supabase/StatusCheckingSupabaseRepository.ts
+283:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+292:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+301:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+310:69  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/persistence/UnitOfWork.ts
+42:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+191:34  Error: 'aggregate' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+191:60  Error: 'operation' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+223:30  Error: 'event' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/infrastructure/providers/ExternalProviderStatusService.ts
+4:31  Error: 'ProviderStatusResponse' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/infrastructure/providers/services/ProviderStatusCache.ts
+90:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/infrastructure/providers/services/ProviderStatusFetcher.ts
+4:10  Error: 'success' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/infrastructure/providers/services/ReplicateProviderClient.ts
+96:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/components/forms/controls/GenerationActionButtons.tsx
+40:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/forms/prompt/ImagePromptForm.tsx
+81:3  Warning: 'mood' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+82:3  Warning: 'onMoodChange' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/forms/settings/ImageDimensionsSection.tsx
+32:3  Warning: 'supportedAspectRatios' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/forms/settings/SettingsSection.tsx
+6:10  Warning: 'cn' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+31:3  Warning: 'supportedOutputFormats' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/generation/history/GenerationHistory.tsx
+25:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:3  Warning: 'onRefresh' is defined but never used. Allowed unused args must match /^(_|organizationId$|activeOrganizationId$)/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/generation/history/HistoryPanel.tsx
+9:16  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+18:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/components/layout/ImageDisplayArea.tsx
+71:17  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+71:102  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+106:75  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+106:86  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./lib/image-generator/presentation/components/providers/HeaderModelSelector.tsx
+11:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/components/providers/ProviderSelector.tsx
+4:10  Warning: 'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/components/shared/EmptyState.tsx
+29:13  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./lib/image-generator/presentation/components/shared/LazyLoadWrapper.tsx
+74:74  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/mutations/utils/prependGenerationToPages.ts
+1:10  Error: 'QueryObserverResult' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/queries/useInfiniteGenerations.ts
+1:28  Error: 'useQueryClient' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+2:32  Error: 'useState' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/hooks/shared/queryConfig.ts
+15:59  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:64  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:69  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:75  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:80  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:90  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+44:95  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/shared/queryKeys.ts
+5:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+12:60  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/specialized/useBatchGenerationPolling.ts
+16:9  Error: 'startTimeRef' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+146:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+150:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/useFileUpload.ts
+168:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+172:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+274:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+278:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/hooks/useGenerationActions.ts
+36:14  Error: '_err' is defined but never used.  @typescript-eslint/no-unused-vars
+53:14  Error: '_err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/image-generator/presentation/hooks/useImageGeneratorCoordinator.ts
+29:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+42:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/useImageGeneratorMain.ts
+74:16  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/hooks/useImagePreloader.ts
+47:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/image-generator/presentation/utils/lazyLoader.ts
+26:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+34:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+36:9  Error: Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+67:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+77:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/infrastructure/providers/elevenlabs/ElevenLabsProvider.ts
+73:14  Error: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+134:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/infrastructure/providers/registry/ProviderRegistry.ts
+113:18  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/infrastructure/providers/replicate/ReplicateProvider.ts
+62:14  Error: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+136:118  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+148:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/infrastructure/query/useMutation.ts
+9:40  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+9:58  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:26  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:57  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/infrastructure/query/useQuery.ts
+35:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/infrastructure/query/useSearch.ts
+27:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/middleware/error.ts
+16:12  Error: The `Function` type accepts any function-like value.
+Prefer explicitly defining any function parameters and return type.  @typescript-eslint/no-unsafe-function-type
+19:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+75:67  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+75:85  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/notes/application/services/__tests__/NotesApplicationService.test.ts
+90:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+
+./lib/openai/application/services/OpenAIApplicationService.ts
+34:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+36:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+96:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/openai/domain/value-objects/OpenAIRateLimitConfig.ts
+13:3  Error: 'ErrorSeverity' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/organization/application/hooks/useOrganizationContext.ts
+85:18  Error: '_contextError' is defined but never used.  @typescript-eslint/no-unused-vars
+95:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+170:16  Error: '_auditError' is defined but never used.  @typescript-eslint/no-unused-vars
+197:16  Error: '_refreshError' is defined but never used.  @typescript-eslint/no-unused-vars
+209:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+241:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+258:14  Error: '_err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/organization/domain/services/AuditTrailService.ts
+29:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+82:14  Error: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+310:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/organization/domain/services/OrganizationContextService.ts
+21:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/organization/domain/services/PermissionValidationService.ts
+28:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/organization/infrastructure/OrganizationContextCache.ts
+169:80  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+191:106  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/performance-profiler.ts
+13:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+46:61  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+53:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+70:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+83:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+95:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+119:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+221:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+223:89  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+245:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+314:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+318:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+340:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+342:69  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+343:83  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/services/api-deduplication.ts
+9:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+15:9  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+207:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+219:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+227:36  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/shared/access-control/hooks/usePermissions.ts
+30:61  Error: 'hasAllPermissions' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+30:107  Error: 'permissions' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./lib/shared/access-control/server/checkFeatureAccess.ts
+16:10  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+24:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/shared/infrastructure/ApiDeduplicationService.ts
+14:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+54:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+61:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+175:53  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/store/services/FolderDataService.ts
+50:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+51:38  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+
+./lib/store/services/FolderStateService.ts
+29:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+49:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+85:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/store/services/FolderTreeService.ts
+129:38  Error: A `require()` style import is forbidden.  @typescript-eslint/no-require-imports
+
+./lib/supabase/db-queries.ts
+30:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+139:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+182:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+204:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+235:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+275:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+277:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+284:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+287:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+312:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+361:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/supabase/db-storage.ts
+41:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+84:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/supabase/db.ts
+4:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/application/services/TtsAccessControlService.ts
+103:16  Error: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/tts/application/services/TtsUnifiedContextService.ts
+77:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+212:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/domain/common/TtsError.ts
+295:41  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+302:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/infrastructure/providers/replicate/TtsReplicateAdapter.ts
+13:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+264:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/presentation/components/VoiceSelector.tsx
+70:64  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+80:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+81:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/presentation/hooks/useTtsHistory.ts
+186:56  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/tts/presentation/hooks/useTtsMutations.ts
+109:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+191:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+249:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/utils/lazyLoader.tsx
+10:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+66:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+66:79  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+67:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

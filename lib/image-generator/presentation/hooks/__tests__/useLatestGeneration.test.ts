@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act as _act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { useLatestGeneration } from '../useLatestGeneration';
 import { GenerationDto } from '../../../application/dto';

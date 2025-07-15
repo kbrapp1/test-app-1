@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { 
   RefreshCw,
@@ -12,7 +13,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { GenerationDto } from '../../../../application/dto';
-import { useOptimizedImage, generateImageSrcSet } from '../../../utils/imageOptimization';
+import { useOptimizedImage } from '../../../utils/imageOptimization';
 
 interface GenerationImageProps {
   generation: GenerationDto;
@@ -33,7 +34,6 @@ const GenerationImageComponent: React.FC<GenerationImageProps> = ({
   // Get optimized image URLs based on size
   const imageSize = size === 'small' ? 'thumbnail' : size === 'medium' ? 'medium' : 'full';
   const optimizedImageUrl = useOptimizedImage(generation.imageUrl || '', imageSize);
-  const imageSrcSet = generation.imageUrl ? generateImageSrcSet(generation.imageUrl) : '';
 
   // Generate blur placeholder for progressive loading
   useEffect(() => {
@@ -41,27 +41,27 @@ const GenerationImageComponent: React.FC<GenerationImageProps> = ({
       // Create a tiny version for blur effect
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const nativeImg = new window.Image();
       
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
+      nativeImg.crossOrigin = 'anonymous';
+      nativeImg.onload = () => {
         canvas.width = 20;
         canvas.height = 20;
-        ctx?.drawImage(img, 0, 0, 20, 20);
+        ctx?.drawImage(nativeImg, 0, 0, 20, 20);
         try {
           setPlaceholder(canvas.toDataURL());
-        } catch (error) {
+        } catch {
           // Fallback if CORS issues
           setPlaceholder(undefined);
         }
       };
       
-      img.onerror = () => {
+      nativeImg.onerror = () => {
         setPlaceholder(undefined);
       };
       
       // Use original URL for placeholder generation to avoid race condition with optimized URL
-      img.src = generation.imageUrl;
+      nativeImg.src = generation.imageUrl;
     }
   }, [generation.imageUrl, generation.status]);
 
@@ -113,20 +113,21 @@ const GenerationImageComponent: React.FC<GenerationImageProps> = ({
         <div className="relative w-full h-full">
           {/* Blur placeholder */}
           {placeholder && !imageLoaded && (
-            <img
+            <Image
               src={placeholder}
               alt="Loading..."
-              className="absolute inset-0 w-full h-full object-cover blur-sm scale-110 transition-opacity duration-300"
+              fill
+              className="object-cover blur-sm scale-110 transition-opacity duration-300"
             />
           )}
           
           {/* Main image */}
-          <img
+          <Image
             src={optimizedImageUrl}
-            srcSet={imageSrcSet}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             alt={generation.prompt}
-            className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className={`object-cover transition-all duration-500 group-hover:scale-105 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setImageLoaded(true)}
@@ -211,4 +212,6 @@ export const GenerationImage = React.memo(GenerationImageComponent, (prevProps, 
   }
   
   return true; // Don't re-render
-}); 
+});
+
+GenerationImage.displayName = 'GenerationImage'; 

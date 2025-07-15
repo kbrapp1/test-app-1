@@ -20,9 +20,7 @@ import {
   ContextSelectionCriteria,
   EntityData,
   ContextGenerationOptions,
-  TokenBudgetAllocation,
-  ContextRelevanceFactors,
-  ConversationPhase
+  TokenBudgetAllocation
 } from '../../domain/services/interfaces/ContextInjectionTypes';
 
 // Helper imports following @golden-rule patterns
@@ -36,8 +34,6 @@ import {
 } from './ContextInjectionFacadeHelpers';
 import {
   validateContextSelection,
-  validateFacadeInputs,
-  validateConversationPhase,
   ValidationResult
 } from './ContextInjectionFacadeValidation';
 

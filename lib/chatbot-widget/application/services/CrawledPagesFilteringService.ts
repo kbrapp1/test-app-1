@@ -3,8 +3,7 @@ import {
   CrawledPageData, 
   FilteringOptions, 
   SortingOptions, 
-  CrawledPageSortField, 
-  SortOrder 
+  CrawledPageSortField
 } from '../types/CrawledPagesTypes';
 
 /** Crawled Pages Filtering Service */

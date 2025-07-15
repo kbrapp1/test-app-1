@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { GenerationDto } from '../../../../application/dto';
@@ -149,12 +150,14 @@ export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
           <div key={generation.id} className="border rounded-lg p-4">
             <div className="text-sm font-medium mb-2">{generation.prompt}</div>
             {generation.imageUrl && (
-              <img 
-                src={generation.imageUrl} 
-                alt={generation.prompt}
-                className="w-full h-32 object-cover rounded cursor-pointer"
-                onClick={() => actions.handleImageClick(generation)}
-              />
+              <div className="relative w-full h-32 cursor-pointer" onClick={() => actions.handleImageClick(generation)}>
+                <Image 
+                  src={generation.imageUrl} 
+                  alt={generation.prompt}
+                  fill
+                  className="object-cover rounded"
+                />
+              </div>
             )}
           </div>
         ))}

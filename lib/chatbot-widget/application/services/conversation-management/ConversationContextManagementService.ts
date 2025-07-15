@@ -5,7 +5,7 @@
  * Single responsibility: Handle context retrieval, token management, and conversation summaries.
  */
 
-import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatSession as _ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ConversationContextWindow } from '../../../domain/value-objects/session-management/ConversationContextWindow';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';

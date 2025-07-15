@@ -59,7 +59,7 @@ export class ReplicateProvider implements BaseProvider {
       // Simple health check - try to get account info
       await this.client.accounts.current();
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

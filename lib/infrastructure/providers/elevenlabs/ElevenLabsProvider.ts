@@ -70,7 +70,7 @@ export class ElevenLabsProvider implements BaseProvider {
         },
       });
       return response.ok;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

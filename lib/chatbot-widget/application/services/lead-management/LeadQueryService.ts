@@ -18,7 +18,6 @@ import { LeadMapper } from '../../mappers/LeadMapper';
 import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 
 import { 
-  ResourceNotFoundError,
   AuthorizationError 
 } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 

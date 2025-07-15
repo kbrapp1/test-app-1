@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, Save, AlertCircleIcon, CopyIcon, Trash2Icon } from 'lucide-react';
@@ -37,11 +37,15 @@ export function TtsOutputCard({
   onDeletePrediction
 }: TtsOutputCardProps) {
   const { toast } = useToast();
-  const [_playbackError, setPlaybackError] = useState<string | null>(null);
+  const [_playbackError, setPlaybackErrorState] = useState<string | null>(null);
+
+  const setPlaybackError = useCallback((error: string | null) => {
+    setPlaybackErrorState(error);
+  }, []);
 
   useEffect(() => {
     setPlaybackError(null);
-  }, [audioUrl]);
+  }, [audioUrl, setPlaybackError]);
 
   const handleDownloadClick = async () => {
     if (!audioUrl) return;

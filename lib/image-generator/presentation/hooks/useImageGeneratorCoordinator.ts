@@ -77,7 +77,7 @@ export const useImageGeneratorCoordinator = ({
     if (latestGeneration && ['pending', 'processing'].includes(latestGeneration.status)) {
       setIsGenerationClicked(false);
     }
-  }, [latestGeneration?.status]);
+  }, [latestGeneration]);
 
   const formIsGenerating = isGenerationClicked || Boolean(
     latestGeneration && ['pending', 'processing'].includes(latestGeneration.status)
@@ -124,7 +124,7 @@ export const useImageGeneratorCoordinator = ({
     try {
       // Inline the orchestration logic
       const enhancedPrompt = enhancePromptWithStyles(request.prompt, styleValues);
-      const enhancePromptFn = (prompt: string) => enhancedPrompt;
+      const enhancePromptFn = (_prompt: string) => enhancedPrompt;
       
       await orchestrationHandleGenerate(
         request.prompt,
@@ -158,9 +158,7 @@ export const useImageGeneratorCoordinator = ({
     selectedModelId,
     capabilities.supportsImageEditing,
     capabilities.supportsMultipleImages,
-    fileUpload.baseImageUrl,
-    fileUpload.secondImageUrl,
-    fileUpload.setBaseImageUrl,
+    fileUpload,
     enhancePromptWithStyles,
     styleValues,
     orchestrationHandleGenerate,

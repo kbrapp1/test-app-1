@@ -177,7 +177,7 @@ describe('Image Generator Performance Tests', () => {
         modules.forEach(module => {
           expect(module).toBeDefined();
         });
-      } catch (error) {
+      } catch (_error) {
         // Some modules might not exist, that's ok
         const loadTime = performance.now() - startTime;
         expect(loadTime).toBeLessThan(3000); // Increased threshold

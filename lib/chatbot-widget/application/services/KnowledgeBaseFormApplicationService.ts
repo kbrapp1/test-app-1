@@ -20,8 +20,7 @@ import {
   createVectorItems
 } from './KnowledgeBaseFormHelpers';
 import {
-  validateFormData,
-  validateUpdateRequest
+  validateFormData
 } from './KnowledgeBaseFormValidation';
 
 /**
@@ -197,7 +196,8 @@ export class KnowledgeBaseFormApplicationService {
       const vectorItems = createVectorItems(processingResult.processedChunks);
       // Store vector items (this would typically call the vector service)
       return { vectorsGenerated: true, affectedItems: vectorItems.length };
-    } catch (vectorError) {
+    } catch (_vectorError) {
+      void _vectorError;
       return { vectorsGenerated: false, affectedItems: 0 };
     }
   }

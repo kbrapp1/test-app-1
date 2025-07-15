@@ -103,7 +103,7 @@ export function useOnboarding() {
   }, [supabase, router, toast]); // _tryAutoCompleteOnboarding is not needed here as it uses hook's scope
 
   // Helper function within the hook for core onboarding steps after auth update
-  const _performCoreOnboardingSteps = async (user: User, currentFullName: string) => {
+  const _performCoreOnboardingSteps = useCallback(async (user: User, currentFullName: string) => {
     // Call Edge Function to complete membership/roles
     await completeOnboardingMembership(supabase);
 
@@ -118,7 +118,7 @@ export function useOnboarding() {
           variant: 'default',
        });
     }
-  };
+  }, [supabase, toast]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +179,7 @@ export function useOnboarding() {
     supabase,
     router,
     toast,
+    _performCoreOnboardingSteps,
   ]);
 
   return {

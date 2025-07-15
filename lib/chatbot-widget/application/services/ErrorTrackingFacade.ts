@@ -39,14 +39,7 @@ import {
   WidgetRenderingError,
   WidgetConfigurationError,
   ExternalServiceError,
-  APIRateLimitError,
-  DataPersistenceError,
-  DataValidationError,
-  SecurityViolationError,
-  AuthenticationError,
-  AuthorizationError,
-  PerformanceThresholdError,
-  ResourceExhaustionError
+  APIRateLimitError
 } from '../../domain/errors/ChatbotWidgetDomainErrors';
 
 export interface ChatbotErrorContext {

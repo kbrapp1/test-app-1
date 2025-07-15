@@ -15,7 +15,7 @@ export class DebugInfoMapper {
     journeyState?: any,
     conversationMetrics?: any,
     shouldCaptureLeadInfo?: boolean,
-    suggestedNextActions?: string[]
+    _suggestedNextActions?: string[]
   ): DebugInfoDto | null {
     if (!domainDebugInfo) {
       return null;

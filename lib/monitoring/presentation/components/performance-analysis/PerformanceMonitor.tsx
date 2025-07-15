@@ -231,9 +231,13 @@ const PerformanceMonitorComponent = ({
 // Set displayName for debugging
 PerformanceMonitorComponent.displayName = 'PerformanceMonitorComponent';
 
+// Create memoized component with displayName
+const MemoizedPerformanceMonitor = React.memo(PerformanceMonitorComponent);
+MemoizedPerformanceMonitor.displayName = 'MemoizedPerformanceMonitor';
+
 // Wrap with error boundary for enhanced error handling
 export const PerformanceMonitor = withMonitoringErrorBoundary(
-  React.memo(PerformanceMonitorComponent),
+  MemoizedPerformanceMonitor,
   {
     componentName: 'PerformanceMonitor',
     retryable: true,

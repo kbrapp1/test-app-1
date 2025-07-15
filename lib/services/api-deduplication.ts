@@ -11,8 +11,8 @@ interface PendingRequest {
   abortController: AbortController;
 }
 
-interface CacheEntry {
-  data: any;
+interface CacheEntry<T = unknown> {
+  data: T;
   timestamp: number;
   expiry: number;
 }

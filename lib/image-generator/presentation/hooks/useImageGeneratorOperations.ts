@@ -19,7 +19,7 @@ export const useImageGeneratorOperations = ({
     
     fileUpload.setBaseImageUrl(fileUpload.baseImageUrl);
     setCurrentGeneratedImage(null);
-  }, [fileUpload.baseImageUrl, fileUpload.setBaseImageUrl, setCurrentGeneratedImage]);
+  }, [fileUpload, setCurrentGeneratedImage]);
 
   const handleMakeBaseImageFromHistory = useCallback((imageUrl: string) => {
     if (!imageUrl || (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))) {
@@ -41,14 +41,14 @@ export const useImageGeneratorOperations = ({
         description: 'You can now edit this image or use it as a reference for new generations.'
       });
     });
-  }, [fileUpload.setBaseImageUrl, setCurrentGeneratedImage, setPrompt, closeHistory]);
+  }, [fileUpload, setCurrentGeneratedImage, setPrompt, closeHistory]);
 
   const handleMakeBaseImageFromCurrent = useCallback((currentImage: string | null) => {
     if (currentImage) {
       fileUpload.setBaseImageUrl(currentImage);
       setCurrentGeneratedImage(null);
     }
-  }, [fileUpload.setBaseImageUrl, setCurrentGeneratedImage]);
+  }, [fileUpload, setCurrentGeneratedImage]);
 
   return {
     handleMakeBaseImage,

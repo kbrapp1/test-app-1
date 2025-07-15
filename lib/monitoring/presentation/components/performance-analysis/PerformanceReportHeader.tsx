@@ -61,6 +61,7 @@ const PerformanceReportHeaderComponent: React.FC<PerformanceReportHeaderProps> =
   );
 };
 
-PerformanceReportHeaderComponent.displayName = 'PerformanceReportHeader';
+PerformanceReportHeaderComponent.displayName = 'PerformanceReportHeaderComponent';
 
 export const PerformanceReportHeader = React.memo(PerformanceReportHeaderComponent);
+PerformanceReportHeader.displayName = 'PerformanceReportHeader';

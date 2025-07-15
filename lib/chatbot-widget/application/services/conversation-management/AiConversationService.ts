@@ -17,7 +17,7 @@ import { LeadExtractionService } from '../../../domain/services/lead-management/
 // ConversationSentimentService removed - using OpenAI API for sentiment analysis
 import { OpenAIProvider } from '../../../infrastructure/providers/openai/OpenAIProvider';
 import OpenAI from 'openai';
-import { IIntentClassificationService, IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
+import { IIntentClassificationService, IntentClassificationContext as _IntentClassificationContext } from '../../../domain/services/interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
@@ -95,7 +95,7 @@ export class AiConversationService implements IAIConversationService {
     chatbotConfig: ChatbotConfig,
     session: ChatSession,
     messageHistory: ChatMessage[],
-    logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
+    _logger?: { logRaw: (message: string) => void; logMessage: (message: string) => void }
   ): string {
     const promptInput: PromptGenerationInput = {
       chatbotConfig,
@@ -260,7 +260,8 @@ export class AiConversationService implements IAIConversationService {
         }
       }
       return undefined;
-    } catch (error) {
+    } catch (_error) {
+      void _error;
       return undefined;
     }
   }

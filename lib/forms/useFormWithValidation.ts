@@ -69,7 +69,7 @@ export function useFormWithValidation<T extends FieldValues>({
   // Initialize form with zod resolver
   const form = useForm<T>({
     ...formProps,
-    // @ts-ignore - Type compatibility issue between react-hook-form@7.57.0 and @hookform/resolvers@5.1.0
+    // @ts-expect-error - Type compatibility issue between react-hook-form@7.57.0 and @hookform/resolvers@5.1.0
     resolver: zodResolver(schema),
   });
   

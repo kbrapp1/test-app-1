@@ -53,7 +53,8 @@ export class GetLeadsQueryHandler {
       );
 
       // 5. Get count by status for breakdown
-      const statusCounts = await this.leadRepository.countByStatus(query.organizationId);
+      const _statusCounts = await this.leadRepository.countByStatus(query.organizationId);
+      void _statusCounts;
 
       // 6. Calculate recent trends (this week vs last week)
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

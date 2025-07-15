@@ -259,4 +259,6 @@ export const GenerationActions = React.memo(GenerationActionsComponent, (prevPro
   }
   
   return true; // Don't re-render, props are effectively the same
-}); 
+});
+
+GenerationActions.displayName = 'GenerationActions'; 

@@ -117,7 +117,7 @@ export function useImageGeneratorMain() {
         // errors handled upstream
       }
     },
-    [generate]
+    []
   );
 
   // Coordinator handles generation workflow
@@ -166,7 +166,7 @@ export function useImageGeneratorMain() {
       formState.setCurrentGeneratedImage(null);
       historyPanel.closeHistory();
     },
-    [fileUpload.setBaseImageUrl, promptEnhancement.stripStyleQualifiers, formState.setPrompt, formState.setCurrentGeneratedImage, historyPanel.closeHistory]
+    [fileUpload, formState, historyPanel, promptEnhancement]
   );
 
   const handleImageSelect = useCallback(
@@ -174,7 +174,7 @@ export function useImageGeneratorMain() {
       formState.setCurrentGeneratedImage(imageUrl);
       historyPanel.closeHistory();
     },
-    [formState.setCurrentGeneratedImage, historyPanel.closeHistory]
+    [formState, historyPanel]
   );
 
   const handleClearAction = useCallback(

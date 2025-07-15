@@ -19,7 +19,7 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   context?: LogContext;
-  data?: any;
+  data?: Record<string, unknown> | string | number | boolean | null;
   error?: { 
     name: string; 
     message: string; 

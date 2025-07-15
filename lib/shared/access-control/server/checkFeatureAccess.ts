@@ -129,7 +129,7 @@ export async function checkTtsAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('tts', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_TTS permission
       const { hasPermission, Permission } = await import('@/lib/auth');
       const hasViewTtsPermission = await hasPermission(user.id, Permission.VIEW_TTS);
@@ -152,7 +152,7 @@ export async function checkDamAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('dam', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_ASSET permission (DAM uses asset permissions)
       const { hasPermission, Permission } = await import('@/lib/auth');
       const hasViewAssetPermission = await hasPermission(user.id, Permission.VIEW_ASSET);
@@ -175,7 +175,7 @@ export async function checkImageGenAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('image-generator', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_IMAGE_GENERATOR permission
       const { hasPermission, Permission } = await import('@/lib/auth');
       const hasViewImageGenPermission = await hasPermission(user.id, Permission.VIEW_IMAGE_GENERATOR);
@@ -198,7 +198,7 @@ export async function checkChatbotAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('chatbot-widget', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_CHATBOT permission
       const { hasPermission, Permission } = await import('@/lib/auth');
       const hasViewChatbotPermission = await hasPermission(user.id, Permission.VIEW_CHATBOT);
@@ -221,7 +221,7 @@ export async function checkNotesAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('notes', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_NOTE permission with super admin bypass
       const { hasPermissionWithSuperAdminCheck, Permission } = await import('@/lib/auth');
       const hasViewNotePermission = await hasPermissionWithSuperAdminCheck(user, Permission.VIEW_NOTE);
@@ -244,7 +244,7 @@ export async function checkTeamAccess(): Promise<FeatureAccessResult> {
   return checkFeatureAccess('team', {
     requireAuth: true,
     requireOrganization: true,
-    customValidation: async (user, organizationId) => {
+    customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_TEAM_MEMBER permission
       const { hasPermission, Permission } = await import('@/lib/auth');
       const hasViewTeamPermission = await hasPermission(user.id, Permission.VIEW_TEAM_MEMBER);

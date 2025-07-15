@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Generation } from '../domain/entities/Generation';
+import { Generation as _Generation } from '../domain/entities/Generation';
 import { GenerationFactory } from '../domain/services/GenerationFactory';
 import { GenerationRowMapper } from '../infrastructure/persistence/supabase/mappers/GenerationRowMapper';
 

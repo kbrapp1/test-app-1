@@ -11,9 +11,9 @@
  */
 
 import { UrlNormalizationService } from '../../domain/services/UrlNormalizationService';
-import { ContentDeduplicationService, DeduplicatableContent, DeduplicationResult } from '../../domain/services/ContentDeduplicationService';
+import { ContentDeduplicationService, DeduplicatableContent, DeduplicationResult as _DeduplicationResult } from '../../domain/services/ContentDeduplicationService';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
-import { WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { WebsiteSource as _WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 /** Represents existing knowledge entry for deduplication
@@ -155,7 +155,8 @@ export class ContentDeduplicationApplicationService {
       }
       
       // Process each URL group
-      for (const [normalizedUrl, groupEntries] of urlGroups) {
+      for (const [_normalizedUrl, groupEntries] of urlGroups) {
+        void _normalizedUrl;
         if (groupEntries.length > 1) {
           
           // Choose canonical entry (prefer HTTPS, shorter URLs)
@@ -163,9 +164,10 @@ export class ContentDeduplicationApplicationService {
             groupEntries.map((entry: { item: KnowledgeItem; vector: number[] }) => entry.item.source || '')
           );
           
-          const canonicalEntry = groupEntries.find((entry: { item: KnowledgeItem; vector: number[] }) => 
+          const _canonicalEntry = groupEntries.find((entry: { item: KnowledgeItem; vector: number[] }) => 
             entry.item.source === canonicalUrl
           );
+          void _canonicalEntry;
           const duplicateEntries = groupEntries.filter((entry: { item: KnowledgeItem; vector: number[] }) => 
             entry.item.source !== canonicalUrl
           );

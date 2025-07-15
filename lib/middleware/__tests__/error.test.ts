@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextResponse } from 'next/server';
 import { withErrorHandling, withServerActionErrorHandling } from '../error';
-import { AppError, ValidationError } from '@/lib/errors/base';
+import { AppError as _AppError, ValidationError } from '@/lib/errors/base';
 import { logger } from '@/lib/logging';
 
 // Mock the logger

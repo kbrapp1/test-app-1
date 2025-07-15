@@ -82,4 +82,6 @@ export const GenerationInfo = React.memo(GenerationInfoComponent, (prevProps, ne
   }
   
   return true; // Don't re-render
-}); 
+});
+
+GenerationInfo.displayName = 'GenerationInfo'; 

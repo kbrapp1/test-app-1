@@ -307,3 +307,5 @@ const arePropsEqual = (
 
 // Export memoized component
 export const ImagePromptForm = memo(ImagePromptFormComponent, arePropsEqual);
+
+ImagePromptForm.displayName = 'ImagePromptForm';

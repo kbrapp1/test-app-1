@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { RefreshCw, X } from 'lucide-react';
 import { GenerationDto } from '../../../../application/dto';
 import { GenerationActionButtons } from '../../forms/controls/GenerationActionButtons';
@@ -31,10 +32,10 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
   const isImageCached = useMemo(() => {
     if (!generation.imageUrl || typeof window === 'undefined') return false;
     
-    const img = new Image();
-    img.src = optimizedImageUrl;
-    return img.complete && img.naturalWidth > 0;
-  }, [optimizedImageUrl]);
+    const nativeImg = new window.Image();
+    nativeImg.src = optimizedImageUrl;
+    return nativeImg.complete && nativeImg.naturalWidth > 0;
+  }, [generation.imageUrl, optimizedImageUrl]);
 
   // Set initial state based on cache status
   const [imageLoaded, setImageLoaded] = useState(isImageCached);
@@ -44,15 +45,15 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
   // Reset states when generation changes
   useEffect(() => {
     const isCached = !generation.imageUrl ? false : (() => {
-      const img = new Image();
-      img.src = optimizedImageUrl;
-      return img.complete && img.naturalWidth > 0;
+      const nativeImg = new window.Image();
+      nativeImg.src = optimizedImageUrl;
+      return nativeImg.complete && nativeImg.naturalWidth > 0;
     })();
     
     setImageLoaded(isCached);
     setImageError(false);
     setBlurPlaceholder(undefined);
-  }, [generation.id, optimizedImageUrl]);
+  }, [generation.id, generation.imageUrl, optimizedImageUrl]);
 
   // Generate blur placeholder only for uncached images
   useEffect(() => {
@@ -65,27 +66,27 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
     
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const img = new Image();
+    const nativeImg = new window.Image();
     
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
+    nativeImg.crossOrigin = 'anonymous';
+    nativeImg.onload = () => {
       if (!mounted) return;
       
       canvas.width = 10;
       canvas.height = 10;
-      ctx?.drawImage(img, 0, 0, 10, 10);
+      ctx?.drawImage(nativeImg, 0, 0, 10, 10);
       try {
         setBlurPlaceholder(canvas.toDataURL());
-      } catch (error) {
+      } catch {
         if (mounted) setBlurPlaceholder(undefined);
       }
     };
     
-    img.onerror = () => {
+    nativeImg.onerror = () => {
       if (mounted) setBlurPlaceholder(undefined);
     };
     
-    img.src = generation.imageUrl;
+    nativeImg.src = generation.imageUrl;
     
     return () => {
       mounted = false;
@@ -108,18 +109,20 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
         <div className="relative w-full h-full overflow-hidden">
           {/* Blur placeholder - only shows for uncached images while loading */}
           {blurPlaceholder && !imageLoaded && (
-            <img
+            <Image
               src={blurPlaceholder}
               alt="Loading..."
-              className="absolute inset-0 w-full h-full object-cover blur-sm scale-110 transition-opacity duration-300"
+              fill
+              className="object-cover blur-sm scale-110 transition-opacity duration-300"
             />
           )}
           
           {/* Main optimized image */}
-          <img
+          <Image
             src={optimizedImageUrl}
             alt={generation.prompt}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 hover:scale-105 ${
+            fill
+            className={`object-cover transition-all duration-300 hover:scale-105 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={handleImageLoad}
@@ -249,4 +252,7 @@ export const GenerationListItem: React.FC<GenerationListItemProps> = React.memo(
   }
   
   return true; // Don't re-render, props are effectively the same
-}); 
+});
+
+// Add display name for React DevTools
+GenerationListItem.displayName = 'GenerationListItem'; 

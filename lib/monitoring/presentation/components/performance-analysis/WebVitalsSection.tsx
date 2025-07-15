@@ -57,6 +57,7 @@ const WebVitalsSectionComponent: React.FC<WebVitalsSectionProps> = ({
   );
 };
 
-WebVitalsSectionComponent.displayName = 'WebVitalsSection';
+WebVitalsSectionComponent.displayName = 'WebVitalsSectionComponent';
 
 export const WebVitalsSection = React.memo(WebVitalsSectionComponent);
+WebVitalsSection.displayName = 'WebVitalsSection';

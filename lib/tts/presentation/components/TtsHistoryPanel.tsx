@@ -77,43 +77,55 @@ export function TtsHistoryPanel({
   }
 
   return (
-    <div
-      className={cn(
-        "fixed inset-y-0 right-0 z-50 w-full max-w-md bg-background border-l shadow-lg transform transition-transform ease-in-out duration-300 flex flex-col",
-        isPanelVisible ? "translate-x-0" : "translate-x-full"
-      )}
-    >
-      <TtsHistoryPanelHeader onClose={onClose} />
-      
-      <TtsHistoryPanelSearch 
-        searchQuery={searchQuery} 
-        onSearchQueryChange={setSearchQuery} 
-        onClearSearch={clearSearch} 
+    <>
+      {/* Dark overlay - matches image generator pattern */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black transition-opacity duration-300 z-40",
+          isPanelVisible ? "opacity-20 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
       />
       
-      <div className="flex-1 overflow-hidden"> 
-        <div className="h-full overflow-y-auto p-4">
-          <TtsHistoryList 
-            historyItems={historyItems}
-            isLoading={isLoading}
-            error={error}
-            searchQuery={searchQuery}
-            allItemsLoaded={allItemsLoaded}
-            isLoadingMore={isLoadingMore}
-            handleLoadMore={handleLoadMore}
-            headlessPlayerCurrentlyPlayingUrl={headlessPlayerCurrentlyPlayingUrl}
-            isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
-            isHeadlessPlayerLoading={isHeadlessPlayerLoading}
-            headlessPlayerError={headlessPlayerError}
-            onReplayItem={onReplayItem}
-            onReloadInputFromItem={onReloadInputFromItem}
-            onDeleteItem={onDeleteItem}
-            onViewInDamItem={onViewInDamItem}
-            onSaveToDamItem={handleSaveToDamForItem}
-            onSaveAsToDamItem={handleSaveAsToDamForItem}
-          />
+      {/* History Panel */}
+      <div
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 w-full max-w-md bg-background border-l shadow-lg transform transition-transform ease-in-out duration-300 flex flex-col",
+          isPanelVisible ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <TtsHistoryPanelHeader onClose={onClose} />
+        
+        <TtsHistoryPanelSearch 
+          searchQuery={searchQuery} 
+          onSearchQueryChange={setSearchQuery} 
+          onClearSearch={clearSearch} 
+        />
+        
+        <div className="flex-1 overflow-hidden"> 
+          <div className="h-full overflow-y-auto p-4">
+            <TtsHistoryList 
+              historyItems={historyItems}
+              isLoading={isLoading}
+              error={error}
+              searchQuery={searchQuery}
+              allItemsLoaded={allItemsLoaded}
+              isLoadingMore={isLoadingMore}
+              handleLoadMore={handleLoadMore}
+              headlessPlayerCurrentlyPlayingUrl={headlessPlayerCurrentlyPlayingUrl}
+              isHeadlessPlayerPlaying={isHeadlessPlayerPlaying}
+              isHeadlessPlayerLoading={isHeadlessPlayerLoading}
+              headlessPlayerError={headlessPlayerError}
+              onReplayItem={onReplayItem}
+              onReloadInputFromItem={onReloadInputFromItem}
+              onDeleteItem={onDeleteItem}
+              onViewInDamItem={onViewInDamItem}
+              onSaveToDamItem={handleSaveToDamForItem}
+              onSaveAsToDamItem={handleSaveAsToDamForItem}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 } 

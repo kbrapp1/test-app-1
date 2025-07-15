@@ -17,7 +17,6 @@ import { IEmbeddingService } from '../../domain/services/interfaces/IEmbeddingSe
 import {
   EmbeddingResult,
   SimilarityMatch,
-  SimilaritySearchOptions,
   BatchProcessingOptions,
   KnowledgeItem,
   PDFChunk,

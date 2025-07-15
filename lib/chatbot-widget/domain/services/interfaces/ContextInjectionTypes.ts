@@ -57,7 +57,7 @@ export interface EntityData {
   teamSize?: string;
   industry?: string;
   budget?: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface ConversationPhase {

@@ -10,7 +10,7 @@
 
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { AIResponse } from '../../../domain/services/interfaces/IAIConversationService';
+import { AIResponse as _AIResponse } from '../../../domain/services/interfaces/IAIConversationService';
 
 export interface ConversationMetrics {
   messageCount: number;

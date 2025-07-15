@@ -146,9 +146,9 @@ export class CrawlOrchestrationService {
 
   // Get crawl progress information
   async getCrawlProgress(
-    organizationId: string,
-    chatbotConfigId: string,
-    sourceId: string
+    _organizationId: string,
+    _chatbotConfigId: string,
+    _sourceId: string
   ): Promise<{
     isRunning: boolean;
     progress?: {
@@ -176,9 +176,9 @@ export class CrawlOrchestrationService {
 
   // Cancel ongoing crawl operation
   async cancelCrawl(
-    organizationId: string,
-    chatbotConfigId: string,
-    sourceId: string
+    _organizationId: string,
+    _chatbotConfigId: string,
+    _sourceId: string
   ): Promise<{
     success: boolean;
     message: string;

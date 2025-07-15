@@ -31,6 +31,7 @@ const RenderMetricsSectionComponent: React.FC<RenderMetricsSectionProps> = ({
   );
 };
 
-RenderMetricsSectionComponent.displayName = 'RenderMetricsSection';
+RenderMetricsSectionComponent.displayName = 'RenderMetricsSectionComponent';
 
 export const RenderMetricsSection = React.memo(RenderMetricsSectionComponent);
+RenderMetricsSection.displayName = 'RenderMetricsSection';

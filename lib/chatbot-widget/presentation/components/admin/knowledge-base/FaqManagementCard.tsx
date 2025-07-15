@@ -3,7 +3,7 @@
  * Handle FAQ editing with composition. @golden-rule: <250 lines.
  */
 
-import { useState, useImperativeHandle, forwardRef } from 'react';
+import { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,7 @@ export const FaqManagementCard = forwardRef<FaqManagementCardRef, FaqManagementC
     category: 'general',
   });
 
-  const handleAddFaq = () => {
+  const handleAddFaq = useCallback(() => {
     if (!newFaq.question.trim() || !newFaq.answer.trim()) return;
 
     onAddFaq?.({
@@ -49,22 +49,22 @@ export const FaqManagementCard = forwardRef<FaqManagementCardRef, FaqManagementC
     });
 
     setNewFaq({ question: '', answer: '', category: 'general' });
-  };
+  }, [newFaq, onAddFaq]);
 
   // Check if there's a pending FAQ that should be added before save
-  const handleBeforeSave = () => {
+  const handleBeforeSave = useCallback(() => {
     // If there's a filled-out FAQ form that hasn't been added yet, add it now
     if (newFaq.question.trim() && newFaq.answer.trim()) {
       handleAddFaq();
       return true; // Indicate that we added a FAQ
     }
     return false; // No pending FAQ
-  };
+  }, [newFaq, handleAddFaq]);
 
   // Expose the handleBeforeSave function through ref
   useImperativeHandle(ref, () => ({
     addPendingFaq: handleBeforeSave
-  }), [newFaq]);
+  }), [handleBeforeSave]);
 
   return (
     <Card>

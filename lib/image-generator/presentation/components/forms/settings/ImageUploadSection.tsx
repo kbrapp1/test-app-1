@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Upload } from 'lucide-react';
 import { getAspectRatioClasses } from '../../../utils/aspectRatioUtils';
 
@@ -33,9 +34,11 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
       {baseImageUrl ? (
         <div className="relative">
           <div className={`w-full ${containerClasses} bg-muted rounded-lg overflow-hidden`}>
-            <img 
+            <Image 
               src={baseImageUrl} 
               alt="Base image" 
+              width={400}
+              height={300}
               className="w-full h-full object-cover object-top"
             />
             <button

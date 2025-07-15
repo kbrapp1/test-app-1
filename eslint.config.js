@@ -79,6 +79,54 @@ const eslintConfig = [
         }
       ]
     }
+  },
+  {
+    // Test files - significantly relaxed rules
+    files: [
+      "**/*.test.{js,ts,tsx}",
+      "**/*.spec.{js,ts,tsx}",
+      "**/__tests__/**/*.{js,ts,tsx}",
+      "**/tests/**/*.{js,ts,tsx}"
+    ],
+    rules: {
+      // TypeScript relaxations for tests
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      
+      // React testing relaxations
+      "react-hooks/rules-of-hooks": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "react/display-name": "off",
+      
+      // General test allowances
+      "no-console": "off",
+      "max-lines": "off",
+      "max-lines-per-function": "off",
+      "prefer-const": "off",
+      
+      // Allow longer test names and descriptions
+      "max-len": ["warn", { "code": 120, "ignoreComments": true, "ignoreStrings": true }],
+      
+      // Security rules that should still be enforced in tests
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-new-func": "error",
+      
+      // Test-specific patterns
+      "no-unused-expressions": "off", // Allow expect() assertions
+      "no-magic-numbers": "off", // Tests often use magic numbers
+      "complexity": "off", // Tests can be complex
+      "max-nested-callbacks": "off", // Tests often have nested describes/its
+      
+      // Allow test utilities and setup patterns
+      "import/no-extraneous-dependencies": "off", // Allow test dependencies
+      "global-require": "off", // Allow dynamic requires in tests
+      "no-process-env": "off" // Allow process.env in tests
+    }
   }
 ];
 

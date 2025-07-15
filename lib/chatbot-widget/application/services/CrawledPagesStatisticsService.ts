@@ -99,7 +99,8 @@ export class CrawledPagesStatisticsService {
       try {
         const url = new URL(page.url);
         uniqueSources.add(url.origin);
-      } catch (error) {
+      } catch (_error) {
+        void _error;
         // Skip invalid URLs
       }
     });
