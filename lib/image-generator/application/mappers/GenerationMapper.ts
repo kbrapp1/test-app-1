@@ -1,7 +1,6 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationDto, GenerationStatusDto, GenerationStatsDto } from '../dto';
 import { GenerationStats } from '../../infrastructure/persistence/supabase/services/GenerationStatsCalculator';
-import { Prompt } from '../../domain/value-objects/Prompt';
 import { GenerationStatus } from '../../domain/value-objects/GenerationStatus';
 
 /**
@@ -41,7 +40,7 @@ export class GenerationMapper {
    * Convert DTO to domain entity (for reconstruction from external data)
    * Note: This is typically used only by infrastructure layer mappers
    */
-  static toDomainEntity(dto: GenerationDto): Generation {
+  static toDomainEntity(_dto: GenerationDto): Generation {
     // For DTOs, we assume the data is already validated
     // This mapper is primarily for application layer boundaries
     throw new Error('Use Infrastructure layer mappers for reconstructing domain entities from external data');
@@ -58,7 +57,7 @@ export class GenerationMapper {
    * Convert multiple DTOs to domain entities
    * Note: Use Infrastructure layer mappers for this operation
    */
-  static toDomainEntityList(dtos: GenerationDto[]): Generation[] {
+  static toDomainEntityList(_dtos: GenerationDto[]): Generation[] {
     throw new Error('Use Infrastructure layer mappers for reconstructing domain entities from external data');
   }
 

@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { getTtsHistory, markTtsUrlProblematic } from '../actions/tts';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
+import { TtsSuccessResponse } from '../../domain/common/TtsError';
 
 const ITEMS_PER_PAGE = 10;
 const DEBOUNCE_DELAY = 300;
@@ -183,7 +184,7 @@ export function useTtsHistory({
           .then(result => {
             if (result.success) {
               // Optimistic cache update for immediate UI feedback
-              queryClient.setQueryData(queryKey, (old: any) => {
+              queryClient.setQueryData(queryKey, (old: TtsSuccessResponse<TtsPredictionDisplayDto[]> | undefined) => {
                 if (old?.success && old.data) {
                   return {
                     ...old,

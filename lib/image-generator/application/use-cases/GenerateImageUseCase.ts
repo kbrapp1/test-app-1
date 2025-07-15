@@ -5,7 +5,7 @@ import { ProviderService } from '../services/ProviderService';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
 import { Result, success, error } from '../../infrastructure/common/Result';
 import { AutoSaveGenerationUseCase } from './AutoSaveGenerationUseCase';
-import { GenerationStatusManager } from '../../domain/entities/services/GenerationStatusManager';
+// import { GenerationStatusManager } from '../../domain/entities/services/GenerationStatusManager';
 import { GenerationFailureHandler } from '../../domain/services/GenerationFailureHandler';
 
 export interface GenerateImageRequest {

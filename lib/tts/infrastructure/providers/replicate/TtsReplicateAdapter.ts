@@ -10,7 +10,7 @@ export class TtsReplicateAdapter {
   private readonly retryDelay = 2000;
   private readonly defaultModel = 'jaaari/kokoro-82m:f559560eb822dc509045f3921a1921234918b91739db4bf3daab2169b71c7a13';
   private readonly provider: ReplicateProvider;
-  private readonly runResultsCache = new Map<string, any>();
+  private readonly runResultsCache = new Map<string, string | string[]>();
 
   constructor(provider: ReplicateProvider) {
     this.provider = provider;
@@ -261,7 +261,7 @@ export class TtsReplicateAdapter {
   /**
    * Store run result for later retrieval (used for synchronous run API)
    */
-  private async storeRunResult(predictionId: string, output: any): Promise<void> {
+  private async storeRunResult(predictionId: string, output: string | string[] | ReadableStream): Promise<void> {
     
     let processedOutput = output;
     

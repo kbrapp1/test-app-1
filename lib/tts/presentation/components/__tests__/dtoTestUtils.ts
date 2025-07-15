@@ -31,7 +31,9 @@ interface MockTtsPredictionDisplayData {
  * Factory function to create TtsPredictionDisplayDto objects for presentation layer testing
  * Following DDD principles - presentation tests should use DTOs, not domain entities
  */
-export function createMockTtsPredictionDisplayDto(overrides: MockTtsPredictionDisplayData = {}): TtsPredictionDisplayDto {
+export function createMockTtsPredictionDisplayDto(
+  overrides: MockTtsPredictionDisplayData = {}
+): TtsPredictionDisplayDto {
   const defaultData = {
     id: 'test-id-1',
     inputText: 'Hello world',
@@ -105,7 +107,9 @@ export function createMockTtsPredictionDisplayDtos(count: number): TtsPrediction
 /**
  * Create a mock TtsPredictionDisplayDto with problematic URL
  */
-export function createProblematicTtsPredictionDisplayDto(overrides: MockTtsPredictionDisplayData = {}): TtsPredictionDisplayDto {
+export function createProblematicTtsPredictionDisplayDto(
+  overrides: MockTtsPredictionDisplayData = {}
+): TtsPredictionDisplayDto {
   return createMockTtsPredictionDisplayDto({
     isOutputUrlProblematic: true,
     outputUrlLastError: 'Audio link flagged as problematic',
@@ -118,7 +122,9 @@ export function createProblematicTtsPredictionDisplayDto(overrides: MockTtsPredi
 /**
  * Create a mock TtsPredictionDisplayDto that's linked to DAM
  */
-export function createSavedTtsPredictionDisplayDto(overrides: MockTtsPredictionDisplayData = {}): TtsPredictionDisplayDto {
+export function createSavedTtsPredictionDisplayDto(
+  overrides: MockTtsPredictionDisplayData = {}
+): TtsPredictionDisplayDto {
   return createMockTtsPredictionDisplayDto({
     outputAssetId: 'dam-asset-123',
     isAlreadySavedToDam: true,
@@ -130,7 +136,9 @@ export function createSavedTtsPredictionDisplayDto(overrides: MockTtsPredictionD
 /**
  * Create a mock TtsPredictionDisplayDto for failed status
  */
-export function createFailedTtsPredictionDisplayDto(overrides: MockTtsPredictionDisplayData = {}): TtsPredictionDisplayDto {
+export function createFailedTtsPredictionDisplayDto(
+  overrides: MockTtsPredictionDisplayData = {}
+): TtsPredictionDisplayDto {
   return createMockTtsPredictionDisplayDto({
     status: 'failed',
     statusDisplayName: 'failed',
@@ -148,7 +156,9 @@ export function createFailedTtsPredictionDisplayDto(overrides: MockTtsPrediction
 /**
  * Create a mock TtsPredictionDisplayDto for processing status
  */
-export function createProcessingTtsPredictionDisplayDto(overrides: MockTtsPredictionDisplayData = {}): TtsPredictionDisplayDto {
+export function createProcessingTtsPredictionDisplayDto(
+  overrides: MockTtsPredictionDisplayData = {}
+): TtsPredictionDisplayDto {
   return createMockTtsPredictionDisplayDto({
     status: 'processing',
     statusDisplayName: 'processing',

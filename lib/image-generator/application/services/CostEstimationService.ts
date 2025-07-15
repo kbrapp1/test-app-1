@@ -1,5 +1,5 @@
 import { ProviderService } from './ProviderService';
-import { ProviderId, ModelId } from '../../domain/value-objects/Provider';
+import { ProviderId, ModelId, ProviderModel } from '../../domain/value-objects/Provider';
 
 export interface CostEstimate {
   estimatedCents: number;
@@ -184,7 +184,7 @@ export class CostEstimationService {
    * Calculate user spending for a given timeframe
    * Note: This would integrate with the generation repository in production
    */
-  async calculateUserSpending(userId: string, timeframe: TimeRange): Promise<SpendingReport> {
+  async calculateUserSpending(_userId: string, _timeframe: TimeRange): Promise<SpendingReport> {
     // Placeholder implementation - would query actual generation data
     return {
       currentMonthCents: 0,
@@ -204,7 +204,7 @@ export class CostEstimationService {
     return highResRatios.includes(aspectRatio);
   }
 
-  private getReasoningText(model: any, request: Omit<GenerationRequest, 'providerId' | 'modelId'>): string {
+  private getReasoningText(model: ProviderModel, request: Omit<GenerationRequest, 'providerId' | 'modelId'>): string {
     const reasons: string[] = [];
 
     if (model.capabilities.costPerGeneration <= 2) {

@@ -1,4 +1,4 @@
-import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
+import { GenerationRepository, IGenerationRepository } from '../../domain/repositories/GenerationRepository';
 import { SupabaseGenerationRepository } from '../../infrastructure/persistence/supabase/SupabaseGenerationRepository';
 import { AutoSaveGenerationUseCase } from '../use-cases/AutoSaveGenerationUseCase';
 import { GenerationStatusService } from './GenerationStatusService';
@@ -50,8 +50,8 @@ export class GenerationOrchestrationService {
    * Reset instances (useful for testing)
    */
   static reset(): void {
-    this.generationRepository = undefined as any;
-    this.autoSaveUseCase = undefined as any;
-    this.statusService = undefined as any;
+    this.generationRepository = undefined as unknown as IGenerationRepository;
+    this.autoSaveUseCase = undefined as unknown as AutoSaveGenerationUseCase;
+    this.statusService = undefined as unknown as GenerationStatusService;
   }
 } 

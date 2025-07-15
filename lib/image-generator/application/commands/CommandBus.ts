@@ -32,7 +32,7 @@ export class CommandBus {
       default:
         return {
           success: false,
-          error: `Unknown command type: ${(command as any).type}`
+          error: `Unknown command type: ${(command as GenerationCommand).type}`
         };
     }
   }

@@ -26,8 +26,18 @@ vi.mock('@/components/ui/popover', () => ({
   PopoverTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
     <div data-testid="popover-trigger">{children}</div>
   ),
-  PopoverContent: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
-    <div data-testid="popover-content" className={className} style={style}>{children}</div>
+  PopoverContent: ({
+    children,
+    className,
+    style
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+  }) => (
+    <div data-testid="popover-content" className={className} style={style}>
+      {children}
+    </div>
   ),
 }));
 
@@ -96,7 +106,11 @@ describe('VoiceSelector', () => {
     return <FormProvider {...methods}>{children}</FormProvider>;
   };
 
-  const renderComponent = (fieldOverrides = {}, formSetValueParam?: MockedFunction<(name: string, value: string) => void>, provider?: string) => {
+  const renderComponent = (
+    fieldOverrides = {},
+    formSetValueParam?: MockedFunction<(name: string, value: string) => void>,
+    provider?: string
+  ) => {
     const mergedField = { ...mockField, ...fieldOverrides };
     return render(
       <TestWrapper>
@@ -244,7 +258,8 @@ describe('VoiceSelector', () => {
     expect(screen.getByTestId('popover-trigger')).toHaveTextContent('Select a voice');
   });
 
-  it('displays correct voice in trigger if current value is initially null/undefined then a voice is selected', async () => {
+  it('displays correct voice in trigger if current value is initially null/undefined then a voice is selected',
+    async () => {
     const localMockSetValue = vi.fn();
     renderComponent({ value: undefined }, localMockSetValue);
   

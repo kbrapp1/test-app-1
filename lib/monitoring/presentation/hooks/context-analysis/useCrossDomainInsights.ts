@@ -16,7 +16,7 @@ import { NetworkIssue } from '../../../domain/network-efficiency/value-objects/N
  * Single Responsibility: Focus solely on correlating frontend and network performance data
  * 
  * @param {OptimizationGap[]} frontendOptimizations - Detected frontend optimization gaps
- * @param {any[]} networkIssues - Detected network performance issues
+ * @param {NetworkIssue[]} networkIssues - Detected network performance issues
  * @param {RenderMetrics} renderMetrics - Current render performance metrics
  * @param {NetworkStats | null} networkStats - Network monitoring statistics
  * @param {boolean} isPaused - Whether monitoring is currently paused

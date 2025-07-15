@@ -98,6 +98,7 @@ export class NetworkMonitoringService {
     const _avgDuration = allCalls
       .filter(call => call.duration)
       .reduce((sum, call) => sum + (call.duration || 0), 0) / Math.max(1, allCalls.length);
+    void _avgDuration; // Preserved for future average duration calculations
 
     return {
       totalCalls,
@@ -231,6 +232,7 @@ export class NetworkMonitoringService {
       redundantPatterns: actualRedundantPatterns, // ✅ Use filtered patterns
       callsByType: {}
     };
+    void _tempStats; // Preserved for future network performance analytics
     
     const newIssues = NetworkIssueDetectionService.detectIssues(allCalls);
     

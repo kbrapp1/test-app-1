@@ -37,8 +37,8 @@ export type ReplicateStatusDto =
 export interface ReplicatePredictionDto {
   id: string;
   status: ReplicateStatusDto;
-  input: Record<string, any>;
-  output?: any;
+  input: Record<string, unknown>;
+  output?: unknown;
   error?: string;
   created_at: string;
   started_at?: string;

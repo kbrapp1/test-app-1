@@ -292,14 +292,14 @@ export interface TtsErrorResponse {
 }
 
 // Success response format for consistency
-export interface TtsSuccessResponse<T = any> {
+export interface TtsSuccessResponse<T = unknown> {
   success: true;
   data?: T;
   count?: number;
 }
 
 // Union type for all TTS responses
-export type TtsResponse<T = any> = TtsSuccessResponse<T> | TtsErrorResponse;
+export type TtsResponse<T = unknown> = TtsSuccessResponse<T> | TtsErrorResponse;
 
 // Error handler utility functions
 export class TtsErrorHandler {

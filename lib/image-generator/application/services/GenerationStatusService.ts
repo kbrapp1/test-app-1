@@ -123,6 +123,13 @@ export class GenerationStatusService {
     generation: Generation, 
     authContext: { userId: string; organizationId: string }
   ): Promise<void> {
+    // Security validation - verify organization context
+    if (!authContext.organizationId) {
+      generation.markAsFailed('Invalid organization context');
+      await this.generationRepository.update(generation);
+      return;
+    }
+    
     const providerId = generation.providerName;
     
     if (!providerId || !generation.externalProviderId) {
@@ -132,7 +139,7 @@ export class GenerationStatusService {
     }
 
     const registry = ProviderFactory.createProviderRegistry();
-    const provider = registry.getProvider(providerId as any);
+    const provider = registry.getProvider(providerId as string);
     
     if (!provider) {
       generation.markAsFailed(`Provider ${providerId} not available`);
@@ -161,7 +168,7 @@ export class GenerationStatusService {
   private async triggerAutoSave(generation: Generation): Promise<void> {
     try {
       await this.autoSaveUseCase.execute(generation.getId());
-    } catch (error) {
+    } catch {
       // Auto-save failure should not affect the main generation flow
       // Error is logged internally by the use case
     }

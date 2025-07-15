@@ -33,13 +33,13 @@ export function createLazyComponent(
     
     const attemptImport = async (): Promise<{ default: any }> => {
       try {
-        const module = await importFn();
+        const importedModule = await importFn();
         
         // Handle both default exports and named exports
-        if (module.default) {
-          return module;
+        if (importedModule.default) {
+          return importedModule;
         } else {
-          return { default: module };
+          return { default: importedModule };
         }
       } catch (error) {
         attemptCount++;

@@ -1,5 +1,5 @@
 import { StatusManagementService } from '../services/StatusManagementService';
-import { StatusMapper } from '../mappers/StatusMapper';
+// import { StatusMapper } from '../mappers/StatusMapper';
 import {
   StatusCheckRequestDto,
   BatchStatusResponseDto,
@@ -218,7 +218,7 @@ export class ManageGenerationStatusUseCase {
   async emergencyCleanup(
     userId: string,
     organizationId: string,
-    options: {
+    _options: {
       forceTimeoutAfterMs?: number;
       maxGenerationsToProcess?: number;
     } = {}

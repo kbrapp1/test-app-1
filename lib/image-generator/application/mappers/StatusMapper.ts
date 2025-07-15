@@ -33,7 +33,7 @@ export class StatusMapper {
 
          return {
        id: generation.getId(),
-       status: generation.getStatus().value as any,
+       status: generation.getStatus().value,
        progress: undefined, // Progress not tracked in current entity
        imageUrl: generation.resultImageUrl || undefined,
        errorMessage: generation.errorMessage || undefined,

@@ -55,7 +55,7 @@ export type GenerationQuery =
   | GetActiveGenerationsQuery;
 
 // Query Result
-export interface QueryResult<T = any> {
+export interface QueryResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

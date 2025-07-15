@@ -235,6 +235,7 @@ export class BundleMonitoringService {
   }
 
   private handlePerformanceEntry(_entry: PerformanceEntry): void {
+    void _entry; // Preserved for future bundle performance entry processing
     // Process performance entries related to bundle loading
     // This integrates with Performance API marks we set in LazyProviderLoader
   }

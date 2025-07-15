@@ -343,7 +343,11 @@ describe('TtsHistoryPanel', () => {
     // DO NOT CLEAR/RESET getTtsHistory here.
     // Set up the mock for the REFRESH call specifically.
     // This .mockResolvedValueOnce() will apply to the *next* call to getTtsHistory.
-                     const newMockData = [createMockTtsPredictionDisplayDto({ id: 'newId1', inputText: 'Input for newId1', inputTextSnippet: 'Input for newId1' })];
+    const newMockData = [createMockTtsPredictionDisplayDto({
+      id: 'newId1',
+      inputText: 'Input for newId1',
+      inputTextSnippet: 'Input for newId1'
+    })];
     (ttsActions.getTtsHistory as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ // This should be for the 2nd call (the refresh call)
         success: true,
@@ -358,14 +362,28 @@ describe('TtsHistoryPanel', () => {
 
     // Trigger refresh by toggling shouldRefresh to true; hook resets state and calls onRefreshComplete
     await act(async () => {
-      rerender(<TtsHistoryPanel {...defaultProps} isOpen={true} shouldRefresh={true} onRefreshComplete={mockOnRefreshComplete} />);
+      rerender(
+        <TtsHistoryPanel
+          {...defaultProps}
+          isOpen={true}
+          shouldRefresh={true}
+          onRefreshComplete={mockOnRefreshComplete}
+        />
+      );
     });
     // onRefreshComplete should be invoked
     expect(mockOnRefreshComplete).toHaveBeenCalledTimes(1);
 
     // After parent resets shouldRefresh to false, effect will fetch new data
     await act(async () => {
-      rerender(<TtsHistoryPanel {...defaultProps} isOpen={true} shouldRefresh={false} onRefreshComplete={mockOnRefreshComplete} />);
+      rerender(
+        <TtsHistoryPanel
+          {...defaultProps}
+          isOpen={true}
+          shouldRefresh={false}
+          onRefreshComplete={mockOnRefreshComplete}
+        />
+      );
     });
     // Wait for the UI to update with new data
     expect(await screen.findByText(`Input for newId1`)).toBeInTheDocument();
@@ -533,18 +551,21 @@ describe('TtsHistoryPanel Item State Management', () => {
     // For now, we can assume the test environment will re-render TtsHistoryItem with new props.
     // We'd ideally check for a visual change, e.g., an error icon or message within the item.
     // Since TtsHistoryItem is complex, we focus on the action call and prop update first.
-    // A more thorough test would involve inspecting the props passed to the specific TtsHistoryItem or its visual output.
+    // A more thorough test would involve inspecting the props passed to the specific
+    // TtsHistoryItem or its visual output.
     
     // Let's assume TtsHistoryItem shows the error message if present and it's problematic
     // The test would need TtsHistoryItem to actually use `item.output_url_last_error` for display.
     // We can check if the `setHistoryItems` was called in a way that would update the item.
-    // This part is harder to test without a direct way to inspect the TtsHistoryItem's received props or state after the effect.
+    // This part is harder to test without a direct way to inspect the TtsHistoryItem's
+    // received props or state after the effect.
     // The effect *does* call setHistoryItems, which should trigger a rerender with the updated item.
 
     // Check that the item is visually updated - this depends on TtsHistoryItem implementation.
     // For example, if TtsHistoryItem shows `output_url_last_error`:
     // await waitFor(async () => {
-    //   const itemElement = await screen.findByText(`Input for ${itemToMark.id}`).closest('.border'); // Find parent item element
+    //   const itemElement = await screen.findByText(`Input for ${itemToMark.id}`)
+    //     .closest('.border'); // Find parent item element
     //   if (itemElement) {
     //     expect(within(itemElement).getByText(playbackError)).toBeInTheDocument();
     //   }
@@ -674,18 +695,23 @@ describe('TtsHistoryPanel Item State Management', () => {
 
     // After the action fails, the item in the UI should NOT reflect the problematic state.
     // This requires checking that TtsHistoryItem does not show visual cues of is_output_url_problematic: true.
-    // For this test, we can check that if TtsHistoryItem were to display `output_url_last_error`, it's not the `playbackError`.
+    // For this test, we can check that if TtsHistoryItem were to display
+    // `output_url_last_error`, it's not the `playbackError`.
     // Or, more simply, if the component were to pass a prop like `isProblematic` to TtsHistoryItem,
     // we would check that this prop is false for the item in question after the failed action.
     // Since the optimistic update is guarded by `if (result.success)`, the item should remain unchanged in the state.
-    // We can't directly inspect the internal `historyItems` state of the panel without more complex setup or exposing it.
+    // We can't directly inspect the internal `historyItems` state of the panel without
+    // more complex setup or exposing it.
     // However, if TtsHistoryItem conditionally renders something based on `is_output_url_problematic`,
     // we would assert that this conditional rendering for "problematic" is NOT present.
-    // For now, the primary check is that the action was called. A more robust test would inspect the rendered TtsHistoryItem.
-    // Let's assume for a moment that TtsHistoryItem shows item.output_url_last_error directly if it exists AND is_output_url_problematic is true.
+    // For now, the primary check is that the action was called. A more robust test
+    // would inspect the rendered TtsHistoryItem.
+    // Let's assume for a moment that TtsHistoryItem shows item.output_url_last_error
+    // directly if it exists AND is_output_url_problematic is true.
     // Since the update shouldn't happen, this text should not appear.
     // A more direct way: If TtsHistoryItem had a data-testid based on problematic state:
     // expect(screen.queryByTestId(`item-${itemToMark.id}-problematic-indicator`)).not.toBeInTheDocument();
-    // This test primarily ensures the action is called. The component logic for not updating state on failure is implicitly tested.
+    // This test primarily ensures the action is called. The component logic for not
+    // updating state on failure is implicitly tested.
   });
 }); 

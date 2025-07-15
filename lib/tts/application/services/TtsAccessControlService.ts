@@ -100,8 +100,9 @@ export class TtsAccessControlService {
     for (const permission of permissions) {
       try {
         return await this.checkTtsAccess([permission]);
-      } catch (_error) {
+      } catch (error) {
         // Continue to next permission if this one fails
+        console.warn('Permission check failed:', error);
         continue;
       }
     }

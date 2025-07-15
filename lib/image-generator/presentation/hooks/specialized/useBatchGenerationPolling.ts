@@ -13,7 +13,7 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
   const queryClient = useQueryClient();
   const lastPolledRef = useRef<Set<string>>(new Set());
   const isPageVisibleRef = useRef(true);
-  const startTimeRef = useRef<number>(Date.now());
+  const _startTimeRef = useRef<number>(Date.now());
   const skipFirstPollRef = useRef(true);
   
   // Memoize the sorted generation IDs to prevent unnecessary re-renders

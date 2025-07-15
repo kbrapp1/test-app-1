@@ -18,6 +18,7 @@ export class ReactQueryCallAnalyzer {
    */
   identifyAllCacheRelatedCalls(calls: NetworkCall[]): ReactQueryCallAnalysis[] {
     return calls.map((call, _index) => {
+      void _index; // Preserved for future call indexing in cache analysis
       const stack = call.source?.stack || '';
       const url = call.url || '';
       const hookMatch = ReactQueryCallAnalyzer.HOOK_REGEX.exec(stack);

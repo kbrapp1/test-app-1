@@ -18,7 +18,7 @@ export interface GenerateImageCommand extends Command {
   safetyTolerance?: number;
   baseImageUrl?: string;
   secondImageUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CancelGenerationCommand extends Command {
@@ -57,7 +57,7 @@ export type GenerationCommand =
   | DeleteGenerationCommand;
 
 // Command Result
-export interface CommandResult<T = any> {
+export interface CommandResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

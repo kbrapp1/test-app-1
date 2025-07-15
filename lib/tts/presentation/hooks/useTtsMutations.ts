@@ -12,6 +12,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { startSpeechGeneration, saveTtsAudioToDam, markTtsUrlProblematic } from '../actions/tts';
 import { TtsPredictionDisplayDto } from '../../application/dto/TtsPredictionDto';
+import { TtsSuccessResponse } from '../../domain/common/TtsError';
 
 export interface TtsGenerationRequest {
   inputText: string;
@@ -106,7 +107,7 @@ export function useSaveToDamMutation(organizationId: string | null) {
       const previousHistory = queryClient.getQueryData(historyQueryKey);
       
       // Update history item to show saving state
-      queryClient.setQueryData(historyQueryKey, (old: any) => {
+      queryClient.setQueryData(historyQueryKey, (old: TtsSuccessResponse<TtsPredictionDisplayDto[]> | undefined) => {
         if (old?.success && old.data) {
           return {
             ...old,
@@ -133,7 +134,7 @@ export function useSaveToDamMutation(organizationId: string | null) {
     onSuccess: (result, request) => {
       // Update history to reflect successful save
       const historyQueryKey = ['tts-history', organizationId];
-      queryClient.setQueryData(historyQueryKey, (old: any) => {
+      queryClient.setQueryData(historyQueryKey, (old: TtsSuccessResponse<TtsPredictionDisplayDto[]> | undefined) => {
         if (old?.success && old.data) {
           return {
             ...old,
@@ -188,7 +189,7 @@ export function useMarkProblematicMutation(organizationId: string | null) {
       
       const previousHistory = queryClient.getQueryData(historyQueryKey);
       
-      queryClient.setQueryData(historyQueryKey, (old: any) => {
+      queryClient.setQueryData(historyQueryKey, (old: TtsSuccessResponse<TtsPredictionDisplayDto[]> | undefined) => {
         if (old?.success && old.data) {
           return {
             ...old,
@@ -246,7 +247,7 @@ export function useDeletePredictionMutation(organizationId: string | null) {
       
       const previousHistory = queryClient.getQueryData(historyQueryKey);
       
-      queryClient.setQueryData(historyQueryKey, (old: any) => {
+      queryClient.setQueryData(historyQueryKey, (old: TtsSuccessResponse<TtsPredictionDisplayDto[]> | undefined) => {
         if (old?.success && old.data) {
           return {
             ...old,

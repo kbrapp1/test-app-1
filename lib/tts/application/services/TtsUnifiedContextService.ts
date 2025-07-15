@@ -74,7 +74,7 @@ export class TtsUnifiedContextService {
       window.addEventListener('organizationSwitched', this.handleOrganizationSwitch.bind(this) as EventListener);
       
       // Expose service instance for direct cache invalidation
-      (window as any).ttsUnifiedContextService = this;
+      (window as unknown as { ttsUnifiedContextService: TtsUnifiedContextService }).ttsUnifiedContextService = this;
     }
   }
 
@@ -209,7 +209,7 @@ export class TtsUnifiedContextService {
       // Return error state compatible with TtsValidationResult
       return {
         isValid: false,
-        user: null as any, // Match existing interface pattern
+        user: null as unknown as User, // Match existing interface pattern
         organizationId: '',
         error: error instanceof Error ? error.message : 'Unknown error',
         securityContext: {

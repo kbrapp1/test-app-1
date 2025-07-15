@@ -1,16 +1,16 @@
-import { Generation } from '../../domain/entities/Generation';
-import { GenerationStatusDomainService } from '../../domain/services/GenerationStatusDomainService';
-import { GenerationPollingSpecification } from '../../domain/specifications/GenerationPollingSpecification';
+// import { Generation } from '../../domain/entities/Generation';
+// import { GenerationStatusDomainService } from '../../domain/services/GenerationStatusDomainService';
+// import { GenerationPollingSpecification } from '../../domain/specifications/GenerationPollingSpecification';
 import { StatusCheckingRepository } from '../../domain/repositories/StatusCheckingRepository';
 import { ExternalProviderStatusService } from '../../infrastructure/providers/ExternalProviderStatusService';
-import { StatusMapper } from '../mappers/StatusMapper';
+// import { StatusMapper } from '../mappers/StatusMapper';
 import {
   StatusCheckRequestDto,
   BatchStatusResponseDto,
-  DeduplicationKeyDto,
+  // DeduplicationKeyDto,
   PollingStrategyDto
 } from '../dto/StatusDto';
-import { Result } from '../../infrastructure/common/Result';
+// import { Result } from '../../infrastructure/common/Result';
 import { CheckStatusWithDeduplicationUseCase } from '../use-cases/CheckStatusWithDeduplicationUseCase';
 import { GetOptimalPollingStrategyUseCase } from '../use-cases/GetOptimalPollingStrategyUseCase';
 import { ProcessTimeoutsUseCase } from '../use-cases/ProcessTimeoutsUseCase';

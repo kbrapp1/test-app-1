@@ -67,8 +67,8 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
             let errorMessage = 'Unknown error';
             if (typeof result.error === 'string') {
               errorMessage = result.error;
-            } else if (result.error && typeof (result.error as any).message === 'string') {
-              errorMessage = (result.error as any).message;
+            } else if (result.error && typeof (result.error as Error).message === 'string') {
+              errorMessage = (result.error as Error).message;
             }
             setVoiceLoadingError(errorMessage);
           }
@@ -77,8 +77,8 @@ export function VoiceSelector({ field, setValue, isDisabled, selectedProvider }:
           if (result.error) {
             if (typeof result.error === 'string') {
               errorMessage = result.error;
-            } else if (typeof (result.error as any).message === 'string') {
-              errorMessage = (result.error as any).message;
+            } else if (typeof (result.error as Error).message === 'string') {
+              errorMessage = (result.error as Error).message;
             }
           }
           setVoiceLoadingError(errorMessage);

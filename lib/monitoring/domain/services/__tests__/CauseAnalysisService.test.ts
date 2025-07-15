@@ -28,7 +28,13 @@ describe('CauseAnalysisService', () => {
       persistent: false,
       ...overrides
     };
-    return new OptimizationGap(defaults.type, defaults.title, defaults.description, defaults.severity, defaults.persistent);
+    return new OptimizationGap(
+      defaults.type, 
+      defaults.title, 
+      defaults.description, 
+      defaults.severity, 
+      defaults.persistent
+    );
   };
 
   const createMockPerformanceMetrics = (overrides: Partial<PerformanceMetrics> = {}): PerformanceMetrics => ({
