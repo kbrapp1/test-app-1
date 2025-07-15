@@ -3,15 +3,15 @@
 import React from 'react';
 import { Folder, File, CheckSquare } from 'lucide-react';
 import { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryMultiSelectState } from '../../../types/gallery-types';
 
 interface ContentSectionsProps {
   folders: (GalleryItemDto & { type: 'folder' })[];
   assets: (GalleryItemDto & { type: 'asset' })[];
   renderFolders: () => React.ReactNode;
   renderAssets: () => React.ReactNode;
-  // Multi-select props
   enableMultiSelect?: boolean;
-  multiSelect?: any;
+  multiSelect?: GalleryMultiSelectState;
 }
 
 export const ContentSections: React.FC<ContentSectionsProps> = ({

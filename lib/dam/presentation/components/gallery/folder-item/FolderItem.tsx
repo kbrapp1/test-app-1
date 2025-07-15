@@ -31,52 +31,55 @@ export const FolderItem: React.FC<FolderItemProps> = ({
   folder, 
   onClick,
   enableNavigation,
-  onAction,
+  onAction: _onAction,
   variant = 'grid',
-  isOptimisticallyHidden = false,
+  isOptimisticallyHidden: _isOptimisticallyHidden = false,
   isSelected = false,
   isSelecting = false,
   onSelectionChange
 }) => {
   // State management hook
   const {
-    setNodeRef,
-    attributes,
-    listeners,
-    isDragging,
-    isOver,
-    style
+    setNodeRef: _setNodeRef,
+    attributes: _attributes,
+    listeners: _listeners,
+    isDragging: _isDragging,
+    isOver: _isOver,
+    style: _style
   } = useFolderItemState({ folder });
 
   // Actions management hook
-  const { handleClick } = useFolderItemActions({
+  const { handleClick: _handleClick } = useFolderItemActions({
     isSelecting,
     isSelected,
     onSelectionChange,
     onClick
   });
 
-  // Common props for both variants
-  const commonProps = {
+  // Extract onClick handlers from complex commonProps
+  const onFolderClick = (_folderId: string) => {
+    if (enableNavigation) {
+      onClick();
+    }
+  };
+
+  const onFolderSelect = (_folderId: string, _isShiftKey: boolean) => {
+    if (onSelectionChange) {
+      onSelectionChange(!isSelected);
+    }
+  };
+
+  // Simple props for variant components
+  const variantProps = {
     folder,
-    isDragging,
-    isOptimisticallyHidden,
-    isSelected,
-    isSelecting,
-    isOver,
-    onClick: handleClick,
-    setNodeRef,
-    attributes,
-    style,
-    listeners,
-    onAction,
-    enableNavigation
+    onFolderClick,
+    onFolderSelect
   };
 
   // Delegate to appropriate variant component
   if (variant === 'list') {
-    return <FolderItemList {...commonProps} />;
+    return <FolderItemList {...variantProps} />;
   }
 
-  return <FolderItemGrid {...commonProps} />;
+  return <FolderItemGrid {...variantProps} />;
 }; 

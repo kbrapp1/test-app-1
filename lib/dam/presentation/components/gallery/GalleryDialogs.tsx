@@ -7,14 +7,16 @@ import { DeleteFolderDialog } from '../dialogs/DeleteFolderDialog';
 import { InputDialog } from '../dialogs/InputDialog';
 import { DeleteAssetConfirmation } from '../dialogs/ConfirmationDialog';
 import { FolderPickerDialog } from '../dialogs/FolderPickerDialog';
+import { useGalleryDialogs } from '../../hooks/navigation/useGalleryDialogs';
+import { useAssetItemDialogs } from '../../hooks/assets/useAssetItemDialogs';
 
 interface GalleryDialogsProps {
   selectedAssetId: string | null;
   onCloseAssetDetails: () => void;
   onAssetUpdated: () => void;
   onAssetDeleted: (assetId: string) => void;
-  dialogManager: any;
-  moveDialog: any;
+  dialogManager: ReturnType<typeof useGalleryDialogs>;
+  moveDialog: ReturnType<typeof useAssetItemDialogs>['moveDialog'];
   onCloseMoveDialog: () => void;
   _activeFolderId: string | null;
   onMoveAssetConfirm: (folderId: string | null) => void;

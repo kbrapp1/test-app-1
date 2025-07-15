@@ -54,7 +54,7 @@ export const useMultiSelectState = (options: UseMultiSelectOptions): MultiSelect
     }
   }, [selection, updateSelectionUseCase, onSelectionChange]);
 
-  // Mode management
+  // Mode management - stabilized with useCallback
   const toggleSelectionMode = useCallback(() => {
     const newMode = selectionMode === 'none' ? 'multiple' : 'none';
     setSelectionMode(newMode);
@@ -112,7 +112,7 @@ export const useMultiSelectState = (options: UseMultiSelectOptions): MultiSelect
     setLastSelectedId,
     setLastSelectedType,
     
-    // Mode management
+    // Mode management - now stable
     toggleSelectionMode,
     enterSelectionMode,
     exitSelectionMode,

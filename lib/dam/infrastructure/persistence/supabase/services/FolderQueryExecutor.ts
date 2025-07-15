@@ -3,7 +3,9 @@ import { DatabaseError, NotFoundError } from '@/lib/errors/base';
 import { CreateFolderData, UpdateFolderData } from '../../../../domain/repositories/IFolderRepository';
 import { FolderMapper, RawFolderDbRecord } from '../mappers/FolderMapper';
 
-type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']> | unknown;
+// Type for Supabase query builders
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
+type SupabaseSingleQueryBuilder = ReturnType<SupabaseQueryBuilder['maybeSingle']>;
 
 /**
  * Folder Query Executor Service
@@ -16,7 +18,7 @@ export class FolderQueryExecutor {
    * Execute query and handle errors
    */
   async executeQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord[]> {
-    const { data, error } = await (query as any);
+    const { data, error } = await query;
     
     if (error) {
       console.error(`Error ${errorContext}:`, error.message);
@@ -29,15 +31,15 @@ export class FolderQueryExecutor {
   /**
    * Execute single record query
    */
-  async executeSingleQuery(query: SupabaseQueryBuilder, errorContext: string): Promise<RawFolderDbRecord | null> {
-    const { data, error } = await (query as any);
+  async executeSingleQuery(query: SupabaseSingleQueryBuilder, errorContext: string): Promise<RawFolderDbRecord | null> {
+    const { data, error } = await query;
     
     if (error) {
       console.error(`Error ${errorContext}:`, error.message);
       throw new DatabaseError(`Failed to ${errorContext}.`, error.message);
     }
     
-    return data as unknown as RawFolderDbRecord | null;
+    return data as RawFolderDbRecord | null;
   }
 
   /**
@@ -157,5 +159,25 @@ export class FolderQueryExecutor {
     }
     
     return data || [];
+  }
+
+  async executeCountQuery(query: SupabaseQueryBuilder): Promise<number> {
+    const { count, error } = await query;
+    
+    if (error) {
+      throw new Error(`Count query failed: ${error.message}`);
+    }
+    
+    return count || 0;
+  }
+
+  async executeExistsQuery(query: SupabaseQueryBuilder): Promise<boolean> {
+    const { count, error } = await query;
+    
+    if (error) {
+      throw new Error(`Exists query failed: ${error.message}`);
+    }
+    
+    return (count || 0) > 0;
   }
 } 

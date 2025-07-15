@@ -39,7 +39,7 @@ export const FolderTreeItem: React.FC<FolderTreeItemProps> = ({
         style={{ paddingLeft: `${0.75 + level * 1.25}rem` }}
         onClick={() => canSelectNode && onSelect(node.id)}
         disabled={!canSelectNode}
-        aria-pressed={isSelected}
+        aria-selected={isSelected}
         role="treeitem"
         aria-expanded={hasChildrenToDisplay ? isExpanded : undefined}
       >

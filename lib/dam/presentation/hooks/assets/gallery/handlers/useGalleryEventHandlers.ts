@@ -1,9 +1,24 @@
 import { useEffect } from 'react';
 
+// TypeScript interfaces for better type safety
+interface MultiSelectInstance {
+  selectedAssets: string[];
+  selectedFolders: string[];
+  clearSelection: () => void;
+  exitSelectionMode: () => void;
+  toggleItem: (id: string, type: 'asset' | 'folder') => void;
+}
+
+interface GalleryDataInstance {
+  folders?: Array<{ id: string; [key: string]: unknown }>;
+  items?: Array<{ id: string; type: 'asset' | 'folder'; [key: string]: unknown }>;
+  fetchData?: (forceRefresh?: boolean) => void;
+}
+
 interface GalleryEventHandlersProps {
   enableMultiSelect?: boolean;
-  multiSelect: any; // Multi-select hook instance
-  galleryData: any; // Gallery data hook instance
+  multiSelect: MultiSelectInstance;
+  galleryData: GalleryDataInstance;
   activeFolderId: string | null;
 }
 
@@ -14,99 +29,66 @@ interface GalleryEventHandlersProps {
  * Follows DDD principles by focusing solely on event handling concerns
  */
 export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
-  const { enableMultiSelect, multiSelect, galleryData, activeFolderId } = props;
+  const { enableMultiSelect, multiSelect, galleryData, activeFolderId: _activeFolderId } = props;
 
   // Listen for selection requests from drag and drop
   useEffect(() => {
     const handleGetSelection = () => {
-      if (enableMultiSelect && multiSelect) {
-        const selectedAssets = multiSelect.selectedAssets;
-        const selectedFolders = multiSelect.selectedFolders;
+      if (enableMultiSelect) {
         window.dispatchEvent(new CustomEvent('damSelectionUpdate', {
-          detail: { selectedAssets, selectedFolders }
+          detail: { 
+            selectedAssets: multiSelect.selectedAssets, 
+            selectedFolders: multiSelect.selectedFolders 
+          }
         }));
       }
     };
-    
-    const handleClearSelection = () => {
-      if (enableMultiSelect && multiSelect) {
-        multiSelect.clearSelection();
-      }
-    };
 
-    const handleExitSelectionMode = () => {
-      if (enableMultiSelect && multiSelect) {
-        multiSelect.exitSelectionMode();
-      }
-    };
-    
-    window.addEventListener('damGetSelection', handleGetSelection);
-    window.addEventListener('damClearSelection', handleClearSelection);
-    window.addEventListener('damExitSelectionMode', handleExitSelectionMode);
-    
-    return () => {
-      window.removeEventListener('damGetSelection', handleGetSelection);
-      window.removeEventListener('damClearSelection', handleClearSelection);
-      window.removeEventListener('damExitSelectionMode', handleExitSelectionMode);
-    };
-     
-    // Performance: multiSelect object changes frequently, adding it would cause excessive re-renders
-  }, [enableMultiSelect, multiSelect?.selectedAssets, multiSelect?.selectedFolders, multiSelect?.clearSelection, multiSelect?.exitSelectionMode]);
+    window.addEventListener('damRequestSelection', handleGetSelection);
+    return () => window.removeEventListener('damRequestSelection', handleGetSelection);
+  }, [enableMultiSelect, multiSelect.selectedAssets, multiSelect.selectedFolders]);
 
-  // Listen for folder updates
+  // Handle escape key for selection mode
   useEffect(() => {
-    const handleFolderUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { type, folderId } = customEvent.detail;
-      
-      // Check if we need to refresh - either the renamed folder is in our current view
-      // or we're viewing the parent folder that contains the renamed folder
-      const isInCurrentView = galleryData.folders?.some((folder: any) => folder.id === folderId);
-      const isCurrentFolder = activeFolderId === folderId;
-      const shouldRefresh = type === 'rename' && (isInCurrentView || isCurrentFolder);
-      
-      if (shouldRefresh) {
-        // Force refresh gallery data when folders are updated
-        setTimeout(() => {
-          galleryData.fetchData?.(true); // Force refresh to bypass any caching
-        }, 100);
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && enableMultiSelect) {
+        // Check if we have any selections before clearing
+        const hasSelections = multiSelect.selectedAssets.length > 0 || multiSelect.selectedFolders.length > 0;
+        if (hasSelections) {
+          multiSelect.clearSelection();
+          multiSelect.exitSelectionMode();
+        }
       }
     };
-    
-    window.addEventListener('folderUpdated', handleFolderUpdate);
-    return () => window.removeEventListener('folderUpdated', handleFolderUpdate);
-     
-    // Performance: galleryData object recreated on every render, adding it causes event listener thrashing
-  }, [galleryData.fetchData, galleryData.folders, activeFolderId]);
 
-  // Handle selection persistence during data refresh
-  useEffect(() => {
-    if (enableMultiSelect && galleryData.items?.length > 0) {
-      // Validate current selection against new data
-      const currentAssets = multiSelect?.selectedAssets || [];
-      const currentFolders = multiSelect?.selectedFolders || [];
-      
-      const validAssets = currentAssets.filter((id: string) => 
-        galleryData.items.some((item: any) => item.id === id && item.type === 'asset')
-      );
-      const validFolders = currentFolders.filter((id: string) => 
-        galleryData.items.some((item: any) => item.id === id && item.type === 'folder')
-      );
-      
-      // Update selection if items were removed
-      if (validAssets.length !== currentAssets.length || validFolders.length !== currentFolders.length) {
-        // Clear and re-select valid items
-        multiSelect?.clearSelection();
-        validAssets.forEach((id: string) => multiSelect?.toggleItem(id, 'asset'));
-        validFolders.forEach((id: string) => multiSelect?.toggleItem(id, 'folder'));
-      }
+    if (enableMultiSelect) {
+      document.addEventListener('keydown', handleEscapeKey);
+      return () => document.removeEventListener('keydown', handleEscapeKey);
     }
-  }, [galleryData.items, enableMultiSelect, multiSelect]);
-   
-  // Performance: multiSelect object has many properties that change frequently, causes excessive validation runs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableMultiSelect, multiSelect.selectedAssets.length, multiSelect.selectedFolders.length, multiSelect.clearSelection, multiSelect.exitSelectionMode]);
 
-  return {
-    // Event handlers are side effects only, no return values needed
-    // All functionality is handled through useEffect hooks
-  };
+  // Handle keyboard shortcuts for selection
+  useEffect(() => {
+    const handleKeyboardShortcuts = (event: KeyboardEvent) => {
+      if (!enableMultiSelect || !galleryData.items) return;
+
+      // Ctrl+A or Cmd+A to select all
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        event.preventDefault();
+        
+        galleryData.items.forEach(item => {
+          if (item.type === 'asset' || item.type === 'folder') {
+            multiSelect.toggleItem(item.id, item.type);
+          }
+        });
+      }
+    };
+
+    if (enableMultiSelect) {
+      document.addEventListener('keydown', handleKeyboardShortcuts);
+      return () => document.removeEventListener('keydown', handleKeyboardShortcuts);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableMultiSelect, galleryData.items, multiSelect.toggleItem]);
 }; 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextImage from 'next/image';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Eye, Edit3, Navigation, Trash2, Image, Video, Music, FileText, File } from 'lucide-react';
@@ -94,7 +95,10 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
   const getAssetIcon = () => {
     const mimeType = asset.mimeType?.toLowerCase() || '';
     
-    if (mimeType.startsWith('image/')) return <Image className="w-5 h-5 text-green-600" />;
+    if (mimeType.startsWith('image/')) return (
+      // eslint-disable-next-line jsx-a11y/alt-text
+      <Image className="w-5 h-5 text-green-600" />
+    );
     if (mimeType.startsWith('video/')) return <Video className="w-5 h-5 text-purple-600" />;
     if (mimeType.startsWith('audio/')) return <Music className="w-5 h-5 text-orange-600" />;
     if (mimeType.includes('text')) return <FileText className="w-5 h-5 text-gray-600" />;
@@ -150,10 +154,11 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
             onMouseDown={(e) => e.stopPropagation()}
           />
           {isImage && asset.publicUrl && !imageError ? (
-            <img
+            <NextImage
               src={asset.publicUrl}
               alt={asset.name}
-              loading="lazy"
+              width={80}
+              height={80}
               className="w-full h-full object-cover rounded-lg transition-transform duration-200 hover:scale-105"
               onError={() => setImageError(true)}
               draggable="false"
@@ -190,7 +195,7 @@ export const AssetListItem: React.FC<AssetListItemProps> = ({
                 <ColoredTag
                   key={tag.id}
                   name={tag.name}
-                  color={(tag as any).color as TagColorName || 'blue'}
+                  color={tag.color as TagColorName || 'blue'}
                   size="sm"
                   className="text-xs"
                 />

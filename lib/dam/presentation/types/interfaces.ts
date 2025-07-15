@@ -1,12 +1,33 @@
+/**
+ * DAM Presentation Layer Interfaces
+ * 
+ * AI INSTRUCTIONS:
+ * - Use base props from base-props.ts to reduce redundancy
+ * - Follow @golden-rule DDD patterns exactly
+ * - Single responsibility: DAM-specific interface definitions
+ * - Keep under 250 lines - focused on domain-specific interfaces
+ * - Security-critical: organizationId fields must be preserved
+ * - Presentation layer only - no domain logic
+ */
+
 import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
 import { DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
-// import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
+import { 
+  BaseComponentProps,
+  SelectableAssetItemProps,
+  SelectableFolderItemProps,
+  FilterComponentProps,
+  SearchComponentProps,
+  LayoutComponentProps
+} from './base-props';
 
-// Presentation Layer Interfaces for DAM Components
-// These define the contracts between the domain and UI layers
+// ===== GALLERY INTERFACES =====
 
-export interface AssetGalleryProps {
+/**
+ * Props for main asset gallery component
+ */
+export interface AssetGalleryProps extends BaseComponentProps {
   folderId?: string | null;
   searchTerm?: string;
   onSelectionChange?: (selectedAssets: DomainAsset[]) => void;
@@ -14,7 +35,10 @@ export interface AssetGalleryProps {
   selectionMode?: boolean;
 }
 
-export interface AssetGridProps {
+/**
+ * Props for asset grid display
+ */
+export interface AssetGridProps extends BaseComponentProps {
   assets: DomainAsset[];
   folders: DomainFolder[];
   loading?: boolean;
@@ -22,31 +46,38 @@ export interface AssetGridProps {
   onFolderNavigate?: (folderId: string) => void;
 }
 
-export interface FolderListProps {
+/**
+ * Props for folder list display
+ */
+export interface FolderListProps extends BaseComponentProps {
   folders: DomainFolder[];
   onFolderSelect?: (folder: DomainFolder) => void;
   onFolderEdit?: (folder: DomainFolder) => void;
   onFolderDelete?: (folderId: string) => void;
 }
 
-export interface AssetItemProps {
-  asset: DomainAsset;
-  onSelect?: (asset: DomainAsset) => void;
+// ===== SPECIFIC COMPONENT INTERFACES =====
+
+/**
+ * Asset item props - extends base selectable asset props
+ */
+export interface AssetItemProps extends SelectableAssetItemProps {
   onEdit?: (asset: DomainAsset) => void;
-  onDelete?: (assetId: string) => void;
-  onMove?: (assetId: string, targetFolderId: string) => void;
   selected?: boolean;
 }
 
-export interface FolderItemProps {
-  folder: DomainFolder;
-  onNavigate?: (folderId: string) => void;
+/**
+ * Folder item props - extends base selectable folder props
+ */
+export interface FolderItemProps extends SelectableFolderItemProps {
   onEdit?: (folder: DomainFolder) => void;
-  onDelete?: (folderId: string) => void;
-  onMove?: (folderId: string, targetParentId: string) => void;
 }
 
-// Event handlers for use case triggers
+// ===== EVENT HANDLERS =====
+
+/**
+ * Event handlers for DAM use case triggers
+ */
 export interface DamEventHandlers {
   onUploadAsset: (file: File, folderId?: string) => Promise<void>;
   onCreateFolder: (name: string, parentId?: string) => Promise<void>;
@@ -59,7 +90,11 @@ export interface DamEventHandlers {
   onFilterChange: (filters: DamFilterParameters) => Promise<void>;
 }
 
-// View models for transforming domain data for UI
+// ===== VIEW MODELS =====
+
+/**
+ * View model for gallery display
+ */
 export interface DamGalleryViewModel {
   items: Array<DomainAsset | DomainFolder>;
   totalCount: number;
@@ -69,6 +104,9 @@ export interface DamGalleryViewModel {
   error?: string;
 }
 
+/**
+ * View model for search results
+ */
 export interface DamSearchViewModel {
   query: string;
   results: Array<DomainAsset | DomainFolder>;
@@ -77,7 +115,11 @@ export interface DamSearchViewModel {
   suggestions: string[];
 }
 
-// Component state management interfaces
+// ===== STATE MANAGEMENT =====
+
+/**
+ * Gallery state management interface
+ */
 export interface DamGalleryState {
   selectedAssets: DomainAsset[];
   selectedFolders: DomainFolder[];
@@ -87,5 +129,38 @@ export interface DamGalleryState {
   filters: DamFilterParameters;
 }
 
-// View mode for gallery display
+// ===== SPECIALIZED INTERFACES =====
+
+/**
+ * DAM-specific filter props
+ */
+export interface DamFilterProps extends FilterComponentProps {
+  filters: DamFilterParameters;
+  onFilterChange: (filters: DamFilterParameters) => void;
+}
+
+/**
+ * DAM-specific search props
+ */
+export interface DamSearchProps extends SearchComponentProps {
+  onSearch: (query: string) => void;
+  onSaveSearch?: (name: string, query: string) => void;
+  savedSearches?: Array<{ id: string; name: string; query: string }>;
+}
+
+/**
+ * DAM workspace layout props
+ */
+export interface DamWorkspaceProps extends LayoutComponentProps {
+  currentFolderId?: string | null;
+  onFolderChange: (folderId: string | null) => void;
+  showSidebar?: boolean;
+  onSidebarToggle?: () => void;
+}
+
+// ===== LEGACY COMPATIBILITY =====
+
+/**
+ * @deprecated Use ViewMode from base-props.ts instead
+ */
 export type ViewMode = 'grid' | 'list'; 

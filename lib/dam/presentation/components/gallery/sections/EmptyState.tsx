@@ -4,12 +4,31 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 
+interface UploadHandler {
+  uploadState: {
+    isUploading: boolean;
+    isDragOver: boolean;
+    files: Array<{
+      file: File;
+      progress: number;
+      status: 'pending' | 'uploading' | 'completed' | 'error';
+      error?: string;
+    }>;
+  };
+  uploadFiles: (files: File[]) => Promise<void>;
+  handleDragOver: (e: React.DragEvent) => void;
+  handleDragLeave: (e: React.DragEvent) => void;
+  handleDrop: (e: React.DragEvent) => void;
+  removeFile: (index: number) => void;
+  clearFiles: () => void;
+  getFileAcceptTypes: () => string;
+}
 
 interface EmptyStateProps {
   searchTerm?: string;
   activeFolderId: string | null;
   enableNavigation: boolean;
-  upload: any;
+  upload: UploadHandler;
   _onRefresh: () => void;
 }
 

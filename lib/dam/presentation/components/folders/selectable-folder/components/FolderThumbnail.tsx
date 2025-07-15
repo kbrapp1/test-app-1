@@ -6,7 +6,7 @@ import { Folder } from 'lucide-react';
 interface FolderThumbnailProps {
   isOver: boolean;
   variant: 'grid' | 'list';
-  dragListeners: any;
+  dragListeners: Record<string, (event: Event) => void>;
 }
 
 /**

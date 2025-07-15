@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useDamDragAndDrop } from '../../../hooks/gallery/useDamDragAndDrop';
 import { DragDropOperations } from '../services/DragDropOperations';
 import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
@@ -59,7 +60,7 @@ export function useDropHandlers({
     }
   });
 
-  const handleDragEnd = useCallback(async (event: any) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     // Get the item ID that will be optimistically hidden (asset or folder)
     // Use activeItem state if event data is not available (e.g., when cancelled)
     const activeItemType = event.active?.data?.current?.type || activeItem?.type;

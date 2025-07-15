@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import NextImage from 'next/image';
 import { File, Folder, Image as ImageIcon } from 'lucide-react';
 
 interface AssetThumbnailProps {
@@ -51,12 +52,13 @@ export const AssetThumbnail: React.FC<AssetThumbnailProps> = ({
     <div className="aspect-square mb-3 bg-gray-100 rounded-lg overflow-hidden relative group">
         {/* Main clickable preview area */}
         {isImage && item.publicUrl && !imageError ? (
-          <img
+          <NextImage
             src={item.publicUrl}
             alt={item.name}
+            width={200}
+            height={200}
             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
             onError={() => setImageError(true)}
-            loading="lazy"
             draggable="false"
           />
         ) : (

@@ -2,18 +2,15 @@ import React from 'react';
 import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 export interface SelectableFolderProps {
-  folder: GalleryItemDto & { type: 'folder' };
-  isSelected?: boolean;
-  onSelect?: (folder: GalleryItemDto) => void;
-  onDoubleClick?: (folder: GalleryItemDto) => void;
-  onContextMenu?: (event: React.MouseEvent, folder: GalleryItemDto) => void;
+  folder: GalleryItemDto;
+  isSelected: boolean;
+  onSelect: (folderId: string) => void;
+  onDoubleClick: (folderId: string) => void;
   className?: string;
-  disabled?: boolean;
-  showCheckbox?: boolean;
-  dragListeners?: Record<string, (event: React.SyntheticEvent) => void>;
-  dragAttributes?: Record<string, unknown>;
-  isDragging?: boolean;
-  style?: React.CSSProperties;
+  
+  // Drag and drop props with proper typing
+  _dragListeners?: Record<string, (event: Event) => void>;
+  _dragAttributes?: Record<string, unknown>;
 }
 
 export interface SelectableFolderItemProps {
@@ -43,8 +40,8 @@ export interface SelectableFolderState {
   dragRef: (node: HTMLElement | null) => void;
   dropRef: (node: HTMLElement | null) => void;
   nodeRef: (node: HTMLElement | null) => void;
-  dragAttributes: any;
-  dragListeners: any;
+  dragAttributes: Record<string, unknown>;
+  dragListeners: Record<string, (event: Event) => void>;
   transform: { x: number; y: number } | null;
   isDragging: boolean;
   isOver: boolean;

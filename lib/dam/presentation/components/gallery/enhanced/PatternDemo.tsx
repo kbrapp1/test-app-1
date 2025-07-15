@@ -61,6 +61,7 @@ export const PatternDemo: React.FC = () => {
           {/* Grid Asset */}
           <div className="p-4 border border-gray-200 rounded-lg group">
             <div className="aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center relative group/thumbnail">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image className="w-8 h-8 text-green-600" />
               
               {/* Asset drag handle - bottom-right */}

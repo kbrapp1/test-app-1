@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
+import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
 
 /**
  * DAM Network Redundancy Tests
@@ -99,7 +100,7 @@ class TestNetworkTracker {
 
 // Mock components that simulate DAM network patterns
 const MockAssetGallery = ({ tracker }: { tracker: TestNetworkTracker }) => {
-  const [assets, setAssets] = React.useState([]);
+  const [assets, setAssets] = React.useState<GalleryItemDto[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   const loadAssets = React.useCallback(async (folderId?: string) => {
@@ -112,7 +113,15 @@ const MockAssetGallery = ({ tracker }: { tracker: TestNetworkTracker }) => {
       tracker.trackCall(url, 'GET');
       
       // Simulate API response
-      setAssets([{ id: '1', name: 'test' }] as any);
+      setAssets([{ 
+        id: '1', 
+        name: 'test', 
+        type: 'asset', 
+        createdAt: new Date(), 
+        mimeType: 'image/jpeg', 
+        size: 1024, 
+        userId: 'user1' 
+      }] as GalleryItemDto[]);
     } finally {
       setLoading(false);
     }
@@ -145,13 +154,21 @@ const MockAssetGallery = ({ tracker }: { tracker: TestNetworkTracker }) => {
 
 const MockSearchComponent = ({ tracker }: { tracker: TestNetworkTracker }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [results, setResults] = React.useState([]);
+  const [results, setResults] = React.useState<GalleryItemDto[]>([]);
 
   React.useEffect(() => {
     if (searchTerm) {
       const searchAssets = () => {
         tracker.trackCall(`http://localhost:3000/api/dam/search?q=${searchTerm}`, 'GET');
-        setResults([{ id: '1' }] as any);
+        setResults([{ 
+          id: '1', 
+          name: 'search-result', 
+          type: 'asset', 
+          createdAt: new Date(), 
+          mimeType: 'image/jpeg', 
+          size: 1024, 
+          userId: 'user1' 
+        }] as GalleryItemDto[]);
       };
       searchAssets();
     }
@@ -179,7 +196,7 @@ describe('DAM Network Redundancy Tests', () => {
     
     // Mock fetch to avoid real HTTP requests
     originalFetch = global.fetch;
-    global.fetch = vi.fn().mockImplementation(async (url: string, _options: any = {}) => {
+    global.fetch = vi.fn().mockImplementation(async (url: string, _options: RequestInit = {}) => {
       return Promise.resolve({
         ok: true,
         status: 200,

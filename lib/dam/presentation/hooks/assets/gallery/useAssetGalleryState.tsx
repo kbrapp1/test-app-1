@@ -78,7 +78,7 @@ export const useAssetGalleryState = (props: AssetGalleryStateProps) => {
   // Side effects: Event handling
   useGalleryEventHandlers({
     enableMultiSelect,
-    multiSelect: selection.multiSelect,
+    multiSelect: selection.multiSelect!,
     galleryData,
     activeFolderId: stateManager.activeFolderId,
   });

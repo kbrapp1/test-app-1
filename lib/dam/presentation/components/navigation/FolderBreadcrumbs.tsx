@@ -53,7 +53,7 @@ export const FolderBreadcrumbs: React.FC<FolderBreadcrumbsProps> = ({
 
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-1" aria-label="Folder navigation">
-        {navigation.breadcrumbs.map((breadcrumb: any, index: number) => (
+        {navigation.breadcrumbs.map((breadcrumb, index: number) => (
           <React.Fragment key={breadcrumb.id || 'root'}>
             {index > 0 && (
               <ChevronRight className="w-4 h-4 text-gray-400" />

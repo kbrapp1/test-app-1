@@ -7,15 +7,59 @@ import { GalleryHeader } from './sections/GalleryHeader';
 import { UploadProgress } from './sections/UploadProgress';
 import { ContentSections } from './sections/ContentSections';
 import { EmptyState } from './sections/EmptyState';
+import { UploadFile } from '../../hooks/assets/useAssetUpload';
+import { GalleryMultiSelectState } from '../../types/gallery-types';
+
+interface FolderNavigation {
+  navigation: {
+    currentFolder: {
+      id: string | null;
+      name: string;
+      path: string;
+    };
+    breadcrumbs: Array<{
+      id: string | null;
+      name: string;
+      isClickable: boolean;
+    }>;
+    parentFolderId: string | null | undefined;
+    canNavigateUp: boolean;
+  } | null;
+  loading: boolean;
+  error: string | null;
+  currentFolderId: string | null;
+  navigateToFolder: (folderId: string | null) => void;
+  refresh: () => void;
+  goUp: () => void;
+  goToRoot: () => void;
+}
+
+interface UploadState {
+  isUploading: boolean;
+  files: UploadFile[];
+  uploadedFiles: UploadFile[];
+  isDragOver: boolean;
+}
+
+interface UploadHandler {
+  uploadState: UploadState;
+  uploadFiles: (files: File[]) => Promise<void>;
+  handleDragOver: (e: React.DragEvent) => void;
+  handleDragLeave: (e: React.DragEvent) => void;
+  handleDrop: (e: React.DragEvent) => void;
+  removeFile: (index: number) => void;
+  clearFiles: () => void;
+  getFileAcceptTypes: () => string;
+}
 
 interface GalleryLayoutProps {
   loading: boolean;
   isFirstLoad: boolean;
   error?: string;
-  folderNavigation?: any;
+  folderNavigation?: FolderNavigation;
   showNavigationUI: boolean;
   activeFolderId: string | null;
-  upload: any;
+  upload: UploadHandler;
   onRefresh: () => void;
   folders: (GalleryItemDto & { type: 'folder' })[];
   assets: (GalleryItemDto & { type: 'asset' })[];
@@ -24,7 +68,7 @@ interface GalleryLayoutProps {
   renderFolders: () => React.ReactNode;
   renderAssets: () => React.ReactNode;
   enableMultiSelect?: boolean;
-  multiSelect?: any;
+  multiSelect?: GalleryMultiSelectState;
 }
 
 const LoadingState: React.FC = () => (
@@ -34,7 +78,7 @@ const LoadingState: React.FC = () => (
   </div>
 );
 
-const ErrorState: React.FC<{ error: string; onRefresh: () => void; folderNavigation?: any }> = ({ 
+const ErrorState: React.FC<{ error: string; onRefresh: () => void; folderNavigation?: FolderNavigation }> = ({ 
   error, 
   onRefresh, 
   folderNavigation 
@@ -129,8 +173,8 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
         showNavigationUI={showNavigationUI}
         enableNavigation={enableNavigation}
         folderNavigation={folderNavigation}
-        activeFolderId={activeFolderId}
-        onRefresh={onRefresh}
+        _activeFolderId={activeFolderId}
+        _onRefresh={onRefresh}
         enableMultiSelect={enableMultiSelect}
         multiSelect={multiSelect}
       />
@@ -151,7 +195,7 @@ export const GalleryLayout: React.FC<GalleryLayoutProps> = ({
             activeFolderId={activeFolderId}
             enableNavigation={enableNavigation}
             upload={upload}
-            onRefresh={onRefresh}
+            _onRefresh={onRefresh}
           />
         )
       )}

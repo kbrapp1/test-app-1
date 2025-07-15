@@ -178,26 +178,25 @@ export const useAssetGalleryHandlers = ({
     } catch (error) {
       sonnerToast.error((error as Error).message || 'Failed to rename asset');
     }
-  }, [dialogManager.renameAssetDialog.asset, refreshGalleryData, dialogManager.closeRenameAsset, renameAssetUseCase, dialogManager]);
+  }, [refreshGalleryData, renameAssetUseCase, dialogManager]);
 
   const handleDeleteAssetConfirm = useCallback(async () => {
     if (!dialogManager.deleteAssetDialog.asset) return;
 
-    const assetToDelete = dialogManager.deleteAssetDialog.asset;
-
     try {
-      addOptimisticallyHiddenItem(assetToDelete.id);
+      // Optimistically hide the item immediately
+      addOptimisticallyHiddenItem(dialogManager.deleteAssetDialog.asset.id);
       
-      // Use React Query mutation for proper cache invalidation
-      await deleteAssetMutation.mutateAsync(assetToDelete.id);
+      // Use React Query mutation for deletion
+      await deleteAssetMutation.mutateAsync(dialogManager.deleteAssetDialog.asset.id);
       
-      sonnerToast.success(`Asset "${assetToDelete.name}" deleted successfully`);
+      // Close the dialog
       dialogManager.closeDeleteAsset();
     } catch (error) {
       sonnerToast.error((error as Error).message || 'Failed to delete asset');
       // Note: React Query will handle error states and cache management
     }
-  }, [dialogManager.deleteAssetDialog.asset, dialogManager.closeDeleteAsset, addOptimisticallyHiddenItem, deleteAssetMutation, dialogManager]);
+  }, [addOptimisticallyHiddenItem, deleteAssetMutation, dialogManager]);
 
   // Asset action creators
   const createAssetActions = useCallback((asset: GalleryItemDto & { type: 'asset' }) => ({

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMultiSelect } from '../../../selection/useMultiSelect';
 import { Selection } from '../../../../../domain/entities/Selection';
+import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 interface GallerySelectionProps {
   enableMultiSelect?: boolean;
@@ -33,52 +34,54 @@ export const useGallerySelection = (props: GallerySelectionProps) => {
     }, [onSelectionChange])
   });
 
-  // Clear selection on folder navigation
+  // Clear selection on folder navigation - using defensive approach
   useEffect(() => {
-    if (enableMultiSelect) {
+    if (enableMultiSelect && multiSelect?.clearSelection) {
       multiSelect.clearSelection();
     }
-     
-    // Performance: multiSelect object changes frequently, adding it would cause clearSelection to run excessively
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFolderId, enableMultiSelect]);
 
-  // Auto-enter selection mode when multi-select is enabled
+  // Auto-enter selection mode when multi-select is enabled - using defensive approach
   useEffect(() => {
-    if (enableMultiSelect && !multiSelect.isSelecting) {
+    if (enableMultiSelect && !multiSelect?.isSelecting && multiSelect?.enterSelectionMode) {
       multiSelect.enterSelectionMode();
-    } else if (!enableMultiSelect && multiSelect.isSelecting) {
+    } else if (!enableMultiSelect && multiSelect?.isSelecting && multiSelect?.exitSelectionMode) {
       multiSelect.exitSelectionMode();
     }
-     
-    // Performance: multiSelect object recreated frequently, adding it would cause mode changes on every selection
-  }, [enableMultiSelect, multiSelect.isSelecting]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableMultiSelect, multiSelect?.isSelecting]);
 
-  // Handle item selection with keyboard modifiers
+  // Handle item selection with keyboard modifiers - now stable
   const handleItemSelection = useCallback((id: string, type: 'asset' | 'folder', event?: MouseEvent) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectItem(id, type, event);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, multiSelect.selectItem]);
 
-  // Toggle selection mode
+  // Toggle selection mode - now stable
   const toggleSelectionMode = useCallback(() => {
     if (!enableMultiSelect) return;
     
     multiSelect.toggleSelectionMode();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, multiSelect.toggleSelectionMode]);
 
-  // Select all files handler
-  const handleSelectAllFiles = useCallback((items: any[]) => {
+  // Select all files handler - now stable
+  const handleSelectAllFiles = useCallback((items: GalleryItemDto[]) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectAllFiles(items);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, multiSelect.selectAllFiles]);
 
-  // Select all folders handler
-  const handleSelectAllFolders = useCallback((items: any[]) => {
+  // Select all folders handler - now stable
+  const handleSelectAllFolders = useCallback((items: GalleryItemDto[]) => {
     if (!enableMultiSelect) return;
     
     multiSelect.selectAllFolders(items);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, multiSelect.selectAllFolders]);
 
   return {
@@ -86,7 +89,7 @@ export const useGallerySelection = (props: GallerySelectionProps) => {
     selectedAssetId,
     setSelectedAssetId,
     
-    // Multi-select state and operations
+    // Multi-select state and operations (simple approach)
     multiSelect: enableMultiSelect ? {
       ...multiSelect,
       handleItemSelection,

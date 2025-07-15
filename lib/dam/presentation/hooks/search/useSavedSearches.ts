@@ -4,6 +4,41 @@ import { useApiMutation, useCacheInvalidation } from '@/lib/infrastructure/query
 import { SavedSearch, SavedSearchProps } from '../../../domain/entities/SavedSearch';
 import { listSavedSearches, saveDamSearch, executeSavedSearch } from '../../../application/actions/savedSearches.actions';
 import { useToast } from '@/components/ui/use-toast';
+import { Asset } from '../../../domain/entities/Asset';
+import { Folder } from '../../../domain/entities/Folder';
+
+// Type for the simplified result returned by the server action
+interface ExecuteSavedSearchActionResult {
+  savedSearch: {
+    id: string;
+    name: string;
+    description?: string;
+    searchCriteria: {
+      searchTerm?: string;
+      folderId?: string | null;
+      tagIds?: string[];
+      filters?: {
+        type?: string;
+        creationDateOption?: string;
+        dateStart?: string;
+        dateEnd?: string;
+        ownerId?: string;
+        sizeOption?: string;
+        sizeMin?: string;
+        sizeMax?: string;
+      };
+      sortParams?: {
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+      };
+    };
+  };
+  searchResults: {
+    assets: Asset[];
+    folders: Folder[];
+    totalCount: number;
+  };
+}
 
 // Legacy interface types for compatibility with existing components
 export interface SavedSearchFormData {
@@ -43,7 +78,7 @@ export interface UseSavedSearchesReturn {
   // Actions
   refreshSavedSearches: () => Promise<void>;
   saveCurrentSearch: (formData: SavedSearchFormData, currentCriteria: CurrentSearchCriteria) => Promise<SavedSearch | null>;
-  executeSearch: (savedSearchId: string, currentFolderId?: string | null) => Promise<any>;
+  executeSearch: (savedSearchId: string, currentFolderId?: string | null) => Promise<ExecuteSavedSearchActionResult | null>;
   canSaveCurrentSearch: (currentCriteria: CurrentSearchCriteria) => boolean;
 }
 
@@ -82,11 +117,11 @@ export function useSavedSearches(): UseSavedSearchesReturn {
   const popularSearches = (searchData?.popularSavedSearches || []).map((s: SavedSearchProps) => new SavedSearch(s));
 
   // Save search mutation
-  const saveSearchMutation = useApiMutation<any, SavedSearchProps>(
+  const saveSearchMutation = useApiMutation<SavedSearchProps, SavedSearchProps>(
     async (searchProps) => {
       const result = await saveDamSearch(searchProps);
       if (!result.success) throw new Error(result.error);
-      return result.data;
+      return result.data!;
     },
     {
       onSuccess: () => {
@@ -107,14 +142,14 @@ export function useSavedSearches(): UseSavedSearchesReturn {
   );
 
   // Execute saved search mutation
-  const executeSearchMutation = useApiMutation<any, string>(
+  const executeSearchMutation = useApiMutation<ExecuteSavedSearchActionResult, string>(
     async (searchId) => {
       const result = await executeSavedSearch({ 
         savedSearchId: searchId,
         currentFolderIdForContext: undefined 
       });
       if (!result.success) throw new Error(result.error);
-      return result.data;
+      return result.data!;
     },
     {
       onSuccess: () => {

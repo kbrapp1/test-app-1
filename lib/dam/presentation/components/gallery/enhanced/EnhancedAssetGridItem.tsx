@@ -127,7 +127,7 @@ export const EnhancedAssetGridItem: React.FC<EnhancedAssetGridItemProps> = ({
                 <ColoredTag
                   key={tag.id}
                   name={tag.name}
-                  color={(tag as any).color as TagColorName || 'blue'}
+                  color={tag.color as TagColorName || 'blue'}
                   size="sm"
                 />
               ))}

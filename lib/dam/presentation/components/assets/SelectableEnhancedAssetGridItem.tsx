@@ -118,7 +118,7 @@ export const SelectableEnhancedAssetGridItem: React.FC<SelectableEnhancedAssetGr
                     <ColoredTag
                       key={tag.id}
                       name={tag.name}
-                      color={(tag as any).color as TagColorName || 'blue'}
+                      color={(tag as { color?: TagColorName }).color || 'blue'}
                       size="sm"
                     />
                   ))}

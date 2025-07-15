@@ -2,110 +2,56 @@
 
 import React from 'react';
 import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { useFolderItemState } from '../hooks/useFolderItemState';
 import { FolderThumbnail } from './FolderThumbnail';
-import { FolderActionMenu } from './FolderActionMenu';
-import { DateFormatters } from '../utils/dateFormatters';
 
 interface FolderItemListProps {
   folder: GalleryItemDto & { type: 'folder' };
-  // State props
-  isDragging: boolean;
-  isOptimisticallyHidden: boolean;
-  isSelected: boolean;
-  isSelecting: boolean;
-  isOver: boolean;
-  // Event props
-  onClick: (e: React.MouseEvent) => void;
-  // Drag props
-  setNodeRef: (node: HTMLElement | null) => void;
-  attributes: any;
-  style: React.CSSProperties;
-  listeners: any;
-  // Action props
-  onAction?: (action: 'rename' | 'delete', folderId: string, folderName: string) => void;
-  enableNavigation: boolean;
+  onFolderClick: (folderId: string) => void;
+  onFolderSelect: (folderId: string, isShiftKey: boolean) => void;
 }
 
 /**
- * List variant of folder item component
+ * FolderItemList - Presentation Layer Component
  * 
- * Single Responsibility: List layout and styling for folder items
- * Handles horizontal layout with thumbnail, name, date, and actions
+ * Single Responsibility: Render folder item in list layout
+ * Follows DDD principles by focusing solely on presentation concerns
  */
-export const FolderItemList: React.FC<FolderItemListProps> = ({
-  folder,
-  isDragging,
-  isOptimisticallyHidden,
-  isSelected,
-  isSelecting,
-  isOver,
-  onClick,
-  setNodeRef,
-  attributes,
-  style,
-  listeners,
-  onAction,
-  enableNavigation
+export const FolderItemList: React.FC<FolderItemListProps> = ({ 
+  folder, 
+  onFolderClick, 
+  onFolderSelect 
 }) => {
-  const containerClasses = `group relative flex items-center p-3 border border-gray-200 rounded-lg bg-white transition-all duration-200 ${
-    isDragging || isOptimisticallyHidden
-      ? 'opacity-0'
-      : isSelected
-      ? 'bg-blue-50 border-blue-300 shadow-md ring-1 ring-blue-200'
-      : isSelecting
-      ? 'cursor-pointer hover:bg-blue-25 hover:border-blue-200'
-      : isOver
-      ? 'bg-blue-50 border-blue-300 shadow-md ring-1 ring-blue-200'
-      : `hover:bg-gray-50/70 hover:border-gray-300 ${enableNavigation ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}`
-  }`;
+  const folderState = useFolderItemState({ 
+    folder, 
+    onFolderClick, 
+    onFolderSelect 
+  });
 
   return (
-    <div 
-      ref={setNodeRef}
-      {...attributes}
-      style={style}
-      className={containerClasses}
+    <div
+      className={`
+        flex items-center p-2 rounded-lg border transition-all duration-200
+        ${folderState.isHovered ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'}
+        ${folderState.isPressed ? 'scale-95' : 'scale-100'}
+        hover:shadow-sm cursor-pointer
+      `}
+      onMouseEnter={folderState.handleMouseEnter}
+      onMouseLeave={folderState.handleMouseLeave}
+      onMouseDown={folderState.handleMouseDown}
+      onMouseUp={folderState.handleMouseUp}
+      onClick={folderState.handleClick}
+      onDoubleClick={folderState.handleDoubleClick}
     >
-      <div 
-        className="flex items-center flex-1 min-w-0"
-        onClick={onClick}
-      >
-        <FolderThumbnail
-          variant="list"
-          isSelecting={isSelecting}
-          isSelected={isSelected}
-          isOver={isOver}
-          listeners={listeners}
-        />
-        
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm text-gray-900 truncate" title={folder.name}>
-            {folder.name}
-          </h3>
-          <p className="text-xs text-gray-500">
-            {DateFormatters.formatRelativeDate(folder.createdAt)}
-          </p>
+      <FolderThumbnail folder={folder} />
+      <div className="ml-3 flex-1">
+        <div className="text-sm font-medium text-gray-900 truncate">
+          {folder.name}
+        </div>
+        <div className="text-xs text-gray-500">
+          Folder
         </div>
       </div>
-      
-      {/* Drop Here Indicator for List View */}
-      {isOver && (
-        <div className="absolute right-12 top-1/2 -translate-y-1/2 z-10">
-          <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded shadow-md whitespace-nowrap border border-blue-200">
-            Drop Here
-          </span>
-        </div>
-      )}
-      
-      {/* Action Menu */}
-      {onAction && (
-        <FolderActionMenu
-          folderId={folder.id}
-          folderName={folder.name}
-          variant="list"
-          onAction={onAction}
-        />
-      )}
     </div>
   );
 }; 

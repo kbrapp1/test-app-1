@@ -2,19 +2,43 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Navigation, CheckSquare } from 'lucide-react';
+import { CheckSquare, Navigation } from 'lucide-react';
 import { FolderBreadcrumbs } from '../../navigation/FolderBreadcrumbs';
+import { GalleryMultiSelectState } from '../../../types/gallery-types';
 
+interface FolderNavigation {
+  navigation: {
+    currentFolder: {
+      id: string | null;
+      name: string;
+      path: string;
+    };
+    breadcrumbs: Array<{
+      id: string | null;
+      name: string;
+      isClickable: boolean;
+    }>;
+    parentFolderId: string | null | undefined;
+    canNavigateUp: boolean;
+  } | null;
+  loading: boolean;
+  error: string | null;
+  currentFolderId: string | null;
+  navigateToFolder: (folderId: string | null) => void;
+  refresh: () => void;
+  goUp: () => void;
+  goToRoot: () => void;
+}
 
 interface GalleryHeaderProps {
   showNavigationUI: boolean;
   enableNavigation: boolean;
-  folderNavigation?: any;
+  folderNavigation?: FolderNavigation;
   _activeFolderId: string | null;
   _onRefresh: () => void;
   // Multi-select props
   enableMultiSelect?: boolean;
-  multiSelect?: any;
+  multiSelect?: GalleryMultiSelectState;
 }
 
 export const GalleryHeader: React.FC<GalleryHeaderProps> = ({

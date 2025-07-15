@@ -68,7 +68,7 @@ export const InputDialog: React.FC<InputDialogProps> = ({
         setInternalIsLoading(false);
       }
     }
-  }, [isOpen, initialValue]);
+  }, [isOpen, initialValue, parentIsLoading, internalIsLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

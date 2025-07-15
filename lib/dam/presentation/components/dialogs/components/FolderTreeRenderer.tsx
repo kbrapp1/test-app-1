@@ -83,7 +83,7 @@ export const FolderTreeRenderer: React.FC<FolderTreeRendererProps> = ({
           }`}
           onClick={() => currentAssetFolderId !== null && onSelect(null)}
           disabled={currentAssetFolderId === null}
-          aria-pressed={selectedFolderId === null}
+          aria-selected={selectedFolderId === null}
           role="treeitem" 
         >
           <HomeIcon className="w-4 h-4 mr-2 flex-shrink-0" />

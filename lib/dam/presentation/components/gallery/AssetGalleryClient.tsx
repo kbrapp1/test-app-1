@@ -9,6 +9,8 @@ import { GalleryDialogs } from './GalleryDialogs';
 import { SelectionToolbar } from '../selection/SelectionToolbar';
 import { BulkOperationDialogs } from '../dialogs/BulkOperationDialogs';
 import { useCacheInvalidation } from '@/lib/infrastructure/query';
+import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryMultiSelectState, RendererMultiSelectState } from '../../types/gallery-types';
 
 interface AssetGalleryClientProps {
   currentFolderId: string | null;
@@ -114,7 +116,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       window.removeEventListener('damDataRefresh', handleDataRefresh);
       window.removeEventListener('reactQueryInvalidateCache', handleReactQueryCacheInvalidation);
     };
-  }, [state]);
+  }, [state, invalidateByPattern]);
   
   useEffect(() => {
     const handleStorageEvent = (event: StorageEvent) => {
@@ -144,12 +146,57 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
     onFolderNavigate,
   });
 
+  // Transform multiSelect to match GalleryLayout interface
+  const multiSelectAdapter: GalleryMultiSelectState | undefined = state.multiSelect ? {
+    selectedAssets: state.multiSelect.selectedAssets,
+    selectedFolders: state.multiSelect.selectedFolders,
+    isSelecting: state.multiSelect.isSelecting,
+    selectedCount: state.multiSelect.selectedCount,
+    selectItem: (id: string, type: 'asset' | 'folder') => {
+      state.multiSelect?.selectItem(id, type);
+    },
+    toggleSelectionMode: () => {
+      state.multiSelect?.toggleSelectionMode();
+    },
+    clearSelection: () => {
+      state.multiSelect?.clearSelection();
+    },
+    selectAll: (items: GalleryItemDto[]) => {
+      state.multiSelect?.selectAll(items);
+    },
+    handleSelectAllFiles: (items: GalleryItemDto[]) => {
+      state.multiSelect?.handleSelectAllFiles(items);
+    },
+    handleSelectAllFolders: (items: GalleryItemDto[]) => {
+      state.multiSelect?.handleSelectAllFolders(items);
+    },
+    handleBulkOperation: (operation: 'move' | 'delete' | 'download' | 'addTags') => {
+      state.multiSelect?.handleBulkOperation(operation);
+    }
+  } : undefined;
+
+  // Transform multiSelect to match AssetGalleryRenderer interface
+  const rendererMultiSelectAdapter: RendererMultiSelectState | undefined = state.multiSelect ? {
+    selectedAssets: state.multiSelect.selectedAssets,
+    selectedFolders: state.multiSelect.selectedFolders,
+    isSelectionMode: state.multiSelect.isSelecting,
+    selectItem: (id: string, type: 'asset' | 'folder') => {
+      state.multiSelect?.selectItem(id, type);
+    },
+    toggleSelectionMode: () => {
+      state.multiSelect?.toggleSelectionMode();
+    },
+    clearSelection: () => {
+      state.multiSelect?.clearSelection();
+    }
+  } : undefined;
+
   // Render functions
   const renderAssets = () => (
     <AssetGalleryRenderer
       viewMode={viewMode}
-      folders={state.folders.filter(item => item.type === 'folder') as any}
-      assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
+      folders={state.folders.filter(item => item.type === 'folder')}
+      assets={state.visibleAssets.filter(item => item.type === 'asset')}
       enableNavigation={enableNavigation}
       onItemClick={handlers.handleItemClick}
       onFolderAction={state.dialogManager.openFolderAction}
@@ -158,15 +205,15 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       optimisticallyHiddenItemIds={state.optimisticallyHiddenItemIds}
       // Multi-select props
       enableMultiSelect={enableMultiSelect}
-      multiSelect={state.multiSelect}
+      multiSelect={rendererMultiSelectAdapter}
     />
   );
 
   const renderFolders = () => (
     <AssetGalleryRenderer
       viewMode={viewMode}
-      folders={state.folders.filter(item => item.type === 'folder') as any}
-      assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
+      folders={state.folders.filter(item => item.type === 'folder')}
+      assets={state.visibleAssets.filter(item => item.type === 'asset')}
       enableNavigation={enableNavigation}
       onItemClick={handlers.handleItemClick}
       onFolderAction={state.dialogManager.openFolderAction}
@@ -174,7 +221,7 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
       renderType="folders"
       // Multi-select props
       enableMultiSelect={enableMultiSelect}
-      multiSelect={state.multiSelect}
+      multiSelect={rendererMultiSelectAdapter}
     />
   );
 
@@ -187,17 +234,17 @@ export const AssetGalleryClient: React.FC<AssetGalleryClientProps> = (props) => 
         folderNavigation={enableNavigation ? state.folderNavigation : undefined}
         showNavigationUI={showNavigationUI}
         activeFolderId={state.activeFolderId}
-        upload={state.upload}
+        upload={state.upload || undefined}
         onRefresh={state.refreshGalleryData}
-        folders={state.folders.filter(item => item.type === 'folder') as any}
-        assets={state.visibleAssets.filter(item => item.type === 'asset') as any}
+        folders={state.folders.filter(item => item.type === 'folder')}
+        assets={state.visibleAssets.filter(item => item.type === 'asset')}
         searchTerm={props.searchTerm}
         enableNavigation={enableNavigation}
         renderFolders={renderFolders}
         renderAssets={renderAssets}
         // Multi-select props
         enableMultiSelect={enableMultiSelect}
-        multiSelect={state.multiSelect}
+        multiSelect={multiSelectAdapter}
       />
 
       {/* Selection Toolbar */}

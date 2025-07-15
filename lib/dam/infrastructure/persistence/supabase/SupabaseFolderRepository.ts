@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { IFolderRepository, FolderTreeNode, CreateFolderData, UpdateFolderData } from '../../../domain/repositories/IFolderRepository';
 import { Folder } from '../../../domain/entities/Folder';
 import { Asset } from '../../../domain/entities/Asset';
-import { FolderMapper, RawFolderDbRecord } from './mappers/FolderMapper';
+import { FolderMapper } from './mappers/FolderMapper';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { ValidationError } from '@/lib/errors/base';
 import type { DamFilterParameters, DamSortParameters } from '../../../application/dto/SearchCriteriaDTO';
@@ -48,7 +48,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
       console.info(`Folder with ID ${id} not found in organization ${organizationId}`);
       return null;
     }
-    return FolderMapper.toDomain(data as RawFolderDbRecord);
+    return FolderMapper.toDomain(data);
   }
 
   async findRootFolders(organizationId: string): Promise<Folder[]> {
@@ -82,7 +82,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     query = this.queryBuilder.applySorting(query, sortParams);
 
     const data = await this.queryExecutor.executeQuery(query, `fetching folders for parent ${parentId}`);
-    const folders = data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    const folders = data.map(raw => FolderMapper.toDomain(raw));
     
     return folders;
   }
@@ -100,7 +100,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     if (!data) {
       return null;
     }
-    return FolderMapper.toDomain(data as RawFolderDbRecord);
+    return FolderMapper.toDomain(data);
   }
 
   async findChildren(folderId: string, organizationId: string): Promise<(Folder | Asset)[]> {
@@ -127,7 +127,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
       return existing;
     }
     
-    return FolderMapper.toDomain(updatedData as RawFolderDbRecord);
+    return FolderMapper.toDomain(updatedData);
   }
 
   async delete(id: string, organizationId: string): Promise<void> {
@@ -156,12 +156,12 @@ export class SupabaseFolderRepository implements IFolderRepository {
 
     const query = this.queryBuilder.buildBaseQuery(organizationId).order('name', { ascending: true });
     const data = await this.queryExecutor.executeQuery(query, 'fetching all folders for organization');
-    return data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    return data.map(raw => FolderMapper.toDomain(raw));
   }
 
   async create(folderData: CreateFolderData): Promise<Folder> {
     const data = await this.queryExecutor.executeCreate(folderData);
-    return FolderMapper.toDomain(data as RawFolderDbRecord);
+    return FolderMapper.toDomain(data);
   }
 
   async search(
@@ -185,7 +185,7 @@ export class SupabaseFolderRepository implements IFolderRepository {
     query = this.queryBuilder.applyPagination(query, limitOptions);
 
     const data = await this.queryExecutor.executeQuery(query, 'searching folders');
-    const result = data.map(raw => FolderMapper.toDomain(raw as RawFolderDbRecord));
+    const result = data.map(raw => FolderMapper.toDomain(raw));
     
     return result;
   }

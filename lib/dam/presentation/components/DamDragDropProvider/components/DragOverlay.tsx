@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
 
 interface DragItem {
@@ -112,9 +113,11 @@ function MultipleAssetPreview({ asset, totalCount, isProcessing }: { asset: Gall
           {/* Main thumbnail */}
           <div className="absolute top-0 left-0 w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-300">
             {isImage && asset.publicUrl ? (
-              <img
+              <Image
                 src={asset.publicUrl}
                 alt={asset.name}
+                width={64}
+                height={64}
                 className="w-full h-full object-cover rounded-lg"
                 draggable="false"
               />
@@ -148,9 +151,11 @@ function SingleAssetPreview({ asset, isProcessing }: { asset: GalleryItemDto & {
       <div className="flex flex-col items-center text-center">
         <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center mb-3 overflow-hidden">
           {isImage && asset.publicUrl ? (
-            <img
+            <Image
               src={asset.publicUrl}
               alt={asset.name}
+              width={64}
+              height={64}
               className="w-full h-full object-cover rounded-lg"
               draggable="false"
             />

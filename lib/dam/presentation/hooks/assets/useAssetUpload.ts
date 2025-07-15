@@ -12,6 +12,7 @@ export interface UploadFile {
 export interface UploadState {
   isUploading: boolean;
   files: UploadFile[];
+  uploadedFiles: UploadFile[];
   isDragOver: boolean;
 }
 
@@ -31,6 +32,7 @@ export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     files: [],
+    uploadedFiles: [],
     isDragOver: false,
   });
 
@@ -125,13 +127,18 @@ export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        // Mark as completed
-        setUploadState(prev => ({
-          ...prev,
-          files: prev.files.map((f, index) => 
-            index === i ? { ...f, status: 'completed', progress: 100 } : f
-          ),
-        }));
+        // Mark as completed and add to uploadedFiles
+        setUploadState(prev => {
+          const updatedFiles = prev.files.map((f, index) => 
+            index === i ? { ...f, status: 'completed' as const, progress: 100 } : f
+          );
+          const completedFile = updatedFiles[i];
+          return {
+            ...prev,
+            files: updatedFiles,
+            uploadedFiles: [...prev.uploadedFiles, completedFile],
+          };
+        });
 
         successCount++;
 
@@ -202,7 +209,7 @@ export const useAssetUpload = (options: UseAssetUploadOptions = {}) => {
   };
 
   const clearFiles = () => {
-    setUploadState(prev => ({ ...prev, files: [] }));
+    setUploadState(prev => ({ ...prev, files: [], uploadedFiles: [] }));
   };
 
   const getFileAcceptTypes = () => {
