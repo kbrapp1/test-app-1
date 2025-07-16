@@ -6,10 +6,10 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { 
   AuthenticationProvider, 
-  useCompleteOnboarding,
   UserProfileProvider,
-  TeamMembersProvider,
-  IdleTimeoutProvider 
+  useCompleteOnboarding,
+  IdleTimeoutProvider,
+  TeamMembersProvider
 } from '@/lib/auth';
 import { OrganizationProvider } from '@/lib/organization/application/providers/OrganizationProvider';
 import ReactScanIntegration from '@/lib/monitoring/infrastructure/development/ReactScanIntegration';
@@ -27,8 +27,8 @@ function ProtectedLayoutContent({
       idleTimeoutMinutes={60}  // 60 minutes of inactivity before logout
       warningTimeoutMinutes={1}  // Show warning 55 minutes before logout
     >
-      <OrganizationProvider>
-        <UserProfileProvider>
+      <UserProfileProvider>
+        <OrganizationProvider>
           <TeamMembersProvider>
             <ReactScanIntegration />
             <SidebarProvider>
@@ -43,8 +43,8 @@ function ProtectedLayoutContent({
               </SidebarInset>
             </SidebarProvider>
           </TeamMembersProvider>
-        </UserProfileProvider>
-      </OrganizationProvider>
+        </OrganizationProvider>
+      </UserProfileProvider>
     </IdleTimeoutProvider>
   );
 }

@@ -26,29 +26,14 @@ async function getHandler(
   supabase: SupabaseClient
 ) {
   try {
-    // Get organization context with refresh logic
-    let activeOrgId = await getActiveOrganizationId();
+    // Get organization context directly from JWT claims - much faster than multiple API calls
+    const activeOrgId = await getActiveOrganizationId();
     
-    // If no organization found, try forcing a session refresh
-    if (!activeOrgId) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (!refreshError) {
-            activeOrgId = await getActiveOrganizationId();
-          }
-        }
-      } catch (refreshError) {
-        console.warn('Team Members API: Session refresh failed:', refreshError);
-      }
-    }
-
     if (!activeOrgId) {
       return NextResponse.json({ error: 'Active organization not found' }, { status: 401 });
     }
     
+    // Direct RPC call - database query is already optimized with indexes
     const { data: members, error: rpcError } = await supabase.rpc(
       'get_organization_members_with_profiles',
       { target_org_id: activeOrgId }

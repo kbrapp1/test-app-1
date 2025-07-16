@@ -11,7 +11,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { AuthContextType } from './types';
 import { SuperAdminPermissionService } from './permissions';
-import { useUserProfile } from '../presentation/providers/UserProfileProvider';
+import { useUserProfile } from '@/lib/auth';
 
 /**
  * Enhanced auth hook with super admin support

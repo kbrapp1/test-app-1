@@ -88,7 +88,7 @@ export function ProfileForm() {
     if (isOrgLoading || !activeOrganizationId) return;
 
     if (currentContext) {
-      const currentOrg = accessibleOrganizations.find(org => org.organization_id === activeOrganizationId);
+      const currentOrg = accessibleOrganizations.find((org: any) => org.organization_id === activeOrganizationId);
       setOrganizationName(currentOrg?.organization_name || 'Unknown Organization');
 
       // Always check super admin status first, regardless of organization
