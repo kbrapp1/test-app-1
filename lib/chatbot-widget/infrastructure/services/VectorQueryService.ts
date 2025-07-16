@@ -16,7 +16,6 @@ import {
   VectorQueryContext,
   SupabaseVectorRow,
   VectorSimilarityRow,
-  VectorValidationResult,
   VectorSearchConfig
 } from '../types/VectorRepositoryTypes';
 
@@ -157,7 +156,7 @@ export class VectorQueryService {
       };
     });
   }
-  private processCrawledPageResults(data: any[]): Array<{
+  private processCrawledPageResults(data: unknown[]): Array<{
     url: string;
     title: string;
     content: string;
@@ -168,19 +167,20 @@ export class VectorQueryService {
     crawledAt: Date;
     errorMessage?: string;
   }> {
-    return data.map((row: any) => {
-      const crawlMetadata = row.metadata?.crawl || {};
+    return data.map((row: unknown) => {
+      const rowData = row as Record<string, unknown>;
+      const crawlMetadata = (rowData.metadata as Record<string, unknown>)?.crawl as Record<string, unknown> || {};
       
       return {
-        url: row.source_url,
-        title: row.title,
-        content: row.content,
-        status: crawlMetadata.status || 'success',
-        statusCode: crawlMetadata.statusCode,
-        responseTime: crawlMetadata.responseTime,
-        depth: crawlMetadata.depth || 0,
-        crawledAt: crawlMetadata.crawledAt ? new Date(crawlMetadata.crawledAt) : new Date(row.created_at),
-        errorMessage: crawlMetadata.errorMessage
+        url: rowData.source_url as string,
+        title: rowData.title as string,
+        content: rowData.content as string,
+        status: (crawlMetadata.status as 'success' | 'failed' | 'skipped') || 'success',
+        statusCode: (crawlMetadata.statusCode as number) || 200,
+        responseTime: (crawlMetadata.responseTime as number) || 0,
+        depth: (crawlMetadata.depth as number) || 0,
+        crawledAt: crawlMetadata.crawledAt ? new Date(crawlMetadata.crawledAt as string) : new Date(rowData.created_at as string),
+        errorMessage: (crawlMetadata.errorMessage as string) || ''
       };
     });
   }
@@ -214,7 +214,7 @@ export class VectorQueryService {
     return categoryMap[dbCategory] || 'general';
   }
 
-  private validateAndProcessVector(vectorData: any, itemId: string): number[] {
+  private validateAndProcessVector(vectorData: unknown, itemId: string): number[] {
     let processedVector: number[];
     
     if (Array.isArray(vectorData)) {
@@ -222,7 +222,7 @@ export class VectorQueryService {
     } else if (typeof vectorData === 'string') {
       try {
         processedVector = JSON.parse(vectorData) as number[];
-      } catch (e) {
+      } catch {
         throw new Error(`Invalid vector format for ${itemId}`);
       }
     } else {

@@ -67,4 +67,4 @@ async function postHandler(request: NextRequest, user: User) {
 }
 
 // Export the POST handler wrapped with authentication and error handling
-export const POST = withErrorHandling(withAuth(postHandler)); 
+export const POST = withErrorHandling(withAuth(postHandler) as (...args: unknown[]) => Promise<NextResponse>); 

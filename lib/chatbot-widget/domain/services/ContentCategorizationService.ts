@@ -68,7 +68,7 @@ export class ContentCategorizationService {
           if (this.isValidCategory(aiCategory)) {
             return aiCategory as KnowledgeItem['category'];
           }
-        } catch (error) {
+        } catch (_error) {
           // Continue to fallback categorization
         }
       }

@@ -126,7 +126,7 @@ export class VectorStatisticsQueryService {
       if (!statsError && statsData && statsData.length > 0) {
         return statsData[0].storage_size || 0;
       }
-    } catch (error) {
+    } catch {
       // Storage size calculation failed - continue without it
     }
     

@@ -7,7 +7,7 @@ class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback: ComponentType<{ error: Error; retry: () => void }> },
   { hasError: boolean; error: Error | null }
 > {
-  constructor(props: any) {
+  constructor(props: { children: React.ReactNode; fallback: ComponentType<{ error: Error; retry: () => void }> }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -62,9 +62,9 @@ export function withLazyLoading<T extends object>(
  * Factory to create preload functions for dynamic imports
  */
 export function makePreloadComponents(
-  importers: Record<string, () => Promise<any>>
-): Record<string, () => Promise<any>> & { all(): Promise<PromiseSettledResult<any>[]> } {
-  const preloads: Record<string, () => Promise<any>> = { ...importers };
+  importers: Record<string, () => Promise<unknown>>
+): Record<string, () => Promise<unknown>> & { all(): Promise<PromiseSettledResult<unknown>[]> } {
+  const preloads: Record<string, () => Promise<unknown>> = { ...importers };
   return {
     ...preloads,
     all: () => Promise.allSettled(Object.values(preloads).map(fn => fn())),

@@ -6,7 +6,7 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DomainConstants } from '../../../../../domain/value-objects/ai-configuration/DomainConstants';
+import { DomainConstants as _DomainConstants } from '../../../../../domain/value-objects/ai-configuration/DomainConstants';
 
 export function LeadScoringDisplay() {
   return (
@@ -32,7 +32,7 @@ export function LeadScoringDisplay() {
           <div className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">Formula</div>
           <div className="relative">
             <div className="bg-muted text-slate-800 p-6 rounded-lg border font-mono text-sm leading-relaxed">
-              <div className="text-slate-600 text-xs mb-2">// Automated Lead Scoring Algorithm</div>
+              <div className="text-slate-600 text-xs mb-2">{/* Automated Lead Scoring Algorithm */}</div>
               <div>
                 <span className="text-emerald-700 font-semibold">leadScore</span> = 
                 <span className="text-blue-700"> budget</span><span className="text-slate-500">(25)</span> + 

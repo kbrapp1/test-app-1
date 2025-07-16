@@ -25,7 +25,7 @@ export interface OrganizationPermission {
 
 export interface PermissionValidationError extends Error {
   code: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export class PermissionValidationService {

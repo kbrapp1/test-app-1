@@ -31,10 +31,10 @@ export class OpenAIApplicationService {
   private state: RateLimitState;
   private isProcessing = false;
   private requestQueue: {
-    apiCall: OpenAIAPICall<any>;
+    apiCall: OpenAIAPICall<unknown>;
     estimatedTokens: number;
-    resolve: (value: any) => void;
-    reject: (reason?: any) => void;
+    resolve: (value: unknown) => void;
+    reject: (reason?: unknown) => void;
     retries: number;
   }[] = [];
 
@@ -63,7 +63,7 @@ export class OpenAIApplicationService {
       this.requestQueue.push({
         apiCall,
         estimatedTokens,
-        resolve,
+        resolve: resolve as any,
         reject,
         retries: 0,
       });
@@ -93,9 +93,10 @@ export class OpenAIApplicationService {
       const result = await apiCall();
       this.recordRequest(estimatedTokens);
       resolve(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorObj = error as { code?: string; status?: number; message?: string };
       if (
-        (error.code === 'rate_limit_exceeded' || error.status === 429) &&
+        (errorObj.code === 'rate_limit_exceeded' || errorObj.status === 429) &&
         retries < this.config.retryAttempts
       ) {
         const delayTime =
@@ -108,7 +109,7 @@ export class OpenAIApplicationService {
             retries + 1
           } after ${cappedDelay}ms.`,
           service: SERVICE_NAME,
-          errorMessage: error.message,
+          errorMessage: errorObj.message,
         });
 
         // Re-queue the request for retry with increased retry count
@@ -120,9 +121,9 @@ export class OpenAIApplicationService {
         logger.error({
           message: errorMessage,
           service: SERVICE_NAME,
-          errorMessage: error.message,
-          code: error.code,
-          status: error.status,
+          errorMessage: errorObj.message,
+          code: errorObj.code,
+          status: errorObj.status,
         });
         reject(error);
       }

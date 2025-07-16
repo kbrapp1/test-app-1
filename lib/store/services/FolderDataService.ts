@@ -1,4 +1,15 @@
-import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { type Folder as DomainFolder, Folder } from '@/lib/dam/domain/entities/Folder';
+
+interface PlainFolderData {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  parentFolderId?: string;
+  organizationId: string;
+  has_children: boolean;
+}
 
 /**
  * Domain Service: Folder Data Operations
@@ -20,7 +31,7 @@ export class FolderDataService {
       
       const freshFolders = await getRootFolders();
       
-      return this.convertTodomainFolders(freshFolders);
+      return this.convertTodomainFolders(freshFolders as PlainFolderData[]);
     } catch (error) {
       console.error('Error fetching root folders:', error);
       throw new Error('Failed to fetch folder data');
@@ -47,11 +58,9 @@ export class FolderDataService {
   /**
    * Converts plain folder objects to domain entities
    */
-  private static convertTodomainFolders(plainFolders: any[]): DomainFolder[] {
-    const { Folder: DomainFolder } = require('@/lib/dam/domain/entities/Folder');
-    
+  private static convertTodomainFolders(plainFolders: PlainFolderData[]): DomainFolder[] {
     return plainFolders.map(plainFolder => {
-      return new DomainFolder({
+      return new Folder({
         id: plainFolder.id,
         name: plainFolder.name,
         userId: plainFolder.userId,

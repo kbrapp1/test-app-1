@@ -70,7 +70,7 @@ export class ElevenLabsProvider implements BaseProvider {
         },
       });
       return response.ok;
-    } catch (_error) {
+    } catch {
       return false;
     }
   }
@@ -131,7 +131,26 @@ export class ElevenLabsProvider implements BaseProvider {
   /**
    * Get user subscription info (useful for quota checking)
    */
-  async getUserInfo(): Promise<any> {
+  async getUserInfo(): Promise<{
+    subscription?: {
+      tier: string;
+      character_count: number;
+      character_limit: number;
+      can_extend_character_limit: boolean;
+      allowed_to_extend_character_limit: boolean;
+      next_character_count_reset_unix: number;
+      voice_limit: number;
+      professional_voice_limit: number;
+      can_extend_voice_limit: boolean;
+      can_use_instant_voice_cloning: boolean;
+      can_use_professional_voice_cloning: boolean;
+      currency: string;
+      status: string;
+    };
+    is_new_user?: boolean;
+    xi_api_key?: string;
+    can_use_delayed_payment_methods?: boolean;
+  }> {
     if (!this.isConnected) {
       throw new Error('ElevenLabs provider not connected. Call connect() first.');
     }

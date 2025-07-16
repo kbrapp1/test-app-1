@@ -10,10 +10,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getGlobalAuthenticationService } from '@/lib/auth';
+import { User } from '@supabase/supabase-js';
 
 export interface FeatureAccessResult {
   hasAccess: boolean;
-  user?: any;
+  user?: User;
   organizationId?: string;
   error?: string;
 }
@@ -21,7 +22,7 @@ export interface FeatureAccessResult {
 export interface FeatureAccessOptions {
   requireAuth?: boolean;
   requireOrganization?: boolean;
-  customValidation?: (user: any, organizationId?: string) => Promise<boolean>;
+  customValidation?: (user: User, organizationId?: string) => Promise<boolean>;
 }
 
 /**
@@ -76,7 +77,7 @@ export async function checkFeatureAccess(
     if (!hasFeatureAccess) {
       return {
         hasAccess: false,
-        user,
+        user: user || undefined,
         organizationId,
         error: `Feature '${featureName}' is not enabled`,
       };
@@ -85,11 +86,11 @@ export async function checkFeatureAccess(
     // Run custom validation if provided
     if (customValidation) {
       try {
-        const isValid = await customValidation(user, organizationId);
+        const isValid = user ? await customValidation(user, organizationId) : false;
         if (!isValid) {
           return {
             hasAccess: false,
-            user,
+            user: user || undefined,
             organizationId,
             error: 'Custom validation failed',
           };
@@ -98,7 +99,7 @@ export async function checkFeatureAccess(
         // Handle validation errors (like permission errors)
         return {
           hasAccess: false,
-          user,
+          user: user || undefined,
           organizationId,
           error: validationError instanceof Error ? validationError.message : 'Custom validation failed',
         };
@@ -107,7 +108,7 @@ export async function checkFeatureAccess(
 
     return {
       hasAccess: true,
-      user,
+      user: user || undefined,
       organizationId,
     };
 
@@ -132,7 +133,7 @@ export async function checkTtsAccess(): Promise<FeatureAccessResult> {
     customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_TTS permission
       const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewTtsPermission = await hasPermission(user.id, Permission.VIEW_TTS);
+      const hasViewTtsPermission = await hasPermission(user, Permission.VIEW_TTS);
       
       if (!hasViewTtsPermission) {
         throw new Error('Insufficient permissions: [view:tts] required');
@@ -155,7 +156,7 @@ export async function checkDamAccess(): Promise<FeatureAccessResult> {
     customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_ASSET permission (DAM uses asset permissions)
       const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewAssetPermission = await hasPermission(user.id, Permission.VIEW_ASSET);
+      const hasViewAssetPermission = await hasPermission(user, Permission.VIEW_ASSET);
       
       if (!hasViewAssetPermission) {
         throw new Error('Insufficient permissions: [view:asset] required');
@@ -178,7 +179,7 @@ export async function checkImageGenAccess(): Promise<FeatureAccessResult> {
     customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_IMAGE_GENERATOR permission
       const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewImageGenPermission = await hasPermission(user.id, Permission.VIEW_IMAGE_GENERATOR);
+      const hasViewImageGenPermission = await hasPermission(user, Permission.VIEW_IMAGE_GENERATOR);
       
       if (!hasViewImageGenPermission) {
         throw new Error('Insufficient permissions: [view:image-generator] required');
@@ -201,7 +202,7 @@ export async function checkChatbotAccess(): Promise<FeatureAccessResult> {
     customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_CHATBOT permission
       const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewChatbotPermission = await hasPermission(user.id, Permission.VIEW_CHATBOT);
+      const hasViewChatbotPermission = await hasPermission(user, Permission.VIEW_CHATBOT);
       
       if (!hasViewChatbotPermission) {
         throw new Error('Insufficient permissions: [view:chatbot] required');
@@ -247,7 +248,7 @@ export async function checkTeamAccess(): Promise<FeatureAccessResult> {
     customValidation: async (user, _organizationId) => {
       // Check if user has VIEW_TEAM_MEMBER permission
       const { hasPermission, Permission } = await import('@/lib/auth');
-      const hasViewTeamPermission = await hasPermission(user.id, Permission.VIEW_TEAM_MEMBER);
+      const hasViewTeamPermission = await hasPermission(user, Permission.VIEW_TEAM_MEMBER);
       
       if (!hasViewTeamPermission) {
         throw new Error('Insufficient permissions: [view:team-member] required');

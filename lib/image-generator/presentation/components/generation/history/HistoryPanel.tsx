@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { GenerationHistory } from './GenerationHistory';
+import type { GenerationDto } from '../../../../application/dto/GenerationDto';
 
 interface HistoryPanelProps {
   panelVisible: boolean;
   showHistory: boolean;
-  generations: any[];
+  generations: GenerationDto[];
   onRefresh: () => void;
   onEditImage: (baseImageUrl: string, originalPrompt: string) => void;
   onImageSelect: (imageUrl: string) => void;
@@ -15,7 +16,7 @@ interface HistoryPanelProps {
   // Infinite scroll props
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
-  onLoadMore?: () => any;
+  onLoadMore?: () => void;
 }
 
 export const HistoryPanel: React.FC<HistoryPanelProps> = ({

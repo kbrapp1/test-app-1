@@ -18,7 +18,7 @@ import { LeadMapper, RawLeadDbRecord } from './mappers/LeadMapper';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
-import { LeadQueryService, LeadFilters } from './services/LeadQueryService';
+import { LeadQueryService, LeadFilters as _LeadFilters } from './services/LeadQueryService';
 import { LeadAnalyticsService } from './services/LeadAnalyticsService';
 
 // Define QualificationStatus locally since we removed LeadScoringService

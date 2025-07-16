@@ -13,6 +13,23 @@ import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrawlProgress } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
+// AI: Type definitions for cached data structures
+interface WebsiteSource {
+  id: string;
+  status: string;
+  pageCount?: number;
+  lastProcessed?: string;
+  errorMessage?: string;
+}
+
+interface CachedKnowledgeBase {
+  websiteSources?: WebsiteSource[];
+}
+
+interface CachedConfigData {
+  knowledgeBase?: CachedKnowledgeBase;
+}
+
 /**
  * Crawl Progress Hook with Database Polling
  * 
@@ -79,8 +96,8 @@ export function useCrawlProgress() {
     pollIntervalRef.current = setInterval(async () => {
       try {
         // AI: First check cached data - no API call
-        let cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as any;
-        let websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: any) => ws.id === sourceId);
+        let cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as CachedConfigData | undefined;
+        let websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: WebsiteSource) => ws.id === sourceId);
         
         // AI: Only refetch if no cached data or if status suggests change is likely
         if (!websiteSource || websiteSource.status === 'pending' || websiteSource.status === 'crawling' || websiteSource.status === 'vectorizing') {
@@ -89,8 +106,8 @@ export function useCrawlProgress() {
           });
           
           // Get fresh data after invalidation
-          cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as any;
-          websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: any) => ws.id === sourceId);
+          cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as CachedConfigData | undefined;
+          websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: WebsiteSource) => ws.id === sourceId);
         }
         
         if (websiteSource) {
@@ -146,10 +163,11 @@ export function useCrawlProgress() {
   };
 
   // AI: Parse real progress from database website source
-  const parseRealProgress = (websiteSource: any): Partial<CrawlProgress> => {
-    const status = websiteSource.status;
-    const pageCount = websiteSource.pageCount || 0;
-    const errorMessage = websiteSource.errorMessage;
+  const parseRealProgress = (websiteSource: unknown): Partial<CrawlProgress> => {
+    const source = websiteSource as Record<string, unknown>;
+    const status = source.status;
+    const pageCount = (source.pageCount as number) || 0;
+    const errorMessage = source.errorMessage as string | undefined;
     
     switch (status) {
       case 'pending':
@@ -209,7 +227,7 @@ export function useCrawlProgress() {
         return {
           status: 'error',
           progress: 0,
-          error: errorMessage || 'Crawl failed',
+          error: String(errorMessage || 'Crawl failed'),
           message: 'Crawl failed'
         };
         

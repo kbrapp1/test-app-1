@@ -54,7 +54,12 @@ vi.mock('@/lib/middleware/error', () => ({
       } catch (error: unknown) {
         const { NextResponse } = await import('next/server');
         
-        const errorObj = error as { name?: string; message?: string; statusCode?: number; constructor: { name: string } };
+        const errorObj = error as {
+          name?: string;
+          message?: string;
+          statusCode?: number;
+          constructor: { name: string };
+        };
         
         // Handle ValidationError (400)
         if (errorObj.name === 'ValidationError' || errorObj.constructor.name === 'ValidationError') {

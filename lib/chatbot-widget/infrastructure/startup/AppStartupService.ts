@@ -57,13 +57,13 @@ export class AppStartupService {
         timestamp: new Date().toISOString()
       };
       
-      const totalTime = Date.now() - startTime;
+      const _totalTime = Date.now() - startTime;
       // AI: Removed console.log - use proper logging service in production
       
       this.isInitialized = true;
       
     } catch (error) {
-      const totalTime = Date.now() - startTime;
+      const _totalTime = Date.now() - startTime;
       // AI: Removed console.error - use proper logging service in production
       
       this.startupResults = {

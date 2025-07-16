@@ -18,14 +18,14 @@ const SERVICE_NAME = 'EmbeddingBatchApplicationService';
 export interface EmbeddingRequest {
   id: string;
   content: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface EmbeddingResult {
   id: string;
   content: string;
   embedding: number[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface BatchProcessingResult {
@@ -164,12 +164,12 @@ export class EmbeddingBatchApplicationService {
         totalProcessed: batch.length,
         totalTokensUsed: estimatedTokens,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({
         message: `❌ Batch ${batchNumber} failed permanently.`,
         service: SERVICE_NAME,
         batchNumber,
-        errorMessage: error.message,
+        errorMessage: error instanceof Error ? error.message : String(error),
       });
 
       // If the whole batch fails, mark all items as failed.
@@ -177,7 +177,7 @@ export class EmbeddingBatchApplicationService {
         successfulItems: [],
         failedItems: batch.map(item => ({
           item,
-          error: `Batch failed: ${error.message}`,
+          error: `Batch failed: ${error instanceof Error ? error.message : String(error)}`,
         })),
         totalProcessed: batch.length,
         totalTokensUsed: 0,

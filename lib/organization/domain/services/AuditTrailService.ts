@@ -26,7 +26,7 @@ export interface AuditMetadata {
 
 export interface AuditTrailError extends Error {
   code: 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'DATABASE_ERROR' | 'EXPORT_ERROR';
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export class AuditTrailService {
@@ -79,7 +79,7 @@ export class AuditTrailService {
       if (insertError) {
         throw new Error(`Audit logging failed: ${insertError.message}`);
       }
-    } catch (error: unknown) {
+    } catch {
       // Don't throw audit errors to avoid breaking main operations
     }
   }
@@ -307,7 +307,7 @@ export class AuditTrailService {
 
       if (error) return false;
 
-      const roleName = (data.roles as any)?.name;
+      const roleName = (data?.roles as { name: string }[])?.[0]?.name;
       return ['admin', 'owner', 'compliance_officer'].includes(roleName);
     } catch {
       return false;

@@ -26,6 +26,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {/* Icon */}
         <div className="relative mb-6">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image className="w-8 h-8 text-purple-600" />
           </div>
           <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">

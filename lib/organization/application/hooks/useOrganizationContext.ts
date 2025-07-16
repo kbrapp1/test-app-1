@@ -82,8 +82,9 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         try {
           const context = await contextService.getCurrentContext();
           setCurrentContext(context);
-        } catch (_contextError) {
+        } catch (contextError) {
           // Context is optional, don't fail the entire operation
+          console.warn('Failed to load organization context:', contextError);
           setCurrentContext(null);
         }
       } else {
@@ -92,8 +93,9 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         setCurrentContext(null);
       }
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to load organization data');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load organization data';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +169,8 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         ]);
         
         await auditWithTimeout;
-      } catch (_auditError) {
+      } catch (auditError) {
+        console.warn('Audit logging failed:', auditError);
         // Don't fail the entire operation if audit fails
       }
 
@@ -194,7 +197,8 @@ export function useOrganizationContext(): UseOrganizationContextResult {
         if (newActiveId.status === 'fulfilled' && newActiveId.value) {
           setActiveOrganizationId(newActiveId.value);
         }
-      } catch (_refreshError) {
+      } catch (refreshError) {
+        console.warn('Context refresh failed after organization switch:', refreshError);
         // The switch succeeded, so don't fail the operation
       }
 
@@ -206,14 +210,15 @@ export function useOrganizationContext(): UseOrganizationContextResult {
       });
 
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Revert optimistic update on error
       setActiveOrganizationId(currentContext?.active_organization_id || null);
-      setError(err.message || 'Failed to switch organization');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to switch organization';
+      setError(errorMessage);
       
       // Show error toast notification
       toast.error('Failed to switch organization', {
-        description: err.message || 'Please try again or contact support',
+        description: errorMessage || 'Please try again or contact support',
         duration: 5000,
       });
       
@@ -238,8 +243,9 @@ export function useOrganizationContext(): UseOrganizationContextResult {
       if (newActiveId.status === 'fulfilled') {
         setActiveOrganizationId(newActiveId.value);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to refresh context');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh context';
+      setError(errorMessage);
     }
   }, [contextService, organizationCache, user]);
 
@@ -255,7 +261,8 @@ export function useOrganizationContext(): UseOrganizationContextResult {
   const checkAccess = useCallback(async (organizationId: string): Promise<boolean> => {
     try {
       return await organizationCache.hasOrganizationAccess(organizationId, user);
-    } catch (_err) {
+    } catch (err) {
+      console.warn('Failed to check organization access:', err);
       return false;
     }
   }, [organizationCache, user]);

@@ -89,5 +89,5 @@ export async function POST(
   const moveHandler = createMoveAssetHandler(assetId);
   const authenticatedMoveHandler = withAuth(moveHandler);
   
-  return withErrorHandling(authenticatedMoveHandler)(request);
+  return withErrorHandling(authenticatedMoveHandler as (...args: unknown[]) => Promise<NextResponse>)(request);
 } 

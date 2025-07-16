@@ -6,7 +6,15 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 
 // Mock next/link to inspect its props (same as NavMain)
 vi.mock('next/link', () => ({
-  default: ({ children, href, legacyBehavior }: { children: React.ReactNode, href: string, legacyBehavior?: boolean }) => (
+  default: ({
+    children,
+    href,
+    legacyBehavior
+  }: {
+    children: React.ReactNode;
+    href: string;
+    legacyBehavior?: boolean;
+  }) => (
     <div data-testid="next-link" data-href={href} data-legacy={legacyBehavior}>
       {children} 
     </div>

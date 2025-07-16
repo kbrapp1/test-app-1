@@ -5,7 +5,15 @@ import type { Profile } from '@/lib/auth';
 
 // Mock the UI components
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, className, ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) => (
+  Badge: ({
+    children,
+    className,
+    ...props
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    [key: string]: unknown;
+  }) => (
     <div data-testid="badge" className={className} {...props}>
       {children}
     </div>

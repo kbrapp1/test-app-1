@@ -86,7 +86,7 @@ export function handleFormError<T extends FieldValues>(
     }
 
     // Check for a general message, even if field errors were present, and show toast if configured
-    const generalMessage = (error as any).message;
+    const generalMessage = (error as { message?: string }).message;
     if (generalMessage && typeof generalMessage === 'string' && config.showToast && !hasSetFieldErrors) {
       // If no field errors were set above, set the root error and show toast
       setError(rootFieldName as any, { type: 'manual', message: generalMessage });
@@ -120,7 +120,7 @@ export function handleFormError<T extends FieldValues>(
  * Note: This might not be strictly necessary if the main handler logic is sufficient,
  * but kept for potential clarity or future use.
  */
-function isApiError(error: unknown): error is ApiError {
+function _isApiError(error: unknown): error is ApiError {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -151,7 +151,7 @@ export interface FieldError {
 /**
  * Creates a reusable error handler for a form
  */
-export function createFormErrorHandler(form: UseFormReturn<any>) {
+export function createFormErrorHandler<T extends FieldValues>(form: UseFormReturn<T>) {
   return (error: unknown, config: FormErrorHandlerConfig = {}) => {
     handleFormError(error, form.setError, config);
   };

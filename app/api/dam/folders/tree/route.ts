@@ -55,5 +55,5 @@ export const GET = async (request: NextRequest) => {
 
   const handler = listFoldersForTreeHandler(parentId, activeOrgId);
   // The `context` argument is not needed here as `parentId` comes from searchParams
-  return withErrorHandling(withAuth(handler))(request);
+  return withErrorHandling(withAuth(handler) as (...args: unknown[]) => Promise<NextResponse>)(request);
 }; 

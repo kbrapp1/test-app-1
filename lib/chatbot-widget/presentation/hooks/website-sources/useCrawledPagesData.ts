@@ -60,7 +60,7 @@ function extractBaseUrl(url: string): string {
   try {
     const urlObj = new URL(url);
     return `${urlObj.protocol}//${urlObj.hostname}`;
-  } catch (_error) {
+  } catch {
     return url || 'unknown';
   }
 }

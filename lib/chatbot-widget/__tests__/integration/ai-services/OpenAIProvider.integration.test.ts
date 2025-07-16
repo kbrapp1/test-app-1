@@ -484,7 +484,8 @@ describe('OpenAI Provider Integration Tests', () => {
       // Create a long conversation that would exceed token limits
       const longConversation = Array(50).fill(null).map((_, index) => ({
         role: index % 2 === 0 ? 'user' : 'assistant',
-        content: `This is message number ${index} with some additional content to make it longer and more realistic for token counting purposes.`
+        content: `This is message number ${index} with some additional content to make it longer ` +
+          `and more realistic for token counting purposes.`
       }));
 
       const mockTokenCounter = (messages: any[]) => {

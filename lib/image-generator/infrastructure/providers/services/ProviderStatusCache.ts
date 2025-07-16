@@ -87,5 +87,5 @@ export interface ProviderStatusResponse {
   imageUrl?: string;
   errorMessage?: string;
   progress?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 } 

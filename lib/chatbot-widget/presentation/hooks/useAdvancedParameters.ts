@@ -129,11 +129,11 @@ export function useAdvancedParameters({
         conversationFlow: {
           ...(config.personalitySettings?.conversationFlow as Record<string, unknown> || {}),
           // Include all required ConversationFlowDto properties
-          greetingMessage: (config.personalitySettings?.conversationFlow as any)?.greetingMessage || 'Hello! How can I help you today?',
-          fallbackMessage: (config.personalitySettings?.conversationFlow as any)?.fallbackMessage || 'I\'m not sure about that. Could you rephrase your question?',
-          escalationMessage: (config.personalitySettings?.conversationFlow as any)?.escalationMessage || 'Let me connect you with a team member.',
-          endConversationMessage: (config.personalitySettings?.conversationFlow as any)?.endConversationMessage || 'Thank you for chatting with us!',
-          leadCapturePrompt: (config.personalitySettings?.conversationFlow as any)?.leadCapturePrompt || 'Can I get your contact information to follow up?',
+          greetingMessage: String((config.personalitySettings?.conversationFlow as unknown as Record<string, unknown>)?.greetingMessage || 'Hello! How can I help you today?'),
+          fallbackMessage: String((config.personalitySettings?.conversationFlow as unknown as Record<string, unknown>)?.fallbackMessage || 'I\'m not sure about that. Could you rephrase your question?'),
+          escalationMessage: String((config.personalitySettings?.conversationFlow as unknown as Record<string, unknown>)?.escalationMessage || 'Let me connect you with a team member.'),
+          endConversationMessage: String((config.personalitySettings?.conversationFlow as unknown as Record<string, unknown>)?.endConversationMessage || 'Thank you for chatting with us!'),
+          leadCapturePrompt: String((config.personalitySettings?.conversationFlow as unknown as Record<string, unknown>)?.leadCapturePrompt || 'Can I get your contact information to follow up?'),
           // Update the specific parameters
           maxConversationTurns: parameters.maxConversationTurns,
           inactivityTimeout: parameters.inactivityTimeoutSeconds,

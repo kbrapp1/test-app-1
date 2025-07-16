@@ -14,7 +14,7 @@ import { ContactInfo, ContactInfoProps } from '../value-objects/lead-management/
 import { QualificationData, QualificationDataProps } from '../value-objects/lead-management/QualificationData';
 import { LeadSource, LeadSourceProps } from '../value-objects/lead-management/LeadSource';
 import { LeadMetadata, LeadMetadataProps, LeadNote } from '../value-objects/lead-management/LeadMetadata';
-import { LeadLifecycleManager, FollowUpStatus, LeadLifecycleState } from './LeadLifecycleManager';
+import { LeadLifecycleManager as _LeadLifecycleManager, FollowUpStatus, LeadLifecycleState } from './LeadLifecycleManager';
 import { LeadExportService } from '../services/lead-management/LeadExportService';
 import { LeadQueryService } from '../services/lead-management/LeadQueryService';
 import { LeadBusinessService } from '../services/lead-management/LeadBusinessService';

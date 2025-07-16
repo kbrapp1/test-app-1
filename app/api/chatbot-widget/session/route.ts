@@ -151,5 +151,5 @@ async function getHandler(
   }
 }
 
-export const POST = withErrorHandling(withAuth(postHandler));
-export const GET = withErrorHandling(withAuth(getHandler)); 
+export const POST = withErrorHandling(withAuth(postHandler as any) as any);
+export const GET = withErrorHandling(withAuth(getHandler as any) as any); 

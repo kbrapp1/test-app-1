@@ -1,4 +1,4 @@
-interface StatsRow {
+export interface StatsRow {
   status: string;
   cost_cents: number;
   generation_time_seconds: number | null;

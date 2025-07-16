@@ -93,4 +93,4 @@ async function postHandler(
 }
 
 // Export the POST handler with authentication and error handling
-export const POST = withErrorHandling(withAuth(postHandler));
+export const POST = withErrorHandling(withAuth(postHandler as any) as any);

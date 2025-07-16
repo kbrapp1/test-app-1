@@ -42,7 +42,7 @@ export interface WebsiteCrawlResponse {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 
@@ -100,15 +100,17 @@ export class CrawlOrchestrationService {
 
   // Prepare crawl settings with appropriate defaults
   private prepareCrawlSettings(websiteSource: WebsiteSource): CrawlSettings {
+    const settings = websiteSource.crawlSettings;
+    
     return {
-      maxPages: websiteSource.crawlSettings?.maxPages!,
-      maxDepth: websiteSource.crawlSettings?.maxDepth!,
-      includePatterns: websiteSource.crawlSettings?.includePatterns!,
-      excludePatterns: websiteSource.crawlSettings?.excludePatterns!,
-      respectRobotsTxt: websiteSource.crawlSettings?.respectRobotsTxt!,
-      crawlFrequency: websiteSource.crawlSettings?.crawlFrequency!,
-      includeImages: websiteSource.crawlSettings?.includeImages!,
-      includePDFs: websiteSource.crawlSettings?.includePDFs!
+      maxPages: settings?.maxPages ?? 100,
+      maxDepth: settings?.maxDepth ?? 3,
+      includePatterns: settings?.includePatterns ?? [],
+      excludePatterns: settings?.excludePatterns ?? [],
+      respectRobotsTxt: settings?.respectRobotsTxt ?? true,
+      crawlFrequency: settings?.crawlFrequency ?? 'manual',
+      includeImages: settings?.includeImages ?? false,
+      includePDFs: settings?.includePDFs ?? true
     };
   }
 

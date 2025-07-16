@@ -18,7 +18,7 @@ export class ChatbotConfigurationError extends DomainError {
   readonly code = 'CHATBOT_CONFIGURATION_ERROR';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(configField: string, context: Record<string, any> = {}) {
+  constructor(configField: string, context: Record<string, unknown> = {}) {
     super(`Chatbot configuration error: ${configField}`, context);
   }
 }
@@ -27,7 +27,7 @@ export class IntegrationConfigurationError extends DomainError {
   readonly code = 'INTEGRATION_CONFIGURATION_ERROR';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(integrationType: string, context: Record<string, any> = {}) {
+  constructor(integrationType: string, context: Record<string, unknown> = {}) {
     super(`Integration configuration error: ${integrationType}`, context);
   }
 } 

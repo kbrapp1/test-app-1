@@ -166,7 +166,7 @@ export class OrganizationContextCache {
   /**
    * Log cache events for monitoring
    */
-  private logCacheEvent(userId: string, event: string, context: Record<string, any> = {}): void {
+  private logCacheEvent(userId: string, event: string, context: Record<string, unknown> = {}): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       userId,
@@ -188,7 +188,7 @@ export class OrganizationContextCache {
   /**
    * Log security events for audit trail
    */
-  private logSecurityEvent(userId: string | null, event: SecurityEvent | string, context: Record<string, any> = {}): void {
+  private logSecurityEvent(userId: string | null, event: SecurityEvent | string, context: Record<string, unknown> = {}): void {
     const logEntry = {
       timestamp: new Date().toISOString(),
       userId,

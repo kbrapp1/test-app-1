@@ -186,4 +186,4 @@ async function getHandler(
   });
 }
 
-export const GET = withErrorHandling(withAuth(getHandler)); 
+export const GET = withErrorHandling(withAuth(getHandler) as (...args: unknown[]) => Promise<NextResponse>); 

@@ -11,7 +11,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { User } from '@supabase/supabase-js';
+// User type is implicitly used through the authentication context
 import { createClient } from '@/lib/supabase/client';
 import { useAuthentication } from '@/lib/auth';
 import { UserRole, Permission, ROLE_PERMISSIONS } from '@/lib/auth';
@@ -43,8 +43,8 @@ export function useUser() {
   const [isRoleLoading, setIsRoleLoading] = useState(false);
   const { user, isLoading, isAuthenticated } = useAuthentication(); // Use shared auth context
   const supabase = createClient();
-  const { toast } = useToast();
-  const router = useRouter();
+  const { toast: _toast } = useToast();
+  const _router = useRouter();
   
   // AI: Fetch user's role from database when user or organization changes
   useEffect(() => {

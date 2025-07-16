@@ -24,7 +24,7 @@ export interface CrawlProgressTrackerProps {
 }
 
 export function CrawlProgressTracker({ 
-  sourceId, 
+  sourceId: _sourceId, 
   progress, 
   onCancel 
 }: CrawlProgressTrackerProps) {

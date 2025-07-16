@@ -45,34 +45,35 @@ export class EntitySerializationService {
   }
 
   // Deserialize stored data back to AccumulatedEntitiesProps
-  static deserializeAccumulatedEntities(storedData: any): AccumulatedEntitiesProps {
+  static deserializeAccumulatedEntities(storedData: unknown): AccumulatedEntitiesProps {
     if (!storedData || typeof storedData !== 'object') {
       return this.createDefaultProps();
     }
 
     try {
+      const data = storedData as Record<string, unknown>;
       const props: AccumulatedEntitiesProps = {
         // Parse array entities
-        goals: this.deserializeEntityArray(storedData.goals),
-        decisionMakers: this.deserializeEntityArray(storedData.decisionMakers),
-        painPoints: this.deserializeEntityArray(storedData.painPoints),
-        integrationNeeds: this.deserializeEntityArray(storedData.integrationNeeds),
-        evaluationCriteria: this.deserializeEntityArray(storedData.evaluationCriteria),
+        goals: this.deserializeEntityArray(data.goals),
+        decisionMakers: this.deserializeEntityArray(data.decisionMakers),
+        painPoints: this.deserializeEntityArray(data.painPoints),
+        integrationNeeds: this.deserializeEntityArray(data.integrationNeeds),
+        evaluationCriteria: this.deserializeEntityArray(data.evaluationCriteria),
         
         // Parse single-value entities
-        budget: this.deserializeEntity(storedData.budget),
-        timeline: this.deserializeEntity(storedData.timeline),
-        urgency: this.deserializeEntity(storedData.urgency),
-        contactMethod: this.deserializeEntity(storedData.contactMethod),
-        visitorName: this.deserializeEntity(storedData.visitorName),
-        role: this.deserializeEntity(storedData.role),
-        industry: this.deserializeEntity(storedData.industry),
-        company: this.deserializeEntity(storedData.company),
-        teamSize: this.deserializeEntity(storedData.teamSize),
+        budget: this.deserializeStringEntity(data.budget),
+        timeline: this.deserializeStringEntity(data.timeline),
+        urgency: this.deserializeUrgencyEntity(data.urgency),
+        contactMethod: this.deserializeContactMethodEntity(data.contactMethod),
+        visitorName: this.deserializeStringEntity(data.visitorName),
+        role: this.deserializeStringEntity(data.role),
+        industry: this.deserializeStringEntity(data.industry),
+        company: this.deserializeStringEntity(data.company),
+        teamSize: this.deserializeStringEntity(data.teamSize),
         
         // Parse metadata
-        lastUpdated: this.parseDate(storedData.lastUpdated || storedData.lastEntityUpdate),
-        totalExtractions: storedData.totalExtractions || storedData.entityMetadata?.totalEntitiesExtracted || 0
+        lastUpdated: this.parseDate(data.lastUpdated || data.lastEntityUpdate),
+        totalExtractions: (data.totalExtractions as number) || (data.entityMetadata as Record<string, unknown>)?.totalEntitiesExtracted as number || 0
       };
 
       return props;
@@ -84,7 +85,7 @@ export class EntitySerializationService {
   }
 
   // Serialize single entity with metadata
-  static serializeEntity(entity: EntityWithMetadata<any> | null): SerializedEntityWithMetadata | null {
+  static serializeEntity(entity: EntityWithMetadata<unknown> | null): SerializedEntityWithMetadata | null {
     if (!entity) return null;
     
     return {
@@ -100,24 +101,68 @@ export class EntitySerializationService {
     return entities.map(entity => this.serializeEntity(entity)).filter(Boolean) as SerializedEntityWithMetadata[];
   }
 
-  // Deserialize single entity with metadata
-  static deserializeEntity(entity: any): EntityWithMetadata<any> | null {
+  // Deserialize single entity with metadata (generic version)
+  static deserializeEntity(entity: unknown): EntityWithMetadata<unknown> | null {
     if (!entity || typeof entity !== 'object') return null;
     
     try {
+      const data = entity as Record<string, unknown>;
       return {
-        value: entity.value,
-        extractedAt: this.parseDate(entity.extractedAt || entity.lastUpdated),
-        confidence: entity.confidence || 0.5,
-        sourceMessageId: entity.sourceMessageId || 'unknown',
+        value: data.value,
+        extractedAt: this.parseDate(data.extractedAt || data.lastUpdated),
+        confidence: (data.confidence as number) || 0.5,
+        sourceMessageId: (data.sourceMessageId as string) || 'unknown',
       };
     } catch (error) {
       return null;
     }
   }
 
+  // Deserialize string entity with metadata
+  static deserializeStringEntity(entity: unknown): EntityWithMetadata<string> | null {
+    const result = this.deserializeEntity(entity);
+    if (!result) return null;
+    
+    return {
+      ...result,
+      value: String(result.value || '')
+    };
+  }
+
+  // Deserialize urgency entity with metadata
+  static deserializeUrgencyEntity(entity: unknown): EntityWithMetadata<'high' | 'low' | 'medium'> | null {
+    const result = this.deserializeEntity(entity);
+    if (!result) return null;
+    
+    const urgencyValue = String(result.value || '').toLowerCase();
+    if (!['high', 'low', 'medium'].includes(urgencyValue)) {
+      return null;
+    }
+    
+    return {
+      ...result,
+      value: urgencyValue as 'high' | 'low' | 'medium'
+    };
+  }
+
+  // Deserialize contact method entity with metadata
+  static deserializeContactMethodEntity(entity: unknown): EntityWithMetadata<'email' | 'phone' | 'meeting'> | null {
+    const result = this.deserializeEntity(entity);
+    if (!result) return null;
+    
+    const contactValue = String(result.value || '').toLowerCase();
+    if (!['email', 'phone', 'meeting'].includes(contactValue)) {
+      return null;
+    }
+    
+    return {
+      ...result,
+      value: contactValue as 'email' | 'phone' | 'meeting'
+    };
+  }
+
   // Deserialize array of entities with metadata
-  static deserializeEntityArray(array: any[]): EntityWithMetadata<string>[] {
+  static deserializeEntityArray(array: unknown): EntityWithMetadata<string>[] {
     if (!Array.isArray(array)) return [];
     
     return array.map(item => {
@@ -130,12 +175,12 @@ export class EntitySerializationService {
           sourceMessageId: 'legacy'
         };
       }
-      return this.deserializeEntity(item);
+      return this.deserializeStringEntity(item);
     }).filter(Boolean) as EntityWithMetadata<string>[];
   }
 
   // Parse date from various input formats
-  static parseDate(dateInput: any): Date {
+  static parseDate(dateInput: unknown): Date {
     if (!dateInput) {
       return new Date();
     }
@@ -145,7 +190,7 @@ export class EntitySerializationService {
     }
 
     try {
-      const parsed = new Date(dateInput);
+      const parsed = new Date(String(dateInput));
       return isNaN(parsed.getTime()) ? new Date() : parsed;
     } catch (error) {
       return new Date();
@@ -175,7 +220,7 @@ export class EntitySerializationService {
   }
 
   // Validate serialized entity structure
-  static validateSerializedEntity(entity: any): EntityValidationResult {
+  static validateSerializedEntity(entity: unknown): EntityValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -188,23 +233,25 @@ export class EntitySerializationService {
       return { isValid: false, errors, warnings };
     }
 
-    if (entity.value === undefined || entity.value === null) {
+    const data = entity as Record<string, unknown>;
+
+    if (data.value === undefined || data.value === null) {
       errors.push('Entity value is required');
     }
 
-    if (entity.confidence !== undefined) {
-      if (typeof entity.confidence !== 'number' || entity.confidence < 0 || entity.confidence > 1) {
+    if (data.confidence !== undefined) {
+      if (typeof data.confidence !== 'number' || data.confidence < 0 || data.confidence > 1) {
         errors.push('Entity confidence must be a number between 0 and 1');
       }
     } else {
       warnings.push('Entity confidence is missing, will use default value');
     }
 
-    if (entity.extractedAt && !this.isValidISOString(entity.extractedAt)) {
+    if (data.extractedAt && !this.isValidISOString(String(data.extractedAt))) {
       warnings.push('Entity extractedAt is not a valid ISO string, will use current date');
     }
 
-    if (!entity.sourceMessageId) {
+    if (!data.sourceMessageId) {
       warnings.push('Entity sourceMessageId is missing, will use default value');
     }
 
@@ -220,7 +267,7 @@ export class EntitySerializationService {
     try {
       const date = new Date(dateString);
       return date.toISOString() === dateString;
-    } catch {
+    } catch (_error) {
       return false;
     }
   }

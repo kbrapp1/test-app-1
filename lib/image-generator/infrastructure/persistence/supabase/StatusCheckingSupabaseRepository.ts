@@ -28,6 +28,7 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
     status,
     result_image_url,
     base_image_url,
+    second_image_url,
     external_provider_id,
     cost_cents,
     estimated_cost_cents,
@@ -280,7 +281,7 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
   /**
    * Transform single database row to domain entity
    */
-  private transformRow(row: any): Generation | null {
+  private transformRow(row: GenerationRow): Generation | null {
     try {
       // Add estimated_cost_cents if missing for compatibility
       const completeRow = {
@@ -298,7 +299,7 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
   /**
    * Transform multiple database rows to domain entities
    */
-  private transformRows(rows: any[]): Generation[] {
+  private transformRows(rows: GenerationRow[]): Generation[] {
     return rows
       .map(row => this.transformRow(row))
       .filter((generation): generation is Generation => generation !== null);
@@ -307,7 +308,7 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
   /**
    * Prepare update data from domain entity
    */
-  private prepareUpdateData(generation: Generation): Record<string, any> {
+  private prepareUpdateData(generation: Generation): Record<string, unknown> {
     // Use the existing row mapper to get the update data
     const rowData = GenerationRowMapper.toRow(generation);
     

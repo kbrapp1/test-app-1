@@ -16,7 +16,7 @@ export interface LogContext {
   operation?: string;
   correlationId?: string;
   messageId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LogMetrics {
@@ -43,7 +43,7 @@ export interface ISessionLogger {
   logRaw(message: string): void;
 
   /** Log a direct message without any prefixes (for clean log entries) */
-  logMessage(message: string, data?: any, level?: LogLevel): void;
+  logMessage(message: string, data?: unknown, level?: LogLevel): void;
 
   /**
    * Log a direct message synchronously to ensure proper ordering

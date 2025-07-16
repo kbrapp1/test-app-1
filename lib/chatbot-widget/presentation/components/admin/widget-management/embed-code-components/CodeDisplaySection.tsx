@@ -39,7 +39,7 @@ export function CodeDisplaySection({ platform, code }: CodeDisplaySectionProps) 
       await navigator.clipboard.writeText(code);
       setCopiedCode(type);
       setTimeout(() => setCopiedCode(null), 2000);
-    } catch (err) {
+    } catch {
       // Copy failed - user will need to manually copy
     }
   };

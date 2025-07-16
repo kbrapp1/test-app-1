@@ -9,7 +9,7 @@
 'use server';
 
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { ChatSession } from '../../domain/entities/ChatSession';
+// Note: ChatSession available via composition root when needed
 
 export interface SimulationSession {
   sessionId: string;

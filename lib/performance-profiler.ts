@@ -10,7 +10,7 @@ interface PerformanceEntry {
   startTime: number;
   endTime: number;
   duration: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface PerformanceReport {
@@ -43,14 +43,14 @@ export class PerformanceProfiler {
   /**
    * Start timing an operation
    */
-  static startTimer(name: string, metadata?: Record<string, any>): string {
+  static startTimer(name: string, metadata?: Record<string, unknown>): string {
     if (!this.isEnabled) return name;
     
     const timerId = `${name}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.activeTimers.set(timerId, performanceAPI.now());
     
     if (metadata) {
-      (this.activeTimers as any).set(`${timerId}_metadata`, metadata);
+      (this.activeTimers as Map<string, unknown>).set(`${timerId}_metadata`, metadata);
     }
     
     return timerId;
@@ -67,20 +67,20 @@ export class PerformanceProfiler {
     
     const endTime = performanceAPI.now();
     const duration = endTime - startTime;
-    const metadata = (this.activeTimers as any).get(`${timerId}_metadata`);
+    const metadata = (this.activeTimers as Map<string, unknown>).get(`${timerId}_metadata`);
     
     const entry: PerformanceEntry = {
       name: timerId.split('_')[0],
       startTime,
       endTime,
       duration,
-      metadata
+      metadata: metadata as Record<string, unknown> | undefined
     };
     
     this.entries.push(entry);
     this.activeTimers.delete(timerId);
     if (metadata) {
-      (this.activeTimers as any).delete(`${timerId}_metadata`);
+      (this.activeTimers as Map<string, unknown>).delete(`${timerId}_metadata`);
     }
     
     return duration;
@@ -92,7 +92,7 @@ export class PerformanceProfiler {
   static async measureAsync<T>(
     name: string, 
     fn: () => Promise<T>,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<{ result: T; duration: number }> {
     if (!this.isEnabled) {
       const result = await fn();
@@ -116,7 +116,7 @@ export class PerformanceProfiler {
   static measure<T>(
     name: string, 
     fn: () => T,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): { result: T; duration: number } {
     if (!this.isEnabled) {
       const result = fn();
@@ -218,9 +218,9 @@ export class PerformanceProfiler {
     name: string;
     exclusiveTime: number;
     percentage: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
   }> {
-    const operationMap = new Map<string, { totalTime: number; metadata?: Record<string, any> }>();
+    const operationMap = new Map<string, { totalTime: number; metadata?: Record<string, unknown> }>();
     
     // Group by operation name
     entries.forEach(entry => {
@@ -242,7 +242,7 @@ export class PerformanceProfiler {
       name: string;
       exclusiveTime: number;
       percentage: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }> = [];
     
     const totalTime = Math.max(...Array.from(operationMap.values()).map(op => op.totalTime));
@@ -311,15 +311,15 @@ export class PerformanceProfiler {
  * Decorator for measuring method execution time
  */
 export function measurePerformance(operationName?: string) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
-    const name = operationName || `${target.constructor.name}.${propertyName}`;
+    const name = operationName || `${(target as { constructor: { name: string } }).constructor.name}.${propertyName}`;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const { result, duration } = await PerformanceProfiler.measureAsync(
         name,
         () => method.apply(this, args),
-        { className: target.constructor.name, methodName: propertyName }
+        { className: (target as { constructor: { name: string } }).constructor.name, methodName: propertyName }
       );
       
       if (duration > 1000) { // Log slow operations (>1s)
@@ -337,10 +337,10 @@ export function measurePerformance(operationName?: string) {
  * Simple performance measurement for code blocks
  */
 export const perf = {
-  start: (name: string, metadata?: Record<string, any>) => PerformanceProfiler.startTimer(name, metadata),
+  start: (name: string, metadata?: Record<string, unknown>) => PerformanceProfiler.startTimer(name, metadata),
   end: (timerId: string) => PerformanceProfiler.endTimer(timerId),
-  measure: <T>(name: string, fn: () => T, metadata?: Record<string, any>) => PerformanceProfiler.measure(name, fn, metadata),
-  measureAsync: <T>(name: string, fn: () => Promise<T>, metadata?: Record<string, any>) => PerformanceProfiler.measureAsync(name, fn, metadata),
+  measure: <T>(name: string, fn: () => T, metadata?: Record<string, unknown>) => PerformanceProfiler.measure(name, fn, metadata),
+  measureAsync: <T>(name: string, fn: () => Promise<T>, metadata?: Record<string, unknown>) => PerformanceProfiler.measureAsync(name, fn, metadata),
   report: () => PerformanceProfiler.printReport(),
   clear: () => PerformanceProfiler.clear()
 }; 

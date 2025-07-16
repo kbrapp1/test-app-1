@@ -224,11 +224,12 @@ This is the start of a new conversation.
   }
 
   // AI: Build journey context section
-  private buildJourneyContextSection(journeyState: any): string {
+  private buildJourneyContextSection(journeyState: unknown): string {
+    const journey = journeyState as { stage: string; confidence: number; isSalesReady(): boolean };
     return `## User Journey Context
-**Stage**: ${journeyState.stage}
-**Confidence**: ${journeyState.confidence.toFixed(2)}
-**Sales Ready**: ${journeyState.isSalesReady() ? 'Yes' : 'No'}
+**Stage**: ${journey.stage}
+**Confidence**: ${journey.confidence.toFixed(2)}
+**Sales Ready**: ${journey.isSalesReady() ? 'Yes' : 'No'}
 
 `;
   }

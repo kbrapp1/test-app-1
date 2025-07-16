@@ -24,7 +24,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Hook for debounced search queries
-export function useSearchQuery<T = any>(
+export function useSearchQuery<T = unknown>(
   searchTerm: string,
   url: string,
   debounceMs: number = 300,

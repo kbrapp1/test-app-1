@@ -51,5 +51,5 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
   }
 
   const handler = createGetFolderPathHandler(folderId);
-  return withErrorHandling(withAuth(handler))(request, context);
+  return withErrorHandling(withAuth(handler) as (...args: unknown[]) => Promise<NextResponse>)(request, context);
 }; 

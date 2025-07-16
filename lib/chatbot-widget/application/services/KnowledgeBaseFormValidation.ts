@@ -67,11 +67,13 @@ export function validateFormData(formData: KnowledgeBaseFormDto): KnowledgeBaseF
  * Validate FAQ data
  * AI INSTRUCTIONS: FAQ-specific validation rules
  */
-export function validateFaqs(faqs: any[]): FormValidationErrorDto[] {
+export function validateFaqs(faqs: unknown[]): FormValidationErrorDto[] {
   const errors: FormValidationErrorDto[] = [];
 
   faqs.forEach((faq, index) => {
-    if (faq.question?.trim() && !faq.answer?.trim()) {
+    const faqObj = faq as Record<string, unknown>;
+    const isStringWithContent = (field: unknown) => typeof field === 'string' && field.trim();
+    if (isStringWithContent(faqObj.question) && !isStringWithContent(faqObj.answer)) {
       errors.push({
         field: `faqs[${index}].answer`,
         message: 'FAQ answer is required when question is provided',
@@ -80,7 +82,7 @@ export function validateFaqs(faqs: any[]): FormValidationErrorDto[] {
       });
     }
 
-    if (!faq.question?.trim() && faq.answer?.trim()) {
+    if (!isStringWithContent(faqObj.question) && isStringWithContent(faqObj.answer)) {
       errors.push({
         field: `faqs[${index}].question`,
         message: 'FAQ question is required when answer is provided',
@@ -90,7 +92,7 @@ export function validateFaqs(faqs: any[]): FormValidationErrorDto[] {
     }
 
     // Validate FAQ content length
-    if (faq.question?.trim() && faq.question.length > 500) {
+    if (typeof faqObj.question === 'string' && faqObj.question.trim() && faqObj.question.length > 500) {
       errors.push({
         field: `faqs[${index}].question`,
         message: 'FAQ question should be under 500 characters',
@@ -99,7 +101,7 @@ export function validateFaqs(faqs: any[]): FormValidationErrorDto[] {
       });
     }
 
-    if (faq.answer?.trim() && faq.answer.length > 2000) {
+    if ((faqObj.answer as any)?.trim() && (faqObj.answer as any).length > 2000) {
       errors.push({
         field: `faqs[${index}].answer`,
         message: 'FAQ answer should be under 2000 characters',
@@ -218,10 +220,12 @@ export function generateSuggestions(
  * Validate update request data
  * AI INSTRUCTIONS: Update request validation
  */
-export function validateUpdateRequest(request: any): FormValidationErrorDto[] {
+export function validateUpdateRequest(request: unknown): FormValidationErrorDto[] {
   const errors: FormValidationErrorDto[] = [];
+  const req = request as Record<string, unknown>;
+  const isValidString = (field: unknown) => typeof field === 'string' && field.trim();
 
-  if (!request.configId?.trim()) {
+  if (!isValidString(req.configId)) {
     errors.push({
       field: 'configId',
       message: 'Configuration ID is required',
@@ -230,7 +234,7 @@ export function validateUpdateRequest(request: any): FormValidationErrorDto[] {
     });
   }
 
-  if (!request.organizationId?.trim()) {
+  if (!isValidString(req.organizationId)) {
     errors.push({
       field: 'organizationId',
       message: 'Organization ID is required',
@@ -239,7 +243,7 @@ export function validateUpdateRequest(request: any): FormValidationErrorDto[] {
     });
   }
 
-  if (!request.formData) {
+  if (!req.formData) {
     errors.push({
       field: 'formData',
       message: 'Form data is required',

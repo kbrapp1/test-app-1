@@ -205,7 +205,7 @@ export class InitializeChatSessionUseCase {
             minRelevanceScore: 0.15
           });
           cacheLogger.logMessage('✅ Vector cache initialized');
-        } catch {
+        } catch (_error) {
           cacheLogger.logMessage('⚠️ Vector cache initialization completed (expected error)');
           // Expected to fail, but should initialize cache
         }

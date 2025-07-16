@@ -6,7 +6,7 @@
  */
 
 interface PendingRequest {
-  promise: Promise<any>;
+  promise: Promise<Response>;
   timestamp: number;
   abortController: AbortController;
 }
@@ -204,7 +204,7 @@ export class ApiDeduplicationService {
     return `${method}:${url}:${body}`;
   }
 
-  private getFromCache(key: string): any | null {
+  private getFromCache(key: string): unknown | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
     
@@ -216,7 +216,7 @@ export class ApiDeduplicationService {
     return entry.data;
   }
 
-  private setCache(key: string, data: any): void {
+  private setCache(key: string, data: unknown): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -224,7 +224,7 @@ export class ApiDeduplicationService {
     });
   }
 
-  private createMockResponse(data: any): Response {
+  private createMockResponse(data: unknown): Response {
     return new Response(JSON.stringify(data), {
       status: 200,
       statusText: 'OK',

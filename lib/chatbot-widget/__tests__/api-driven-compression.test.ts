@@ -44,7 +44,8 @@ describe('ApiDrivenCompressionService', () => {
       const messages: ChatMessage[] = [];
       for (let i = 0; i < 50; i++) {
         messages.push(createTestMessage(
-          `This is a longer test message number ${i} that should help us reach the token threshold for compression testing`, 
+          `This is a longer test message number ${i} that should help us reach the token ` +
+          `threshold for compression testing`,
           i % 2 === 0
         ));
       }

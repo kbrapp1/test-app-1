@@ -18,7 +18,7 @@ export interface GenerationRow {
   saved_to_dam: boolean;
   dam_asset_id: string | null;
   error_message: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   // Provider analytics fields added in migration 20250601224802

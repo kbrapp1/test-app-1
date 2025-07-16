@@ -55,7 +55,7 @@ export class DebugInfoMapper {
     if (domainDebugInfo.firstApiCall) {
       dto.firstApiCall = this.transformApiCall(domainDebugInfo.firstApiCall, 'first');
       dto.intentClassification = ApiResponseExtractor.extractIntentClassification(
-        domainDebugInfo.firstApiCall.responseData.response
+        domainDebugInfo.firstApiCall.responseData.response as any
       );
       dto.functionCalls = this.buildFunctionCallsStructure(domainDebugInfo.firstApiCall);
     }
@@ -83,10 +83,10 @@ export class DebugInfoMapper {
     };
     
     return {
-      model: ApiResponseExtractor.extractModelFromPayload(apiCall.requestData.payload),
+      model: ApiResponseExtractor.extractModelFromPayload(apiCall.requestData.payload as any),
       messagesCount: apiCall.requestData.messageCount,
-      temperature: ApiResponseExtractor.extractTemperatureFromPayload(apiCall.requestData.payload),
-      maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(apiCall.requestData.payload),
+      temperature: ApiResponseExtractor.extractTemperatureFromPayload(apiCall.requestData.payload as any),
+      maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(apiCall.requestData.payload as any),
       timestamp: apiCall.requestData.timestamp,
       userMessage: apiCall.requestData.userMessage,
       fullPrompt: `User: ${apiCall.requestData.userMessage}`
@@ -112,30 +112,30 @@ export class DebugInfoMapper {
     
     return {
       requestData: {
-        model: ApiResponseExtractor.extractModelFromPayload(call.requestData.payload),
+        model: ApiResponseExtractor.extractModelFromPayload(call.requestData.payload as any),
         messagesCount: call.requestData.messageCount,
-        temperature: ApiResponseExtractor.extractTemperatureFromPayload(call.requestData.payload),
-        maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(call.requestData.payload),
+        temperature: ApiResponseExtractor.extractTemperatureFromPayload(call.requestData.payload as any),
+        maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(call.requestData.payload as any),
         timestamp: call.requestData.timestamp,
         userMessage: call.requestData.userMessage,
         apiEndpoint: call.requestData.endpoint,
         requestSize: parseInt(call.requestData.payloadSize.replace(' characters', '')),
         fullRequestPayload: call.requestData.payload as Record<string, unknown> | undefined,
         ...(callType === 'first' && {
-          functionsProvided: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload)
+          functionsProvided: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload as any)
         })
       },
       responseData: {
-        id: ApiResponseExtractor.extractIdFromResponse(call.responseData.response),
-        model: ApiResponseExtractor.extractModelFromResponse(call.responseData.response),
-        usage: ApiResponseExtractor.extractUsageFromResponse(call.responseData.response),
-        responseLength: ApiResponseExtractor.extractResponseLength(call.responseData.response),
+        id: ApiResponseExtractor.extractIdFromResponse(call.responseData.response as any),
+        model: ApiResponseExtractor.extractModelFromResponse(call.responseData.response as any),
+        usage: ApiResponseExtractor.extractUsageFromResponse(call.responseData.response as any),
+        responseLength: ApiResponseExtractor.extractResponseLength(call.responseData.response as any),
         processingTime: parseInt(call.responseData.processingTime.replace('ms', '')),
-        fullResponse: ApiResponseExtractor.extractResponseContent(call.responseData.response),
+        fullResponse: ApiResponseExtractor.extractResponseContent(call.responseData.response as any),
         responseSize: parseInt(call.responseData.responseSize.replace(' characters', '')),
         statusCode: 200,
         ...(callType === 'first' && {
-          functionCallsExecuted: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response)
+          functionCallsExecuted: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response as any)
         })
       },
       costData: this.calculateCostDataFromResponse(call.responseData.response)
@@ -150,8 +150,8 @@ export class DebugInfoMapper {
     
     return {
       firstApiCall: {
-        functions: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload),
-        functionCallsMade: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response),
+        functions: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload as any),
+        functionCallsMade: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response as any),
         totalFunctionExecutionTime: parseInt(call.responseData.processingTime.replace('ms', ''))
       }
     };

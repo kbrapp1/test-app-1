@@ -42,7 +42,15 @@ vi.mock('@/components/ui/command', async (importOriginal) => {
   return {
     ...mod,
     // Mock CommandDialog to just render children when open
-    CommandDialog: ({ open, children, onOpenChange: _ }: { open: boolean; children: React.ReactNode; onOpenChange: (open: boolean)=>void }) => {
+    CommandDialog: ({
+      open,
+      children,
+      onOpenChange: _
+    }: {
+      open: boolean;
+      children: React.ReactNode;
+      onOpenChange: (open: boolean) => void;
+    }) => {
       // Need to simulate the dialog being present in the DOM when open
       return open ? <div data-testid="command-dialog">{children}</div> : null;
     },
@@ -56,7 +64,15 @@ vi.mock('@/components/ui/command', async (importOriginal) => {
         {children}
       </div>
     ),
-    CommandItem: ({ children, onSelect, ...props }: { children: React.ReactNode; onSelect?: () => void; [key: string]: unknown }) => (
+    CommandItem: ({
+      children,
+      onSelect,
+      ...props
+    }: {
+      children: React.ReactNode;
+      onSelect?: () => void;
+      [key: string]: unknown;
+    }) => (
       // Simulate item click calling onSelect
       (<button data-testid="command-item" onClick={onSelect} {...props}>
         {children}

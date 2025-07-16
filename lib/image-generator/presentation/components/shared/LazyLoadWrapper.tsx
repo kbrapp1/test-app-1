@@ -71,7 +71,7 @@ export const SidebarLoader = () => (
  */
 export const useLazyWrapper = (FallbackComponent?: React.ComponentType) => {
   return React.useCallback(
-    ({ children, ...props }: { children: React.ReactNode; [key: string]: any }) => (
+    ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
       <LazyLoadWrapper fallback={FallbackComponent ? <FallbackComponent {...props} /> : undefined}>
         {children}
       </LazyLoadWrapper>

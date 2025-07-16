@@ -18,13 +18,14 @@ import { TagExtractionService } from './TagExtractionService';
 
 export class KnowledgeConverterService {
 
-  static convertFaqToKnowledgeItem(faq: any, context: KnowledgeProcessingContext): KnowledgeItem {
+  static convertFaqToKnowledgeItem(faq: unknown, context: KnowledgeProcessingContext): KnowledgeItem {
+    const faqData = faq as { id: string; question: string; answer: string; category: string };
     return {
-      id: faq.id,
-      title: faq.question,
-      content: faq.answer,
-      category: this.mapFaqCategoryToKnowledgeCategory(faq.category),
-      tags: TagExtractionService.extractFaqCategoryTags(faq.category),
+      id: faqData.id,
+      title: faqData.question,
+      content: faqData.answer,
+      category: this.mapFaqCategoryToKnowledgeCategory(faqData.category),
+      tags: TagExtractionService.extractFaqCategoryTags(faqData.category),
       relevanceScore: 0.8,
       source: 'faq',
       lastUpdated: context.lastUpdated

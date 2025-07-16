@@ -76,7 +76,12 @@ vi.mock('@/components/ui/sidebar', async (importOriginal) => {
 
 // Mock Button component from shadcn/ui
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => <button {...props}>{children}</button>
+  Button: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+  } & Record<string, unknown>) => <button {...props}>{children}</button>
 }))
 
 // Unmock Accordion components explicitly

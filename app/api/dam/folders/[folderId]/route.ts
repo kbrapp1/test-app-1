@@ -76,7 +76,7 @@ export const PATCH = async (request: NextRequest, context: RouteContext) => {
 
 
   const handler = createUpdateFolderHandler(folderId, activeOrgId, body);
-  return withErrorHandling(withAuth(handler))(request, context);
+  return withErrorHandling(withAuth(handler) as (...args: unknown[]) => Promise<NextResponse>)(request, context);
 };
 
 const createDeleteFolderHandler = (folderId: string, activeOrgId: string): AuthenticatedHandler => {
@@ -111,5 +111,5 @@ export const DELETE = async (request: NextRequest, context: RouteContext) => {
     return NextResponse.json({ message: 'Active organization not found.' }, { status: 400 });
   }
   const handler = createDeleteFolderHandler(folderId, activeOrgId);
-  return withErrorHandling(withAuth(handler))(request, context);
+  return withErrorHandling(withAuth(handler) as (...args: unknown[]) => Promise<NextResponse>)(request, context);
 }; 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { SupabaseClient, User, UserIdentity } from '@supabase/supabase-js';
+import { User, UserIdentity } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 
 // Import helpers from their new locations
@@ -32,7 +32,7 @@ export function useOnboarding() {
   const [needsPasswordSet, setNeedsPasswordSet] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
 
-  const [invitationData, setInvitationData] = useState<{
+  const [_invitationData, setInvitationData] = useState<{
     invited_to_org_id?: string;
     assigned_role_id?: string;
     full_name?: string;
@@ -54,7 +54,7 @@ export function useOnboarding() {
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
-    } catch (onboardingError: any) {
+    } catch (onboardingError: unknown) {
       handleOnboardingError(onboardingError, 'auto complete onboarding', toast, (msg) => setError(msg), 'Onboarding Error');
     }
   };
@@ -91,7 +91,7 @@ export function useOnboarding() {
                throw new Error('Invitation is incomplete. Missing organization or role information.');
            }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleOnboardingError(err, 'initial auth check', toast, (msg) => setError(msg), 'Invitation ProcessingError');
       } finally {
         setLoading(false);
@@ -103,18 +103,19 @@ export function useOnboarding() {
   }, [supabase, router, toast]); // _tryAutoCompleteOnboarding is not needed here as it uses hook's scope
 
   // Helper function within the hook for core onboarding steps after auth update
-  const _performCoreOnboardingSteps = useCallback(async (user: User, currentFullName: string) => {
+  const _performCoreOnboardingSteps = useCallback(async (user: User, _currentFullName: string) => {
     // Call Edge Function to complete membership/roles
     await completeOnboardingMembership(supabase);
 
     // Update Public Profile (optional, log errors)
     try {
       await updateUserProfile(supabase, user);
-    } catch (profileErr: any) {
-       console.warn("Profile update failed:", profileErr.message);
+    } catch (profileErr: unknown) {
+       const errorMessage = profileErr instanceof Error ? profileErr.message : 'Unknown error';
+       console.warn("Profile update failed:", errorMessage);
        toast({
           title: 'Profile Sync Warning',
-          description: `Could not sync profile name: ${profileErr.message}`,
+          description: `Could not sync profile name: ${errorMessage}`,
           variant: 'default',
        });
     }
@@ -153,13 +154,13 @@ export function useOnboarding() {
       toast({ title: 'Account Setup Complete!', description: 'Redirecting to dashboard...', variant: 'default' });
       setTimeout(() => router.push('/dashboard'), 2000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       const isFormValidationError = [
           'Name is required',
           'Password is required',
           'Password must be at least 8 characters',
           'Passwords do not match'
-      ].includes(err.message);
+      ].includes(err instanceof Error ? err.message : '');
 
       if (isFormValidationError) {
          handleOnboardingError(err, 'form validation', toast, setValidationError);

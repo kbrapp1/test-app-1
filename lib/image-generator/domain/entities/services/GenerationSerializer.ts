@@ -23,7 +23,7 @@ export interface GenerationSnapshot {
   damAssetId: string | null;
   sourceDamAssetId: string | null;
   errorMessage: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   seed: number | null;
   createdAt: Date;
   updatedAt: Date;
@@ -51,7 +51,7 @@ export interface GenerationData {
   damAssetId: string | null;
   sourceDamAssetId: string | null;
   errorMessage: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   seed: number | null;
   createdAt: Date;
   updatedAt: Date;

@@ -55,5 +55,5 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
   const handler = createListFolderChildrenHandler(folderId, activeOrgId);
   // Apply middleware. withAuth expects (req, user, supabase) after its own processing.
   // The `request` here is passed to withAuth, which then passes its modified version (or original) to the handler.
-  return withErrorHandling(withAuth(handler))(request, context); // Pass context if withErrorHandling or withAuth needs it, usually not for the final handler call.
+  return withErrorHandling(withAuth(handler) as (...args: unknown[]) => Promise<NextResponse>)(request, context); // Pass context if withErrorHandling or withAuth needs it, usually not for the final handler call.
 }; 

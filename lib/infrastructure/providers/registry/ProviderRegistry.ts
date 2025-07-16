@@ -110,7 +110,7 @@ export class ProviderRegistry {
         try {
           const isHealthy = await entry.provider.healthCheck();
           results.set(type, isHealthy);
-        } catch (error) {
+        } catch {
           results.set(type, false);
         }
       } else {

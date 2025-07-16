@@ -103,7 +103,7 @@ export class ContentExtractionService {
               this.isContentUrl(absoluteUrl)) {
             validLinks.push(absoluteUrl);
           }
-        } catch (error) {
+        } catch (_error) {
           // Skip invalid URLs
           continue;
         }

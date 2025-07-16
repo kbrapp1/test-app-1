@@ -15,7 +15,7 @@ import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDom
 import {
   VectorKnowledgeStats,
   VectorQueryContext,
-  SupabaseVectorRow
+  // SupabaseVectorRow
 } from '../types/VectorRepositoryTypes';
 import { VectorStatisticsQueryService } from './VectorStatisticsQueryService';
 import { VectorMetricsCalculatorService } from './VectorMetricsCalculatorService';

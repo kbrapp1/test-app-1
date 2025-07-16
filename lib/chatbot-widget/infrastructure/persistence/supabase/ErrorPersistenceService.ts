@@ -30,13 +30,13 @@ export interface ErrorPersistenceContext {
     memoryUsage: number;
     cpuUsage: number;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ErrorPersistenceData {
   errorCode: string;
   errorMessage: string;
-  errorContext: Record<string, any>;
+  errorContext: Record<string, unknown>;
   timestamp: Date;
   stack?: string;
 }

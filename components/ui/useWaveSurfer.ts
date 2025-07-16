@@ -76,8 +76,9 @@ export function useWaveSurfer({
           url: url,
           normalize: true,
         });
-      } catch (initError: any) {
-        setError(`Failed to initialize player: ${initError.message || 'Unknown error'}`);
+      } catch (initError: unknown) {
+        const errorMessage = initError instanceof Error ? initError.message : 'Unknown error';
+        setError(`Failed to initialize player: ${errorMessage}`);
         setIsLoading(false);
         wavesurfer.current = null;
         return;
@@ -111,8 +112,8 @@ export function useWaveSurfer({
       });
       currentInstance.on('decode', (newDuration) => {
         if (wavesurfer.current !== currentInstance) return;
-        if (duration === 0) setDuration(newDuration);
-        if (isLoading) setIsLoading(false);
+        if (newDuration > 0) setDuration(newDuration);
+        setIsLoading(false);
       });
       currentInstance.on('error', (err) => {
         if (wavesurfer.current !== currentInstance && wavesurfer.current !== null) return;
@@ -121,7 +122,7 @@ export function useWaveSurfer({
         let isExpiredLinkError = false;
 
         if (typeof err === 'object' && err !== null) {
-          const mediaError = err as any;
+          const mediaError = err as { code?: number; message?: string };
           if (
             mediaError.code === 4 &&
             typeof mediaError.message === 'string' &&
@@ -140,12 +141,15 @@ export function useWaveSurfer({
 
         if (!displayError) {
           let errorMessage = 'Unknown error occurred.';
-          if (typeof err === 'string') errorMessage = err;
-          else if (err && typeof (err as any).message === 'string') errorMessage = (err as any).message;
+          if (typeof err === 'string') {
+            errorMessage = err;
+          } else if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+            errorMessage = err.message;
+          }
 
-          if (typeof (err as any).message === 'string' &&
-              (err as any).message.includes('Failed to fetch') &&
-              (err as any).message.includes('404') &&
+          if (typeof err === 'object' && err && 'message' in err && typeof err.message === 'string' &&
+              err.message.includes('Failed to fetch') &&
+              err.message.includes('404') &&
               currentInstance.options.url?.includes('replicate.delivery')) {
             displayError = "Media link expired. Please create another generation.";
           }

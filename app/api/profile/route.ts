@@ -97,5 +97,5 @@ async function putHandler(
 }
 
 // Wrap the authenticated handler with the error handler
-export const GET = withErrorHandling(withAuth(getHandler));
-export const PUT = withErrorHandling(withAuth(putHandler)); 
+export const GET = withErrorHandling(withAuth(getHandler as any) as any);
+export const PUT = withErrorHandling(withAuth(putHandler as any) as any); 

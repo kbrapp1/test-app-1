@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
 // Error handling utility
-export const handleSupabaseError = (error: any, status = 500) => {
+export const handleSupabaseError = (error: unknown, status = 500) => {
   console.error('Supabase Error:', error);
-  return NextResponse.json({ error: error.message || 'Database error' }, { status });
+  const errorMessage = error instanceof Error ? error.message : 'Database error';
+  return NextResponse.json({ error: errorMessage }, { status });
 };
 
 // Authentication check utility - MOVED to db-auth.ts

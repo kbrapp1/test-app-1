@@ -19,7 +19,7 @@ import {
   ChevronDown, 
   ChevronRight, 
   FileText, 
-  Clock, 
+  Clock as _Clock, 
   Hash,
   Eye,
   EyeOff
@@ -50,7 +50,7 @@ interface CrawledPagesDisplayProps {
 }
 
 export function CrawledPagesDisplay({
-  sourceId,
+  sourceId: _sourceId,
   sourceName,
   pages,
   isVisible,
@@ -70,7 +70,7 @@ export function CrawledPagesDisplay({
 
   const successfulPages = pages.filter(p => p.status === 'success');
   const failedPages = pages.filter(p => p.status === 'failed');
-  const skippedPages = pages.filter(p => p.status === 'skipped');
+  const _skippedPages = pages.filter(p => p.status === 'skipped');
 
   const averageContentLength = successfulPages.length > 0 
     ? Math.round(successfulPages.reduce((sum, p) => sum + p.contentLength, 0) / successfulPages.length)

@@ -75,7 +75,8 @@ export function getOrgMembersTableColumns({
                 try {
                     const date = new Date(lastLogin);
                     return <span className="text-xs">{date.toLocaleString()}</span>;
-                } catch (_e) {
+                } catch (e) {
+                    console.error('Date parsing error:', e);
                     return <span className="text-xs text-destructive">Invalid Date</span>;
                 }
             },

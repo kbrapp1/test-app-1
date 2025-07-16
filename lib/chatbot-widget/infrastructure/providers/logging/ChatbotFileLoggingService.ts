@@ -179,7 +179,7 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
       
       try {
         await fs.access(this.config.logDirectory);
-      } catch {
+      } catch (_error) {
         await fs.mkdir(this.config.logDirectory, { recursive: true });
       }
     } catch (error) {

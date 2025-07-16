@@ -9,8 +9,7 @@
  */
 
 import { ContentType } from '../../domain/value-objects/content/ContentType';
-import { SanitizeUserContentUseCase } from '../../application/use-cases/SanitizeUserContentUseCase';
-import { ValidateContentUseCase } from '../../application/use-cases/ValidateContentUseCase';
+// Note: Use cases available via composition service
 import { UseCaseCompositionService } from '../../infrastructure/composition/UseCaseCompositionService';
 import { DomainError } from '../../../errors/base';
 import { ContentValidationError } from '../../domain/errors/ContentValidationError';

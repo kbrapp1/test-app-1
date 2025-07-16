@@ -2,32 +2,71 @@
  * Service responsible for extracting data from API responses and payloads
  * Following DDD principles: Single responsibility for data extraction
  */
+
+interface ApiPayload {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  maxTokens?: number;
+  functions?: Array<{
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  }>;
+}
+
+interface ApiResponse {
+  id?: string;
+  model?: string;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  choices?: Array<{
+    message?: {
+      content?: string;
+      role?: string;
+      function_call?: {
+        name?: string;
+        arguments?: string;
+      };
+    };
+    finish_reason?: string;
+  }>;
+  error?: {
+    message?: string;
+    type?: string;
+    code?: string;
+  };
+}
+
 export class ApiResponseExtractor {
-  static extractModelFromPayload(payload: any): string {
+  static extractModelFromPayload(payload: ApiPayload): string {
     return payload?.model || 'unknown';
   }
 
-  static extractTemperatureFromPayload(payload: any): number {
+  static extractTemperatureFromPayload(payload: ApiPayload): number {
     return payload?.temperature || 0.7;
   }
 
-  static extractMaxTokensFromPayload(payload: any): number {
+  static extractMaxTokensFromPayload(payload: ApiPayload): number {
     return payload?.max_tokens || payload?.maxTokens || 1000;
   }
 
-  static extractFunctionsFromPayload(payload: any): Array<{name: string; description: string; parameters: any}> {
+  static extractFunctionsFromPayload(payload: ApiPayload): Array<{name: string; description: string; parameters: Record<string, unknown>}> {
     return payload?.functions || [];
   }
 
-  static extractIdFromResponse(response: any): string {
+  static extractIdFromResponse(response: ApiResponse): string {
     return response?.id || 'unknown';
   }
 
-  static extractModelFromResponse(response: any): string {
+  static extractModelFromResponse(response: ApiResponse): string {
     return response?.model || 'unknown';
   }
 
-  static extractUsageFromResponse(response: any): {promptTokens: number; completionTokens: number; totalTokens: number} {
+  static extractUsageFromResponse(response: ApiResponse): {promptTokens: number; completionTokens: number; totalTokens: number} {
     const usage = response?.usage || {};
     return {
       promptTokens: usage.prompt_tokens || 0,
@@ -36,21 +75,21 @@ export class ApiResponseExtractor {
     };
   }
 
-  static extractResponseLength(response: any): number {
+  static extractResponseLength(response: ApiResponse): number {
     return response?.choices?.[0]?.message?.content?.length || 0;
   }
 
-  static extractResponseContent(response: any): string {
+  static extractResponseContent(response: ApiResponse): string {
     return response?.choices?.[0]?.message?.content || '';
   }
 
-  static extractFunctionCallsFromResponse(response: any): Array<{name: string; arguments: any; result: any; executionTime: number; success: boolean}> {
+  static extractFunctionCallsFromResponse(response: ApiResponse): Array<{name: string; arguments: Record<string, unknown>; result: string; executionTime: number; success: boolean}> {
     const functionCall = response?.choices?.[0]?.message?.function_call;
     if (functionCall) {
       return [{
-        name: functionCall.name,
+        name: functionCall.name || '',
         arguments: JSON.parse(functionCall.arguments || '{}'),
-        result: functionCall.arguments,
+        result: functionCall.arguments || '',
         executionTime: 0,
         success: true
       }];
@@ -58,14 +97,14 @@ export class ApiResponseExtractor {
     return [];
   }
 
-  static extractIntentClassification(response: any): {
+  static extractIntentClassification(response: ApiResponse): {
     detectedIntent: string; 
     confidence: number; 
     alternativeIntents: Array<{ intent: string; confidence: number }>; 
     category: 'sales' | 'support' | 'qualification' | 'general'; 
     threshold: number; 
     isAmbiguous: boolean; 
-    rawClassificationResult?: any; 
+    rawClassificationResult?: Record<string, unknown>; 
     processingTime?: number; 
     modelUsed?: string;
   } {
@@ -94,7 +133,7 @@ export class ApiResponseExtractor {
       category: 'general',
       threshold: 0.7,
       isAmbiguous: true,
-      rawClassificationResult: null,
+      rawClassificationResult: undefined,
       processingTime: 0,
       modelUsed: 'unknown'
     };

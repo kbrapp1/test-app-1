@@ -9,7 +9,12 @@
  * - Maintain type safety and domain model compliance
  */
 
-import { WebsiteSource, WebsiteCrawlSettings, KnowledgeBase, FAQ } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { 
+  WebsiteSource, 
+  WebsiteCrawlSettings, 
+  KnowledgeBase, 
+  FAQ 
+} from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 export class TestDataFactory {
@@ -111,7 +116,9 @@ export class TestDataFactory {
   }
 
   /** Knowledge Item with Vector Data */
-  static createKnowledgeItemWithVector(overrides: Partial<KnowledgeItem & { embedding: number[] }> = {}): KnowledgeItem & { embedding: number[] } {
+  static createKnowledgeItemWithVector(
+    overrides: Partial<KnowledgeItem & { embedding: number[] }> = {}
+  ): KnowledgeItem & { embedding: number[] } {
     return {
       ...this.createKnowledgeItem(),
       embedding: this.createMockEmbedding(),

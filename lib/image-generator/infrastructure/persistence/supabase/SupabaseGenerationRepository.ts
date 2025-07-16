@@ -3,9 +3,9 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Generation } from '../../../domain/entities/Generation';
 import { GenerationRepository, GenerationFilters } from '../../../domain/repositories/GenerationRepository';
 import { Result, success, error } from '../../common/Result';
-import { GenerationRowMapper } from './mappers/GenerationRowMapper';
+import { GenerationRowMapper, GenerationRow } from './mappers/GenerationRowMapper';
 import { GenerationQueryBuilder } from './services/GenerationQueryBuilder';
-import { GenerationStatsCalculator, GenerationStats } from './services/GenerationStatsCalculator';
+import { GenerationStatsCalculator, GenerationStats, StatsRow } from './services/GenerationStatsCalculator';
 
 export class SupabaseGenerationRepository implements GenerationRepository {
   private tableName = 'image_generations';
@@ -99,7 +99,7 @@ export class SupabaseGenerationRepository implements GenerationRepository {
         return error(`Failed to find generations: ${supabaseError.message}`);
       }
 
-      const generations = GenerationRowMapper.fromRows(data);
+      const generations = GenerationRowMapper.fromRows(data as GenerationRow[]);
       return success(generations);
     } catch (err) {
       return error(err instanceof Error ? err.message : 'Unknown error');
@@ -136,7 +136,7 @@ export class SupabaseGenerationRepository implements GenerationRepository {
         return error(`Failed to get stats: ${supabaseError.message}`);
       }
 
-      const stats = GenerationStatsCalculator.calculateStats(data);
+      const stats = GenerationStatsCalculator.calculateStats(data as StatsRow[]);
       return success(stats);
     } catch (err) {
       return error(err instanceof Error ? err.message : 'Unknown error');

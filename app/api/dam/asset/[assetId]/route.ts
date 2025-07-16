@@ -70,7 +70,7 @@ async function routeHandler(request: NextRequest, context: RouteContext) {
   const specificAssetHandler = createAssetDetailsHandler(assetId);
   const authenticatedSpecificAssetHandler = withAuth(specificAssetHandler);
   
-  return withErrorHandling(authenticatedSpecificAssetHandler)(request);
+  return withErrorHandling(authenticatedSpecificAssetHandler as (...args: unknown[]) => Promise<NextResponse>)(request);
 }
 
 export { routeHandler as GET };
@@ -138,7 +138,7 @@ export async function PATCH(
   const updateHandler = createUpdateAssetHandler(assetId);
   const authenticatedUpdateHandler = withAuth(updateHandler);
   
-  return withErrorHandling(authenticatedUpdateHandler)(request);
+  return withErrorHandling(authenticatedUpdateHandler as (...args: unknown[]) => Promise<NextResponse>)(request);
 }
 
 // DELETE route handler with authentication
@@ -222,5 +222,5 @@ export async function DELETE(
   const deleteHandler = createDeleteAssetHandler(assetId);
   const authenticatedDeleteHandler = withAuth(deleteHandler);
   
-  return withErrorHandling(authenticatedDeleteHandler)(request);
+  return withErrorHandling(authenticatedDeleteHandler as (...args: unknown[]) => Promise<NextResponse>)(request);
 } 

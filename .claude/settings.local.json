@@ -50,7 +50,9 @@
       "Bash(pnpm exec eslint:*)",
       "Bash(next lint:*)",
       "Bash(awk:*)",
-      "Bash(./node_modules/.bin/eslint lib/dam/application/actions/folder.actions.ts)"
+      "Bash(./node_modules/.bin/eslint lib/dam/application/actions/folder.actions.ts)",
+      "Bash(timeout:*)",
+      "Bash(awk:*)"
     ],
     "deny": []
   },

@@ -51,7 +51,7 @@ export const validateUseCase = (useCase: UseCase): void => {
 };
 
 /** Validate analysis inputs */
-export const validateAnalysisInputs = (result: any, criteria: ContextSelectionCriteria): void => {
+export const validateAnalysisInputs = (result: unknown, criteria: ContextSelectionCriteria): void => {
   if (!result) {
     throw new DataValidationError('result', 'is required for analysis');
   }

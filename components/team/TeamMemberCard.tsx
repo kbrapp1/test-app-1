@@ -59,7 +59,8 @@ export function TeamMemberCard({ member }: TeamMemberCardProps) {
       } else {
         toast.error(result.error || 'Failed to delete team member');
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Delete team member error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setIsDeleting(false);

@@ -231,7 +231,8 @@ describe('WebsiteKnowledgeApplicationService', () => {
       mockCrawledPagesQueryService.getCrawledPages.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(service.getCrawledPages(organizationId, chatbotConfigId, sourceUrl)).rejects.toThrow(BusinessRuleViolationError);
+      await expect(service.getCrawledPages(organizationId, chatbotConfigId, sourceUrl))
+        .rejects.toThrow(BusinessRuleViolationError);
       expect(mockCrawledPagesQueryService.getCrawledPages).toHaveBeenCalledWith({
         organizationId,
         chatbotConfigId,

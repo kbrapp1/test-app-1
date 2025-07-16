@@ -85,7 +85,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to add website source']);
       }
-    } catch (_error) {
+    } catch {
       formState.setFormErrors(['An unexpected error occurred']);
     } finally {
       uiState.setActionLoading(false);
@@ -124,7 +124,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to remove website source']);
       }
-    } catch (_error) {
+    } catch {
       formState.setFormErrors(['An unexpected error occurred']);
     } finally {
       uiState.setActionLoading(false);
@@ -193,7 +193,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to cleanup website sources']);
       }
-    } catch (_error) {
+    } catch {
       formState.setFormErrors(['An unexpected error occurred during cleanup']);
     } finally {
       uiState.setActionLoading(false);

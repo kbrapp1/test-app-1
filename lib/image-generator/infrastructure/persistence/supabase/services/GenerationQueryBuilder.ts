@@ -1,7 +1,10 @@
 import { GenerationFilters } from '../../../../domain/repositories/GenerationRepository';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
 
 export class GenerationQueryBuilder {
-  static applyFilters(query: any, filters: GenerationFilters) {
+  static applyFilters(query: SupabaseQueryBuilder, filters: GenerationFilters): SupabaseQueryBuilder {
     let filteredQuery = query;
 
     // Apply status filter
@@ -41,11 +44,11 @@ export class GenerationQueryBuilder {
     return filteredQuery;
   }
 
-  static applyOrdering(query: any) {
+  static applyOrdering(query: SupabaseQueryBuilder): SupabaseQueryBuilder {
     return query.order('created_at', { ascending: false });
   }
 
-  static applyPagination(query: any, filters: GenerationFilters) {
+  static applyPagination(query: SupabaseQueryBuilder, filters: GenerationFilters): SupabaseQueryBuilder {
     let paginatedQuery = query;
 
     // Apply limit
@@ -65,7 +68,7 @@ export class GenerationQueryBuilder {
     return paginatedQuery;
   }
 
-  static buildFindManyQuery(baseQuery: any, filters: GenerationFilters) {
+  static buildFindManyQuery(baseQuery: ReturnType<SupabaseClient['from']>, filters: GenerationFilters): SupabaseQueryBuilder {
     let query = baseQuery.select('*');
     
     // Apply filters
@@ -80,7 +83,7 @@ export class GenerationQueryBuilder {
     return query;
   }
 
-  static buildStatsQuery(baseQuery: any, userId: string, organizationId: string) {
+  static buildStatsQuery(baseQuery: ReturnType<SupabaseClient['from']>, userId: string, organizationId: string) {
     return baseQuery
       .select('status, cost_cents, generation_time_seconds, saved_to_dam')
       .eq('user_id', userId)

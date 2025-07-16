@@ -10,10 +10,10 @@ import { VectorStatisticsService } from '../../services/VectorStatisticsService'
 import {
   VectorKnowledgeItem,
   VectorSearchOptions,
-  VectorSearchResult,
-  VectorWithItem,
-  VectorKnowledgeStats,
-  CrawledPageInfo,
+  // VectorSearchResult,
+  // VectorWithItem,
+  // VectorKnowledgeStats,
+  // CrawledPageInfo,
   VectorQueryContext,
   VectorDeletionContext
 } from '../../types/VectorRepositoryTypes';

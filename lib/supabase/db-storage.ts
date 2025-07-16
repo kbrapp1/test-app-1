@@ -38,11 +38,13 @@ export const uploadFile = async (
       return { path: null, error: dbError };
     }
     return { path: data?.path || null, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     const dbError = new DatabaseError(
-      `Unexpected error uploading to bucket ${bucket}: ${error.message}`,
+      `Unexpected error uploading to bucket ${bucket}: ${errorMessage}`,
       'STORAGE_UNEXPECTED_UPLOAD_ERROR',
-      { originalError: error, bucket, path, stack: error.stack }
+      { originalError: error, bucket, path, stack: errorStack }
     );
     // Log the structured error context
     logger.error({ 
@@ -81,11 +83,13 @@ export const removeFile = async (
       return { success: false, error: dbError };
     }
     return { success: !error && !!data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     const dbError = new DatabaseError(
-      `Unexpected error removing from bucket ${bucket}: ${error.message}`,
+      `Unexpected error removing from bucket ${bucket}: ${errorMessage}`,
       'STORAGE_UNEXPECTED_REMOVE_ERROR',
-      { originalError: error, bucket, path, stack: error.stack }
+      { originalError: error, bucket, path, stack: errorStack }
     );
     // Log the structured error context
     logger.error({ 

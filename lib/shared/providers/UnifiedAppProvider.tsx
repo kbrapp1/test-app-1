@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthentication } from '@/lib/auth/presentation/providers/AuthenticationProvider';
@@ -106,7 +106,7 @@ export function UnifiedAppProvider({ children }: UnifiedAppProviderProps) {
   const supabase = createClient();
   
   // Parallel data loading functions
-  const loadUserProfile = async (): Promise<Profile | null> => {
+  const loadUserProfile = useCallback(async (): Promise<Profile | null> => {
     if (!user?.id) return null;
     
     const { data: profileData, error } = await supabase
@@ -121,9 +121,9 @@ export function UnifiedAppProvider({ children }: UnifiedAppProviderProps) {
     }
     
     return profileData as Profile;
-  };
+  }, [user?.id, supabase]);
   
-  const loadOrganizations = async (): Promise<{ organizations: Organization[], activeId: string | null }> => {
+  const loadOrganizations = useCallback(async (): Promise<{ organizations: Organization[], activeId: string | null }> => {
     if (!user?.id) return { organizations: [], activeId: null };
     
     // Load accessible organizations and active organization using Supabase RPC functions
@@ -157,9 +157,9 @@ export function UnifiedAppProvider({ children }: UnifiedAppProviderProps) {
     }
     
     return { organizations: orgs, activeId };
-  };
+  }, [user?.id, supabase]);
   
-  const loadTeamMembers = async (organizationId: string | null): Promise<Member[]> => {
+  const loadTeamMembers = useCallback(async (organizationId: string | null): Promise<Member[]> => {
     if (!organizationId) return [];
     
     const response = await fetch('/api/team/members');
@@ -170,7 +170,7 @@ export function UnifiedAppProvider({ children }: UnifiedAppProviderProps) {
     
     const data = await response.json();
     return data.members || [];
-  };
+  }, []);
   
   // Parallel loading effect - PERFORMANCE OPTIMIZATION
   useEffect(() => {
@@ -242,7 +242,7 @@ export function UnifiedAppProvider({ children }: UnifiedAppProviderProps) {
     };
     
     loadAllData();
-  }, [isAuthenticated, user?.id, isAuthLoading, supabase]);
+  }, [isAuthenticated, user, isAuthLoading, supabase, loadUserProfile, loadOrganizations, loadTeamMembers]);
   
   // Individual refresh functions
   const refreshProfile = async () => {

@@ -53,8 +53,8 @@ export class StatusManagementFactory {
    * Test configuration for unit and integration tests
    */
   static createTestUseCase(
-    mockRepository: any,
-    mockProviderService?: any
+    mockRepository: StatusCheckingSupabaseRepository,
+    mockProviderService?: ExternalProviderStatusService
   ): ManageGenerationStatusUseCase {
     const providerService = mockProviderService || new ExternalProviderStatusService([]);
     
@@ -121,8 +121,8 @@ export class StatusManagementFactory {
    * Useful for testing application logic without full use case
    */
   static createStatusManagementService(
-    repository: any,
-    providerService: any
+    repository: StatusCheckingSupabaseRepository,
+    providerService: ExternalProviderStatusService
   ): StatusManagementService {
     return new StatusManagementService(repository, providerService);
   }

@@ -17,18 +17,35 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock } from 'lucide-react';
 import {
-  BotConfigurationFormData,
-  BotConfigurationViewState,
-  BotConfigurationActions,
+  BotConfigurationFormData as _BotConfigurationFormData,
+  BotConfigurationViewState as _BotConfigurationViewState,
+  BotConfigurationActions as _BotConfigurationActions,
 } from '../../../types/BotConfigurationTypes';
 import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 interface OperatingHoursFormProps {
-  // No props needed - hook handles everything
+  organizationId?: string;
 }
 
-export function OperatingHoursForm({}: OperatingHoursFormProps) {
+export function OperatingHoursForm({ organizationId }: OperatingHoursFormProps) {
+  // Security validation - verify client context matches server validation
+  const { activeOrganizationId } = useOrganization();
   const { formData, viewState, actions } = useChatbotConfiguration();
+  
+  // Validate organization context for security
+  if (organizationId && activeOrganizationId !== organizationId) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Organization Context Mismatch</h2>
+            <p className="text-gray-600">Please refresh the page or switch to the correct organization.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   // Early return if form state is not available
   if (!formData || !viewState || !actions) {

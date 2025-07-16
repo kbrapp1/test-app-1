@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UseFileUploadReturn } from './useFileUpload';
 import { GenerationDto } from '../../application/dto';
+import { UseMutationResult } from '@tanstack/react-query';
+import { GenerateImageRequest } from '../../application/actions/generation.actions';
 
 // Import for GenerationRequest type
 export interface GenerationRequest {
@@ -26,7 +28,7 @@ interface UseImageGeneratorCoordinatorProps {
   styleValues: Record<string, string>;
   fileUpload: UseFileUploadReturn;
   latestGeneration: GenerationDto | null;
-  enhancePromptWithStyles: (prompt: string, styles: any) => string;
+  enhancePromptWithStyles: (prompt: string, styles: Record<string, string>) => string;
   orchestrationHandleGenerate: (
     prompt: string,
     aspectRatio: string,
@@ -34,12 +36,12 @@ interface UseImageGeneratorCoordinatorProps {
     providerId: string,
     modelId: string,
     enhancePrompt: (prompt: string) => string,
-    generate: any,
+    generate: UseMutationResult<GenerationDto, Error, GenerateImageRequest>,
     setCurrentImage: (image: string | null) => void,
     baseImageUrl?: string,
     secondImageUrl?: string // NEW: Second image parameter
   ) => Promise<void>;
-  generate: any;
+  generate: UseMutationResult<GenerationDto, Error, GenerateImageRequest>;
   setCurrentGeneratedImage: (image: string | null) => void;
   capabilities: {
     supportsImageEditing: boolean;

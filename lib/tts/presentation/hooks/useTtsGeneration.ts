@@ -77,8 +77,10 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
       }
       return failureCount < 3; // Standard retry for other errors
     },
-    staleTime: 0, // Always fresh for polling
+    staleTime: 2000, // Keep data fresh for 2 seconds to reduce flickering
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch when component mounts if data exists
+    notifyOnChangeProps: ['data', 'error'], // Only notify on data/error changes, not loading states
   });
 
   // Handle generation completion
@@ -171,7 +173,8 @@ export function useTtsGeneration(options?: UseTtsGenerationOptions) {
     // Don't set currentPredictionId to avoid polling for already completed predictions
   }, [resetTtsState]);
 
-  const isGenerating = isTtsPending || isPollingLoading;
+  // More stable loading state - only show loading for initial generation or actual pending states
+  const isGenerating = isTtsPending || (isPollingLoading && !generationResult);
 
   return {
     isGenerating,

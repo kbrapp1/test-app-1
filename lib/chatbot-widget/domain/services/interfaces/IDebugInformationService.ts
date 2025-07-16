@@ -3,7 +3,7 @@ export interface ApiCallDebugInfo {
     endpoint: string;
     method: string;
     timestamp: string;
-    payload: any;
+    payload: unknown;
     payloadSize: string;
     messageCount: number;
     conversationHistoryLength: number;
@@ -12,7 +12,7 @@ export interface ApiCallDebugInfo {
   responseData: {
     timestamp: string;
     processingTime: string;
-    response: any;
+    response: unknown;
     responseSize: string;
   };
 }
@@ -32,8 +32,8 @@ export interface IDebugInformationService {
    */
   captureApiCall(
     callType: 'first' | 'second',
-    requestData: any,
-    responseData: any,
+    requestData: unknown,
+    responseData: unknown,
     processingTime: number
   ): ApiCallDebugInfo;
 

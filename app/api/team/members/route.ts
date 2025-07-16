@@ -69,7 +69,7 @@ async function getHandler(
   }
 }
 
-export const GET = withErrorHandling(withAuth(getHandler));
+export const GET = withErrorHandling(withAuth(getHandler as any) as any);
 
 // Basic check to ensure the route is hit - can be removed later
 export async function OPTIONS() {

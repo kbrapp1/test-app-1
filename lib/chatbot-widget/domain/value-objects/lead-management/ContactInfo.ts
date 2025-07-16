@@ -77,7 +77,7 @@ export class ContactInfo {
     try {
       new URL(url);
       return true;
-    } catch {
+    } catch (_error) {
       return false;
     }
   }

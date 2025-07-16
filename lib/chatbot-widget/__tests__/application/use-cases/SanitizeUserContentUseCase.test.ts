@@ -567,7 +567,8 @@ Normal business content continues.`;
     });
 
     it('should handle edge case content that passes validation but requires sanitization', async () => {
-      const edgeCaseContent = `Legitimate business content here. We use AI technology responsibly. Our system helps customers. Contact our assistant team.`;
+      const edgeCaseContent = `Legitimate business content here. We use AI technology responsibly. ` +
+        `Our system helps customers. Contact our assistant team.`;
 
       const result = await useCase.execute(edgeCaseContent, ContentType.COMPANY_INFO);
 

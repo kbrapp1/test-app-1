@@ -22,7 +22,7 @@ export abstract class DomainError extends Error {
   
   constructor(
     message: string,
-    public readonly context: Record<string, any> = {},
+    public readonly context: Record<string, unknown> = {},
     public readonly timestamp: Date = new Date()
   ) {
     super(message);
@@ -34,7 +34,7 @@ export class SessionNotFoundError extends DomainError {
   readonly code = 'SESSION_NOT_FOUND';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(sessionId: string, context: Record<string, any> = {}) {
+  constructor(sessionId: string, context: Record<string, unknown> = {}) {
     super(`Chat session not found: ${sessionId}`, { ...context, sessionId });
   }
 }
@@ -43,7 +43,7 @@ export class ConfigurationNotFoundError extends DomainError {
   readonly code = 'CONFIGURATION_NOT_FOUND';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(configId: string, organizationId: string, context: Record<string, any> = {}) {
+  constructor(configId: string, organizationId: string, context: Record<string, unknown> = {}) {
     super(`Chatbot configuration not found: ${configId}`, { ...context, configId, organizationId });
   }
 }

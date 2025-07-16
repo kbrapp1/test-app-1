@@ -35,7 +35,7 @@ export function ChatConfigurationPanel({
           <label className="text-sm font-medium">User Profile</label>
           <Select 
             value={userProfile.intent} 
-            onValueChange={(value) => onUserProfileChange({ ...userProfile, intent: value as any })}
+            onValueChange={(value) => onUserProfileChange({ ...userProfile, intent: value as unknown as SimulatedUserProfile['intent'] })}
             disabled={isActive}
           >
             <SelectTrigger>

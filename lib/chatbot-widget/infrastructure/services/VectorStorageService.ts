@@ -350,7 +350,7 @@ export class VectorStorageService {
           }
         }
       );
-    } catch (trackingError) {
+    } catch {
       // Error tracking failed - continue without it to avoid cascading failures
     }
   }

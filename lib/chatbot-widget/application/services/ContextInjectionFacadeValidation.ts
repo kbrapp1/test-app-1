@@ -72,8 +72,8 @@ export function validateContextSelection(
  * AI INSTRUCTIONS: Input validation for facade methods
  */
 export function validateFacadeInputs(
-  session: any,
-  chatbotConfig: any,
+  session: unknown,
+  chatbotConfig: unknown,
   availableTokens?: number
 ): string[] {
   const errors: string[] = [];
@@ -106,7 +106,7 @@ export function validateConversationPhase(phase: string): boolean {
  * Validate entity data structure
  * AI INSTRUCTIONS: Basic entity data validation
  */
-export function validateEntityData(entityData: any): string[] {
+export function validateEntityData(entityData: unknown): string[] {
   const errors: string[] = [];
   
   if (entityData && typeof entityData !== 'object') {

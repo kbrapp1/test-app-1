@@ -145,7 +145,7 @@ export function WebsiteSourcesDialogs({
                   <ul className="text-sm text-blue-700 mt-1 space-y-1">
                     <li>• Website source will be saved to your configuration</li>
                     <li>• You can crawl it manually to extract content</li>
-                    <li>• Content will be added to your chatbot's knowledge base</li>
+                    <li>• Content will be added to your chatbot&apos;s knowledge base</li>
                   </ul>
                 </div>
               </div>

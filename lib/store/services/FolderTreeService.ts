@@ -1,5 +1,5 @@
 import { type FolderNode } from '../folderStore';
-import { type Folder as DomainFolder } from '@/lib/dam/domain/entities/Folder';
+import { type Folder as DomainFolder, Folder } from '@/lib/dam/domain/entities/Folder';
 import {
   findAndUpdateNode,
   findAndRemoveNode,
@@ -126,9 +126,7 @@ export class FolderTreeService {
     folderToMove: FolderNode, 
     newParentFolderId: string | null
   ): FolderNode {
-    const { Folder: DomainFolder } = require('@/lib/dam/domain/entities/Folder');
-    
-    const updatedDomainFolder = new DomainFolder({
+    const updatedDomainFolder = new Folder({
       id: folderToMove.id,
       name: folderToMove.name,
       userId: folderToMove.userId,

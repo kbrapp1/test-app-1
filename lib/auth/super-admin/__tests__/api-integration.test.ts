@@ -55,7 +55,12 @@ describe('Super Admin API Integration - Core Logic', () => {
     });
 
     it('should handle organization membership bypass for super admins', () => {
-      const getMembershipStatus = (isSuperAdmin: boolean, userId: string, orgId: string, memberships: TestMembership[]) => {
+      const getMembershipStatus = (
+        isSuperAdmin: boolean,
+        userId: string,
+        orgId: string,
+        memberships: TestMembership[]
+      ) => {
         if (isSuperAdmin) {
           return {
             isMember: true,

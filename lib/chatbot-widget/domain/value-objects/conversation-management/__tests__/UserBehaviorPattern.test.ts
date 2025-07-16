@@ -284,7 +284,7 @@ describe('UserBehaviorPattern', () => {
       // Attempt to modify nested object (should not affect original)
       try {
         (pattern.communicationStyle as any).preferredResponseLength = 'brief';
-      } catch {
+      } catch (_error) {
         // Some immutability implementations may throw
       }
       
@@ -298,7 +298,7 @@ describe('UserBehaviorPattern', () => {
       // Attempt to modify array (should not affect original if readonly)
       try {
         (pattern.engagementMetrics.dropOffPoints as any).push('new-point');
-      } catch {
+      } catch (_error) {
         // Some immutability implementations may throw
       }
       

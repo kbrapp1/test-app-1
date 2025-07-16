@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import React from 'react';
 
 /**
  * Lazy loading utility for image generator components
@@ -23,7 +24,7 @@ interface LazyComponentOptions {
  * Creates a lazy-loaded component with error handling and retry logic
  */
 export function createLazyComponent(
-  importFn: () => Promise<any>,
+  importFn: () => Promise<{ default: React.ComponentType<unknown> } | React.ComponentType<unknown>>,
   options: LazyComponentOptions = {}
 ) {
   const { retries = 1, retryDelay = 1000 } = options;
@@ -31,15 +32,15 @@ export function createLazyComponent(
   return lazy(() => {
     let attemptCount = 0;
     
-    const attemptImport = async (): Promise<{ default: any }> => {
+    const attemptImport = async (): Promise<{ default: React.ComponentType<unknown> }> => {
       try {
         const importedModule = await importFn();
         
         // Handle both default exports and named exports
-        if (importedModule.default) {
-          return importedModule;
+        if (importedModule && typeof importedModule === 'object' && 'default' in importedModule) {
+          return importedModule as { default: React.ComponentType<unknown> };
         } else {
-          return { default: importedModule };
+          return { default: importedModule as React.ComponentType<unknown> };
         }
       } catch (error) {
         attemptCount++;
@@ -64,7 +65,7 @@ export function createLazyComponent(
  * Preloads a lazy component without rendering it
  * Useful for preloading on hover or route pre-fetch
  */
-export function preloadLazyComponent(importFn: () => Promise<any>): void {
+export function preloadLazyComponent(importFn: () => Promise<{ default: React.ComponentType<unknown> } | React.ComponentType<unknown>>): void {
   importFn().catch((error) => {
     console.warn('Failed to preload component:', error);
   });
@@ -74,7 +75,7 @@ export function preloadLazyComponent(importFn: () => Promise<any>): void {
  * Creates a hook for preloading components on user interaction
  */
 export function useComponentPreloader() {
-  const preload = (importFn: () => Promise<any>) => {
+  const preload = (importFn: () => Promise<{ default: React.ComponentType<unknown> } | React.ComponentType<unknown>>) => {
     return () => preloadLazyComponent(importFn);
   };
   

@@ -10,7 +10,6 @@
 
 import {
   BusinessRuleViolationError,
-  ErrorSeverity,
 } from '@/lib/errors/base';
 
 export const OPENAI_USAGE_TIERS = {

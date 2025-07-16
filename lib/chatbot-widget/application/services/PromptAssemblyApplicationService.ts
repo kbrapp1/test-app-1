@@ -15,7 +15,7 @@
 import { SanitizeUserContentUseCase } from '../use-cases/SanitizeUserContentUseCase';
 import { ValidateContentUseCase } from '../use-cases/ValidateContentUseCase';
 import { ContentType } from '../../domain/value-objects/content/ContentType';
-import { SanitizedContent } from '../../domain/value-objects/content/SanitizedContent';
+// Note: SanitizedContent available when needed
 import { ContentValidationResult } from '../../domain/value-objects/content/ContentValidationResult';
 
 export interface PromptSection {
@@ -156,7 +156,7 @@ export class PromptAssemblyApplicationService {
         
         totalEstimatedLength += sanitizedContent.content.length;
         processedSections++;
-      } catch (error) {
+      } catch {
         // AI: For estimation, use original length if sanitization fails
         totalEstimatedLength += section.content.length;
         processedSections++;

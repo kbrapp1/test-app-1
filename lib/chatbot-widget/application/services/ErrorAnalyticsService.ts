@@ -12,6 +12,18 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 
+interface ErrorRecord {
+  error_code: string;
+  error_message: string;
+  error_category: string;
+  severity: string;
+  created_at: string;
+}
+
+interface ErrorRecordWithTable extends ErrorRecord {
+  tableName: string;
+}
+
 export interface ErrorSummary {
   totalErrors: number;
   errorsByCode: Record<string, number>;
@@ -67,10 +79,10 @@ export class ErrorAnalyticsService {
     ]);
 
     // Combine all errors with table names
-    const allErrors = [
-      ...(conversationErrors || []).map(e => ({ ...e, tableName: 'conversation' })),
-      ...(knowledgeErrors || []).map(e => ({ ...e, tableName: 'knowledge' })),
-      ...(systemErrors || []).map(e => ({ ...e, tableName: 'system' }))
+    const allErrors: ErrorRecordWithTable[] = [
+      ...conversationErrors.map(e => ({ ...e, tableName: 'conversation' as const })),
+      ...knowledgeErrors.map(e => ({ ...e, tableName: 'knowledge' as const })),
+      ...systemErrors.map(e => ({ ...e, tableName: 'system' as const }))
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     if (allErrors.length === 0) {
@@ -93,9 +105,9 @@ export class ErrorAnalyticsService {
 
     // Combine and sort trends
     const allTrends = [
-      ...(conversationTrends || []),
-      ...(knowledgeTrends || []),
-      ...(systemTrends || [])
+      ...conversationTrends,
+      ...knowledgeTrends,
+      ...systemTrends
     ].sort((a, b) => new Date(a.period).getTime() - new Date(b.period).getTime());
 
     return allTrends;
@@ -125,7 +137,7 @@ export class ErrorAnalyticsService {
     tableName: string,
     filter: ErrorAnalyticsFilter,
     timeFilter: string
-  ): Promise<any[]> {
+  ): Promise<ErrorRecord[]> {
     try {
       let query = this.supabase
         .from(tableName)
@@ -162,7 +174,7 @@ export class ErrorAnalyticsService {
         return [];
       }
 
-      return data || [];
+      return this.validateErrorRecords(data || []);
     } catch (err) {
       console.error(`Error querying ${tableName}:`, err);
       return [];
@@ -200,19 +212,21 @@ export class ErrorAnalyticsService {
       const trends: Record<string, ErrorTrend> = {};
 
       data.forEach(row => {
-        const period = this.truncateToInterval(row.created_at, interval);
-        const key = `${period}-${row.error_category}-${row.severity}`;
+        if (this.isValidTrendRecord(row)) {
+          const period = this.truncateToInterval(row.created_at, interval);
+          const key = `${period}-${row.error_category}-${row.severity}`;
 
-        if (!trends[key]) {
-          trends[key] = {
-            period,
-            errorCount: 0,
-            severity: row.severity,
-            category: row.error_category
-          };
+          if (!trends[key]) {
+            trends[key] = {
+              period,
+              errorCount: 0,
+              severity: row.severity,
+              category: row.error_category
+            };
+          }
+
+          trends[key].errorCount++;
         }
-
-        trends[key].errorCount++;
       });
 
       return Object.values(trends);
@@ -222,7 +236,50 @@ export class ErrorAnalyticsService {
     }
   }
 
-  private buildErrorSummary(allErrors: any[]): ErrorSummary {
+  private validateErrorRecords(data: unknown[]): ErrorRecord[] {
+    return data.filter(this.isValidErrorRecord).map(record => ({
+      error_code: record.error_code,
+      error_message: record.error_message,
+      error_category: record.error_category,
+      severity: record.severity,
+      created_at: record.created_at
+    }));
+  }
+
+  private isValidErrorRecord(record: unknown): record is ErrorRecord {
+    return (
+      typeof record === 'object' &&
+      record !== null &&
+      'error_code' in record &&
+      'error_message' in record &&
+      'error_category' in record &&
+      'severity' in record &&
+      'created_at' in record &&
+      typeof (record as ErrorRecord).error_code === 'string' &&
+      typeof (record as ErrorRecord).error_message === 'string' &&
+      typeof (record as ErrorRecord).error_category === 'string' &&
+      typeof (record as ErrorRecord).severity === 'string' &&
+      typeof (record as ErrorRecord).created_at === 'string'
+    );
+  }
+
+  private isValidTrendRecord(record: unknown): record is { created_at: string; error_category: string; severity: string } {
+    if (typeof record !== 'object' || record === null) {
+      return false;
+    }
+    
+    const obj = record as Record<string, unknown>;
+    return (
+      'created_at' in obj &&
+      'error_category' in obj &&
+      'severity' in obj &&
+      typeof obj.created_at === 'string' &&
+      typeof obj.error_category === 'string' &&
+      typeof obj.severity === 'string'
+    );
+  }
+
+  private buildErrorSummary(allErrors: ErrorRecordWithTable[]): ErrorSummary {
     const errorsByCode: Record<string, number> = {};
     const errorsBySeverity: Record<string, number> = {};
     const errorsByCategory: Record<string, number> = {};

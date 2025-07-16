@@ -71,4 +71,4 @@ const createFolderHandler: AuthenticatedHandler = async (
 };
 
 // Export the wrapped handler for the POST method
-export const POST = withErrorHandling(withAuth(createFolderHandler)); 
+export const POST = withErrorHandling(withAuth(createFolderHandler) as (...args: unknown[]) => Promise<NextResponse>); 

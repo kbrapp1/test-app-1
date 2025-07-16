@@ -6,7 +6,7 @@ import { GenerationRowMapper, GenerationRow } from './GenerationRowMapper';
  * Single Responsibility: Map raw database rows to domain entities and prepare update payloads
  * Infrastructure Layer - separate concerns away from repository implementation
  */
-export function toDomainGeneration(row: any): Generation | null {
+export function toDomainGeneration(row: GenerationRow): Generation | null {
   try {
     const completeRow = {
       ...row,
@@ -19,7 +19,7 @@ export function toDomainGeneration(row: any): Generation | null {
   }
 }
 
-export function toUpdateData(generation: Generation): Record<string, any> {
+export function toUpdateData(generation: Generation): Record<string, unknown> {
   const rowData = GenerationRowMapper.toRow(generation);
   const { id, organization_id, user_id, created_at, ...updateFields } = rowData;
 

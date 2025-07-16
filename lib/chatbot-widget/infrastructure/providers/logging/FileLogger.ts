@@ -18,10 +18,10 @@ import { LogEntry } from './LoggingTypes';
 
 export class FileLogger implements ISessionLogger, IOperationLogger {
   private startTime: number = Date.now();
-  private operationContext: Record<string, any> = {};
+  private operationContext: Record<string, unknown> = {};
 
   constructor(
-    private service: any, // ChatbotFileLoggingService - avoiding circular import
+    private service: unknown, // ChatbotFileLoggingService - avoiding circular import
     private context: LogContext,
     private logFile: string
   ) {}
@@ -34,14 +34,14 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
   }
 
   logSeparator(): void {
-    this.service.addRawLogEntry('================================================================================', this.logFile);
+    (this.service as any).addRawLogEntry('================================================================================', this.logFile as any);
   }
 
   logRaw(message: string): void {
-    this.service.addRawLogEntry(message, this.logFile);
+    (this.service as any).addRawLogEntry(message, this.logFile as any);
   }
 
-  logMessage(message: string, data?: any, level: LogLevel = LogLevel.INFO): void {
+  logMessage(message: string, data?: unknown, level: LogLevel = LogLevel.INFO): void {
     if (data !== undefined && data !== null) {
       // For structured data, use the addEntry method which handles formatting properly
       this.addEntry(level, message, data);
@@ -52,7 +52,7 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
   }
 
   // FIXED: Add synchronous logging method for critical step ordering
-  logMessageSync(message: string, data?: any, level: LogLevel = LogLevel.INFO): void {
+  logMessageSync(message: string, data?: unknown, level: LogLevel = LogLevel.INFO): void {
     if (data !== undefined && data !== null) {
       // For structured data, use the synchronous addEntry method
       this.addEntrySync(level, message, data);
@@ -62,7 +62,7 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
     }
   }
 
-  logStep(step: string, data?: any, level: LogLevel = LogLevel.INFO): void {
+  logStep(step: string, data?: unknown, level: LogLevel = LogLevel.INFO): void {
     // Extract step number if present in the step string (supports both integer and decimal format)
     const stepMatch = step.match(/^(\d+(?:\.\d+)?)[:.]?\s*(.+)$/);
     const stepNumber = stepMatch ? stepMatch[1] : null;
@@ -73,9 +73,9 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
     
     if (isSubStep) {
       // For sub-steps: add line space before and log without timestamp
-      this.service.addRawLogEntry('', this.logFile);
+      (this.service as any).addRawLogEntry('', this.logFile as any);
       const stepHeader = `🔄 STEP ${stepNumber}: ${description}`;
-      this.service.addRawLogEntry(stepHeader, this.logFile);
+      (this.service as any).addRawLogEntry(stepHeader, this.logFile as any);
     } else {
       // For main steps: log with timestamp as before
       const stepHeader = stepNumber ? `🔄 STEP ${stepNumber}: ${description}` : `🔄 ${step}`;
@@ -145,8 +145,8 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
 
   async flush(): Promise<void> {
     // Delegate to service flush method
-    if (this.service.flushPendingWrites) {
-      await this.service.flushPendingWrites();
+    if ((this.service as any).flushPendingWrites) {
+      await (this.service as any).flushPendingWrites();
     }
   }
 
@@ -163,16 +163,16 @@ export class FileLogger implements ISessionLogger, IOperationLogger {
   }
 
   private addEntry(level: LogLevel, message: string, data?: any, error?: any, metrics?: LogMetrics): void {
-    this.service.addLogEntry(level, message, this.logFile, data, error, metrics);
+    (this.service as any).addLogEntry(level, message, this.logFile as any, data, error, metrics);
   }
 
   // FIXED: Add synchronous entry method for critical step ordering
   private addEntrySync(level: LogLevel, message: string, data?: any, error?: any, metrics?: LogMetrics): void {
-    if (this.service.addLogEntrySync) {
-      this.service.addLogEntrySync(level, message, this.logFile, data, error, metrics);
+    if ((this.service as any).addLogEntrySync) {
+      (this.service as any).addLogEntrySync(level, message, this.logFile as any, data, error, metrics);
     } else {
       // Fallback to async method if sync method not available
-      this.service.addLogEntry(level, message, this.logFile, data, error, metrics);
+      (this.service as any).addLogEntry(level, message, this.logFile as any, data, error, metrics);
     }
   }
 

@@ -248,7 +248,7 @@ export class CrawlAndStoreWebsiteUseCase {
         
         itemsToStore.push(itemToStore);
         
-      } catch (error) {
+      } catch (_error) {
         // AI: Skip items that fail embedding generation silently
         // Don't fail the entire process for individual items - error tracking handled at higher level
         continue;

@@ -10,6 +10,7 @@ import {
   useImageGeneratorCoordinator,
   useGenerateImage
 } from '.';
+import type { GenerationDto } from '../../application/dto/GenerationDto';
 import { useCacheCleanup } from '@/lib/infrastructure/query/useCacheInvalidation';
 import { preloadComponents } from '../components/LazyComponentLoader';
 import { useImageGeneratorOperations } from './useImageGeneratorOperations';
@@ -60,7 +61,7 @@ export function useImageGeneratorMain() {
   const historyPanel = useHistoryPanel();
 
   const generateImageMutation = useGenerateImage();
-  const generate = useCallback(
+  const _generate = useCallback(
     async (
       prompt: string,
       width?: number,
@@ -71,7 +72,7 @@ export function useImageGeneratorMain() {
       aspectRatio?: string,
       baseImageUrl?: string,
       secondImageUrl?: string // NEW: Second image parameter
-    ): Promise<any> => {
+    ): Promise<GenerationDto> => {
       return await generateImageMutation.mutateAsync({
         prompt,
         width,
@@ -103,7 +104,7 @@ export function useImageGeneratorMain() {
       providerId: string,
       modelId: string,
       enhancePrompt: (prompt: string) => string,
-      generateFn: any,
+      generateFn: (prompt: string, width?: number, height?: number, safetyTolerance?: number, providerId?: string, modelId?: string, aspectRatio?: string, baseImageUrl?: string, secondImageUrl?: string) => Promise<GenerationDto>,
       setCurrentImage: (image: string | null) => void,
       baseImageUrl?: string,
       secondImageUrl?: string // NEW: Second image parameter
@@ -130,9 +131,17 @@ export function useImageGeneratorMain() {
     styleValues: formState.styleValues,
     fileUpload,
     latestGeneration,
-    enhancePromptWithStyles: promptEnhancement.enhancePromptWithStyles,
-    orchestrationHandleGenerate,
-    generate,
+    enhancePromptWithStyles: (prompt: string, styles: Record<string, string>) => {
+      const styleValues = {
+        vibe: styles.vibe || '',
+        lighting: styles.lighting || '',
+        shotType: styles.shotType || '',
+        colorTheme: styles.colorTheme || ''
+      };
+      return promptEnhancement.enhancePromptWithStyles(prompt, styleValues);
+    },
+    orchestrationHandleGenerate: (prompt: string, aspectRatio: string, safetyTolerance: number, providerId: string, modelId: string, enhancePrompt: (prompt: string) => string, generate: unknown, setCurrentImage: (image: string | null) => void, baseImageUrl?: string, secondImageUrl?: string) => orchestrationHandleGenerate(prompt, aspectRatio, safetyTolerance, providerId, modelId, enhancePrompt, _generate, setCurrentImage, baseImageUrl, secondImageUrl),
+    generate: generateImageMutation,
     setCurrentGeneratedImage: formState.setCurrentGeneratedImage,
     capabilities
   });

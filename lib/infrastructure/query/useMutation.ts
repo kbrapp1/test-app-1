@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
  */
 
 // Hook for mutations with optimistic updates
-export function useApiMutation<TData = any, TVariables = any>(
+export function useApiMutation<TData = unknown, TVariables = unknown>(
   mutationFn: (variables: TVariables) => Promise<TData>,
   options: {
     onSuccess?: (data: TData, variables: TVariables) => void;
@@ -14,7 +14,7 @@ export function useApiMutation<TData = any, TVariables = any>(
     invalidateQueries?: string[];
     optimisticUpdate?: {
       queryKey: string[];
-      updater: (oldData: any, variables: TVariables) => any;
+      updater: (oldData: unknown, variables: TVariables) => unknown;
     };
   } = {}
 ) {

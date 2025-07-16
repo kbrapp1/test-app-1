@@ -26,7 +26,7 @@ export class FolderStateService {
    */
   static updateFolderData(
     rootFolders: FolderNode[], 
-    updatedFolder: any
+    updatedFolder: { id: string; name: string; [key: string]: unknown }
   ): FolderNode[] {
     return findAndUpdateNode(rootFolders, updatedFolder.id, (node) => ({
       ...node,
@@ -46,7 +46,7 @@ export class FolderStateService {
    * Validates if folders should be updated
    */
   static shouldUpdateFolders(
-    newFolders: any[], 
+    newFolders: unknown[], 
     currentFolders: FolderNode[]
   ): boolean {
     return !(newFolders.length === 0 && currentFolders.length > 0);
@@ -82,7 +82,7 @@ export class FolderStateService {
    * Creates state update with incremented version
    */
   static createStateUpdate(
-    updates: Record<string, any>, 
+    updates: Record<string, unknown>, 
     currentVersion: number
   ) {
     return {

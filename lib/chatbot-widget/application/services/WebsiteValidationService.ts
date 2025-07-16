@@ -66,7 +66,7 @@ export class WebsiteValidationService {
           if (!isAccessible) {
             errors.push('Website is not accessible or blocks crawlers');
           }
-        } catch (error) {
+        } catch {
           warnings.push('Could not verify website accessibility - proceeding with caution');
         }
       }
@@ -178,7 +178,7 @@ export class WebsiteValidationService {
   private validateCrawlSettings(
     websiteSource: WebsiteSource, 
     errors: string[], 
-    warnings: string[]
+    _warnings: string[]
   ): void {
     if (websiteSource.crawlSettings.maxPages > 200) {
       errors.push('Maximum pages cannot exceed 200');
@@ -226,7 +226,7 @@ export class WebsiteValidationService {
       // Consider 2xx and 3xx status codes as accessible
       return response.ok || (response.status >= 300 && response.status < 400);
       
-    } catch (error) {
+    } catch {
       // If fetch fails (network error, timeout, etc.), consider not accessible
       return false;
     }

@@ -18,7 +18,7 @@ export interface OrganizationContext {
 
 export interface OrganizationContextError extends Error {
   code: 'UNAUTHORIZED' | 'ACCESS_DENIED' | 'NOT_FOUND' | 'VALIDATION_ERROR' | 'DATABASE_ERROR';
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export class OrganizationContextService {

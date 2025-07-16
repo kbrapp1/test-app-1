@@ -100,8 +100,8 @@ export function useAssetDelete() {
       },
       optimisticUpdate: {
         queryKey: ['assets'],
-        updater: (oldAssets: Asset[], deletedAssetId: string) => 
-          oldAssets?.filter(asset => asset.id !== deletedAssetId) || []
+        updater: (oldAssets: unknown, deletedAssetId: string) => 
+          (oldAssets as Asset[])?.filter(asset => asset.id !== deletedAssetId) || []
       }
     }
   );

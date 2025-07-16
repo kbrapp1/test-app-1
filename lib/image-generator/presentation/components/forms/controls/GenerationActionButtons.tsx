@@ -37,7 +37,7 @@ export const GenerationActionButtons: React.FC<GenerationActionButtonsProps> = (
     try {
       await deleteGeneration.mutateAsync(generation.id);
       setShowDeleteConfirm(false);
-    } catch (error) {
+    } catch {
       // Error handling is now done in the hook via toast notifications
       setShowDeleteConfirm(false);
     }

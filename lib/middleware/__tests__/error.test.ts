@@ -28,7 +28,7 @@ describe('Error Middleware', () => {
   describe('withErrorHandling', () => {
     it('should pass through successful responses', async () => {
       const handler = () => NextResponse.json({ success: true });
-      const wrappedHandler = withErrorHandling(handler);
+      const wrappedHandler = withErrorHandling(handler as any);
       const response = await wrappedHandler();
       
       const data = await response.json();

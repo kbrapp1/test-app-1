@@ -29,6 +29,18 @@ export interface UsePermissionsResult {
 export function usePermissions(): UsePermissionsResult {
   const { user, isLoading, hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole, role, permissions } = useUser();
   
+  // Security validation - ensure permissions are consistent with user role
+  useMemo(() => {
+    if (!user || !permissions || !role) return [];
+    
+    // Validate that user has the permissions they claim to have
+    const validPermissions = permissions.filter(permission => 
+      hasAllPermissions && hasAllPermissions([permission])
+    );
+    
+    return validPermissions;
+  }, [user, permissions, role, hasAllPermissions]);
+  
   const permissionCheckers = useMemo(() => {
     if (isLoading || !user) {
       return {

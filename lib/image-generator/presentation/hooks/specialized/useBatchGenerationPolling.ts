@@ -143,12 +143,12 @@ export function useBatchGenerationPolling(generationIds: string[], enabled: bool
         
         // Single update to the infinite cache for all changed generations
         const infiniteQueryKey = ['image-generations', 'list', { filters: {} }, 'infinite'];
-        queryClient.setQueryData(infiniteQueryKey, (oldData: any) => {
-          if (!oldData?.pages) return oldData;
+        queryClient.setQueryData(infiniteQueryKey, (oldData: unknown) => {
+          if (!oldData || typeof oldData !== 'object' || !('pages' in oldData)) return oldData;
           
           // Update all generations in the cache pages in one operation
-          const newPages = oldData.pages.map((page: any[]) => 
-            page.map((g: any) => {
+          const newPages = (oldData as { pages: GenerationDto[][] }).pages.map((page: GenerationDto[]) => 
+            page.map((g: GenerationDto) => {
               const updated = updatedGenerations.find(ug => ug.id === g.id);
               return updated || g;
             })

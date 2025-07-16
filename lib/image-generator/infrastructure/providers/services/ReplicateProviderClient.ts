@@ -93,7 +93,7 @@ export class ReplicateProviderClient {
   /**
    * Extract image URL from Replicate output
    */
-  private extractImageUrl(output: any): string | undefined {
+  private extractImageUrl(output: unknown): string | undefined {
     if (!output) return undefined;
     
     // Handle different output formats from Replicate
@@ -105,8 +105,8 @@ export class ReplicateProviderClient {
       return output[0];
     }
     
-    if (output.image_url) {
-      return output.image_url;
+    if (output && typeof output === 'object' && 'image_url' in output) {
+      return (output as { image_url: string }).image_url;
     }
     
     return undefined;

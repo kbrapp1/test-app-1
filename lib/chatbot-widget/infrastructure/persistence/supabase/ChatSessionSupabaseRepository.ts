@@ -13,7 +13,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '../../../../supabase/server';
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
 import { ChatSession } from '../../../domain/entities/ChatSession';
-import { ChatSessionMapper, RawChatSessionDbRecord } from './mappers/ChatSessionMapper';
+import { ChatSessionMapper, RawChatSessionDbRecord as _RawChatSessionDbRecord } from './mappers/ChatSessionMapper';
 import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { 
   ChatSessionQueryService,

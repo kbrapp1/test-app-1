@@ -103,8 +103,8 @@ export function useBulkAssetOperations() {
         },
         optimisticUpdate: {
           queryKey: ['assets'],
-          updater: (oldAssets: Asset[], deletedAssetIds: string[]) =>
-            oldAssets?.filter(asset => !deletedAssetIds.includes(asset.id)) || []
+          updater: (oldAssets: unknown, deletedAssetIds: string[]) =>
+            (oldAssets as Asset[])?.filter(asset => !deletedAssetIds.includes(asset.id)) || []
         }
       }
     ),

@@ -60,6 +60,7 @@ export interface ChatbotErrorContext {
     cpuUsage: number;
   };
   metadata?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export class ErrorTrackingFacade {
@@ -81,7 +82,7 @@ export class ErrorTrackingFacade {
   // ===== CONVERSATION & MESSAGE PROCESSING ERRORS =====
 
   async trackMessageProcessingError(reason: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new MessageProcessingError(reason, context);
+    const error = new MessageProcessingError(reason, context as Record<string, unknown>);
     await this.trackError(error, context);
   }
 
@@ -327,16 +328,20 @@ export class ErrorTrackingFacade {
   private sanitizeUnifiedResult(result: unknown): Record<string, unknown> | null {
     if (!result) return null;
     
-    const resultObj = result as Record<string, any>;
+    const resultObj = result as Record<string, unknown>;
+    
+    const analysis = resultObj.analysis as Record<string, unknown> | undefined;
+    const response = analysis?.response as Record<string, unknown> | undefined;
+    const content = response?.content as string | undefined;
     
     return {
-      hasAnalysis: !!resultObj.analysis,
-      hasResponse: !!resultObj.analysis?.response,
-      hasContent: !!resultObj.analysis?.response?.content,
-      contentLength: resultObj.analysis?.response?.content?.length || 0,
+      hasAnalysis: !!analysis,
+      hasResponse: !!response,
+      hasContent: !!content,
+      contentLength: content?.length || 0,
       structure: Object.keys(resultObj).join(', '),
-      analysisKeys: resultObj.analysis ? Object.keys(resultObj.analysis).join(', ') : null,
-      responseKeys: resultObj.analysis?.response ? Object.keys(resultObj.analysis.response).join(', ') : null
+      analysisKeys: analysis ? Object.keys(analysis).join(', ') : null,
+      responseKeys: response ? Object.keys(response).join(', ') : null
     };
   }
 } 

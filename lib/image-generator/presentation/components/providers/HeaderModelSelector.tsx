@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ModelSelector } from './ModelSelector';
 import { ProviderId, ModelId } from '../../../domain/value-objects/Provider';
+import { ProviderOption } from './ProviderSelector';
 
 interface HeaderModelSelectorProps {
   selectedProviderId: ProviderId;
   selectedModelId: ModelId;
-  availableProviders: any[];
+  availableProviders: ProviderOption[];
   onProviderChange: (providerId: ProviderId, modelId: ModelId) => void;
   disabled: boolean;
 }

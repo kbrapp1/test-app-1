@@ -10,11 +10,11 @@
  * - Keep under 250 lines - focus on deduplication logic
  */
 
-interface PendingRequest {
-  promise: Promise<any>;
+interface PendingRequest<T = unknown> {
+  promise: Promise<T>;
   timestamp: number;
   actionId: string;
-  parameters: any[];
+  parameters: unknown[];
   deduplicationCount: number;
   domain?: string;
 }
@@ -51,14 +51,14 @@ export class ApiDeduplicationService {
    */
   async deduplicateServerAction<T>(
     actionId: string,
-    parameters: any[],
+    parameters: unknown[],
     action: () => Promise<T>,
     domain?: string
   ): Promise<T> {
     ApiDeduplicationService.globalCallCount++;
     
     // Track globally for monitoring
-    (globalThis as any).__serverActionCallCount = ApiDeduplicationService.globalCallCount;
+    (globalThis as { __serverActionCallCount?: number }).__serverActionCallCount = ApiDeduplicationService.globalCallCount;
     
     // Determine timeout based on domain or action ID
     const timeout = this.getTimeoutForDomain(domain, actionId);
@@ -86,7 +86,7 @@ export class ApiDeduplicationService {
         this.logSecurityEvent(actionId, existing.deduplicationCount, domain);
       }
       
-      return existing.promise;
+      return existing.promise as Promise<T>;
     }
 
     // Execute new request
@@ -172,7 +172,7 @@ export class ApiDeduplicationService {
   /**
    * Generate unique key for request deduplication
    */
-  private generateKey(actionId: string, parameters: any[]): string {
+  private generateKey(actionId: string, parameters: unknown[]): string {
     // For save operations, include timestamp to make them more unique
     // This prevents legitimate save operations from being deduplicated
     const saveOperations = ['saveTtsAudioToDam', 'saveAsNewTextAsset', 'updateAssetText'];

@@ -44,7 +44,7 @@ export function useImagePreloader(generations: GenerationDto[], currentIndex: nu
       
       // Set priority for modern browsers
       if ('fetchPriority' in link) {
-        (link as any).fetchPriority = priority;
+        (link as HTMLLinkElement & { fetchPriority: string }).fetchPriority = priority;
       }
 
       link.onload = () => {

@@ -32,7 +32,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 }
 
 // Hook for standard API queries
-export function useApiQuery<T = any>(
+export function useApiQuery<T = unknown>(
   queryKey: string | (string | number | boolean)[],
   url: string,
   options: RequestInit = {},

@@ -88,7 +88,7 @@ export function ProfileForm() {
     if (isOrgLoading || !activeOrganizationId) return;
 
     if (currentContext) {
-      const currentOrg = accessibleOrganizations.find((org: any) => org.organization_id === activeOrganizationId);
+      const currentOrg = accessibleOrganizations.find((org: { organization_id: string; organization_name: string }) => org.organization_id === activeOrganizationId);
       setOrganizationName(currentOrg?.organization_name || 'Unknown Organization');
 
       // Always check super admin status first, regardless of organization
@@ -130,7 +130,8 @@ export function ProfileForm() {
       await refreshProfile(); // Refresh the shared profile state
       form.reset({ name: data.name });
       
-    } catch (_error) {
+    } catch (error) {
+      console.error('Profile update error:', error);
       toast({ variant: "destructive", title: "Error", description: "Failed to update profile. Please try again." });
     } finally {
       setIsFormLoading(false);

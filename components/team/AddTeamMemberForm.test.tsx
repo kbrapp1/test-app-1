@@ -58,7 +58,14 @@ global.fetch = mockFetch;
 
 // Mock next/image
 vi.mock('next/image', () => ({
-    default: (props: { src: string; alt: string; width?: number; height?: number; priority?: boolean; className?: string }) => {
+    default: (props: {
+        src: string;
+        alt: string;
+        width?: number;
+        height?: number;
+        priority?: boolean;
+        className?: string;
+    }) => {
         // eslint-disable-next-line @next/next/no-img-element
         return <img src={props.src} alt={props.alt || ""} className={props.className} />;
     },

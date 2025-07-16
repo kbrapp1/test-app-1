@@ -27,7 +27,7 @@ export type SystemQueryOptions = {
 };
 
 // Generic database query function - TENANT-SCOPED
-export const queryData = async <T = any>(
+export const queryData = async <T = unknown>(
   supabase: SupabaseClient,
   table: string,
   selectFields: string,
@@ -75,20 +75,21 @@ export const queryData = async <T = any>(
 
   try {
     // Define the shouldRetry logic
-    const shouldRetryQuery = (error: any, attempt: number): boolean => {
+    const shouldRetryQuery = (error: unknown, attempt: number): boolean => {
       // Basic check: Retry up to 3 times if it's not a clear client/query error
       // Supabase errors often have a 'code' property (e.g., Postgres error codes like 'PGRSTxxx')
       // Avoid retrying on common query issues like 'PGRST116' (invalid syntax/param) or auth errors (401/403 status)
-      const isAuthError = error?.status === 401 || error?.status === 403;
-      const isQuerySyntaxError = error?.code === 'PGRST116'; // Example, add more known non-retryable codes if found
+      const errorObj = error as any;
+      const isAuthError = errorObj?.status === 401 || errorObj?.status === 403;
+      const isQuerySyntaxError = errorObj?.code === 'PGRST116'; // Example, add more known non-retryable codes if found
       
       if (isAuthError || isQuerySyntaxError) {
-        logger.warn({ message: `Non-retryable error encountered on attempt ${attempt}`, code: error?.code, context: { table, error } });
+        logger.warn({ message: `Non-retryable error encountered on attempt ${attempt}`, code: errorObj?.code, context: { table, error } });
         return false; // Do not retry auth or syntax errors
       }
       
       // Otherwise, assume it might be transient (network, temp load) and retry up to 3 times
-       logger.info({ message: `Potential transient error on attempt ${attempt}. Retrying queryData.`, code: error?.code, context: { table, error } });
+       logger.info({ message: `Potential transient error on attempt ${attempt}. Retrying queryData.`, code: errorObj?.code, context: { table, error } });
       return attempt < 3; // Retry up to 2 times (total 3 attempts)
     };
 
@@ -103,12 +104,13 @@ export const queryData = async <T = any>(
     // If retry succeeded, return data
     return { data: data as T[] | null, error: null };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // This block now catches errors after retries failed or if shouldRetry returned false
     // Or catches unexpected errors from executeQuery setup itself (less likely)
     
-    const errorCode = error?.code || 'UNKNOWN_DB_ERROR';
-    const errorMessage = error?.message || 'An unknown database error occurred';
+    const errorObj = error as { code?: string; message?: string };
+    const errorCode = errorObj?.code || 'UNKNOWN_DB_ERROR';
+    const errorMessage = errorObj?.message || 'An unknown database error occurred';
 
     const dbError = new DatabaseError(
       `Failed querying table ${table} after retries: ${errorMessage}`,
@@ -118,8 +120,8 @@ export const queryData = async <T = any>(
         table,
         selectFields,
         options,
-        stack: error?.stack,
-        status: error?.status, // Include status if available
+        stack: (error as any)?.stack,
+        status: (error as any)?.status, // Include status if available
       }
     );
     
@@ -136,7 +138,7 @@ export const queryData = async <T = any>(
 };
 
 // AI: System-level query function for non-tenant-scoped operations
-export const querySystemData = async <T = any>(
+export const querySystemData = async <T = unknown>(
   supabase: SupabaseClient,
   table: string,
   selectFields: string,
@@ -179,16 +181,17 @@ export const querySystemData = async <T = any>(
   };
 
   try {
-    const shouldRetryQuery = (error: any, attempt: number): boolean => {
-      const isAuthError = error?.status === 401 || error?.status === 403;
-      const isQuerySyntaxError = error?.code === 'PGRST116';
+    const shouldRetryQuery = (error: unknown, attempt: number): boolean => {
+      const errorObj = error as any;
+      const isAuthError = errorObj?.status === 401 || errorObj?.status === 403;
+      const isQuerySyntaxError = errorObj?.code === 'PGRST116';
       
       if (isAuthError || isQuerySyntaxError) {
-        logger.warn({ message: `Non-retryable error encountered on attempt ${attempt}`, code: error?.code, context: { table, error } });
+        logger.warn({ message: `Non-retryable error encountered on attempt ${attempt}`, code: errorObj?.code, context: { table, error } });
         return false;
       }
       
-      logger.info({ message: `Potential transient error on attempt ${attempt}. Retrying querySystemData.`, code: error?.code, context: { table, error } });
+      logger.info({ message: `Potential transient error on attempt ${attempt}. Retrying querySystemData.`, code: errorObj?.code, context: { table, error } });
       return attempt < 3;
     };
 
@@ -201,9 +204,10 @@ export const querySystemData = async <T = any>(
     
     return { data: data as T[] | null, error: null };
 
-  } catch (error: any) {
-    const errorCode = error?.code || 'UNKNOWN_DB_ERROR';
-    const errorMessage = error?.message || 'An unknown database error occurred';
+  } catch (error: unknown) {
+    const errorObj = error as { code?: string; message?: string; stack?: string; status?: number };
+    const errorCode = errorObj?.code || 'UNKNOWN_DB_ERROR';
+    const errorMessage = errorObj?.message || 'An unknown database error occurred';
 
     const dbError = new DatabaseError(
       `Failed querying system table ${table} after retries: ${errorMessage}`,
@@ -213,8 +217,8 @@ export const querySystemData = async <T = any>(
         table,
         selectFields,
         options,
-        stack: error?.stack,
-        status: error?.status,
+        stack: errorObj?.stack,
+        status: errorObj?.status,
       }
     );
     
@@ -232,7 +236,7 @@ export const querySystemData = async <T = any>(
 
 // Generic database query function - SYSTEM-SCOPED (for non-tenant data)
 export const queryDataSystem = async (
-  supabase: any,
+  supabase: SupabaseClient,
   table: string,
   columns: string = '*',
   options: SystemQueryOptions = {}
@@ -272,19 +276,19 @@ export const queryDataSystem = async (
 
 // Generic database insert function - SYSTEM-SCOPED (for non-tenant data)
 export const insertDataSystem = async (
-  supabase: any,
+  supabase: SupabaseClient,
   table: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ) => {
   // AI: System-level insert without required organization context
   return await supabase.from(table).insert(data).select().single();
 };
 
 // Insert data utility - TENANT-SCOPED
-export const insertData = async <T = any>(
+export const insertData = async <T = unknown>(
   supabase: SupabaseClient,
   table: string,
-  insertValues: Record<string, any>,
+  insertValues: Record<string, unknown>,
   organizationId: string // AI: Required parameter, not optional
 ): Promise<{ data: T | null; error: DatabaseError | null }> => {
   try {
@@ -309,11 +313,13 @@ export const insertData = async <T = any>(
       return { data: null, error: dbError };
     }
     return { data: result as T | null, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     const dbError = new DatabaseError(
-      `Unexpected error inserting into table ${table}: ${error.message}`,
+      `Unexpected error inserting into table ${table}: ${errorMessage}`,
       'DB_UNEXPECTED_INSERT_ERROR',
-      { originalError: error, table, insertValues, stack: error.stack }
+      { originalError: error, table, insertValues, stack: errorStack }
     );
     logger.error({ 
       message: dbError.message,
@@ -358,11 +364,13 @@ export const deleteData = async (
       return { success: false, error: dbError };
     }
     return { success: true, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     const dbError = new DatabaseError(
-      `Unexpected error deleting from table ${table}: ${error.message}`,
+      `Unexpected error deleting from table ${table}: ${errorMessage}`,
       'DB_UNEXPECTED_DELETE_ERROR',
-      { originalError: error, table, matchColumn, matchValue, organizationId, stack: error.stack }
+      { originalError: error, table, matchColumn, matchValue, organizationId, stack: errorStack }
     );
     logger.error({ 
       message: dbError.message,

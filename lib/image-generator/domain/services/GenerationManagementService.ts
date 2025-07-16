@@ -107,7 +107,7 @@ export class GenerationManagementService {
   /**
    * Create DAM metadata from generation
    */
-  static createDAMMetadata(generation: Generation): Record<string, any> {
+  static createDAMMetadata(generation: Generation): Record<string, unknown> {
     return {
       title: GenerationDisplayService.getDisplayTitle(generation),
       description: generation.prompt.toString(),

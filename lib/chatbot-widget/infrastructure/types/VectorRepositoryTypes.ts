@@ -20,7 +20,7 @@ export interface VectorKnowledgeItem {
   sourceUrl?: string;
   embedding: number[];
   contentHash: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface VectorSearchOptions {
@@ -71,13 +71,14 @@ export interface VectorStorageRecord {
   source_url?: string;
   vector: number[];
   content_hash: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   updated_at: string;
 }
 
 export interface VectorQueryContext {
   organizationId: string;
   chatbotConfigId: string;
+  [key: string]: unknown;
 }
 
 export interface VectorDeletionContext extends VectorQueryContext {
@@ -116,7 +117,7 @@ export interface VectorOperationResult {
   itemsProcessed: number;
   errors: string[];
   warnings: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SupabaseVectorRow {
@@ -129,7 +130,7 @@ export interface SupabaseVectorRow {
   vector: number[] | string; // Can be array or string from Supabase
   updated_at: string;
   created_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   id?: string;
 }
 

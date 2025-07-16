@@ -1,4 +1,5 @@
 import { AggregateRoot, DomainEvent } from '../../domain/common/AggregateRoot';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface UnitOfWork {
   /**
@@ -39,7 +40,7 @@ export class SupabaseUnitOfWork implements UnitOfWork {
   private isCommitting = false;
 
   constructor(
-    private readonly supabase: any // Supabase client
+    private readonly supabase: SupabaseClient
   ) {}
 
   registerNew(aggregate: AggregateRoot): void {

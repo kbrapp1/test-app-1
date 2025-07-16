@@ -59,7 +59,7 @@ export class ReplicateProvider implements BaseProvider {
       // Simple health check - try to get account info
       await this.client.accounts.current();
       return true;
-    } catch (_error) {
+    } catch {
       return false;
     }
   }
@@ -133,7 +133,7 @@ export class ReplicateProvider implements BaseProvider {
   /**
    * Run a model synchronously (alternative to predictions API)
    */
-  async run(model: `${string}/${string}` | `${string}/${string}:${string}`, input: Record<string, unknown>): Promise<any> {
+  async run(model: `${string}/${string}` | `${string}/${string}:${string}`, input: Record<string, unknown>): Promise<unknown> {
     if (!this.client) {
       throw new Error('Replicate client not connected. Call connect() first.');
     }
@@ -145,7 +145,17 @@ export class ReplicateProvider implements BaseProvider {
   /**
    * List available models
    */
-  async listModels(): Promise<any[]> {
+  async listModels(): Promise<Array<{
+    url: string;
+    owner: string;
+    name: string;
+    description?: string;
+    visibility: 'public' | 'private';
+    github_url?: string;
+    paper_url?: string;
+    license_url?: string;
+    cover_image_url?: string;
+  }>> {
     if (!this.client) {
       throw new Error('Replicate client not connected. Call connect() first.');
     }

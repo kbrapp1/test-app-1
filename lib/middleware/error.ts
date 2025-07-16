@@ -13,10 +13,10 @@ export type ErrorMiddlewareConfig = {
  * Wraps an API route handler with error handling
  */
 export function withErrorHandling(
-  handler: Function,
+  handler: (...args: unknown[]) => Promise<NextResponse>,
   config: ErrorMiddlewareConfig = { logErrors: true, includeStackTrace: false }
 ) {
-  return async function errorHandler(...args: any[]) {
+  return async function errorHandler(...args: unknown[]) {
     try {
       return await handler(...args);
     } catch (error) {
@@ -72,7 +72,7 @@ export function withErrorHandling(
 /**
  * HOC to add error handling to server actions
  */
-export function withServerActionErrorHandling<T extends (...args: any[]) => Promise<any>>(
+export function withServerActionErrorHandling<T extends (...args: unknown[]) => Promise<unknown>>(
   action: T,
   config: ErrorMiddlewareConfig = { logErrors: true, includeStackTrace: false }
 ): T {

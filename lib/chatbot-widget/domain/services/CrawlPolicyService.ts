@@ -114,7 +114,7 @@ export class CrawlPolicyService {
       }
       
       return false;
-    } catch {
+    } catch (_error) {
       return false; // Invalid URLs should not be crawled
     }
   }

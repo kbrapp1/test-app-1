@@ -8,7 +8,15 @@ const MockDynamicIcon = (_props: LucideProps) => <div data-testid="icon-dynamic"
 
 // Mock next/link to inspect its props
 vi.mock('next/link', () => ({
-  default: ({ children, href, legacyBehavior }: { children: React.ReactNode, href: string, legacyBehavior?: boolean }) => (
+  default: ({
+    children,
+    href,
+    legacyBehavior
+  }: {
+    children: React.ReactNode;
+    href: string;
+    legacyBehavior?: boolean;
+  }) => (
     <div data-testid="next-link" data-href={href} data-legacy={legacyBehavior}>
       {children}
     </div>

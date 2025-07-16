@@ -131,7 +131,7 @@ export function createEmptyStatistics(processingTimeMs: number): ProcessingStati
  * Filter and validate FAQs
  * AI INSTRUCTIONS: FAQ data sanitization and validation
  */
-export function filterValidFaqs(faqs: any[]): Array<{
+export function filterValidFaqs(faqs: unknown[]): Array<{
   id: string;
   question: string;
   answer: string;
@@ -139,27 +139,39 @@ export function filterValidFaqs(faqs: any[]): Array<{
   isActive: boolean;
 }> {
   return faqs
-    .filter(faq => faq.question?.trim() && faq.answer?.trim())
-    .map(faq => ({
-      id: faq.id || `faq_${Date.now()}_${Math.random()}`,
-      question: faq.question.trim(),
-      answer: faq.answer.trim(),
-      category: faq.category?.trim() || 'general',
-      isActive: faq.isActive !== false
-    }));
+    .filter((faq: unknown) => {
+      const f = faq as Record<string, unknown>;
+      return f.question?.toString().trim() && f.answer?.toString().trim();
+    })
+    .map((faq: unknown) => {
+      const f = faq as Record<string, unknown>;
+      return {
+        id: f.id?.toString() || `faq_${Date.now()}_${Math.random()}`,
+        question: f.question?.toString().trim() || '',
+        answer: f.answer?.toString().trim() || '',
+        category: f.category?.toString().trim() || 'general',
+        isActive: f.isActive !== false
+      };
+    });
 }
 
 /**
  * Check if form has any content
  * AI INSTRUCTIONS: Content presence validation
  */
-export function hasFormContent(formData: any): boolean {
+export function hasFormContent(formData: unknown): boolean {
+  const data = formData as Record<string, unknown>;
+  const hasStringContent = (field: unknown) => typeof field === 'string' && field.trim();
+  
   return !!(
-    formData.companyInfo?.trim() ||
-    formData.productCatalog?.trim() ||
-    formData.supportDocs?.trim() ||
-    formData.complianceGuidelines?.trim() ||
-    formData.faqs.some((faq: any) => faq.question?.trim() && faq.answer?.trim())
+    hasStringContent(data.companyInfo) ||
+    hasStringContent(data.productCatalog) ||
+    hasStringContent(data.supportDocs) ||
+    hasStringContent(data.complianceGuidelines) ||
+    (Array.isArray(data.faqs) && data.faqs.some((faq: unknown) => {
+      const faqObj = faq as Record<string, unknown>;
+      return hasStringContent(faqObj.question) && hasStringContent(faqObj.answer);
+    }))
   );
 }
 
