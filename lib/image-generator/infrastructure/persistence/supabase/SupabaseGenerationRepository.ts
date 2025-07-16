@@ -167,4 +167,6 @@ export class SupabaseGenerationRepository implements GenerationRepository {
       return error(err instanceof Error ? err.message : 'Unknown error');
     }
   }
+
+
 } 

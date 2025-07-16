@@ -1,7 +1,7 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationStatusDomainService } from '../../domain/services/GenerationStatusDomainService';
 import { success, error, Result } from '../common/Result';
-import { ProviderStatusCache, ProviderStatusResponse } from './services/ProviderStatusCache';
+import { ProviderStatusCache } from './services/ProviderStatusCache';
 import { ProviderConfigManager, ProviderConfig } from './services/ProviderConfigManager';
 import { ProviderStatusFetcher } from './services/ProviderStatusFetcher';
 import { ProviderBatchProcessor } from './services/ProviderBatchProcessor';

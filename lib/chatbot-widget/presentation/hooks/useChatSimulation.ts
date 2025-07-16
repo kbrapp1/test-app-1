@@ -43,8 +43,8 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<SimulatedUserProfile>(defaultUserProfile);
-  const [testingGoals, setTestingGoals] = useState<TestingGoal[]>(defaultTestingGoals);
-  const [responseMode, setResponseMode] = useState<'mock' | 'live'>('live');
+  const [testingGoals, _setTestingGoals] = useState<TestingGoal[]>(defaultTestingGoals);
+  const [responseMode, _setResponseMode] = useState<'mock' | 'live'>('live');
   const [simulationResults, setSimulationResults] = useState<SimulationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiDebugInfo, setApiDebugInfo] = useState<DebugInfoDto | null>(null);

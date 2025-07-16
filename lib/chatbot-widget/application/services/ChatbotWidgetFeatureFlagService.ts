@@ -8,7 +8,7 @@
  * - Support conditional cache warming based on feature availability
  */
 
-import { checkFeatureFlag, isFeatureEnabled } from '@/lib/organization/application/services/FeatureFlagService';
+import { checkFeatureFlag, isFeatureEnabled } from '../../../organization/application/services/FeatureFlagService';
 
 /**
  * Check if chatbot widget feature is enabled (throws if disabled)

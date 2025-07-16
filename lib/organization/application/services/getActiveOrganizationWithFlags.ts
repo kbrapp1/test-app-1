@@ -1,5 +1,5 @@
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { Organization } from '@/lib/auth/domain/value-objects/Organization';
+import { createClient as createSupabaseServerClient } from '../../../supabase/server';
+import { Organization } from '../../../auth/domain/value-objects/Organization';
 
 /**
  * Fetches the full active organization entity, including feature flags.

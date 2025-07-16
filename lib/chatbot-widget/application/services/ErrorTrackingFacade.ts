@@ -261,7 +261,10 @@ export class ErrorTrackingFacade {
         const persistenceData: ErrorPersistenceData = {
           errorCode: error.code,
           errorMessage: error.message,
-          errorContext: { ...(error.context || {}), ...sanitizedContext },
+          errorContext: { 
+            ...(error.context && typeof error.context === 'object' ? error.context : {}), 
+            ...sanitizedContext 
+          },
           timestamp: error.timestamp || new Date(),
           stack: error.stack
         };

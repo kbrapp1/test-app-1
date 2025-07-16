@@ -8,13 +8,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateChatbotConfig, updateKnowledgeBase } from '../actions/configActions';
-import { UpdateChatbotConfigDto, FaqDto, ChatbotConfigDto } from '../../application/dto/ChatbotConfigDto';
+import { updateKnowledgeBase } from '../actions/configActions';
+import { FaqDto, ChatbotConfigDto } from '../../application/dto/ChatbotConfigDto';
 import { 
   KnowledgeBaseFormDto, 
   FaqFormDto,
-  KnowledgeBaseUpdateRequestDto,
-  FaqOperationDto 
+  KnowledgeBaseUpdateRequestDto
 } from '../../application/dto/KnowledgeBaseFormDto';
 
 export interface KnowledgeBaseFormData {

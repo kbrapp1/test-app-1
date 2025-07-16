@@ -4,7 +4,7 @@ export interface DomainEvent {
   eventType: string;
   occurredOn: Date;
   eventVersion: number;
-  eventData?: Record<string, any>;
+  eventData?: Record<string, unknown>;
 }
 
 export abstract class AggregateRoot {
@@ -39,7 +39,7 @@ export abstract class AggregateRoot {
   // Factory method for creating domain events
   protected createEvent(
     eventType: string,
-    eventData?: Record<string, any>
+    eventData?: Record<string, unknown>
   ): DomainEvent {
     return {
       eventId: crypto.randomUUID(),

@@ -13,21 +13,33 @@ import { getCrawledPages } from '../../actions/websiteSourcesActions';
 import { CrawledPageInfo } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
 /** Transform Database Page to UI Format */
-function transformPageToUIFormat(page: any): CrawledPageInfo {
+function transformPageToUIFormat(page: unknown): CrawledPageInfo {
+  const pageData = page as {
+    url?: string;
+    title?: string;
+    content?: string;
+    depth?: number;
+    crawledAt?: string;
+    status?: string;
+    errorMessage?: string;
+    responseTime?: number;
+    statusCode?: number;
+  };
+  
   return {
     id: generatePageId(),
-    url: page.url,
-    title: page.title,
-    content: page.content || '',
+    url: pageData.url || '',
+    title: pageData.title || '',
+    content: pageData.content || '',
     category: 'general',
     tags: ['website', 'crawled'],
-    depth: page.depth,
-    contentLength: page.content ? page.content.length : 0,
-    crawledAt: page.crawledAt,
-    status: page.status,
-    errorMessage: page.errorMessage,
-    responseTime: page.responseTime,
-    statusCode: page.statusCode
+    depth: pageData.depth || 0,
+    contentLength: pageData.content ? pageData.content.length : 0,
+    crawledAt: pageData.crawledAt ? new Date(pageData.crawledAt) : new Date(),
+    status: (pageData.status as 'success' | 'failed' | 'skipped') || 'skipped',
+    errorMessage: pageData.errorMessage || '',
+    responseTime: pageData.responseTime || 0,
+    statusCode: pageData.statusCode || 0
   };
 }
 
@@ -48,18 +60,19 @@ function extractBaseUrl(url: string): string {
   try {
     const urlObj = new URL(url);
     return `${urlObj.protocol}//${urlObj.hostname}`;
-  } catch (error) {
+  } catch (_error) {
     return url || 'unknown';
   }
 }
 
 /** Group Pages by Base URL */
-function groupPagesByBaseUrl(pages: any[]): Record<string, CrawledPageInfo[]> {
+function groupPagesByBaseUrl(pages: unknown[]): Record<string, CrawledPageInfo[]> {
   const groupedData: Record<string, CrawledPageInfo[]> = {};
   
   pages.forEach(page => {
     const crawledPageInfo = transformPageToUIFormat(page);
-    const baseUrl = extractBaseUrl(page.url);
+    const pageData = page as { url?: string };
+    const baseUrl = extractBaseUrl(pageData.url || '');
     
     if (!groupedData[baseUrl]) {
       groupedData[baseUrl] = [];
@@ -73,18 +86,21 @@ function groupPagesByBaseUrl(pages: any[]): Record<string, CrawledPageInfo[]> {
 /** Map Base URLs to Source IDs */
 function mapPagesToSourceIds(
   groupedData: Record<string, CrawledPageInfo[]>,
-  sources: any[]
+  sources: unknown[]
 ): Record<string, CrawledPageInfo[]> {
   const sourceIdMappedData: Record<string, CrawledPageInfo[]> = {};
   
   sources.forEach(source => {
-    const sourceBaseUrl = extractBaseUrl(source.url);
+    const sourceData = source as { id?: string; url?: string };
+    const sourceBaseUrl = extractBaseUrl(sourceData.url || '');
     
     // Try base URL match first, then exact URL match
-    if (groupedData[sourceBaseUrl]) {
-      sourceIdMappedData[source.id] = groupedData[sourceBaseUrl];
-    } else if (groupedData[source.url]) {
-      sourceIdMappedData[source.id] = groupedData[source.url];
+    if (sourceData.id) {
+      if (groupedData[sourceBaseUrl]) {
+        sourceIdMappedData[sourceData.id] = groupedData[sourceBaseUrl];
+      } else if (sourceData.url && groupedData[sourceData.url]) {
+        sourceIdMappedData[sourceData.id] = groupedData[sourceData.url];
+      }
     }
   });
   
@@ -92,7 +108,7 @@ function mapPagesToSourceIds(
 }
 
 /** Crawled Pages Data Hook */
-export function useCrawledPagesData(organizationId: string, chatbotConfigId: string, existingConfig: any) {
+export function useCrawledPagesData(organizationId: string, chatbotConfigId: string, existingConfig: unknown) {
   return useQuery({
     queryKey: ['crawled-pages', organizationId, chatbotConfigId],
     queryFn: async () => {
@@ -107,7 +123,8 @@ export function useCrawledPagesData(organizationId: string, chatbotConfigId: str
       }
 
       const groupedData = groupPagesByBaseUrl(result.data);
-      const sources = existingConfig?.knowledgeBase?.websiteSources || [];
+      const configData = existingConfig as { knowledgeBase?: { websiteSources?: unknown[] } };
+      const sources = configData?.knowledgeBase?.websiteSources || [];
       
       return mapPagesToSourceIds(groupedData, sources);
     },

@@ -11,9 +11,9 @@ export class DebugInfoMapper {
    */
   static toDto(
     domainDebugInfo: ProcessingDebugInfo | null,
-    intentAnalysis?: any,
-    journeyState?: any,
-    conversationMetrics?: any,
+    intentAnalysis?: unknown,
+    journeyState?: unknown,
+    conversationMetrics?: unknown,
     shouldCaptureLeadInfo?: boolean,
     _suggestedNextActions?: string[]
   ): DebugInfoDto | null {
@@ -27,7 +27,12 @@ export class DebugInfoMapper {
         sessionId: domainDebugInfo.sessionId,
         userMessageId: domainDebugInfo.userMessageId,
         botMessageId: domainDebugInfo.botMessageId,
-        conversationMetrics: conversationMetrics || {
+        conversationMetrics: (conversationMetrics as {
+          messageCount: number;
+          sessionDuration: number;
+          engagementScore: number;
+          leadQualificationProgress: number;
+        }) || {
           messageCount: 0,
           sessionDuration: 0,
           engagementScore: 0,
@@ -39,8 +44,8 @@ export class DebugInfoMapper {
       },
       
       // Additional context
-      intentClassification: intentAnalysis,
-      journeyProgression: journeyState,
+      intentClassification: intentAnalysis as import('../dto/debug-components/IntentClassificationDebugDto').IntentClassificationDebugDto | undefined,
+      journeyProgression: journeyState as import('../dto/debug-components/JourneyProgressionDebugDto').JourneyProgressionDebugDto | undefined,
       
       // Request processing information
       request: this.buildRequestData(domainDebugInfo.firstApiCall),
@@ -65,68 +70,98 @@ export class DebugInfoMapper {
     return dto;
   }
 
-  private static buildRequestData(firstApiCall: any) {
+  private static buildRequestData(firstApiCall: unknown) {
     if (!firstApiCall) return undefined;
     
+    const apiCall = firstApiCall as { 
+      requestData: {
+        payload: unknown;
+        messageCount: number;
+        timestamp: string;
+        userMessage: string;
+      }
+    };
+    
     return {
-      model: ApiResponseExtractor.extractModelFromPayload(firstApiCall.requestData.payload),
-      messagesCount: firstApiCall.requestData.messageCount,
-      temperature: ApiResponseExtractor.extractTemperatureFromPayload(firstApiCall.requestData.payload),
-      maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(firstApiCall.requestData.payload),
-      timestamp: firstApiCall.requestData.timestamp,
-      userMessage: firstApiCall.requestData.userMessage,
-      fullPrompt: `User: ${firstApiCall.requestData.userMessage}`
+      model: ApiResponseExtractor.extractModelFromPayload(apiCall.requestData.payload),
+      messagesCount: apiCall.requestData.messageCount,
+      temperature: ApiResponseExtractor.extractTemperatureFromPayload(apiCall.requestData.payload),
+      maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(apiCall.requestData.payload),
+      timestamp: apiCall.requestData.timestamp,
+      userMessage: apiCall.requestData.userMessage,
+      fullPrompt: `User: ${apiCall.requestData.userMessage}`
     };
   }
 
-  private static transformApiCall(apiCall: any, callType: 'first' | 'second') {
+  private static transformApiCall(apiCall: unknown, callType: 'first' | 'second') {
+    const call = apiCall as {
+      requestData: {
+        payload: unknown;
+        messageCount: number;
+        timestamp: string;
+        userMessage: string;
+        endpoint: string;
+        payloadSize: string;
+      };
+      responseData: {
+        response: unknown;
+        processingTime: string;
+        responseSize: string;
+      };
+    };
+    
     return {
       requestData: {
-        model: ApiResponseExtractor.extractModelFromPayload(apiCall.requestData.payload),
-        messagesCount: apiCall.requestData.messageCount,
-        temperature: ApiResponseExtractor.extractTemperatureFromPayload(apiCall.requestData.payload),
-        maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(apiCall.requestData.payload),
-        timestamp: apiCall.requestData.timestamp,
-        userMessage: apiCall.requestData.userMessage,
-        apiEndpoint: apiCall.requestData.endpoint,
-        requestSize: parseInt(apiCall.requestData.payloadSize.replace(' characters', '')),
-        fullRequestPayload: apiCall.requestData.payload,
+        model: ApiResponseExtractor.extractModelFromPayload(call.requestData.payload),
+        messagesCount: call.requestData.messageCount,
+        temperature: ApiResponseExtractor.extractTemperatureFromPayload(call.requestData.payload),
+        maxTokens: ApiResponseExtractor.extractMaxTokensFromPayload(call.requestData.payload),
+        timestamp: call.requestData.timestamp,
+        userMessage: call.requestData.userMessage,
+        apiEndpoint: call.requestData.endpoint,
+        requestSize: parseInt(call.requestData.payloadSize.replace(' characters', '')),
+        fullRequestPayload: call.requestData.payload as Record<string, unknown> | undefined,
         ...(callType === 'first' && {
-          functionsProvided: ApiResponseExtractor.extractFunctionsFromPayload(apiCall.requestData.payload)
+          functionsProvided: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload)
         })
       },
       responseData: {
-        id: ApiResponseExtractor.extractIdFromResponse(apiCall.responseData.response),
-        model: ApiResponseExtractor.extractModelFromResponse(apiCall.responseData.response),
-        usage: ApiResponseExtractor.extractUsageFromResponse(apiCall.responseData.response),
-        responseLength: ApiResponseExtractor.extractResponseLength(apiCall.responseData.response),
-        processingTime: parseInt(apiCall.responseData.processingTime.replace('ms', '')),
-        fullResponse: ApiResponseExtractor.extractResponseContent(apiCall.responseData.response),
-        responseSize: parseInt(apiCall.responseData.responseSize.replace(' characters', '')),
+        id: ApiResponseExtractor.extractIdFromResponse(call.responseData.response),
+        model: ApiResponseExtractor.extractModelFromResponse(call.responseData.response),
+        usage: ApiResponseExtractor.extractUsageFromResponse(call.responseData.response),
+        responseLength: ApiResponseExtractor.extractResponseLength(call.responseData.response),
+        processingTime: parseInt(call.responseData.processingTime.replace('ms', '')),
+        fullResponse: ApiResponseExtractor.extractResponseContent(call.responseData.response),
+        responseSize: parseInt(call.responseData.responseSize.replace(' characters', '')),
         statusCode: 200,
         ...(callType === 'first' && {
-          functionCallsExecuted: ApiResponseExtractor.extractFunctionCallsFromResponse(apiCall.responseData.response)
+          functionCallsExecuted: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response)
         })
       },
-      costData: this.calculateCostDataFromResponse(apiCall.responseData.response)
+      costData: this.calculateCostDataFromResponse(call.responseData.response)
     };
   }
 
-  private static buildFunctionCallsStructure(firstApiCall: any) {
+  private static buildFunctionCallsStructure(firstApiCall: unknown) {
+    const call = firstApiCall as {
+      requestData: { payload: unknown };
+      responseData: { response: unknown; processingTime: string };
+    };
+    
     return {
       firstApiCall: {
-        functions: ApiResponseExtractor.extractFunctionsFromPayload(firstApiCall.requestData.payload),
-        functionCallsMade: ApiResponseExtractor.extractFunctionCallsFromResponse(firstApiCall.responseData.response),
-        totalFunctionExecutionTime: parseInt(firstApiCall.responseData.processingTime.replace('ms', ''))
+        functions: ApiResponseExtractor.extractFunctionsFromPayload(call.requestData.payload),
+        functionCallsMade: ApiResponseExtractor.extractFunctionCallsFromResponse(call.responseData.response),
+        totalFunctionExecutionTime: parseInt(call.responseData.processingTime.replace('ms', ''))
       }
     };
   }
 
   private static enrichWithDerivedData(
     dto: DebugInfoDto,
-    intentAnalysis: any,
-    journeyState: any,
-    conversationMetrics: any,
+    intentAnalysis: unknown,
+    journeyState: unknown,
+    conversationMetrics: unknown,
     shouldCaptureLeadInfo: boolean | undefined,
     domainDebugInfo: ProcessingDebugInfo
   ) {
@@ -145,11 +180,16 @@ export class DebugInfoMapper {
     dto.businessRules = DebugDataEnricher.buildBusinessRules(shouldCaptureLeadInfo);
   }
 
-  private static calculateCostDataFromResponse(response: any) {
-    const usage = response?.usage || {};
+  private static calculateCostDataFromResponse(response: unknown) {
+    const responseData = response as {
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+      model?: string;
+    };
+    
+    const usage = responseData?.usage || {};
     const promptTokens = usage.prompt_tokens || 0;
     const completionTokens = usage.completion_tokens || 0;
-    const model = response?.model || 'gpt-4o-mini';
+    const model = responseData?.model || 'gpt-4o-mini';
     
     // Use domain service for proper cost calculation
     const breakdown = MessageCostCalculationService.calculateCostBreakdown(

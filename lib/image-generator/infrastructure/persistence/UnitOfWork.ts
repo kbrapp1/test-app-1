@@ -188,7 +188,7 @@ export class SupabaseUnitOfWork implements UnitOfWork {
     }
   }
 
-  private async persistAggregate(aggregate: AggregateRoot, operation: 'INSERT' | 'UPDATE' | 'DELETE'): Promise<void> {
+  private async persistAggregate(_aggregate: AggregateRoot, _operation: 'INSERT' | 'UPDATE' | 'DELETE'): Promise<void> {
     // This is a simplified example - in practice, you'd route to the appropriate repository
     // based on the aggregate type and operation
     
@@ -220,7 +220,7 @@ export class SupabaseUnitOfWork implements UnitOfWork {
     }
   }
 
-  private async publishEvent(event: DomainEvent): Promise<void> {
+  private async publishEvent(_event: DomainEvent): Promise<void> {
     // Implementation would depend on your event publishing mechanism
     // Could be: Event bus, Message queue, HTTP webhooks, etc.
   }

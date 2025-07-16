@@ -1,9 +1,9 @@
-import { QueryObserverResult } from '@tanstack/react-query';
+// Removed unused QueryObserverResult import
 import { GenerationDto } from '../../../../application/dto';
 
 export interface InfiniteData {
   pages: GenerationDto[][];
-  pageParams: any[];
+  pageParams: unknown[];
 }
 
 /**

@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useQueryClient, InfiniteData } from '@tanstack/react-query';
-import { useMemo, useCallback, useState } from 'react';
+import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
+import { useMemo, useCallback } from 'react';
 import { GenerationDto } from '../../../application/dto';
 import { getGenerations } from '../../../application/actions/generation.actions';
 import { createListQueryKey } from '../shared/queryKeys';

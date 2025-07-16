@@ -32,7 +32,7 @@ export interface SessionDebugDto {
     totalInteractions: number;
     sessionStartTime: string;
     currentStage: string;
-    userContext?: Record<string, any>;
+    userContext?: Record<string, unknown>;
   };
   
   performanceMetrics?: {

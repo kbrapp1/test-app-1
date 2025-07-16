@@ -92,14 +92,14 @@ export function getMinimalTokenBudget(): number {
  */
 export function buildTokenBudgetCriteria(
   messageCount: number,
-  entityData?: any,
+  entityData?: unknown,
   leadScore?: number,
   qualificationStatus?: string
 ): ContextSelectionCriteria {
   return {
     availableTokens: 0, // Not used for recommendation
     messageCount,
-    entityData,
+    entityData: entityData as import('../../domain/services/interfaces/ContextInjectionTypes').EntityData | undefined,
     leadScore,
     qualificationStatus
   };
@@ -112,13 +112,13 @@ export function buildTokenBudgetCriteria(
 export function buildEffectivenessCriteria(
   allocation: TokenBudgetAllocation,
   messageCount: number,
-  entityData?: any,
+  entityData?: unknown,
   leadScore?: number
 ): ContextSelectionCriteria {
   return {
     availableTokens: allocation.totalAvailable,
     messageCount,
-    entityData,
+    entityData: entityData as import('../../domain/services/interfaces/ContextInjectionTypes').EntityData | undefined,
     leadScore
   };
 }

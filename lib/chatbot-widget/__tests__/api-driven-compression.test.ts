@@ -43,7 +43,10 @@ describe('ApiDrivenCompressionService', () => {
       // Create many messages to simulate large conversation
       const messages: ChatMessage[] = [];
       for (let i = 0; i < 50; i++) {
-        messages.push(createTestMessage(`This is a longer test message number ${i} that should help us reach the token threshold for compression testing`, i % 2 === 0));
+        messages.push(createTestMessage(
+          `This is a longer test message number ${i} that should help us reach the token threshold for compression testing`, 
+          i % 2 === 0
+        ));
       }
 
       const analysis = ApiDrivenCompressionService.analyzeTokenUsage(messages, {
@@ -123,7 +126,10 @@ describe('ApiDrivenCompressionService', () => {
     it('should preserve business entities in summary instruction', async () => {
       const messages: ChatMessage[] = [];
       for (let i = 0; i < 16; i++) {
-        messages.push(createTestMessage(`This is a longer message ${i + 1} with more content to reach token threshold for compression testing`, i % 2 === 0));
+        messages.push(createTestMessage(
+          `This is a longer message ${i + 1} with more content to reach token threshold for compression testing`, 
+          i % 2 === 0
+        ));
       }
 
       await ApiDrivenCompressionService.compressConversation(

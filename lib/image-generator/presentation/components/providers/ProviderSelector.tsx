@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronDown, Zap, DollarSign, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { Zap, DollarSign, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ProviderId, ModelId } from '../../../domain/value-objects/Provider';

@@ -12,7 +12,6 @@ import { LeadMapper } from '../../application/mappers/LeadMapper';
 // Infrastructure services
 import { OpenAIProvider, OpenAIConfig } from '../providers/openai/OpenAIProvider';
 import { IAIConversationService } from '../../domain/services/interfaces/IAIConversationService';
-import { IKnowledgeRetrievalService } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 // Composition services
 import { RepositoryCompositionService } from './RepositoryCompositionService';

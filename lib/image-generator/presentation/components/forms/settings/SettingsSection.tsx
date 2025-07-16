@@ -3,7 +3,7 @@
 import React from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+// cn utility not used in this component
 
 interface SettingsSectionProps {
   safetyTolerance: number;
@@ -28,7 +28,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   hasInputImage = false,
   maxSafetyTolerance: propMaxSafetyTolerance,
   minSafetyTolerance: propMinSafetyTolerance,
-  supportedOutputFormats,
+  supportedOutputFormats: _supportedOutputFormats,
 }) => {
   // Dynamic safety tolerance max: use provider setting or fallback to input image logic
   const maxSafetyTolerance = propMaxSafetyTolerance ?? (hasInputImage ? 2 : 6);

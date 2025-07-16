@@ -50,10 +50,15 @@ export async function generateImage(request: GenerateImageRequest): Promise<Gene
       providerId: request.providerId,
       modelId: request.modelId,
       baseImageUrl: request.baseImageUrl,
-      secondImageUrl: request.secondImageUrl,
+      secondImageUrl: request.secondImageUrl
     };
 
-    return await commandBus.execute(command);
+    const result = await commandBus.execute(command);
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error
+    } as GenerateImageResponse;
   } catch (error) {
     return {
       success: false,
@@ -84,7 +89,12 @@ export async function cancelGeneration(id: string): Promise<CancelGenerationResp
       generationId: id
     };
 
-    return await commandBus.execute(command);
+    const result = await commandBus.execute(command);
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error
+    } as CancelGenerationResponse;
   } catch (error) {
     return {
       success: false,
@@ -95,7 +105,7 @@ export async function cancelGeneration(id: string): Promise<CancelGenerationResp
 
 /**
  * Save Generation to DAM Command Action
- * Handles saving completed generations to DAM through command bus
+ * Handles saving generation to digital asset management
  */
 export async function saveGenerationToDAM(id: string): Promise<SaveGenerationToDAMResponse> {
   try {
@@ -115,7 +125,12 @@ export async function saveGenerationToDAM(id: string): Promise<SaveGenerationToD
       generationId: id
     };
 
-    return await commandBus.execute(command);
+    const result = await commandBus.execute(command);
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error
+    } as SaveGenerationToDAMResponse;
   } catch (error) {
     return {
       success: false,
@@ -146,7 +161,12 @@ export async function deleteGeneration(id: string): Promise<DeleteGenerationResp
       generationId: id
     };
 
-    return await commandBus.execute(command);
+    const result = await commandBus.execute(command);
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error
+    } as DeleteGenerationResponse;
   } catch (error) {
     return {
       success: false,
@@ -160,26 +180,40 @@ export async function deleteGeneration(id: string): Promise<DeleteGenerationResp
  * Monitors generation progress and handles auto-save when completed
  */
 export async function checkGenerationStatus(id: string): Promise<GetGenerationResponse> {
-  const authResult = await getAuthContext();
-  if (!authResult.success || !authResult.context) {
-    return { success: false, error: authResult.error };
-  }
+  try {
+    const authResult = await getAuthContext();
+    if (!authResult.success || !authResult.context) {
+      return { success: false, error: authResult.error };
+    }
 
-  const statusService = GenerationOrchestrationService.getStatusService();
-  return statusService.checkGenerationStatus(id, authResult.context);
+    const statusService = GenerationOrchestrationService.getStatusService();
+    return await statusService.checkGenerationStatus(id, authResult.context);
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Status check failed'
+    };
+  }
 }
 
 /**
  * Check Multiple Generation Status Action
- * Batch operation for efficient status checking
+ * Batch operation for efficient status checking of multiple generations
  */
 export async function checkMultipleGenerationStatus(ids: string[]): Promise<BatchGenerationResponse> {
-  const authResult = await getAuthContext();
-  if (!authResult.success || !authResult.context) {
-    return { success: false, error: authResult.error };
-  }
+  try {
+    const authResult = await getAuthContext();
+    if (!authResult.success || !authResult.context) {
+      return { success: false, error: authResult.error };
+    }
 
-  const statusService = GenerationOrchestrationService.getStatusService();
-  return statusService.checkMultipleGenerationStatus(ids, authResult.context);
+    const statusService = GenerationOrchestrationService.getStatusService();
+    return await statusService.checkMultipleGenerationStatus(ids, authResult.context);
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Batch status check failed'
+    };
+  }
 }
 

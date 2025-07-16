@@ -36,7 +36,7 @@ export async function addWebsiteSource(
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
     const existingConfig = await configRepository.findById(configId);
     if (!existingConfig) {
-      return createErrorResult('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
     }
 
     const websiteSource = createWebsiteSourceFromFormData(formData);
@@ -62,12 +62,12 @@ export async function removeWebsiteSource(
     const vectorService = ChatbotWidgetCompositionRoot.getVectorKnowledgeApplicationService();
     const existingConfig = await configRepository.findById(configId);
     if (!existingConfig) {
-      return createErrorResult('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
     }
 
     const websiteSource = existingConfig.knowledgeBase.websiteSources.find(ws => ws.id === sourceId);
     if (!websiteSource) {
-      return createErrorResult('SOURCE_NOT_FOUND', 'Website source not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('SOURCE_NOT_FOUND', 'Website source not found', 'HIGH');
     }
 
     await vectorService.deleteKnowledgeItemsBySource(organizationId, configId, 'website_crawled', websiteSource.url);
@@ -94,12 +94,12 @@ export async function crawlWebsiteSource(
     
     const existingConfig = await configRepository.findById(configId);
     if (!existingConfig) {
-      return createErrorResult('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
     }
 
     const websiteSource = existingConfig.knowledgeBase.websiteSources.find(ws => ws.id === sourceId);
     if (!websiteSource) {
-      return createErrorResult('SOURCE_NOT_FOUND', 'Website source not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('SOURCE_NOT_FOUND', 'Website source not found', 'HIGH');
     }
     
     // AI: Update status to 'crawling' when starting
@@ -150,7 +150,7 @@ export async function crawlWebsiteSource(
     };
   } catch (error) {
     await updateWebsiteSourceStatus(configId, sourceId, 'error', 0, error instanceof Error ? error.message : 'Unknown error');
-    return handleActionError(error, 'crawling website source');
+    return handleActionError<{ itemsProcessed: number; crawledPages?: unknown[] }>(error, 'crawling website source');
   }
 }
 
@@ -166,7 +166,7 @@ export async function updateWebsiteSource(
     
     const existingConfig = await configRepository.findById(configId);
     if (!existingConfig) {
-      return createErrorResult('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
+      return createErrorResult<{ itemsProcessed: number; crawledPages?: unknown[] }>('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
     }
 
     const updatedKnowledgeBase = existingConfig.knowledgeBase.updateWebsiteSource(sourceId, {
@@ -187,11 +187,7 @@ export async function updateWebsiteSource(
 }
 
 // Get Crawled Pages Action
-export async function getCrawledPages(
-  organizationId: string,
-  chatbotConfigId: string,
-  sourceUrl?: string
-): Promise<ActionResult<Array<{
+type CrawledPageData = {
   url: string;
   title: string;
   content: string;
@@ -201,14 +197,20 @@ export async function getCrawledPages(
   depth: number;
   crawledAt: Date;
   errorMessage?: string;
-}>>> {
+};
+
+export async function getCrawledPages(
+  organizationId: string,
+  chatbotConfigId: string,
+  sourceUrl?: string
+): Promise<ActionResult<Array<CrawledPageData>>> {
   try {
     const websiteService = ChatbotWidgetCompositionRoot.getWebsiteKnowledgeApplicationService();
     
     const result = await websiteService.getCrawledPages(organizationId, chatbotConfigId, sourceUrl);
     
     if (!result.success) {
-      return createErrorResult(
+      return createErrorResult<Array<CrawledPageData>>(
         result.error?.code || 'RETRIEVAL_ERROR',
         result.error?.message || 'Failed to get crawled pages',
         'MEDIUM'
@@ -220,7 +222,7 @@ export async function getCrawledPages(
       data: result.crawledPages || []
     };
   } catch (error) {
-    return handleActionError(error, 'retrieving crawled pages');
+    return handleActionError<Array<CrawledPageData>>(error, 'retrieving crawled pages');
   }
 }
 
@@ -235,7 +237,7 @@ export async function cleanupWebsiteSources(
     
     const existingConfig = await configRepository.findById(configId);
     if (!existingConfig) {
-      return createErrorResult('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
+      return createErrorResult<{ deletedItems: number; message: string }>('CONFIG_NOT_FOUND', 'Chatbot configuration not found', 'HIGH');
     }
 
     const deletedItemsCount = await vectorService.deleteKnowledgeItemsBySource(organizationId, configId, 'website_crawled');
@@ -253,6 +255,6 @@ export async function cleanupWebsiteSources(
       }
     };
   } catch (error) {
-    return handleActionError(error, 'cleaning up website sources');
+    return handleActionError<{ deletedItems: number; message: string }>(error, 'cleaning up website sources');
   }
 } 

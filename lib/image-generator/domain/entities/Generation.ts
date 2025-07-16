@@ -22,7 +22,7 @@ export interface CreateGenerationData {
   externalProviderId?: string | null;
   editType?: 'text-to-image' | 'image-editing' | 'style-transfer' | 'background-swap';
   damAssetId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   seed?: number;
 }
 
@@ -48,7 +48,7 @@ export interface GenerationData {
   damAssetId: string | null;
   sourceDamAssetId: string | null;
   errorMessage: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   seed: number | null;
   createdAt: Date;
   updatedAt: Date;
@@ -81,7 +81,7 @@ export class Generation {
   private _damAssetId: string | null;
   private _sourceDamAssetId: string | null;
   private _errorMessage: string | null;
-  private _metadata: Record<string, any>;
+  private _metadata: Record<string, unknown>;
   private _updatedAt: Date;
   private _seed: number | null;
 
@@ -128,7 +128,7 @@ export class Generation {
   get damAssetId(): string | null { return this._damAssetId; }
   get sourceDamAssetId(): string | null { return this._sourceDamAssetId; }
   get errorMessage(): string | null { return this._errorMessage; }
-  get metadata(): Record<string, any> { return { ...this._metadata }; }
+  get metadata(): Record<string, unknown> { return { ...this._metadata }; }
   get updatedAt(): Date { return this._updatedAt; }
   get seed(): number | null { return this._seed; }
 

@@ -18,7 +18,7 @@ export interface IntentClassificationDebugDto {
   isAmbiguous: boolean;
   
   classificationDetails?: {
-    rawClassificationResult?: any;
+    rawClassificationResult?: unknown;
     processingTime?: number;
     modelUsed?: string;
     classificationMethod?: 'rule_based' | 'ml_model' | 'hybrid';

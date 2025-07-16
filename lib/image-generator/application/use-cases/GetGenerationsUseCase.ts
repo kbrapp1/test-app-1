@@ -18,21 +18,56 @@ export interface GetGenerationsOptions {
 export class GetGenerationsUseCase {
   constructor(private generationRepository: GenerationRepository) {}
 
-  async execute(options: GetGenerationsOptions): Promise<Result<Generation[]>> {
+  /**
+   * Get multiple generations with filters - optimized for React Query integration
+   */
+  async getMany(filters: GetGenerationsFilters = {}): Promise<Result<Generation[], string>> {
     try {
-      let generations: Generation[];
-
-      if (options.id) {
-        // Get single generation by ID
-        const generation = await this.generationRepository.getById(options.id);
-        generations = generation ? [generation] : [];
-      } else {
-        // Get multiple generations with filters
-        const filters = options.filters || {};
-        generations = await this.generationRepository.getAll(filters);
+      const result = await this.generationRepository.findMany(filters);
+      if (!result.isSuccess()) {
+        return error(result.getError() || 'Failed to fetch generations');
       }
+      
+      return success(result.getValue());
+    } catch (err) {
+      return error(`Failed to get generations: ${err instanceof Error ? err.message : err}`);
+    }
+  }
 
-      return success(generations);
+  /**
+   * Get single generation by ID - optimized for React Query integration
+   */
+  async getById(id: string): Promise<Result<Generation | null, string>> {
+    try {
+      const result = await this.generationRepository.findById(id);
+      if (!result.isSuccess()) {
+        return error(result.getError() || 'Failed to fetch generation');
+      }
+      
+      return success(result.getValue());
+    } catch (err) {
+      return error(`Failed to get generation: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  /**
+   * Legacy execute method - kept for backward compatibility
+   */
+  async execute(options: GetGenerationsOptions): Promise<Result<Generation[], string>> {
+    try {
+      if (options.id) {
+        // Get single generation by ID using optimized method
+        const result = await this.getById(options.id);
+        if (!result.isSuccess()) {
+          return error(result.getError());
+        }
+        const generation = result.getValue();
+        return success(generation ? [generation] : []);
+      } else {
+        // Get multiple generations with filters using optimized method
+        const filters = options.filters || {};
+        return await this.getMany(filters);
+      }
     } catch (err) {
       return error(`Failed to get generations: ${err instanceof Error ? err.message : err}`);
     }

@@ -49,9 +49,9 @@ export class ChatSessionMapper {
       chatbotConfigId: dto.chatbotConfigId,
       visitorId: dto.visitorId,
       sessionToken: dto.sessionToken,
-      contextData: this.contextDataFromDto(dto.contextData),
-      leadQualificationState: this.qualificationStateFromDto(dto.leadQualificationState),
-      status: this.mapDtoStatusToDomain(dto.status),
+      contextData: this.contextDataFromDto(dto.contextData) as import('../../domain/value-objects/session-management/ChatSessionTypes').SessionContext,
+      leadQualificationState: this.qualificationStateFromDto(dto.leadQualificationState) as import('../../domain/value-objects/session-management/ChatSessionTypes').LeadQualificationState,
+      status: this.mapDtoStatusToDomain(dto.status) as import('../../domain/value-objects/session-management/ChatSessionTypes').SessionStatus,
       startedAt: new Date(dto.startedAt),
       lastActivityAt: new Date(dto.lastActivityAt),
       endedAt: dto.endedAt ? new Date(dto.endedAt) : undefined,
@@ -91,7 +91,7 @@ export class ChatSessionMapper {
     return session;
   }
 
-  private static mapDomainStatusToDto(status: string): any {
+  private static mapDomainStatusToDto(status: string): import('../dto/ChatSessionDto').ChatSessionStatus {
     // Map domain SessionStatus to DTO ChatSessionStatus
     switch (status) {
       case 'idle':
@@ -107,7 +107,7 @@ export class ChatSessionMapper {
     }
   }
 
-  private static mapDtoStatusToDomain(status: string): any {
+  private static mapDtoStatusToDomain(status: string): string {
     // Map DTO ChatSessionStatus to domain SessionStatus
     switch (status) {
       case 'escalated':
@@ -123,18 +123,27 @@ export class ChatSessionMapper {
     }
   }
 
-  private static contextDataToDto(contextData: any): SessionContextDto {
+  private static contextDataToDto(contextData: unknown): import('../dto/ChatSessionDto').SessionContextDto {
+    const data = contextData as {
+      previousVisits?: number;
+      pageViews?: string[];
+      conversationSummary?: { fullSummary?: string };
+      topics?: string[];
+      interests?: string[];
+      engagementScore?: number;
+    };
+    
     return {
-      previousVisits: contextData?.previousVisits || 0,
-      pageViews: contextData?.pageViews || [],
-      conversationSummary: contextData?.conversationSummary?.fullSummary || 'New conversation started',
-      topics: contextData?.topics || [],
-      interests: contextData?.interests || [],
-      engagementScore: contextData?.engagementScore || 0,
+      previousVisits: data?.previousVisits || 0,
+      pageViews: data?.pageViews || [],
+      conversationSummary: data?.conversationSummary?.fullSummary || 'New conversation started',
+      topics: data?.topics || [],
+      interests: data?.interests || [],
+      engagementScore: data?.engagementScore || 0,
     };
   }
 
-  private static contextDataFromDto(dto: SessionContextDto): any {
+  private static contextDataFromDto(dto: SessionContextDto): unknown {
     // Convert DTO conversationSummary (string) to enhanced format
     const conversationSummary = {
       fullSummary: dto.conversationSummary || 'New conversation started',
@@ -159,18 +168,27 @@ export class ChatSessionMapper {
     };
   }
 
-  private static qualificationStateToDto(qualificationState: any): LeadQualificationStateDto {
+  private static qualificationStateToDto(qualificationState: unknown): import('../dto/ChatSessionDto').LeadQualificationStateDto {
+    const state = qualificationState as {
+      currentStep?: number;
+      totalSteps?: number;
+      answeredQuestions?: unknown[];
+      qualificationStatus?: string;
+      isQualified?: boolean;
+      engagementLevel?: string;
+    };
+    
     return {
-      currentStep: qualificationState?.currentStep || 0,
-      totalSteps: qualificationState?.totalSteps || 0,
-      answeredQuestions: qualificationState?.answeredQuestions || [],
-      qualificationStatus: qualificationState?.qualificationStatus || 'not_started',
-      isQualified: qualificationState?.isQualified || false,
-      engagementLevel: qualificationState?.engagementLevel || 'low',
+      currentStep: state?.currentStep || 0,
+      totalSteps: state?.totalSteps || 0,
+      answeredQuestions: (state?.answeredQuestions as import('../dto/ChatSessionDto').AnsweredQuestionDto[]) || [],
+      qualificationStatus: (state?.qualificationStatus as import('../dto/ChatSessionDto').QualificationStatus) || 'not_started',
+      isQualified: state?.isQualified || false,
+      engagementLevel: (state?.engagementLevel as import('../dto/ChatSessionDto').EngagementLevel) || 'low',
     };
   }
 
-  private static qualificationStateFromDto(dto: LeadQualificationStateDto): any {
+  private static qualificationStateFromDto(dto: LeadQualificationStateDto): unknown {
     return {
       currentStep: dto.currentStep,
       totalSteps: dto.totalSteps,

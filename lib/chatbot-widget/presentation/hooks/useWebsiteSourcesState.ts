@@ -21,14 +21,13 @@ import { useCrawledPagesData } from './website-sources/useCrawledPagesData';
 import { useFormState } from './website-sources/useFormState';
 import { useUIState } from './website-sources/useUIState';
 import { useCrawlProgress } from './website-sources/useCrawlProgress';
-import { simulateCrawlProgress } from '../utils/crawlProgressSimulator';
 import { useToast } from '@/components/ui/use-toast';
 
 /** Main Website Sources State Hook */
 export function useWebsiteSourcesState(
   organizationId: string | null,
   chatbotConfigId: string,
-  existingConfig: any
+  existingConfig: unknown
 ) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -44,8 +43,9 @@ export function useWebsiteSourcesState(
     refetch: refetchCrawledPages
   } = useCrawledPagesData(organizationId || '', chatbotConfigId, existingConfig);
 
-  // Derived state
-  const websiteSources: WebsiteSourceDto[] = existingConfig?.knowledgeBase?.websiteSources || [];
+  // Derived state - safely cast existingConfig
+  const configData = existingConfig as { knowledgeBase?: { websiteSources?: WebsiteSourceDto[] } };
+  const websiteSources: WebsiteSourceDto[] = configData?.knowledgeBase?.websiteSources || [];
 
   // Helper functions
   const invalidateQueries = () => {
@@ -57,7 +57,8 @@ export function useWebsiteSourcesState(
 
   // Action handlers
   const handleAddSource = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     if (!formState.validateForm()) return;
     
@@ -67,11 +68,12 @@ export function useWebsiteSourcesState(
   };
 
   const confirmAddSource = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await addWebsiteSource(existingConfig.id, organizationId, formState.formData);
+      const result = await addWebsiteSource(config.id, organizationId, formState.formData);
       
       if (result.success) {
         formState.setFormErrors([]);
@@ -83,7 +85,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to add website source']);
       }
-    } catch (error) {
+    } catch (_error) {
       formState.setFormErrors(['An unexpected error occurred']);
     } finally {
       uiState.setActionLoading(false);
@@ -91,7 +93,8 @@ export function useWebsiteSourcesState(
   };
 
   const handleRemoveSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     uiState.clearMessages();
     uiState.setIsConfirmingAdd(false);
@@ -99,11 +102,12 @@ export function useWebsiteSourcesState(
   };
 
   const confirmDeleteSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await removeWebsiteSource(existingConfig.id, organizationId, sourceId);
+      const result = await removeWebsiteSource(config.id, organizationId, sourceId);
       
       if (result.success) {
         invalidateQueries();
@@ -120,7 +124,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to remove website source']);
       }
-    } catch (error) {
+    } catch (_error) {
       formState.setFormErrors(['An unexpected error occurred']);
     } finally {
       uiState.setActionLoading(false);
@@ -129,7 +133,8 @@ export function useWebsiteSourcesState(
 
   // AI: Crawl website source with real database polling
   const crawlWebsiteSource = async (sourceId: string) => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     try {
       crawlProgressState.startCrawlProgress(sourceId);
@@ -138,7 +143,7 @@ export function useWebsiteSourcesState(
       crawlProgressState.startPolling(organizationId, chatbotConfigId, sourceId);
       
       // AI: Execute crawl in background - polling will show real progress
-      const result = await crawlWebsiteSourceAction(existingConfig.id, organizationId, sourceId);
+      const result = await crawlWebsiteSourceAction(config.id, organizationId, sourceId);
       
       if (result.success && result.data) {
         crawlProgressState.completeCrawlProgress(result.data.itemsProcessed);
@@ -173,11 +178,12 @@ export function useWebsiteSourcesState(
   };
 
   const handleCleanupSources = async () => {
-    if (!existingConfig?.id || !organizationId) return;
+    const config = configData as { id?: string };
+    if (!config?.id || !organizationId) return;
     
     uiState.setActionLoading(true);
     try {
-      const result = await cleanupWebsiteSources(existingConfig.id, organizationId);
+      const result = await cleanupWebsiteSources(config.id, organizationId);
       
       if (result.success) {
         invalidateQueries();
@@ -187,7 +193,7 @@ export function useWebsiteSourcesState(
       } else {
         formState.setFormErrors([result.error?.message || 'Failed to cleanup website sources']);
       }
-    } catch (error) {
+    } catch (_error) {
       formState.setFormErrors(['An unexpected error occurred during cleanup']);
     } finally {
       uiState.setActionLoading(false);

@@ -8,7 +8,7 @@ export interface RequestData {
   userMessage: string;
   fullPrompt?: string;
   requestHeaders?: Record<string, string>;
-  requestPayload?: any;
+  requestPayload?: unknown;
   apiEndpoint?: string;
   requestSize?: number;
   userAgent?: string;
@@ -26,7 +26,7 @@ export interface ResponseData {
   processingTime: number;
   fullResponse?: string;
   responseHeaders?: Record<string, string>;
-  responsePayload?: any;
+  responsePayload?: unknown;
   responseSize?: number;
   statusCode?: number;
   rateLimitInfo?: {

@@ -64,7 +64,15 @@ export async function getGeneration(id: string): Promise<GetGenerationResponse> 
       };
     }
 
-    const dto = GenerationMapper.toDto(result.getValue());
+    const generation = result.getValue();
+    if (!generation) {
+      return {
+        success: false,
+        error: 'Generation not found'
+      };
+    }
+
+    const dto = GenerationMapper.toDto(generation);
     return {
       success: true,
       data: dto

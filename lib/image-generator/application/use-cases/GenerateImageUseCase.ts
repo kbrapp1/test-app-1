@@ -51,7 +51,7 @@ export class GenerateImageUseCase {
       }
 
       // Get model
-      const model = await provider.getModel(modelId as any);
+      const model = await provider.getModel(modelId as import('../../domain/value-objects/Provider').ModelId);
       if (!model) {
         return error(`Model ${modelId} not found for provider ${providerId}`);
       }
@@ -91,8 +91,8 @@ export class GenerateImageUseCase {
 
   private async startAsyncGeneration(
     generation: Generation,
-    provider: any,
-    model: any,
+    provider: import('../../domain/repositories/ImageGenerationProvider').ImageGenerationProvider,
+    model: import('../../domain/value-objects/Provider').ProviderModel,
     safetyTolerance: number = 2
   ): Promise<void> {
     try {
@@ -101,12 +101,13 @@ export class GenerateImageUseCase {
       await this.repository.update(generation);
 
       // Prepare generation request for provider
-      const generationRequest: any = {
+      const generationRequest: import('../../domain/repositories/ImageGenerationProvider').GenerationRequest = {
         prompt: generation.prompt.text,
+        providerId: provider.providerId,
         modelId: model.id,
         aspectRatio: generation.aspectRatio,
-        baseImageUrl: generation.baseImageUrl,
-        secondImageUrl: generation.secondImageUrl,
+        baseImageUrl: generation.baseImageUrl || undefined,
+        secondImageUrl: generation.secondImageUrl || undefined,
       };
 
       // Only add safetyTolerance if the model supports it

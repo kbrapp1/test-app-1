@@ -30,7 +30,7 @@ export class GenerationFailureHandler {
       generation.markAsFailed(errorMessage);
       
       return true;
-    } catch (error) {
+    } catch {
       // This can happen due to concurrent modifications - not an error, just log for debugging
       console.debug(`Generation ${generation.getId()} already in terminal state - no action needed`);
       return false;

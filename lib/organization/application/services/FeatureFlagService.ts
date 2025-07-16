@@ -5,7 +5,7 @@
  * Used by feature-specific services to maintain DDD boundaries while avoiding duplication.
  */
 
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseServerClient } from '../../../supabase/server';
 import { getActiveOrganizationWithFlags } from './getActiveOrganizationWithFlags';
 
 /**

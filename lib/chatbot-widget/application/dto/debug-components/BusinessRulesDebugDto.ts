@@ -50,7 +50,7 @@ export interface BusinessRulesDebugDto {
       condition: string;
       result: boolean;
       evaluationTime?: number;
-      variables?: Record<string, any>;
+      variables?: Record<string, unknown>;
     }>;
     logicalOperators?: Array<{
       operator: 'AND' | 'OR' | 'NOT';

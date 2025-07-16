@@ -23,7 +23,7 @@ export interface ProcessChatMessageResult {
   readonly intentAnalysis?: {
     readonly intent: string;
     readonly confidence: number;
-    readonly entities: Record<string, any>;
+    readonly entities: Record<string, unknown>;
     readonly category: string;
   };
   readonly journeyState?: {

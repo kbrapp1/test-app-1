@@ -46,7 +46,11 @@
       "mcp__supabase__get_logs",
       "Bash(D:)",
       "Bash(pnpm eslint:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(next lint:*)",
+      "Bash(awk:*)",
+      "Bash(./node_modules/.bin/eslint lib/dam/application/actions/folder.actions.ts)"
     ],
     "deny": []
   },

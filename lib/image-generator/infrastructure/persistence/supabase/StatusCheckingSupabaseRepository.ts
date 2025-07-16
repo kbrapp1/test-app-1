@@ -289,7 +289,7 @@ export class StatusCheckingSupabaseRepository implements StatusCheckingRepositor
       } as GenerationRow;
       
       return GenerationRowMapper.fromRow(completeRow);
-    } catch (error) {
+    } catch {
       // Log error and return null for invalid rows
       return null;
     }

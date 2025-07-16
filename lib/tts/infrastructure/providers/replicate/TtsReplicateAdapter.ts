@@ -10,7 +10,7 @@ export class TtsReplicateAdapter {
   private readonly retryDelay = 2000;
   private readonly defaultModel = 'jaaari/kokoro-82m:f559560eb822dc509045f3921a1921234918b91739db4bf3daab2169b71c7a13';
   private readonly provider: ReplicateProvider;
-  private readonly runResultsCache = new Map<string, string | string[]>();
+  private readonly runResultsCache = new Map<string, unknown>();
 
   constructor(provider: ReplicateProvider) {
     this.provider = provider;
@@ -90,8 +90,17 @@ export class TtsReplicateAdapter {
   async getSpeechResult(predictionId: string): Promise<SpeechResult> {
     // Check if this is a cached run result first
     if (this.runResultsCache.has(predictionId)) {
-      const cachedResult = this.runResultsCache.get(predictionId);
-      const result = this.mapPredictionToTtsResult(cachedResult);
+      const cachedOutput = this.runResultsCache.get(predictionId);
+      // Convert cached output to ReplicatePrediction format
+      const cachedPrediction: ReplicatePrediction = {
+        id: predictionId,
+        status: 'succeeded',
+        output: cachedOutput,
+        error: undefined,
+        logs: undefined,
+        metrics: undefined
+      };
+      const result = this.mapPredictionToTtsResult(cachedPrediction);
       return result;
     }
 
@@ -261,7 +270,7 @@ export class TtsReplicateAdapter {
   /**
    * Store run result for later retrieval (used for synchronous run API)
    */
-  private async storeRunResult(predictionId: string, output: string | string[] | ReadableStream): Promise<void> {
+  private async storeRunResult(predictionId: string, output: unknown): Promise<void> {
     
     let processedOutput = output;
     
@@ -270,11 +279,11 @@ export class TtsReplicateAdapter {
     if (output && typeof output === 'object' && 
         (output.constructor?.name === 'ReadableStream' || 
          output instanceof ReadableStream ||
-         (typeof output.getReader === 'function' && typeof output.locked === 'boolean'))) {
+         (typeof (output as unknown as ReadableStream).getReader === 'function' && typeof (output as unknown as ReadableStream).locked === 'boolean'))) {
       try {
 
         // Convert ReadableStream to blob
-        const response = new Response(output);
+        const response = new Response(output as ReadableStream);
         const blob = await response.blob();
         // Convert to ArrayBuffer then to base64 data URL for browser compatibility
         const arrayBuffer = await blob.arrayBuffer();
@@ -292,8 +301,8 @@ export class TtsReplicateAdapter {
       try {
 
         // FileOutput might have a stream property or be iterable
-        if (typeof output.stream === 'function') {
-          const stream = output.stream();
+        if (typeof (output as unknown as { stream: () => ReadableStream }).stream === 'function') {
+          const stream = (output as unknown as { stream: () => ReadableStream }).stream();
 
           const response = new Response(stream);
           const blob = await response.blob();
@@ -303,12 +312,12 @@ export class TtsReplicateAdapter {
           const dataUrl = `data:audio/wav;base64,${base64}`;
           processedOutput = dataUrl;
 
-        } else if (output[Symbol.asyncIterator]) {
+        } else if ((output as unknown as AsyncIterable<unknown>)[Symbol.asyncIterator]) {
 
           // Handle async iterable
-          const chunks = [];
-          for await (const chunk of output) {
-            chunks.push(chunk);
+          const chunks: BlobPart[] = [];
+          for await (const chunk of (output as unknown as AsyncIterable<unknown>)) {
+            chunks.push(chunk as BlobPart);
           }
           const blob = new Blob(chunks);
           // Convert to ArrayBuffer then to base64 data URL for browser compatibility
@@ -327,11 +336,7 @@ export class TtsReplicateAdapter {
       }
     }
     
-    this.runResultsCache.set(predictionId, {
-      status: 'succeeded', // Use 'succeeded' to match Replicate's actual status
-      output: processedOutput,
-      id: predictionId,
-    });
+    this.runResultsCache.set(predictionId, processedOutput);
 
   }
 

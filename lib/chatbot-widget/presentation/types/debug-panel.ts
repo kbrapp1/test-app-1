@@ -105,12 +105,12 @@ export interface FunctionCallsProps {
     functions?: Array<{
       name: string;
       description: string;
-      parameters: any;
+      parameters: unknown;
     }>;
     functionCallsMade?: Array<{
       name: string;
-      arguments: any;
-      result: any;
+      arguments: unknown;
+      result: unknown;
       executionTime: number;
       success: boolean;
       error?: string;

@@ -24,7 +24,7 @@ export interface WebsiteSourceFormData {
   respectRobotsTxt?: boolean;
 }
 
-export interface ActionResult<T = any> {
+export interface ActionResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
@@ -112,7 +112,7 @@ export async function updateWebsiteSourceStatus(
  * - Provide consistent error structure
  * - Handle error severity levels
  */
-export function createErrorResult(code: string, message: string, severity: string): ActionResult {
+export function createErrorResult<T = unknown>(code: string, message: string, severity: string): ActionResult<T> {
   return {
     success: false,
     error: {
@@ -125,7 +125,7 @@ export function createErrorResult(code: string, message: string, severity: strin
 
 /** Handle Action Error Helper
  */
-export function handleActionError(error: unknown, operation: string): ActionResult {
+export function handleActionError<T = unknown>(error: unknown, operation: string): ActionResult<T> {
   if (error instanceof DomainError) {
     return {
       success: false,
@@ -166,6 +166,7 @@ interface KnowledgeBaseData {
 }
 
 export function createCleanedKnowledgeBase(existingKnowledgeBase: KnowledgeBaseData): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { KnowledgeBase } = require('../../domain/value-objects/ai-configuration/KnowledgeBase');
   return KnowledgeBase.create({
     companyInfo: existingKnowledgeBase.companyInfo,

@@ -1,6 +1,7 @@
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
 import { Generation } from '../../domain/entities/Generation';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
+import { ProviderId } from '../../domain/value-objects/Provider';
 import { AutoSaveGenerationUseCase } from '../use-cases/AutoSaveGenerationUseCase';
 import { GenerationDto } from '../dto';
 import { GenerationMapper } from '../mappers/GenerationMapper';
@@ -139,7 +140,7 @@ export class GenerationStatusService {
     }
 
     const registry = ProviderFactory.createProviderRegistry();
-    const provider = registry.getProvider(providerId as string);
+    const provider = registry.getProvider(providerId as ProviderId);
     
     if (!provider) {
       generation.markAsFailed(`Provider ${providerId} not available`);

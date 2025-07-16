@@ -13,7 +13,7 @@ import { updateChatbotConfig } from '../actions/configActions';
 import { UpdateChatbotConfigDto } from '../../application/dto/ChatbotConfigDto';
 
 interface UseAdvancedParametersProps {
-  existingConfig: any;
+  existingConfig: unknown;
   activeOrganizationId: string | null;
 }
 
@@ -23,7 +23,10 @@ interface UseAdvancedParametersReturn {
   isEditing: boolean;
   setIsEditing: (editing: boolean) => void;
   handleSave: () => void;
-  updateMutation: any;
+  updateMutation: {
+    isPending: boolean;
+    mutate: (variables: { id: string; data: UpdateChatbotConfigDto }) => void;
+  };
 }
 
 const DEFAULT_PARAMETERS: AdvancedParameters = {
@@ -76,10 +79,19 @@ export function useAdvancedParameters({
 
   useEffect(() => {
     if (existingConfig) {
+      const config = existingConfig as {
+        personalitySettings?: {
+          conversationFlow?: {
+            maxConversationTurns?: number;
+            inactivityTimeout?: number;
+          };
+        };
+      };
+      
       setParameters(prev => ({
         ...prev,
-        maxConversationTurns: existingConfig.personalitySettings?.conversationFlow?.maxConversationTurns || prev.maxConversationTurns,
-        inactivityTimeoutSeconds: existingConfig.personalitySettings?.conversationFlow?.inactivityTimeout || prev.inactivityTimeoutSeconds,
+        maxConversationTurns: config.personalitySettings?.conversationFlow?.maxConversationTurns || prev.maxConversationTurns,
+        inactivityTimeoutSeconds: config.personalitySettings?.conversationFlow?.inactivityTimeout || prev.inactivityTimeoutSeconds,
       }));
     }
   }, [existingConfig]);
@@ -102,12 +114,27 @@ export function useAdvancedParameters({
 
   const handleSave = () => {
     if (!activeOrganizationId || !existingConfig) return;
+    
+    const config = existingConfig as {
+      id: string;
+      personalitySettings?: {
+        conversationFlow?: unknown;
+        [key: string]: unknown;
+      };
+    };
 
     const updateData: UpdateChatbotConfigDto = {
       personalitySettings: {
-        ...existingConfig.personalitySettings,
+        ...config.personalitySettings,
         conversationFlow: {
-          ...existingConfig.personalitySettings.conversationFlow,
+          ...(config.personalitySettings?.conversationFlow as Record<string, unknown> || {}),
+          // Include all required ConversationFlowDto properties
+          greetingMessage: (config.personalitySettings?.conversationFlow as any)?.greetingMessage || 'Hello! How can I help you today?',
+          fallbackMessage: (config.personalitySettings?.conversationFlow as any)?.fallbackMessage || 'I\'m not sure about that. Could you rephrase your question?',
+          escalationMessage: (config.personalitySettings?.conversationFlow as any)?.escalationMessage || 'Let me connect you with a team member.',
+          endConversationMessage: (config.personalitySettings?.conversationFlow as any)?.endConversationMessage || 'Thank you for chatting with us!',
+          leadCapturePrompt: (config.personalitySettings?.conversationFlow as any)?.leadCapturePrompt || 'Can I get your contact information to follow up?',
+          // Update the specific parameters
           maxConversationTurns: parameters.maxConversationTurns,
           inactivityTimeout: parameters.inactivityTimeoutSeconds,
         },
@@ -115,7 +142,7 @@ export function useAdvancedParameters({
     };
 
     updateMutation.mutate({
-      id: existingConfig.id,
+      id: config.id,
       data: updateData,
     });
   };

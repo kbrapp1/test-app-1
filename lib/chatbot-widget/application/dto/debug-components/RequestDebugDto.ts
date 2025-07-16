@@ -21,8 +21,8 @@ export interface RequestDebugDto {
   
   requestMetadata?: {
     requestHeaders?: Record<string, string>;
-    requestPayload?: any;
-    fullRequestPayload?: any;
+    requestPayload?: unknown;
+    fullRequestPayload?: unknown;
     apiEndpoint?: string;
     requestSize?: number;
     userAgent?: string;
@@ -40,9 +40,9 @@ export interface RequestDebugDto {
   };
   
   contextInformation?: {
-    conversationHistory?: any[];
-    userProfile?: Record<string, any>;
-    sessionContext?: Record<string, any>;
+    conversationHistory?: unknown[];
+    userProfile?: Record<string, unknown>;
+    sessionContext?: Record<string, unknown>;
     businessRules?: string[];
     appliedFilters?: string[];
   };

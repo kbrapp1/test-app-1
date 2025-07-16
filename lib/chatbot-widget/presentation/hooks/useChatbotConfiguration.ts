@@ -21,7 +21,6 @@ import {
   deleteChatbotConfig
 } from '../actions/configActions';
 import { 
-  ChatbotConfigDto,
   CreateChatbotConfigDto, 
   UpdateChatbotConfigDto 
 } from '../../application/dto/ChatbotConfigDto';
@@ -47,7 +46,7 @@ export interface ConfigValidationResult {
 export function useChatbotConfiguration(options: UseChatbotConfigurationOptions = {}) {
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
-  const { configId, enableFormState = true, autoLoad = true } = options;
+  const { configId: _configId, enableFormState = true, autoLoad = true } = options;
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<BotConfigurationFormData>(DEFAULT_FORM_DATA);

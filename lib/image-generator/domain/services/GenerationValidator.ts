@@ -8,7 +8,7 @@ export interface CreateGenerationRequest {
   providerName?: string;
   imageWidth?: number;
   imageHeight?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationResult {
@@ -175,7 +175,7 @@ export class GenerationValidator {
       // TODO: Check user hasn't exceeded rate limits
 
       return true;
-    } catch (error) {
+    } catch {
       // If validation fails, err on the side of caution
       return false;
     }

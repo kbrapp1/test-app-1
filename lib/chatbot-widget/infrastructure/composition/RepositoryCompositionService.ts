@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../supabase/server';
 
 // Repository implementations
 import { ChatbotConfigSupabaseRepository } from '../persistence/supabase/ChatbotConfigSupabaseRepository';
@@ -38,7 +38,8 @@ export class RepositoryCompositionService {
     return this.supabaseClient;
   }
 
-  /** Get ChatbotConfig Repository */
+  /** Get ChatbotConfig Repository
+ */
   static getChatbotConfigRepository(): IChatbotConfigRepository {
     if (!this.chatbotConfigRepository) {
       this.chatbotConfigRepository = new ChatbotConfigSupabaseRepository(
@@ -48,7 +49,8 @@ export class RepositoryCompositionService {
     return this.chatbotConfigRepository;
   }
 
-  /** Get ChatSession Repository */
+  /** Get ChatSession Repository
+ */
   static getChatSessionRepository(): IChatSessionRepository {
     if (!this.chatSessionRepository) {
       this.chatSessionRepository = new ChatSessionSupabaseRepository(
@@ -58,7 +60,8 @@ export class RepositoryCompositionService {
     return this.chatSessionRepository;
   }
 
-  /** Get ChatMessage Repository */
+  /** Get ChatMessage Repository
+ */
   static getChatMessageRepository(): IChatMessageRepository {
     if (!this.chatMessageRepository) {
       this.chatMessageRepository = new ChatMessageSupabaseRepository(
@@ -68,7 +71,8 @@ export class RepositoryCompositionService {
     return this.chatMessageRepository;
   }
 
-  /** Get Lead Repository */
+  /** Get Lead Repository
+ */
   static getLeadRepository(): ILeadRepository {
     if (!this.leadRepository) {
       this.leadRepository = new LeadSupabaseRepository(
@@ -78,14 +82,16 @@ export class RepositoryCompositionService {
     return this.leadRepository;
   }
 
-  /** Configure with custom Supabase client (useful for testing) */
+  /** Configure with custom Supabase client (useful for testing)
+ */
   static configureWithSupabaseClient(client: SupabaseClient): void {
     this.supabaseClient = client;
     // Reset repositories to force recreation with new client
     this.resetRepositories();
   }
 
-  /** Reset repository singletons */
+  /** Reset repository singletons
+ */
   static resetRepositories(): void {
     this.chatbotConfigRepository = null;
     this.chatSessionRepository = null;
@@ -93,7 +99,8 @@ export class RepositoryCompositionService {
     this.leadRepository = null;
   }
 
-  /** Reset all including Supabase client */
+  /** Reset all including Supabase client
+ */
   static reset(): void {
     this.supabaseClient = null;
     this.resetRepositories();

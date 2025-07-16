@@ -1,4 +1,4 @@
-import { ProviderId, ModelId, ProviderValueObject } from '../value-objects/Provider';
+import { ProviderId, ModelId } from '../value-objects/Provider';
 import { ImageGenerationProvider } from '../repositories/ImageGenerationProvider';
 
 export interface ProviderRegistryService {

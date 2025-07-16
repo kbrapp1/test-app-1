@@ -8,6 +8,87 @@ interface ApiResponseDetailsProps {
   textColor: string;
 }
 
+// Helper component to avoid ReactNode type issues
+function StreamingDetailsSection({ streamingDetails }: { streamingDetails: ResponseData['streamingDetails'] }) {
+  if (!streamingDetails) return null;
+
+  return (
+    <div className="mt-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-2">
+      <strong className="text-sm text-blue-800 dark:text-blue-200">Streaming Performance:</strong>
+      <div className="grid grid-cols-3 gap-4 text-xs mt-1">
+        <div><strong>First Token:</strong> {streamingDetails.firstTokenTime}ms</div>
+        <div><strong>Tokens/Second:</strong> {streamingDetails.tokensPerSecond.toFixed(1)}</div>
+        <div><strong>Total Chunks:</strong> {streamingDetails.totalChunks}</div>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for response headers
+function ResponseHeadersSection({ responseHeaders }: { responseHeaders: ResponseData['responseHeaders'] }) {
+  if (!responseHeaders || Object.keys(responseHeaders).length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <strong className="text-sm">Response Headers:</strong>
+      <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2">
+        <ScrollArea className="h-20 w-full">
+          <div className="space-y-1">
+            {Object.entries(responseHeaders).map(([key, value]) => (
+              <div key={key} className="text-xs font-mono">
+                <span className="text-green-600 dark:text-green-400">{key}:</span>{' '}
+                <span className="text-gray-700 dark:text-gray-300">{String(value)}</span>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for response payload
+function ResponsePayloadSection({ responsePayload }: { responsePayload: ResponseData['responsePayload'] }) {
+  if (!responsePayload) return null;
+
+  return (
+    <div className="mt-2">
+      <strong className="text-sm">Full Response Payload:</strong>
+      <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2 max-w-full overflow-hidden">
+        <ScrollArea className="h-32 w-full">
+          <pre className="font-mono text-xs whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300 max-w-full overflow-wrap-anywhere">
+            {typeof responsePayload === 'string' 
+              ? responsePayload 
+              : JSON.stringify(responsePayload, null, 2)
+            }
+          </pre>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for generated response
+function GeneratedResponseSection({ fullResponse }: { fullResponse: ResponseData['fullResponse'] }) {
+  if (!fullResponse) return null;
+
+  return (
+    <div className="mt-2">
+      <strong className="text-sm">Generated Response:</strong>
+      <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2 max-w-full overflow-hidden">
+        <ScrollArea className="h-24 w-full">
+          <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words max-w-full overflow-wrap-anywhere">
+            {typeof fullResponse === 'string' 
+              ? fullResponse 
+              : JSON.stringify(fullResponse, null, 2)
+            }
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
 export function ApiResponseDetails({ responseData, textColor }: ApiResponseDetailsProps) {
   return (
     <div className="border-t pt-2">
@@ -48,69 +129,16 @@ export function ApiResponseDetails({ responseData, textColor }: ApiResponseDetai
       )}
 
       {/* Streaming Details */}
-      {responseData.streamingDetails && (
-        <div className="mt-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-2">
-          <strong className="text-sm text-blue-800 dark:text-blue-200">Streaming Performance:</strong>
-          <div className="grid grid-cols-3 gap-4 text-xs mt-1">
-            <div><strong>First Token:</strong> {responseData.streamingDetails.firstTokenTime}ms</div>
-            <div><strong>Tokens/Second:</strong> {responseData.streamingDetails.tokensPerSecond.toFixed(1)}</div>
-            <div><strong>Total Chunks:</strong> {responseData.streamingDetails.totalChunks}</div>
-          </div>
-        </div>
-      )}
+      <StreamingDetailsSection streamingDetails={responseData.streamingDetails} />
 
       {/* Response Headers */}
-      {responseData.responseHeaders && Object.keys(responseData.responseHeaders).length > 0 && (
-        <div className="mt-2">
-          <strong className="text-sm">Response Headers:</strong>
-          <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2">
-            <ScrollArea className="h-20 w-full">
-              <div className="space-y-1">
-                {Object.entries(responseData.responseHeaders).map(([key, value]) => (
-                  <div key={key} className="text-xs font-mono">
-                    <span className="text-green-600 dark:text-green-400">{key}:</span>{' '}
-                    <span className="text-gray-700 dark:text-gray-300">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-      )}
+      <ResponseHeadersSection responseHeaders={responseData.responseHeaders} />
 
       {/* Full Response Payload */}
-      {responseData.responsePayload && (
-        <div className="mt-2">
-          <strong className="text-sm">Full Response Payload:</strong>
-          <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2 max-w-full overflow-hidden">
-            <ScrollArea className="h-32 w-full">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300 max-w-full overflow-wrap-anywhere">
-                {typeof responseData.responsePayload === 'string' 
-                  ? responseData.responsePayload 
-                  : JSON.stringify(responseData.responsePayload, null, 2)
-                }
-              </pre>
-            </ScrollArea>
-          </div>
-        </div>
-      )}
+      <ResponsePayloadSection responsePayload={responseData.responsePayload} />
 
       {/* Generated Response */}
-      {responseData.fullResponse && (
-        <div className="mt-2">
-          <strong className="text-sm">Generated Response:</strong>
-          <div className="mt-1 bg-gray-50 dark:bg-gray-800 rounded p-2 max-w-full overflow-hidden">
-            <ScrollArea className="h-24 w-full">
-              <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words max-w-full overflow-wrap-anywhere">
-                {typeof responseData.fullResponse === 'string' 
-                  ? responseData.fullResponse 
-                  : JSON.stringify(responseData.fullResponse, null, 2)
-                }
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-      )}
+      <GeneratedResponseSection fullResponse={responseData.fullResponse} />
     </div>
   );
 } 

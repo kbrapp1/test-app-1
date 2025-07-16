@@ -6,14 +6,26 @@ import { Generation } from '../entities/Generation';
 import { GenerationStatus } from '../value-objects/GenerationStatus';
 import { GenerationStatusManager } from '../entities/services/GenerationStatusManager';
 
+// Type assertion for domain service pattern - allows legitimate access to private fields
+type WritableGeneration = {
+  _status: GenerationStatus;
+  _resultImageUrl: string;
+  _generationTimeSeconds: number;
+  _updatedAt: Date;
+  _errorMessage: string | null;
+  _savedToDAM: boolean;
+  _damAssetId: string | null;
+  _externalProviderId: string | null;
+};
+
 export class GenerationLifecycle {
   /**
    * Update generation status with validation
    */
   static updateStatus(generation: Generation, newStatus: GenerationStatus): void {
     GenerationStatusManager.validateTransition(generation.status, newStatus);
-    (generation as any)._status = newStatus;
-    (generation as any)._updatedAt = new Date();
+    (generation as unknown as WritableGeneration)._status = newStatus;
+    (generation as unknown as WritableGeneration)._updatedAt = new Date();
   }
 
   /**
@@ -21,9 +33,9 @@ export class GenerationLifecycle {
    */
   static markAsCompleted(generation: Generation, imageUrl: string, generationTime: number): void {
     this.updateStatus(generation, GenerationStatus.completed());
-    (generation as any)._resultImageUrl = imageUrl;
-    (generation as any)._generationTimeSeconds = generationTime;
-    (generation as any)._updatedAt = new Date();
+    (generation as unknown as WritableGeneration)._resultImageUrl = imageUrl;
+    (generation as unknown as WritableGeneration)._generationTimeSeconds = generationTime;
+    (generation as unknown as WritableGeneration)._updatedAt = new Date();
   }
 
   /**
@@ -31,8 +43,8 @@ export class GenerationLifecycle {
    */
   static markAsFailed(generation: Generation, errorMessage: string): void {
     this.updateStatus(generation, GenerationStatus.failed());
-    (generation as any)._errorMessage = errorMessage;
-    (generation as any)._updatedAt = new Date();
+    (generation as unknown as WritableGeneration)._errorMessage = errorMessage;
+    (generation as unknown as WritableGeneration)._updatedAt = new Date();
   }
 
   /**
@@ -40,7 +52,7 @@ export class GenerationLifecycle {
    */
   static markAsProcessing(generation: Generation): void {
     this.updateStatus(generation, GenerationStatus.processing());
-    (generation as any)._updatedAt = new Date();
+    (generation as unknown as WritableGeneration)._updatedAt = new Date();
   }
 
   /**
@@ -50,8 +62,8 @@ export class GenerationLifecycle {
     if (!providerId?.trim()) {
       throw new Error('External provider ID cannot be empty');
     }
-    (generation as any)._externalProviderId = providerId;
-    (generation as any)._updatedAt = new Date();
+    (generation as unknown as WritableGeneration)._externalProviderId = providerId;
+    (generation as unknown as WritableGeneration)._updatedAt = new Date();
   }
 
   /**
@@ -61,11 +73,11 @@ export class GenerationLifecycle {
     if (!permanentUrl?.trim()) {
       throw new Error('Storage URL cannot be empty');
     }
-    (generation as any)._resultImageUrl = permanentUrl;
+    (generation as unknown as WritableGeneration)._resultImageUrl = permanentUrl;
     // Ensure updatedAt strictly increases even if clock resolution is low
-    const prevTime = (generation as any)._updatedAt?.getTime() || 0;
+    const prevTime = (generation as unknown as WritableGeneration)._updatedAt?.getTime() || 0;
     const nowTime = Date.now();
     const newTime = nowTime > prevTime ? nowTime : prevTime + 1;
-    (generation as any)._updatedAt = new Date(newTime);
+    (generation as unknown as WritableGeneration)._updatedAt = new Date(newTime);
   }
 } 

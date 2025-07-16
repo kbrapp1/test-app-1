@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../supabase/server';
 import { ErrorCategorizationDomainService } from '../../domain/services/ErrorCategorizationDomainService';
 import { ErrorPersistenceService } from '../persistence/supabase/ErrorPersistenceService';
 import { ErrorAnalyticsService } from '../../application/services/ErrorAnalyticsService';
@@ -22,7 +22,8 @@ export class ErrorTrackingCompositionService {
   private static errorAnalyticsService: ErrorAnalyticsService | null = null;
   private static errorTrackingFacade: ErrorTrackingFacade | null = null;
 
-  /** Get error categorization service singleton */
+  /** Get error categorization service singleton
+ */
   static getErrorCategorizationService(): ErrorCategorizationDomainService {
     if (!this.errorCategorizationService) {
       this.errorCategorizationService = new ErrorCategorizationDomainService();
@@ -30,7 +31,8 @@ export class ErrorTrackingCompositionService {
     return this.errorCategorizationService;
   }
 
-  /** Get error persistence service singleton */
+  /** Get error persistence service singleton
+ */
   static getErrorPersistenceService(): ErrorPersistenceService {
     if (!this.errorPersistenceService) {
       const supabase = createClient();
@@ -39,7 +41,8 @@ export class ErrorTrackingCompositionService {
     return this.errorPersistenceService;
   }
 
-  /** Get error analytics service singleton */
+  /** Get error analytics service singleton
+ */
   static getErrorAnalyticsService(): ErrorAnalyticsService {
     if (!this.errorAnalyticsService) {
       const supabase = createClient();
@@ -48,7 +51,8 @@ export class ErrorTrackingCompositionService {
     return this.errorAnalyticsService;
   }
 
-  /** Get error tracking facade with all dependencies wired */
+  /** Get error tracking facade with all dependencies wired
+ */
   static getErrorTrackingFacade(): ErrorTrackingFacade {
     if (!this.errorTrackingFacade) {
       this.errorTrackingFacade = this.createErrorTrackingFacade();
@@ -71,7 +75,8 @@ export class ErrorTrackingCompositionService {
     );
   }
 
-  /** Reset all error tracking services for testing */
+  /** Reset all error tracking services for testing
+ */
   static reset(): void {
     this.errorCategorizationService = null;
     this.errorPersistenceService = null;

@@ -8,8 +8,6 @@ import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 
 // Domain service interfaces
-import { IIntentClassificationService } from '../../domain/services/interfaces/IIntentClassificationService';
-import { ITokenCountingService } from '../../domain/services/interfaces/ITokenCountingService';
 import { IChatbotLoggingService } from '../../domain/services/interfaces/IChatbotLoggingService';
 
 // Application services

@@ -68,7 +68,7 @@ export const ImageDisplayArea: React.FC<ImageDisplayAreaProps> = ({
             </h3>
             {currentPrompt && (
               <p className="text-sm text-foreground mb-3 font-medium">
-                "{currentPrompt.length > 80 ? currentPrompt.substring(0, 80) + '...' : currentPrompt}"
+                &quot;{currentPrompt.length > 80 ? currentPrompt.substring(0, 80) + '...' : currentPrompt}&quot;
               </p>
             )}
             <p className="text-muted-foreground">
@@ -103,7 +103,7 @@ export const ImageDisplayArea: React.FC<ImageDisplayAreaProps> = ({
               <Wand2 className="w-12 h-12 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-medium text-foreground mb-2">Ready to create amazing images</h3>
-            <p className="text-muted-foreground">Enter a prompt and click "Create art" to generate your first AI image</p>
+            <p className="text-muted-foreground">Enter a prompt and click &quot;Create art&quot; to generate your first AI image</p>
           </div>
         )}
       </div>

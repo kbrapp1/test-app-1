@@ -248,7 +248,12 @@ describe('Generation', () => {
   describe('auto-save functionality', () => {
     it('should generate correct auto-save storage path', () => {
       const generation = GenerationFactory.create(validGenerationData);
-      const expectedPath = `${validGenerationData.organizationId}/${validGenerationData.userId}/ai-generations/${generation.id}.webp`;
+      const expectedPath = [
+        validGenerationData.organizationId,
+        validGenerationData.userId,
+        'ai-generations',
+        `${generation.id}.webp`
+      ].join('/');
       
       expect(GenerationDisplayService.getAutoSaveStoragePath(generation)).toBe(expectedPath);
     });

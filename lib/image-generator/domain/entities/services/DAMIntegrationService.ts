@@ -23,7 +23,7 @@ export class DAMIntegrationService {
     providerName: string,
     costCents: number,
     generationId: string
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return {
       title: prompt.length > 50 ? `${prompt.substring(0, 47)}...` : prompt,
       description: prompt,

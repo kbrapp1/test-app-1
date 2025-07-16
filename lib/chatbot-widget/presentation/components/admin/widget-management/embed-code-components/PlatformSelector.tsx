@@ -1,6 +1,6 @@
 'use client';
 
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Globe } from 'lucide-react';
 
 /**
@@ -20,7 +20,7 @@ interface PlatformSelectorProps {
   onPlatformChange: (platform: PlatformType) => void;
 }
 
-export function PlatformSelector({ selectedPlatform, onPlatformChange }: PlatformSelectorProps) {
+export function PlatformSelector({ selectedPlatform: _selectedPlatform, onPlatformChange }: PlatformSelectorProps) {
   return (
     <TabsList className="grid w-full grid-cols-3">
       <TabsTrigger 

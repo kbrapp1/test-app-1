@@ -22,12 +22,12 @@ interface GenerationHistoryProps {
   // Infinite scroll props
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
-  onLoadMore?: () => any;
+  onLoadMore?: () => void;
 }
 
 export const GenerationHistory: React.FC<GenerationHistoryProps> = ({
   generations,
-  onRefresh,
+  onRefresh: _onRefresh,
   onEditImage,
   onImageSelect,
   onMakeBaseImage,

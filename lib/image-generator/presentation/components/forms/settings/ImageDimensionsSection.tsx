@@ -29,7 +29,7 @@ const MAX_RATIO = 21/9; // 2.33 (21:9)
 export const ImageDimensionsSection: React.FC<ImageDimensionsSectionProps> = ({
   aspectRatio,
   onAspectRatioChange,
-  supportedAspectRatios,
+  supportedAspectRatios: _supportedAspectRatios,
 }) => {
   const [customRatio, setCustomRatio] = React.useState('');
   const [customError, setCustomError] = React.useState('');

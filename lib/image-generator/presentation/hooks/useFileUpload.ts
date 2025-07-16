@@ -165,11 +165,11 @@ export const useFileUpload = (): UseFileUploadReturn => {
             setBaseImageUrl(publicUrl);
             setIsStorageUrl(true); // This is now a proper storage URL
           }
-        } catch (_error) {
+        } catch {
           // Silently fall back to base64 - no need to log error
         }
       }
-    } catch (_error) {
+    } catch {
       // Handle any errors in the process
     } finally {
       // Always reset uploading state, regardless of success/failure
@@ -271,11 +271,11 @@ export const useFileUpload = (): UseFileUploadReturn => {
             setSecondImageUrl(publicUrl);
             setIsSecondImageStorageUrl(true); // This is now a proper storage URL
           }
-        } catch (_error) {
+        } catch {
           // Silently fall back to base64 - no need to log error
         }
       }
-    } catch (_error) {
+    } catch {
       // Handle any errors in the process
     } finally {
       // Always reset uploading state, regardless of success/failure

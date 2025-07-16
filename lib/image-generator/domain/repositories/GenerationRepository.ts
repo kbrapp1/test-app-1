@@ -49,4 +49,6 @@ export interface GenerationRepository {
    * Mark generation as saved to DAM
    */
   markSavedToDAM(id: string, damAssetId: string): Promise<Result<Generation, string>>;
+
+
 } 
