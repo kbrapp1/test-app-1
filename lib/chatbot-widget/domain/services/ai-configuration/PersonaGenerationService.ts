@@ -21,18 +21,19 @@ export class PersonaGenerationService {
   // Context-aware persona generation
   generateContextAwarePersona(
     config: ChatbotConfig, 
-    analysis: ConversationAnalysis
+    _analysis: ConversationAnalysis
   ): TemplateVariable[] {
     // Generate template variables for business persona
-    return this.generateBusinessPersonaVariables(config, analysis);
+    return this.generateBusinessPersonaVariables(config, _analysis);
   }
 
   // Business persona variables for template generation
   private generateBusinessPersonaVariables(
     config: ChatbotConfig, 
-    analysis: ConversationAnalysis
+    _analysis: ConversationAnalysis
   ): TemplateVariable[] {
-    const companyName = this.extractCompanyName(config.knowledgeBase.companyInfo || '');
+    // AI: Add null safety check for knowledgeBase to prevent runtime errors
+    const companyName = this.extractCompanyName(config.knowledgeBase?.companyInfo || '');
     
     return [
       {
@@ -57,7 +58,7 @@ export class PersonaGenerationService {
       },
       {
         name: 'tone',
-        value: config.personalitySettings.tone || 'Consultative with authority',
+        value: config.personalitySettings?.tone || 'Consultative with authority',
         isRequired: true
       },
       {

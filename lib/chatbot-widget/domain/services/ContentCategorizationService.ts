@@ -159,7 +159,7 @@ export class ContentCategorizationService {
   /**
    * Get fallback category based on content characteristics
    */
-  private getFallbackCategory(content: string, title: string): KnowledgeItem['category'] {
+  private getFallbackCategory(content: string, _title: string): KnowledgeItem['category'] {
     // Domain rule: Use content length and structure for fallback categorization
     const wordCount = content.split(/\s+/).length;
     const hasQuestions = /\?/.test(content);

@@ -82,7 +82,7 @@ export class ContentExtractionService {
   extractInternalLinks(
     htmlParser: IHtmlParser,
     baseUrl: string,
-    maxDepth: number
+    _maxDepth: number
   ): string[] {
     try {
       const allLinks = htmlParser.getAllLinks();
@@ -103,7 +103,7 @@ export class ContentExtractionService {
               this.isContentUrl(absoluteUrl)) {
             validLinks.push(absoluteUrl);
           }
-        } catch (_error) {
+        } catch {
           // Skip invalid URLs
           continue;
         }
@@ -213,7 +213,7 @@ export class ContentExtractionService {
   private extractDomain(url: string): string {
     try {
       return new URL(url).hostname;
-    } catch (error) {
+    } catch {
       throw new ContentExtractionError(
         'Invalid URL format',
         { url }
@@ -225,7 +225,7 @@ export class ContentExtractionService {
   private convertToAbsoluteUrl(href: string, baseUrl: string): string {
     try {
       return new URL(href, baseUrl).href;
-    } catch (error) {
+    } catch {
       throw new ContentExtractionError(
         'Invalid URL format',
         { href, baseUrl }

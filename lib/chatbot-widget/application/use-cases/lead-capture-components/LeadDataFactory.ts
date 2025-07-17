@@ -38,7 +38,7 @@ export interface LeadDataFactoryResult {
 export class LeadDataFactory {
   /** Create complete lead data from session information */
   static createFromSession(input: LeadDataFactoryInput): LeadDataFactoryResult {
-    const { session, config, contactInfo } = input;
+    const { session, config: _config, contactInfo } = input;
 
     return {
       contactInfo: this.createContactInfo(session, contactInfo),

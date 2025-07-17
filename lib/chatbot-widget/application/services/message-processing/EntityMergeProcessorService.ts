@@ -16,6 +16,13 @@ import { AccumulatedEntities } from '../../../domain/value-objects/context/Accum
 import { ExtractedEntities } from '../../../domain/value-objects/message-processing/IntentResult';
 import { IChatbotLoggingService, ISessionLogger as _ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { 
+  UnifiedProcessingResult, 
+  ProcessingSession, 
+  ArrayEntities, 
+  ApiProvidedData,
+  UnifiedEntities
+} from './types/UnifiedResultTypes';
 
 
 export class EntityMergeProcessorService {
@@ -27,13 +34,13 @@ export class EntityMergeProcessorService {
 
   /** Process and merge entities from unified AI results */
   processUnifiedEntities(
-    session: any,
+    session: ProcessingSession,
     botMessage: ChatMessage,
-    unifiedResult: any,
+    unifiedResult: UnifiedProcessingResult,
     logFileName?: string
   ): {
     finalAccumulatedEntities: AccumulatedEntities;
-    apiProvidedData: any;
+    apiProvidedData: ApiProvidedData;
   } {
     // Create session logger with context - shared log file is required
     if (!logFileName) {
@@ -61,7 +68,7 @@ export class EntityMergeProcessorService {
     };
 
     // Separate array entities from single entities
-    const arrayEntities = {
+    const arrayEntities: ArrayEntities = {
       goals: analysis.entities?.goals || [],
       painPoints: analysis.entities?.painPoints || [],
       decisionMakers: analysis.entities?.decisionMakers || [],
@@ -127,7 +134,7 @@ export class EntityMergeProcessorService {
    * - Handle missing data gracefully
    * - Single entities only - arrays handled separately
    */
-  private convertToExtractedEntitiesFormat(entities: any): ExtractedEntities {
+  private convertToExtractedEntitiesFormat(entities: UnifiedEntities): ExtractedEntities {
     const extractedEntities: ExtractedEntities = {};
     
     // Core business entities
@@ -139,9 +146,9 @@ export class EntityMergeProcessorService {
     ];
     
     entityTypes.forEach(entityType => {
-      const value = entities[entityType];
+      const value = entities[entityType as keyof UnifiedEntities];
       if (value !== undefined && value !== null) {
-        (extractedEntities as any)[entityType] = value;
+        (extractedEntities as Record<string, unknown>)[entityType] = value;
       }
     });
     
@@ -151,29 +158,37 @@ export class EntityMergeProcessorService {
   /** Build API provided data structure */
   private buildApiProvidedData(
     finalAccumulatedEntities: AccumulatedEntities,
-    unifiedResult: any
-  ): any {
+    unifiedResult: UnifiedProcessingResult
+  ): ApiProvidedData {
     const accumulatedEntitiesPlain = finalAccumulatedEntities.toPlainObject();
     
     return {
       entities: {
-        urgency: accumulatedEntitiesPlain.urgency?.value || 'medium' as const,
-        goals: accumulatedEntitiesPlain.goals?.map((g: any) => g.value) || [],
-        painPoints: accumulatedEntitiesPlain.painPoints?.map((p: any) => p.value) || [],
-        integrationNeeds: accumulatedEntitiesPlain.integrationNeeds?.map((i: any) => i.value) || [],
-        evaluationCriteria: accumulatedEntitiesPlain.evaluationCriteria?.map((e: any) => e.value) || [],
-        company: accumulatedEntitiesPlain.company?.value,
-        role: accumulatedEntitiesPlain.role?.value,
-        budget: accumulatedEntitiesPlain.budget?.value,
-        timeline: accumulatedEntitiesPlain.timeline?.value,
-        teamSize: accumulatedEntitiesPlain.teamSize?.value,
-        industry: accumulatedEntitiesPlain.industry?.value,
-        contactMethod: accumulatedEntitiesPlain.contactMethod?.value,
-        visitorName: accumulatedEntitiesPlain.visitorName?.value
+        urgency: (accumulatedEntitiesPlain.urgency as { value?: string } | undefined)?.value as 'low' | 'medium' | 'high' || 'medium',
+        goals: Array.isArray(accumulatedEntitiesPlain.goals) 
+          ? accumulatedEntitiesPlain.goals.map((g: unknown) => (g as { value?: string })?.value || '').filter(Boolean)
+          : [],
+        painPoints: Array.isArray(accumulatedEntitiesPlain.painPoints)
+          ? accumulatedEntitiesPlain.painPoints.map((p: unknown) => (p as { value?: string })?.value || '').filter(Boolean)
+          : [],
+        integrationNeeds: Array.isArray(accumulatedEntitiesPlain.integrationNeeds)
+          ? accumulatedEntitiesPlain.integrationNeeds.map((i: unknown) => (i as { value?: string })?.value || '').filter(Boolean)
+          : [],
+        evaluationCriteria: Array.isArray(accumulatedEntitiesPlain.evaluationCriteria)
+          ? accumulatedEntitiesPlain.evaluationCriteria.map((e: unknown) => (e as { value?: string })?.value || '').filter(Boolean)
+          : [],
+        company: (accumulatedEntitiesPlain.company as { value?: string } | undefined)?.value,
+        role: (accumulatedEntitiesPlain.role as { value?: string } | undefined)?.value,
+        budget: (accumulatedEntitiesPlain.budget as { value?: string } | undefined)?.value,
+        timeline: (accumulatedEntitiesPlain.timeline as { value?: string } | undefined)?.value,
+        teamSize: (accumulatedEntitiesPlain.teamSize as { value?: string } | undefined)?.value,
+        industry: (accumulatedEntitiesPlain.industry as { value?: string } | undefined)?.value,
+        contactMethod: (accumulatedEntitiesPlain.contactMethod as { value?: string } | undefined)?.value,
+        visitorName: (accumulatedEntitiesPlain.visitorName as { value?: string } | undefined)?.value
       },
       personaInference: {
-        role: accumulatedEntitiesPlain.role?.value,
-        industry: accumulatedEntitiesPlain.industry?.value,
+        role: (accumulatedEntitiesPlain.role as { value?: string } | undefined)?.value,
+        industry: (accumulatedEntitiesPlain.industry as { value?: string } | undefined)?.value,
         evidence: unifiedResult?.analysis?.personaInference?.evidence || []
       },
       leadScore: {

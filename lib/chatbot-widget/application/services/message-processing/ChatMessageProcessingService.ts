@@ -11,6 +11,10 @@
 
 import { WorkflowContext } from './MessageProcessingWorkflowService';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { IntentResult } from '../../../domain/value-objects/message-processing/IntentResult';
+import { ProcessingConfig, ProcessingSession } from './types/UnifiedResultTypes';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
@@ -35,22 +39,22 @@ export interface AnalysisResult {
   session: Record<string, unknown>;
   userMessage: ChatMessage;
   contextResult: Record<string, unknown>;
-  config: Record<string, unknown>;
+  config: ChatbotConfig;
   enhancedContext: Record<string, unknown>;
 }
 
 export interface MessageProcessingContext {
-  session: Record<string, unknown>;
-  config: Record<string, unknown>;
+  session: ChatSession;
+  config: ChatbotConfig;
   userMessage: ChatMessage;
 }
 
 export interface ResponseResult {
-  session: Record<string, unknown>;
+  session: ChatSession;
   userMessage: ChatMessage;
   botMessage: ChatMessage;
   allMessages: ChatMessage[];
-  config: Record<string, unknown>;
+  config: ChatbotConfig;
   enhancedContext: Record<string, unknown>;
 }
 
@@ -92,8 +96,8 @@ export class ChatMessageProcessingService {
     const { session, config, userMessage } = workflowContext;
 
     return {
-      session: session as any,
-      config: config as any,
+      session,
+      config,
       userMessage
     };
   }
@@ -109,7 +113,7 @@ export class ChatMessageProcessingService {
 
     // AI: Convert plain message objects to ChatMessage entities using repository
     // This follows @golden-rule.mdc by maintaining proper domain boundaries
-    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages as any[], sharedLogFile);
+    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages as Record<string, unknown>[], sharedLogFile);
     
     // Check if userMessage is already in context messages to avoid duplication
     const isUserMessageInContext = contextMessages.some((msg: ChatMessage) => msg.id === userMessage.id);
@@ -121,21 +125,30 @@ export class ChatMessageProcessingService {
     const logFileName = sharedLogFile;
 
     // Build conversation context with compression and entity injection
+    const processingConfig: ProcessingConfig = {
+      organizationId: config.organizationId,
+      name: config.name
+    };
+    const processingSession: ProcessingSession = {
+      id: (session as Record<string, unknown>).id as string,
+      conversationId: (session as Record<string, unknown>).conversationId as string,
+      contextData: (session as Record<string, unknown>).contextData as Record<string, unknown>
+    };
     const conversationContext = await this.conversationContextBuilder.buildConversationContext(
-      config,
-      session,
+      processingConfig,
+      processingSession,
       contextMessages, // Use converted entities
       userMessage,
-      contextResult.summary as any,
+      contextResult.summary as string | undefined,
       enhancedContext,
       logFileName
     );
 
     // Add shared log file to context for downstream services
-    (conversationContext as any).sharedLogFile = logFileName;
+    (conversationContext as unknown as Record<string, unknown>).sharedLogFile = logFileName;
 
     // Process unified AI interaction
-    const unifiedResult = await (this.intentClassificationService as { processChatbotInteractionComplete: (content: string, context: unknown) => Promise<unknown> }).processChatbotInteractionComplete(
+    const unifiedResult = await (this.intentClassificationService as IIntentClassificationService & { processChatbotInteractionComplete: (content: string, context: unknown) => Promise<unknown> }).processChatbotInteractionComplete(
       userMessage.content,
       conversationContext
     );
@@ -213,9 +226,9 @@ export class ChatMessageProcessingService {
 
     const searchContext = {
       userQuery: query,
-      intentResult: context?.intentResult as any,
-      conversationHistory: context?.conversationHistory as any,
-      userPreferences: context?.userPreferences as any,
+      intentResult: context?.intentResult as IntentResult,
+      conversationHistory: context?.conversationHistory as string[],
+      userPreferences: context?.userPreferences as Record<string, unknown>,
       maxResults: (context?.maxResults as number) || 5,
       minRelevanceScore: (context?.minRelevanceScore as number) || 0.5
     };
@@ -304,7 +317,7 @@ export class ChatMessageProcessingService {
         
         // If not found in repository, check if it's already a ChatMessage entity
         if (msg.isFromUser && typeof msg.isFromUser === 'function') {
-          chatMessages.push(msg as any);
+          chatMessages.push(msg as unknown as ChatMessage);
           continue;
         }
         

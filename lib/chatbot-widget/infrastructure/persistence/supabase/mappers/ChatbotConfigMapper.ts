@@ -159,6 +159,18 @@ export class ChatbotConfigMapper {
 
   /** Map JSONB knowledge base to domain value object */
   private static mapKnowledgeBase(data: any): KnowledgeBase {
+    // Handle case where knowledge_base JSONB field is null in database
+    if (!data || data === null) {
+      return KnowledgeBase.create({
+        companyInfo: '',
+        productCatalog: '',
+        faqs: [],
+        supportDocs: '',
+        complianceGuidelines: '',
+        websiteSources: [],
+      });
+    }
+    
     return KnowledgeBase.create({
       companyInfo: data?.companyInfo || '',
       productCatalog: data?.productCatalog || '',

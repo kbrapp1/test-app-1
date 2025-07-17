@@ -4,7 +4,7 @@ import {
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
-import { IChatbotLoggingService, IOperationLogger } from './interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService, IOperationLogger as _IOperationLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 /**

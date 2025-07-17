@@ -8,13 +8,13 @@ import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepo
 import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { 
-  KnowledgeRetrievalError, 
+  KnowledgeRetrievalError as _KnowledgeRetrievalError, 
   VectorSearchError, 
   EmbeddingGenerationError,
-  KnowledgeCacheError,
+  KnowledgeCacheError as _KnowledgeCacheError,
   PerformanceThresholdError 
 } from '../errors/ChatbotWidgetDomainErrors';
-import { IEmbeddingService } from './interfaces/IEmbeddingService';
+import { IEmbeddingService as _IEmbeddingService } from './interfaces/IEmbeddingService';
 import { IChatbotLoggingService, ISessionLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeCacheWarmingService, CacheWarmingMetrics } from './KnowledgeCacheWarmingService';
@@ -89,7 +89,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
 
     try {
       // Create session logger with context - use a dummy session ID if not provided
-      const sessionId = (context as any).sessionId || 'unknown-session';
+      const sessionId = (context as { sessionId?: string }).sessionId || 'unknown-session';
       
       // Shared log file is required for all logging operations
       if (!context.sharedLogFile) {
@@ -144,10 +144,10 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       const embeddingTimeMs = Date.now() - embeddingStartTime;
       
       // Use synchronous logging for embedding completion to maintain order
-      if (typeof (logger as any).logMessageSync === 'function') {
-        (logger as any).logMessageSync('✅ Embeddings generated successfully');
-        (logger as any).logMessageSync(`Vector dimensions: ${queryEmbedding.length}`);
-        (logger as any).logMessageSync(`Embedding time: ${embeddingTimeMs}ms`);
+      if (typeof (logger as { logMessageSync?: (message: string) => void }).logMessageSync === 'function') {
+        (logger as { logMessageSync: (message: string) => void }).logMessageSync('✅ Embeddings generated successfully');
+        (logger as { logMessageSync: (message: string) => void }).logMessageSync(`Vector dimensions: ${queryEmbedding.length}`);
+        (logger as { logMessageSync: (message: string) => void }).logMessageSync(`Embedding time: ${embeddingTimeMs}ms`);
       } else {
         logger.logMessage('✅ Embeddings generated successfully');
         logger.logMessage(`Vector dimensions: ${queryEmbedding.length}`);
@@ -367,7 +367,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     return result.items.filter(item => !excludeIds?.includes(item.id));
   }
 
-  async upsertKnowledgeItem(item: Omit<KnowledgeItem, 'id' | 'lastUpdated'>): Promise<KnowledgeItem> {
+  async upsertKnowledgeItem(_item: Omit<KnowledgeItem, 'id' | 'lastUpdated'>): Promise<KnowledgeItem> {
     throw new BusinessRuleViolationError(
       'Knowledge modifications not supported by retrieval service',
       { 
@@ -382,7 +382,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     try {
       const healthResult = await this.managementService.checkHealthStatus(sharedLogFile);
       return healthResult.status === 'healthy' && this.vectorCache.isReady();
-    } catch (error) {
+    } catch {
       return false;
     }
   }

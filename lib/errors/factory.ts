@@ -22,8 +22,7 @@ import {
   ExternalServiceError,
 } from './base';
 import { 
-  ErrorCodes,
-  ErrorSeverity 
+  ErrorCodes
 } from './constants';
 
 /**

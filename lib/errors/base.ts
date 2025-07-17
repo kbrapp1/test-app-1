@@ -139,7 +139,7 @@ export abstract class DomainError extends Error {
 
   constructor(
     message: string,
-    public readonly context: Record<string, any> = {},
+    public readonly context: Record<string, unknown> = {},
     public readonly timestamp: Date = new Date(),
   ) {
     super(message);
@@ -151,7 +151,7 @@ export class BusinessRuleViolationError extends DomainError {
   readonly code = 'BUSINESS_RULE_VIOLATION';
   readonly severity = ErrorSeverity.HIGH;
 
-  constructor(rule: string, context: Record<string, any> = {}) {
+  constructor(rule: string, context: Record<string, unknown> = {}) {
     super(`Business rule violated: ${rule}`, context);
   }
 }
@@ -160,7 +160,7 @@ export class InvariantViolationError extends DomainError {
   readonly code = 'INVARIANT_VIOLATION';
   readonly severity = ErrorSeverity.CRITICAL;
 
-  constructor(invariant: string, context: Record<string, any> = {}) {
+  constructor(invariant: string, context: Record<string, unknown> = {}) {
     super(`Domain invariant violated: ${invariant}`, context);
   }
 }
@@ -172,7 +172,7 @@ export class ResourceNotFoundError extends DomainError {
   constructor(
     resourceType: string,
     identifier: string,
-    context: Record<string, any> = {},
+    context: Record<string, unknown> = {},
   ) {
     super(`${resourceType} not found: ${identifier}`, {
       ...context,

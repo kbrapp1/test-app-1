@@ -90,7 +90,7 @@ export class ContentDeduplicationService {
     // Step 2: Within each URL group, check for content duplicates across groups
     const contentGroups = new Map<string, DeduplicatableContent[]>();
     
-    for (const [normalizedUrl, urlGroupItems] of Array.from(urlGroups)) {
+    for (const [_normalizedUrl, urlGroupItems] of Array.from(urlGroups)) {
       // For URL groups with multiple items, pick the canonical URL
       if (urlGroupItems.length > 1) {
         const canonicalUrl = this.urlNormalizationService.getCanonicalUrl(

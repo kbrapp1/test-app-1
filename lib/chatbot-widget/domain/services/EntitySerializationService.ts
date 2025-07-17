@@ -78,7 +78,7 @@ export class EntitySerializationService {
 
       return props;
       
-    } catch (error) {
+    } catch {
       // Deserialization failed - return default props without logging
       return this.createDefaultProps();
     }
@@ -113,7 +113,7 @@ export class EntitySerializationService {
         confidence: (data.confidence as number) || 0.5,
         sourceMessageId: (data.sourceMessageId as string) || 'unknown',
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -192,7 +192,7 @@ export class EntitySerializationService {
     try {
       const parsed = new Date(String(dateInput));
       return isNaN(parsed.getTime()) ? new Date() : parsed;
-    } catch (error) {
+    } catch {
       return new Date();
     }
   }
@@ -267,7 +267,7 @@ export class EntitySerializationService {
     try {
       const date = new Date(dateString);
       return date.toISOString() === dateString;
-    } catch (_error) {
+    } catch {
       return false;
     }
   }

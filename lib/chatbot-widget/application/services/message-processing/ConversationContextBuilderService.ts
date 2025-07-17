@@ -12,6 +12,8 @@
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { IAIConversationService, ConversationContext } from '../../../domain/services/interfaces/IAIConversationService';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { ChatSession } from '../../../domain/entities/ChatSession';
 import { SystemPromptBuilderService } from '../conversation-management/SystemPromptBuilderService';
 import { ApiDrivenCompressionService } from '../conversation-management/ApiDrivenCompressionService';
 import { EntityAccumulationService } from '../../../domain/services/context/EntityAccumulationService';
@@ -19,6 +21,12 @@ import { AccumulatedEntities } from '../../../domain/value-objects/context/Accum
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
+import { 
+  ProcessingConfig, 
+  ProcessingSession, 
+  EnhancedProcessingContext,
+  AccumulatedEntityData
+} from './types/UnifiedResultTypes';
 
 export class ConversationContextBuilderService {
   private readonly systemPromptBuilderService: SystemPromptBuilderService;
@@ -42,18 +50,18 @@ export class ConversationContextBuilderService {
 
   /** Build conversation context with compression and entity injection */
   async buildConversationContext(
-    config: Record<string, unknown>,
-    session: Record<string, unknown>,
+    config: ProcessingConfig,
+    session: ProcessingSession,
     messages: ChatMessage[],
     userMessage: ChatMessage,
     summary: string | undefined,
-    enhancedContext: Record<string, unknown>,
+    enhancedContext: EnhancedProcessingContext,
     logFileName?: string
   ): Promise<ConversationContext> {
     // Store context for error tracking
-    this.sessionId = session.id as string;
-    this.organizationId = config.organizationId as string;
-    this.conversationId = session.conversationId as string;
+    this.sessionId = session.id;
+    this.organizationId = config.organizationId;
+    this.conversationId = session.conversationId;
     
     // AI: Validate organization ID is available for error tracking
     if (!this.organizationId) {
@@ -65,10 +73,10 @@ export class ConversationContextBuilderService {
       throw new Error('LogFileName is required for conversation context building - all logging must be conversation-specific');
     }
     const logger = this.loggingService.createSessionLogger(
-      session.id as string,
+      session.id,
       logFileName,
       {
-        sessionId: session.id as string,
+        sessionId: session.id,
         operation: 'conversation-context-building',
         messageId: userMessage.id
       }
@@ -94,15 +102,15 @@ export class ConversationContextBuilderService {
 
     // Build enhanced system prompt with knowledge base integration
     const systemPrompt = await this.systemPromptBuilderService.buildEnhancedSystemPrompt(
-      config as any,
-      session as any,
+      config as unknown as ChatbotConfig,
+      session as unknown as ChatSession,
       finalMessages,
       completeEnhancedContext
     );
 
     return {
-      chatbotConfig: config as any,
-      session: session as any,
+      chatbotConfig: config as unknown as ChatbotConfig,
+      session: session as unknown as ChatSession,
       messageHistory: finalMessages,
       systemPrompt,
       conversationSummary
@@ -154,23 +162,23 @@ export class ConversationContextBuilderService {
   }
 
   /** Analyze and inject accumulated entities */
-  private analyzeAndInjectEntities(session: Record<string, unknown>, logger: ISessionLogger): string {
+  private analyzeAndInjectEntities(session: ProcessingSession, logger: ISessionLogger): string {
     logger.logStep('Entity injection analysis started', {
-      hasContextData: !!(session.contextData as any),
-      hasAccumulatedEntities: !!((session.contextData as any)?.accumulatedEntities)
+      hasContextData: !!session.contextData,
+      hasAccumulatedEntities: !!session.contextData?.accumulatedEntities
     });
     
-    if (!(session.contextData as any)?.accumulatedEntities) {
+    if (!session.contextData?.accumulatedEntities) {
       logger.logStep('No accumulated entities found - no injection will occur');
       return '';
     }
 
     // Analyze entities for injection
-    this.logEntityAnalysis((session.contextData as any).accumulatedEntities, logger);
+    this.logEntityAnalysis(session.contextData.accumulatedEntities as AccumulatedEntityData, logger);
 
     // Build entity context prompt
     const entityContextPrompt = EntityAccumulationService.buildEntityContextPrompt(
-      AccumulatedEntities.fromObject((session.contextData as any).accumulatedEntities)
+      AccumulatedEntities.fromObject(session.contextData.accumulatedEntities)
     );
     
     if (entityContextPrompt) {
@@ -186,7 +194,7 @@ export class ConversationContextBuilderService {
   }
 
   /** Log detailed entity analysis */
-  private logEntityAnalysis(entities: Record<string, unknown>, logger: ISessionLogger): void {
+  private logEntityAnalysis(entities: AccumulatedEntityData, logger: ISessionLogger): void {
     logger.logStep('Raw accumulated entities structure', {
       entities: entities
     });
@@ -194,18 +202,26 @@ export class ConversationContextBuilderService {
     const entitiesToInject: string[] = [];
     
     // Check single entities
-    const singleEntityTypes = ['visitorName', 'role', 'company', 'industry', 'teamSize', 'budget', 'timeline', 'urgency'];
+    const singleEntityTypes = ['visitorName', 'role', 'company', 'industry', 'teamSize', 'budget', 'timeline', 'urgency'] as const;
     singleEntityTypes.forEach(entityType => {
-      if ((entities as any)[entityType]?.value) {
-        entitiesToInject.push(`${entityType}: "${(entities as any)[entityType].value}" (confidence: ${(entities as any)[entityType].confidence})`);
+      const entity = entities[entityType];
+      if (entity && typeof entity === 'object' && !Array.isArray(entity) && 'value' in entity && entity.value) {
+        const confidence = (entity as { confidence?: number }).confidence;
+        entitiesToInject.push(`${entityType}: "${entity.value}" (confidence: ${confidence || 'unknown'})`);
       }
     });
     
     // Check array entities
-    const arrayEntityTypes = ['painPoints', 'decisionMakers', 'integrationNeeds', 'evaluationCriteria'];
+    const arrayEntityTypes = ['painPoints', 'decisionMakers', 'integrationNeeds', 'evaluationCriteria'] as const;
     arrayEntityTypes.forEach(entityType => {
-      if ((entities as any)[entityType]?.length > 0) {
-        const valuesList = (entities as any)[entityType].map((item: any) => `"${item.value}"`).join(', ');
+      const entity = entities[entityType];
+      if (Array.isArray(entity) && entity.length > 0) {
+        const valuesList = entity.map(item => {
+          if (typeof item === 'object' && item && 'value' in item) {
+            return `"${item.value}"`;
+          }
+          return `"${item}"`;
+        }).join(', ');
         entitiesToInject.push(`${entityType}: [${valuesList}]`);
       }
     });
@@ -236,8 +252,8 @@ Provide a concise but comprehensive summary focusing on business-critical inform
 
       try {
         const result = await this.aiConversationService.generateResponse(summaryPrompt, {
-          chatbotConfig: { name: 'Summary Assistant' } as any,
-          session: { id: 'summary-session' } as any,
+          chatbotConfig: { name: 'Summary Assistant' } as unknown as ChatbotConfig,
+          session: { id: 'summary-session' } as unknown as ChatSession,
           messageHistory: [],
           systemPrompt: 'You are a conversation summarization assistant. Create concise, business-focused summaries.'
         });

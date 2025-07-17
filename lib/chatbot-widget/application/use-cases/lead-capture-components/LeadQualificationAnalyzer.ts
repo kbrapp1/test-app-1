@@ -10,7 +10,7 @@
  * - UPDATED: Removed all business rule analyzers - using OpenAI API decisions only
  */
 
-import { Lead } from '../../../domain/entities/Lead';
+import { Lead as _Lead } from '../../../domain/entities/Lead';
 
 // AI-provided qualification types (from OpenAI function calling)
 export type QualificationStatus = 'qualified' | 'unqualified' | 'needs_review';

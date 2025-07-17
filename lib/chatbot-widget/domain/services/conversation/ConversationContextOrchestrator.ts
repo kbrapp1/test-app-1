@@ -15,7 +15,7 @@ import { ConversationContextWindow } from '../../value-objects/session-managemen
 import { ITokenCountingService } from '../interfaces/ITokenCountingService';
 import { IIntentClassificationService } from '../interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../interfaces/IKnowledgeRetrievalService';
-import { ChatbotConfig } from '../../entities/ChatbotConfig';
+// import { ChatbotConfig } from '../../entities/ChatbotConfig'; // Unused import
 
 // Import refactored services and value objects
 import { 
@@ -206,7 +206,7 @@ export class ConversationContextOrchestrator {
       }
       
       return tokenCount;
-    } catch (error) {
+    } catch {
       // Fallback to character-based estimation
       return messages.reduce((total, msg) => total + Math.ceil(msg.content.length / 4), 0);
     }
@@ -301,7 +301,7 @@ export class ConversationContextOrchestrator {
       
       // Fallback to basic analysis if enhanced service not available
       return baseAnalysis;
-    } catch (error) {
+    } catch {
       // Log through proper logging context if available, fallback to basic analysis
       return this.analyzeContext(messages, session);
     }

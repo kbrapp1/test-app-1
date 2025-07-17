@@ -134,7 +134,7 @@ async function postHandler(req: NextRequest, user: User, supabase: SupabaseClien
 }
 
 // Export the POST handler with authentication and admin role requirement
-export const POST = withErrorHandling(withAuth(postHandler as any, { 
+export const POST = withErrorHandling(withAuth(postHandler, { 
   requiredRole: 'admin',
   unauthorizedMessage: 'Admin access required for team management'
-}) as any); 
+}) as (...args: unknown[]) => Promise<NextResponse>); 

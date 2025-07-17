@@ -63,7 +63,7 @@ export class OpenAIApplicationService {
       this.requestQueue.push({
         apiCall,
         estimatedTokens,
-        resolve: resolve as any,
+        resolve: resolve as (value: unknown) => void,
         reject,
         retries: 0,
       });

@@ -14,6 +14,11 @@ export class KnowledgeBaseService {
   // Minimal knowledge base injection (2025 RAG best practice - vector-first)
   // Uses only essential context, relies on vector search for specific content
   buildMinimalKnowledgeBase(knowledgeBase: any): string {
+    // AI: Add null safety check for knowledgeBase to prevent runtime errors
+    if (!knowledgeBase) {
+      return this.buildEmptyKnowledgeBaseMessage();
+    }
+    
     const companyName = this.extractCompanyName(knowledgeBase.companyInfo || '');
     const hasContent = this.hasKnowledgeBaseContent(knowledgeBase);
     

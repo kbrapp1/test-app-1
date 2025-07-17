@@ -69,7 +69,7 @@ async function getHandler(
   }
 }
 
-export const GET = withErrorHandling(withAuth(getHandler as any) as any);
+export const GET = withErrorHandling(withAuth(getHandler) as (...args: unknown[]) => Promise<NextResponse>);
 
 // Basic check to ensure the route is hit - can be removed later
 export async function OPTIONS() {

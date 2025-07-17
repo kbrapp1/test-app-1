@@ -130,7 +130,11 @@ export const useFolderStore = create<FolderStoreState>((set, get) => ({
     set((state) => {
       const updatedFolders = FolderStateService.updateFolderData(
         state.rootFolders, 
-        updatedFolder as any
+        { 
+          id: updatedFolder.id, 
+          name: updatedFolder.name, 
+          ...(updatedFolder as unknown as Record<string, unknown>)
+        }
       );
       
       return FolderStateService.createStateUpdate({

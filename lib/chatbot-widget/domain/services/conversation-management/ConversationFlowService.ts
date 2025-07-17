@@ -91,7 +91,7 @@ export class ConversationFlowService {
       
       // Calculate score using domain service
       return ReadinessIndicatorDomainService.calculateReadinessScore(indicators);
-    } catch (error) {
+    } catch {
       // Domain validation failed - return default value without logging to console
       return 0.3; // Default medium readiness
     }
@@ -118,7 +118,7 @@ export class ConversationFlowService {
 
     try {
       return ReadinessIndicatorDomainService.deriveReadinessIndicators(context);
-    } catch (error) {
+    } catch {
       // Domain validation failed - return empty indicators without logging to console
       return {
         hasContactInfo: false,

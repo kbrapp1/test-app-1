@@ -5,7 +5,7 @@ import {
   VectorCacheConfig, 
   MemoryEvictionResult, 
   MemoryEvictionReason,
-  VectorCacheEntry
+  VectorCacheEntry as _VectorCacheEntry
 } from '../types/VectorCacheTypes';
 
 /** Vector Memory Management Service
@@ -141,8 +141,8 @@ export class VectorMemoryManagementService {
    * - Handle disabled eviction configuration
    */
   static isMemoryLimitExceeded(
-    vectorCache: Map<string, CachedKnowledgeVector>,
-    config: Required<VectorCacheConfig>
+    _vectorCache: Map<string, CachedKnowledgeVector>,
+    _config: Required<VectorCacheConfig>
   ): boolean {
     // AI: Removed LRU eviction - let serverless platform handle memory management
     return false;

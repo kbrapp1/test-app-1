@@ -20,7 +20,7 @@ export class ConversationAnalysisService {
     conversationHistory?: ChatMessage[],
     entityData?: any,
     intentData?: any,
-    leadScore?: number
+    _leadScore?: number
   ): ConversationAnalysis {
     const messageCount = conversationHistory?.length || 0;
     const phase = this.classifyConversationPhase(messageCount, session.contextData.topics);
@@ -51,7 +51,7 @@ export class ConversationAnalysisService {
   }
 
   /** Conversation phase classification (2025 approach) */
-  private classifyConversationPhase(messageCount: number, topics: string[]): ConversationPhase {
+  private classifyConversationPhase(messageCount: number, _topics: string[]): ConversationPhase {
     if (messageCount <= 1) return 'greeting';
     if (messageCount <= 3) return 'discovery';
     if (messageCount <= 7) return 'exploration';

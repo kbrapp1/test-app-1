@@ -4,7 +4,7 @@ import {
   PromptGenerationOptions,
   PromptComponents,
   PromptMetadata,
-  PromptSection,
+  // PromptSection, // Unused import
   ISimplePromptService,
   KnowledgeItem 
 } from './types/SimplePromptTypes';

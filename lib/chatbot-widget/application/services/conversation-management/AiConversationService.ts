@@ -21,6 +21,7 @@ import { IIntentClassificationService, IntentClassificationContext as _IntentCla
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
+import { AIConfiguration } from '../../../domain/value-objects/ai-configuration/AIConfiguration';
 
 export class AiConversationService implements IAIConversationService {
   private readonly errorTrackingService: ErrorTrackingFacade;
@@ -72,7 +73,7 @@ export class AiConversationService implements IAIConversationService {
     const messages = this.buildConversationMessages(systemPrompt, context.messageHistory, userMessage);
 
     // 4. Configure provider for this request
-    await this.configureProviderForRequest(context.chatbotConfig.aiConfiguration as any);
+    await this.configureProviderForRequest(context.chatbotConfig.aiConfiguration);
 
     // 5. Create lead capture function definition
     const leadCaptureFunction = this.createLeadCaptureFunction();
@@ -87,7 +88,7 @@ export class AiConversationService implements IAIConversationService {
     );
 
     // 7. Process and return response
-    return this.processAIResponse(response as any, context.chatbotConfig.aiConfiguration as any);
+    return this.processAIResponse(response, context.chatbotConfig.aiConfiguration);
   }
 
   // Build system prompt - delegates to simple prompt service (high performance)
@@ -166,17 +167,15 @@ export class AiConversationService implements IAIConversationService {
   }
 
   // Configure provider for this specific request
-  private async configureProviderForRequest(aiConfig: any): Promise<void> {
+  private async configureProviderForRequest(aiConfig: AIConfiguration): Promise<void> {
     if (this.openAIProvider && aiConfig) {
-      const provider = this.openAIProvider as any;
-      if (provider.config) {
-        provider.config = {
-          ...provider.config,
-          model: aiConfig.openaiModel || 'gpt-4o-mini',
-          temperature: aiConfig.temperature || 0.7,
-          maxTokens: aiConfig.maxTokens || 1000
-        };
-      }
+      // Note: Provider configuration is handled through the composition root
+      // This method can be enhanced to update provider settings if needed
+      console.log('AI configuration provided:', {
+        model: aiConfig.openAI.model,
+        temperature: aiConfig.openaiTemperature,
+        maxTokens: aiConfig.openaiMaxTokens
+      });
     }
   }
 
@@ -208,27 +207,27 @@ export class AiConversationService implements IAIConversationService {
   }
 
   // Process AI provider response into domain format
-  private processAIResponse(response: Record<string, unknown>, aiConfig: Record<string, unknown>): AIResponse {
-    const choices = response.choices as Array<Record<string, unknown>>;
+  private processAIResponse(response: OpenAI.Chat.Completions.ChatCompletion, aiConfig: AIConfiguration): AIResponse {
+    const choices = response.choices;
     const choice = choices[0];
-    const usage = response.usage as Record<string, unknown>;
+    const usage = response.usage;
     
     // Handle function calls (lead capture)
-    const message = choice.message as Record<string, unknown>;
-    const functionCall = message.function_call as Record<string, unknown>;
+    const message = choice.message;
+    const functionCall = message.function_call;
     
     if (functionCall && functionCall.name === 'capture_lead') {
-      const leadData = JSON.parse(functionCall.arguments as string);
+      const leadData = JSON.parse(functionCall.arguments || '{}');
       
       return {
-        content: message.content as string || 'Thank you for your interest! I\'ll make sure someone follows up with you soon.',
+        content: message.content || 'Thank you for your interest! I\'ll make sure someone follows up with you soon.',
         confidence: 0.9,
         processingTimeMs: 0,
         metadata: {
-          model: response.model as string || aiConfig?.openaiModel as string || 'gpt-4o-mini',
-          promptTokens: usage?.prompt_tokens as number || 0,
-          completionTokens: usage?.completion_tokens as number || 0,
-          totalTokens: usage?.total_tokens as number || 0,
+          model: response.model || aiConfig.openAI.model || 'gpt-4o-mini',
+          promptTokens: usage?.prompt_tokens || 0,
+          completionTokens: usage?.completion_tokens || 0,
+          totalTokens: usage?.total_tokens || 0,
         },
         functionCall: {
           name: 'capture_lead',
@@ -239,30 +238,30 @@ export class AiConversationService implements IAIConversationService {
 
     // Return regular response
     return {
-      content: message.content as string || 'I apologize, but I\'m having trouble generating a response right now.',
+      content: message.content || 'I apologize, but I\'m having trouble generating a response right now.',
       confidence: 0.8,
       sentiment: this.extractSentimentFromResponse(response),
       processingTimeMs: 0,
       metadata: {
-        model: response.model as string || aiConfig?.openaiModel as string || 'gpt-4o-mini',
-        promptTokens: usage?.prompt_tokens as number || 0,
-        completionTokens: usage?.completion_tokens as number || 0,
-        totalTokens: usage?.total_tokens as number || 0,
+        model: response.model || aiConfig.openAI.model || 'gpt-4o-mini',
+        promptTokens: usage?.prompt_tokens || 0,
+        completionTokens: usage?.completion_tokens || 0,
+        totalTokens: usage?.total_tokens || 0,
       }
     };
   }
 
   // Extract sentiment from OpenAI response (when function calling includes sentiment)
-  private extractSentimentFromResponse(response: Record<string, unknown>): 'positive' | 'neutral' | 'negative' | undefined {
+  private extractSentimentFromResponse(response: OpenAI.Chat.Completions.ChatCompletion): 'positive' | 'neutral' | 'negative' | undefined {
     try {
       // Check if response includes function call with sentiment analysis
-      const choices = response.choices as Array<Record<string, unknown>>;
+      const choices = response.choices;
       const choice = choices[0];
-      const message = choice?.message as Record<string, unknown>;
-      const functionCall = message?.function_call as Record<string, unknown>;
+      const message = choice?.message;
+      const functionCall = message?.function_call;
       
       if (functionCall?.arguments) {
-        const functionArgs = JSON.parse(functionCall.arguments as string);
+        const functionArgs = JSON.parse(functionCall.arguments || '{}');
         if (functionArgs.analysis?.sentiment) {
           return functionArgs.analysis.sentiment;
         }

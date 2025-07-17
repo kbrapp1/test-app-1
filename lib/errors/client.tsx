@@ -19,10 +19,10 @@
 
 import { toast } from 'sonner';
 import { AppError, ValidationError, AuthorizationError } from './base';
-import { ErrorCodes, ErrorSeverity } from './constants';
+import { ErrorSeverity } from './constants';
 import { ErrorBoundary } from '../../components/error-boundary';
 import * as React from 'react';
-import type { ComponentType, FC } from 'react';
+import type { ComponentType } from 'react';
 
 interface ClientErrorConfig {
   showToast?: boolean;
@@ -69,7 +69,7 @@ export function handleClientError(error: unknown, config: ClientErrorConfig = DE
       };
 
       // Default to HIGH severity if not specified
-      const severity = (error as any).severity || ErrorSeverity.HIGH;
+      const severity = (error as AppError & { severity?: ErrorSeverity }).severity || ErrorSeverity.HIGH;
       const toastType = getToastTypeForSeverity(severity);
 
       switch (toastType) {
@@ -113,13 +113,13 @@ export function handleClientError(error: unknown, config: ClientErrorConfig = DE
 /**
  * Creates a safe error handler for async operations
  */
-export function createAsyncErrorHandler<T extends (...args: any[]) => Promise<any>>(
+export function createAsyncErrorHandler<T extends (...args: unknown[]) => Promise<unknown>>(
   handler: T,
   config?: ClientErrorConfig
-): (...args: Parameters<T>) => Promise<ReturnType<T>> {
-  return async (...args: Parameters<T>) => {
+): (...args: Parameters<T>) => Promise<ReturnType<T> | undefined> {
+  return async (...args: Parameters<T>): Promise<ReturnType<T> | undefined> => {
     try {
-      return await handler(...args);
+      return await handler(...args) as ReturnType<T>;
     } catch (error) {
       handleClientError(error, config);
       throw error; // Re-throw to allow parent handlers to catch if needed

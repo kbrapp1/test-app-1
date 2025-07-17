@@ -14,7 +14,7 @@ import { ConversationAnalysis } from './ConversationAnalysisService';
 export class BusinessGuidanceService {
 
   /** Business guidance injection (always-on conversation management) */
-  generateBusinessGuidance(analysis: ConversationAnalysis, leadScore?: number): string {
+  generateBusinessGuidance(analysis: ConversationAnalysis, _leadScore?: number): string {
     let guidance = '\n## Conversation Management\n';
 
     switch (analysis.phase) {

@@ -26,6 +26,12 @@ export class KnowledgeItemService {
   }
 
   async getAllKnowledgeItems(): Promise<KnowledgeItem[]> {
+    // Guard clause: If no knowledge base is configured, return empty array
+    if (!this.chatbotConfig.knowledgeBase) {
+      console.warn('Knowledge base not configured for chatbot config:', this.chatbotConfig.id);
+      return [];
+    }
+
     const items: KnowledgeItem[] = [];
 
     // Process FAQs
@@ -128,7 +134,7 @@ export class KnowledgeItemService {
 
   // Get FAQ Knowledge Items - Private Helper
   private async getFaqKnowledgeItems(): Promise<KnowledgeItem[]> {
-    const activeFaqs = this.chatbotConfig.knowledgeBase.faqs.filter(faq => faq.isActive);
+    const activeFaqs = this.chatbotConfig.knowledgeBase?.faqs?.filter(faq => faq.isActive) || [];
     
     if (activeFaqs.length === 0) {
       return [];
@@ -149,7 +155,7 @@ export class KnowledgeItemService {
 
   // Get Company Info Knowledge Item - Private Helper
   private getCompanyInfoKnowledgeItem(): KnowledgeItem | null {
-    const companyInfo = this.chatbotConfig.knowledgeBase.companyInfo;
+    const companyInfo = this.chatbotConfig.knowledgeBase?.companyInfo;
     
     if (!companyInfo) {
       return null;
@@ -163,7 +169,7 @@ export class KnowledgeItemService {
 
   // Get Product Catalog Knowledge Items - Private Helper
   private async getProductCatalogKnowledgeItems(): Promise<KnowledgeItem[]> {
-    const productCatalog = this.chatbotConfig.knowledgeBase.productCatalog;
+    const productCatalog = this.chatbotConfig.knowledgeBase?.productCatalog;
     
     if (!productCatalog) {
       return [];
@@ -184,7 +190,7 @@ export class KnowledgeItemService {
 
   // Get Support Docs Knowledge Item - Private Helper
   private getSupportDocsKnowledgeItem(): KnowledgeItem | null {
-    const supportDocs = this.chatbotConfig.knowledgeBase.supportDocs;
+    const supportDocs = this.chatbotConfig.knowledgeBase?.supportDocs;
     
     if (!supportDocs) {
       return null;
@@ -210,7 +216,7 @@ export class KnowledgeItemService {
 
   // Extract Company Name - Private Helper
   private extractCompanyName(): string | undefined {
-    const companyInfo = this.chatbotConfig.knowledgeBase.companyInfo;
+    const companyInfo = this.chatbotConfig.knowledgeBase?.companyInfo;
     if (!companyInfo) return undefined;
     
     // Try to extract company name from company info

@@ -79,7 +79,7 @@ export const queryData = async <T = unknown>(
       // Basic check: Retry up to 3 times if it's not a clear client/query error
       // Supabase errors often have a 'code' property (e.g., Postgres error codes like 'PGRSTxxx')
       // Avoid retrying on common query issues like 'PGRST116' (invalid syntax/param) or auth errors (401/403 status)
-      const errorObj = error as any;
+      const errorObj = error as { status?: number; code?: string; message?: string; };
       const isAuthError = errorObj?.status === 401 || errorObj?.status === 403;
       const isQuerySyntaxError = errorObj?.code === 'PGRST116'; // Example, add more known non-retryable codes if found
       
@@ -120,8 +120,8 @@ export const queryData = async <T = unknown>(
         table,
         selectFields,
         options,
-        stack: (error as any)?.stack,
-        status: (error as any)?.status, // Include status if available
+        stack: (error as Error)?.stack,
+        status: (error as { status?: number })?.status, // Include status if available
       }
     );
     
@@ -182,7 +182,7 @@ export const querySystemData = async <T = unknown>(
 
   try {
     const shouldRetryQuery = (error: unknown, attempt: number): boolean => {
-      const errorObj = error as any;
+      const errorObj = error as { status?: number; code?: string; message?: string; };
       const isAuthError = errorObj?.status === 401 || errorObj?.status === 403;
       const isQuerySyntaxError = errorObj?.code === 'PGRST116';
       

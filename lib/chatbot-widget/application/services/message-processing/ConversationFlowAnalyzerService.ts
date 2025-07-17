@@ -13,6 +13,12 @@ import { AccumulatedEntities } from '../../../domain/value-objects/context/Accum
 import { ReadinessIndicatorDomainService } from '../../../domain/services/conversation-management/ReadinessIndicatorDomainService';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { 
+  UnifiedProcessingResult, 
+  AIFlowDecision, 
+  LeadScoringEntities,
+  ReadinessCalculationContext
+} from './types/UnifiedResultTypes';
 
 export class ConversationFlowAnalyzerService {
   private readonly loggingService: IChatbotLoggingService;
@@ -30,7 +36,7 @@ export class ConversationFlowAnalyzerService {
    * - Maintains same logging output for debugging consistency
    */
   processConversationFlowDecisions(
-    unifiedResult: any,
+    unifiedResult: UnifiedProcessingResult,
     leadScore: number,
     accumulatedEntities: AccumulatedEntities,
     sessionId: string,
@@ -75,9 +81,9 @@ export class ConversationFlowAnalyzerService {
  */
   private logAIFlowDecisions(
     logger: ISessionLogger,
-    aiFlowDecision: any,
+    aiFlowDecision: AIFlowDecision,
     leadScore: number,
-    leadScoreEntities: any
+    leadScoreEntities: LeadScoringEntities
   ): void {
     logger.logRaw('🔄 =====================================');
     logger.logRaw('🔄 AI CONVERSATION FLOW DECISIONS');
@@ -101,11 +107,11 @@ export class ConversationFlowAnalyzerService {
   private calculateAndLogReadinessIndicators(
     logger: ISessionLogger,
     leadScore: number,
-    leadScoreEntities: any,
-    aiFlowDecision: any
+    leadScoreEntities: LeadScoringEntities,
+    aiFlowDecision: AIFlowDecision
   ): void {
     // Calculate readiness indicators
-    const context = {
+    const context: ReadinessCalculationContext = {
       leadScore,
       entities: leadScoreEntities,
       conversationPhase: aiFlowDecision.conversationPhase || 'discovery',
@@ -125,17 +131,18 @@ export class ConversationFlowAnalyzerService {
 
   /** Convert accumulated entities to lead scoring format
  */
-  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: any): Partial<Record<string, any>> {
-    const leadScoringEntities: Partial<Record<string, any>> = {};
+  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: Record<string, unknown>): LeadScoringEntities {
+    const leadScoringEntities: LeadScoringEntities = {};
     
     const scoringEntityTypes = [
       'budget', 'timeline', 'company', 'industry', 'teamSize', 
       'urgency', 'contactMethod', 'role'
-    ];
+    ] as const;
     
     scoringEntityTypes.forEach(entityType => {
-      if (accumulatedEntities[entityType]?.value) {
-        leadScoringEntities[entityType] = accumulatedEntities[entityType].value;
+      const entity = accumulatedEntities[entityType] as { value?: string } | undefined;
+      if (entity?.value) {
+        leadScoringEntities[entityType] = entity.value;
       }
     });
     
@@ -150,7 +157,7 @@ export class ConversationFlowAnalyzerService {
    * - Maintains compatibility with existing logging and analysis
    * - Uses lead score and intent to determine flow decisions
    */
-  private createFlowDecisionFromSimplifiedResponse(unifiedResult: any, leadScore: number): any {
+  private createFlowDecisionFromSimplifiedResponse(unifiedResult: UnifiedProcessingResult, leadScore: number): AIFlowDecision {
     const intent = unifiedResult.intent || 'inquiry';
     const _leadData = unifiedResult.lead_data || {};
     const response = unifiedResult.response || {};
@@ -167,7 +174,7 @@ export class ConversationFlowAnalyzerService {
   }
 
   /** Map intent to next best action */
-  private mapIntentToAction(intent: string, shouldCapture: boolean): string {
+  private mapIntentToAction(intent: string, shouldCapture?: boolean): string {
     if (shouldCapture) return 'capture_contact';
     
     switch (intent) {

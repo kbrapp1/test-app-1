@@ -146,7 +146,7 @@ export class EntityAccumulationService {
   private static processCorrections(
     accumulated: AccumulatedEntities,
     corrections: EntityCorrections,
-    context: EntityMergeContext
+    _context: EntityMergeContext
   ): { updatedEntities: AccumulatedEntities; correctionsApplied: number; entitiesRemoved: number } {
     const result = accumulated;
     let correctionsApplied = 0;
@@ -371,7 +371,7 @@ export class EntityAccumulationService {
       } else {
         return 'just now';
       }
-    } catch (error) {
+    } catch {
       return 'unknown';
     }
   }

@@ -37,17 +37,17 @@ export function extractFieldErrors(error: unknown): FieldError[] {
 
   // Handle API response error format
   if (typeof error === 'object' && error !== null) {
-    const apiError = error as any;
+    const apiError = error as Record<string, unknown>;
 
     // Check for field errors in common API response formats
-    if (apiError.fieldErrors) {
-      return apiError.fieldErrors;
+    if (apiError.fieldErrors && Array.isArray(apiError.fieldErrors)) {
+      return apiError.fieldErrors as FieldError[];
     }
 
     if (apiError.errors && Array.isArray(apiError.errors)) {
-      return apiError.errors.map((err: any) => ({
-        field: err.field || 'unknown',
-        message: err.message,
+      return apiError.errors.map((err: Record<string, unknown>) => ({
+        field: typeof err.field === 'string' ? err.field : 'unknown',
+        message: typeof err.message === 'string' ? err.message : 'Unknown error',
       }));
     }
   }

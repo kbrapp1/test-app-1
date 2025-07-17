@@ -1,13 +1,13 @@
 import { 
-  IKnowledgeRetrievalService, 
+  IKnowledgeRetrievalService as _IKnowledgeRetrievalService, 
   KnowledgeItem, 
-  KnowledgeSearchResult, 
-  KnowledgeRetrievalContext 
+  KnowledgeSearchResult as _KnowledgeSearchResult, 
+  KnowledgeRetrievalContext as _KnowledgeRetrievalContext 
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
 import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
-import { IEmbeddingService } from './interfaces/IEmbeddingService';
+import { IEmbeddingService as _IEmbeddingService } from './interfaces/IEmbeddingService';
 import { IChatbotLoggingService, IOperationLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
