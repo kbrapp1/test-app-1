@@ -24,7 +24,7 @@ export class ContentSanitizationError extends DomainError {
    * - Support debugging and error recovery
    * - Maintain user-friendly error messages
    */
-  constructor(message: string, context: Record<string, any> = {}) {
+  constructor(message: string, context: Record<string, unknown> = {}) {
     super(`Content sanitization failed: ${message}`, {
       ...context,
       domain: 'content-processing',
@@ -81,7 +81,7 @@ export class ContentSanitizationError extends DomainError {
   }
 
   /** Create error for invalid input parameters */
-  static invalidInput(parameterName: string, expectedType: string, actualValue: any): ContentSanitizationError {
+  static invalidInput(parameterName: string, expectedType: string, actualValue: unknown): ContentSanitizationError {
     return new ContentSanitizationError(
       `Invalid input parameter: ${parameterName} must be ${expectedType}`,
       { 

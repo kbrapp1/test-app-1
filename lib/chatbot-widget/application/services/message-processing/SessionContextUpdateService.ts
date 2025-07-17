@@ -11,7 +11,7 @@
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
-import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
+import { AccumulatedEntities as _AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 import { EntityMergeProcessorService } from './EntityMergeProcessorService';
 import { LeadScoreCalculatorService } from './LeadScoreCalculatorService';
 import { ConversationFlowAnalyzerService } from './ConversationFlowAnalyzerService';

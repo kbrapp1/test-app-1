@@ -41,29 +41,29 @@ export class LeadCaptureDecisionService {
    * Create AI flow context from enhanced context data
    * Maps enhanced context to AI flow decision format for consistency
    */
-  createAIFlowContext(enhancedContext: any): { aiFlowDecision: AIConversationFlowDecision } {
+  createAIFlowContext(enhancedContext: Record<string, unknown>): { aiFlowDecision: AIConversationFlowDecision } {
     if (!enhancedContext) {
       throw new Error('Enhanced context is required for AI-driven lead capture decisions');
     }
 
-    const leadScore = enhancedContext.leadScore?.totalScore || 0;
-    const callToAction = enhancedContext.callToAction || {};
+    const leadScore = (enhancedContext.leadScore as Record<string, unknown>)?.totalScore as number || 0;
+    const callToAction = enhancedContext.callToAction as Record<string, unknown> || {};
 
     return {
       aiFlowDecision: {
         shouldCaptureLeadNow: leadScore >= 60, // FIXED: Aligned with AI recommendation threshold (60+)
         shouldAskQualificationQuestions: leadScore >= 30 && leadScore < 70,
-        shouldEscalateToHuman: leadScore >= 80 || callToAction.priority === 'high',
+        shouldEscalateToHuman: leadScore >= 80 || callToAction.priority as string === 'high',
         nextBestAction: this.mapCallToActionToNextAction(callToAction),
         conversationPhase: this.determinePhaseFromScore(leadScore),
         engagementLevel: this.determineEngagementFromScore(leadScore),
-        flowReasoning: `Lead score: ${leadScore}, CTA: ${callToAction.type || 'none'}`
+        flowReasoning: `Lead score: ${leadScore}, CTA: ${callToAction.type as string || 'none'}`
       }
     };
   }
 
-  private mapCallToActionToNextAction(callToAction: any): 'continue_conversation' | 'capture_contact' | 'ask_qualification' | 'request_demo' | 'escalate_human' | 'provide_resources' {
-    switch (callToAction.type) {
+  private mapCallToActionToNextAction(callToAction: Record<string, unknown>): 'continue_conversation' | 'capture_contact' | 'ask_qualification' | 'request_demo' | 'escalate_human' | 'provide_resources' {
+    switch (callToAction.type as string) {
       case 'demo_request': return 'request_demo';
       case 'resource_sharing': return 'provide_resources';
       case 'contact_capture': return 'capture_contact';

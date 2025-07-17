@@ -38,7 +38,7 @@ export class UnifiedResponseProcessorService {
       try {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         responseContent = functionArgs?.response?.content;
-      } catch (parseError) {
+      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // Continue to fallback
       }
     }
@@ -69,7 +69,7 @@ export class UnifiedResponseProcessorService {
       try {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         confidence = functionArgs?.analysis?.primaryConfidence || 0;
-      } catch (parseError) {
+      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // Use default
       }
     }
@@ -83,7 +83,7 @@ export class UnifiedResponseProcessorService {
       try {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         entities = functionArgs?.analysis?.entities || {};
-      } catch (parseError) {
+      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // Use empty
       }
     }
@@ -95,7 +95,7 @@ export class UnifiedResponseProcessorService {
       try {
         const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
         primaryIntent = functionArgs?.analysis?.primaryIntent || 'unified_processing';
-      } catch (parseError) {
+      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // Use default
       }
     }

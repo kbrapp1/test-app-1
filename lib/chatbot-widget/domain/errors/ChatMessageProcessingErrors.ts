@@ -9,6 +9,8 @@
  * - Capture business context, not technical details
  */
 
+import type { OperatingHoursProps } from '../value-objects/session-management/OperatingHours';
+
 export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
@@ -52,7 +54,7 @@ export class OperatingHoursViolationError extends DomainError {
   readonly code = 'OPERATING_HOURS_VIOLATION';
   readonly severity = ErrorSeverity.MEDIUM;
   
-  constructor(currentTime: Date, operatingHours: any, context: Record<string, any> = {}) {
+  constructor(currentTime: Date, operatingHours: OperatingHoursProps, context: Record<string, unknown> = {}) {
     super('Message received outside operating hours', { ...context, currentTime, operatingHours });
   }
 }
@@ -61,7 +63,7 @@ export class ConversationContextAnalysisError extends DomainError {
   readonly code = 'CONTEXT_ANALYSIS_ERROR';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(sessionId: string, reason: string, context: Record<string, any> = {}) {
+  constructor(sessionId: string, reason: string, context: Record<string, unknown> = {}) {
     super(`Failed to analyze conversation context: ${reason}`, { ...context, sessionId, reason });
   }
 }
@@ -70,7 +72,7 @@ export class AIResponseGenerationError extends DomainError {
   readonly code = 'AI_RESPONSE_GENERATION_ERROR';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(sessionId: string, reason: string, context: Record<string, any> = {}) {
+  constructor(sessionId: string, reason: string, context: Record<string, unknown> = {}) {
     super(`Failed to generate AI response: ${reason}`, { ...context, sessionId, reason });
   }
 }
@@ -79,7 +81,7 @@ export class UnifiedProcessingServiceUnavailableError extends DomainError {
   readonly code = 'UNIFIED_PROCESSING_UNAVAILABLE';
   readonly severity = ErrorSeverity.MEDIUM;
   
-  constructor(sessionId: string, fallbackUsed: boolean, context: Record<string, any> = {}) {
+  constructor(sessionId: string, fallbackUsed: boolean, context: Record<string, unknown> = {}) {
     super('Unified processing service unavailable', { ...context, sessionId, fallbackUsed });
   }
 }
@@ -88,7 +90,7 @@ export class OrganizationRequiredError extends DomainError {
   readonly code = 'ORGANIZATION_REQUIRED';
   readonly severity = ErrorSeverity.CRITICAL;
   
-  constructor(context: Record<string, any> = {}) {
+  constructor(context: Record<string, unknown> = {}) {
     super('Organization ID is required for message processing', context);
   }
 }
@@ -97,7 +99,7 @@ export class MessageValidationError extends DomainError {
   readonly code = 'MESSAGE_VALIDATION_ERROR';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(field: string, reason: string, context: Record<string, any> = {}) {
+  constructor(field: string, reason: string, context: Record<string, unknown> = {}) {
     super(`Message validation failed for ${field}: ${reason}`, { ...context, field, reason });
   }
 } 

@@ -155,7 +155,7 @@ export async function canCreateChatbot(
 // Get chatbot configuration statistics
 export async function getChatbotConfigStats(
   organizationId: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> {
   try {
     const service = new ChatbotConfigService();
     const result = await service.getChatbotConfigStats(organizationId);

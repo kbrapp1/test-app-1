@@ -307,6 +307,37 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     }
   }
 
+  /** Public method to initialize vector cache during session startup
+   * 
+   * AI INSTRUCTIONS:
+   * - Direct vector cache initialization for session startup
+   * - Avoids redundant dummy search approach
+   * - Ensures cache is ready before user interactions
+   * - Reuses existing initializeVectorCache logic
+   */
+  async initializeVectorCacheForSession(sharedLogFile: string): Promise<void> {
+    if (this.vectorCache.isReady()) {
+      return; // Already initialized
+    }
+
+    const logger = this.loggingService.createSessionLogger(
+      'vector-cache-init',
+      sharedLogFile,
+      {
+        operation: 'initializeVectorCacheForSession',
+        organizationId: this.organizationId
+      }
+    );
+
+    await this.initializeVectorCache(sharedLogFile, logger);
+  }
+
+  /** Check if vector cache is ready for use
+   */
+  isVectorCacheReady(): boolean {
+    return this.vectorCache.isReady();
+  }
+
   // Delegate cache warming to specialized service
   async warmCache(sharedLogFile?: string): Promise<{ success: boolean; itemsWarmed: number; timeMs: number; metrics: CacheWarmingMetrics }> {
     return this.cacheWarmingService.warmCache(sharedLogFile);
@@ -372,9 +403,5 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
   // Vector cache specific methods
   getVectorCacheStats(): VectorCacheStats {
     return this.vectorCache.getCacheStats();
-  }
-
-  isVectorCacheReady(): boolean {
-    return this.vectorCache.isReady();
   }
 } 

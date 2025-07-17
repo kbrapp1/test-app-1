@@ -242,7 +242,7 @@ export async function cleanupWebsiteSources(
 
     const deletedItemsCount = await vectorService.deleteKnowledgeItemsBySource(organizationId, configId, 'website_crawled');
 
-    const cleanedKnowledgeBase = createCleanedKnowledgeBase(existingConfig.knowledgeBase);
+    const cleanedKnowledgeBase = createCleanedKnowledgeBase(existingConfig.knowledgeBase as any);
     const updatedConfig = existingConfig.updateKnowledgeBase(cleanedKnowledgeBase as any);
     await configRepository.update(updatedConfig);
     

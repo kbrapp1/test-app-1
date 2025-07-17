@@ -8,6 +8,7 @@
 
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ChatSessionMapper } from '../../mappers/ChatSessionMapper';
+import { ChatSession } from '../../../domain/entities/ChatSession';
 import {
   ChatSessionDto,
   CreateChatSessionDto,
@@ -16,7 +17,7 @@ import {
 
 export class ChatSessionService {
   private readonly chatSessionRepository;
-  private readonly conversationContextService: any;
+  private readonly conversationContextService: unknown;
   
   // Simple token counting service for basic operations
   private readonly basicTokenCountingService = {
@@ -34,7 +35,7 @@ export class ChatSessionService {
       // Return synchronous number, not Promise
       return Math.ceil(text.length / 4);
     },
-    async getTokenUsage(): Promise<any> {
+    async getTokenUsage(): Promise<{ messageTokens: number; totalTokens: number; estimatedCost: number }> {
       // Return minimal TokenUsage interface
       return { 
         messageTokens: 50, 
@@ -148,13 +149,13 @@ export class ChatSessionService {
   /** Get active chat sessions for a chatbot */
   async getActiveSessionsForChatbot(chatbotConfigId: string): Promise<ChatSessionDto[]> {
     const sessions = await this.chatSessionRepository.findActiveByChatbotConfigId(chatbotConfigId);
-    return sessions.map((session: any) => ChatSessionMapper.toDto(session));
+    return sessions.map((session: ChatSession) => ChatSessionMapper.toDto(session));
   }
 
   /** Get chat sessions by visitor ID */
   async getSessionsByVisitor(visitorId: string): Promise<ChatSessionDto[]> {
     const sessions = await this.chatSessionRepository.findByVisitorId(visitorId);
-    return sessions.map((session: any) => ChatSessionMapper.toDto(session));
+    return sessions.map((session: ChatSession) => ChatSessionMapper.toDto(session));
   }
 
   /** End a chat session */

@@ -161,8 +161,8 @@ export class LeadQueryService {
       qualifiedLeads: analytics.qualifiedLeads + analytics.highlyQualifiedLeads,
       conversionRate: analytics.conversionRate,
       averageScore: analytics.avgLeadScore,
-      leadsBySource: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: any) => {
-        acc[item.source] = item.count;
+      leadsBySource: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: Record<string, unknown>) => {
+        acc[item.source as string] = item.count as number;
         return acc;
       }, {} as Record<string, number>),
       leadsByStatus: {

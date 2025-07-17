@@ -152,7 +152,7 @@ export class ConversationFlowAnalyzerService {
    */
   private createFlowDecisionFromSimplifiedResponse(unifiedResult: any, leadScore: number): any {
     const intent = unifiedResult.intent || 'inquiry';
-    const leadData = unifiedResult.lead_data || {};
+    const _leadData = unifiedResult.lead_data || {};
     const response = unifiedResult.response || {};
     
     return {

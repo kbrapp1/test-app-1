@@ -40,7 +40,7 @@ export class LeadLifecycleService {
       updatedAt: lead.updatedAt
     };
 
-    const newState = LeadLifecycleManager.updateFollowUpStatus(currentState, newStatus);
+    const _newState = LeadLifecycleManager.updateFollowUpStatus(currentState, newStatus);
     
     // Update the lead with new state
     const updatedLead = lead.updateFollowUpStatus(newStatus);
@@ -90,7 +90,7 @@ export class LeadLifecycleService {
   }
 
   /** Mark lead as converted */
-  async convertLead(leadId: string, conversionNotes?: string): Promise<Lead> {
+  async convertLead(leadId: string, _conversionNotes?: string): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
       throw new BusinessRuleViolationError(`Lead not found: ${leadId}`);
@@ -101,7 +101,7 @@ export class LeadLifecycleService {
   }
 
   /** Mark lead as lost */
-  async markAsLost(leadId: string, reason?: string): Promise<Lead> {
+  async markAsLost(leadId: string, _reason?: string): Promise<Lead> {
     const lead = await this.leadRepository.findById(leadId);
     if (!lead) {
       throw new BusinessRuleViolationError(`Lead not found: ${leadId}`);

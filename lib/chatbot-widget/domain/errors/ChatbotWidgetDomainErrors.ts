@@ -123,23 +123,23 @@ export {
 
 /** Error Factory for Common Patterns */
 export class ChatbotErrorFactory {
-  static createBusinessRuleViolation(rule: string, context?: Record<string, any>): BusinessRuleViolationError {
+  static createBusinessRuleViolation(rule: string, context?: Record<string, unknown>): BusinessRuleViolationError {
     return new BusinessRuleViolationError(rule, context);
   }
   
-  static createResourceNotFound(resourceType: string, identifier: string, context?: Record<string, any>): ResourceNotFoundError {
+  static createResourceNotFound(resourceType: string, identifier: string, context?: Record<string, unknown>): ResourceNotFoundError {
     return new ResourceNotFoundError(resourceType, identifier, context);
   }
   
-  static createDatabaseError(message: string, errorDetail?: string | Record<string, any>): DatabaseError {
+  static createDatabaseError(message: string, errorDetail?: string | Record<string, unknown>): DatabaseError {
     return new DatabaseError(message, errorDetail);
   }
   
-  static createAIProcessingError(modelName: string, context?: Record<string, any>): AIResponseGenerationError {
+  static createAIProcessingError(modelName: string, context?: Record<string, unknown>): AIResponseGenerationError {
     return new AIResponseGenerationError(modelName, context);
   }
   
-  static createKnowledgeRetrievalError(queryType: string, context?: Record<string, any>): KnowledgeRetrievalError {
+  static createKnowledgeRetrievalError(queryType: string, context?: Record<string, unknown>): KnowledgeRetrievalError {
     return new KnowledgeRetrievalError(queryType, context);
   }
 }
@@ -166,7 +166,7 @@ export class ErrorSeverityUtils {
 
 /** Error Context Utilities */
 export class ErrorContextUtils {
-  static enrichWithTimestamp(context: Record<string, any>): Record<string, any> {
+  static enrichWithTimestamp(context: Record<string, unknown>): Record<string, unknown> {
     return {
       ...context,
       timestamp: new Date().toISOString(),
@@ -174,7 +174,7 @@ export class ErrorContextUtils {
     };
   }
   
-  static enrichWithSession(context: Record<string, any>, sessionId: string): Record<string, any> {
+  static enrichWithSession(context: Record<string, unknown>, sessionId: string): Record<string, unknown> {
     return {
       ...context,
       sessionId,
@@ -182,7 +182,7 @@ export class ErrorContextUtils {
     };
   }
   
-  static enrichWithOperation(context: Record<string, any>, operation: string): Record<string, any> {
+  static enrichWithOperation(context: Record<string, unknown>, operation: string): Record<string, unknown> {
     return {
       ...context,
       operation,

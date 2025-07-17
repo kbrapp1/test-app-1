@@ -58,7 +58,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should initialize chat session with valid configuration', async () => {
       // Set up cache as already warmed for successful scenario
       mockKnowledgeService.setVectorCacheReady(true);
-      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 5 to indicate warmed
+      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 0 to indicate warmed
 
       const request: InitializeSessionRequest = {
         chatbotConfigId: 'config-123',
@@ -129,7 +129,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should successfully warm knowledge cache', async () => {
       // Mock successful cache warming - set caches as already warmed
       mockKnowledgeService.setVectorCacheReady(true);
-      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 5 to indicate warmed
+      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 0 to indicate warmed
       const mockWarmCache = vi.fn().mockResolvedValue(undefined);
       mockKnowledgeService.setWarmCacheFunction(mockWarmCache);
 
@@ -149,7 +149,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should handle cache warming failure gracefully', async () => {
       // Mock cache warming failure - set caches as not warmed
       mockKnowledgeService.setVectorCacheReady(false);
-      mockKnowledgeService.setEmbeddingCacheSize(2); // Less than 5 to indicate not warmed
+      mockKnowledgeService.setEmbeddingCacheSize(0); // Equal to 0 to indicate not warmed
       const mockWarmCache = vi.fn().mockRejectedValue(new Error('Cache warming failed'));
       mockKnowledgeService.setWarmCacheFunction(mockWarmCache);
 
@@ -175,13 +175,13 @@ describe('InitializeChatSessionUseCase', () => {
       );
     });
 
-    it('should trigger vector cache initialization on first search', async () => {
+    it('should trigger vector cache initialization directly', async () => {
       // Mock vector cache not ready
       mockKnowledgeService.setVectorCacheReady(false);
-      mockKnowledgeService.setEmbeddingCacheSize(2); // Less than 5 to indicate not warmed
+      mockKnowledgeService.setEmbeddingCacheSize(0); // Equal to 0 to indicate not warmed
       
-      const mockSearchKnowledge = vi.spyOn(mockKnowledgeService, 'searchKnowledge')
-        .mockRejectedValue(new Error('Expected initialization error'));
+      const mockInitializeVectorCache = vi.spyOn(mockKnowledgeService, 'initializeVectorCacheForSession')
+        .mockResolvedValue(undefined);
 
       const request: InitializeSessionRequest = {
         chatbotConfigId: 'config-123',
@@ -190,12 +190,9 @@ describe('InitializeChatSessionUseCase', () => {
 
       const _result = await useCase.execute(request);
 
-      expect(mockSearchKnowledge).toHaveBeenCalledWith({
-        userQuery: 'initialization dummy query',
-        sharedLogFile: expect.stringMatching(/chatbot-.*\.log/),
-        maxResults: 1,
-        minRelevanceScore: 0.15
-      });
+      expect(mockInitializeVectorCache).toHaveBeenCalledWith(
+        expect.stringMatching(/chatbot-.*\.log/)
+      );
     });
   });
 
@@ -281,7 +278,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should publish SessionInitializedEvent', async () => {
       // Set up cache as already warmed for successful scenario
       mockKnowledgeService.setVectorCacheReady(true);
-      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 5 to indicate warmed
+      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 0 to indicate warmed
 
       // Spy on the private method to verify event handling
       const handleEventSpy = vi.spyOn(useCase as any, 'handleSessionInitializedEvent');
@@ -310,7 +307,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should include cache warming status in domain event', async () => {
       // Set cache as not warmed for this test
       mockKnowledgeService.setVectorCacheReady(false);
-      mockKnowledgeService.setEmbeddingCacheSize(2); // Less than 5 to indicate not warmed
+      mockKnowledgeService.setEmbeddingCacheSize(0); // Equal to 0 to indicate not warmed
 
       const handleEventSpy = vi.spyOn(useCase as any, 'handleSessionInitializedEvent');
 
@@ -394,7 +391,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should handle cache warming within reasonable time', async () => {
       // Mock slow but successful cache warming - set caches as not warmed initially
       mockKnowledgeService.setVectorCacheReady(false);
-      mockKnowledgeService.setEmbeddingCacheSize(2); // Less than 5 to indicate not warmed
+      mockKnowledgeService.setEmbeddingCacheSize(0); // Equal to 0 to indicate not warmed
       const mockWarmCache = vi.fn().mockImplementation(() => 
         new Promise(resolve => setTimeout(resolve, 50))
       );
@@ -443,7 +440,7 @@ describe('InitializeChatSessionUseCase', () => {
     it('should handle complete initialization workflow', async () => {
       // Set up cache as already warmed for successful scenario
       mockKnowledgeService.setVectorCacheReady(true);
-      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 5 to indicate warmed
+      mockKnowledgeService.setEmbeddingCacheSize(10); // More than 0 to indicate warmed
 
       const request: InitializeSessionRequest = {
         chatbotConfigId: 'config-123',

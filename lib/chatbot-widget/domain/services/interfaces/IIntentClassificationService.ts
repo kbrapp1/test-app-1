@@ -10,10 +10,18 @@ export interface IntentClassificationContext {
   currentMessage: string;
 }
 
+/**
+ * Intent Classification Service Interface
+ * 
+ * AI INSTRUCTIONS:
+ * - Keep interface lean with only essential methods
+ * - All implementations must use unified processing approach
+ * - Follow @golden-rule patterns exactly
+ */
 export interface IIntentClassificationService {
-  /** Classify the intent of a user message with context */
-  classifyIntent(
+  /** Unified processing method for complete chatbot interaction */
+  processChatbotInteractionComplete(
     message: string,
-    context: IntentClassificationContext
-  ): Promise<IntentResult>;
+    context: any
+  ): Promise<any>;
 } 

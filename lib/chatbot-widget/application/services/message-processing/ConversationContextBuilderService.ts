@@ -42,18 +42,18 @@ export class ConversationContextBuilderService {
 
   /** Build conversation context with compression and entity injection */
   async buildConversationContext(
-    config: any,
-    session: any,
+    config: Record<string, unknown>,
+    session: Record<string, unknown>,
     messages: ChatMessage[],
     userMessage: ChatMessage,
     summary: string | undefined,
-    enhancedContext: any,
+    enhancedContext: Record<string, unknown>,
     logFileName?: string
   ): Promise<ConversationContext> {
     // Store context for error tracking
-    this.sessionId = session.id;
-    this.organizationId = config.organizationId;
-    this.conversationId = session.conversationId;
+    this.sessionId = session.id as string;
+    this.organizationId = config.organizationId as string;
+    this.conversationId = session.conversationId as string;
     
     // AI: Validate organization ID is available for error tracking
     if (!this.organizationId) {
@@ -65,10 +65,10 @@ export class ConversationContextBuilderService {
       throw new Error('LogFileName is required for conversation context building - all logging must be conversation-specific');
     }
     const logger = this.loggingService.createSessionLogger(
-      session.id,
+      session.id as string,
       logFileName,
       {
-        sessionId: session.id,
+        sessionId: session.id as string,
         operation: 'conversation-context-building',
         messageId: userMessage.id
       }
@@ -94,15 +94,15 @@ export class ConversationContextBuilderService {
 
     // Build enhanced system prompt with knowledge base integration
     const systemPrompt = await this.systemPromptBuilderService.buildEnhancedSystemPrompt(
-      config,
-      session,
+      config as any,
+      session as any,
       finalMessages,
       completeEnhancedContext
     );
 
     return {
-      chatbotConfig: config,
-      session,
+      chatbotConfig: config as any,
+      session: session as any,
       messageHistory: finalMessages,
       systemPrompt,
       conversationSummary
@@ -154,23 +154,23 @@ export class ConversationContextBuilderService {
   }
 
   /** Analyze and inject accumulated entities */
-  private analyzeAndInjectEntities(session: any, logger: ISessionLogger): string {
+  private analyzeAndInjectEntities(session: Record<string, unknown>, logger: ISessionLogger): string {
     logger.logStep('Entity injection analysis started', {
-      hasContextData: !!session.contextData,
-      hasAccumulatedEntities: !!session.contextData?.accumulatedEntities
+      hasContextData: !!(session.contextData as any),
+      hasAccumulatedEntities: !!((session.contextData as any)?.accumulatedEntities)
     });
     
-    if (!session.contextData?.accumulatedEntities) {
+    if (!(session.contextData as any)?.accumulatedEntities) {
       logger.logStep('No accumulated entities found - no injection will occur');
       return '';
     }
 
     // Analyze entities for injection
-    this.logEntityAnalysis(session.contextData.accumulatedEntities, logger);
+    this.logEntityAnalysis((session.contextData as any).accumulatedEntities, logger);
 
     // Build entity context prompt
     const entityContextPrompt = EntityAccumulationService.buildEntityContextPrompt(
-      AccumulatedEntities.fromObject(session.contextData.accumulatedEntities)
+      AccumulatedEntities.fromObject((session.contextData as any).accumulatedEntities)
     );
     
     if (entityContextPrompt) {
@@ -186,7 +186,7 @@ export class ConversationContextBuilderService {
   }
 
   /** Log detailed entity analysis */
-  private logEntityAnalysis(entities: any, logger: ISessionLogger): void {
+  private logEntityAnalysis(entities: Record<string, unknown>, logger: ISessionLogger): void {
     logger.logStep('Raw accumulated entities structure', {
       entities: entities
     });
@@ -196,16 +196,16 @@ export class ConversationContextBuilderService {
     // Check single entities
     const singleEntityTypes = ['visitorName', 'role', 'company', 'industry', 'teamSize', 'budget', 'timeline', 'urgency'];
     singleEntityTypes.forEach(entityType => {
-      if (entities[entityType]?.value) {
-        entitiesToInject.push(`${entityType}: "${entities[entityType].value}" (confidence: ${entities[entityType].confidence})`);
+      if ((entities as any)[entityType]?.value) {
+        entitiesToInject.push(`${entityType}: "${(entities as any)[entityType].value}" (confidence: ${(entities as any)[entityType].confidence})`);
       }
     });
     
     // Check array entities
     const arrayEntityTypes = ['painPoints', 'decisionMakers', 'integrationNeeds', 'evaluationCriteria'];
     arrayEntityTypes.forEach(entityType => {
-      if (entities[entityType]?.length > 0) {
-        const valuesList = entities[entityType].map((item: any) => `"${item.value}"`).join(', ');
+      if ((entities as any)[entityType]?.length > 0) {
+        const valuesList = (entities as any)[entityType].map((item: any) => `"${item.value}"`).join(', ');
         entitiesToInject.push(`${entityType}: [${valuesList}]`);
       }
     });

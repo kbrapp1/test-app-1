@@ -178,7 +178,7 @@ export class ConfigureChatbotUseCase {
     const recommendations: string[] = [];
     const warnings: string[] = [];
     let score = 0;
-    const maxScore = 100;
+    const _maxScore = 100;
 
     // Company info (25 points)
     if (knowledgeBase.companyInfo?.trim()) {

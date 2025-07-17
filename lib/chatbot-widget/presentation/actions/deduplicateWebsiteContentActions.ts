@@ -28,7 +28,7 @@ export async function previewWebsiteContentDeduplication(
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }> {
   try {
@@ -96,7 +96,7 @@ export async function executeWebsiteContentDeduplication(
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }> {
   try {
@@ -159,7 +159,7 @@ export async function normalizeUrl(url: string): Promise<{
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }> {
   try {

@@ -17,7 +17,7 @@ import {
   EmbeddingLogContext,
   KnowledgeItem,
   PDFChunk,
-  CacheStats
+  CacheStats as _CacheStats
 } from '../../../../domain/services/interfaces/EmbeddingTypes';
 
 export class OpenAIEmbeddingService implements IEmbeddingService {

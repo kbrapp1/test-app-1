@@ -72,7 +72,7 @@ export class AiConversationService implements IAIConversationService {
     const messages = this.buildConversationMessages(systemPrompt, context.messageHistory, userMessage);
 
     // 4. Configure provider for this request
-    await this.configureProviderForRequest(context.chatbotConfig.aiConfiguration);
+    await this.configureProviderForRequest(context.chatbotConfig.aiConfiguration as any);
 
     // 5. Create lead capture function definition
     const leadCaptureFunction = this.createLeadCaptureFunction();
@@ -87,7 +87,7 @@ export class AiConversationService implements IAIConversationService {
     );
 
     // 7. Process and return response
-    return this.processAIResponse(response, context.chatbotConfig.aiConfiguration);
+    return this.processAIResponse(response as any, context.chatbotConfig.aiConfiguration as any);
   }
 
   // Build system prompt - delegates to simple prompt service (high performance)
@@ -168,12 +168,15 @@ export class AiConversationService implements IAIConversationService {
   // Configure provider for this specific request
   private async configureProviderForRequest(aiConfig: any): Promise<void> {
     if (this.openAIProvider && aiConfig) {
-      (this.openAIProvider as any).config = {
-        ...(this.openAIProvider as any).config,
-        model: aiConfig.openaiModel || 'gpt-4o-mini',
-        temperature: aiConfig.temperature || 0.7,
-        maxTokens: aiConfig.maxTokens || 1000
-      };
+      const provider = this.openAIProvider as any;
+      if (provider.config) {
+        provider.config = {
+          ...provider.config,
+          model: aiConfig.openaiModel || 'gpt-4o-mini',
+          temperature: aiConfig.temperature || 0.7,
+          maxTokens: aiConfig.maxTokens || 1000
+        };
+      }
     }
   }
 
@@ -205,23 +208,27 @@ export class AiConversationService implements IAIConversationService {
   }
 
   // Process AI provider response into domain format
-  private processAIResponse(response: any, aiConfig: any): AIResponse {
-    const choice = response.choices[0];
-    const usage = response.usage;
+  private processAIResponse(response: Record<string, unknown>, aiConfig: Record<string, unknown>): AIResponse {
+    const choices = response.choices as Array<Record<string, unknown>>;
+    const choice = choices[0];
+    const usage = response.usage as Record<string, unknown>;
     
     // Handle function calls (lead capture)
-    if (choice.message.function_call && choice.message.function_call.name === 'capture_lead') {
-      const leadData = JSON.parse(choice.message.function_call.arguments);
+    const message = choice.message as Record<string, unknown>;
+    const functionCall = message.function_call as Record<string, unknown>;
+    
+    if (functionCall && functionCall.name === 'capture_lead') {
+      const leadData = JSON.parse(functionCall.arguments as string);
       
       return {
-        content: choice.message.content || 'Thank you for your interest! I\'ll make sure someone follows up with you soon.',
+        content: message.content as string || 'Thank you for your interest! I\'ll make sure someone follows up with you soon.',
         confidence: 0.9,
         processingTimeMs: 0,
         metadata: {
-          model: response.model || aiConfig?.openaiModel || 'gpt-4o-mini',
-          promptTokens: usage?.prompt_tokens || 0,
-          completionTokens: usage?.completion_tokens || 0,
-          totalTokens: usage?.total_tokens || 0,
+          model: response.model as string || aiConfig?.openaiModel as string || 'gpt-4o-mini',
+          promptTokens: usage?.prompt_tokens as number || 0,
+          completionTokens: usage?.completion_tokens as number || 0,
+          totalTokens: usage?.total_tokens as number || 0,
         },
         functionCall: {
           name: 'capture_lead',
@@ -232,26 +239,30 @@ export class AiConversationService implements IAIConversationService {
 
     // Return regular response
     return {
-      content: choice.message.content || 'I apologize, but I\'m having trouble generating a response right now.',
+      content: message.content as string || 'I apologize, but I\'m having trouble generating a response right now.',
       confidence: 0.8,
       sentiment: this.extractSentimentFromResponse(response),
       processingTimeMs: 0,
       metadata: {
-        model: response.model || aiConfig?.openaiModel || 'gpt-4o-mini',
-        promptTokens: usage?.prompt_tokens || 0,
-        completionTokens: usage?.completion_tokens || 0,
-        totalTokens: usage?.total_tokens || 0,
+        model: response.model as string || aiConfig?.openaiModel as string || 'gpt-4o-mini',
+        promptTokens: usage?.prompt_tokens as number || 0,
+        completionTokens: usage?.completion_tokens as number || 0,
+        totalTokens: usage?.total_tokens as number || 0,
       }
     };
   }
 
   // Extract sentiment from OpenAI response (when function calling includes sentiment)
-  private extractSentimentFromResponse(response: any): 'positive' | 'neutral' | 'negative' | undefined {
+  private extractSentimentFromResponse(response: Record<string, unknown>): 'positive' | 'neutral' | 'negative' | undefined {
     try {
       // Check if response includes function call with sentiment analysis
-      const choice = response.choices[0];
-      if (choice?.message?.function_call?.arguments) {
-        const functionArgs = JSON.parse(choice.message.function_call.arguments);
+      const choices = response.choices as Array<Record<string, unknown>>;
+      const choice = choices[0];
+      const message = choice?.message as Record<string, unknown>;
+      const functionCall = message?.function_call as Record<string, unknown>;
+      
+      if (functionCall?.arguments) {
+        const functionArgs = JSON.parse(functionCall.arguments as string);
         if (functionArgs.analysis?.sentiment) {
           return functionArgs.analysis.sentiment;
         }

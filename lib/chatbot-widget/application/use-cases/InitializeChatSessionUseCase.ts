@@ -178,7 +178,7 @@ export class InitializeChatSessionUseCase {
       
       // Check if embedding cache has substantial warming (not just dummy entries)
       const embeddingCacheStats = vectorService.getEmbeddingService?.()?.getCacheStats?.() || { size: 0 };
-      const isEmbeddingCacheWarmed = embeddingCacheStats.size > 5; // Require more than just dummy entries
+      const isEmbeddingCacheWarmed = embeddingCacheStats.size > 0; // Require at least one entry to indicate warmed
 
       cacheLogger.logMessage(`📊 Vector Cache Ready: ${isVectorCacheReady}`);
       cacheLogger.logMessage(`📊 Embedding Cache Stats: ${embeddingCacheStats.size} entries`);
@@ -194,20 +194,16 @@ export class InitializeChatSessionUseCase {
 
       cacheLogger.logMessage('🔄 Cache warming required - initializing caches');
       
-      // Only initialize vector cache if not ready (avoids redundant API calls)
+      // Only initialize vector cache if not ready (direct initialization)
       if (!isVectorCacheReady) {
         cacheLogger.logMessage('🔄 Initializing vector cache...');
         try {
-          await this.knowledgeRetrievalService.searchKnowledge({
-            userQuery: 'initialization dummy query',
-            sharedLogFile: sessionLogFile,
-            maxResults: 1,
-            minRelevanceScore: 0.15
-          });
-          cacheLogger.logMessage('✅ Vector cache initialized');
-        } catch (_error) {
-          cacheLogger.logMessage('⚠️ Vector cache initialization completed (expected error)');
-          // Expected to fail, but should initialize cache
+          // AI: Direct vector cache initialization instead of unreliable dummy search
+          await this.knowledgeRetrievalService.initializeVectorCacheForSession(sessionLogFile);
+          cacheLogger.logMessage('✅ Vector cache initialized successfully');
+        } catch (error) {
+          cacheLogger.logMessage(`❌ Vector cache initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // Continue with session initialization even if cache fails
         }
       } else {
         cacheLogger.logMessage('✅ Vector cache already ready');

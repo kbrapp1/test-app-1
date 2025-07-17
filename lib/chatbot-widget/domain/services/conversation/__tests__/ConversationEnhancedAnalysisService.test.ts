@@ -20,8 +20,12 @@ import { IKnowledgeRetrievalService, KnowledgeRetrievalContext } from '../../int
 
 describe('ConversationEnhancedAnalysisService', () => {
   let service: ConversationEnhancedAnalysisService;
-  let mockIntentService: IIntentClassificationService;
-  let mockKnowledgeService: IKnowledgeRetrievalService;
+  let mockIntentService: { 
+    processChatbotInteractionComplete: any;
+  };
+  let mockKnowledgeService: {
+    searchKnowledge: any;
+  };
   let baseAnalysis: ContextAnalysis;
   let messages: ChatMessage[];
   let chatbotConfig: ChatbotConfig;
@@ -30,7 +34,7 @@ describe('ConversationEnhancedAnalysisService', () => {
   beforeEach(() => {
     // Mock intent classification service
     mockIntentService = {
-      classifyIntent: vi.fn()
+      processChatbotInteractionComplete: vi.fn()
     };
 
     // Mock knowledge retrieval service
@@ -85,8 +89,8 @@ describe('ConversationEnhancedAnalysisService', () => {
     session = { id: 'session-1' } as ChatSession;
 
     service = new ConversationEnhancedAnalysisService(
-      mockIntentService,
-      mockKnowledgeService
+      mockIntentService as any, // Cast to any for testing flexibility
+      mockKnowledgeService as any // Cast to any for testing flexibility  
     );
   });
 
@@ -102,7 +106,7 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
 
       expect(result).toEqual(baseAnalysis);
-      expect(mockIntentService.classifyIntent).not.toHaveBeenCalled();
+      expect(mockIntentService.processChatbotInteractionComplete).not.toHaveBeenCalled();
       expect(mockKnowledgeService.searchKnowledge).not.toHaveBeenCalled();
     });
 
@@ -115,7 +119,7 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
 
       expect(result).toEqual(baseAnalysis);
-      expect(mockIntentService.classifyIntent).not.toHaveBeenCalled();
+      expect(mockIntentService.processChatbotInteractionComplete).not.toHaveBeenCalled();
       expect(mockKnowledgeService.searchKnowledge).not.toHaveBeenCalled();
     });
   });
@@ -130,7 +134,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         { model: 'test', processingTimeMs: 100, alternativeIntents: [] }
       );
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(mockIntentResult);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(mockIntentResult);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       const result = await service.enhanceAnalysis(
@@ -140,20 +144,15 @@ describe('ConversationEnhancedAnalysisService', () => {
         session
       );
 
-      expect(result.intentResult).toEqual(mockIntentResult);
-      expect(mockIntentService.classifyIntent).toHaveBeenCalledWith(
-        'I need help with pricing information',
-        {
-          chatbotConfig,
-          session,
-          messageHistory: messages.slice(-5),
-          currentMessage: 'I need help with pricing information'
-        }
-      );
+      // Intent classification is no longer performed during pre-processing
+      expect(result.intentResult).toBeUndefined();
+      expect(result.relevantKnowledge).toEqual([]);
+      // Intent service should not be called during pre-processing
+      expect(mockIntentService.processChatbotInteractionComplete).not.toHaveBeenCalled();
     });
 
     it('should handle intent classification errors gracefully', async () => {
-      (mockIntentService.classifyIntent as any).mockRejectedValue(new Error('Intent service unavailable'));
+      (mockIntentService.processChatbotInteractionComplete as any).mockRejectedValue(new Error('Intent service unavailable'));
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       const result = await service.enhanceAnalysis(
@@ -170,7 +169,7 @@ describe('ConversationEnhancedAnalysisService', () => {
     it('should skip intent classification when service is not provided', async () => {
       service = new ConversationEnhancedAnalysisService(
         undefined,
-        mockKnowledgeService
+        mockKnowledgeService as any
       );
 
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
@@ -183,7 +182,7 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
 
       expect(result.intentResult).toBeUndefined();
-      expect(mockIntentService.classifyIntent).not.toHaveBeenCalled();
+      expect(mockIntentService.processChatbotInteractionComplete).not.toHaveBeenCalled();
     });
 
     it('should skip intent classification when config or session is missing', async () => {
@@ -197,7 +196,7 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
 
       expect(result.intentResult).toBeUndefined();
-      expect(mockIntentService.classifyIntent).not.toHaveBeenCalled();
+      expect(mockIntentService.processChatbotInteractionComplete).not.toHaveBeenCalled();
     });
   });
 
@@ -218,7 +217,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         }
       ];
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({
         items: mockKnowledgeItems
       });
@@ -236,14 +235,14 @@ describe('ConversationEnhancedAnalysisService', () => {
         userQuery: 'I need help with pricing information',
         intentResult: undefined,
         conversationHistory: ['Hello', 'I need help with pricing information'],
-        maxResults: 7,
+        maxResults: 5,
         minRelevanceScore: 0.15,
         sharedLogFile: undefined
       });
     });
 
     it('should handle knowledge retrieval errors gracefully', async () => {
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockRejectedValue(new Error('Knowledge service unavailable'));
 
       const result = await service.enhanceAnalysis(
@@ -263,7 +262,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         undefined
       );
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
 
       const result = await service.enhanceAnalysis(
         baseAnalysis,
@@ -293,7 +292,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         } as ChatMessage
       ];
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       await service.enhanceAnalysis(
@@ -317,7 +316,7 @@ describe('ConversationEnhancedAnalysisService', () => {
     it('should pass shared log file to knowledge retrieval', async () => {
       const sharedLogFile = '/tmp/chat-log.txt';
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       await service.enhanceAnalysis(
@@ -347,27 +346,23 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
 
       const mockKnowledgeItems = [
-        {
-          id: 'kb-1',
-          title: 'Pricing Plans',
-          content: 'Pricing information',
-          relevanceScore: 0.85
-        }
+        { id: '1', title: 'Pricing Guide', content: 'Pricing information', relevanceScore: 0.9 },
+        { id: '2', title: 'FAQ', content: 'Frequently asked questions', relevanceScore: 0.7 }
       ];
 
-      // Track execution order
       const executionOrder: string[] = [];
 
-      (mockIntentService.classifyIntent as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        executionOrder.push('intent');
-        return mockIntentResult;
-      });
-
+      // Mock with delays to test parallel execution
       (mockKnowledgeService.searchKnowledge as any).mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 50));
         executionOrder.push('knowledge');
         return { items: mockKnowledgeItems };
+      });
+
+      (mockIntentService.processChatbotInteractionComplete as any).mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 70));
+        executionOrder.push('intent');
+        return mockIntentResult;
       });
 
       const startTime = Date.now();
@@ -379,11 +374,11 @@ describe('ConversationEnhancedAnalysisService', () => {
       );
       const endTime = Date.now();
 
-      // Should complete in less than 150ms (not 150ms sequential)
-      expect(endTime - startTime).toBeLessThan(150);
-      expect(result.intentResult).toEqual(mockIntentResult);
+      // Only knowledge retrieval runs now - should complete in ~50ms (not 120ms sequential)
+      expect(endTime - startTime).toBeLessThan(80);
+      expect(result.intentResult).toBeUndefined(); // No intent classification
       expect(result.relevantKnowledge).toEqual(mockKnowledgeItems);
-      expect(executionOrder).toEqual(['knowledge', 'intent']);
+      expect(executionOrder).toEqual(['knowledge']); // Only knowledge retrieval
     });
   });
 
@@ -406,7 +401,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         }
       ];
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(mockIntentResult);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(mockIntentResult);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({
         items: mockKnowledgeItems
       });
@@ -420,14 +415,14 @@ describe('ConversationEnhancedAnalysisService', () => {
 
       expect(result).toEqual({
         ...baseAnalysis,
-        intentResult: mockIntentResult,
+        intentResult: undefined, // No intent classification during pre-processing
         relevantKnowledge: mockKnowledgeItems,
         knowledgeRetrievalThreshold: 0.15
       });
     });
 
     it('should preserve base analysis when enhancement fails', async () => {
-      (mockIntentService.classifyIntent as any).mockRejectedValue(new Error('Intent failed'));
+      (mockIntentService.processChatbotInteractionComplete as any).mockRejectedValue(new Error('Intent failed'));
       (mockKnowledgeService.searchKnowledge as any).mockRejectedValue(new Error('Knowledge failed'));
 
       const result = await service.enhanceAnalysis(
@@ -454,7 +449,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         { model: 'test', processingTimeMs: 100, alternativeIntents: [] }
       );
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(mockIntentResult);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(mockIntentResult);
       (mockKnowledgeService.searchKnowledge as any).mockRejectedValue(new Error('Knowledge failed'));
 
       const result = await service.enhanceAnalysis(
@@ -466,7 +461,7 @@ describe('ConversationEnhancedAnalysisService', () => {
 
       expect(result).toEqual({
         ...baseAnalysis,
-        intentResult: mockIntentResult,
+        intentResult: undefined, // No intent classification during pre-processing
         relevantKnowledge: undefined,
         knowledgeRetrievalThreshold: 0.15
       });
@@ -503,7 +498,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         { model: 'test', processingTimeMs: 100, alternativeIntents: [] }
       );
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(mockIntentResult);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(mockIntentResult);
 
       const result = await service.enhanceAnalysis(
         baseAnalysis,
@@ -512,12 +507,12 @@ describe('ConversationEnhancedAnalysisService', () => {
         session
       );
 
-      expect(result.intentResult).toEqual(mockIntentResult);
+      expect(result.intentResult).toBeUndefined(); // No intent classification during pre-processing
       expect(result.relevantKnowledge).toBeUndefined();
     });
 
     it('should work with only knowledge service', async () => {
-      service = new ConversationEnhancedAnalysisService(undefined, mockKnowledgeService);
+      service = new ConversationEnhancedAnalysisService(undefined, mockKnowledgeService as any);
 
       const mockKnowledgeItems = [
         {
@@ -556,7 +551,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         } as ChatMessage
       ];
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       const result = await service.enhanceAnalysis(
@@ -583,7 +578,7 @@ describe('ConversationEnhancedAnalysisService', () => {
         } as ChatMessage
       ];
 
-      (mockIntentService.classifyIntent as any).mockResolvedValue(undefined);
+      (mockIntentService.processChatbotInteractionComplete as any).mockResolvedValue(undefined);
       (mockKnowledgeService.searchKnowledge as any).mockResolvedValue({ items: [] });
 
       const result = await service.enhanceAnalysis(

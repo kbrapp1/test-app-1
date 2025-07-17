@@ -9,11 +9,11 @@
  * - Follow DDD application service patterns
  */
 
-import { MessageProcessingWorkflowService, WorkflowContext } from './MessageProcessingWorkflowService';
+import { WorkflowContext } from './MessageProcessingWorkflowService';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
-import { IAIConversationService, ConversationContext } from '../../../domain/services/interfaces/IAIConversationService';
+import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
 import { IIntentClassificationService } from '../../../domain/services/interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ConversationContextBuilderService } from './ConversationContextBuilderService';
@@ -28,30 +28,30 @@ export interface ProcessMessageRequest {
   userMessage: string;
   sessionId: string;
   organizationId?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface AnalysisResult {
-  session: any;
+  session: Record<string, unknown>;
   userMessage: ChatMessage;
-  contextResult: any;
-  config: any;
-  enhancedContext: any;
+  contextResult: Record<string, unknown>;
+  config: Record<string, unknown>;
+  enhancedContext: Record<string, unknown>;
 }
 
 export interface MessageProcessingContext {
-  session: any;
-  config: any;
+  session: Record<string, unknown>;
+  config: Record<string, unknown>;
   userMessage: ChatMessage;
 }
 
 export interface ResponseResult {
-  session: any;
+  session: Record<string, unknown>;
   userMessage: ChatMessage;
   botMessage: ChatMessage;
   allMessages: ChatMessage[];
-  config: any;
-  enhancedContext: any;
+  config: Record<string, unknown>;
+  enhancedContext: Record<string, unknown>;
 }
 
 export class ChatMessageProcessingService {
@@ -87,13 +87,13 @@ export class ChatMessageProcessingService {
   /** Process user message through workflow */
   async processUserMessage(
     workflowContext: WorkflowContext,
-    request: ProcessMessageRequest
+    _request: ProcessMessageRequest
   ): Promise<MessageProcessingContext> {
     const { session, config, userMessage } = workflowContext;
 
     return {
-      session,
-      config,
+      session: session as any,
+      config: config as any,
       userMessage
     };
   }
@@ -109,7 +109,7 @@ export class ChatMessageProcessingService {
 
     // AI: Convert plain message objects to ChatMessage entities using repository
     // This follows @golden-rule.mdc by maintaining proper domain boundaries
-    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages, sharedLogFile);
+    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages as any[], sharedLogFile);
     
     // Check if userMessage is already in context messages to avoid duplication
     const isUserMessageInContext = contextMessages.some((msg: ChatMessage) => msg.id === userMessage.id);
@@ -126,7 +126,7 @@ export class ChatMessageProcessingService {
       session,
       contextMessages, // Use converted entities
       userMessage,
-      contextResult.summary,
+      contextResult.summary as any,
       enhancedContext,
       logFileName
     );
@@ -135,7 +135,7 @@ export class ChatMessageProcessingService {
     (conversationContext as any).sharedLogFile = logFileName;
 
     // Process unified AI interaction
-    const unifiedResult = await (this.intentClassificationService as any).processChatbotInteractionComplete(
+    const unifiedResult = await (this.intentClassificationService as { processChatbotInteractionComplete: (content: string, context: unknown) => Promise<unknown> }).processChatbotInteractionComplete(
       userMessage.content,
       conversationContext
     );
@@ -146,9 +146,9 @@ export class ChatMessageProcessingService {
     let updatedUserMessage = userMessage;
     try {
       // Extract analysis data directly without requiring MessageProcessingWorkflowService
-      const sentiment = this.extractSentimentFromUnified(unifiedResult);
-      const urgency = this.extractUrgencyFromUnified(unifiedResult);
-      const engagement = this.extractEngagementFromUnified(unifiedResult);
+      const sentiment = this.extractSentimentFromUnified(unifiedResult as Record<string, unknown>);
+      const urgency = this.extractUrgencyFromUnified(unifiedResult as Record<string, unknown>);
+      const engagement = this.extractEngagementFromUnified(unifiedResult as Record<string, unknown>);
       
       // Update user message with extracted data (same as before)
       const messageWithSentiment = userMessage.updateSentiment(sentiment);
@@ -198,26 +198,26 @@ export class ChatMessageProcessingService {
       config,
       enhancedContext: {
         ...enhancedContext,
-        unifiedAnalysis: unifiedResult?.analysis || { primaryIntent: 'unknown', primaryConfidence: 0 },
+        unifiedAnalysis: (unifiedResult as Record<string, unknown>)?.analysis as Record<string, unknown> || { primaryIntent: 'unknown', primaryConfidence: 0 },
         conversationFlow: null, // Will be set after session update
-        callToAction: unifiedResult?.response?.callToAction || { type: 'none', priority: 'low' }
+        callToAction: ((unifiedResult as Record<string, unknown>)?.response as Record<string, unknown>)?.callToAction as Record<string, unknown> || { type: 'none', priority: 'low' }
       }
     };
   }
 
   /** Retrieve knowledge for query context */
-  async retrieveKnowledge(query: string, context?: any): Promise<any> {
+  async retrieveKnowledge(query: string, context?: Record<string, unknown>): Promise<unknown> {
     if (!this.knowledgeRetrievalService) {
       return null;
     }
 
     const searchContext = {
       userQuery: query,
-      intentResult: context?.intentResult,
-      conversationHistory: context?.conversationHistory,
-      userPreferences: context?.userPreferences,
-      maxResults: context?.maxResults || 5,
-      minRelevanceScore: context?.minRelevanceScore || 0.5
+      intentResult: context?.intentResult as any,
+      conversationHistory: context?.conversationHistory as any,
+      userPreferences: context?.userPreferences as any,
+      maxResults: (context?.maxResults as number) || 5,
+      minRelevanceScore: (context?.minRelevanceScore as number) || 0.5
     };
 
     const result = await this.knowledgeRetrievalService.searchKnowledge(searchContext);
@@ -225,10 +225,12 @@ export class ChatMessageProcessingService {
   }
 
   /** Extract sentiment from unified API response */
-  private extractSentimentFromUnified(unifiedResult: any): 'positive' | 'neutral' | 'negative' {
+  private extractSentimentFromUnified(unifiedResult: Record<string, unknown>): 'positive' | 'neutral' | 'negative' {
     // Try multiple paths in unified response
-    const sentiment = unifiedResult?.analysis?.sentiment ||
-                     unifiedResult?.response?.sentiment ||
+    const analysis = unifiedResult?.analysis as Record<string, unknown>;
+    const response = unifiedResult?.response as Record<string, unknown>;
+    const sentiment = analysis?.sentiment ||
+                     response?.sentiment ||
                      'neutral'; // Default fallback
     
     // Validate and normalize sentiment value
@@ -240,10 +242,13 @@ export class ChatMessageProcessingService {
   }
 
   /** Extract urgency from unified API response */
-  private extractUrgencyFromUnified(unifiedResult: any): 'low' | 'medium' | 'high' {
+  private extractUrgencyFromUnified(unifiedResult: Record<string, unknown>): 'low' | 'medium' | 'high' {
     // Try multiple paths in unified response
-    const urgency = unifiedResult?.analysis?.entities?.urgency ||
-                   unifiedResult?.conversationFlow?.urgency ||
+    const analysis = unifiedResult?.analysis as Record<string, unknown>;
+    const entities = analysis?.entities as Record<string, unknown>;
+    const conversationFlow = unifiedResult?.conversationFlow as Record<string, unknown>;
+    const urgency = entities?.urgency ||
+                   conversationFlow?.urgency ||
                    'low'; // Default fallback
     
     // Validate and normalize urgency value
@@ -255,10 +260,12 @@ export class ChatMessageProcessingService {
   }
 
   /** Extract engagement from unified API response */
-  private extractEngagementFromUnified(unifiedResult: any): 'low' | 'medium' | 'high' {
+  private extractEngagementFromUnified(unifiedResult: Record<string, unknown>): 'low' | 'medium' | 'high' {
     // Try multiple paths in unified response
-    const engagement = unifiedResult?.conversationFlow?.engagementLevel ||
-                      unifiedResult?.analysis?.engagementLevel ||
+    const conversationFlow = unifiedResult?.conversationFlow as Record<string, unknown>;
+    const analysis = unifiedResult?.analysis as Record<string, unknown>;
+    const engagement = conversationFlow?.engagementLevel ||
+                      analysis?.engagementLevel ||
                       'low'; // Default fallback
     
     // Validate and normalize engagement value
@@ -278,7 +285,7 @@ export class ChatMessageProcessingService {
    * - Follows @golden-rule.mdc domain boundary patterns
    * - Maintains type safety between application and domain layers
    */
-  private async convertPlainMessagesToEntities(messages: any[], logFileName: string): Promise<ChatMessage[]> {
+  private async convertPlainMessagesToEntities(messages: Record<string, unknown>[], _logFileName: string): Promise<ChatMessage[]> {
     const chatMessages: ChatMessage[] = [];
     
     for (const msg of messages) {
@@ -289,7 +296,7 @@ export class ChatMessageProcessingService {
       
       try {
         // First try to get the entity from repository (preferred approach)
-        const existingMessage = await this.messageRepository.findById(msg.id);
+        const existingMessage = await this.messageRepository.findById(msg.id as string);
         if (existingMessage) {
           chatMessages.push(existingMessage);
           continue;
@@ -297,7 +304,7 @@ export class ChatMessageProcessingService {
         
         // If not found in repository, check if it's already a ChatMessage entity
         if (msg.isFromUser && typeof msg.isFromUser === 'function') {
-          chatMessages.push(msg as ChatMessage);
+          chatMessages.push(msg as any);
           continue;
         }
         

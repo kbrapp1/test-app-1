@@ -61,7 +61,7 @@ export class CrawlWebsiteUseCase {
       await this.websiteCrawlingService.validateCrawlRequest(source, settings);
 
       // Step 2: Calculate crawl budget (domain calculation)
-      const budget = this.websiteCrawlingService.calculateCrawlBudget(settings);
+      const _budget = this.websiteCrawlingService.calculateCrawlBudget(settings);
 
       // Step 3: Execute crawling (infrastructure delegation)
       const crawledPages: CrawledPageData[] = [];
@@ -78,7 +78,7 @@ export class CrawlWebsiteUseCase {
             const extractedContent = this.contentExtractionService.extractMainContent(htmlParser);
 
             // Categorize content using domain service
-            const category = await this.contentCategorizationService.categorizeContent(
+            const _category = await this.contentCategorizationService.categorizeContent(
               extractedContent,
               pageData.title
             );

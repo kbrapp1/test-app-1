@@ -19,7 +19,7 @@ export interface EnhancedContext {
   intentResult?: {
     intent: string;
     confidence: number;
-    entities: Record<string, any>;
+    entities: Record<string, unknown>;
     getCategory(): string;
     isSalesIntent(): boolean;
     isSupportIntent(): boolean;

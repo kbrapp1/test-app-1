@@ -14,7 +14,7 @@ import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { EntityAccumulationService } from '../../../domain/services/context/EntityAccumulationService';
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 import { ExtractedEntities } from '../../../domain/value-objects/message-processing/IntentResult';
-import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService, ISessionLogger as _ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 

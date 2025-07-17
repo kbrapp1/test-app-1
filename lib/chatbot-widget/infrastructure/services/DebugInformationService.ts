@@ -5,26 +5,29 @@ export class DebugInformationService implements IDebugInformationService {
 
   captureApiCall(
     callType: 'first' | 'second',
-    requestData: any,
-    responseData: any,
+    requestData: unknown,
+    responseData: unknown,
     processingTime: number
   ): ApiCallDebugInfo {
+    const req = requestData as Record<string, unknown>;
+    const res = responseData as Record<string, unknown>;
+    
     return {
       requestData: {
-        endpoint: requestData.endpoint || 'https://api.openai.com/v1/chat/completions',
-        method: requestData.method || 'POST',
-        timestamp: requestData.timestamp || new Date().toISOString(),
-        payload: requestData.payload,
-        payloadSize: requestData.payloadSize || `${JSON.stringify(requestData.payload).length} characters`,
-        messageCount: requestData.messageCount || 0,
-        conversationHistoryLength: requestData.conversationHistoryLength || 0,
-        userMessage: requestData.userMessage || ''
+        endpoint: (req.endpoint as string) || 'https://api.openai.com/v1/chat/completions',
+        method: (req.method as string) || 'POST',
+        timestamp: (req.timestamp as string) || new Date().toISOString(),
+        payload: req.payload,
+        payloadSize: (req.payloadSize as string) || `${JSON.stringify(req.payload).length} characters`,
+        messageCount: (req.messageCount as number) || 0,
+        conversationHistoryLength: (req.conversationHistoryLength as number) || 0,
+        userMessage: (req.userMessage as string) || ''
       },
       responseData: {
-        timestamp: responseData.timestamp || new Date().toISOString(),
-        processingTime: responseData.processingTime || `${processingTime}ms`,
-        response: responseData.response,
-        responseSize: responseData.responseSize || `${JSON.stringify(responseData.response).length} characters`
+        timestamp: (res.timestamp as string) || new Date().toISOString(),
+        processingTime: (res.processingTime as string) || `${processingTime}ms`,
+        response: res.response,
+        responseSize: (res.responseSize as string) || `${JSON.stringify(res.response).length} characters`
       }
     };
   }

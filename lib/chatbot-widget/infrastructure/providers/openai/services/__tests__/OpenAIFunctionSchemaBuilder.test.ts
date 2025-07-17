@@ -50,7 +50,9 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include proper field types and constraints', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const leadData = schema.parameters.properties.lead_data as { properties: Record<string, { type: string; enum?: string[] }> };
+      const leadData = schema.parameters.properties.lead_data as {
+        properties: Record<string, { type: string; enum?: string[] }>
+      };
       const leadDataProperties = leadData.properties;
 
       // Verify field types
@@ -129,7 +131,9 @@ describe('OpenAIFunctionSchemaBuilder', () => {
 
     it('should include proper descriptions for all fields', () => {
       const schema = OpenAIFunctionSchemaBuilder.buildUnifiedChatbotSchemaWithContext();
-      const leadData = schema.parameters.properties.lead_data as { properties: Record<string, { description: string }> };
+      const leadData = schema.parameters.properties.lead_data as {
+        properties: Record<string, { description: string }>
+      };
       const leadDataProperties = leadData.properties;
 
       // Verify descriptions exist for key fields

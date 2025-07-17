@@ -201,3 +201,5 @@ function AddFaqForm({ newFaq, onUpdateNewFaq, onAddFaq }: AddFaqFormProps) {
     </div>
   );
 }
+
+FaqManagementCard.displayName = 'FaqManagementCard';

@@ -24,7 +24,7 @@ export class ContentValidationError extends DomainError {
    * - Support debugging and error recovery
    * - Maintain user-friendly error messages
    */
-  constructor(message: string, context: Record<string, any> = {}) {
+  constructor(message: string, context: Record<string, unknown> = {}) {
     super(`Content validation failed: ${message}`, {
       ...context,
       domain: 'content-processing',
@@ -45,7 +45,7 @@ export class ContentValidationError extends DomainError {
   }
 
   /** Create error for validation rule violation */
-  static ruleViolation(rule: string, contentType: string, details?: Record<string, any>): ContentValidationError {
+  static ruleViolation(rule: string, contentType: string, details?: Record<string, unknown>): ContentValidationError {
     return new ContentValidationError(
       `Content violates validation rule: ${rule}`,
       { 
@@ -83,7 +83,7 @@ export class ContentValidationError extends DomainError {
   /**
    * Create error for invalid input parameters
    */
-  static invalidInput(parameterName: string, expectedType: string, actualValue: any): ContentValidationError {
+  static invalidInput(parameterName: string, expectedType: string, actualValue: unknown): ContentValidationError {
     return new ContentValidationError(
       `Invalid input parameter: ${parameterName} must be ${expectedType}`,
       { 

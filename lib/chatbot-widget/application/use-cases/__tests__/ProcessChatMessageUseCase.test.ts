@@ -27,7 +27,8 @@ vi.mock('../../../../performance-profiler', () => ({
     clear: vi.fn(),
     startTimer: vi.fn(),
     endTimer: vi.fn(),
-    getMetrics: vi.fn(() => ({}))
+    getMetrics: vi.fn(() => ({})),
+    printReport: vi.fn()
   }
 }));
 

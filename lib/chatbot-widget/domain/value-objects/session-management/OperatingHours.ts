@@ -186,6 +186,11 @@ export class OperatingHours {
   }
 
   isWithinOperatingHours(timestamp: Date = new Date()): boolean {
+    // If no business hours are defined, default to 24/7 operation
+    if (!this.props.businessHours || this.props.businessHours.length === 0) {
+      return true;
+    }
+
     const now = new Date(timestamp.toLocaleString("en-US", { timeZone: this.props.timezone }));
     const dayOfWeek = now.getDay();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -213,6 +218,11 @@ export class OperatingHours {
   }
 
   getNextOpenTime(fromTimestamp: Date = new Date()): Date | null {
+    // If no business hours are defined, we're always open (24/7), so return null
+    if (!this.props.businessHours || this.props.businessHours.length === 0) {
+      return null; // null means "always open"
+    }
+
     const maxDaysToCheck = 14; // Prevent infinite loops
     const checkDate = new Date(fromTimestamp);
     

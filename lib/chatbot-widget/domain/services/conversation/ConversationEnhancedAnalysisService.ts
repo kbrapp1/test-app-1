@@ -43,17 +43,12 @@ export class ConversationEnhancedAnalysisService {
 
     const lastUserMessage = userMessages[userMessages.length - 1];
     
-    // PERFORMANCE OPTIMIZATION: Run ALL operations in parallel
-    // This can save 2-3 seconds by avoiding sequential processing
+    // PERFORMANCE OPTIMIZATION: Only run knowledge retrieval 
+    // Intent classification is redundant - main API call already handles it
     const startTime = Date.now();
     
-    const [intentResult, relevantKnowledge] = await Promise.allSettled([
-      // Step 1: Classify intent if service is available
-      this.intentClassificationService && chatbotConfig && session
-        ? this.classifyMessageIntent(lastUserMessage, messages, chatbotConfig, session)
-        : Promise.resolve(undefined),
-      
-      // Step 2: Retrieve relevant knowledge if service is available
+    const [relevantKnowledge] = await Promise.allSettled([
+      // Only Step 1: Retrieve relevant knowledge if service is available
       // AI: This step triggers the vector embeddings pipeline
       this.knowledgeRetrievalService
         ? this.retrieveRelevantKnowledge(lastUserMessage, userMessages, undefined, sharedLogFile)
@@ -64,45 +59,16 @@ export class ConversationEnhancedAnalysisService {
     // AI: Removed console.log - use proper logging service in production
     
     // Extract results from Promise.allSettled
-    const intentValue = intentResult.status === 'fulfilled' ? intentResult.value : undefined;
     const knowledgeValue = relevantKnowledge.status === 'fulfilled' ? relevantKnowledge.value : undefined;
 
-    // Create enhanced analysis with all collected data
+    // Create enhanced analysis with knowledge data only
+    // Intent classification will be handled by the main API call
     return {
       ...baseAnalysis,
-      intentResult: intentValue,
+      intentResult: undefined, // No intent classification during pre-processing
       relevantKnowledge: knowledgeValue,
       knowledgeRetrievalThreshold: 0.15 // Pass the threshold used for knowledge retrieval
     };
-  }
-
-  // Classify message intent using intent classification service
-  private async classifyMessageIntent(
-    message: ChatMessage,
-    allMessages: ChatMessage[],
-    config: ChatbotConfig,
-    session: ChatSession
-  ): Promise<IntentResult | undefined> {
-    if (!this.intentClassificationService) {
-      return undefined;
-    }
-
-    try {
-      const context = {
-        chatbotConfig: config,
-        session,
-        messageHistory: allMessages.slice(-5), // Last 5 messages for context
-        currentMessage: message.content
-      };
-      
-      return await this.intentClassificationService.classifyIntent(
-        message.content,
-        context
-      );
-    } catch (error) {
-      // Intent classification failed - using fallback
-      return undefined;
-    }
   }
 
   // Retrieve relevant knowledge based on user query and intent
@@ -121,7 +87,7 @@ export class ConversationEnhancedAnalysisService {
         userQuery: message.content,
         intentResult,
         conversationHistory: userMessages.slice(-3).map(m => m.content),
-        maxResults: 7, // ✅ BEST PRACTICE: 5-10 results for better coverage
+        maxResults: 5, // ✅ BEST PRACTICE: 5-10 results for better coverage
         minRelevanceScore: 0.15, // Slightly lower for initial retrieval
         sharedLogFile
       };

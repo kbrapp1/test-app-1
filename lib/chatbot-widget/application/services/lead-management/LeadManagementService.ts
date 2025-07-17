@@ -211,7 +211,7 @@ export class LeadManagementService {
    * Add tag to lead
    * Note: This functionality should be implemented in LeadLifecycleService
    */
-  async addTag(id: string, tag: string): Promise<LeadDto> {
+  async addTag(_id: string, _tag: string): Promise<LeadDto> {
     // For now, throw an error indicating this needs to be implemented
     throw new Error('Add tag functionality not yet implemented - needs to be added to LeadLifecycleService');
   }
@@ -220,7 +220,7 @@ export class LeadManagementService {
    * Remove tag from lead
    * Note: This functionality should be implemented in LeadLifecycleService
    */
-  async removeTag(id: string, tag: string): Promise<LeadDto> {
+  async removeTag(_id: string, _tag: string): Promise<LeadDto> {
     // For now, throw an error indicating this needs to be implemented
     throw new Error('Remove tag functionality not yet implemented - needs to be added to LeadLifecycleService');
   }

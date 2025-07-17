@@ -3,7 +3,7 @@
  * Following DDD principles: Single responsibility for data extraction
  */
 
-interface ApiPayload {
+export interface ApiPayload {
   model?: string;
   temperature?: number;
   max_tokens?: number;
@@ -13,9 +13,10 @@ interface ApiPayload {
     description: string;
     parameters: Record<string, unknown>;
   }>;
+  [key: string]: unknown;
 }
 
-interface ApiResponse {
+export interface ApiResponse {
   id?: string;
   model?: string;
   usage?: {

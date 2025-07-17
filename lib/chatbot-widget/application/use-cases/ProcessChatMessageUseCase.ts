@@ -22,7 +22,7 @@ import { IDebugInformationService } from '../../domain/services/interfaces/IDebu
 import { MessageProcessingWorkflowService } from '../services/message-processing/MessageProcessingWorkflowService';
 import { ChatMessageProcessingService } from '../services/message-processing/ChatMessageProcessingService';
 import { ConversationContextManagementService } from '../services/conversation-management/ConversationContextManagementService';
-import { SessionUpdateService } from '../services/configuration-management/SessionUpdateService';
+
 import { ProcessChatMessageWorkflowOrchestrator } from '../services/ProcessChatMessageWorkflowOrchestrator';
 import { ProcessChatMessageRequest, ProcessChatMessageRequestValidator } from '../dto/ProcessChatMessageRequest';
 import { ProcessChatMessageResult } from '../dto/ProcessChatMessageResult';
@@ -30,8 +30,7 @@ import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/C
 import { 
   OrganizationRequiredError, 
   MessageValidationError,
-  DomainError,
-  ErrorSeverity 
+  DomainError
 } from '../../domain/errors/ChatMessageProcessingErrors';
 import { PerformanceProfiler } from '../../../performance-profiler';
 
@@ -93,9 +92,17 @@ export class ProcessChatMessageUseCase {
       const validatedRequest = this.validateRequest(request);
       
       // AI: Delegate to workflow orchestrator
-      return await this.workflowOrchestrator.orchestrate(validatedRequest);
+      const result = await this.workflowOrchestrator.orchestrate(validatedRequest);
+      
+      // AI: Print performance report if profiling is enabled
+      PerformanceProfiler.printReport();
+      
+      return result;
       
     } catch (error) {
+      // AI: Print performance report even on error for debugging
+      PerformanceProfiler.printReport();
+      
       // AI: Transform domain errors for presentation layer
       throw this.transformError(error);
     }

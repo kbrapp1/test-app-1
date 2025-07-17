@@ -57,7 +57,7 @@ export class VectorStatisticsQueryService {
 
   /** Get optimization data for storage analysis */
   async getOptimizationData(context: VectorQueryContext): Promise<Array<{
-    vector: any;
+    vector: number[];
     content_hash: string;
     created_at: string;
     updated_at: string;

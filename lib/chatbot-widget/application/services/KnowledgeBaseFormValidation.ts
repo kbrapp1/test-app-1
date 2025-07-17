@@ -101,7 +101,7 @@ export function validateFaqs(faqs: unknown[]): FormValidationErrorDto[] {
       });
     }
 
-    if ((faqObj.answer as any)?.trim() && (faqObj.answer as any).length > 2000) {
+    if (typeof faqObj.answer === 'string' && faqObj.answer.trim() && faqObj.answer.length > 2000) {
       errors.push({
         field: `faqs[${index}].answer`,
         message: 'FAQ answer should be under 2000 characters',

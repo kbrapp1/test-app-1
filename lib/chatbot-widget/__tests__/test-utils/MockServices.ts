@@ -157,74 +157,20 @@ export class MockTokenCountingService implements ITokenCountingService {
 }
 
 export class MockIntentClassificationService implements IIntentClassificationService {
-  private intents: Map<string, IntentResult> = new Map();
-
-  setIntent(text: string, intent: IntentResult): void {
-    this.intents.set(text, intent);
-  }
-
-  setIntentResponse(intent: string, confidence: number, entities: Record<string, any>): void {
-    const result = IntentResult.create(
-      'unknown' as any, // Cast to any to handle test flexibility
-      confidence,
-      entities,
-      `Mock classification for ${intent}`,
-      {
-        model: 'mock-classifier',
-        processingTimeMs: 50,
-        alternativeIntents: []
+  /** Unified processing method for complete chatbot interaction */
+  async processChatbotInteractionComplete(
+    message: string,
+    context: any
+  ): Promise<any> {
+    // Mock implementation for testing
+    return {
+      response: 'Mock response',
+      analysis: {
+        intent: 'general',
+        confidence: 0.8,
+        entities: {}
       }
-    );
-    this.intents.set('mock_current_message', result);
-  }
-
-  async classifyIntent(
-    message: string, 
-    context: IntentClassificationContext
-  ): Promise<IntentResult> {
-    const customIntent = this.intents.get(message) || this.intents.get('mock_current_message');
-    if (customIntent) return customIntent;
-
-    // Default mock classification
-    if (message.toLowerCase().includes('pricing') || message.toLowerCase().includes('cost')) {
-      return IntentResult.create(
-        'faq_pricing',
-        0.95,
-        { budget: 'pricing_inquiry' },
-        'Detected pricing inquiry based on keywords',
-        {
-          model: 'mock-classifier',
-          processingTimeMs: 50,
-          alternativeIntents: []
-        }
-      );
-    }
-
-    if (message.toLowerCase().includes('help') || message.toLowerCase().includes('support')) {
-      return IntentResult.create(
-        'support_request',
-        0.90,
-        { urgency: 'medium' },
-        'Detected support request based on keywords',
-        {
-          model: 'mock-classifier',
-          processingTimeMs: 50,
-          alternativeIntents: []
-        }
-      );
-    }
-
-    return IntentResult.create(
-      'unknown',
-      0.75,
-      {},
-      'No specific pattern matched',
-      {
-        model: 'mock-classifier',
-        processingTimeMs: 50,
-        alternativeIntents: []
-      }
-    );
+    };
   }
 }
 
@@ -364,6 +310,11 @@ export class MockKnowledgeRetrievalService implements IKnowledgeRetrievalService
 
   async healthCheck(): Promise<boolean> {
     return true;
+  }
+
+  async initializeVectorCacheForSession(sharedLogFile: string): Promise<void> {
+    // Mock implementation - just mark cache as ready
+    this.vectorCacheReady = true;
   }
 }
 

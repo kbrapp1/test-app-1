@@ -15,6 +15,50 @@ import { OpenAIIntentConfig, PersonaInference } from '../types/OpenAITypes';
 import { ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
 import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
 
+// Context interface for processing
+interface ProcessingContext {
+  messageHistory: ChatMessage[];
+  sessionId: string;
+  organizationId?: string;
+  userData?: Record<string, unknown>;
+  systemPrompt?: string;
+  sharedLogFile?: string;
+}
+
+// Function call schema interface
+interface FunctionSchema {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+// OpenAI message interface
+interface OpenAIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+// Function call arguments interface
+interface FunctionCallArguments {
+  intent?: string;
+  lead_data?: Record<string, unknown>;
+  response?: {
+    content?: string;
+    capture_contact?: boolean;
+    next_question?: string;
+  };
+}
+
+// OpenAI API request interface
+interface OpenAIApiRequest {
+  model: string;
+  messages: OpenAIMessage[];
+  functions: FunctionSchema[];
+  function_call: { name: string };
+  temperature: number;
+  max_tokens: number;
+}
+
 export class OpenAIChatbotProcessingService {
   private readonly config: OpenAIIntentConfig;
   private readonly client: OpenAI;
@@ -30,14 +74,7 @@ export class OpenAIChatbotProcessingService {
   // Process complete chatbot interaction in single API call
   async processChatbotInteractionComplete(
     message: string,
-    context: {
-      messageHistory: ChatMessage[];
-      sessionId: string;
-      organizationId?: string;
-      userData?: Record<string, unknown>;
-      systemPrompt?: string;
-      sharedLogFile?: string;
-    }
+    context: ProcessingContext
   ): Promise<{
     analysis: {
       primaryIntent: string;
@@ -75,10 +112,11 @@ export class OpenAIChatbotProcessingService {
   }> {
     // Use the main chatbot logging service instead of OpenAI's separate logging
     // Cache the logging service import to avoid repeated dynamic imports
-    if (!(globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]) {
-      (globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] = await import('../../../providers/logging/ChatbotFileLoggingService');
+    if (!(globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]) {
+      (globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] = await import('../../../providers/logging/ChatbotFileLoggingService');
     }
-    const loggingService = new ((globalThis as any)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]).ChatbotFileLoggingService();
+    const LoggingServiceClass = (globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] as { ChatbotFileLoggingService: new () => { createSessionLogger: (sessionId: string, logFile: string, metadata: Record<string, unknown>) => { logApiCall: Function; logMessage: Function; logError: Function; flush: Function } } };
+    const loggingService = new LoggingServiceClass.ChatbotFileLoggingService();
     
     const sessionLogger = loggingService.createSessionLogger(
       context.sessionId,
@@ -131,7 +169,7 @@ export class OpenAIChatbotProcessingService {
         throw new Error('No function call in response');
       }
 
-      const functionArgs = JSON.parse(choice.message.function_call.arguments);
+      const functionArgs = JSON.parse(choice.message.function_call.arguments) as FunctionCallArguments;
       sessionLogger.logMessage('🔧 EXTRACTED FUNCTION ARGUMENTS:', functionArgs);
 
       // AI: Map simplified schema response to expected format
@@ -147,8 +185,8 @@ export class OpenAIChatbotProcessingService {
           shouldAskQualificationQuestions: functionArgs.response?.next_question ? true : false,
           shouldEscalateToHuman: false, // Default for simplified schema
           nextBestAction: functionArgs.response?.capture_contact ? 'capture_contact' : 'continue_conversation',
-          conversationPhase: this.mapIntentToPhase(functionArgs.intent),
-          engagementLevel: this.mapIntentToEngagement(functionArgs.intent)
+          conversationPhase: this.mapIntentToPhase(functionArgs.intent || 'unknown'),
+          engagementLevel: this.mapIntentToEngagement(functionArgs.intent || 'unknown')
         },
         // leadScore: Intentionally excluded - calculated by domain service
         response: {
@@ -181,11 +219,11 @@ export class OpenAIChatbotProcessingService {
   // Build messages with proper knowledge base integration
   private buildMessagesWithKnowledgeBase(
     userMessage: string,
-    context: any,
-    schema: any,
+    context: ProcessingContext,
+    schema: FunctionSchema,
     systemPrompt: string
-  ): any[] {
-    const messages = [
+  ): OpenAIMessage[] {
+    const messages: OpenAIMessage[] = [
       {
         role: 'system',
         content: systemPrompt // This now includes full knowledge base integration
@@ -194,11 +232,11 @@ export class OpenAIChatbotProcessingService {
 
     // Add conversation history (filter out current message to prevent duplication)
     if (context.messageHistory && context.messageHistory.length > 0) {
-      const filteredHistory = context.messageHistory.filter((msg: any) => 
+      const filteredHistory = context.messageHistory.filter((msg: ChatMessage) => 
         !(msg.messageType === 'user' && msg.content.trim() === userMessage.trim())
       );
       
-      filteredHistory.forEach((msg: any) => {
+      filteredHistory.forEach((msg: ChatMessage) => {
         messages.push({
           role: msg.messageType === 'user' ? 'user' : 'assistant',
           content: msg.content
@@ -243,8 +281,8 @@ export class OpenAIChatbotProcessingService {
   }
 
   // Map function call entities to expected format
-  private mapFunctionCallEntitiesToExpectedFormat(leadData: any): ExtractedEntities {
-    const mappedEntities = { ...leadData };
+  private mapFunctionCallEntitiesToExpectedFormat(leadData: Record<string, unknown>): ExtractedEntities {
+    const mappedEntities: Record<string, unknown> = { ...leadData };
     
     // Map snake_case to camelCase for array entities
     if (leadData.pain_points) {
@@ -255,7 +293,7 @@ export class OpenAIChatbotProcessingService {
     // Goals already uses correct camelCase name
     // Other fields like name, company, role, budget, timeline, urgency are already correct
     
-    return mappedEntities;
+    return mappedEntities as ExtractedEntities;
   }
 
   // AI: Phase-based entity extraction removed in favor of simplified schema approach

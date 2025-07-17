@@ -22,9 +22,9 @@ export class OpenAIFunctionSchemaBuilder {
    * - Parameters kept for backward compatibility but not used in simplified approach
    */
   static buildUnifiedChatbotSchemaWithContext(
-    existingEntities?: Record<string, unknown>, 
-    conversationPhase?: string, 
-    userMessage?: string
+    _existingEntities?: Record<string, unknown>, 
+    _conversationPhase?: string, 
+    _userMessage?: string
   ): OpenAIFunctionSchema {
     return {
       name: "lead_qualification_response",

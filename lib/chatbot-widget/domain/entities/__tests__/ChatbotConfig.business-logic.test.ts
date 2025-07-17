@@ -254,7 +254,7 @@ describe('ChatbotConfig - Business Logic', () => {
     it('should use custom timestamp for operating hours check', () => {
       const operatingHours = OperatingHours.create({
         timezone: 'UTC',
-        businessHours: [],  // No business hours defined
+        businessHours: [],  // No business hours defined - should default to 24/7
         holidaySchedule: [],
         outsideHoursMessage: 'We are currently closed'
       });
@@ -265,7 +265,7 @@ describe('ChatbotConfig - Business Logic', () => {
       });
 
       const customTimestamp = new Date('2024-01-01T12:00:00Z');
-      expect(config.isWithinOperatingHours(customTimestamp)).toBe(false);
+      expect(config.isWithinOperatingHours(customTimestamp)).toBe(true); // Empty businessHours = 24/7 operation
     });
   });
 

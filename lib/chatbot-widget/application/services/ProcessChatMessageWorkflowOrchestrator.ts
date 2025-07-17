@@ -12,7 +12,7 @@
 
 import { ProcessChatMessageRequest } from '../dto/ProcessChatMessageRequest';
 import { ProcessChatMessageResult, ProcessChatMessageResultBuilder } from '../dto/ProcessChatMessageResult';
-import { MessageProcessingWorkflowService } from './message-processing/MessageProcessingWorkflowService';
+import { MessageProcessingWorkflowService, WorkflowContext } from './message-processing/MessageProcessingWorkflowService';
 import { ChatMessageProcessingService } from './message-processing/ChatMessageProcessingService';
 import { ConversationContextManagementService } from './conversation-management/ConversationContextManagementService';
 import { ConversationContextWindow } from '../../domain/value-objects/session-management/ConversationContextWindow';
@@ -29,40 +29,129 @@ import {
   ConversationContextAnalyzedEvent
 } from '../../domain/events/ChatMessageProcessingEvents';
 import { DomainError as _DomainError } from '../../domain/errors/ChatMessageProcessingErrors';
+import { ChatMessage } from '../../domain/entities/ChatMessage';
+import { ChatSession } from '../../domain/entities/ChatSession';
+import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
+
+// Enhanced interfaces for workflow context
+interface ContextResultData {
+  messages: ChatMessage[];
+  contextWindow: number;
+  summary?: string;
+  tokenUsage: {
+    messagesTokens: number;
+    summaryTokens: number;
+    totalTokens: number;
+  };
+  wasCompressed: boolean;
+}
+
+interface EnhancedContextData {
+  intentAnalysis: {
+    intent?: string;
+    confidence?: number;
+    entities?: Record<string, unknown>;
+  };
+  relevantKnowledge: Array<{
+    id: string;
+    title: string;
+    content: string;
+    relevanceScore: number;
+  }>;
+}
+
+interface WorkflowSession {
+  id: string;
+  status: string;
+}
+
+interface WorkflowConfig {
+  id: string;
+  organizationId?: string;
+}
+
+interface WorkflowUserMessage {
+  id: string;
+  content?: string;
+  messageType?: string;
+}
+
+interface WorkflowBotMessage {
+  id: string;
+  content?: string;
+}
+
+interface ConversationMetricsData {
+  messageCount?: number;
+  sessionDuration?: number;
+  engagementScore?: number;
+  leadQualificationProgress?: number;
+}
+
+interface JourneyStateData {
+  stage?: string;
+  phase?: string;
+  progress?: number;
+}
+
+interface IntentAnalysisData {
+  intent?: string;
+  confidence?: number;
+  entities?: Record<string, unknown>;
+}
+
+interface SuggestedActionsData {
+  action?: string;
+  priority?: number;
+  description?: string;
+}
+
+interface CallToActionData {
+  text?: string;
+  type?: string;
+  priority?: number;
+}
 
 // AI: Internal workflow result interfaces for type safety
-interface WorkflowContext {
-  session: { id: string; status: string };
-  config: { id: string };
+
+interface MessageContext {
+  session: WorkflowSession;
+  config: WorkflowConfig;
+  userMessage: WorkflowUserMessage;
 }
 
-interface MessageContext extends WorkflowContext {
-  userMessage: { id: string };
+interface AnalysisContext {
+  session: WorkflowSession;
+  config: WorkflowConfig;
+  userMessage: WorkflowUserMessage;
+  contextResult: ContextResultData;
+  enhancedContext: EnhancedContextData;
 }
 
-interface AnalysisContext extends MessageContext {
-  contextResult: {
-    messages: unknown[];
-    contextWindow: number;
-  };
-  enhancedContext: {
-    intentAnalysis: { intent?: string };
-    relevantKnowledge: unknown[];
-  };
+interface ResponseContext {
+  session: WorkflowSession;
+  config: WorkflowConfig;
+  userMessage: WorkflowUserMessage;
+  botMessage: WorkflowBotMessage;
 }
 
-interface ResponseContext extends MessageContext {
-  botMessage: { id: string };
-}
-
-interface FinalWorkflowResult extends ResponseContext {
+interface FinalWorkflowResult {
+  session: WorkflowSession;
+  config: WorkflowConfig;
+  userMessage: WorkflowUserMessage;
+  botMessage: WorkflowBotMessage;
   shouldCaptureLeadInfo: boolean;
-  suggestedNextActions: unknown[];
-  conversationMetrics: unknown;
-  intentAnalysis: unknown;
-  journeyState: unknown;
-  relevantKnowledge: unknown[];
-  callToAction: unknown;
+  suggestedNextActions: SuggestedActionsData[];
+  conversationMetrics: ConversationMetricsData;
+  intentAnalysis: IntentAnalysisData;
+  journeyState: JourneyStateData;
+  relevantKnowledge: Array<{
+    id: string;
+    title: string;
+    content: string;
+    relevanceScore: number;
+  }>;
+  callToAction: CallToActionData;
 }
 
 export class ProcessChatMessageWorkflowOrchestrator {
@@ -115,19 +204,29 @@ export class ProcessChatMessageWorkflowOrchestrator {
       ));
 
       // AI: Step 1 - Initialize workflow
-      const workflowContext = await this.initializeWorkflow(request, logger);
+      const { result: workflowContext } = await perf.measureAsync('workflow-initialization', 
+        () => this.initializeWorkflow(request, logger)
+      );
       
       // AI: Step 2 - Process user message
-      const messageContext = await this.processUserMessage(workflowContext, request, logger);
+      const { result: messageContext } = await perf.measureAsync('user-message-processing', 
+        () => this.processUserMessage(workflowContext, request, logger)
+      );
       
       // AI: Step 3 - Analyze conversation context
-      const analysisResult = await this.analyzeConversationContext(messageContext, logger);
+      const { result: analysisResult } = await perf.measureAsync('conversation-context-analysis', 
+        () => this.analyzeConversationContext(messageContext, logger)
+      );
       
       // AI: Step 4 - Generate AI response
-      const responseResult = await this.generateAIResponse(analysisResult, logger);
+      const { result: responseResult } = await perf.measureAsync('ai-response-generation', 
+        () => this.generateAIResponse(analysisResult, logger)
+      );
       
       // AI: Step 5 - Finalize workflow
-      const finalResult = await this.finalizeWorkflow(responseResult, startTime, logger);
+      const { result: finalResult } = await perf.measureAsync('workflow-finalization', 
+        () => this.finalizeWorkflow(responseResult, startTime, logger)
+      );
 
       const processingTime = Date.now() - startTime;
       
@@ -165,7 +264,7 @@ export class ProcessChatMessageWorkflowOrchestrator {
     }
   }
 
-  private async initializeWorkflow(request: ProcessChatMessageRequest, logger: ISessionLogger): Promise<WorkflowContext> {
+  private async initializeWorkflow(request: ProcessChatMessageRequest, logger: ISessionLogger): Promise<MessageContext> {
     logger.logRaw('📋 STEP 1: Initialize workflow and validate prerequisites');
     
     const { result, duration: _duration } = await perf.measureAsync(
@@ -183,31 +282,23 @@ export class ProcessChatMessageWorkflowOrchestrator {
     return result;
   }
 
-  private async processUserMessage(workflowContext: WorkflowContext, request: ProcessChatMessageRequest, logger: ISessionLogger): Promise<MessageContext> {
+  private async processUserMessage(workflowContext: MessageContext, request: ProcessChatMessageRequest, logger: ISessionLogger): Promise<MessageContext> {
     logger.logRaw('📝 STEP 2: Process user message and update session');
     
-    const { result, duration: _duration } = await perf.measureAsync(
-      'ProcessUserMessage',
-      () => this.processingService.processUserMessage(workflowContext as any, request),
-      { step: 2 }
-    );
+    const result = await this.processingService.processUserMessage(workflowContext as unknown as WorkflowContext, request);
     
     logger.logMessage('💬 MESSAGE CONTEXT', {
       sessionId: result.session.id,
       userMessageId: result.userMessage.id
     });
     
-    return result;
+    return result as unknown as MessageContext;
   }
 
   private async analyzeConversationContext(messageContext: MessageContext, logger: ISessionLogger): Promise<AnalysisContext> {
     logger.logRaw('🔍 STEP 3: Analyze conversation context');
     
-    const { result, duration: _duration } = await perf.measureAsync(
-      'AnalyzeConversationContext',
-      () => this.performContextAnalysis(messageContext, logger),
-      { step: 3 }
-    );
+    const result = await this.performContextAnalysis(messageContext, logger);
     
     // AI: Publish context analysis event
     const resultData = result as AnalysisContext;
@@ -230,35 +321,44 @@ export class ProcessChatMessageWorkflowOrchestrator {
   private async generateAIResponse(analysisResult: AnalysisContext, logger: ISessionLogger): Promise<ResponseContext> {
     logger.logRaw('🤖 STEP 4: Generate AI response');
     
-    const { result, duration: _duration } = await perf.measureAsync(
-      'GenerateAIResponse',
-      () => this.processingService.generateAIResponse(analysisResult as any, this.sharedLogFile!),
-      { step: 4 }
-    );
+    const result = await this.processingService.generateAIResponse(analysisResult as unknown as import('./message-processing/ChatMessageProcessingService').AnalysisResult, this.sharedLogFile!);
     
     logger.logMessage('🎯 AI RESPONSE RESULT', {
       sessionId: result.session.id,
       botMessageId: result.botMessage.id
     });
     
-    return result;
+    return result as unknown as ResponseContext;
   }
 
   private async finalizeWorkflow(responseResult: ResponseContext, startTime: number, logger: ISessionLogger): Promise<FinalWorkflowResult> {
     logger.logRaw('✅ STEP 5: Finalize workflow and calculate metrics');
     
-    const { result, duration: _duration } = await perf.measureAsync(
-      'FinalizeWorkflow',
-      () => this.workflowService.finalizeWorkflow(responseResult, startTime, this.sharedLogFile!),
-      { step: 5 }
-    );
+    const result = await this.workflowService.finalizeWorkflow(responseResult as unknown, startTime, this.sharedLogFile!);
     
     logger.logMessage('🏁 FINAL RESULT', {
       sessionId: result.session.id,
       processingTimeMs: Date.now() - startTime
     });
     
-    return {...result, config: responseResult.config || { id: 'unknown' }, intentAnalysis: result.intentAnalysis || undefined} as FinalWorkflowResult;
+    const finalWorkflowResult = result as import('./message-processing/MessageProcessingWorkflowService').WorkflowFinalResult;
+    return {
+      session: finalWorkflowResult.session as WorkflowSession,
+      config: { id: 'unknown' } as WorkflowConfig, // WorkflowFinalResult doesn't have config
+      userMessage: finalWorkflowResult.userMessage as WorkflowUserMessage,
+      botMessage: finalWorkflowResult.botMessage as WorkflowBotMessage,
+      shouldCaptureLeadInfo: finalWorkflowResult.shouldCaptureLeadInfo as boolean || false,
+      suggestedNextActions: finalWorkflowResult.suggestedNextActions as unknown as SuggestedActionsData[] || [],
+      conversationMetrics: finalWorkflowResult.conversationMetrics as ConversationMetricsData || {},
+      intentAnalysis: finalWorkflowResult.intentAnalysis as IntentAnalysisData || {},
+      journeyState: finalWorkflowResult.journeyState as JourneyStateData || {},
+      relevantKnowledge: finalWorkflowResult.relevantKnowledge as Array<{ id: string; title: string; content: string; relevanceScore: number; }> || [],
+      callToAction: finalWorkflowResult.callToAction ? {
+        type: finalWorkflowResult.callToAction.type || 'none',
+        text: finalWorkflowResult.callToAction.message || '',
+        priority: parseInt(finalWorkflowResult.callToAction.priority || '0') || 0
+      } as CallToActionData : {} as CallToActionData
+    } as FinalWorkflowResult;
   }
 
   private async performContextAnalysis(messageContext: MessageContext, logger: ISessionLogger): Promise<AnalysisContext> {
@@ -267,11 +367,11 @@ export class ProcessChatMessageWorkflowOrchestrator {
     // AI: Get token-aware context
     const contextResult = await this.contextManagementService.getTokenAwareContext(
       session.id,
-      userMessage as any,
+      userMessage as unknown as ChatMessage,
       this.contextWindow,
       { logEntry: (message: string) => logger.logMessage(message) },
       this.sharedLogFile!
-    );
+    ) as unknown as ContextResultData;
 
     // AI: Create enhanced orchestrator with proper dependencies
     const knowledgeRetrievalService = this.getKnowledgeRetrievalService(config);
@@ -279,18 +379,34 @@ export class ProcessChatMessageWorkflowOrchestrator {
     
     // AI: Analyze enhanced context
     const enhancedContext = await enhancedOrchestrator.analyzeContextEnhanced(
-      [...contextResult.messages, userMessage] as any,
-      config,
-      session as any,
+      [...contextResult.messages, userMessage] as ChatMessage[],
+      config as ChatbotConfig,
+      session as ChatSession,
       this.sharedLogFile!
-    );
+    ) as EnhancedContextData;
 
-    return { session, userMessage, contextResult: {...contextResult, contextWindow: 0}, config, enhancedContext };
+    return { 
+      session: session as WorkflowSession, 
+      userMessage: userMessage as WorkflowUserMessage, 
+      contextResult: {
+        messages: contextResult.messages,
+        contextWindow: contextResult.contextWindow || 0,
+        summary: contextResult.summary,
+        tokenUsage: contextResult.tokenUsage || {
+          messagesTokens: 0,
+          summaryTokens: 0,
+          totalTokens: 0
+        },
+        wasCompressed: contextResult.wasCompressed || false
+      }, 
+      config: config as WorkflowConfig, 
+      enhancedContext 
+    };
   }
 
-  private getKnowledgeRetrievalService(config: { id: string }): IKnowledgeRetrievalService | undefined {
+  private getKnowledgeRetrievalService(config: WorkflowConfig): IKnowledgeRetrievalService | undefined {
     return DomainServiceCompositionService.getKnowledgeRetrievalService(
-      config as any,
+      config as ChatbotConfig,
       ChatbotWidgetCompositionRoot.getVectorKnowledgeRepository(),
       ChatbotWidgetCompositionRoot.getEmbeddingService()
     );
@@ -308,22 +424,40 @@ export class ProcessChatMessageWorkflowOrchestrator {
   }
 
   private buildResult(finalResult: FinalWorkflowResult): ProcessChatMessageResult {
-    const result = finalResult;
     return new ProcessChatMessageResultBuilder()
-      .withChatSession(result.session as any)
-      .withUserMessage(result.userMessage as any)
-      .withBotResponse(result.botMessage as any)
-      .withLeadCapture(result.shouldCaptureLeadInfo)
-      .withSuggestedActions(result.suggestedNextActions as any)
-      .withConversationMetrics(result.conversationMetrics as any)
-      .withIntentAnalysis(result.intentAnalysis as any)
-      .withJourneyState(result.journeyState as any)
-      .withRelevantKnowledge(result.relevantKnowledge as any)
-      .withCallToAction(result.callToAction as any)
+      .withChatSession(finalResult.session as ChatSession)
+      .withUserMessage(finalResult.userMessage as ChatMessage)
+      .withBotResponse(finalResult.botMessage as ChatMessage)
+      .withLeadCapture(finalResult.shouldCaptureLeadInfo)
+      .withSuggestedActions((finalResult.suggestedNextActions || []).map((action: string | SuggestedActionsData) => typeof action === 'string' ? action : action.action || action.description || String(action)))
+      .withConversationMetrics({
+        messageCount: finalResult.conversationMetrics?.messageCount || 0,
+        sessionDuration: finalResult.conversationMetrics?.sessionDuration || 0,
+        engagementScore: finalResult.conversationMetrics?.engagementScore || 0,
+        leadQualificationProgress: finalResult.conversationMetrics?.leadQualificationProgress || 0
+      })
+      .withIntentAnalysis(finalResult.intentAnalysis ? {
+        intent: finalResult.intentAnalysis.intent || 'unknown',
+        confidence: finalResult.intentAnalysis.confidence || 0,
+        entities: finalResult.intentAnalysis.entities || {},
+        category: 'general'
+      } : undefined)
+      .withJourneyState(finalResult.journeyState ? {
+        stage: finalResult.journeyState.stage || 'initial',
+        confidence: 0.5,
+        isSalesReady: false,
+        recommendedActions: []
+      } : undefined)
+      .withRelevantKnowledge(finalResult.relevantKnowledge)
+      .withCallToAction(finalResult.callToAction ? {
+        type: finalResult.callToAction.type || 'none',
+        message: finalResult.callToAction.text || '',
+        priority: String(finalResult.callToAction.priority || 'low')
+      } : undefined)
       .build();
   }
 
-  private publishDomainEvent(_event: unknown): void {
+  private publishDomainEvent(_event: MessageProcessingStartedEvent | MessageProcessingCompletedEvent | MessageProcessingFailedEvent | ConversationContextAnalyzedEvent): void {
     // AI: Domain event publishing - implement based on your event bus
     // For now, just log the event
   }

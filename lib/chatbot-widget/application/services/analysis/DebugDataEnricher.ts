@@ -1,12 +1,33 @@
 import { ProcessingDebugInfo } from '../../../domain/services/interfaces/IDebugInformationService';
 import { EntityCategorizationService } from './EntityCategorizationService';
 
+// Types for better type safety
+interface IntentAnalysisData {
+  intent?: string;
+  confidence?: number;
+  entities?: Record<string, unknown>;
+}
+
+interface JourneyStateData {
+  stage?: string;
+  phase?: string;
+  progress?: number;
+  confidence?: number;
+}
+
+interface ConversationMetricsData {
+  messageCount: number;
+  sessionDuration: number;
+  engagementScore: number;
+  leadQualificationProgress: number;
+}
+
 /**
  * Service responsible for enriching debug data with derived information
  * Following DDD principles: Single responsibility for data enrichment
  */
 export class DebugDataEnricher {
-  static buildEntityExtraction(intentAnalysis: any, domainDebugInfo: ProcessingDebugInfo) {
+  static buildEntityExtraction(intentAnalysis: IntentAnalysisData, domainDebugInfo: ProcessingDebugInfo) {
     const entities = intentAnalysis.entities || {};
     return {
       extractedEntities: Object.entries(entities).map(([type, value]) => ({
@@ -26,7 +47,7 @@ export class DebugDataEnricher {
     };
   }
 
-  static buildLeadScoring(conversationMetrics: any) {
+  static buildLeadScoring(conversationMetrics: ConversationMetricsData) {
     const currentScore = conversationMetrics.engagementScore || 0;
     const previousScore = 0; // First message in a new session starts from 0
     const scoreChange = currentScore - previousScore;
@@ -52,7 +73,7 @@ export class DebugDataEnricher {
     };
   }
 
-  static buildJourneyProgression(journeyState: any) {
+  static buildJourneyProgression(journeyState: JourneyStateData) {
     const currentStage = journeyState.stage || 'discovery';
     const stageConfidence = journeyState.confidence || 0;
     return {

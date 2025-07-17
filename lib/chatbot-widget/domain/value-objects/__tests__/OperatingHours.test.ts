@@ -187,8 +187,24 @@ describe('OperatingHours Value Object', () => {
       });
 
       it('should use current date when no date provided', () => {
+        // This is a basic smoke test - hard to test exact behavior without mocking Date
         const result = operatingHours.isWithinOperatingHours();
         expect(typeof result).toBe('boolean');
+      });
+
+      it('should return true for empty business hours (24/7 default)', () => {
+        const emptyHoursConfig = OperatingHours.create({
+          timezone: 'UTC',
+          businessHours: [], // Empty array should default to 24/7
+          holidaySchedule: [],
+          outsideHoursMessage: 'We are always available!'
+        });
+        
+        const mondayAt3AM = new Date('2024-01-08T03:00:00Z'); // Any time should be open
+        const saturdayAt11PM = new Date('2024-01-06T23:00:00Z'); // Any day should be open
+        
+        expect(emptyHoursConfig.isWithinOperatingHours(mondayAt3AM)).toBe(true);
+        expect(emptyHoursConfig.isWithinOperatingHours(saturdayAt11PM)).toBe(true);
       });
     });
 
