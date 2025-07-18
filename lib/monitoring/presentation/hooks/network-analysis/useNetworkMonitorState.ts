@@ -18,7 +18,9 @@ export function useNetworkMonitorState(isOpen: boolean, autoRefresh: boolean = t
   }, [autoRefresh]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return undefined;
+    }
 
     refreshStats();
 
