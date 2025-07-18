@@ -55,7 +55,7 @@ export class ConversationEnhancedAnalysisService {
         : Promise.resolve(undefined)
     ]);
 
-    const processingTime = Date.now() - startTime;
+    const _processingTime = Date.now() - startTime;
     // AI: Removed console.log - use proper logging service in production
     
     // Extract results from Promise.allSettled
@@ -105,7 +105,7 @@ export class ConversationEnhancedAnalysisService {
         content: item.content,
         relevanceScore: item.relevanceScore
       }));
-    } catch (error) {
+    } catch {
       // Knowledge retrieval failed - continuing without knowledge
       return undefined;
     }

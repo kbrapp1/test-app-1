@@ -52,7 +52,13 @@
       "Bash(awk:*)",
       "Bash(./node_modules/.bin/eslint lib/dam/application/actions/folder.actions.ts)",
       "Bash(timeout:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(./node_modules/.bin/eslint.cmd:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": []
   },

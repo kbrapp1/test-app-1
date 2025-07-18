@@ -11,6 +11,7 @@
  */
 
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
+import { EntitySummary } from '../../types/AccumulatedEntityTypes';
 
 export interface ReadinessIndicators {
   hasContactInfo: boolean;
@@ -20,9 +21,20 @@ export interface ReadinessIndicators {
   hasTimelineUrgency: boolean;
 }
 
+export interface ReadinessEntityContext extends EntitySummary {
+  // Additional entity fields for readiness calculation
+  email?: string;
+  phone?: string;
+  eventType?: string;
+  productName?: string;
+  featureName?: string;
+  preferredTime?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+}
+
 export interface ReadinessCalculationContext {
   leadScore: number;
-  entities: Record<string, any>;
+  entities: ReadinessEntityContext;
   conversationPhase: string;
   engagementLevel: string;
   userRole?: string;
@@ -83,7 +95,7 @@ export class ReadinessIndicatorDomainService {
   }
 
   /** Domain logic: Calculate contact information indicator */
-  private static calculateContactInfoIndicator(entities: Record<string, any>, conversationPhase: string): boolean {
+  private static calculateContactInfoIndicator(entities: ReadinessEntityContext, conversationPhase: string): boolean {
     // Direct contact information available
     if (entities.email || entities.phone || entities.contactMethod) {
       return true;
@@ -96,7 +108,7 @@ export class ReadinessIndicatorDomainService {
 
     // Advanced conversation phases typically indicate contact exchange readiness
     if (['qualification', 'demonstration', 'closing'].includes(conversationPhase)) {
-      return entities.company || entities.role;
+      return !!(entities.company || entities.role);
     }
 
     return false;
@@ -105,7 +117,7 @@ export class ReadinessIndicatorDomainService {
   /** Domain logic: Calculate buying intent indicator */
   private static calculateBuyingIntentIndicator(
     leadScore: number, 
-    entities: Record<string, any>, 
+    entities: ReadinessEntityContext, 
     conversationPhase: string,
     engagementLevel: string
   ): boolean {
@@ -120,7 +132,7 @@ export class ReadinessIndicatorDomainService {
     }
 
     // Pain points + medium engagement suggests solution seeking
-    if (entities.painPoints?.length > 0 && (engagementLevel === 'high' || engagementLevel === 'very_high')) {
+    if (entities.painPoints && entities.painPoints.length > 0 && (engagementLevel === 'high' || engagementLevel === 'very_high')) {
       return true;
     }
 
@@ -138,7 +150,7 @@ export class ReadinessIndicatorDomainService {
   }
 
   /** Domain logic: Calculate decision authority indicator */
-  private static calculateDecisionAuthorityIndicator(entities: Record<string, any>, userRole?: string): boolean {
+  private static calculateDecisionAuthorityIndicator(entities: ReadinessEntityContext, userRole?: string): boolean {
     const role = entities.role || userRole || '';
     const normalizedRole = role.toLowerCase();
 
@@ -163,7 +175,7 @@ export class ReadinessIndicatorDomainService {
     }
 
     // Decision makers explicitly mentioned
-    if (entities.decisionMakers?.length > 0) {
+    if (entities.decisionMakers && entities.decisionMakers.length > 0) {
       return true;
     }
 
@@ -178,7 +190,7 @@ export class ReadinessIndicatorDomainService {
   /**
    * Domain logic: Calculate budget indicator
    */
-  private static calculateBudgetIndicator(entities: Record<string, any>, leadScore: number, conversationPhase: string): boolean {
+  private static calculateBudgetIndicator(entities: ReadinessEntityContext, leadScore: number, conversationPhase: string): boolean {
     // Explicit budget information
     if (entities.budget) {
       return true;
@@ -199,7 +211,7 @@ export class ReadinessIndicatorDomainService {
 
   /** Domain logic: Calculate timeline urgency indicator */
   private static calculateTimelineUrgencyIndicator(
-    entities: Record<string, any>, 
+    entities: ReadinessEntityContext, 
     conversationPhase: string,
     engagementLevel: string
   ): boolean {
@@ -237,9 +249,9 @@ export class ReadinessIndicatorDomainService {
   }
 
   /** Helper: Determine if role/company combination implies budget capacity */
-  private static hasImpliedBudgetCapacity(entities: Record<string, any>): boolean {
-    const role = (entities.role || '').toLowerCase();
-    const industry = (entities.industry || '').toLowerCase();
+  private static hasImpliedBudgetCapacity(entities: ReadinessEntityContext): boolean {
+    const role = entities.role ? entities.role.toLowerCase() : '';
+    const industry = entities.industry ? entities.industry.toLowerCase() : '';
     
     // Technology companies with technical roles typically have software budgets
     if (industry.includes('technology') && (role.includes('engineer') || role.includes('developer'))) {

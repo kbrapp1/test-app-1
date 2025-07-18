@@ -1,4 +1,5 @@
-import { SessionContext, PageView, ContactInfo } from '../../value-objects/session-management/ChatSessionTypes';
+import { SessionContext, PageView } from '../../value-objects/session-management/ChatSessionTypes';
+import { ChatSessionMetadata } from '../../types/ChatbotTypes';
 
 /**
  * Session Context Service
@@ -101,7 +102,12 @@ export class SessionContextService {
     context: SessionContext,
     stage: string,
     confidence: number,
-    metadata: any = {}
+    metadata: ChatSessionMetadata = {
+      sessionStartTime: new Date(),
+      lastActivity: new Date(),
+      totalMessages: 0,
+      averageResponseTime: 0
+    }
   ): SessionContext {
     return {
       ...context,

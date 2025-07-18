@@ -14,10 +14,16 @@
 
 import { ChatSession } from '../../entities/ChatSession';
 import { ChatMessage } from '../../entities/ChatMessage';
-import { ContextAnalysis, ContextAnalysisValueObject } from '../../value-objects/message-processing/ContextAnalysis';
-import { ContactInfo } from '../../value-objects/lead-management/ContactInfo';
+import { ContextAnalysis } from '../../value-objects/message-processing/ContextAnalysis';
 import { IntentPersistenceService } from '../session-management/IntentPersistenceService';
 import { ApiAnalysisData } from './ConversationContextOrchestrator';
+
+interface IntentData {
+  intent?: string;
+  confidence?: number;
+  entities?: Record<string, unknown>;
+  sentiment?: string;
+}
 
 export class ConversationSessionUpdateService {
 
@@ -99,7 +105,7 @@ export class ConversationSessionUpdateService {
     }
     
     const userMessages = validMessages.filter(m => m.isFromUser());
-    const botMessages = validMessages.filter(m => !m.isFromUser());
+    const _botMessages = validMessages.filter(m => !m.isFromUser());
     
     if (userMessages.length === 0) {
       return 'No user messages yet';
@@ -128,7 +134,7 @@ export class ConversationSessionUpdateService {
   updateSessionWithIntentData(
     session: ChatSession,
     message: ChatMessage,
-    intentData: any,
+    intentData: IntentData,
     turnNumber: number
   ): ChatSession {
     // Update intent history using the persistence service
@@ -148,7 +154,7 @@ export class ConversationSessionUpdateService {
     message: ChatMessage,
     allMessages: ChatMessage[],
     enhancedAnalysis: ContextAnalysis,
-    intentData?: any
+    intentData?: IntentData
   ): ChatSession {
     // First apply base context updates
     let updatedSession = this.updateSessionContext(session, message, allMessages, enhancedAnalysis);

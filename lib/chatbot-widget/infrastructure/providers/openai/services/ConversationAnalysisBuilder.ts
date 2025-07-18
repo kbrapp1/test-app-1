@@ -213,15 +213,15 @@ ${this.extractBehavioralPatterns(conversationHistory).map(pattern => `- ${patter
   private static inferIntentFromMessage(content: string): string {
     const lowerContent = content.toLowerCase();
     
-    if (/hello|hi|hey|good morning|good afternoon/i.test(content)) return 'greeting';
-    if (/price|cost|budget|how much/i.test(content)) return 'faq_pricing';
-    if (/demo|demonstration|show me|see it/i.test(content)) return 'demo_request';
-    if (/meeting|schedule|book|call|appointment/i.test(content)) return 'booking_request';
-    if (/feature|capability|function|how does/i.test(content)) return 'faq_features';
-    if (/buy|purchase|get started|sign up/i.test(content)) return 'sales_inquiry';
-    if (/help|support|problem|issue|trouble/i.test(content)) return 'support_request';
-    if (/company|business|team|organization/i.test(content)) return 'qualification';
-    if (/concern|worry|but|however|what if/i.test(content)) return 'objection_handling';
+    if (/hello|hi|hey|good morning|good afternoon/i.test(lowerContent)) return 'greeting';
+    if (/price|cost|budget|how much/i.test(lowerContent)) return 'faq_pricing';
+    if (/demo|demonstration|show me|see it/i.test(lowerContent)) return 'demo_request';
+    if (/meeting|schedule|book|call|appointment/i.test(lowerContent)) return 'booking_request';
+    if (/feature|capability|function|how does/i.test(lowerContent)) return 'faq_features';
+    if (/buy|purchase|get started|sign up/i.test(lowerContent)) return 'sales_inquiry';
+    if (/help|support|problem|issue|trouble/i.test(lowerContent)) return 'support_request';
+    if (/company|business|team|organization/i.test(lowerContent)) return 'qualification';
+    if (/concern|worry|but|however|what if/i.test(lowerContent)) return 'objection_handling';
     
     return 'discovery';
   }

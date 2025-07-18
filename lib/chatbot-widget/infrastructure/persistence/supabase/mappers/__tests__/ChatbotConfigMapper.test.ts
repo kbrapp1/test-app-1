@@ -186,9 +186,9 @@ describe('ChatbotConfigMapper', () => {
 
       const config = ChatbotConfigMapper.toDomainEntity(minimalRecord);
 
-      // The mapper passes null values directly - the entity handles null vs undefined
-      expect(config.avatarUrl).toBe(null);
-      expect(config.description).toBe(null);
+      // The mapper converts null to undefined - the entity expects undefined for optional fields
+      expect(config.avatarUrl).toBe(undefined);
+      expect(config.description).toBe(undefined);
       expect(config.personalitySettings).toBeDefined();
       expect(config.knowledgeBase).toBeDefined();
       expect(config.operatingHours).toBeDefined();
@@ -266,12 +266,12 @@ describe('ChatbotConfigMapper', () => {
     it('should transform domain entity to database record', () => {
       const dbRecord = ChatbotConfigMapper.toDbRecord(validConfig);
 
-      expect(dbRecord.id).toBe(validConfig.id);
-      expect(dbRecord.organization_id).toBe(validConfig.organizationId);
-      expect(dbRecord.name).toBe(validConfig.name);
-      expect(dbRecord.is_active).toBe(validConfig.isActive);
-      expect(typeof dbRecord.created_at).toBe('string');
-      expect(typeof dbRecord.updated_at).toBe('string');
+      expect((dbRecord as any).id).toBe(validConfig.id);
+      expect((dbRecord as any).organization_id).toBe(validConfig.organizationId);
+      expect((dbRecord as any).name).toBe(validConfig.name);
+      expect((dbRecord as any).is_active).toBe(validConfig.isActive);
+      expect(typeof (dbRecord as any).created_at).toBe('string');
+      expect(typeof (dbRecord as any).updated_at).toBe('string');
     });
 
     it('should handle optional fields correctly', () => {
@@ -282,18 +282,18 @@ describe('ChatbotConfigMapper', () => {
 
       const dbRecord = ChatbotConfigMapper.toDbRecord(configWithOptionals);
 
-      expect(dbRecord.avatar_url).toBeUndefined();
-      expect(dbRecord.description).toBeUndefined();
+      expect((dbRecord as any).avatar_url).toBeUndefined();
+      expect((dbRecord as any).description).toBeUndefined();
     });
 
     it('should serialize complex value objects', () => {
       const dbRecord = ChatbotConfigMapper.toDbRecord(validConfig);
 
-      expect(typeof dbRecord.personality_settings).toBe('object');
-      expect(typeof dbRecord.knowledge_base).toBe('object');
-      expect(typeof dbRecord.operating_hours).toBe('object');
-      expect(typeof dbRecord.ai_configuration).toBe('object');
-      expect(Array.isArray(dbRecord.lead_qualification_questions)).toBe(true);
+      expect(typeof (dbRecord as any).personality_settings).toBe('object');
+      expect(typeof (dbRecord as any).knowledge_base).toBe('object');
+      expect(typeof (dbRecord as any).operating_hours).toBe('object');
+      expect(typeof (dbRecord as any).ai_configuration).toBe('object');
+      expect(Array.isArray((dbRecord as any).lead_qualification_questions)).toBe(true);
     });
   });
 
@@ -313,10 +313,10 @@ describe('ChatbotConfigMapper', () => {
       const insertData = ChatbotConfigMapper.toInsert(validConfig);
 
       // These should be plain objects, not domain value objects
-      expect(insertData.personality_settings).toBeDefined();
-      expect(insertData.personality_settings.constructor.name).toBe('Object');
-      expect(insertData.knowledge_base).toBeDefined();
-      expect(insertData.knowledge_base.constructor.name).toBe('Object');
+      expect((insertData as any).personality_settings).toBeDefined();
+      expect((insertData as any).personality_settings.constructor.name).toBe('Object');
+      expect((insertData as any).knowledge_base).toBeDefined();
+      expect((insertData as any).knowledge_base.constructor.name).toBe('Object');
     });
 
     it('should handle optional fields in insert data', () => {
@@ -434,7 +434,7 @@ describe('ChatbotConfigMapper', () => {
       const recordWithCorruptedSources = {
         ...validDbRecord,
         knowledge_base: {
-          ...validDbRecord.knowledge_base,
+          ...(validDbRecord.knowledge_base as any),
           websiteSources: [
             { /* missing required fields */ },
             null,

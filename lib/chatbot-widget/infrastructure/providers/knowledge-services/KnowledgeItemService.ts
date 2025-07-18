@@ -141,7 +141,7 @@ export class KnowledgeItemService {
     }
 
     const conversionResult = KnowledgeConverterService.convertFaqsToKnowledgeItems(
-      activeFaqs,
+      activeFaqs as unknown as Record<string, unknown>[],
       this.processingContext
     );
 

@@ -64,7 +64,7 @@ export class LeadScoreValidationService {
   }
 
   /** Validate LeadScore constructor parameters */
-  static validateLeadScoreParams(score: number, qualificationLevel: any, breakdown: any, calculatedAt: Date): void {
+  static validateLeadScoreParams(score: number, qualificationLevel: unknown, breakdown: unknown, calculatedAt: Date): void {
     const MIN_SCORE = 0;
     const MAX_SCORE = 100;
     
@@ -86,13 +86,13 @@ export class LeadScoreValidationService {
   }
 
   /** Check if qualification level is valid */
-  private static isValidQualificationLevel(level: any): boolean {
+  private static isValidQualificationLevel(level: unknown): boolean {
     const validLevels = ['not_qualified', 'qualified', 'highly_qualified', 'disqualified'];
-    return validLevels.includes(level);
+    return validLevels.includes(level as string);
   }
 
   /** Validate boolean field */
-  private static validateBooleanField(value: any, fieldName: string): void {
+  private static validateBooleanField(value: unknown, fieldName: string): void {
     if (typeof value !== 'boolean') {
       throw new Error(`${fieldName} must be a boolean`);
     }

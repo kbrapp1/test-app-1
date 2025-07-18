@@ -79,6 +79,9 @@ export class RepositoryCompositionService {
         this.getSupabaseClient()
       );
     }
+    if (!this.leadRepository) {
+      throw new Error('Failed to initialize lead repository');
+    }
     return this.leadRepository;
   }
 

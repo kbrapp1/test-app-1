@@ -28,7 +28,7 @@ export interface AIConversationFlowDecision {
   flowReasoning: string;
   // Note: readinessIndicators are now derived from API data, not provided by API
   leadScore?: number;
-  entities?: Record<string, any>;
+  entities?: Record<string, unknown>;
 }
 
 export interface ConversationFlowState {
@@ -80,7 +80,24 @@ export class ConversationFlowService {
     // Create context from API data for readiness calculation
     const context: ReadinessCalculationContext = {
       leadScore: flowDecision.leadScore || 0,
-      entities: flowDecision.entities || {},
+      entities: {
+        goals: [],
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: [],
+        budget: null,
+        timeline: null,
+        urgency: null,
+        contactMethod: null,
+        visitorName: null,
+        role: null,
+        industry: null,
+        company: null,
+        teamSize: null,
+        eventType: '',
+        ...(flowDecision.entities || {})
+      },
       conversationPhase: flowDecision.conversationPhase || 'discovery',
       engagementLevel: flowDecision.engagementLevel || 'low'
     };
@@ -111,7 +128,24 @@ export class ConversationFlowService {
 
     const context: ReadinessCalculationContext = {
       leadScore: flowDecision.leadScore || 0,
-      entities: flowDecision.entities || {},
+      entities: {
+        goals: [],
+        decisionMakers: [],
+        painPoints: [],
+        integrationNeeds: [],
+        evaluationCriteria: [],
+        budget: null,
+        timeline: null,
+        urgency: null,
+        contactMethod: null,
+        visitorName: null,
+        role: null,
+        industry: null,
+        company: null,
+        teamSize: null,
+        eventType: '',
+        ...(flowDecision.entities || {})
+      },
       conversationPhase: flowDecision.conversationPhase || 'discovery',
       engagementLevel: flowDecision.engagementLevel || 'low'
     };

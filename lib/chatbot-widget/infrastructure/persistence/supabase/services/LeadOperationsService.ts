@@ -141,7 +141,7 @@ export class LeadOperationsService {
       return 0;
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 

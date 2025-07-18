@@ -133,11 +133,13 @@ export class UnifiedResultParsingError extends DomainError {
   readonly code = 'UNIFIED_RESULT_PARSING_FAILED';
   readonly severity = ErrorSeverity.HIGH;
   
-  constructor(expectedStructure: string, actualStructure: any, context: Record<string, unknown> = {}) {
+  constructor(expectedStructure: string, actualStructure: unknown, context: Record<string, unknown> = {}) {
     super(`Unified result parsing failed: expected ${expectedStructure}`, {
       ...context,
       expectedStructure,
-      actualStructure: JSON.stringify(actualStructure, null, 2)
+      actualStructure: typeof actualStructure === 'object' ? 
+        JSON.stringify(actualStructure, null, 2) : 
+        String(actualStructure)
     });
   }
 }

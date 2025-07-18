@@ -8,8 +8,18 @@
  * - Include context for debugging database issues
  */
 
+interface DatabaseErrorContext {
+  query?: string;
+  table?: string;
+  organizationId?: string;
+  userId?: string;
+  operation?: 'INSERT' | 'UPDATE' | 'DELETE' | 'SELECT';
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
 export class DatabaseError extends Error {
-  constructor(message: string, public readonly context: Record<string, any> = {}) {
+  constructor(message: string, public readonly context: DatabaseErrorContext = {}) {
     super(message);
     this.name = 'DatabaseError';
   }

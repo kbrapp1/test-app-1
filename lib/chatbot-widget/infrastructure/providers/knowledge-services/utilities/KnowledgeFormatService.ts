@@ -158,7 +158,7 @@ export class KnowledgeFormatService {
     return { score: Math.max(0, score), issues };
   }
 
-  static getOverallFormatScore(items: KnowledgeItem[]): { score: number; breakdown: any; allIssues: string[] } {
+  static getOverallFormatScore(items: KnowledgeItem[]): { score: number; breakdown: Record<string, unknown>; allIssues: string[] } {
     const titleCheck = this.checkTitleConsistency(items);
     const tagCheck = this.checkTagConsistency(items);
     const contentCheck = this.checkContentStructure(items);

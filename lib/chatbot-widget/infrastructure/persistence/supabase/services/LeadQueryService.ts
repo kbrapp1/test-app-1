@@ -11,9 +11,8 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Lead } from '../../../../domain/entities/Lead';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
-import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
+import { RawLeadDbRecord } from '../mappers/LeadMapper';
 
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
@@ -30,6 +29,8 @@ export interface LeadFilters {
   searchTerm?: string;
 }
 
+// Use proper Supabase types from main package
+
 export class LeadQueryService {
   constructor(
     private supabase: SupabaseClient,
@@ -45,7 +46,7 @@ export class LeadQueryService {
   }
 
   /** Apply filters to query */
-  applyFilters(query: any, filters: LeadFilters) {
+  applyFilters(query: ReturnType<typeof this.buildBaseQuery>, filters: LeadFilters) {
     let filteredQuery = query;
 
     if (filters.qualificationStatus) {
@@ -83,25 +84,61 @@ export class LeadQueryService {
     return filteredQuery;
   }
 
+  /** Build count query with filters */
+  private async buildCountQuery(organizationId: string, filters?: LeadFilters) {
+    let query = this.supabase
+      .from(this.tableName)
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organizationId);
+
+    if (filters) {
+      if (filters.qualificationStatus) {
+        query = query.eq('qualification_status', filters.qualificationStatus);
+      }
+      if (filters.followUpStatus) {
+        query = query.eq('follow_up_status', filters.followUpStatus);
+      }
+      if (filters.assignedTo) {
+        query = query.eq('assigned_to', filters.assignedTo);
+      }
+      if (filters.dateFrom) {
+        query = query.gte('captured_at', filters.dateFrom.toISOString());
+      }
+      if (filters.dateTo) {
+        query = query.lte('captured_at', filters.dateTo.toISOString());
+      }
+      if (filters.minScore) {
+        query = query.gte('lead_score', filters.minScore);
+      }
+      if (filters.maxScore) {
+        query = query.lte('lead_score', filters.maxScore);
+      }
+      if (filters.tags && filters.tags.length > 0) {
+        query = query.contains('tags', filters.tags);
+      }
+      if (filters.searchTerm) {
+        query = query.or(`conversation_summary.ilike.%${filters.searchTerm}%,contact_info->>name.ilike.%${filters.searchTerm}%`);
+      }
+    }
+
+    return query;
+  }
+
   /** Execute paginated query */
   async executePaginatedQuery(
     organizationId: string,
     page: number,
     limit: number,
     filters?: LeadFilters
-  ) {
-    // Get total count first
-    let countQuery = this.buildBaseQuery(organizationId).select('*');
-    if (filters) {
-      countQuery = this.applyFilters(countQuery, filters);
-    }
-    const { count, error: countError } = await countQuery;
+  ): Promise<{ data: RawLeadDbRecord[]; count: number; totalPages: number }> {
+    // Build count query with filters
+    const { count, error: countError } = await this.buildCountQuery(organizationId, filters);
     if (countError) {
       throw countError;
     }
 
     // Get paginated data
-    let dataQuery = this.buildBaseQuery(organizationId).select('*');
+    let dataQuery = this.buildBaseQuery(organizationId);
     if (filters) {
       dataQuery = this.applyFilters(dataQuery, filters);
     }
@@ -126,7 +163,7 @@ export class LeadQueryService {
     organizationId: string,
     query: string,
     limit?: number
-  ) {
+  ): Promise<RawLeadDbRecord[]> {
     let supabaseQuery = this.buildBaseQuery(organizationId)
       .or(`
         contact_info->>name.ilike.%${query}%,
@@ -149,7 +186,7 @@ export class LeadQueryService {
   }
 
   /** Find leads requiring follow-up */
-  async findRequiringFollowUp(organizationId: string, daysSinceLastContact: number) {
+  async findRequiringFollowUp(organizationId: string, daysSinceLastContact: number): Promise<RawLeadDbRecord[]> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysSinceLastContact);
 
@@ -169,7 +206,7 @@ export class LeadQueryService {
   }
 
   /** Find top leads by score */
-  async findTopByScore(organizationId: string, limit: number) {
+  async findTopByScore(organizationId: string, limit: number): Promise<RawLeadDbRecord[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select('*')
@@ -185,7 +222,7 @@ export class LeadQueryService {
   }
 
   /** Find recent leads */
-  async findRecent(organizationId: string, limit: number) {
+  async findRecent(organizationId: string, limit: number): Promise<RawLeadDbRecord[]> {
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select('*')

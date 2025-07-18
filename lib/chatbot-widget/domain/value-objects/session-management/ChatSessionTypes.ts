@@ -3,7 +3,7 @@
  * Following DDD principles: Separate type definitions for clarity
  */
 
-import { ChatSessionMetadata, EntityValue, EntityChange } from '../../types/ChatbotTypes';
+import { ChatSessionMetadata, EntityValue } from '../../types/ChatbotTypes';
 
 export interface ChatSessionProps {
   id: string;

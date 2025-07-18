@@ -90,7 +90,9 @@ describe('UserBehaviorPattern', () => {
       });
       
       expect(updated.communicationStyle.formalityLevel).toBe('casual');
-      expect(updated.communicationStyle.preferredResponseLength).toBe(pattern.communicationStyle.preferredResponseLength);
+      expect(updated.communicationStyle.preferredResponseLength).toBe(
+        pattern.communicationStyle.preferredResponseLength
+      );
     });
 
     it('should update questioning pattern', () => {

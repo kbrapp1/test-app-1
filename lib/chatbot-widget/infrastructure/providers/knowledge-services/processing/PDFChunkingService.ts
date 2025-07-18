@@ -176,7 +176,7 @@ export class PDFChunkingService {
     chunkIndex: number,
     metadata: PDFDocumentMetadata,
     pageNumbers: number[],
-    config: PDFChunkingConfig
+    _config: PDFChunkingConfig
   ): PDFChunk {
     return {
       chunkId: `${this.sanitizeFilename(metadata.filename)}-chunk-${chunkIndex + 1}`,

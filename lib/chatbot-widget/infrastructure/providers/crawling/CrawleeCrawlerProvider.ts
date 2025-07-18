@@ -10,8 +10,8 @@
  * - Let Crawlee handle robots.txt compliance (industry standard)
  */
 
-import { CheerioCrawler } from '@crawlee/cheerio';
-import { RobotsFile } from '@crawlee/utils';
+// import { CheerioCrawler } from '@crawlee/cheerio';
+// import { RobotsFile } from '@crawlee/utils';
 import { WebsiteSource, WebsiteCrawlSettings } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { IWebCrawlerProvider } from '../../../application/use-cases/CrawlWebsiteUseCase';
 import { CrawledPageData, IRobotsTxtChecker } from '../../../domain/services/WebsiteCrawlingDomainService';
@@ -60,7 +60,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         });
         
         // AI: Update total based on discovered URLs
-        const totalPages = Math.min(filteredSitemapUrls.length, settings.maxPages);
+        const _totalPages = Math.min(filteredSitemapUrls.length, settings.maxPages);
         // progressCallback?.({ current: 0, total: totalPages, status: 'crawling', currentPage: `Found ${filteredSitemapUrls.length} pages to crawl` });
       } else {
         // Fallback to starting with just the homepage
@@ -163,14 +163,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
                       crawlQueue.push({ url: fullUrl, depth: currentDepth + 1 });
                     }
                   }
-                } catch (error) {
+                } catch {
                   // Skip invalid URLs
                 }
               }
             });
           }
 
-        } catch (error) {
+        } catch {
           // Skip pages that fail to process
           continue;
         }
@@ -238,7 +238,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
             return urls;
           }
         }
-      } catch (error) {
+      } catch {
         // Try next sitemap URL
         continue;
       }
@@ -267,7 +267,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
                 this.crawlPolicyService.isValuableLeadGenContent(url)) {
               urls.push(url);
             }
-          } catch (error) {
+          } catch {
             // Skip invalid URLs
           }
         }
@@ -284,14 +284,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
               // Recursively fetch nested sitemap
               const nestedUrls = await this.fetchNestedSitemap(sitemapUrl, baseUrl);
               urls.push(...nestedUrls);
-            } catch (error) {
+            } catch {
               // Skip failed nested sitemaps
             }
           }
         }
       }
       
-    } catch (error) {
+    } catch {
       // Return empty array if parsing fails
     }
     
@@ -310,7 +310,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
         const xml = await response.text();
         return await this.extractUrlsFromSitemap(xml, baseUrl);
       }
-    } catch (error) {
+    } catch {
       // Return empty array if fetch fails
     }
     
@@ -319,7 +319,7 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
 }
 
 export class CrawleeRobotsTxtProvider {
-  async createChecker(baseUrl: string): Promise<IRobotsTxtChecker> {
+  async createChecker(_baseUrl: string): Promise<IRobotsTxtChecker> {
     // Return a no-op checker since Crawlee handles this
     return {
       canLoad: async () => true,

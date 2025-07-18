@@ -25,7 +25,7 @@ export class PromptSection {
     public readonly contentType: ContentType,
     public readonly priority: PromptPriority,
     public readonly isRequired: boolean,
-    public readonly metadata: Record<string, any> = {}
+    public readonly metadata: Record<string, unknown> = {}
   ) {
     this.validateInvariants();
   }
@@ -47,7 +47,7 @@ export class PromptSection {
     contentType: ContentType,
     priority: PromptPriority,
     isRequired: boolean = false,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ): PromptSection {
     return new PromptSection(
       sectionId,
@@ -93,7 +93,7 @@ export class PromptSection {
   }
 
   /** Create PromptSection with updated metadata */
-  withMetadata(additionalMetadata: Record<string, any>): PromptSection {
+  withMetadata(additionalMetadata: Record<string, unknown>): PromptSection {
     return new PromptSection(
       this.sectionId,
       this.serviceId,

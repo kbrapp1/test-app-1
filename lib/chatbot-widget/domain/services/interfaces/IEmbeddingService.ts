@@ -23,4 +23,10 @@ export interface IEmbeddingService {
 
   /** Clear internal embedding cache */
   clearCache(): void;
+
+  /** Get cache statistics */
+  getCacheStats(): { size: number; maxSize: number; utilizationPercent: number; keys: string[] };
+
+  /** Set logging context for API call logging */
+  setLogContext(logContext: { logEntry: (message: string) => void }): void;
 } 

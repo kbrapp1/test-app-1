@@ -1,5 +1,7 @@
 // Domain service interfaces
 import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { IVectorKnowledgeRepository } from '../../../domain/repositories/IVectorKnowledgeRepository';
+import { IEmbeddingService } from '../../../domain/services/interfaces/IEmbeddingService';
 
 // Infrastructure service implementations
 import { VectorKnowledgeRetrievalService } from '../../../domain/services/VectorKnowledgeRetrievalService';
@@ -32,9 +34,9 @@ export class KnowledgeServiceCompositionService {
    * - Dependencies injected to avoid circular imports
    */
   static getKnowledgeRetrievalService(
-    chatbotConfig?: any, 
-    vectorRepository?: any, 
-    embeddingService?: any
+    chatbotConfig?: { id: string; organizationId: string; lastUpdated?: Date }, 
+    vectorRepository?: Record<string, unknown>, 
+    embeddingService?: Record<string, unknown>
   ): IKnowledgeRetrievalService {
     if (!chatbotConfig) {
       throw new BusinessRuleViolationError(
@@ -84,8 +86,8 @@ export class KnowledgeServiceCompositionService {
       }
       
       const service = new VectorKnowledgeRetrievalService(
-        vectorRepository,
-        embeddingService,
+        vectorRepository as unknown as IVectorKnowledgeRepository,
+        embeddingService as unknown as IEmbeddingService,
         organizationId,
         configId
       );
@@ -140,9 +142,9 @@ export class KnowledgeServiceCompositionService {
   /** Warm Knowledge Cache for Better Performance
  */
   static async warmKnowledgeCache(
-    chatbotConfigs: any[], 
-    vectorRepository?: any, 
-    embeddingService?: any
+    chatbotConfigs: Array<{ id: string; organizationId: string; lastUpdated?: Date }>, 
+    vectorRepository?: Record<string, unknown>, 
+    embeddingService?: Record<string, unknown>
   ): Promise<void> {
     if (!Array.isArray(chatbotConfigs)) {
       throw new BusinessRuleViolationError(
@@ -168,7 +170,7 @@ export class KnowledgeServiceCompositionService {
         if (typeof service.healthCheck === 'function') {
           await service.healthCheck();
         }
-      } catch (error) {
+      } catch {
         // Silent fail for warmup - service will initialize when actually needed
         // This is expected behavior during warmup phase
       }

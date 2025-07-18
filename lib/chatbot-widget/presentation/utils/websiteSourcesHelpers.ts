@@ -10,7 +10,7 @@
  */
 
 import { revalidatePath } from 'next/cache';
-import { WebsiteSource, WebsiteCrawlSettings } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { WebsiteSource, WebsiteCrawlSettings, KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { DomainError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
@@ -158,16 +158,20 @@ export function revalidateWebsiteSourcesPaths(): void {
 /** Create Cleaned Knowledge Base Helper
  */
 interface KnowledgeBaseData {
-  companyInfo: unknown;
-  productCatalog: unknown;
-  faqs: unknown;
-  supportDocs: unknown;
-  complianceGuidelines: unknown;
+  companyInfo: string;
+  productCatalog: string;
+  faqs: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    category: string;
+    isActive: boolean;
+  }>;
+  supportDocs: string;
+  complianceGuidelines: string;
 }
 
-export function createCleanedKnowledgeBase(existingKnowledgeBase: KnowledgeBaseData): unknown {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { KnowledgeBase } = require('../../domain/value-objects/ai-configuration/KnowledgeBase');
+export function createCleanedKnowledgeBase(existingKnowledgeBase: KnowledgeBaseData): KnowledgeBase {
   return KnowledgeBase.create({
     companyInfo: existingKnowledgeBase.companyInfo,
     productCatalog: existingKnowledgeBase.productCatalog,

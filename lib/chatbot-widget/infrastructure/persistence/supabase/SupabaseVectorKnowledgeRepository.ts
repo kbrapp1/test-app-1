@@ -55,7 +55,7 @@ export class SupabaseVectorKnowledgeRepository implements IVectorKnowledgeReposi
       sourceUrl?: string;
       embedding: number[];
       contentHash: string;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     }>
   ): Promise<void> {
     try {

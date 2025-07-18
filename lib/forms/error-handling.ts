@@ -13,7 +13,7 @@
  * @module forms/error-handling
  */
 
-import { UseFormSetError, FieldValues } from 'react-hook-form';
+import { UseFormSetError, FieldValues, Path } from 'react-hook-form';
 import { AppError, ValidationError } from '../errors/base';
 import { ApiError, DEFAULT_CONFIG, FormErrorHandlerConfig } from './error-handling-types';
 import { extractFieldErrors, setFormErrors, showErrorToast } from './error-handling-utils';
@@ -52,7 +52,7 @@ export function handleFormError<T extends FieldValues>(
 
   // Handle generic Error objects (if not already handled as a field error type)
   if (error instanceof Error && !hasSetFieldErrors) {
-    setError(rootFieldName as any, {
+    setError(rootFieldName as Path<T>, {
       type: 'manual',
       message: error.message
     });
@@ -64,7 +64,7 @@ export function handleFormError<T extends FieldValues>(
 
   // Handle string errors (if not already handled)
   if (typeof error === 'string' && !hasSetFieldErrors) {
-    setError(rootFieldName as any, {
+    setError(rootFieldName as Path<T>, {
       type: 'manual',
       message: error
     });
@@ -89,7 +89,7 @@ export function handleFormError<T extends FieldValues>(
     const generalMessage = (error as { message?: string }).message;
     if (generalMessage && typeof generalMessage === 'string' && config.showToast && !hasSetFieldErrors) {
       // If no field errors were set above, set the root error and show toast
-      setError(rootFieldName as any, { type: 'manual', message: generalMessage });
+      setError(rootFieldName as Path<T>, { type: 'manual', message: generalMessage });
       showErrorToast(generalMessage, { duration: config.toastDuration });
       return;
     }
@@ -104,7 +104,7 @@ export function handleFormError<T extends FieldValues>(
     } else {
       console.error('Unexpected form error:', error);
       const unexpectedMessage = 'An unexpected error occurred. Please try again.';
-      setError(rootFieldName as any, {
+      setError(rootFieldName as Path<T>, {
         type: 'manual',
         message: unexpectedMessage
       });

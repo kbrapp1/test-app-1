@@ -138,7 +138,7 @@ export class KnowledgeQualityAnalysisService {
       contentMap.get(normalizedContent)!.push(item.id);
     });
     
-    contentMap.forEach((itemIds, content) => {
+    contentMap.forEach((itemIds, _content) => {
       if (itemIds.length > 1) {
         duplicates.push(...itemIds.slice(1)); // Keep first, mark rest as duplicates
       }
@@ -163,7 +163,7 @@ export class KnowledgeQualityAnalysisService {
       });
     });
     
-    tagVariations.forEach((variations, normalized) => {
+    tagVariations.forEach((variations, _normalized) => {
       if (variations.size > 1) {
         inconsistent.push(...Array.from(variations));
       }

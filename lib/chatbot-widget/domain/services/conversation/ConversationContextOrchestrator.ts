@@ -15,7 +15,7 @@ import { ConversationContextWindow } from '../../value-objects/session-managemen
 import { ITokenCountingService } from '../interfaces/ITokenCountingService';
 import { IIntentClassificationService } from '../interfaces/IIntentClassificationService';
 import { IKnowledgeRetrievalService } from '../interfaces/IKnowledgeRetrievalService';
-// import { ChatbotConfig } from '../../entities/ChatbotConfig'; // Unused import
+import { ChatbotConfig } from '../../entities/ChatbotConfig';
 
 // Import refactored services and value objects
 import { 
@@ -276,10 +276,10 @@ export class ConversationContextOrchestrator {
   /** Enhanced context analysis that triggers vector embeddings pipeline */
   async analyzeContextEnhanced(
     messages: ChatMessage[], 
-    config: any,
+    config: ChatbotConfig,
     session?: ChatSession,
     sharedLogFile?: string
-  ): Promise<any> {
+  ): Promise<{ intentAnalysis?: { intent?: string; confidence?: number; entities?: Record<string, unknown> }; relevantKnowledge?: Array<{ id: string; title: string; content: string; relevanceScore: number }> }> {
     try {
       // First get basic context analysis
       const baseAnalysis = this.analyzeContext(messages, session);
@@ -315,7 +315,7 @@ export class ConversationContextOrchestrator {
   ): ConversationSummary {
     const context = session.contextData;
     
-    const overview = this.createSimpleOverview(messages, context);
+    const overview = this.createSimpleOverview(messages, context as unknown as Record<string, unknown>);
     const keyTopics = apiAnalysisData?.entities?.evaluationCriteria || context.topics || [];
     const userNeeds = apiAnalysisData?.entities?.integrationNeeds || [];
     const painPoints = apiAnalysisData?.entities?.painPoints || [];
@@ -333,7 +333,7 @@ export class ConversationContextOrchestrator {
   }
 
   /** Create simple overview from messages */
-  private createSimpleOverview(messages: ChatMessage[], context: any): string {
+  private createSimpleOverview(messages: ChatMessage[], context: Record<string, unknown>): string {
     // Safety check: Filter out any non-ChatMessage objects
     const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
     const userMessages = validMessages.filter(m => m.isFromUser());
@@ -344,7 +344,7 @@ export class ConversationContextOrchestrator {
     
     const conversationLength = userMessages.length;
     const hasContactInfo = context.email || context.phone;
-    const topicsCount = context.topics?.length || 0;
+    const topicsCount = Array.isArray(context.topics) ? context.topics.length : 0;
     
     return `Active conversation with ${conversationLength} user messages (${messages.length} total). ` +
       `${hasContactInfo ? 'Contact info captured. ' : ''}` +

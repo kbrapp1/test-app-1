@@ -20,13 +20,62 @@ import { ConversationMetricsService } from '../conversation-management/Conversat
 import { LeadCaptureDecisionService } from '../lead-management/LeadCaptureDecisionService';
 import { SessionUpdateService } from '../configuration-management/SessionUpdateService';
 import { IAIConversationService } from '../../../domain/services/interfaces/IAIConversationService';
-import { ConversationFlowService } from '../../../domain/services/conversation-management/ConversationFlowService';
+import { ConversationFlowService, AIConversationFlowDecision } from '../../../domain/services/conversation-management/ConversationFlowService';
+
+interface ResponseResult {
+  session: ChatSession;
+  userMessage: ChatMessage;
+  botMessage: ChatMessage;
+  allMessages: ChatMessage[];
+  config: ChatbotConfig;
+  enhancedContext: EnhancedContext;
+}
+
+interface UnifiedAnalysis {
+  primaryIntent?: string;
+  primaryConfidence?: number;
+  entities?: Record<string, unknown>;
+}
+
+interface LeadScore {
+  totalScore: number;
+  qualificationStatus?: {
+    readyForSales?: boolean;
+    nextSteps?: string[];
+  };
+}
+
+interface CallToAction {
+  type: string;
+  message: string;
+  priority: string;
+}
+
+interface EnhancedContext {
+  intentAnalysis?: IntentAnalysis;
+  journeyState?: JourneyState;
+  relevantKnowledge?: RelevantKnowledge;
+  conversationMetrics?: ConversationMetrics;
+  unifiedAnalysis?: UnifiedAnalysis;
+  leadScore?: LeadScore;
+  callToAction?: CallToAction;
+  [key: string]: unknown;
+}
+
+interface MessageMetadata {
+  userAgent?: string;
+  ipAddress?: string;
+  timestamp?: Date;
+  referrer?: string;
+  deviceType?: 'desktop' | 'mobile' | 'tablet';
+  [key: string]: unknown;
+}
 
 export interface ProcessMessageRequest {
   userMessage: string;
   sessionId: string;
   organizationId: string; // AI: Required - should never be undefined
-  metadata?: any;
+  metadata?: MessageMetadata;
 }
 
 export interface WorkflowContext {
@@ -35,16 +84,47 @@ export interface WorkflowContext {
   userMessage: ChatMessage;
 }
 
+interface ConversationMetrics {
+  messageCount: number;
+  sessionDuration: number;
+  engagementScore: number;
+  leadQualificationProgress: number;
+}
+
+interface IntentAnalysis {
+  primaryIntent: string;
+  confidence: number;
+  entities: Array<{ name: string; value: string; confidence: number }>;
+  followUpIntents: string[];
+}
+
+interface JourneyState {
+  currentStage: string;
+  completedStages: string[];
+  nextRecommendedStage?: string;
+  progressPercentage: number;
+}
+
+interface RelevantKnowledge {
+  items: Array<{
+    title: string;
+    content: string;
+    relevanceScore: number;
+    source: string;
+  }>;
+  totalMatches: number;
+}
+
 export interface WorkflowFinalResult {
   session: ChatSession;
   userMessage: ChatMessage;
   botMessage: ChatMessage;
   shouldCaptureLeadInfo: boolean;
   suggestedNextActions: string[];
-  conversationMetrics: any;
-  intentAnalysis?: any;
-  journeyState?: any;
-  relevantKnowledge?: any;
+  conversationMetrics: ConversationMetrics;
+  intentAnalysis?: IntentAnalysis;
+  journeyState?: JourneyState;
+  relevantKnowledge?: RelevantKnowledge;
   callToAction?: {
     type: string;
     message: string;
@@ -95,7 +175,7 @@ export class MessageProcessingWorkflowService {
   }
 
   async finalizeWorkflow(
-    responseResult: any,
+    responseResult: ResponseResult,
     startTime: number,
     sharedLogFile: string
   ): Promise<WorkflowFinalResult> {
@@ -180,15 +260,19 @@ export class MessageProcessingWorkflowService {
     }
   }
 
-  private buildIntentAnalysis(enhancedContext: any): any {
+  private buildIntentAnalysis(enhancedContext: EnhancedContext): IntentAnalysis | undefined {
     // Handle unified API response structure (consistent data contract)
     if (enhancedContext?.unifiedAnalysis) {
       const analysis = enhancedContext.unifiedAnalysis;
       return {
-        intent: analysis.primaryIntent || 'unknown',
+        primaryIntent: analysis.primaryIntent || 'unknown',
         confidence: analysis.primaryConfidence || 0,
-        entities: analysis.entities || {},
-        category: 'general' // Unified API doesn't provide category - use default
+        entities: (analysis.entities ? Object.entries(analysis.entities).map(([name, value]) => ({
+          name,
+          value: String(value),
+          confidence: 1.0
+        })) : []),
+        followUpIntents: []
       };
     }
 
@@ -196,15 +280,16 @@ export class MessageProcessingWorkflowService {
     return undefined;
   }
 
-  private buildJourneyState(enhancedContext: any): any {
+  private buildJourneyState(enhancedContext: EnhancedContext): JourneyState | undefined {
     // Handle unified API lead score structure (consistent data contract)
     if (enhancedContext?.leadScore) {
       const leadScore = enhancedContext.leadScore;
+      const stage = this.mapLeadScoreToStage(leadScore.totalScore);
       return {
-        stage: this.mapLeadScoreToStage(leadScore.totalScore),
-        confidence: leadScore.totalScore / 100, // Convert 0-100 to 0-1 confidence
-        isSalesReady: leadScore.qualificationStatus?.readyForSales || false,
-        recommendedActions: leadScore.qualificationStatus?.nextSteps || []
+        currentStage: stage,
+        completedStages: this.getCompletedStages(stage),
+        nextRecommendedStage: this.getNextStage(stage),
+        progressPercentage: leadScore.totalScore
       };
     }
 
@@ -224,22 +309,35 @@ export class MessageProcessingWorkflowService {
    * Create AI flow context from enhanced context data
    * Maps available enhanced context to AI flow decision format
    */
-  private createAIFlowContext(enhancedContext: any): { aiFlowDecision: any } {
+  private createAIFlowContext(enhancedContext: EnhancedContext): { aiFlowDecision: AIConversationFlowDecision } {
     // Use the LeadCaptureDecisionService's createAIFlowContext method
     // This ensures consistency and proper mapping
     return this.leadCaptureDecisionService.createAIFlowContext(enhancedContext);
   }
 
-  private determineConversationPhase(enhancedContext: any): string {
-    if (enhancedContext.leadScore?.totalScore >= 70) return 'qualification';
-    if (enhancedContext.leadScore?.totalScore >= 40) return 'discovery';
+  private determineConversationPhase(enhancedContext: EnhancedContext): string {
+    const totalScore = enhancedContext.leadScore?.totalScore;
+    if (totalScore !== undefined && totalScore >= 70) return 'qualification';
+    if (totalScore !== undefined && totalScore >= 40) return 'discovery';
     return 'introduction';
   }
 
-  private determineEngagementLevel(enhancedContext: any): string {
+  private determineEngagementLevel(enhancedContext: EnhancedContext): string {
     const confidence = enhancedContext.unifiedAnalysis?.primaryConfidence || 0;
     if (confidence >= 0.8) return 'high';
     if (confidence >= 0.5) return 'medium';
     return 'low';
+  }
+
+  private getCompletedStages(currentStage: string): string[] {
+    const stageOrder = ['initial', 'engaged', 'interested', 'qualified', 'qualified-ready'];
+    const currentIndex = stageOrder.indexOf(currentStage);
+    return currentIndex > 0 ? stageOrder.slice(0, currentIndex) : [];
+  }
+
+  private getNextStage(currentStage: string): string | undefined {
+    const stageOrder = ['initial', 'engaged', 'interested', 'qualified', 'qualified-ready'];
+    const currentIndex = stageOrder.indexOf(currentStage);
+    return currentIndex < stageOrder.length - 1 ? stageOrder[currentIndex + 1] : undefined;
   }
 } 

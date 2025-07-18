@@ -13,7 +13,6 @@
 
 import {
   EntityWithMetadata,
-  AccumulatedEntitiesProps,
   AdditiveEntityType,
   ReplaceableEntityType,
   ConfidenceBasedEntityType,
@@ -154,7 +153,7 @@ export class EntityAccumulationStrategies {
   }
 
   // Validate entity confidence scores
-  static validateEntityConfidence(entities: EntityWithMetadata<any>[]): boolean {
+  static validateEntityConfidence(entities: EntityWithMetadata<unknown>[]): boolean {
     return entities.every(entity => 
       entity.confidence >= 0 && 
       entity.confidence <= 1 &&
@@ -187,7 +186,7 @@ export class EntityAccumulationStrategies {
 
   // Calculate entity quality score
   static calculateEntityQuality(
-    entity: EntityWithMetadata<any>,
+    entity: EntityWithMetadata<unknown>,
     currentTime: Date = new Date()
   ): number {
     const ageInDays = (currentTime.getTime() - entity.extractedAt.getTime()) / (1000 * 60 * 60 * 24);

@@ -12,7 +12,6 @@
  */
 
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
-import { EntityValue, EntityChange } from '../../types/ChatbotTypes';
 
 export interface CorrectionMetadata {
   timestamp: Date;
@@ -162,7 +161,7 @@ export class EntityCorrections {
     
     return new EntityCorrections({
       ...this.props,
-      [propertyKey]: correction as any,
+      [propertyKey]: correction as CorrectionOperation<T>,
       totalCorrections: this.props.totalCorrections + 1,
       lastCorrectionAt: new Date()
     });

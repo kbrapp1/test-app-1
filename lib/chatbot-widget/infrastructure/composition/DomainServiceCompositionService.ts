@@ -5,7 +5,11 @@ import { CoreDomainServiceCompositionService } from './core/CoreDomainServiceCom
 import { ConversationFlowCompositionService } from './core/ConversationFlowCompositionService';
 
 // Domain types
-import { AIConversationFlowDecision } from '../../domain/services/conversation-management/ConversationFlowService';
+import { AIConversationFlowDecision, ConversationFlowState } from '../../domain/services/conversation-management/ConversationFlowService';
+
+// Repository and service interfaces
+import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
+import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';
 
 /** Domain Service Composition Service */
 export class DomainServiceCompositionService {
@@ -28,13 +32,13 @@ export class DomainServiceCompositionService {
   
   static getKnowledgeRetrievalService(
     chatbotConfig: { id: string; organizationId: string; lastUpdated?: Date }, 
-    vectorRepository: any, 
-    embeddingService: any
+    vectorRepository: IVectorKnowledgeRepository, 
+    embeddingService: OpenAIEmbeddingService
   ) {
     return KnowledgeServiceCompositionService.getKnowledgeRetrievalService(
       chatbotConfig, 
-      vectorRepository, 
-      embeddingService
+      vectorRepository as unknown as Record<string, unknown>, 
+      embeddingService as unknown as Record<string, unknown>
     );
   }
 
@@ -44,13 +48,13 @@ export class DomainServiceCompositionService {
 
   static async warmKnowledgeCache(
     chatbotConfigs: Array<{ id: string; organizationId: string; lastUpdated?: Date }>, 
-    vectorRepository: any, 
-    embeddingService: any
+    vectorRepository: IVectorKnowledgeRepository, 
+    embeddingService: OpenAIEmbeddingService
   ) {
     return KnowledgeServiceCompositionService.warmKnowledgeCache(
       chatbotConfigs, 
-      vectorRepository, 
-      embeddingService
+      vectorRepository as unknown as Record<string, unknown>, 
+      embeddingService as unknown as Record<string, unknown>
     );
   }
 
@@ -112,7 +116,7 @@ export class DomainServiceCompositionService {
 
   // ===== CONVERSATION FLOW SERVICES =====
 
-  static processAIFlowDecision(decision: AIConversationFlowDecision, currentState: any) {
+  static processAIFlowDecision(decision: AIConversationFlowDecision, currentState: ConversationFlowState) {
     return ConversationFlowCompositionService.processAIFlowDecision(decision, currentState);
   }
 
@@ -132,11 +136,11 @@ export class DomainServiceCompositionService {
     return ConversationFlowCompositionService.getReadinessIndicators(flowDecision);
   }
 
-  static validateFlowDecision(decision: any) {
+  static validateFlowDecision(decision: AIConversationFlowDecision) {
     return ConversationFlowCompositionService.validateFlowDecision(decision);
   }
 
-  static batchProcessFlowDecisions(decisions: AIConversationFlowDecision[], currentStates: any[]) {
+  static batchProcessFlowDecisions(decisions: AIConversationFlowDecision[], currentStates: ConversationFlowState[]) {
     return ConversationFlowCompositionService.batchProcessFlowDecisions(decisions, currentStates);
   }
 

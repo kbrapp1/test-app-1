@@ -96,7 +96,7 @@ export class KnowledgeContentDistributionService {
     this.validateItems(items);
     
     const uniqueSources = KnowledgeGroupingService.countUniqueSources(items);
-    const uniqueTags = KnowledgeGroupingService.countUniqueTags(items);
+    const _uniqueTags = KnowledgeGroupingService.countUniqueTags(items);
     const tagStats = KnowledgeStatsService.calculateTagStats(items);
     const formatScore = KnowledgeFormatService.getOverallFormatScore(items);
     
@@ -153,8 +153,8 @@ export class KnowledgeContentDistributionService {
   // Private helper methods
   private static generateRecommendations(
     healthScore: number,
-    formatAnalysis: any,
-    tagStats: any
+    formatAnalysis: Record<string, unknown>,
+    tagStats: Record<string, unknown>
   ): string[] {
     const recommendations: string[] = [];
     
@@ -162,15 +162,15 @@ export class KnowledgeContentDistributionService {
       recommendations.push('Improve content quality and completeness');
     }
     
-    if (formatAnalysis.score < 70) {
+    if ((formatAnalysis.score as number) < 70) {
       recommendations.push('Establish consistent formatting standards');
     }
     
-    if (tagStats.tagCoverage < 50) {
+    if ((tagStats.tagCoverage as number) < 50) {
       recommendations.push('Add more tags to improve content discoverability');
     }
     
-    if (tagStats.averageTagsPerItem < 2) {
+    if ((tagStats.averageTagsPerItem as number) < 2) {
       recommendations.push('Increase average tags per item (aim for 2-4 tags)');
     }
     

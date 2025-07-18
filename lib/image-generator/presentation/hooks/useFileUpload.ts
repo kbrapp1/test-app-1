@@ -119,6 +119,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [isUploading, baseImageUrl]);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {

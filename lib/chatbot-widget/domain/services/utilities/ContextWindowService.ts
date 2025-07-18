@@ -123,7 +123,7 @@ export class ContextWindowService {
     const botMessages = validMessages.filter(m => !m.isFromUser());
 
     // Create a structured summary prompt
-    const summaryPrompt = `Summarize this conversation in ${maxTokens} tokens or less. Focus on:
+    const _summaryPrompt = `Summarize this conversation in ${maxTokens} tokens or less. Focus on:
 - Key topics discussed
 - User's main needs/interests
 - Important context for future responses

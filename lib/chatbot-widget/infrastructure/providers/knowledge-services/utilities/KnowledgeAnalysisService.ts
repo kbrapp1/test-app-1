@@ -10,8 +10,8 @@
 import {
   ProductSection,
   ContentAnalysisResult,
-  ChunkingStrategy,
-  DEFAULT_CHUNKING_STRATEGY
+  // ChunkingStrategy,
+  // DEFAULT_CHUNKING_STRATEGY
 } from '../types/KnowledgeServiceTypes';
 
 export class KnowledgeAnalysisService {

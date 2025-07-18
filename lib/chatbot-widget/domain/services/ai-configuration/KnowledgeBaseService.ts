@@ -1,3 +1,5 @@
+import { KnowledgeBaseProps } from '../../value-objects/ai-configuration/KnowledgeBase';
+
 /**
  * Knowledge Base Domain Service
  * 
@@ -13,7 +15,7 @@ export class KnowledgeBaseService {
 
   // Minimal knowledge base injection (2025 RAG best practice - vector-first)
   // Uses only essential context, relies on vector search for specific content
-  buildMinimalKnowledgeBase(knowledgeBase: any): string {
+  buildMinimalKnowledgeBase(knowledgeBase: KnowledgeBaseProps): string {
     // AI: Add null safety check for knowledgeBase to prevent runtime errors
     if (!knowledgeBase) {
       return this.buildEmptyKnowledgeBaseMessage();
@@ -49,11 +51,11 @@ export class KnowledgeBaseService {
   }
 
   // Check if knowledge base has any content
-  private hasKnowledgeBaseContent(knowledgeBase: any): boolean {
-    return knowledgeBase.companyInfo?.trim() || 
-           knowledgeBase.productCatalog?.trim() || 
-           knowledgeBase.supportDocs?.trim() || 
-           knowledgeBase.complianceGuidelines?.trim() || 
+  private hasKnowledgeBaseContent(knowledgeBase: KnowledgeBaseProps): boolean {
+    return !!(knowledgeBase.companyInfo?.trim()) || 
+           !!(knowledgeBase.productCatalog?.trim()) || 
+           !!(knowledgeBase.supportDocs?.trim()) || 
+           !!(knowledgeBase.complianceGuidelines?.trim()) || 
            (knowledgeBase.faqs && knowledgeBase.faqs.length > 0);
   }
 

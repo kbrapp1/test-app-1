@@ -206,18 +206,18 @@ export class KnowledgeContentCoordinatorService {
   }
 
   // Generate reports based on type
-  static generateReport(items: KnowledgeItem[], reportType: 'summary' | 'detailed' | 'executive' | 'dashboard' | 'full'): any {
+  static generateReport(items: KnowledgeItem[], reportType: 'summary' | 'detailed' | 'executive' | 'dashboard' | 'full'): Record<string, unknown> {
     switch (reportType) {
       case 'summary':
-        return KnowledgeReportingService.generateContentSummary(items);
+        return KnowledgeReportingService.generateContentSummary(items) as unknown as Record<string, unknown>;
       case 'detailed':
-        return KnowledgeReportingService.generateBasicReport(items);
+        return KnowledgeReportingService.generateBasicReport(items) as unknown as Record<string, unknown>;
       case 'executive':
-        return this.generateExecutiveSummary(items);
+        return this.generateExecutiveSummary(items) as unknown as Record<string, unknown>;
       case 'dashboard':
-        return this.generateContentManagementDashboard(items);
+        return this.generateContentManagementDashboard(items) as unknown as Record<string, unknown>;
       default:
-        return KnowledgeReportingService.generateBasicReport(items);
+        return KnowledgeReportingService.generateBasicReport(items) as unknown as Record<string, unknown>;
     }
   }
 

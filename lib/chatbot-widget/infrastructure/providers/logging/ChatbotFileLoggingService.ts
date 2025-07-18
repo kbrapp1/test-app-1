@@ -64,14 +64,14 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     this.writeAsync(content, logFile!);
   }
 
-  addLogEntry(level: LogLevel, message: string, logFile: string, data?: any, error?: Error, metrics?: LogMetrics): void {
+  addLogEntry(level: LogLevel, message: string, logFile: string, data?: unknown, error?: Error, metrics?: LogMetrics): void {
     if (!this.shouldLog(logFile)) return;
     
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
-      data,
+      data: data as string | number | boolean | Record<string, unknown> | null | undefined,
       error: error ? { 
         name: error.name, 
         message: error.message, 
@@ -84,14 +84,14 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     this.writeAsync(formatted, logFile);
   }
 
-  addLogEntrySync(level: LogLevel, message: string, logFile: string, data?: any, error?: Error, metrics?: LogMetrics): void {
+  addLogEntrySync(level: LogLevel, message: string, logFile: string, data?: unknown, error?: Error, metrics?: LogMetrics): void {
     if (!this.shouldLog(logFile)) return;
     
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
-      data,
+      data: data as string | number | boolean | Record<string, unknown> | null | undefined,
       error: error ? { 
         name: error.name, 
         message: error.message, 
@@ -142,15 +142,15 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
 
   private async performWrite(content: string, logFile: string): Promise<void> {
     try {
-      const fs = await eval('import("fs")').then((m: any) => m.promises);
-      const path = await eval('import("path")');
+      const fs = await eval('import("fs")').then((m: typeof import('fs')) => m.promises);
+      const path = await eval('import("path")') as typeof import('path');
       const logPath = path.join(this.config.logDirectory, logFile);
       
       await this.ensureLogDirectory();
       await fs.appendFile(logPath, content, 'utf8');
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Logging error:', error);
+        console.error('Logging error occurred');
       }
     }
   }
@@ -174,17 +174,17 @@ export class ChatbotFileLoggingService implements IChatbotLoggingService {
     if (!this.isServerSide()) return;
 
     try {
-      const fs = await eval('import("fs")').then((m: any) => m.promises);
-      const path = await eval('import("path")');
+      const fs = await eval('import("fs")').then((m: typeof import('fs')) => m.promises);
+      const _path = await eval('import("path")');
       
       try {
         await fs.access(this.config.logDirectory);
-      } catch (_error) {
+      } catch {
         await fs.mkdir(this.config.logDirectory, { recursive: true });
       }
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to create log directory:', error);
+        console.error('Failed to create log directory');
       }
     }
   }

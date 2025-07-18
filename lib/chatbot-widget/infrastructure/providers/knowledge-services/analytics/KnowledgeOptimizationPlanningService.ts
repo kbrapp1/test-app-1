@@ -258,8 +258,9 @@ export class KnowledgeOptimizationPlanningService {
   }
 
   // Helper methods
-  private static calculateStructureScore(structureAnalysis: any, totalItems: number): number {
-    const wellStructured = structureAnalysis.structureTypes?.well_structured || 0;
+  private static calculateStructureScore(structureAnalysis: Record<string, unknown>, totalItems: number): number {
+    const structureTypes = structureAnalysis.structureTypes as Record<string, unknown> | undefined;
+    const wellStructured = Number(structureTypes?.well_structured) || 0;
     return Math.round((wellStructured / totalItems) * 100);
   }
 } 

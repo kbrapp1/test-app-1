@@ -235,7 +235,7 @@ export class ChatMessage {
     });
   }
 
-  addCostTracking(costCents: number, breakdown?: any): ChatMessage {
+  addCostTracking(costCents: number, breakdown?: { promptTokensCents: number; completionTokensCents: number; totalCents: number; displayCents: number; modelRate?: number }): ChatMessage {
     const newCostTracking = breakdown 
       ? MessageCostTracking.create({ costCents, costBreakdown: breakdown })
       : MessageCostTracking.create({ costCents });
@@ -254,7 +254,7 @@ export class ChatMessage {
   hasError(): boolean { return this.props.contextMetadata.hasError(); }
   hasEntities(): boolean { return this.props.aiMetadata.hasEntities(); }
   getTokenCost(): number { return this.props.costTracking.costCents; }
-  getCostBreakdown(): any { return this.props.costTracking.costBreakdown; }
+  getCostBreakdown(): { promptTokensCents: number; completionTokensCents: number; totalCents: number; displayCents: number; modelRate?: number } | undefined { return this.props.costTracking.costBreakdown; }
   hasErrorDetails(): boolean { return this.props.contextMetadata.hasErrorDetails(); }
   getProcessingDuration(): number { return this.props.processingMetrics.getTotalProcessingDuration(); }
   hasHighConfidence(threshold: number = 0.8): boolean { return this.props.aiMetadata.hasHighConfidence(threshold); }

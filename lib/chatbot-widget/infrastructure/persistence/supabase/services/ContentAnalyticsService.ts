@@ -69,7 +69,7 @@ export class ContentAnalyticsService {
           if (validation.warnings.length > 0) {
             hasWarnings = true;
           }
-        } catch (error) {
+        } catch {
           hasErrors = true;
         }
       }
@@ -186,7 +186,7 @@ export class ContentAnalyticsService {
     percentage: number;
   }> {
     const distribution: Record<string, { present: boolean; percentage: number }> = {};
-    const totalTypes = Object.values(ContentType).length;
+    const _totalTypes = Object.values(ContentType).length;
 
     // AI: Initialize all content types
     Object.values(ContentType).forEach(type => {

@@ -172,10 +172,10 @@ export class CaptureLeadUseCase {
       totalCaptured: analytics.totalLeads,
       avgLeadScore: analytics.avgLeadScore,
       qualificationBreakdown: analytics.qualificationDistribution,
-      sourceBreakdown: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: any) => {
+      sourceBreakdown: analytics.sourceBreakdown.reduce((acc: Record<string, number>, item: { source: string; count: number }) => {
         acc[item.source] = item.count;
         return acc;
-      }, {})
+      }, {} as Record<string, number>)
     };
   }
 } 

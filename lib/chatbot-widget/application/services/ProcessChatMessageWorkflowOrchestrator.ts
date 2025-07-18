@@ -12,7 +12,8 @@
 
 import { ProcessChatMessageRequest } from '../dto/ProcessChatMessageRequest';
 import { ProcessChatMessageResult, ProcessChatMessageResultBuilder } from '../dto/ProcessChatMessageResult';
-import { MessageProcessingWorkflowService, WorkflowContext } from './message-processing/MessageProcessingWorkflowService';
+import { WorkflowBoundaryMapper } from '../mappers/WorkflowBoundaryMapper';
+import { MessageProcessingWorkflowService, WorkflowContext, ProcessMessageRequest } from './message-processing/MessageProcessingWorkflowService';
 import { ChatMessageProcessingService } from './message-processing/ChatMessageProcessingService';
 import { ConversationContextManagementService } from './conversation-management/ConversationContextManagementService';
 import { ConversationContextWindow } from '../../domain/value-objects/session-management/ConversationContextWindow';
@@ -32,6 +33,62 @@ import { DomainError as _DomainError } from '../../domain/errors/ChatMessageProc
 import { ChatMessage } from '../../domain/entities/ChatMessage';
 import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
+
+// Type for workflow service ResponseResult parameter
+interface WorkflowResponseResult {
+  session: ChatSession;
+  userMessage: ChatMessage;
+  botMessage: ChatMessage;
+  allMessages: ChatMessage[];
+  config: ChatbotConfig;
+  enhancedContext: {
+    intentAnalysis?: {
+      primaryIntent: string;
+      confidence: number;
+      entities: Array<{ name: string; value: string; confidence: number }>;
+      followUpIntents: string[];
+    };
+    journeyState?: {
+      currentStage: string;
+      completedStages: string[];
+      nextRecommendedStage?: string;
+      progressPercentage: number;
+    };
+    relevantKnowledge?: {
+      items: Array<{
+        title: string;
+        content: string;
+        relevanceScore: number;
+        source: string;
+      }>;
+      totalMatches: number;
+    };
+    conversationMetrics?: {
+      messageCount: number;
+      sessionDuration: number;
+      engagementScore: number;
+      leadQualificationProgress: number;
+    };
+    unifiedAnalysis?: {
+      primaryIntent?: string;
+      primaryConfidence?: number;
+      entities?: Record<string, unknown>;
+    };
+    leadScore?: {
+      totalScore: number;
+      qualificationStatus?: {
+        readyForSales?: boolean;
+        nextSteps?: string[];
+      };
+    };
+    callToAction?: {
+      type: string;
+      message: string;
+      priority: string;
+    };
+    [key: string]: unknown;
+  };
+}
 
 // Enhanced interfaces for workflow context
 interface ContextResultData {
@@ -267,9 +324,20 @@ export class ProcessChatMessageWorkflowOrchestrator {
   private async initializeWorkflow(request: ProcessChatMessageRequest, logger: ISessionLogger): Promise<MessageContext> {
     logger.logRaw('📋 STEP 1: Initialize workflow and validate prerequisites');
     
+    const processMessageRequest: ProcessMessageRequest = {
+      userMessage: request.userMessage,
+      sessionId: request.sessionId,
+      organizationId: request.organizationId || '', // Required by MessageProcessingWorkflowService
+      metadata: request.metadata ? {
+        userId: request.metadata.userId,
+        timestamp: request.metadata.timestamp ? new Date(request.metadata.timestamp) : undefined,
+        clientInfo: request.metadata.clientInfo
+      } : undefined
+    };
+    
     const { result, duration: _duration } = await perf.measureAsync(
       'InitializeWorkflow',
-      () => this.workflowService.initializeWorkflow(request, this.sharedLogFile!),
+      () => this.workflowService.initializeWorkflow(processMessageRequest, this.sharedLogFile!),
       { step: 1 }
     );
     
@@ -334,30 +402,41 @@ export class ProcessChatMessageWorkflowOrchestrator {
   private async finalizeWorkflow(responseResult: ResponseContext, startTime: number, logger: ISessionLogger): Promise<FinalWorkflowResult> {
     logger.logRaw('✅ STEP 5: Finalize workflow and calculate metrics');
     
-    const result = await this.workflowService.finalizeWorkflow(responseResult as unknown, startTime, this.sharedLogFile!);
+    const result = await this.workflowService.finalizeWorkflow(responseResult as unknown as WorkflowResponseResult, startTime, this.sharedLogFile!);
     
     logger.logMessage('🏁 FINAL RESULT', {
       sessionId: result.session.id,
       processingTimeMs: Date.now() - startTime
     });
     
-    const finalWorkflowResult = result as import('./message-processing/MessageProcessingWorkflowService').WorkflowFinalResult;
+    // Use boundary mapper for type-safe conversions
+    const intentAnalysis = WorkflowBoundaryMapper.toIntentAnalysis(result);
+    const journeyState = WorkflowBoundaryMapper.toJourneyState(result);
+    const relevantKnowledge = WorkflowBoundaryMapper.toRelevantKnowledge(result);
+    const callToAction = WorkflowBoundaryMapper.toCallToAction(result);
+    
     return {
-      session: finalWorkflowResult.session as WorkflowSession,
+      session: result.session as WorkflowSession,
       config: { id: 'unknown' } as WorkflowConfig, // WorkflowFinalResult doesn't have config
-      userMessage: finalWorkflowResult.userMessage as WorkflowUserMessage,
-      botMessage: finalWorkflowResult.botMessage as WorkflowBotMessage,
-      shouldCaptureLeadInfo: finalWorkflowResult.shouldCaptureLeadInfo as boolean || false,
-      suggestedNextActions: finalWorkflowResult.suggestedNextActions as unknown as SuggestedActionsData[] || [],
-      conversationMetrics: finalWorkflowResult.conversationMetrics as ConversationMetricsData || {},
-      intentAnalysis: finalWorkflowResult.intentAnalysis as IntentAnalysisData || {},
-      journeyState: finalWorkflowResult.journeyState as JourneyStateData || {},
-      relevantKnowledge: finalWorkflowResult.relevantKnowledge as Array<{ id: string; title: string; content: string; relevanceScore: number; }> || [],
-      callToAction: finalWorkflowResult.callToAction ? {
-        type: finalWorkflowResult.callToAction.type || 'none',
-        text: finalWorkflowResult.callToAction.message || '',
-        priority: parseInt(finalWorkflowResult.callToAction.priority || '0') || 0
-      } as CallToActionData : {} as CallToActionData
+      userMessage: result.userMessage as WorkflowUserMessage,
+      botMessage: result.botMessage as WorkflowBotMessage,
+      shouldCaptureLeadInfo: Boolean(result.shouldCaptureLeadInfo),
+      suggestedNextActions: Array.isArray(result.suggestedNextActions) ? result.suggestedNextActions as SuggestedActionsData[] : [],
+      conversationMetrics: result.conversationMetrics as ConversationMetricsData || {},
+      intentAnalysis: {
+        primaryIntent: intentAnalysis.primaryIntent,
+        confidence: intentAnalysis.confidence,
+        entities: intentAnalysis.entities,
+        sentiment: intentAnalysis.sentiment
+      },
+      journeyState: {
+        currentStage: journeyState.currentStage,
+        completedStages: journeyState.completedStages,
+        nextRecommendedStage: journeyState.nextRecommendedStage,
+        progressPercentage: journeyState.progressPercentage
+      },
+      relevantKnowledge: relevantKnowledge,
+      callToAction: callToAction || {} as CallToActionData
     } as FinalWorkflowResult;
   }
 

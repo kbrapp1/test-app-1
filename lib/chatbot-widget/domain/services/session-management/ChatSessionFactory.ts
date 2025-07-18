@@ -1,4 +1,4 @@
-import { ChatSessionProps, SessionContext } from '../../value-objects/session-management/ChatSessionTypes';
+import { ChatSessionProps, SessionContext, SessionStatus, LeadQualificationState, PageView } from '../../value-objects/session-management/ChatSessionTypes';
 
 /**
  * Chat Session Factory Service
@@ -69,22 +69,22 @@ export class ChatSessionFactory {
 
   /** Create session props from persistence data
  */
-  static fromPersistenceData(data: any): ChatSessionProps {
+  static fromPersistenceData(data: Record<string, unknown>): ChatSessionProps {
     return {
-      id: data.id,
-      chatbotConfigId: data.chatbot_config_id,
-      visitorId: data.visitor_id,
-      sessionToken: data.session_token,
-      contextData: this.parseContextData(data.context_data),
-      leadQualificationState: this.parseQualificationState(data.lead_qualification_state),
-      status: data.status,
-      startedAt: new Date(data.started_at),
-      lastActivityAt: new Date(data.last_activity_at),
-      endedAt: data.ended_at ? new Date(data.ended_at) : undefined,
-      ipAddress: data.ip_address,
-      userAgent: data.user_agent,
-      referrerUrl: data.referrer_url,
-      currentUrl: data.current_url,
+      id: data.id as string,
+      chatbotConfigId: data.chatbot_config_id as string,
+      visitorId: data.visitor_id as string,
+      sessionToken: data.session_token as string,
+      contextData: this.parseContextData((data.context_data as Record<string, unknown>) || {}),
+      leadQualificationState: this.parseQualificationState((data.lead_qualification_state as Record<string, unknown>) || {}),
+      status: data.status as SessionStatus,
+      startedAt: new Date(data.started_at as string),
+      lastActivityAt: new Date(data.last_activity_at as string),
+      endedAt: data.ended_at ? new Date(data.ended_at as string) : undefined,
+      ipAddress: data.ip_address as string,
+      userAgent: data.user_agent as string,
+      referrerUrl: data.referrer_url as string,
+      currentUrl: data.current_url as string,
     };
   }
 
@@ -92,7 +92,7 @@ export class ChatSessionFactory {
    * Parse context data from persistence
    * AI INSTRUCTIONS: Handle enhanced conversationSummary format
    */
-  private static parseContextData(data: any): SessionContext {
+  private static parseContextData(data: Record<string, unknown>): SessionContext {
     // Handle conversationSummary format - use enhanced object format
     const conversationSummary = data.conversation_summary && typeof data.conversation_summary === 'object'
       ? data.conversation_summary
@@ -103,14 +103,14 @@ export class ChatSessionFactory {
         };
 
     return {
-      previousVisits: data.previous_visits || 0,
-      pageViews: data.page_views || [],
-      conversationSummary,
-      topics: data.topics || [],
-      interests: data.interests || [],
-      engagementScore: data.engagement_score || 0,
-      journeyState: data.journey_state,
-      accumulatedEntities: data.accumulated_entities || {
+      previousVisits: (data.previous_visits as number) || 0,
+      pageViews: (data.page_views as PageView[]) || [],
+      conversationSummary: conversationSummary as SessionContext['conversationSummary'],
+      topics: (data.topics as string[]) || [],
+      interests: (data.interests as string[]) || [],
+      engagementScore: (data.engagement_score as number) || 0,
+      journeyState: (data.journey_state as SessionContext['journeyState']) || undefined,
+      accumulatedEntities: (data.accumulated_entities as SessionContext['accumulatedEntities']) || {
         decisionMakers: [],
         painPoints: [],
         integrationNeeds: [],
@@ -121,19 +121,19 @@ export class ChatSessionFactory {
 
   /** Parse qualification state from persistence
  */
-  private static parseQualificationState(data: any) {
+  private static parseQualificationState(data: Record<string, unknown>) {
     return {
-      isQualified: data.is_qualified || false,
-      currentStep: data.current_step || 0,
-      answeredQuestions: data.answered_questions || [],
-      qualificationStatus: data.qualification_status || 'not_started',
-      capturedAt: data.captured_at ? new Date(data.captured_at) : undefined,
+      isQualified: (data.is_qualified as boolean) || false,
+      currentStep: (data.current_step as number) || 0,
+      answeredQuestions: (data.answered_questions as LeadQualificationState['answeredQuestions']) || [],
+      qualificationStatus: (data.qualification_status as 'not_started' | 'in_progress' | 'completed' | 'skipped') || 'not_started',
+      capturedAt: data.captured_at ? new Date(data.captured_at as string) : undefined,
     };
   }
 
   /** Convert session props to persistence format
  */
-  static toPersistenceData(props: ChatSessionProps): any {
+  static toPersistenceData(props: ChatSessionProps): Record<string, unknown> {
     return {
       id: props.id,
       chatbot_config_id: props.chatbotConfigId,
@@ -153,7 +153,7 @@ export class ChatSessionFactory {
   }
 
   /** Convert context to persistence format */
-  private static contextToPersistence(context: SessionContext): any {
+  private static contextToPersistence(context: SessionContext): Record<string, unknown> {
     return {
       previous_visits: context.previousVisits,
       page_views: context.pageViews,
@@ -168,13 +168,13 @@ export class ChatSessionFactory {
 
   /** Convert qualification state to persistence format
  */
-  private static qualificationToPersistence(state: any): any {
+  private static qualificationToPersistence(state: LeadQualificationState): Record<string, unknown> {
     return {
       is_qualified: state.isQualified,
       current_step: state.currentStep,
       answered_questions: state.answeredQuestions,
       qualification_status: state.qualificationStatus,
-      captured_at: state.capturedAt?.toISOString(),
+      captured_at: (state.capturedAt as Date)?.toISOString(),
     };
   }
 } 

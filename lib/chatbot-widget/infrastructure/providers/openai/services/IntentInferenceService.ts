@@ -235,7 +235,7 @@ export class IntentInferenceService {
   static determineConversationPhase(recentIntents: string[]): string {
     if (recentIntents.length === 0) return 'initial';
     
-    const latestIntent = recentIntents[recentIntents.length - 1];
+    const _latestIntent = recentIntents[recentIntents.length - 1];
     
     // Analyze intent progression
     const hasGreeting = recentIntents.includes('greeting');
@@ -255,7 +255,6 @@ export class IntentInferenceService {
 
   /** Calculate intent confidence score */
   static calculateIntentConfidence(content: string, inferredIntent: string): number {
-    const contentLength = content.length;
     const wordCount = content.split(' ').length;
     
     let confidence = 50; // Base confidence

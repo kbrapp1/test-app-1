@@ -27,7 +27,7 @@ export interface RelevanceScore {
 
 export interface RelevanceContext {
   currentIntent: IntentResult;
-  businessEntities: Record<string, any>;
+  businessEntities: Record<string, unknown>;
   conversationPhase: string;
   leadScore: number;
   maxRetentionMessages: number;

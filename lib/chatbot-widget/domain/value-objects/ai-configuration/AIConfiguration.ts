@@ -19,7 +19,6 @@ import {
   LeadScoringConfiguration,
   MonitoringConfiguration
 } from './ai-config-components';
-import { AIConfigurationComponent } from '../../types/ChatbotTypes';
 
 export interface AIConfigurationProps {
   // OpenAI Configuration

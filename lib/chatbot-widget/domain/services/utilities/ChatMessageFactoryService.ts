@@ -16,61 +16,63 @@ export class ChatMessageFactoryService {
    * Reconstruct ChatMessage from persistence data
    * Handles the complex mapping of flat persistence data to value objects
    */
-  static fromPersistence(props: any): ChatMessage {
+  static fromPersistence(props: Record<string, unknown>): ChatMessage {
+    const metadata = (props.metadata as Record<string, unknown>) || {};
+    
     // Reconstruct AI metadata value object
     const aiMetadata = MessageAIMetadata.create({
-      aiModel: props.metadata?.aiModel,
-      promptTokens: props.metadata?.promptTokens,
-      completionTokens: props.metadata?.completionTokens,
-      totalTokens: props.metadata?.totalTokens,
-      confidence: props.metadata?.confidence,
-      intentDetected: props.metadata?.intentDetected,
-      entitiesExtracted: props.metadata?.entitiesExtracted || [],
+      aiModel: metadata.aiModel as string,
+      promptTokens: metadata.promptTokens as number,
+      completionTokens: metadata.completionTokens as number,
+      totalTokens: metadata.totalTokens as number,
+      confidence: metadata.confidence as number,
+      intentDetected: metadata.intentDetected as string,
+      entitiesExtracted: (metadata.entitiesExtracted as Array<{ type: string; value: string; confidence: number; start?: number; end?: number }>) || [],
     });
 
     // Reconstruct context metadata value object
     const contextMetadata = MessageContextMetadata.create({
-      qualificationStep: props.metadata?.qualificationStep,
-      questionId: props.metadata?.questionId,
-      expectedAnswerType: props.metadata?.expectedAnswerType,
-      topicsDiscussed: props.metadata?.topicsDiscussed || [],
-      sentiment: props.metadata?.sentiment,
-      urgency: props.metadata?.urgency,
-      inputMethod: props.metadata?.inputMethod,
-      errorType: props.metadata?.errorType,
-      errorCode: props.metadata?.errorCode,
-      errorMessage: props.metadata?.errorMessage,
-      createdBy: props.metadata?.createdBy,
-      updatedAt: props.metadata?.updatedAt ? new Date(props.metadata.updatedAt) : undefined,
-      version: props.metadata?.version,
+      qualificationStep: metadata.qualificationStep as number,
+      questionId: metadata.questionId as string,
+      expectedAnswerType: metadata.expectedAnswerType as 'text' | 'email' | 'phone' | 'select' | 'multiselect',
+      topicsDiscussed: (metadata.topicsDiscussed as string[]) || [],
+      sentiment: metadata.sentiment as 'positive' | 'neutral' | 'negative',
+      urgency: metadata.urgency as 'low' | 'medium' | 'high',
+      inputMethod: metadata.inputMethod as 'text' | 'voice' | 'button',
+      errorType: metadata.errorType as string,
+      errorCode: metadata.errorCode as string,
+      errorMessage: metadata.errorMessage as string,
+      createdBy: metadata.createdBy as string,
+      updatedAt: metadata.updatedAt ? new Date(metadata.updatedAt as string | number) : undefined,
+      version: metadata.version as number,
     });
 
     // Reconstruct processing metrics value object
     const processingMetrics = MessageProcessingMetrics.create({
-      processingSteps: props.metadata?.processingSteps || [],
-      responseTime: props.metadata?.responseTime,
-      cacheHit: props.metadata?.cacheHit,
-      processingTime: props.processingTime,
+      processingSteps: (metadata.processingSteps as Array<{ step: string; duration: number; success: boolean }>) || [],
+      responseTime: metadata.responseTime as number,
+      cacheHit: metadata.cacheHit as boolean,
+      processingTime: props.processingTime as number,
     });
 
     // Reconstruct cost tracking value object
-    const costTracking = props.metadata?.costCents !== undefined
+    const costTracking = metadata.costCents !== undefined
       ? MessageCostTracking.create({
-          costCents: props.metadata.costCents,
-          costBreakdown: props.metadata.costBreakdown,
-          modelRate: props.metadata.costBreakdown?.modelRate,
+          costCents: metadata.costCents as number,
+          costBreakdown: metadata.costBreakdown as { promptTokensCents: number; completionTokensCents: number; totalCents: number; displayCents: number; modelRate?: number },
+          modelRate: (metadata.costBreakdown as Record<string, unknown>)?.modelRate as number,
         })
       : MessageCostTracking.createZeroCost();
 
     // Create the entity with properly composed value objects
     const chatMessageProps: ChatMessageProps = {
-      id: props.id,
-      sessionId: props.sessionId,
-      messageType: props.messageType,
-      content: props.content,
-      timestamp: new Date(props.timestamp),
-      isVisible: props.isVisible,
-      processingTime: props.processingTime,
+      id: props.id as string,
+      sessionId: props.sessionId as string,
+      messageType: props.messageType as MessageType,
+      content: props.content as string,
+      timestamp: new Date(props.timestamp as string | number),
+      isVisible: props.isVisible as boolean,
+      processingTime: props.processingTime as number,
       aiMetadata,
       contextMetadata,
       processingMetrics,

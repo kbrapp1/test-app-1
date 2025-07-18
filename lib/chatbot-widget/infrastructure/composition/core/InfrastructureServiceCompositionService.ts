@@ -40,7 +40,7 @@ export class InfrastructureServiceCompositionService {
       } catch (error) {
         throw new BusinessRuleViolationError(
           'Failed to initialize token counting service',
-          { error: error instanceof Error ? error.message : 'Unknown error' }
+          { error: error instanceof Error ? error.message : 'Unknown error' } as Record<string, unknown>
         );
       }
     }
@@ -54,7 +54,7 @@ export class InfrastructureServiceCompositionService {
     if (!apiKey) {
       throw new BusinessRuleViolationError(
         'OpenAI API key is required for intent classification',
-        { service: 'IntentClassificationService', configMissing: 'OPENAI_API_KEY' }
+        { service: 'IntentClassificationService', configMissing: 'OPENAI_API_KEY' } as Record<string, unknown>
       );
     }
 
@@ -73,7 +73,7 @@ export class InfrastructureServiceCompositionService {
         { 
           error: error instanceof Error ? error.message : 'Unknown error',
           config: { model: config.model, temperature: config.temperature }
-        }
+        } as Record<string, unknown>
       );
     }
   }
@@ -93,7 +93,7 @@ export class InfrastructureServiceCompositionService {
       } catch (error) {
         throw new BusinessRuleViolationError(
           'Failed to initialize debug information service',
-          { error: error instanceof Error ? error.message : 'Unknown error' }
+          { error: error instanceof Error ? error.message : 'Unknown error' } as Record<string, unknown>
         );
       }
     }
@@ -125,20 +125,20 @@ export class InfrastructureServiceCompositionService {
       if (typeof globalThis !== 'undefined') {
         // Clear tiktoken cache
         const tiktokenCacheKey = 'OpenAITokenCountingService_tiktokenCache';
-        if ((globalThis as any)[tiktokenCacheKey]) {
-          (globalThis as any)[tiktokenCacheKey] = null;
+        if ((globalThis as Record<string, unknown>)[tiktokenCacheKey]) {
+          (globalThis as Record<string, unknown>)[tiktokenCacheKey] = null;
         }
 
         // Clear logging service cache
         const loggingCacheKey = 'OpenAIChatbotProcessingService_loggingServiceCache';
-        if ((globalThis as any)[loggingCacheKey]) {
-          (globalThis as any)[loggingCacheKey] = null;
+        if ((globalThis as Record<string, unknown>)[loggingCacheKey]) {
+          (globalThis as Record<string, unknown>)[loggingCacheKey] = null;
         }
 
         // Clear conversation context orchestrator cache
         const contextCacheKey = 'UseCaseCompositionService_conversationContextOrchestratorCache';
-        if ((globalThis as any)[contextCacheKey]) {
-          (globalThis as any)[contextCacheKey] = null;
+        if ((globalThis as Record<string, unknown>)[contextCacheKey]) {
+          (globalThis as Record<string, unknown>)[contextCacheKey] = null;
         }
       }
     } catch (error) {
@@ -194,7 +194,7 @@ export class InfrastructureServiceCompositionService {
       // Check token counting service
       const tokenService = this.getTokenCountingService();
       results.tokenCountingService = !!tokenService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
@@ -202,7 +202,7 @@ export class InfrastructureServiceCompositionService {
       // Check debug information service
       const debugService = this.getDebugInformationService();
       results.debugInformationService = !!debugService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
@@ -212,7 +212,7 @@ export class InfrastructureServiceCompositionService {
         const intentService = await this.getIntentClassificationService();
         results.intentClassificationService = !!intentService;
       }
-    } catch (error) {
+    } catch {
       // Service failed to initialize or API key missing
     }
 

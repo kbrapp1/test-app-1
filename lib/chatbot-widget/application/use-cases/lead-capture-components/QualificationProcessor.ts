@@ -11,7 +11,7 @@
  */
 
 import { ChatSession } from '../../../domain/entities/ChatSession';
-import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { ChatbotConfig, LeadQualificationQuestion } from '../../../domain/entities/ChatbotConfig';
 
 export interface QualificationAnswer {
   questionId: string;
@@ -129,7 +129,7 @@ export class QualificationProcessor {
   /** Validate answer format and content */
   private static validateAnswer(
     answer: QualificationAnswer,
-    questionConfig: any
+    questionConfig: LeadQualificationQuestion
   ): { valid: boolean; error?: string } {
     // Check if answer is provided
     if (answer.answer === undefined || answer.answer === null) {

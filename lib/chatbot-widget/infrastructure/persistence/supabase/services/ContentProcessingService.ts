@@ -113,7 +113,7 @@ export class ContentProcessingService {
           if (!result.isValid) {
             validationErrorCount += result.validationIssues.length;
           }
-        } catch (error) {
+        } catch {
           validationErrorCount++;
         }
       }

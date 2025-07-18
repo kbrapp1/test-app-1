@@ -15,6 +15,21 @@ import { OpenAIIntentConfig, PersonaInference } from '../types/OpenAITypes';
 import { ExtractedEntities } from '../../../../domain/value-objects/message-processing/IntentResult';
 import { OpenAIFunctionSchemaBuilder } from './OpenAIFunctionSchemaBuilder';
 
+interface SessionLogger {
+  logApiCall: (callType: string, requestData: unknown, responseData: unknown, processingTime: number) => void;
+  logMessage: (message: string, level?: string) => void;
+  logError: (error: Error | string, context?: Record<string, unknown>) => void;
+  flush: () => Promise<void>;
+}
+
+interface LoggingService {
+  createSessionLogger: (sessionId: string, logFile: string, metadata: Record<string, unknown>) => SessionLogger;
+}
+
+interface LoggingServiceClass {
+  ChatbotFileLoggingService: new () => LoggingService;
+}
+
 // Context interface for processing
 interface ProcessingContext {
   messageHistory: ChatMessage[];
@@ -49,15 +64,6 @@ interface FunctionCallArguments {
   };
 }
 
-// OpenAI API request interface
-interface OpenAIApiRequest {
-  model: string;
-  messages: OpenAIMessage[];
-  functions: FunctionSchema[];
-  function_call: { name: string };
-  temperature: number;
-  max_tokens: number;
-}
 
 export class OpenAIChatbotProcessingService {
   private readonly config: OpenAIIntentConfig;
@@ -115,7 +121,7 @@ export class OpenAIChatbotProcessingService {
     if (!(globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY]) {
       (globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] = await import('../../../providers/logging/ChatbotFileLoggingService');
     }
-    const LoggingServiceClass = (globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] as { ChatbotFileLoggingService: new () => { createSessionLogger: (sessionId: string, logFile: string, metadata: Record<string, unknown>) => { logApiCall: Function; logMessage: Function; logError: Function; flush: Function } } };
+    const LoggingServiceClass = (globalThis as Record<string, unknown>)[OpenAIChatbotProcessingService.LOGGING_CACHE_KEY] as LoggingServiceClass;
     const loggingService = new LoggingServiceClass.ChatbotFileLoggingService();
     
     const sessionLogger = loggingService.createSessionLogger(
@@ -170,7 +176,7 @@ export class OpenAIChatbotProcessingService {
       }
 
       const functionArgs = JSON.parse(choice.message.function_call.arguments) as FunctionCallArguments;
-      sessionLogger.logMessage('🔧 EXTRACTED FUNCTION ARGUMENTS:', functionArgs);
+      sessionLogger.logMessage('🔧 EXTRACTED FUNCTION ARGUMENTS: ' + JSON.stringify(functionArgs));
 
       // AI: Map simplified schema response to expected format
       const result = {
@@ -202,7 +208,7 @@ export class OpenAIChatbotProcessingService {
         model: response.model || 'gpt-4o-mini'
       };
       
-      sessionLogger.logMessage('✨ FINAL UNIFIED RESULT:', result);
+      sessionLogger.logMessage('✨ FINAL UNIFIED RESULT: ' + JSON.stringify(result));
       
       // Ensure all logs are written before returning
       await sessionLogger.flush();

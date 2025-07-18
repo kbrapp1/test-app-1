@@ -113,7 +113,9 @@ export class ProductSection {
   }
 
   extractKeywords(): string[] {
-    const text = this.props.content.toLowerCase();
+    // Ensure content is a string and not null/undefined
+    const content = typeof this.props.content === 'string' ? this.props.content : String(this.props.content || '');
+    const text = content.toLowerCase();
     const words = text.split(/\W+/).filter(word => 
       word.length > 3 && 
       !this.isCommonWord(word)
@@ -156,7 +158,7 @@ export class ProductSection {
     return similarity > 0.3; // 30% similarity threshold
   }
 
-  withContextualContent(fullCatalog: string): ProductSection {
+  withContextualContent(_fullCatalog: string): ProductSection {
     let contextualContent = '';
     
     // Add parent context if available

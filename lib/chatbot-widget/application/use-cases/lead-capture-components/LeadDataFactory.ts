@@ -148,7 +148,7 @@ export class LeadDataFactory {
     try {
       const urlObj = new URL(url);
       return urlObj.pathname.split('/').pop() || urlObj.hostname;
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return url;
     }
   }

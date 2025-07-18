@@ -183,8 +183,8 @@ export class ChatMessageProcessingService {
 
     // Process unified response and create bot message
     const botMessage = await this.unifiedResponseProcessor.createBotMessageFromUnifiedResult(
-      session,
-      unifiedResult,
+      session as unknown as ChatSession,
+      unifiedResult as Record<string, unknown>,
       logFileName,
       config
     );
@@ -196,10 +196,10 @@ export class ChatMessageProcessingService {
 
     // Update session context with unified results
     const updatedSession = this.sessionContextUpdater.updateSessionWithUnifiedResults(
-      session,
+      session as unknown as ChatSession,
       botMessage,
       finalAllMessages,
-      unifiedResult,
+      unifiedResult as Record<string, unknown>,
       logFileName
     );
 

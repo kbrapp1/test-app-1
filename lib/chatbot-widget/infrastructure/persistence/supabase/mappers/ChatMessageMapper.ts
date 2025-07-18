@@ -10,7 +10,7 @@ export interface RawChatMessageDbRecord {
   session_id: string;
   message_type: string;
   content: string;
-  metadata: any; // JSONB
+  metadata: unknown; // JSONB
   timestamp: string;
   is_visible: boolean;
   processing_time_ms: number | null;
@@ -23,7 +23,7 @@ export interface InsertChatMessageData {
   session_id: string;
   message_type: string;
   content: string;
-  metadata: any;
+  metadata: unknown;
   timestamp: string;
   is_visible: boolean;
   processing_time_ms?: number;
@@ -32,7 +32,7 @@ export interface InsertChatMessageData {
 /** Update data structure for database operations */
 export interface UpdateChatMessageData {
   content?: string;
-  metadata?: any;
+  metadata?: unknown;
   is_visible?: boolean;
   processing_time_ms?: number;
 }
@@ -44,38 +44,38 @@ export interface UpdateChatMessageData {
 export class ChatMessageMapper {
   /** Transform database record to domain entity */
   static toDomain(record: RawChatMessageDbRecord): ChatMessage {
-    const metadata = record.metadata || {};
+    const metadata = (record.metadata as Record<string, unknown>) || {};
     
     // Extract AI metadata from the database metadata
     const aiMetadata = MessageAIMetadata.createFromTokens(
-      metadata.aiModel || 'gpt-4o-mini',
-      metadata.promptTokens || 0,
-      metadata.completionTokens || 0,
-      metadata.confidence,
-      metadata.intentDetected
+      metadata.aiModel as string || 'gpt-4o-mini',
+      metadata.promptTokens as number || 0,
+      metadata.completionTokens as number || 0,
+      metadata.confidence as number,
+      metadata.intentDetected as string
     );
 
     // Extract context metadata
     const contextMetadata = MessageContextMetadata.create({
-      topicsDiscussed: metadata.topics || [],
-      sentiment: metadata.sentiment,
-      urgency: metadata.urgency,
-      inputMethod: metadata.inputMethod,
-      errorType: metadata.errorType,
-      errorCode: metadata.errorCode,
-      errorMessage: metadata.errorMessage,
+      topicsDiscussed: (Array.isArray(metadata.topics) ? metadata.topics : []) as string[],
+      sentiment: (metadata.sentiment as 'positive' | 'neutral' | 'negative') || undefined,
+      urgency: (metadata.urgency as 'low' | 'medium' | 'high') || undefined,
+      inputMethod: (metadata.inputMethod as 'text' | 'voice' | 'button') || undefined,
+      errorType: metadata.errorType as string || undefined,
+      errorCode: metadata.errorCode as string || undefined,
+      errorMessage: metadata.errorMessage as string || undefined,
     });
 
     // Extract processing metrics
     const processingMetrics = MessageProcessingMetrics.createWithResponseTime(
-      metadata.responseTime || record.processing_time_ms || 0
+      (metadata.responseTime as number) || (record.processing_time_ms as number) || 0
     );
 
     // Extract cost tracking
     const costTracking = MessageCostTracking.createFromTokens(
-      metadata.promptTokens || 0,
-      metadata.completionTokens || 0,
-      metadata.costPerToken || 0.0001
+      (metadata.promptTokens as number) || 0,
+      (metadata.completionTokens as number) || 0,
+      (metadata.costPerToken as number) || 0.0001
     );
 
     const props: ChatMessageProps = {
@@ -124,7 +124,7 @@ export class ChatMessageMapper {
   }
 
   /** Serialize domain value objects to database metadata format */
-  private static serializeMetadata(message: ChatMessage): any {
+  private static serializeMetadata(message: ChatMessage): unknown {
     return {
       // AI metadata
       aiModel: message.aiMetadata.aiModel,

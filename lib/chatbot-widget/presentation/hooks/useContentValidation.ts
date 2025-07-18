@@ -217,32 +217,161 @@ export function useContentValidation(
 }
 
 // AI: Hook for validating multiple content fields
-// Fixed implementation that doesn't violate React Hooks Rules
+// Safe implementation that follows React Hooks Rules
 export function useMultiContentValidation(
   contentFields: Record<string, { content: string; type: ContentType; maxLength?: number }>
 ) {
-  // AI: Get field entries at the top level (not in a callback)
-  const fieldEntries = Object.entries(contentFields);
+  // AI: Create validation results using a different approach
+  // Since we can't dynamically call hooks, we'll use a query-based approach
+  const fieldKeys = useMemo(() => Object.keys(contentFields).sort(), [contentFields]);
   
-  // AI: Call hooks for each field individually at the top level
-  // This is safe because the number and order of fields should be consistent
-  const validationResults = fieldEntries.map(([fieldName, field]) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const validation = useContentValidation(field.content, {
-      contentType: field.type,
-      maxLength: field.maxLength,
-      enableRealTime: true
-    });
-    return [fieldName, validation] as const;
+  // AI: Create a unified query for all fields to avoid hooks in loops
+  const multiValidationQuery = useQuery({
+    queryKey: ['multi-content-validation', contentFields],
+    queryFn: async () => {
+      const results: Record<string, ContentValidationResult> = {};
+      
+      // Validate all fields in parallel
+      const validationPromises = Object.entries(contentFields).map(async ([fieldName, field]) => {
+        if (!field.content.trim()) {
+          return [fieldName, {
+            isValid: true,
+            errors: [] as Array<{
+              field: string;
+              message: string;
+              code: string;
+              severity: 'low' | 'medium' | 'high' | 'critical';
+            }>,
+            warnings: [] as Array<{
+              field: string;
+              message: string;
+              suggestion?: string;
+            }>,
+            suggestions: [] as string[],
+            characterCount: 0,
+            wordCount: 0
+          }] as const;
+        }
+
+        const result = await validateContent({
+          content: field.content,
+          contentType: field.type,
+          maxLength: field.maxLength
+        });
+        
+        return [fieldName, result] as const;
+      });
+
+      const validationResults = await Promise.all(validationPromises);
+      
+      validationResults.forEach(([fieldName, result]) => {
+        results[fieldName] = result;
+      });
+
+      return results;
+    },
+    enabled: Object.values(contentFields).some(field => Boolean(field.content.trim())),
+    staleTime: 30000,
+    retry: false,
+    refetchOnWindowFocus: false
   });
-  
-  // AI: Convert to object for easier access
+
+  // AI: Convert query results to individual validation objects
   const validations = useMemo(() => {
-    return validationResults.reduce((acc, [fieldName, validation]) => {
-      acc[fieldName] = validation;
-      return acc;
-    }, {} as Record<string, ReturnType<typeof useContentValidation>>);
-  }, [validationResults]);
+    const results: Record<string, {
+      validation: ContentValidationResult;
+      isValidating: boolean;
+      validationStatus: string;
+      validateNow: (content?: string) => Promise<ContentValidationResult>;
+      getValidationMessage: () => string;
+      getSuggestions: () => string[];
+      contentStats: {
+        characterCount: number;
+        wordCount: number;
+        lineCount: number;
+        hasMarkdownHeaders: boolean;
+        hasExcessiveWhitespace: boolean;
+      };
+      isError: boolean;
+      error: Error | null;
+    }> = {};
+
+    fieldKeys.forEach(fieldName => {
+      const field = contentFields[fieldName];
+      const validationResult = multiValidationQuery.data?.[fieldName] || {
+        isValid: true,
+        errors: [],
+        warnings: [],
+        suggestions: [],
+        characterCount: field.content.length,
+        wordCount: field.content.trim() ? field.content.trim().split(/\s+/).length : 0
+      };
+
+      // Create individual validation status
+      const validationStatus = (() => {
+        if (!validationResult) return 'pending';
+        
+        if (validationResult.errors.length > 0) {
+          const hasCritical = validationResult.errors.some((e: ContentValidationError) => e.severity === 'critical');
+          const hasHigh = validationResult.errors.some((e: ContentValidationError) => e.severity === 'high');
+          if (hasCritical) return 'critical';
+          if (hasHigh) return 'error';
+          return 'warning';
+        }
+        
+        if (validationResult.warnings.length > 0) return 'warning';
+        return 'valid';
+      })();
+
+      results[fieldName] = {
+        validation: validationResult,
+        isValidating: multiValidationQuery.isLoading,
+        validationStatus,
+        validateNow: async (contentToValidate?: string) => {
+          const targetContent = contentToValidate ?? field.content;
+          if (!targetContent.trim()) {
+            return {
+              isValid: true,
+              errors: [],
+              warnings: [],
+              suggestions: [],
+              characterCount: 0,
+              wordCount: 0
+            };
+          }
+          return await validateContent({
+            content: targetContent,
+            contentType: field.type,
+            maxLength: field.maxLength
+          });
+        },
+        getValidationMessage: () => {
+          if (!validationResult) return '';
+          if (validationResult.errors.length > 0) {
+            const criticalErrors = validationResult.errors.filter((e: ContentValidationError) => e.severity === 'critical');
+            if (criticalErrors.length > 0) return criticalErrors[0].message;
+            const highErrors = validationResult.errors.filter((e: ContentValidationError) => e.severity === 'high');
+            if (highErrors.length > 0) return highErrors[0].message;
+            return validationResult.errors[0].message;
+          }
+          if (validationResult.warnings.length > 0) return validationResult.warnings[0].message;
+          return 'Content looks good!';
+        },
+        getSuggestions: () => validationResult.suggestions || [],
+        contentStats: {
+          characterCount: field.content.length,
+          wordCount: field.content.trim() ? field.content.trim().split(/\s+/).length : 0,
+          lineCount: field.content.split('\n').length,
+          hasMarkdownHeaders: /^#{1,6}\s/.test(field.content),
+          hasExcessiveWhitespace: /\n{3,}/.test(field.content)
+        },
+        isError: multiValidationQuery.isError,
+        error: multiValidationQuery.error
+      };
+    });
+
+    return results;
+  }, [fieldKeys, contentFields, multiValidationQuery.data, multiValidationQuery.isLoading, multiValidationQuery.isError, multiValidationQuery.error]);
 
   // AI: Compute overall validation status
   const overallStatus = useMemo(() => {

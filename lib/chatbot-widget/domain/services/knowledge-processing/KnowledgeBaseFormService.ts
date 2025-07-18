@@ -75,7 +75,7 @@ export class KnowledgeBaseFormService {
 
   /** Identify semantic sections in product catalog */
   private identifyProductSections(catalog: string): ProductSection[] {
-    const sections: ProductSection[] = [];
+    const _sections: ProductSection[] = [];
     
     // Strategy 1: Split by headers (markdown-style or numbered)
     const headerPattern = /^(#{1,6}\s+.*|^\d+\.\s+.*|^[A-Z][^.]*:)/gm;

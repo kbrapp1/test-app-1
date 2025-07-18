@@ -432,7 +432,7 @@ export class DomainConstants {
   }
 
   static getEntityCategory(entity: EntityType): 'core_business' | 'advanced' {
-    return CORE_BUSINESS_ENTITIES.includes(entity as any) ? 'core_business' : 'advanced';
+    return (CORE_BUSINESS_ENTITIES as readonly string[]).includes(entity) ? 'core_business' : 'advanced';
   }
 
   // Summary Methods

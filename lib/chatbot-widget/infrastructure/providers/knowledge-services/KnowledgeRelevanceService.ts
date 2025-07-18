@@ -11,7 +11,7 @@
  */
 
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { OpenAIEmbeddingService, SimilarityMatch, EmbeddingLogContext } from '../openai/services/OpenAIEmbeddingService';
+import { OpenAIEmbeddingService, /* SimilarityMatch, */ EmbeddingLogContext } from '../openai/services/OpenAIEmbeddingService';
 
 export class KnowledgeRelevanceService {
   private embeddingService: OpenAIEmbeddingService;

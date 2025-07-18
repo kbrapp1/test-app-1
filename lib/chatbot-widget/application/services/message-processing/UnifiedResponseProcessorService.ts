@@ -10,10 +10,13 @@
  */
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ChatMessageFactoryService } from '../../../domain/services/utilities/ChatMessageFactoryService';
 import { MessageCostCalculationService } from '../../../domain/services/utilities/MessageCostCalculationService';
 import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
+import { WorkflowBoundaryMapper } from '../../mappers/WorkflowBoundaryMapper';
 
 export class UnifiedResponseProcessorService {
   constructor(
@@ -23,28 +26,17 @@ export class UnifiedResponseProcessorService {
 
   // Create bot message from unified processing result
   async createBotMessageFromUnifiedResult(
-    session: any,
-    unifiedResult: any,
+    session: ChatSession,
+    unifiedResult: Record<string, unknown>,
     logFileName: string,
-    config: any
+    config: ChatbotConfig
   ): Promise<ChatMessage> {
-    // Extract response content with fallback paths
-    let responseContent = unifiedResult?.response?.content || 
-                         unifiedResult?.analysis?.response?.content ||
-                         unifiedResult?.choices?.[0]?.message?.function_call?.arguments?.response?.content;
+    // Use boundary mapper for type-safe extraction
+    const workflowResponse = WorkflowBoundaryMapper.toWorkflowResponse(unifiedResult);
+    const unifiedAnalysis = WorkflowBoundaryMapper.toUnifiedAnalysis(unifiedResult);
     
-    // Parse function_call arguments if needed
-    if (!responseContent && unifiedResult?.choices?.[0]?.message?.function_call?.arguments) {
-      try {
-        const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
-        responseContent = functionArgs?.response?.content;
-      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Continue to fallback
-      }
-    }
-    
-    // Track fallback error if response content missing
-    if (!responseContent) {
+    // Track fallback error if response content is using fallback
+    if (workflowResponse.content.includes("I'm having trouble processing")) {
       await this.errorTrackingFacade.trackMessageProcessingError(
         'Response content extraction failed - using fallback response',
         {
@@ -57,69 +49,30 @@ export class UnifiedResponseProcessorService {
           }
         }
       );
-      
-      responseContent = "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.";
     }
     
-    // Extract confidence with fallback from multiple paths
-    let confidence = unifiedResult?.analysis?.primaryConfidence || 0;
-    
-    // Try parsing from function call if not in direct path
-    if (confidence === 0 && unifiedResult?.choices?.[0]?.message?.function_call?.arguments) {
-      try {
-        const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
-        confidence = functionArgs?.analysis?.primaryConfidence || 0;
-      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Use default
-      }
-    }
-
-    // Extract token usage from unified result
-    const tokenUsage = this.extractTokenUsage(unifiedResult);
-    
-    // Extract entity data from unified analysis with multiple paths
-    let entities = unifiedResult?.analysis?.entities || {};
-    if (Object.keys(entities).length === 0 && unifiedResult?.choices?.[0]?.message?.function_call?.arguments) {
-      try {
-        const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
-        entities = functionArgs?.analysis?.entities || {};
-      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Use empty
-      }
-    }
-    const entitiesExtracted = this.extractEntitiesFromUnified(entities);
-    
-    // Extract primary intent with multiple paths
-    let primaryIntent = unifiedResult?.analysis?.primaryIntent || 'unified_processing';
-    if (primaryIntent === 'unified_processing' && unifiedResult?.choices?.[0]?.message?.function_call?.arguments) {
-      try {
-        const functionArgs = JSON.parse(unifiedResult.choices[0].message.function_call.arguments);
-        primaryIntent = functionArgs?.analysis?.primaryIntent || 'unified_processing';
-      } catch (_parseError) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // Use default
-      }
-    }
+    // Extract entities from analysis
+    const entitiesExtracted = this.extractEntitiesFromUnified(unifiedAnalysis.entities);
     
     // Create bot message with full metadata using factory service
     let botMessage = ChatMessageFactoryService.createBotMessageWithFullMetadata(
       session.id,
-      responseContent,
-      unifiedResult?.model || 'gpt-4o-mini',
-      tokenUsage.promptTokens,
-      tokenUsage.completionTokens,
-      confidence,
-      primaryIntent,
+      workflowResponse.content,
+      workflowResponse.model || 'gpt-4o-mini',
+      workflowResponse.tokenUsage.promptTokens,
+      workflowResponse.tokenUsage.completionTokens,
+      workflowResponse.confidence,
+      unifiedAnalysis.primaryIntent,
       entitiesExtracted,
       0 // processingTime calculated by provider
     );
 
     // Add cost tracking using domain service
-    if (tokenUsage.promptTokens > 0 || tokenUsage.completionTokens > 0) {
-      const model = unifiedResult?.model || 'gpt-4o-mini';
+    if (workflowResponse.tokenUsage.promptTokens > 0 || workflowResponse.tokenUsage.completionTokens > 0) {
       const costBreakdown = MessageCostCalculationService.calculateCostBreakdown(
-        model,
-        tokenUsage.promptTokens,
-        tokenUsage.completionTokens
+        workflowResponse.model || 'gpt-4o-mini',
+        workflowResponse.tokenUsage.promptTokens,
+        workflowResponse.tokenUsage.completionTokens
       );
       
       botMessage = botMessage.addCostTracking(costBreakdown.totalCents, costBreakdown);
@@ -131,14 +84,15 @@ export class UnifiedResponseProcessorService {
   }
 
   // Extract token usage from unified API response
-  private extractTokenUsage(unifiedResult: any): {
+  private extractTokenUsage(unifiedResult: Record<string, unknown>): {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
   } {
-    const promptTokens = unifiedResult?.usage?.prompt_tokens || 0;
-    const completionTokens = unifiedResult?.usage?.completion_tokens || 0;
-    const totalTokens = unifiedResult?.usage?.total_tokens || promptTokens + completionTokens;
+    const usage = unifiedResult.usage as { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
+    const promptTokens = usage?.prompt_tokens || 0;
+    const completionTokens = usage?.completion_tokens || 0;
+    const totalTokens = usage?.total_tokens || promptTokens + completionTokens;
 
     return {
       promptTokens,
@@ -148,7 +102,7 @@ export class UnifiedResponseProcessorService {
   }
 
   // Extract entities from unified API response into factory service format
-  private extractEntitiesFromUnified(entities: any): Array<{
+  private extractEntitiesFromUnified(entities: unknown): Array<{
     type: string;
     value: string;
     confidence: number;

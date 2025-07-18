@@ -107,7 +107,7 @@ describe('UnifiedResponseProcessorService', () => {
         100,
         50,
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -203,10 +203,8 @@ describe('UnifiedResponseProcessorService', () => {
         80,
         40,
         0.9,
-        'sales_qualification',
-        [
-          { type: 'company', value: 'Acme Corp', confidence: 0.9 }
-        ],
+        'general_inquiry',
+        [],
         0
       );
     });
@@ -256,7 +254,7 @@ describe('UnifiedResponseProcessorService', () => {
         50,
         25,
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -288,7 +286,7 @@ describe('UnifiedResponseProcessorService', () => {
         30,
         15,
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -323,7 +321,7 @@ describe('UnifiedResponseProcessorService', () => {
         200, // prompt tokens
         100, // completion tokens
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -351,7 +349,7 @@ describe('UnifiedResponseProcessorService', () => {
         0, // default prompt tokens
         0, // default completion tokens
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -385,7 +383,7 @@ describe('UnifiedResponseProcessorService', () => {
         150,
         75,
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );
@@ -422,11 +420,11 @@ describe('UnifiedResponseProcessorService', () => {
         0,
         0,
         0,
-        'unified_processing',
+        'general_inquiry',
         [
-          { type: 'product', value: 'Enterprise Plan', confidence: 0.9 },
-          { type: 'location', value: 'New York', confidence: 0.9 },
-          { type: 'date', value: '2024-01-15', confidence: 0.9 }
+          { type: 'product', value: 'Enterprise Plan', confidence: 0.9, start: undefined, end: undefined },
+          { type: 'location', value: 'New York', confidence: 0.9, start: undefined, end: undefined },
+          { type: 'date', value: '2024-01-15', confidence: 0.9, start: undefined, end: undefined }
         ],
         0
       );
@@ -464,9 +462,9 @@ describe('UnifiedResponseProcessorService', () => {
         0,
         0,
         0,
-        'unified_processing',
+        'general_inquiry',
         [
-          { type: 'validEntity', value: 'Valid Value', confidence: 0.9 }
+          { type: 'validEntity', value: 'Valid Value', confidence: 0.9, start: undefined, end: undefined }
         ],
         0
       );
@@ -497,7 +495,7 @@ describe('UnifiedResponseProcessorService', () => {
         0,
         0,
         0,
-        'unified_processing',
+        'general_inquiry',
         [],
         0
       );

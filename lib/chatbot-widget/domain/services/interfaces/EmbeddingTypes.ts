@@ -37,6 +37,11 @@ export interface CacheStats {
 
 export interface CacheConfiguration {
   // AI: Removed cache size limits - let serverless platform handle memory management
+  enabled: boolean;
+  enableKnowledgeBaseCache: boolean;
+  enableUserQueryCache: boolean;
+  enablePdfDocumentCache: boolean;
+  cacheKeyPrefix?: string;
 }
 
 export enum CacheType {

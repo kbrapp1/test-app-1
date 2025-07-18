@@ -46,6 +46,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isOpen]);
 
   const formatCost = (cost: number) => {

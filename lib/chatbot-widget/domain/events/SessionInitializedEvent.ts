@@ -34,7 +34,7 @@ export class SessionInitializedEvent {
    * - Include all relevant context for event handlers
    * - Include cache warming metrics for performance monitoring
    */
-  toEventData(): Record<string, any> {
+  toEventData(): Record<string, string | boolean> {
     return {
       eventType: this.eventType,
       sessionId: this.sessionId,

@@ -1,4 +1,5 @@
 import { ChatSession, ChatSessionProps, SessionContext, LeadQualificationState, SessionStatus } from '../../../../domain/entities/ChatSession';
+import { AnsweredQuestion } from '../../../../domain/value-objects/session-management/ChatSessionTypes';
 
 /** Raw database record structure from Supabase */
 export interface RawChatSessionDbRecord {
@@ -6,8 +7,8 @@ export interface RawChatSessionDbRecord {
   chatbot_config_id: string;
   visitor_id: string;
   session_token: string;
-  context_data: any; // JSONB
-  lead_qualification_state: any; // JSONB
+  context_data: unknown; // JSONB
+  lead_qualification_state: unknown; // JSONB
   status: string;
   started_at: string;
   last_activity_at: string;
@@ -26,8 +27,8 @@ export interface InsertChatSessionData {
   chatbot_config_id: string;
   visitor_id: string;
   session_token: string;
-  context_data: any;
-  lead_qualification_state: any;
+  context_data: unknown;
+  lead_qualification_state: unknown;
   status: string;
   started_at: string;
   last_activity_at: string;
@@ -40,8 +41,8 @@ export interface InsertChatSessionData {
 
 /** Update data structure for database operations */
 export interface UpdateChatSessionData {
-  context_data?: any;
-  lead_qualification_state?: any;
+  context_data?: unknown;
+  lead_qualification_state?: unknown;
   status?: string;
   last_activity_at?: string;
   ended_at?: string;
@@ -110,16 +111,22 @@ export class ChatSessionMapper {
   }
 
   /** Map JSONB context data to domain object - MODERN: Use accumulated entities */
-  private static mapContextData(data: any): SessionContext {
+  private static mapContextData(data: unknown): SessionContext {
+    const context = data as Record<string, unknown> | null | undefined;
     return {
-      previousVisits: data?.previousVisits || 0,
-      pageViews: data?.pageViews || [],
-      conversationSummary: data?.conversationSummary || '',
-      topics: data?.topics || [],
-      interests: data?.interests || [],
-      engagementScore: data?.engagementScore || 50,
+      previousVisits: context?.previousVisits as number || 0,
+      pageViews: ((context?.pageViews as Array<{ url: string; title: string; timestamp: string; timeOnPage: number }>) || []).map(pv => ({
+        ...pv,
+        timestamp: new Date(pv.timestamp)
+      })),
+      conversationSummary: {
+        fullSummary: (context?.conversationSummary as string) || ''
+      },
+      topics: context?.topics as string[] || [],
+      interests: context?.interests as string[] || [],
+      engagementScore: context?.engagementScore as number || 50,
       // MODERN: Legacy fields removed, entity data is in accumulated entities
-      accumulatedEntities: data?.accumulatedEntities || {
+      accumulatedEntities: (context?.accumulatedEntities as SessionContext['accumulatedEntities']) || {
         decisionMakers: [],
         painPoints: [],
         integrationNeeds: [],
@@ -129,13 +136,14 @@ export class ChatSessionMapper {
   }
 
   /** Map JSONB lead qualification state to domain object */
-  private static mapLeadQualificationState(data: any): LeadQualificationState {
+  private static mapLeadQualificationState(data: unknown): LeadQualificationState {
+    const state = data as Record<string, unknown> | null | undefined;
     return {
-      currentStep: data?.currentStep || 0,
-      answeredQuestions: data?.answeredQuestions || [],
-      qualificationStatus: data?.qualificationStatus || 'not_started',
-      isQualified: data?.isQualified || false,
-      capturedAt: data?.capturedAt ? new Date(data.capturedAt) : undefined,
+      currentStep: state?.currentStep as number || 0,
+      answeredQuestions: (state?.answeredQuestions as AnsweredQuestion[]) || [],
+      qualificationStatus: (state?.qualificationStatus as 'not_started' | 'in_progress' | 'completed' | 'skipped') || 'not_started',
+      isQualified: state?.isQualified as boolean || false,
+      capturedAt: state?.capturedAt ? new Date(state.capturedAt as string) : undefined,
     };
   }
 } 

@@ -10,6 +10,9 @@ import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKno
 // Domain service interfaces
 import { IChatbotLoggingService } from '../../domain/services/interfaces/IChatbotLoggingService';
 
+// Domain types for conversation flow
+import { AIConversationFlowDecision, ConversationFlowState } from '../../domain/services/conversation-management/ConversationFlowService';
+
 // Application services
 import { LeadManagementService } from '../../application/services/lead-management/LeadManagementService';
 import { WebsiteKnowledgeApplicationService } from '../../application/services/WebsiteKnowledgeApplicationService';
@@ -161,11 +164,11 @@ export class ChatbotWidgetCompositionRoot {
     );
   }
 
-  static processAIFlowDecision(decision: any, currentState: any) {
+  static processAIFlowDecision(decision: AIConversationFlowDecision, currentState: ConversationFlowState) {
     return DomainServiceCompositionService.processAIFlowDecision(decision, currentState);
   }
 
-  static shouldTriggerLeadCapture(decision: any) {
+  static shouldTriggerLeadCapture(decision: AIConversationFlowDecision) {
     return DomainServiceCompositionService.shouldTriggerLeadCapture(decision);
   }
 

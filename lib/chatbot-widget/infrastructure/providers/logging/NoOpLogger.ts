@@ -8,10 +8,7 @@
 
 import { 
   ISessionLogger, 
-  IOperationLogger, 
-  LogContext, 
-  LogLevel, 
-  LogMetrics 
+  IOperationLogger
 } from '../../../domain/services/interfaces/IChatbotLoggingService';
 
 export class NoOpLogger implements ISessionLogger, IOperationLogger {

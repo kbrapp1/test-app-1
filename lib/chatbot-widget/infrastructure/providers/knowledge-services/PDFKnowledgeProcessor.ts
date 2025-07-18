@@ -33,7 +33,7 @@ export class PDFKnowledgeProcessor {
     pdfContent: string,
     metadata: PDFDocumentMetadata,
     organizationId: string,
-    chatbotConfigId: string
+    _chatbotConfigId: string
   ): Promise<KnowledgeItem[]> {
     try {
       // SECURITY: Validate organization context for multi-tenant isolation

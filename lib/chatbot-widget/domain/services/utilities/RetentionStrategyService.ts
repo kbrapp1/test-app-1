@@ -9,12 +9,10 @@
  * - Keep under 150 lines - focused implementation
  */
 
-import { ChatMessage } from '../../entities/ChatMessage';
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 import { 
   CategorizedMessages, 
   RetentionRecommendation,
-  ScoredMessage,
   PrioritizedMessages
 } from './types/RelevanceTypes';
 

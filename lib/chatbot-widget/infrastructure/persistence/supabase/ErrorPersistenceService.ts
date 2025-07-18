@@ -80,7 +80,7 @@ export class ErrorPersistenceService {
     errorData: ErrorPersistenceData,
     categorization: ErrorCategorization,
     context: ErrorPersistenceContext
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return {
       error_code: errorData.errorCode,
       error_message: errorData.errorMessage,
@@ -101,10 +101,10 @@ export class ErrorPersistenceService {
 
   private enrichDataForTable(
     tableName: string,
-    baseData: Record<string, any>,
+    baseData: Record<string, unknown>,
     context: ErrorPersistenceContext,
     errorData: ErrorPersistenceData
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     const enrichedData = { ...baseData };
 
     switch (tableName) {
@@ -123,10 +123,10 @@ export class ErrorPersistenceService {
   }
 
   private enrichConversationErrorData(
-    baseData: Record<string, any>,
+    baseData: Record<string, unknown>,
     context: ErrorPersistenceContext,
     errorData: ErrorPersistenceData
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return {
       ...baseData,
       conversation_id: context.conversationId,
@@ -143,10 +143,10 @@ export class ErrorPersistenceService {
   }
 
   private enrichKnowledgeErrorData(
-    baseData: Record<string, any>,
+    baseData: Record<string, unknown>,
     context: ErrorPersistenceContext,
     errorData: ErrorPersistenceData
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return {
       ...baseData,
       chatbot_config_id: errorData.errorContext?.chatbotConfigId || null,
@@ -168,10 +168,10 @@ export class ErrorPersistenceService {
   }
 
   private enrichSystemErrorData(
-    baseData: Record<string, any>,
+    baseData: Record<string, unknown>,
     context: ErrorPersistenceContext,
     errorData: ErrorPersistenceData
-  ): Record<string, any> {
+  ): Record<string, unknown> {
     return {
       ...baseData,
       chatbot_config_id: errorData.errorContext?.chatbotConfigId || null,
@@ -200,7 +200,7 @@ export class ErrorPersistenceService {
     errorData: ErrorPersistenceData,
     categorization: ErrorCategorization,
     context: ErrorPersistenceContext,
-    dbError: any
+    dbError: unknown
   ): void {
     const fallbackLog = {
       errorCode: errorData.errorCode,

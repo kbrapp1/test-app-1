@@ -5,7 +5,7 @@ import {
   KnowledgeRetrievalContext 
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
-import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
+import { IEmbeddingService } from './interfaces/IEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { 
   KnowledgeRetrievalError as _KnowledgeRetrievalError, 
@@ -42,7 +42,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
   
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
-    private readonly embeddingService: OpenAIEmbeddingService,
+    private readonly embeddingService: IEmbeddingService,
     private readonly organizationId: string,
     private readonly chatbotConfigId: string
   ) {

@@ -1,7 +1,6 @@
 import { ChatMessage } from '../../entities/ChatMessage';
 import { ChatSession } from '../../entities/ChatSession';
 import { ChatbotConfig } from '../../entities/ChatbotConfig';
-import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 
 export interface IntentClassificationContext {
   chatbotConfig: ChatbotConfig;
@@ -22,6 +21,6 @@ export interface IIntentClassificationService {
   /** Unified processing method for complete chatbot interaction */
   processChatbotInteractionComplete(
     message: string,
-    context: any
-  ): Promise<any>;
+    context: unknown
+  ): Promise<unknown>;
 } 

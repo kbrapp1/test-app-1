@@ -49,25 +49,25 @@ export interface ISessionLogger {
    * Log a direct message synchronously to ensure proper ordering
    * FIXED: Added for critical step ordering in chatbot processing
    */
-  logMessageSync?(message: string, data?: any, level?: LogLevel): void;
+  logMessageSync?(message: string, data?: unknown, level?: LogLevel): void;
 
   /** Log a processing step with structured data */
-  logStep(step: string, data?: any, level?: LogLevel): void;
+  logStep(step: string, data?: unknown, level?: LogLevel): void;
 
   /** Log an error with context and stack trace */
-  logError(error: Error, context?: any): void;
+  logError(error: Error, context?: unknown): void;
 
   /** Log performance metrics and timing data */
   logMetrics(operation: string, metrics: LogMetrics): void;
 
   /** Log API call details with request/response data */
-  logApiCall(endpoint: string, request: any, response: any, duration: number): void;
+  logApiCall(endpoint: string, request: unknown, response: unknown, duration: number): void;
 
   /** Log cache operations (hits, misses, warming) */
-  logCache(operation: 'hit' | 'miss' | 'warm' | 'evict', key: string, details?: any): void;
+  logCache(operation: 'hit' | 'miss' | 'warm' | 'evict', key: string, details?: unknown): void;
 
   /** Log business domain events */
-  logDomainEvent(eventName: string, eventData: any): void;
+  logDomainEvent(eventName: string, eventData: unknown): void;
 
   /** Flush all pending log entries to storage */
   flush(): Promise<void>;
@@ -81,13 +81,13 @@ export interface IOperationLogger {
   start(context?: LogContext): void;
 
   /** Log operation completion with results */
-  complete(result?: any, metrics?: LogMetrics): void;
+  complete(result?: unknown, metrics?: LogMetrics): void;
 
   /** Log operation failure with error details */
-  fail(error: Error, context?: any): void;
+  fail(error: Error, context?: unknown): void;
 
   /** Add contextual information to operation */
-  addContext(key: string, value: any): void;
+  addContext(key: string, value: unknown): void;
 
   /** Get operation duration in milliseconds */
   getDuration(): number;

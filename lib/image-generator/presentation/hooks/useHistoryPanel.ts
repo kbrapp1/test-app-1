@@ -34,6 +34,7 @@ export const useHistoryPanel = (): UseHistoryPanelReturn => {
       }, 200); // match CSS transition duration
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isOpen, isMounted]);
 
   const toggleHistory = useCallback(() => {

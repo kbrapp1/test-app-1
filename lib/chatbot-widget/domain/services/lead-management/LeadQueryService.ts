@@ -11,7 +11,6 @@
  * - Keep under 200 lines following @golden-rule patterns
  */
 
-import { Lead } from '../../entities/Lead';
 import { FollowUpStatus } from '../../entities/LeadLifecycleManager';
 
 // Define QualificationStatus locally since we removed LeadScoringService

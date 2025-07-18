@@ -11,18 +11,16 @@
  * - Lead scores are now stored as provided by external API
  */
 
-import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
+import { ILeadRepository, LeadAnalytics, LeadSearchFilters } from '../../../domain/repositories/ILeadRepository';
 import { Lead } from '../../../domain/entities/Lead';
 import { createClient } from '../../../../supabase/server';
 import { LeadMapper, RawLeadDbRecord } from './mappers/LeadMapper';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { FollowUpStatus } from '../../../domain/entities/LeadLifecycleManager';
 import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
-import { LeadQueryService, LeadFilters as _LeadFilters } from './services/LeadQueryService';
+import { LeadQueryService, LeadFilters, QualificationStatus } from './services/LeadQueryService';
 import { LeadAnalyticsService } from './services/LeadAnalyticsService';
 
-// Define QualificationStatus locally since we removed LeadScoringService
-export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export class LeadSupabaseRepository implements ILeadRepository {
   private client: SupabaseClient;
@@ -96,7 +94,7 @@ export class LeadSupabaseRepository implements ILeadRepository {
     organizationId: string,
     page: number,
     limit: number,
-    filters?: any
+    filters?: LeadSearchFilters
   ): Promise<{
     leads: Lead[];
     total: number;
@@ -105,8 +103,19 @@ export class LeadSupabaseRepository implements ILeadRepository {
     totalPages: number;
   }> {
     try {
-      const result = await this.queryService.executePaginatedQuery(organizationId, page, limit, filters);
-      const leads = result.data.map(record => LeadMapper.toDomain(record as RawLeadDbRecord));
+      // Convert LeadSearchFilters to LeadFilters
+      const convertedFilters: LeadFilters | undefined = filters ? {
+        assignedTo: Array.isArray(filters.assignedTo) ? filters.assignedTo[0] : undefined,
+        dateFrom: filters.dateFrom || filters.dateRange?.start,
+        dateTo: filters.dateTo || filters.dateRange?.end,
+        minScore: filters.score?.min,
+        maxScore: filters.score?.max,
+        tags: filters.tags,
+        searchTerm: undefined
+      } : undefined;
+      
+      const result = await this.queryService.executePaginatedQuery(organizationId, page, limit, convertedFilters);
+      const leads = result.data.map((record: RawLeadDbRecord) => LeadMapper.toDomain(record));
       
       return {
         leads,
@@ -160,7 +169,7 @@ export class LeadSupabaseRepository implements ILeadRepository {
   async searchByQuery(organizationId: string, query: string, limit: number): Promise<Lead[]> {
     try {
       const data = await this.queryService.executeSearchQuery(organizationId, query, limit);
-      return data.map(record => LeadMapper.toDomain(record as RawLeadDbRecord));
+      return data.map((record: RawLeadDbRecord) => LeadMapper.toDomain(record));
     } catch (error) {
       throw new DatabaseError(`Failed to search leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -175,12 +184,24 @@ export class LeadSupabaseRepository implements ILeadRepository {
     }
   }
 
-  async findForExport(organizationId: string, filters?: any): Promise<Lead[]> {
+  async findForExport(organizationId: string, filters?: Record<string, unknown>): Promise<Lead[]> {
     try {
       // Use the existing base query method with filters
       let query = this.queryService.buildBaseQuery(organizationId);
       if (filters) {
-        query = this.queryService.applyFilters(query, filters);
+        // Convert generic filters to typed filters safely
+        const typedFilters: Partial<LeadFilters> = {
+          qualificationStatus: filters.qualificationStatus as QualificationStatus,
+          followUpStatus: filters.followUpStatus as FollowUpStatus,
+          assignedTo: filters.assignedTo as string,
+          dateFrom: filters.dateFrom as Date,
+          dateTo: filters.dateTo as Date,
+          minScore: filters.minScore as number,
+          maxScore: filters.maxScore as number,
+          tags: filters.tags as string[],
+          searchTerm: filters.searchTerm as string
+        };
+        query = this.queryService.applyFilters(query, typedFilters);
       }
       
       const { data, error } = await query.order('captured_at', { ascending: false });
@@ -189,13 +210,13 @@ export class LeadSupabaseRepository implements ILeadRepository {
         throw error;
       }
       
-      return (data || []).map((record: any) => LeadMapper.toDomain(record as RawLeadDbRecord));
+      return (data || []).map((record: unknown) => LeadMapper.toDomain(record as RawLeadDbRecord));
     } catch (error) {
       throw new DatabaseError(`Failed to find leads for export: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async getAnalytics(organizationId: string, dateFrom: Date, dateTo: Date): Promise<any> {
+  async getAnalytics(organizationId: string, dateFrom: Date, dateTo: Date): Promise<LeadAnalytics> {
     try {
       return await this.analyticsService.calculateAnalytics(organizationId, dateFrom, dateTo);
     } catch (error) {
@@ -264,7 +285,7 @@ export class LeadSupabaseRepository implements ILeadRepository {
   async findTopByScore(organizationId: string, limit: number): Promise<Lead[]> {
     try {
       const data = await this.queryService.findTopByScore(organizationId, limit);
-      return (data || []).map((record: any) => LeadMapper.toDomain(record as RawLeadDbRecord));
+      return (data || []).map((record: unknown) => LeadMapper.toDomain(record as RawLeadDbRecord));
     } catch (error) {
       throw new DatabaseError(`Failed to find top leads by score: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -282,7 +303,7 @@ export class LeadSupabaseRepository implements ILeadRepository {
   async findRecent(organizationId: string, limit: number): Promise<Lead[]> {
     try {
       const data = await this.queryService.findRecent(organizationId, limit);
-      return (data || []).map((record: any) => LeadMapper.toDomain(record as RawLeadDbRecord));
+      return (data || []).map((record: unknown) => LeadMapper.toDomain(record as RawLeadDbRecord));
     } catch (error) {
       throw new DatabaseError(`Failed to find recent leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -356,7 +377,7 @@ export class LeadSupabaseRepository implements ILeadRepository {
     tags?: { add?: string[]; remove?: string[] };
   }): Promise<number> {
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       
       if (updates.followUpStatus) {
         updateData.follow_up_status = updates.followUpStatus;

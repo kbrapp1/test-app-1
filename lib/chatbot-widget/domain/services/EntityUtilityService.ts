@@ -172,7 +172,7 @@ export class EntityUtilityService {
   static findEntitiesByConfidence(
     props: AccumulatedEntitiesProps,
     minConfidence: number = 0.7
-  ): EntityWithMetadata<any>[] {
+  ): EntityWithMetadata<string | 'low' | 'medium' | 'high' | 'email' | 'phone' | 'meeting'>[] {
     const allEntities = [
       ...props.goals,
       ...props.decisionMakers,
@@ -197,14 +197,14 @@ export class EntityUtilityService {
   static getEntityExtractionTimeline(props: AccumulatedEntitiesProps): Array<{
     date: Date;
     entityType: string;
-    value: any;
+    value: string;
     confidence: number;
     sourceMessageId: string;
   }> {
     const timeline: Array<{
       date: Date;
       entityType: string;
-      value: any;
+      value: string;
       confidence: number;
       sourceMessageId: string;
     }> = [];

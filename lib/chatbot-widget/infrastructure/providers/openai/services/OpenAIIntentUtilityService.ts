@@ -54,7 +54,13 @@ export class OpenAIIntentUtilityService {
    * - Handle missing fields gracefully
    */
   static convertToIntentResult(
-    result: any, 
+    result: {
+      intent: IntentType;
+      confidence: number;
+      entities: Record<string, unknown>;
+      reasoning: string;
+      alternativeIntents?: Array<{ intent: IntentType; confidence: number }>;
+    }, 
     processingTime: number, 
     config: OpenAIIntentConfig
   ): IntentResult {

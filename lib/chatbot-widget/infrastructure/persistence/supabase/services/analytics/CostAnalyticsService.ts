@@ -147,7 +147,7 @@ export class CostAnalyticsService {
 
   calculateCostProjections(
     messages: ChatMessage[],
-    projectionDays: number = 30
+    _projectionDays: number = 30
   ): {
     dailyAvgCostCents: number;
     projectedMonthlyCostCents: number;

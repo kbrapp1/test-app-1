@@ -9,7 +9,7 @@
 
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import {
-  CategoryMapping,
+  // CategoryMapping,
   KnowledgeProcessingContext,
   KnowledgeConversionResult,
   FAQ_CATEGORY_MAPPINGS
@@ -71,7 +71,7 @@ export class KnowledgeConverterService {
   }
 
   static convertFaqsToKnowledgeItems(
-    faqs: any[],
+    faqs: Record<string, unknown>[],
     context: KnowledgeProcessingContext
   ): KnowledgeConversionResult {
     const startTime = Date.now();

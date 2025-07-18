@@ -65,6 +65,7 @@ export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
       document.addEventListener('keydown', handleEscapeKey);
       return () => document.removeEventListener('keydown', handleEscapeKey);
     }
+    return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, multiSelect.selectedAssets.length, multiSelect.selectedFolders.length, multiSelect.clearSelection, multiSelect.exitSelectionMode]);
 
@@ -89,6 +90,7 @@ export const useGalleryEventHandlers = (props: GalleryEventHandlersProps) => {
       document.addEventListener('keydown', handleKeyboardShortcuts);
       return () => document.removeEventListener('keydown', handleKeyboardShortcuts);
     }
+    return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableMultiSelect, galleryData.items, multiSelect.toggleItem]);
 }; 

@@ -11,7 +11,7 @@
  * - Lead scores are now provided externally from OpenAI API
  */
 
-import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
+import { ILeadRepository, LeadSearchFilters as _RepoLeadSearchFilters, LeadAnalytics as _LeadAnalytics } from '../../../domain/repositories/ILeadRepository';
 import { Lead } from '../../../domain/entities/Lead';
 import { LeadDto, LeadAnalyticsDto } from '../../dto/LeadDto';
 import { LeadMapper } from '../../mappers/LeadMapper';
@@ -27,7 +27,7 @@ export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualif
 export interface LeadSearchFilters {
   qualificationStatus?: QualificationStatus;
   followUpStatus?: FollowUpStatus;
-  assignedTo?: string;
+  assignedTo?: string | string[];
   dateFrom?: Date;
   dateTo?: Date;
   minScore?: number;
@@ -89,15 +89,15 @@ export class LeadQueryService {
       page,
       limit,
       {
-        qualificationStatus: filters.qualificationStatus,
-        followUpStatus: filters.followUpStatus,
-        assignedTo: filters.assignedTo,
+        status: filters.qualificationStatus ? [filters.qualificationStatus] : undefined,
+        assignedTo: typeof filters.assignedTo === 'string' ? [filters.assignedTo] : filters.assignedTo,
         dateFrom: filters.dateFrom,
         dateTo: filters.dateTo,
-        minScore: filters.minScore,
-        maxScore: filters.maxScore,
+        score: filters.minScore !== undefined || filters.maxScore !== undefined ? {
+          min: filters.minScore,
+          max: filters.maxScore
+        } : undefined,
         tags: filters.tags,
-        searchTerm: filters.searchTerm,
       }
     );
 
@@ -139,10 +139,9 @@ export class LeadQueryService {
     filters: LeadSearchFilters = {}
   ): Promise<LeadDto[]> {
     const leads = await this.leadRepository.findForExport(organizationId, {
-      qualificationStatus: filters.qualificationStatus,
-      followUpStatus: filters.followUpStatus,
-      dateFrom: filters.dateFrom,
-      dateTo: filters.dateTo,
+      qualificationStatus: filters.qualificationStatus ? [filters.qualificationStatus] : undefined,
+      assignedTo: typeof filters.assignedTo === 'string' ? [filters.assignedTo] : filters.assignedTo,
+      dateRange: filters.dateFrom && filters.dateTo ? { start: filters.dateFrom, end: filters.dateTo } : undefined,
     });
 
     return leads.map(lead => this.leadMapper.toDto(lead));
@@ -187,7 +186,12 @@ export class LeadQueryService {
       organizationId,
       1,
       1,
-      filters
+      {
+        assignedTo: typeof filters.assignedTo === 'string' ? [filters.assignedTo] : filters.assignedTo,
+        status: filters.qualificationStatus ? [filters.qualificationStatus] : undefined,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+      }
     );
     
     return result.total;

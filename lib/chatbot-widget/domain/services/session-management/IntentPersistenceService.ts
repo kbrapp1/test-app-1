@@ -1,5 +1,5 @@
 import { SessionContext } from '../../value-objects/session-management/ChatSessionTypes';
-import { ChatMessage } from '../../entities/ChatMessage';
+// import { IntentType } from '../../value-objects/message-processing/IntentResult';
 
 /**
  * Intent Persistence Service - 2025 Context Memory Implementation
@@ -12,20 +12,21 @@ import { ChatMessage } from '../../entities/ChatMessage';
  */
 export class IntentPersistenceService {
 
-  /** Update session with new intent data and maintain context flags */
+  /** Update session with new intent data and maintain context flags */
   static updateIntentHistory(
     sessionContext: SessionContext,
-    intentData: any,
+    intentData: unknown,
     messageId: string,
     turnNumber: number
   ): SessionContext {
-    const currentIntentHistory = sessionContext.intentHistory || this.createInitialIntentHistory();
+    const currentIntentHistory: NonNullable<SessionContext['intentHistory']> = sessionContext.intentHistory || this.createInitialIntentHistory();
     
     // Add new intent to sequence
+    const intent = intentData as { primary?: string; confidence?: number } | null | undefined;
     const newIntentEntry = {
       turn: turnNumber,
-      intent: intentData?.primary || 'unknown',
-      confidence: intentData?.confidence || 0,
+      intent: intent?.primary || 'unknown',
+      confidence: intent?.confidence || 0,
       timestamp: new Date().toISOString(),
       messageId: messageId
     };
@@ -60,7 +61,7 @@ export class IntentPersistenceService {
       ...sessionContext,
       intentHistory: {
         businessContextEstablished,
-        lastBusinessIntent: this.isBusinessIntent(intentData) ? intentData.primary : currentIntentHistory.lastBusinessIntent,
+        lastBusinessIntent: this.isBusinessIntent(intentData) ? (intent?.primary || '') : currentIntentHistory.lastBusinessIntent,
         lastBusinessTurn: this.isBusinessIntent(intentData) ? turnNumber : currentIntentHistory.lastBusinessTurn,
         currentConversationMode: conversationMode,
         intentSequence: updatedSequence,
@@ -69,7 +70,7 @@ export class IntentPersistenceService {
     };
   }
 
-  /** Check if knowledge base should be injected based on intent history */
+  /** Check if knowledge base should be injected based on intent history */
   static shouldInjectKnowledgeBase(sessionContext: SessionContext): boolean {
     const intentHistory = sessionContext.intentHistory;
     
@@ -89,7 +90,7 @@ export class IntentPersistenceService {
            intentHistory.currentConversationMode === 'qualification';
   }
 
-  /** Get business context strength for prompt weighting */
+  /** Get business context strength for prompt weighting */
   static getBusinessContextStrength(sessionContext: SessionContext): number {
     const intentHistory = sessionContext.intentHistory;
     
@@ -111,8 +112,8 @@ export class IntentPersistenceService {
     return strength;
   }
 
-  /** Create initial intent history structure */
-  private static createInitialIntentHistory() {
+  /** Create initial intent history structure */
+  private static createInitialIntentHistory(): NonNullable<SessionContext['intentHistory']> {
     return {
       businessContextEstablished: false,
       lastBusinessIntent: '',
@@ -130,26 +131,40 @@ export class IntentPersistenceService {
     };
   }
 
-  /** Update context flags based on new intent */
-  private static updateContextFlags(currentFlags: any, intentData: any, turnNumber: number) {
-    const newFlags = { ...currentFlags };
+  /** Update context flags based on new intent */
+  private static updateContextFlags(
+    currentFlags: NonNullable<SessionContext['intentHistory']>['contextFlags'], 
+    intentData: unknown, 
+    turnNumber: number
+  ): NonNullable<SessionContext['intentHistory']>['contextFlags'] {
+    const intent = intentData as { primary?: string } | null | undefined;
+    
+    // Start with current flags or defaults
+    const newFlags: NonNullable<SessionContext['intentHistory']>['contextFlags'] = {
+      productInterestEstablished: currentFlags.productInterestEstablished,
+      pricingDiscussed: currentFlags.pricingDiscussed,
+      comparisonMode: currentFlags.comparisonMode,
+      companyInquiryMade: currentFlags.companyInquiryMade,
+      knowledgeBaseNeeded: currentFlags.knowledgeBaseNeeded,
+      lastBusinessQuestionTurn: currentFlags.lastBusinessQuestionTurn
+    };
 
-    if (intentData?.primary === 'product_inquiry' || intentData?.primary === 'feature_inquiry') {
+    if (intent?.primary === 'product_inquiry' || intent?.primary === 'feature_inquiry') {
       newFlags.productInterestEstablished = true;
       newFlags.knowledgeBaseNeeded = true;
     }
 
-    if (intentData?.primary === 'pricing_inquiry' || intentData?.primary === 'cost_inquiry') {
+    if (intent?.primary === 'pricing_inquiry' || intent?.primary === 'cost_inquiry') {
       newFlags.pricingDiscussed = true;
       newFlags.knowledgeBaseNeeded = true;
     }
 
-    if (intentData?.primary === 'comparison_inquiry' || intentData?.primary === 'competitor_inquiry') {
+    if (intent?.primary === 'comparison_inquiry' || intent?.primary === 'competitor_inquiry') {
       newFlags.comparisonMode = true;
       newFlags.knowledgeBaseNeeded = true;
     }
 
-    if (intentData?.primary === 'company_inquiry' || intentData?.primary === 'business_inquiry') {
+    if (intent?.primary === 'company_inquiry' || intent?.primary === 'business_inquiry') {
       newFlags.companyInquiryMade = true;
       newFlags.knowledgeBaseNeeded = true;
       newFlags.lastBusinessQuestionTurn = turnNumber;
@@ -158,10 +173,10 @@ export class IntentPersistenceService {
     return newFlags;
   }
 
-  /** Determine if business context should be established */
+  /** Determine if business context should be established */
   private static determineBusinessContextStatus(
-    intentData: any, 
-    contextFlags: any, 
+    intentData: unknown, 
+    contextFlags: NonNullable<SessionContext['intentHistory']>['contextFlags'], 
     currentStatus: boolean
   ): boolean {
     // Once established, maintain unless explicitly cleared
@@ -173,10 +188,10 @@ export class IntentPersistenceService {
            contextFlags.companyInquiryMade;
   }
 
-  /** Determine current conversation mode */
+  /** Determine current conversation mode */
   private static determineConversationMode(
-    intentData: any,
-    contextFlags: any,
+    intentData: unknown,
+    contextFlags: NonNullable<SessionContext['intentHistory']>['contextFlags'],
     businessContextEstablished: boolean
   ): 'greeting' | 'business' | 'casual' | 'qualification' {
     if (this.isBusinessIntent(intentData)) {
@@ -187,16 +202,17 @@ export class IntentPersistenceService {
       return 'qualification';
     }
 
-    if (intentData?.primary === 'greeting') {
+    const intent = intentData as { primary?: string } | null | undefined;
+    if (intent?.primary === 'greeting') {
       return businessContextEstablished ? 'casual' : 'greeting';
     }
 
     return businessContextEstablished ? 'casual' : 'greeting';
   }
 
-  /** Check if intent is business-related */
-  private static isBusinessIntent(intentData: any): boolean {
-    const businessIntents = [
+  /** Check if intent is business-related */
+  private static isBusinessIntent(intentData: unknown): boolean {
+    const businessIntents: string[] = [
       'company_inquiry',
       'business_inquiry', 
       'product_inquiry',
@@ -208,20 +224,21 @@ export class IntentPersistenceService {
       'faq_general'
     ];
 
-    return businessIntents.includes(intentData?.primary);
+    const intent = intentData as { primary?: string } | null | undefined;
+    return businessIntents.includes(intent?.primary || '');
   }
 
-  /** Get turns since last business intent */
-  private static getTurnsSinceLastBusiness(intentHistory: any): number {
+  /** Get turns since last business intent */
+  private static getTurnsSinceLastBusiness(intentHistory: NonNullable<SessionContext['intentHistory']>): number {
     const lastSequenceEntry = intentHistory.intentSequence[intentHistory.intentSequence.length - 1];
     const currentTurn = lastSequenceEntry?.turn || 0;
     return currentTurn - intentHistory.lastBusinessTurn;
   }
 
-  /** Count business intents in history */
-  private static getBusinessIntentCount(intentHistory: any): number {
-    return intentHistory.intentSequence.filter((entry: any) => 
+  /** Count business intents in history */
+  private static getBusinessIntentCount(intentHistory: NonNullable<SessionContext['intentHistory']>): number {
+    return intentHistory.intentSequence.filter(entry => 
       this.isBusinessIntent({ primary: entry.intent })
     ).length;
   }
-} 
+}

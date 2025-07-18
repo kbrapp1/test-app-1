@@ -18,7 +18,8 @@ import {
   ConfidenceBasedEntityType,
   EntityOperationContext,
   EntityCounts,
-  EntitySummary
+  EntitySummary,
+  SerializedAccumulatedEntities
 } from '../../types/AccumulatedEntityTypes';
 import { EntityAccumulationStrategies } from '../../services/EntityAccumulationStrategies';
 import { EntitySerializationService } from '../../services/EntitySerializationService';
@@ -38,7 +39,7 @@ export class AccumulatedEntities {
   }
 
   // Create AccumulatedEntities from stored object (deserialization)
-  static fromObject(storedData: any): AccumulatedEntities {
+  static fromObject(storedData: SerializedAccumulatedEntities | Record<string, unknown>): AccumulatedEntities {
     const props = EntitySerializationService.deserializeAccumulatedEntities(storedData);
     return new AccumulatedEntities(props);
   }
@@ -149,7 +150,7 @@ export class AccumulatedEntities {
   withRemovedEntity(
     entityType: AdditiveEntityType,
     valueToRemove: string,
-    messageId: string
+    _messageId: string
   ): AccumulatedEntities {
     const existingEntities = this.props[entityType];
     const updatedEntities = EntityAccumulationStrategies.removeFromAdditiveArray(
@@ -207,7 +208,7 @@ export class AccumulatedEntities {
   }
 
   // Convert to plain object for serialization
-  toPlainObject(): any {
+  toPlainObject(): SerializedAccumulatedEntities {
     return EntitySerializationService.serializeAccumulatedEntities(this.props);
   }
 

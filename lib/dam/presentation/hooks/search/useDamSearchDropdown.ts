@@ -101,6 +101,7 @@ export function useDamSearchDropdown({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isDropdownOpen, searchContainerRef]);
 
   // Close dropdown when main search term changes (user navigated to search results)

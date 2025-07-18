@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { getActiveOrganizationId } from '@/lib/auth';
@@ -11,7 +12,9 @@ import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/
  * Process user chat message and return AI response
  */
 async function postHandler(
-  request: NextRequest
+  request: NextRequest,
+  _user: User,
+  _supabase: SupabaseClient
 ) {
   // Check if chatbot widget feature is enabled
   await checkChatbotWidgetFeatureFlag();
@@ -93,4 +96,4 @@ async function postHandler(
 }
 
 // Export the POST handler with authentication and error handling
-export const POST = withErrorHandling(withAuth(postHandler as any) as any);
+export const POST = withErrorHandling(withAuth(postHandler) as (...args: unknown[]) => Promise<NextResponse>);

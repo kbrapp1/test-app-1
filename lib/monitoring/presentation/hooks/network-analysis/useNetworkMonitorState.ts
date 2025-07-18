@@ -26,6 +26,7 @@ export function useNetworkMonitorState(isOpen: boolean, autoRefresh: boolean = t
       const interval = setInterval(refreshStats, 2000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [isOpen, autoRefresh, refreshStats]);
 
   // Memoize handlers to prevent unnecessary re-renders

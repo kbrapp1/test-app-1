@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { User, SupabaseClient } from '@supabase/supabase-js';
 import { withAuth } from '@/lib/supabase/auth-middleware';
 import { withErrorHandling } from '@/lib/middleware/error';
 import { ChatbotWidgetCompositionRoot } from '@/lib/chatbot-widget/infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -17,7 +18,9 @@ import { checkChatbotWidgetFeatureFlag } from '@/lib/chatbot-widget/application/
  * - Return comprehensive session information including cache status
  */
 async function postHandler(
-  request: NextRequest
+  request: NextRequest,
+  _user: User,
+  _supabase: SupabaseClient
 ) {
   const body = await request.json();
   const { 
@@ -103,7 +106,9 @@ async function postHandler(
  * Retrieve session information
  */
 async function getHandler(
-  request: NextRequest
+  request: NextRequest,
+  _user: User,
+  _supabase: SupabaseClient
 ) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');
@@ -151,5 +156,5 @@ async function getHandler(
   }
 }
 
-export const POST = withErrorHandling(withAuth(postHandler as any) as any);
-export const GET = withErrorHandling(withAuth(getHandler as any) as any); 
+export const POST = withErrorHandling(withAuth(postHandler) as (...args: unknown[]) => Promise<NextResponse>);
+export const GET = withErrorHandling(withAuth(getHandler) as (...args: unknown[]) => Promise<NextResponse>); 

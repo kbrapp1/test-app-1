@@ -1,5 +1,15 @@
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
 
+interface KnowledgeItemMetadata {
+  author?: string;
+  lastModified?: Date;
+  version?: string;
+  tags?: string[];
+  importance?: 'low' | 'medium' | 'high';
+  language?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Vector Knowledge Repository Interface
  * 
@@ -23,7 +33,7 @@ export interface IVectorKnowledgeRepository {
       sourceUrl?: string;
       embedding: number[];
       contentHash: string;
-      metadata?: Record<string, any>;
+      metadata?: KnowledgeItemMetadata;
     }>
   ): Promise<void>;
 

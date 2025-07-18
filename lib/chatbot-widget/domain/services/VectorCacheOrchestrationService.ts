@@ -268,7 +268,7 @@ export class VectorCacheOrchestrationService {
   static orchestrateErrorHandling(
     operation: string,
     error: Error,
-    context: Record<string, any>,
+    context: Record<string, unknown>,
     logger: ISessionLogger
   ): void {
     try {

@@ -127,16 +127,16 @@ export class KnowledgeReportingService {
     };
   }
 
-  static generateExportData(items: KnowledgeItem[], format: 'summary' | 'metrics' | 'full'): any {
+  static generateExportData(items: KnowledgeItem[], format: 'summary' | 'metrics' | 'full'): Record<string, unknown> {
     switch (format) {
       case 'summary':
-        return this.generateContentSummary(items);
+        return this.generateContentSummary(items) as unknown as Record<string, unknown>;
       case 'metrics':
-        return this.generateContentMetrics(items);
+        return this.generateContentMetrics(items) as unknown as Record<string, unknown>;
       case 'full':
-        return this.generateBasicReport(items);
+        return this.generateBasicReport(items) as unknown as Record<string, unknown>;
       default:
-        return this.generateContentSummary(items);
+        return this.generateContentSummary(items) as unknown as Record<string, unknown>;
     }
   }
 

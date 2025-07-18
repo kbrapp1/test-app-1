@@ -328,35 +328,35 @@ export class CoreDomainServiceCompositionService {
     try {
       const sessionContextService = this.getSessionContextService();
       results.sessionContextService = !!sessionContextService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
     try {
       const sessionStateService = this.getSessionStateService();
       results.sessionStateService = !!sessionStateService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
     try {
       const contextWindowService = this.getContextWindowService();
       results.contextWindowService = !!contextWindowService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
     try {
       const leadExtractionService = this.getLeadExtractionService();
       results.leadExtractionService = !!leadExtractionService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 
     try {
       const knowledgeBaseFormService = this.getKnowledgeBaseFormService();
       results.knowledgeBaseFormService = !!knowledgeBaseFormService;
-    } catch (error) {
+    } catch {
       // Service failed to initialize
     }
 

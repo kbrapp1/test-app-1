@@ -15,11 +15,15 @@ import { ChatbotConfig } from '../../entities/ChatbotConfig';
 import { ChatMessage } from '../../entities/ChatMessage';
 import {
   ContextModule,
+  ContextModuleType,
   EntityData,
   ContextGenerationOptions,
+  OperatingHours,
   CONTEXT_PRIORITY_WEIGHTS,
   CONTEXT_TOKEN_ESTIMATES
 } from '../interfaces/ContextInjectionTypes';
+import { KnowledgeBase } from '../../value-objects/ai-configuration/KnowledgeBase';
+import { SessionContext } from '../../value-objects/session-management/ChatSessionTypes';
 
 export class ContextModuleGeneratorDomainService {
   
@@ -150,10 +154,10 @@ export class ContextModuleGeneratorDomainService {
    * - Maintain business rule integrity
    * - Keep methods focused and reusable
    */
-  private static createModule(type: string, entityData: EntityData, contentFn: () => string): ContextModule {
+  private static createModule(type: ContextModuleType, entityData: EntityData, contentFn: () => string): ContextModule {
     return {
-      type: type as any,
-      priority: CONTEXT_PRIORITY_WEIGHTS[type as keyof typeof CONTEXT_PRIORITY_WEIGHTS],
+      type,
+      priority: CONTEXT_PRIORITY_WEIGHTS[type],
       estimatedTokens: this.estimateTokens(type, entityData),
       relevanceScore: this.calculateRelevance(type, entityData),
       content: contentFn
@@ -164,7 +168,7 @@ export class ContextModuleGeneratorDomainService {
     return `${prefix}: ${parts.filter(Boolean).join(', ')}`;
   }
 
-  private static estimateTokens(type: string, entityData: EntityData): number {
+  private static estimateTokens(type: ContextModuleType, entityData: EntityData): number {
     const estimates = CONTEXT_TOKEN_ESTIMATES[type as keyof typeof CONTEXT_TOKEN_ESTIMATES];
     if (!estimates) return 50;
     
@@ -182,7 +186,7 @@ export class ContextModuleGeneratorDomainService {
     return tokens;
   }
 
-  private static calculateRelevance(type: string, entityData: EntityData): number {
+  private static calculateRelevance(type: ContextModuleType, entityData: EntityData): number {
     switch (type) {
       case 'userProfile':
         let relevance = 50;
@@ -217,7 +221,7 @@ export class ContextModuleGeneratorDomainService {
     };
   }
 
-  private static estimateKnowledgeBaseTokens(knowledgeBase: any): number {
+  private static estimateKnowledgeBaseTokens(knowledgeBase: KnowledgeBase): number {
     const estimates = CONTEXT_TOKEN_ESTIMATES.knowledgeBase;
     let tokens = estimates.base;
     if (knowledgeBase?.faqs?.length > 0) {
@@ -226,7 +230,7 @@ export class ContextModuleGeneratorDomainService {
     return Math.min(tokens, estimates.max);
   }
 
-  private static estimateHistoryTokens(contextData: any): number {
+  private static estimateHistoryTokens(contextData: SessionContext): number {
     const estimates = CONTEXT_TOKEN_ESTIMATES.conversationHistory;
     const topicCount = contextData?.topics?.length || 0;
     const interestCount = contextData?.interests?.length || 0;
@@ -256,13 +260,13 @@ export class ContextModuleGeneratorDomainService {
     return 'discovery';
   }
 
-  private static isBusinessHours(operatingHours?: any): boolean {
+  private static isBusinessHours(operatingHours?: OperatingHours): boolean {
     if (!operatingHours?.businessHours) return false;
     const now = new Date();
     const dayOfWeek = now.getDay();
     const currentHour = now.getHours();
     
-    const todayHours = operatingHours.businessHours.find((h: any) => 
+    const todayHours = operatingHours.businessHours.find(h => 
       h.dayOfWeek === dayOfWeek && h.isActive
     );
     

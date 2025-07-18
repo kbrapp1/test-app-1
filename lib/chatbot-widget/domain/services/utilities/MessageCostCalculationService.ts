@@ -69,7 +69,7 @@ export class MessageCostCalculationService {
     // Calculate costs in dollars
     const promptCostDollars = promptTokens * promptCostPerToken;
     const completionCostDollars = completionTokens * completionCostPerToken;
-    const totalCostDollars = promptCostDollars + completionCostDollars;
+    const _totalCostDollars = promptCostDollars + completionCostDollars;
     
     // Convert to precise cents (preserve micro-costs)
     const promptTokensCents = promptCostDollars * 100;      // e.g., 0.0822 cents

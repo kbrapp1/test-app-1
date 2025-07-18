@@ -18,6 +18,8 @@ import { IEmbeddingService } from '../../domain/services/interfaces/IEmbeddingSe
 import { WebsiteCrawlingError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { createHash } from 'crypto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { CrawledPageData } from '../types/CrawledPagesTypes';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
 // Storage result for crawl and store operation
@@ -157,14 +159,34 @@ export class CrawlAndStoreWebsiteUseCase {
    * - Return items ready for storage
    */
   private async prepareKnowledgeItemsForStorage(
-    knowledgeItems: any[],
-    crawledPages: any[],
+    knowledgeItems: KnowledgeItem[],
+    crawledPages: CrawledPageData[],
     statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>
-  ): Promise<any[]> {
-    const itemsToStore = [];
+  ): Promise<Array<{
+    knowledgeItemId: string;
+    title: string;
+    content: string;
+    category: string;
+    sourceType: 'faq' | 'company_info' | 'product_catalog' | 'support_docs' | 'website_crawled';
+    sourceUrl?: string;
+    embedding: number[];
+    contentHash: string;
+    metadata?: Record<string, unknown>;
+  }>> {
+    const itemsToStore: Array<{
+      knowledgeItemId: string;
+      title: string;
+      content: string;
+      category: string;
+      sourceType: 'faq' | 'company_info' | 'product_catalog' | 'support_docs' | 'website_crawled';
+      sourceUrl?: string;
+      embedding: number[];
+      contentHash: string;
+      metadata?: Record<string, unknown>;
+    }> = [];
 
     // Create a map of URLs to crawled page data for metadata lookup
-    const crawledPagesMap = new Map();
+    const crawledPagesMap = new Map<string, CrawledPageData>();
     crawledPages.forEach(page => {
       crawledPagesMap.set(page.url, page);
     });

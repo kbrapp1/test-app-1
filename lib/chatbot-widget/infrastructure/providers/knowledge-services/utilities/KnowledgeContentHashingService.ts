@@ -197,8 +197,8 @@ export class KnowledgeContentHashingService {
       const currentHash = this.generateItemContentHash(item);
       
       // If item has a stored hash, validate it
-      if ((item as any).contentHash) {
-        if ((item as any).contentHash === currentHash) {
+      if ((item as unknown as Record<string, unknown>).contentHash) {
+        if ((item as unknown as Record<string, unknown>).contentHash === currentHash) {
           validHashes++;
         } else {
           invalidHashes++;

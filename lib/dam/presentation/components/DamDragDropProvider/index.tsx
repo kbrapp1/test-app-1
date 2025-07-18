@@ -87,6 +87,7 @@ export function DamDragDropProvider({ children }: DamDragDropProviderProps) {
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
+    return undefined;
   }, [showOverlay, handleEscape]);
 
   return (

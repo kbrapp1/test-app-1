@@ -178,7 +178,7 @@ export class ErrorCategorizationDomainService {
    * - Business rules for error filtering
    * - Consider error frequency and importance
    */
-  shouldPersistError(errorCode: string, context: Record<string, any>): boolean {
+  shouldPersistError(errorCode: string, context: Record<string, unknown>): boolean {
     // Always persist critical and high severity errors
     const severity = this.getErrorSeverity(errorCode);
     if (['critical', 'high'].includes(severity)) {
@@ -205,7 +205,7 @@ export class ErrorCategorizationDomainService {
    * - Remove sensitive data
    * - Limit large content for performance
    */
-  sanitizeErrorContext(context: Record<string, any>): Record<string, any> {
+  sanitizeErrorContext(context: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...context };
 
     // Remove sensitive fields
@@ -217,7 +217,7 @@ export class ErrorCategorizationDomainService {
     // Limit large content fields
     if (sanitized.content && typeof sanitized.content === 'string' && sanitized.content.length > 1000) {
       sanitized.content = sanitized.content.substring(0, 1000) + '... [truncated]';
-      sanitized.originalContentLength = context.content.length;
+      sanitized.originalContentLength = typeof context.content === 'string' ? context.content.length : 0;
     }
 
     // Limit stack traces

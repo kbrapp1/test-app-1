@@ -118,10 +118,31 @@ describe('LeadSupabaseRepository Integration Tests', () => {
       });
       vi.spyOn(repository, 'getAnalytics').mockResolvedValue({
         totalLeads: 0,
+        qualifiedLeads: 0,
+        convertedLeads: 0,
+        averageScore: 0,
         avgLeadScore: 0,
-        qualificationDistribution: {},
-        sourceBreakdown: []
-      });
+        conversionRate: 0,
+        topSources: [],
+        sourceBreakdown: [],
+        scoreDistribution: [],
+        qualificationDistribution: {
+          not_qualified: 0,
+          qualified: 0,
+          highly_qualified: 0,
+          disqualified: 0
+        },
+        followUpDistribution: {
+          new: 0,
+          contacted: 0,
+          in_progress: 0,
+          converted: 0,
+          lost: 0,
+          nurturing: 0
+        },
+        monthlyTrends: [],
+        highlyQualifiedLeads: 0
+      } as any);
     }
     
     // Store whether we're using real Supabase for cleanup purposes
@@ -324,15 +345,15 @@ describe('LeadSupabaseRepository Integration Tests', () => {
       const analytics = await repository.getAnalytics(organizationId, dateFrom, dateTo);
 
       if (!vi.isMockFunction(repository.getAnalytics)) {
-        expect(analytics.totalLeads).toBeGreaterThanOrEqual(3);
-        expect(analytics.avgLeadScore).toBeGreaterThan(0);
+        expect((analytics as any).totalLeads).toBeGreaterThanOrEqual(3);
+        expect((analytics as any).avgLeadScore).toBeGreaterThan(0);
       } else {
         // For mocked implementation, just verify structure
-        expect(analytics.totalLeads).toBeGreaterThanOrEqual(0);
-        expect(typeof analytics.avgLeadScore).toBe('number');
+        expect((analytics as any).totalLeads).toBeGreaterThanOrEqual(0);
+        expect(typeof (analytics as any).avgLeadScore).toBe('number');
       }
-      expect(analytics.qualificationDistribution).toBeDefined();
-      expect(typeof analytics.qualificationDistribution).toBe('object');
+      expect((analytics as any).qualificationDistribution).toBeDefined();
+      expect(typeof (analytics as any).qualificationDistribution).toBe('object');
     });
 
     it('should filter leads by organization', async () => {

@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    // Only include new code or specific domains for strict checking
+    "lib/chatbot-widget/**/*.ts",
+    "lib/dam/domain/**/*.ts",
+    "lib/tts/domain/**/*.ts"
+  ]
+}

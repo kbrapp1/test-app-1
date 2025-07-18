@@ -220,7 +220,7 @@ export class VectorCacheLoggingService {
     logger: ISessionLogger,
     operation: string,
     error: Error,
-    context: Record<string, any>
+    context: Record<string, unknown>
   ): void {
     logger.logMessage(`❌ Vector cache error in ${operation}`);
     logger.logMessage(`Error: ${error.message}`);

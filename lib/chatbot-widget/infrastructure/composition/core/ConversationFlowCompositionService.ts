@@ -1,5 +1,6 @@
 // Domain services imports
-import { ConversationFlowService, AIConversationFlowDecision } from '../../../domain/services/conversation-management/ConversationFlowService';
+import { ConversationFlowService, AIConversationFlowDecision, ConversationFlowState } from '../../../domain/services/conversation-management/ConversationFlowService';
+import { ReadinessIndicators } from '../../../domain/services/conversation-management/ReadinessIndicatorDomainService';
 
 // Domain errors
 import { BusinessRuleViolationError } from '../../../domain/errors/base/DomainErrorBase';
@@ -31,8 +32,8 @@ export class ConversationFlowCompositionService {
    */
   static processAIFlowDecision(
     decision: AIConversationFlowDecision,
-    currentState: any
-  ): any {
+    currentState: ConversationFlowState
+  ): ConversationFlowState {
     if (!decision) {
       throw new BusinessRuleViolationError(
         'AI conversation flow decision is required for processing',
@@ -49,7 +50,7 @@ export class ConversationFlowCompositionService {
           error: error instanceof Error ? error.message : 'Unknown error',
           decision: typeof decision,
           hasCurrentState: !!currentState
-        }
+        } as Record<string, unknown>
       );
     }
   }
@@ -78,7 +79,7 @@ export class ConversationFlowCompositionService {
         { 
           error: error instanceof Error ? error.message : 'Unknown error',
           decision: typeof decision
-        }
+        } as Record<string, unknown>
       );
     }
   }
@@ -100,7 +101,7 @@ export class ConversationFlowCompositionService {
         { 
           error: error instanceof Error ? error.message : 'Unknown error',
           decision: typeof decision
-        }
+        } as Record<string, unknown>
       );
     }
   }
@@ -122,13 +123,13 @@ export class ConversationFlowCompositionService {
         { 
           error: error instanceof Error ? error.message : 'Unknown error',
           decision: typeof flowDecision
-        }
+        } as Record<string, unknown>
       );
     }
   }
 
   /** Get derived readiness indicators from AI flow decision */
-  static getReadinessIndicators(flowDecision: AIConversationFlowDecision): any {
+  static getReadinessIndicators(flowDecision: AIConversationFlowDecision): ReadinessIndicators {
     if (!flowDecision) {
       throw new BusinessRuleViolationError(
         'AI conversation flow decision is required for readiness indicators',
@@ -144,7 +145,7 @@ export class ConversationFlowCompositionService {
         { 
           error: error instanceof Error ? error.message : 'Unknown error',
           decision: typeof flowDecision
-        }
+        } as Record<string, unknown>
       );
     }
   }
@@ -157,7 +158,7 @@ export class ConversationFlowCompositionService {
    * - Follow @golden-rule validation patterns
    * - Provide detailed validation context for debugging
    */
-  static validateFlowDecision(decision: any): boolean {
+  static validateFlowDecision(decision: AIConversationFlowDecision): boolean {
     if (!decision) {
       throw new BusinessRuleViolationError(
         'AI conversation flow decision cannot be null or undefined',
@@ -192,8 +193,8 @@ export class ConversationFlowCompositionService {
    */
   static batchProcessFlowDecisions(
     decisions: AIConversationFlowDecision[],
-    currentStates: any[]
-  ): Array<{ success: boolean; result?: any; error?: string }> {
+    currentStates: ConversationFlowState[]
+  ): Array<{ success: boolean; result?: ConversationFlowState; error?: string }> {
     if (!Array.isArray(decisions)) {
       throw new BusinessRuleViolationError(
         'Decisions must be provided as an array for batch processing',
@@ -258,7 +259,13 @@ export class ConversationFlowCompositionService {
       
       try {
         // This should fail with validation error, but service is working
-        this.processAIFlowDecision(mockDecision, {});
+        this.processAIFlowDecision(mockDecision, {
+          currentPhase: 'discovery',
+          messageCount: 0,
+          engagementScore: 0,
+          lastFlowDecision: null,
+          flowHistory: []
+        } as ConversationFlowState);
       } catch (error) {
         if (error instanceof BusinessRuleViolationError) {
           results.canProcessDecisions = true; // Service is working, just validation failed
@@ -288,7 +295,7 @@ export class ConversationFlowCompositionService {
                         results.canTriggerLeadCapture && 
                         results.canCalculateReadiness;
 
-    } catch (error) {
+    } catch {
       // Unexpected error - service is not healthy
     }
 

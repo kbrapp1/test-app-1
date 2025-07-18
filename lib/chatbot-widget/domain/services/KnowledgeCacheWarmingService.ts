@@ -5,9 +5,8 @@ import {
   KnowledgeRetrievalContext as _KnowledgeRetrievalContext 
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
-import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
+import { IEmbeddingService } from './interfaces/IEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
-import { IEmbeddingService as _IEmbeddingService } from './interfaces/IEmbeddingService';
 import { IChatbotLoggingService, IOperationLogger } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
@@ -27,7 +26,7 @@ export class KnowledgeCacheWarmingService {
   
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
-    private readonly embeddingService: OpenAIEmbeddingService,
+    private readonly embeddingService: IEmbeddingService,
     private readonly organizationId: string,
     private readonly chatbotConfigId: string
   ) {

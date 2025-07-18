@@ -25,42 +25,60 @@ export class EmbeddingCacheDomainService {
 
   constructor() {
     // AI: Removed cache size limits - let serverless platform handle memory management
-    this.config = {};
+    this.config = {
+      enabled: true,
+      enableKnowledgeBaseCache: true,
+      enableUserQueryCache: true,
+      enablePdfDocumentCache: true,
+      cacheKeyPrefix: 'embed_'
+    };
   }
 
   /** Generate cache key for text
  */
   generateCacheKey(text: string): string {
-    return Buffer.from(text.trim().toLowerCase()).toString('base64');
+    const baseKey = Buffer.from(text.trim().toLowerCase()).toString('base64');
+    return this.config.cacheKeyPrefix ? `${this.config.cacheKeyPrefix}${baseKey}` : baseKey;
   }
 
   /** Get embedding from appropriate cache
  */
   getEmbedding(cacheKey: string): EmbeddingResult | undefined {
+    if (!this.config.enabled) {
+      return undefined;
+    }
+
     // Check knowledge base cache first (permanent, no LRU)
-    const knowledgeBaseCached = this.knowledgeBaseCache.get(cacheKey);
-    if (knowledgeBaseCached) {
-      return knowledgeBaseCached;
+    if (this.config.enableKnowledgeBaseCache) {
+      const knowledgeBaseCached = this.knowledgeBaseCache.get(cacheKey);
+      if (knowledgeBaseCached) {
+        return knowledgeBaseCached;
+      }
     }
 
     // Check PDF cache with LRU update
-    const pdfCached = this.pdfDocumentCache.get(cacheKey);
-    if (pdfCached) {
-      // Move to end (most recently used)
-      this.pdfDocumentCache.delete(cacheKey);
-      this.pdfDocumentCache.set(cacheKey, pdfCached);
-      return pdfCached;
+    if (this.config.enablePdfDocumentCache) {
+      const pdfCached = this.pdfDocumentCache.get(cacheKey);
+      if (pdfCached) {
+        // Move to end (most recently used)
+        this.pdfDocumentCache.delete(cacheKey);
+        this.pdfDocumentCache.set(cacheKey, pdfCached);
+        return pdfCached;
+      }
     }
 
     // Check user query cache with LRU update
-    const userQueryCached = this.userQueryCache.get(cacheKey);
-    if (userQueryCached) {
-      // Move to end (most recently used)
-      this.userQueryCache.delete(cacheKey);
-      this.userQueryCache.set(cacheKey, userQueryCached);
+    if (this.config.enableUserQueryCache) {
+      const userQueryCached = this.userQueryCache.get(cacheKey);
+      if (userQueryCached) {
+        // Move to end (most recently used)
+        this.userQueryCache.delete(cacheKey);
+        this.userQueryCache.set(cacheKey, userQueryCached);
+        return userQueryCached;
+      }
     }
     
-    return userQueryCached;
+    return undefined;
   }
 
   /**
@@ -92,21 +110,27 @@ export class EmbeddingCacheDomainService {
   /** Store in knowledge base cache (permanent)
  */
   private storeInKnowledgeBaseCache(cacheKey: string, result: EmbeddingResult): void {
-    this.knowledgeBaseCache.set(cacheKey, result);
+    if (this.config.enabled && this.config.enableKnowledgeBaseCache) {
+      this.knowledgeBaseCache.set(cacheKey, result);
+    }
   }
 
   /** Store in PDF cache
  */
   private storeInPdfCache(cacheKey: string, result: EmbeddingResult): void {
     // AI: Removed LRU eviction - let serverless platform handle memory management
-    this.pdfDocumentCache.set(cacheKey, result);
+    if (this.config.enabled && this.config.enablePdfDocumentCache) {
+      this.pdfDocumentCache.set(cacheKey, result);
+    }
   }
 
   /** Store in user query cache
  */
   private storeInUserQueryCache(cacheKey: string, result: EmbeddingResult): void {
     // AI: Removed LRU eviction - let serverless platform handle memory management
-    this.userQueryCache.set(cacheKey, result);
+    if (this.config.enabled && this.config.enableUserQueryCache) {
+      this.userQueryCache.set(cacheKey, result);
+    }
   }
 
   /**
@@ -137,9 +161,12 @@ export class EmbeddingCacheDomainService {
   /** Detect PDF content characteristics
  */
   private isPdfContent(text: string): boolean {
-    const hasDocumentMarkers = /(?:Page \d+|Chapter \d+|Section \d+|\.pdf|document)/i.test(text);
-    const hasLongParagraphs = text.split('\n').some(line => line.length > 200);
-    const isVeryLong = text.length > 500;
+    // Ensure text is a string
+    const content = typeof text === 'string' ? text : String(text || '');
+    
+    const hasDocumentMarkers = /(?:Page \d+|Chapter \d+|Section \d+|\.pdf|document)/i.test(content);
+    const hasLongParagraphs = content.split('\n').some(line => line.length > 200);
+    const isVeryLong = content.length > 500;
     
     return hasDocumentMarkers || (hasLongParagraphs && isVeryLong);
   }

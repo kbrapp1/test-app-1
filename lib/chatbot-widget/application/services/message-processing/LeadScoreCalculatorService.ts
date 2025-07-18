@@ -14,6 +14,7 @@ import { DomainConstants } from '../../../domain/value-objects/ai-configuration/
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { LeadScoringEntities } from '../../../domain/types/ChatbotTypes';
+import { SerializedAccumulatedEntities } from '../../../domain/types/AccumulatedEntityTypes';
 
 export class LeadScoreCalculatorService {
   private readonly loggingService: IChatbotLoggingService;
@@ -58,29 +59,29 @@ export class LeadScoreCalculatorService {
   }
 
   /** Convert accumulated entities to lead scoring format */
-  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: any): LeadScoringEntities {
+  private convertAccumulatedEntitiesToLeadScoringFormat(accumulatedEntities: SerializedAccumulatedEntities): LeadScoringEntities {
     const leadScoringEntities: LeadScoringEntities = {
       contactInfo: {
-        email: accumulatedEntities.email?.value,
-        phone: accumulatedEntities.phone?.value || accumulatedEntities.contactMethod?.value,
-        name: accumulatedEntities.name?.value
+        email: undefined, // Email not directly available in SerializedAccumulatedEntities
+        phone: accumulatedEntities.contactMethod?.value === 'phone' ? 'phone_provided' : undefined,
+        name: accumulatedEntities.visitorName?.value as string | undefined
       },
       businessInfo: {
-        company: accumulatedEntities.company?.value,
-        industry: accumulatedEntities.industry?.value,
-        size: accumulatedEntities.teamSize?.value
+        company: accumulatedEntities.company?.value as string | undefined,
+        industry: accumulatedEntities.industry?.value as string | undefined,
+        size: accumulatedEntities.teamSize?.value as string | undefined
       },
       intentSignals: {
-        urgency: accumulatedEntities.urgency?.value,
-        budget: accumulatedEntities.budget?.value,
-        timeline: accumulatedEntities.timeline?.value
+        urgency: accumulatedEntities.urgency?.value as 'low' | 'medium' | 'high' | undefined,
+        budget: accumulatedEntities.budget?.value as 'low' | 'medium' | 'high' | undefined,
+        timeline: accumulatedEntities.timeline?.value as 'medium' | 'immediate' | 'short' | 'long' | undefined
       },
       engagementMetrics: {
-        messageCount: accumulatedEntities.messageCount?.value,
-        sessionDuration: accumulatedEntities.sessionDuration?.value,
-        responseTime: accumulatedEntities.responseTime?.value
+        messageCount: undefined, // Not directly available in SerializedAccumulatedEntities
+        sessionDuration: undefined, // Not directly available in SerializedAccumulatedEntities
+        responseTime: undefined // Not directly available in SerializedAccumulatedEntities
       },
-      role: accumulatedEntities.role?.value
+      role: accumulatedEntities.role?.value as string | undefined
     };
     
     return leadScoringEntities;

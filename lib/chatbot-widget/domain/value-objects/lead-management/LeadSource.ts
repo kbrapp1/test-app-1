@@ -75,7 +75,7 @@ export class LeadSource {
     try {
       new URL(url);
       return true;
-    } catch (_error) {
+    } catch {
       return false;
     }
   }
@@ -145,7 +145,7 @@ export class LeadSource {
       try {
         const referrerDomain = new URL(this.props.referrer).hostname.toLowerCase();
         return socialDomains.some(domain => referrerDomain.includes(domain));
-      } catch (_error) {
+      } catch {
         return false;
       }
     }
@@ -163,7 +163,7 @@ export class LeadSource {
       try {
         const referrerDomain = new URL(this.props.referrer).hostname.toLowerCase();
         return searchDomains.some(domain => referrerDomain.includes(domain));
-      } catch (_error) {
+      } catch {
         return false;
       }
     }
@@ -206,7 +206,7 @@ export class LeadSource {
       try {
         const domain = new URL(this.props.referrer).hostname;
         parts.push(`referrer:${domain}`);
-      } catch (_error) {
+      } catch {
         parts.push('referrer:unknown');
       }
     }
@@ -217,7 +217,7 @@ export class LeadSource {
   getDomain(): string {
     try {
       return new URL(this.props.pageUrl).hostname;
-    } catch (_error) {
+    } catch {
       return 'unknown';
     }
   }
@@ -225,7 +225,7 @@ export class LeadSource {
   getPath(): string {
     try {
       return new URL(this.props.pageUrl).pathname;
-    } catch (_error) {
+    } catch {
       return '/';
     }
   }

@@ -4,7 +4,7 @@
  * @module forms/error-handling-utils
  */
 
-import { UseFormSetError, FieldValues } from 'react-hook-form';
+import { UseFormSetError, FieldValues, Path } from 'react-hook-form';
 import { toast as sonnerToast } from 'sonner';
 import { AppError, ValidationError } from '../errors/base';
 import { FieldError, FormErrorHandlerConfig } from './error-handling-types';
@@ -72,7 +72,7 @@ export function setFormErrors<T extends FieldValues>(
   fieldErrors.forEach(error => {
     // Check if we need to remap the field name
     const field = config?.fieldMap?.[error.field] || error.field;
-    setError(field as any, {
+    setError(field as Path<T>, {
       type: 'manual',
       message: error.message
     });

@@ -56,6 +56,7 @@ export const useMultiSelectEventHandlers = (
       document.addEventListener('keydown', handleGlobalKeyDown);
       return () => document.removeEventListener('keydown', handleGlobalKeyDown);
     }
+    return undefined;
   }, [isSelecting, handleKeyDown]);
 
   return {

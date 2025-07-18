@@ -60,12 +60,43 @@ npx vitest run path/to/test.test.ts
 # Lint code
 pnpm run lint
 
+# TypeScript type checking
+pnpm run typecheck
+
+# Combined quality check
+pnpm run quality:check
+
+# Watch mode for real-time quality checks
+pnpm run quality:watch
+
+# Development with quality monitoring
+pnpm run dev:quality
+
 # Generate contexts (for monitoring)
 pnpm run generate:contexts
 
 # Performance analysis
 pnpm run perf
 ```
+
+### Development Quality Enforcement
+
+**CRITICAL**: Always run quality checks before creating/editing files:
+
+1. **IDE Setup**: Ensure VS Code extensions are installed and auto-fix is enabled
+2. **Real-time Checking**: Use `pnpm run quality:watch` during development
+3. **Before Changes**: Run `pnpm run quality:check` before making significant changes
+4. **TypeScript Checking**: 
+   - Standard: `pnpm run typecheck` (current codebase)
+   - Strict: `pnpm run typecheck:strict` (new/updated code only)
+5. **ESLint Compliance**: No `any` types allowed without explicit ESLint disable comments
+
+### Gradual Quality Improvement
+
+The project uses a **gradual strictness approach**:
+- **Existing code**: Uses standard TypeScript settings
+- **New/updated code**: Can opt into stricter checking with `tsconfig.strict.json`
+- **Goal**: Gradually migrate entire codebase to strict mode
 
 ### Development Tools
 ```bash

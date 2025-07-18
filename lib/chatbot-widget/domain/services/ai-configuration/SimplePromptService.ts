@@ -8,6 +8,8 @@ import {
   ISimplePromptService,
   KnowledgeItem 
 } from './types/SimplePromptTypes';
+import { TemplateVariable } from './PersonaGenerationService';
+import { ChatMessage } from '../../entities/ChatMessage';
 import { PersonaGenerationService } from './PersonaGenerationService';
 import { KnowledgeBaseService } from './KnowledgeBaseService';
 import { BusinessGuidanceService } from './BusinessGuidanceService';
@@ -166,7 +168,7 @@ export class SimplePromptService implements ISimplePromptService {
   }
 
   // AI: Build persona section from template variables
-  private buildPersonaSection(personaVariables: any[]): string {
+  private buildPersonaSection(personaVariables: TemplateVariable[]): string {
     const roleTitle = personaVariables.find(v => v.name === 'roleTitle')?.value || 'Assistant';
     const roleDescription = personaVariables.find(v => v.name === 'roleDescription')?.value || 'helpful assistant';
     const tone = personaVariables.find(v => v.name === 'tone')?.value || 'Professional';
@@ -182,7 +184,7 @@ export class SimplePromptService implements ISimplePromptService {
   }
 
   // AI: Build conversation context from message history
-  private buildConversationContext(messageHistory: any[]): string {
+  private buildConversationContext(messageHistory: ChatMessage[]): string {
     if (!messageHistory || messageHistory.length === 0) {
       return `## Conversation Context
 This is the start of a new conversation.

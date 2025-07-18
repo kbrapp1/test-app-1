@@ -12,6 +12,7 @@
 import { IIntentClassificationService } from '../../../domain/services/interfaces/IIntentClassificationService';
 import { OpenAIChatbotProcessingService } from './services/OpenAIChatbotProcessingService';
 import { OpenAIIntentConfig } from './types/OpenAITypes';
+import { ChatMessage } from '../../../domain/entities/ChatMessage';
 
 /**
  * OpenAI Intent Classification Service
@@ -36,8 +37,17 @@ export class OpenAIIntentClassificationService implements IIntentClassificationS
   /** Unified processing method for complete chatbot interaction */
   async processChatbotInteractionComplete(
     message: string,
-    context: any
-  ): Promise<any> {
-    return this.chatbotProcessingService.processChatbotInteractionComplete(message, context);
+    context: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    // Transform context to match ProcessingContext interface
+    const processingContext = {
+      messageHistory: context.messageHistory as ChatMessage[] || [],
+      sessionId: context.sessionId as string || '',
+      organizationId: context.organizationId as string,
+      userData: context.userData as Record<string, unknown>,
+      systemPrompt: context.systemPrompt as string,
+      sharedLogFile: context.sharedLogFile as string
+    };
+    return this.chatbotProcessingService.processChatbotInteractionComplete(message, processingContext);
   }
 }

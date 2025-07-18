@@ -4,6 +4,19 @@ import { perf } from '../../../../performance-profiler';
 
 type SupportedOpenAIModel = 'gpt-4o' | 'gpt-4o-mini';
 
+interface TiktokenEncoding {
+  encode: (text: string) => number[];
+  free: () => void;
+}
+
+interface TiktokenModule {
+  encoding_for_model: (model: string) => TiktokenEncoding;
+}
+
+interface GlobalWithCache {
+  [key: string]: unknown;
+}
+
 export class OpenAITokenCountingService implements ITokenCountingService {
   private readonly DEFAULT_MODEL: SupportedOpenAIModel = 'gpt-4o-mini';
   private static readonly CACHE_KEY = 'OpenAITokenCountingService_tiktokenCache';
@@ -16,10 +29,13 @@ export class OpenAITokenCountingService implements ITokenCountingService {
 
   /** Count tokens in a single message */
   async countMessageTokens(message: ChatMessage): Promise<number> {
+    // Type safety check for message content
+    const content = typeof message.content === 'string' ? message.content : String(message.content || '');
+    
     // Format message as it would be sent to OpenAI
     const formattedMessage = {
       role: message.isFromUser() ? 'user' : 'assistant',
-      content: message.content
+      content: content
     };
 
     return this.countTextTokens(JSON.stringify(formattedMessage));
@@ -41,23 +57,44 @@ export class OpenAITokenCountingService implements ITokenCountingService {
 
   /** Count tokens in text content using tiktoken (if available) or estimation */
   async countTextTokens(text: string): Promise<number> {
+    // Type safety check - ensure text is a string
+    if (typeof text !== 'string') {
+      console.error('CHATBOT ERROR: countTextTokens received non-string input:', { 
+        text, 
+        type: typeof text,
+        value: text,
+        stackTrace: new Error().stack 
+      });
+      text = String(text || '');
+    }
+    
+    // Handle empty or null text
+    if (!text || text.length === 0) {
+      return 0;
+    }
+
     try {
       // Cache the tiktoken import to avoid repeated dynamic imports
-      if (!(globalThis as any)[OpenAITokenCountingService.CACHE_KEY]) {
+      if (!(globalThis as GlobalWithCache)[OpenAITokenCountingService.CACHE_KEY]) {
         const { result: tiktokenModule } = await perf.measureAsync(
           'ImportTiktoken',
           () => import('tiktoken'),
           { library: 'tiktoken', operation: 'dynamic-import' }
         );
-        (globalThis as any)[OpenAITokenCountingService.CACHE_KEY] = tiktokenModule;
+        (globalThis as GlobalWithCache)[OpenAITokenCountingService.CACHE_KEY] = tiktokenModule;
       }
       
-      const tiktoken = (globalThis as any)[OpenAITokenCountingService.CACHE_KEY];
-      const encoding = tiktoken.encoding_for_model(this.DEFAULT_MODEL as any);
+      const tiktoken = (globalThis as GlobalWithCache)[OpenAITokenCountingService.CACHE_KEY] as TiktokenModule;
+      const encoding = tiktoken.encoding_for_model(this.DEFAULT_MODEL);
       const tokens = encoding.encode(text);
       encoding.free();
       return tokens.length;
     } catch (error) {
+      // Log token counting failure for performance monitoring
+      console.debug('Tiktoken counting failed, using estimation:', {
+        textLength: text.length,
+        error: error instanceof Error ? error.message : String(error)
+      });
       // Fallback to estimation if tiktoken is not available
       return this.estimateTextTokens(text);
     }
@@ -68,6 +105,22 @@ export class OpenAITokenCountingService implements ITokenCountingService {
    * Rule of thumb: ~4 characters per token for English text
    */
   estimateTextTokens(text: string): number {
+    // Type safety check - ensure text is a string
+    if (typeof text !== 'string') {
+      console.error('CHATBOT ERROR: estimateTextTokens received non-string input:', { 
+        text, 
+        type: typeof text,
+        value: text,
+        stackTrace: new Error().stack 
+      });
+      text = String(text || '');
+    }
+    
+    // Handle empty or null text
+    if (!text || text.length === 0) {
+      return 0;
+    }
+
     // More sophisticated estimation
     const words = text.split(/\s+/).length;
     const characters = text.length;

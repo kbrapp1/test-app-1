@@ -1,5 +1,6 @@
 import { ChatSession } from '../../entities/ChatSession';
 import { ChatMessage } from '../../entities/ChatMessage';
+import { IntentType, ExtractedEntities } from '../../value-objects/message-processing/IntentResult';
 
 /**
  * Conversation Analysis Domain Service
@@ -18,8 +19,8 @@ export class ConversationAnalysisService {
   analyzeConversationContext(
     session: ChatSession,
     conversationHistory?: ChatMessage[],
-    entityData?: any,
-    intentData?: any,
+    entityData?: ExtractedEntities,
+    intentData?: IntentClassificationData,
     _leadScore?: number
   ): ConversationAnalysis {
     const messageCount = conversationHistory?.length || 0;
@@ -59,18 +60,16 @@ export class ConversationAnalysisService {
   }
 
   /** Use extracted intent data for business context (no re-processing) */
-  private determineBusinessContextFromIntent(intentData?: any, entityData?: any): boolean {
+  private determineBusinessContextFromIntent(intentData?: IntentClassificationData, entityData?: ExtractedEntities): boolean {
     // Use previously extracted intent instead of keyword matching
-    if (intentData?.primary === 'business_inquiry' || 
-        intentData?.primary === 'company_inquiry' ||
+    if (intentData?.primary === 'sales_inquiry' || 
         intentData?.primary === 'faq_general') {
       return true;
     }
     
     // Use extracted entities for business context
-    if (entityData?.companies?.length > 0 || 
-        entityData?.industries?.length > 0 ||
-        entityData?.businessTerms?.length > 0) {
+    if (entityData?.company || 
+        entityData?.industry) {
       return true;
     }
     
@@ -78,15 +77,13 @@ export class ConversationAnalysisService {
   }
 
   /** Use extracted intent data for product interest (no re-processing) */
-  private determineProductInterestFromIntent(intentData?: any, entityData?: any): boolean {
-    if (intentData?.primary === 'product_inquiry' || 
-        intentData?.primary === 'feature_inquiry' ||
-        intentData?.primary === 'capability_inquiry') {
+  private determineProductInterestFromIntent(intentData?: IntentClassificationData, entityData?: ExtractedEntities): boolean {
+    if (intentData?.primary === 'faq_features') {
       return true;
     }
     
-    if (entityData?.products?.length > 0 || 
-        entityData?.features?.length > 0) {
+    // Product interest inferred from business context
+    if (entityData?.company) {
       return true;
     }
     
@@ -94,14 +91,12 @@ export class ConversationAnalysisService {
   }
 
   /** Use extracted intent data for pricing focus (no re-processing) */
-  private determinePricingFocusFromIntent(intentData?: any, entityData?: any): boolean {
-    if (intentData?.primary === 'pricing_inquiry' || 
-        intentData?.primary === 'cost_inquiry') {
+  private determinePricingFocusFromIntent(intentData?: IntentClassificationData, entityData?: ExtractedEntities): boolean {
+    if (intentData?.primary === 'faq_pricing') {
       return true;
     }
     
-    if (entityData?.pricing?.length > 0 || 
-        entityData?.budget?.length > 0) {
+    if (entityData?.budget) {
       return true;
     }
     
@@ -109,14 +104,13 @@ export class ConversationAnalysisService {
   }
 
   /** Use extracted intent data for comparison mode (no re-processing) */
-  private determineComparisonModeFromIntent(intentData?: any, entityData?: any): boolean {
-    if (intentData?.primary === 'comparison_inquiry' || 
-        intentData?.primary === 'competitor_inquiry') {
+  private determineComparisonModeFromIntent(intentData?: IntentClassificationData, entityData?: ExtractedEntities): boolean {
+    if (intentData?.primary === 'objection_handling') {
       return true;
     }
     
-    if (entityData?.competitors?.length > 0 || 
-        entityData?.alternatives?.length > 0) {
+    // Comparison mode inferred from urgency or timeline
+    if (entityData?.urgency === 'high' || entityData?.timeline) {
       return true;
     }
     
@@ -124,13 +118,31 @@ export class ConversationAnalysisService {
   }
 
   /** Calculate entity complexity from extracted data */
-  private calculateEntityComplexity(entityData?: any): number {
+  private calculateEntityComplexity(entityData?: ExtractedEntities): number {
     if (!entityData) return 0;
     
+    // Count non-empty string fields and defined values
     let complexity = 0;
-    Object.keys(entityData).forEach(category => {
-      if (Array.isArray(entityData[category])) {
-        complexity += entityData[category].length;
+    const fields = [
+      entityData.visitorName,
+      entityData.location,
+      entityData.budget,
+      entityData.timeline,
+      entityData.company,
+      entityData.industry,
+      entityData.teamSize,
+      entityData.role,
+      entityData.urgency,
+      entityData.contactMethod,
+      entityData.currentSolution,
+      entityData.preferredTime
+    ];
+    
+    fields.forEach(field => {
+      if (field && field.trim && field.trim() !== '') {
+        complexity++;
+      } else if (field && typeof field !== 'string') {
+        complexity++;
       }
     });
     
@@ -138,7 +150,7 @@ export class ConversationAnalysisService {
   }
 
   /** Token requirement prediction (2025 efficiency) */
-  private calculateTokenRequirements(intentSignals: any): number {
+  private calculateTokenRequirements(intentSignals: IntentSignals): number {
     let baseTokens = 400; // Core persona
     
     if (intentSignals.businessContext) baseTokens += 800; // Knowledge base needed
@@ -162,4 +174,19 @@ export interface ConversationAnalysis {
   tokensNeeded: number;
 }
 
-export type ConversationPhase = 'greeting' | 'discovery' | 'exploration' | 'qualification'; 
+export type ConversationPhase = 'greeting' | 'discovery' | 'exploration' | 'qualification';
+
+// AI-related type definitions for intent classification
+export interface IntentClassificationData {
+  primary: IntentType;
+  confidence?: number;
+  secondary?: IntentType;
+  reasoning?: string;
+}
+
+export interface IntentSignals {
+  businessContext: boolean;
+  productInterest: boolean;
+  pricingFocus: boolean;
+  comparisonMode: boolean;
+} 

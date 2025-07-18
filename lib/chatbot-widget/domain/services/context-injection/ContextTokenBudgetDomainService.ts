@@ -40,10 +40,10 @@ export class ContextTokenBudgetDomainService {
     }
 
     // Greedy selection based on priority and token efficiency
-    for (const module of sortedModules) {
-      if (usedTokens + module.estimatedTokens <= availableTokens) {
-        selectedModules.push(module);
-        usedTokens += module.estimatedTokens;
+    for (const contextModule of sortedModules) {
+      if (usedTokens + contextModule.estimatedTokens <= availableTokens) {
+        selectedModules.push(contextModule);
+        usedTokens += contextModule.estimatedTokens;
       }
     }
 
@@ -151,10 +151,10 @@ export class ContextTokenBudgetDomainService {
     const selectedModules: ContextModule[] = [];
     let usedTokens = 0;
 
-    for (const module of optimizedModules) {
-      if (usedTokens + module.estimatedTokens <= availableTokens) {
-        selectedModules.push(module);
-        usedTokens += module.estimatedTokens;
+    for (const contextModule of optimizedModules) {
+      if (usedTokens + contextModule.estimatedTokens <= availableTokens) {
+        selectedModules.push(contextModule);
+        usedTokens += contextModule.estimatedTokens;
       }
     }
 
@@ -257,10 +257,10 @@ export class ContextTokenBudgetDomainService {
     const selectedModules: ContextModule[] = [];
     let usedTokens = 0;
     
-    for (const module of essentialModules) {
-      if (usedTokens + module.estimatedTokens <= availableTokens) {
-        selectedModules.push(module);
-        usedTokens += module.estimatedTokens;
+    for (const contextModule of essentialModules) {
+      if (usedTokens + contextModule.estimatedTokens <= availableTokens) {
+        selectedModules.push(contextModule);
+        usedTokens += contextModule.estimatedTokens;
       }
     }
     

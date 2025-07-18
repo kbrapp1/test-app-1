@@ -32,7 +32,7 @@ export class EntityRelevanceScoreService {
   /** Calculate entity relevance score based on business entity mentions */
   static calculateEntityRelevanceScore(
     message: ChatMessage,
-    businessEntities: Record<string, any>
+    businessEntities: Record<string, unknown>
   ): number {
     if (!businessEntities || Object.keys(businessEntities).length === 0) {
       return 0.1; // Base score for messages without entity context
@@ -65,7 +65,7 @@ export class EntityRelevanceScoreService {
   /** Calculate entity density score */
   static calculateEntityDensityScore(
     message: ChatMessage,
-    businessEntities: Record<string, any>
+    businessEntities: Record<string, unknown>
   ): number {
     if (!businessEntities || Object.keys(businessEntities).length === 0) {
       return 0.0;
@@ -106,7 +106,7 @@ export class EntityRelevanceScoreService {
   /** Calculate combined entity score */
   static calculateCombinedEntityScore(
     message: ChatMessage,
-    businessEntities: Record<string, any>
+    businessEntities: Record<string, unknown>
   ): number {
     const relevanceScore = this.calculateEntityRelevanceScore(message, businessEntities);
     const densityScore = this.calculateEntityDensityScore(message, businessEntities);

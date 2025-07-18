@@ -62,6 +62,10 @@ export class OpenAIProvider implements BaseProvider {
       await this.client.models.list();
       return true;
     } catch (error) {
+      // Log authentication failure for security monitoring
+      console.warn('OpenAI API authentication failed:', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       return false;
     }
   }
@@ -70,8 +74,8 @@ export class OpenAIProvider implements BaseProvider {
   private captureApiCall(
     sessionId: string | null,
     callType: 'first' | 'second',
-    requestData: any,
-    responseData: any,
+    requestData: Record<string, unknown>,
+    responseData: Record<string, unknown>,
     processingTime: number
   ): void {
     if (this.debugService && sessionId) {
@@ -138,10 +142,19 @@ export class OpenAIProvider implements BaseProvider {
       }
 
       if (response.usage) {
-        const costEstimate = this.estimateCost(
+        const _costEstimate = this.estimateCost(
           response.usage.prompt_tokens,
           response.usage.completion_tokens
         );
+        
+        // Log cost estimate for billing and monitoring
+        console.debug('OpenAI API cost estimate:', {
+          promptTokens: response.usage.prompt_tokens,
+          completionTokens: response.usage.completion_tokens,
+          estimatedCost: _costEstimate,
+          sessionId,
+          callType
+        });
       }
 
       return response;

@@ -162,7 +162,7 @@ export class KnowledgeInsightsService {
   // Quality Issues and Optimization Opportunities - Delegated to Quality Analysis Service
 
   // Helper methods for gap analysis
-  private static analyzeTopicCoverage(items: KnowledgeItem[]): { gapScore: number; suggestions: string[] } {
+  private static analyzeTopicCoverage(_items: KnowledgeItem[]): { gapScore: number; suggestions: string[] } {
     const suggestions = [
       'Diversify content across different topics',
       'Create content for underrepresented areas',

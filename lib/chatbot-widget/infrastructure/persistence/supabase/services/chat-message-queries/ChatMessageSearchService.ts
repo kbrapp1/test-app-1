@@ -23,6 +23,8 @@ export interface SearchFilters {
   hasErrors?: boolean;
 }
 
+// Use proper Supabase types from main package
+
 export class ChatMessageSearchService {
   private readonly tableName = 'chat_messages';
 
@@ -55,7 +57,7 @@ export class ChatMessageSearchService {
       throw new DatabaseError('Failed to search messages by content', error.message);
     }
 
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return (data || []).map((record: RawChatMessageDbRecord) => ChatMessageMapper.toDomain(record));
   }
 
   async searchByKeywords(
@@ -63,7 +65,7 @@ export class ChatMessageSearchService {
     keywords: string[],
     filters?: SearchFilters
   ): Promise<ChatMessage[]> {
-    const searchPattern = keywords.map(keyword => `%${keyword}%`).join('|');
+    const _searchPattern = keywords.map(keyword => `%${keyword}%`).join('|');
     
     let query = this.supabase
       .from(this.tableName)
@@ -87,7 +89,7 @@ export class ChatMessageSearchService {
       throw new DatabaseError('Failed to search messages by keywords', error.message);
     }
 
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return (data || []).map((record: RawChatMessageDbRecord) => ChatMessageMapper.toDomain(record));
   }
 
   async findMessagesWithErrors(
@@ -128,7 +130,7 @@ export class ChatMessageSearchService {
       throw new DatabaseError('Failed to find messages with errors', error.message);
     }
 
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return (data || []).map((record: RawChatMessageDbRecord) => ChatMessageMapper.toDomain(record));
   }
 
   async findMessagesByDateRange(
@@ -163,7 +165,7 @@ export class ChatMessageSearchService {
       throw new DatabaseError('Failed to find messages by date range', error.message);
     }
 
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return (data || []).map((record: RawChatMessageDbRecord) => ChatMessageMapper.toDomain(record));
   }
 
   async findMessagesBySession(
@@ -191,10 +193,10 @@ export class ChatMessageSearchService {
       throw new DatabaseError('Failed to find messages by session', error.message);
     }
 
-    return (data || []).map(record => ChatMessageMapper.toDomain(record as RawChatMessageDbRecord));
+    return (data || []).map((record: RawChatMessageDbRecord) => ChatMessageMapper.toDomain(record));
   }
 
-  private applyFilters(query: any, filters?: SearchFilters): any {
+  private applyFilters(query: ReturnType<ReturnType<SupabaseClient['from']>['select']>, filters?: SearchFilters) {
     if (!filters) return query;
 
     if (filters.messageType) {

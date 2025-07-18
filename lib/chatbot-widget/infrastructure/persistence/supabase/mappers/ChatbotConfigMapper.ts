@@ -1,4 +1,4 @@
-import { ChatbotConfig, ChatbotConfigProps, LeadQualificationQuestion } from '../../../../domain/entities/ChatbotConfig';
+import { ChatbotConfig, LeadQualificationQuestion } from '../../../../domain/entities/ChatbotConfig';
 import { PersonalitySettings } from '../../../../domain/value-objects/ai-configuration/PersonalitySettings';
 import { KnowledgeBase } from '../../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { OperatingHours } from '../../../../domain/value-objects/session-management/OperatingHours';
@@ -11,11 +11,11 @@ export interface RawChatbotConfigDbRecord {
   name: string;
   avatar_url: string | null;
   description: string | null;
-  personality_settings: any; // JSONB
-  knowledge_base: any; // JSONB
-  operating_hours: any; // JSONB
-  lead_qualification_questions: any; // JSONB array
-  ai_configuration: any; // JSONB
+  personality_settings: unknown; // JSONB
+  knowledge_base: unknown; // JSONB
+  operating_hours: unknown; // JSONB
+  lead_qualification_questions: unknown; // JSONB array
+  ai_configuration: unknown; // JSONB
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -28,11 +28,11 @@ export interface InsertChatbotConfigData {
   name: string;
   avatar_url?: string;
   description?: string;
-  personality_settings: any;
-  knowledge_base: any;
-  operating_hours: any;
-  lead_qualification_questions: any;
-  ai_configuration: any;
+  personality_settings: unknown;
+  knowledge_base: unknown;
+  operating_hours: unknown;
+  lead_qualification_questions: unknown;
+  ai_configuration: unknown;
   is_active: boolean;
 }
 
@@ -41,11 +41,11 @@ export interface UpdateChatbotConfigData {
   name?: string;
   avatar_url?: string;
   description?: string;
-  personality_settings?: any;
-  knowledge_base?: any;
-  operating_hours?: any;
-  lead_qualification_questions?: any;
-  ai_configuration?: any;
+  personality_settings?: unknown;
+  knowledge_base?: unknown;
+  operating_hours?: unknown;
+  lead_qualification_questions?: unknown;
+  ai_configuration?: unknown;
   is_active?: boolean;
   updated_at?: string;
 }
@@ -60,26 +60,27 @@ export interface UpdateChatbotConfigData {
 
 export class ChatbotConfigMapper {
   /** Transform database record to domain entity using factory method */
-  static toDomainEntity(data: any): ChatbotConfig {
+  static toDomainEntity(data: unknown): ChatbotConfig {
+    const record = data as RawChatbotConfigDbRecord;
     return ChatbotConfig.fromPersistence({
-      id: data.id,
-      organizationId: data.organization_id,
-      name: data.name,
-      avatarUrl: data.avatar_url,
-      description: data.description,
-      personalitySettings: this.mapPersonalitySettings(data.personality_settings),
-      knowledgeBase: this.mapKnowledgeBase(data.knowledge_base),
-      operatingHours: this.mapOperatingHours(data.operating_hours),
-      leadQualificationQuestions: this.mapLeadQuestions(data.lead_qualification_questions),
-      aiConfiguration: this.mapAIConfiguration(data.ai_configuration),
-      isActive: data.is_active,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      id: record.id,
+      organizationId: record.organization_id,
+      name: record.name,
+      avatarUrl: record.avatar_url ?? undefined,
+      description: record.description ?? undefined,
+      personalitySettings: this.mapPersonalitySettings(record.personality_settings),
+      knowledgeBase: this.mapKnowledgeBase(record.knowledge_base),
+      operatingHours: this.mapOperatingHours(record.operating_hours),
+      leadQualificationQuestions: this.mapLeadQuestions(record.lead_qualification_questions),
+      aiConfiguration: this.mapAIConfiguration(record.ai_configuration),
+      isActive: record.is_active,
+      createdAt: new Date(record.created_at),
+      updatedAt: new Date(record.updated_at)
     });
   }
 
   /** Transform domain entity to database record */
-  static toDbRecord(config: ChatbotConfig): any {
+  static toDbRecord(config: ChatbotConfig): unknown {
     return {
       id: config.id,
       organization_id: config.organizationId,
@@ -131,36 +132,38 @@ export class ChatbotConfigMapper {
   }
 
   /** Map JSONB personality settings to domain value object */
-  private static mapPersonalitySettings(data: any): PersonalitySettings {
+  private static mapPersonalitySettings(data: unknown): PersonalitySettings {
+    const settings = data as Record<string, unknown> | null | undefined;
     return PersonalitySettings.create({
-      tone: data?.tone || 'professional',
-      communicationStyle: data?.communicationStyle || 'helpful',
-      responseLength: data?.responseLength || 'adaptive',
-      escalationTriggers: data?.escalationTriggers || [],
+      tone: (settings?.tone as 'professional' | 'friendly' | 'casual' | 'formal') || 'professional',
+      communicationStyle: (settings?.communicationStyle as 'helpful' | 'direct' | 'conversational' | 'sales-focused') || 'helpful',
+      responseLength: (settings?.responseLength as 'adaptive' | 'brief' | 'detailed') || 'adaptive',
+      escalationTriggers: (settings?.escalationTriggers as string[]) || [],
       responseBehavior: {
-        useEmojis: data?.responseBehavior?.useEmojis || false,
-        askFollowUpQuestions: data?.responseBehavior?.askFollowUpQuestions || true,
-        proactiveOffering: data?.responseBehavior?.proactiveOffering || true,
-        personalizeResponses: data?.responseBehavior?.personalizeResponses || true,
-        acknowledgePreviousInteractions: data?.responseBehavior?.acknowledgePreviousInteractions || true,
+        useEmojis: ((settings?.responseBehavior as Record<string, unknown>)?.useEmojis as boolean) || false,
+        askFollowUpQuestions: ((settings?.responseBehavior as Record<string, unknown>)?.askFollowUpQuestions as boolean) || true,
+        proactiveOffering: ((settings?.responseBehavior as Record<string, unknown>)?.proactiveOffering as boolean) || true,
+        personalizeResponses: ((settings?.responseBehavior as Record<string, unknown>)?.personalizeResponses as boolean) || true,
+        acknowledgePreviousInteractions: ((settings?.responseBehavior as Record<string, unknown>)?.acknowledgePreviousInteractions as boolean) || true,
       },
       conversationFlow: {
-        greetingMessage: data?.conversationFlow?.greetingMessage || 'Hello! How can I help you today?',
-        fallbackMessage: data?.conversationFlow?.fallbackMessage || 'I\'m not sure about that. Could you rephrase your question?',
-        escalationMessage: data?.conversationFlow?.escalationMessage || 'Let me connect you with a team member.',
-        endConversationMessage: data?.conversationFlow?.endConversationMessage || 'Thank you for chatting with us!',
-        leadCapturePrompt: data?.conversationFlow?.leadCapturePrompt || 'Can I get your contact information to follow up?',
-        maxConversationTurns: data?.conversationFlow?.maxConversationTurns || 20,
-        inactivityTimeout: data?.conversationFlow?.inactivityTimeout || 300,
+        greetingMessage: ((settings?.conversationFlow as Record<string, unknown>)?.greetingMessage as string) || 'Hello! How can I help you today?',
+        fallbackMessage: ((settings?.conversationFlow as Record<string, unknown>)?.fallbackMessage as string) || 'I\'m not sure about that. Could you rephrase your question?',
+        escalationMessage: ((settings?.conversationFlow as Record<string, unknown>)?.escalationMessage as string) || 'Let me connect you with a team member.',
+        endConversationMessage: ((settings?.conversationFlow as Record<string, unknown>)?.endConversationMessage as string) || 'Thank you for chatting with us!',
+        leadCapturePrompt: ((settings?.conversationFlow as Record<string, unknown>)?.leadCapturePrompt as string) || 'Can I get your contact information to follow up?',
+        maxConversationTurns: ((settings?.conversationFlow as Record<string, unknown>)?.maxConversationTurns as number) || 20,
+        inactivityTimeout: ((settings?.conversationFlow as Record<string, unknown>)?.inactivityTimeout as number) || 300,
       },
-      customInstructions: data?.customInstructions || '',
+      customInstructions: (settings?.customInstructions as string) || '',
     });
   }
 
   /** Map JSONB knowledge base to domain value object */
-  private static mapKnowledgeBase(data: any): KnowledgeBase {
+  private static mapKnowledgeBase(data: unknown): KnowledgeBase {
+    const kb = data as Record<string, unknown> | null | undefined;
     // Handle case where knowledge_base JSONB field is null in database
-    if (!data || data === null) {
+    if (!kb || kb === null) {
       return KnowledgeBase.create({
         companyInfo: '',
         productCatalog: '',
@@ -172,115 +175,118 @@ export class ChatbotConfigMapper {
     }
     
     return KnowledgeBase.create({
-      companyInfo: data?.companyInfo || '',
-      productCatalog: data?.productCatalog || '',
-      faqs: (data?.faqs || []).map((faq: any) => ({
-        id: faq?.id || crypto.randomUUID(),
-        question: faq?.question || '',
-        answer: faq?.answer || '',
-        category: faq?.category || 'general',
-        isActive: faq?.isActive !== undefined ? faq.isActive : true,
+      companyInfo: (kb?.companyInfo as string) || '',
+      productCatalog: (kb?.productCatalog as string) || '',
+      faqs: ((kb?.faqs as unknown[]) || []).map((faq: unknown) => ({
+        id: ((faq as Record<string, unknown>)?.id as string) || crypto.randomUUID(),
+        question: ((faq as Record<string, unknown>)?.question as string) || '',
+        answer: ((faq as Record<string, unknown>)?.answer as string) || '',
+        category: ((faq as Record<string, unknown>)?.category as string) || 'general',
+        isActive: ((faq as Record<string, unknown>)?.isActive as boolean) !== undefined ? ((faq as Record<string, unknown>)?.isActive as boolean) : true,
       })),
-      supportDocs: data?.supportDocs || '',
-      complianceGuidelines: data?.complianceGuidelines || '',
-              websiteSources: (data?.websiteSources || []).map((source: any) => ({
-          id: source?.id || crypto.randomUUID(),
-          url: source?.url || '',
-          name: source?.name || '',
-          description: source?.description || '',
-          isActive: source?.isActive !== undefined ? source.isActive : true,
+      supportDocs: (kb?.supportDocs as string) || '',
+      complianceGuidelines: (kb?.complianceGuidelines as string) || '',
+      websiteSources: (kb?.websiteSources as unknown[] || []).map((source: unknown) => ({
+          id: (source as Record<string, unknown>)?.id as string || crypto.randomUUID(),
+          url: (source as Record<string, unknown>)?.url as string || '',
+          name: (source as Record<string, unknown>)?.name as string || '',
+          description: (source as Record<string, unknown>)?.description as string || '',
+          isActive: (source as Record<string, unknown>)?.isActive !== undefined ? (source as Record<string, unknown>).isActive as boolean : true,
           crawlSettings: {
-            maxPages: source?.crawlSettings?.maxPages!,
-            maxDepth: source?.crawlSettings?.maxDepth!,
-            includePatterns: source?.crawlSettings?.includePatterns!,
-            excludePatterns: source?.crawlSettings?.excludePatterns!,
-            respectRobotsTxt: source?.crawlSettings?.respectRobotsTxt!,
-            crawlFrequency: source?.crawlSettings?.crawlFrequency!,
-            includeImages: source?.crawlSettings?.includeImages!,
-            includePDFs: source?.crawlSettings?.includePDFs!,
+            maxPages: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.maxPages as number || 10,
+            maxDepth: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.maxDepth as number || 3,
+            includePatterns: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.includePatterns as string[] || [],
+            excludePatterns: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.excludePatterns as string[] || [],
+            respectRobotsTxt: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.respectRobotsTxt as boolean ?? true,
+            crawlFrequency: (((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.crawlFrequency as 'manual' | 'daily' | 'weekly' | 'monthly') || 'weekly',
+            includeImages: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.includeImages as boolean ?? false,
+            includePDFs: ((source as Record<string, unknown>)?.crawlSettings as Record<string, unknown>)?.includePDFs as boolean ?? true,
           },
-          lastCrawled: source?.lastCrawled ? new Date(source.lastCrawled) : undefined,
-          status: source?.status || 'pending',
-          pageCount: source?.pageCount || 0,
-          errorMessage: source?.errorMessage,
+          lastCrawled: (source as Record<string, unknown>)?.lastCrawled ? new Date((source as Record<string, unknown>).lastCrawled as string) : undefined,
+          status: ((source as Record<string, unknown>)?.status as 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error') || 'pending',
+          pageCount: (source as Record<string, unknown>)?.pageCount as number || 0,
+          errorMessage: (source as Record<string, unknown>)?.errorMessage as string,
         })),
     });
   }
 
   /** Map JSONB operating hours to domain value object */
-  private static mapOperatingHours(data: any): OperatingHours {
+  private static mapOperatingHours(data: unknown): OperatingHours {
+    const hours = data as Record<string, unknown> | null | undefined;
     return OperatingHours.create({
-      timezone: data?.timezone || 'UTC',
-      businessHours: (data?.businessHours || []).map((hours: any) => ({
-        dayOfWeek: hours?.dayOfWeek || 0,
-        startTime: hours?.startTime || '09:00',
-        endTime: hours?.endTime || '17:00',
-        isActive: hours?.isActive !== undefined ? hours.isActive : true,
+      timezone: hours?.timezone as string || 'UTC',
+      businessHours: (hours?.businessHours as unknown[] || []).map((hours: unknown) => ({
+        dayOfWeek: (hours as Record<string, unknown>)?.dayOfWeek as number || 0,
+        startTime: (hours as Record<string, unknown>)?.startTime as string || '09:00',
+        endTime: (hours as Record<string, unknown>)?.endTime as string || '17:00',
+        isActive: (hours as Record<string, unknown>)?.isActive !== undefined ? (hours as Record<string, unknown>).isActive as boolean : true,
       })),
-      holidaySchedule: (data?.holidaySchedule || []).map((holiday: any) => ({
-        date: holiday?.date || '',
-        name: holiday?.name || '',
-        isRecurring: holiday?.isRecurring !== undefined ? holiday.isRecurring : false,
+      holidaySchedule: (hours?.holidaySchedule as unknown[] || []).map((holiday: unknown) => ({
+        date: (holiday as Record<string, unknown>)?.date as string || '',
+        name: (holiday as Record<string, unknown>)?.name as string || '',
+        isRecurring: (holiday as Record<string, unknown>)?.isRecurring !== undefined ? (holiday as Record<string, unknown>).isRecurring as boolean : false,
       })),
-      outsideHoursMessage: data?.outsideHoursMessage || 'We are currently closed. Please leave a message and we will get back to you.',
+      outsideHoursMessage: hours?.outsideHoursMessage as string || 'We are currently closed. Please leave a message and we will get back to you.',
     });
   }
 
   /** Map JSONB AI configuration to domain value object */
-  private static mapAIConfiguration(data: any): AIConfiguration {
+  private static mapAIConfiguration(data: unknown): AIConfiguration {
     if (!data) {
       return AIConfiguration.createDefault();
     }
     
+    const config = data as Record<string, unknown>;
     return AIConfiguration.create({
-      openaiModel: data?.openaiModel || 'gpt-4o-mini',
-      openaiTemperature: data?.openaiTemperature || 0.3,
-      openaiMaxTokens: data?.openaiMaxTokens || 1000,
-      contextMaxTokens: data?.contextMaxTokens || 12000,
-      contextSystemPromptTokens: data?.contextSystemPromptTokens || 500,
-      contextResponseReservedTokens: data?.contextResponseReservedTokens || 3000,
-      contextSummaryTokens: data?.contextSummaryTokens || 200,
-      intentConfidenceThreshold: data?.intentConfidenceThreshold || 0.7,
-      intentAmbiguityThreshold: data?.intentAmbiguityThreshold || 0.2,
-      enableMultiIntentDetection: data?.enableMultiIntentDetection !== undefined ? data.enableMultiIntentDetection : true,
-      enablePersonaInference: data?.enablePersonaInference !== undefined ? data.enablePersonaInference : true,
-      enableAdvancedEntities: data?.enableAdvancedEntities !== undefined ? data.enableAdvancedEntities : true,
-      entityExtractionMode: data?.entityExtractionMode || 'comprehensive',
-      customEntityTypes: data?.customEntityTypes || [],
-      maxConversationTurns: data?.maxConversationTurns || 20,
-      inactivityTimeoutSeconds: data?.inactivityTimeoutSeconds || 300,
-      enableJourneyRegression: data?.enableJourneyRegression !== undefined ? data.enableJourneyRegression : true,
-      enableContextSwitchDetection: data?.enableContextSwitchDetection !== undefined ? data.enableContextSwitchDetection : true,
-      enableAdvancedScoring: data?.enableAdvancedScoring !== undefined ? data.enableAdvancedScoring : true,
-      entityCompletenessWeight: data?.entityCompletenessWeight || 0.3,
-      personaConfidenceWeight: data?.personaConfidenceWeight || 0.2,
-      journeyProgressionWeight: data?.journeyProgressionWeight || 0.25,
-      enablePerformanceLogging: data?.enablePerformanceLogging !== undefined ? data.enablePerformanceLogging : true,
-      enableIntentAnalytics: data?.enableIntentAnalytics !== undefined ? data.enableIntentAnalytics : true,
-      enablePersonaAnalytics: data?.enablePersonaAnalytics !== undefined ? data.enablePersonaAnalytics : true,
-      responseTimeThresholdMs: data?.responseTimeThresholdMs || 2000,
+      openaiModel: (config?.openaiModel as 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo') || 'gpt-4o-mini',
+      openaiTemperature: config?.openaiTemperature as number || 0.3,
+      openaiMaxTokens: config?.openaiMaxTokens as number || 1000,
+      contextMaxTokens: config?.contextMaxTokens as number || 12000,
+      contextSystemPromptTokens: config?.contextSystemPromptTokens as number || 500,
+      contextResponseReservedTokens: config?.contextResponseReservedTokens as number || 3000,
+      contextSummaryTokens: config?.contextSummaryTokens as number || 200,
+      intentConfidenceThreshold: config?.intentConfidenceThreshold as number || 0.7,
+      intentAmbiguityThreshold: config?.intentAmbiguityThreshold as number || 0.2,
+      enableMultiIntentDetection: config?.enableMultiIntentDetection !== undefined ? config.enableMultiIntentDetection as boolean : true,
+      enablePersonaInference: config?.enablePersonaInference !== undefined ? config.enablePersonaInference as boolean : true,
+      enableAdvancedEntities: config?.enableAdvancedEntities !== undefined ? config.enableAdvancedEntities as boolean : true,
+      entityExtractionMode: (config?.entityExtractionMode as 'comprehensive' | 'basic' | 'custom') || 'comprehensive',
+      customEntityTypes: config?.customEntityTypes as string[] || [],
+      maxConversationTurns: config?.maxConversationTurns as number || 20,
+      inactivityTimeoutSeconds: config?.inactivityTimeoutSeconds as number || 300,
+      enableJourneyRegression: config?.enableJourneyRegression !== undefined ? config.enableJourneyRegression as boolean : true,
+      enableContextSwitchDetection: config?.enableContextSwitchDetection !== undefined ? config.enableContextSwitchDetection as boolean : true,
+      enableAdvancedScoring: config?.enableAdvancedScoring !== undefined ? config.enableAdvancedScoring as boolean : true,
+      entityCompletenessWeight: config?.entityCompletenessWeight as number || 0.3,
+      personaConfidenceWeight: config?.personaConfidenceWeight as number || 0.2,
+      journeyProgressionWeight: config?.journeyProgressionWeight as number || 0.25,
+      enablePerformanceLogging: config?.enablePerformanceLogging !== undefined ? config.enablePerformanceLogging as boolean : true,
+      enableIntentAnalytics: config?.enableIntentAnalytics !== undefined ? config.enableIntentAnalytics as boolean : true,
+      enablePersonaAnalytics: config?.enablePersonaAnalytics !== undefined ? config.enablePersonaAnalytics as boolean : true,
+      responseTimeThresholdMs: config?.responseTimeThresholdMs as number || 2000,
     });
   }
 
   /** Map JSONB lead qualification questions to domain objects */
-  private static mapLeadQuestions(data: any): LeadQualificationQuestion[] {
+  private static mapLeadQuestions(data: unknown): LeadQualificationQuestion[] {
     if (!Array.isArray(data)) {
       return [];
     }
 
-    return data.map((question: any) => this.mapLeadQuestion(question));
+    return data.map((question: unknown) => this.mapLeadQuestion(question));
   }
 
   /** Map lead qualification question object */
-  private static mapLeadQuestion(question: any): LeadQualificationQuestion {
+  private static mapLeadQuestion(question: unknown): LeadQualificationQuestion {
+    const q = question as Record<string, unknown>;
     return {
-      id: question?.id || crypto.randomUUID(),
-      question: question?.question || '',
-      type: question?.type || 'text',
-      options: question?.options || undefined,
-      isRequired: question?.isRequired !== undefined ? question.isRequired : false,
-      order: question?.order || 0,
-      scoringWeight: question?.scoringWeight || 1,
+      id: q?.id as string || crypto.randomUUID(),
+      question: q?.question as string || '',
+      type: (q?.type as 'text' | 'email' | 'phone' | 'select' | 'multiselect') || 'text',
+      options: q?.options as string[] || undefined,
+      isRequired: q?.isRequired !== undefined ? q.isRequired as boolean : false,
+      order: q?.order as number || 0,
+      scoringWeight: q?.scoringWeight as number || 1,
     };
   }
 } 

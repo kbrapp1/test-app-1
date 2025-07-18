@@ -10,10 +10,10 @@
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 
 /** Search Result Interface */
-interface SearchResult {
+/* interface SearchResult {
   item: KnowledgeItem;
   score: number;
-}
+} */
 
 export class KnowledgeSearchService {
 

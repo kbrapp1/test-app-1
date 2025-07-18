@@ -13,9 +13,12 @@ import {
   IHtmlElement, 
   ILinkElement 
 } from '../../../domain/services/ContentExtractionService';
+import type { CheerioAPI, Cheerio } from 'cheerio';
+import * as _cheerio from 'cheerio';
 
 export class CheerioElementAdapter implements IHtmlElement {
-  constructor(private readonly cheerioElement: any) {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required for Cheerio library compatibility
+  constructor(private readonly cheerioElement: Cheerio<any>) {}
 
   getText(): string {
     return this.cheerioElement.text() || '';
@@ -27,7 +30,8 @@ export class CheerioElementAdapter implements IHtmlElement {
 }
 
 export class CheerioLinkElementAdapter implements ILinkElement {
-  constructor(private readonly cheerioElement: any) {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required for Cheerio library compatibility
+  constructor(private readonly cheerioElement: Cheerio<any>) {}
 
   getHref(): string {
     return this.cheerioElement.attr('href') || '';
@@ -40,7 +44,7 @@ export class CheerioLinkElementAdapter implements ILinkElement {
 }
 
 export class CheerioHtmlParserAdapter implements IHtmlParser {
-  constructor(private readonly $: any) {}
+  constructor(private readonly $: CheerioAPI) {}
 
   /** Remove elements by CSS selectors */
   removeElements(selectors: string[]): void {
@@ -73,7 +77,7 @@ export class CheerioHtmlParserAdapter implements IHtmlParser {
   getAllLinks(): ILinkElement[] {
     const links: ILinkElement[] = [];
     
-    this.$('a[href]').each((_: any, element: any) => {
+    this.$('a[href]').each((_, element) => {
       const linkAdapter = new CheerioLinkElementAdapter(this.$(element));
       links.push(linkAdapter);
     });

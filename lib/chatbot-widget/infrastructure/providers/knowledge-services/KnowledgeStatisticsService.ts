@@ -10,7 +10,7 @@
 
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { KnowledgeStats, KnowledgeHealthMetrics } from './types/KnowledgeServiceTypes';
-import { KnowledgeUtilityService } from './KnowledgeUtilityService';
+// import { KnowledgeUtilityService } from './KnowledgeUtilityService';
 import { KnowledgeContentHashingService } from './utilities/KnowledgeContentHashingService';
 import { KnowledgeGroupingService } from './utilities/KnowledgeGroupingService';
 

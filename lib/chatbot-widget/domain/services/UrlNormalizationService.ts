@@ -132,6 +132,12 @@ export class UrlNormalizationService {
       // Use decodeURIComponent for proper percent-decoding
       return decodeURIComponent(pathname);
     } catch (error) {
+      // Log decoding failure for security monitoring
+      console.warn('URL decoding failed, attempting selective decode:', { 
+        pathname, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      
       // If decoding fails, try selective decoding of common characters
       try {
         return pathname
@@ -169,6 +175,11 @@ export class UrlNormalizationService {
           .replace(/%7D/gi, '}')   // right brace
           .replace(/%7E/gi, '~');  // tilde
       } catch (fallbackError) {
+        // Log fallback failure for security monitoring
+        console.warn('URL selective decoding also failed, returning original pathname:', { 
+          pathname, 
+          fallbackError: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) 
+        });
         return pathname;
       }
     }
@@ -222,6 +233,12 @@ export class UrlNormalizationService {
         return a.localeCompare(b);
         
       } catch (error) {
+        // Log URL parsing failure for security monitoring
+        console.warn('URL parsing failed during sorting, using string comparison:', { 
+          url1: a, 
+          url2: b, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
         // If URL parsing fails, fallback to string comparison
         return a.localeCompare(b);
       }

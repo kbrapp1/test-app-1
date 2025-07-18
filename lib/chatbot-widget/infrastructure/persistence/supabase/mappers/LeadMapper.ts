@@ -14,7 +14,7 @@ import { Lead } from '../../../../domain/entities/Lead';
 import { ContactInfo } from '../../../../domain/value-objects/lead-management/ContactInfo';
 import { LeadSource } from '../../../../domain/value-objects/lead-management/LeadSource';
 import { QualificationData } from '../../../../domain/value-objects/lead-management/QualificationData';
-import { LeadMetadata, LeadNote } from '../../../../domain/value-objects/lead-management/LeadMetadata';
+import { LeadNote } from '../../../../domain/value-objects/lead-management/LeadMetadata';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 
 // Define QualificationStatus locally since we removed LeadScoringService

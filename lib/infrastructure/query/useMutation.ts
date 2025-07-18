@@ -33,6 +33,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
         );
         return { previousData };
       }
+      return undefined;
     },
     onError: (error, variables, context) => {
       // Rollback optimistic update on error

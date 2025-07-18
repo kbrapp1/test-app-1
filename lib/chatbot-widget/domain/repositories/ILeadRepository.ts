@@ -1,6 +1,56 @@
 import { Lead } from '../entities/Lead';
 import { FollowUpStatus } from '../entities/LeadLifecycleManager';
 
+export interface LeadSearchFilters {
+  status?: string[];
+  score?: { min?: number; max?: number };
+  dateRange?: { start: Date; end: Date };
+  dateFrom?: Date;
+  dateTo?: Date;
+  assignedTo?: string[];
+  tags?: string[];
+  source?: string[];
+}
+
+export interface LeadExportFilters {
+  status?: string[];
+  qualificationStatus?: string[];
+  dateRange?: { start: Date; end: Date };
+  assignedTo?: string[];
+  tags?: string[];
+  includeContactInfo?: boolean;
+  includeScoring?: boolean;
+  includeNotes?: boolean;
+}
+
+export interface LeadAnalytics {
+  totalLeads: number;
+  qualifiedLeads: number;
+  convertedLeads: number;
+  averageScore: number;
+  avgLeadScore: number;
+  conversionRate: number;
+  topSources: Array<{ source: string; count: number }>;
+  sourceBreakdown: Array<{ source: string; count: number }>;
+  scoreDistribution: Array<{ range: string; count: number }>;
+  qualificationDistribution: {
+    not_qualified: number;
+    qualified: number;
+    highly_qualified: number;
+    disqualified: number;
+  };
+  followUpDistribution: {
+    new: number;
+    contacted: number;
+    in_progress: number;
+    converted: number;
+    lost: number;
+    nurturing: number;
+  };
+  monthlyTrends: Array<{ month: string; leads: number; conversions: number }>;
+  highlyQualifiedLeads: number;
+}
+
 export interface ILeadRepository {
   /** Find lead by ID */
   findById(id: string): Promise<Lead | null>;
@@ -16,7 +66,7 @@ export interface ILeadRepository {
     organizationId: string,
     page: number,
     limit: number,
-    filters?: any
+    filters?: LeadSearchFilters
   ): Promise<{
     leads: Lead[];
     total: number;
@@ -45,12 +95,12 @@ export interface ILeadRepository {
     organizationId: string,
     dateFrom: Date,
     dateTo: Date
-  ): Promise<any>;
+  ): Promise<LeadAnalytics>;
 
   /** Get leads for export (CSV/Excel) */
   findForExport(
     organizationId: string,
-    filters?: any
+    filters?: LeadExportFilters
   ): Promise<Lead[]>;
 
   /** Find leads requiring follow-up */

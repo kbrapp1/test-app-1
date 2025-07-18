@@ -44,7 +44,7 @@ export interface CrawledPagesQueryResponse {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 
@@ -76,7 +76,7 @@ export interface CrawledPagesStatsResponse {
   error?: {
     code: string;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
 }
 

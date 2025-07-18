@@ -12,9 +12,6 @@
  */
 
 import { Lead } from '../../entities/Lead';
-import { ContactInfo } from '../../value-objects/lead-management/ContactInfo';
-import { LeadMetadata } from '../../value-objects/lead-management/LeadMetadata';
-import { LeadSource } from '../../value-objects/lead-management/LeadSource';
 
 export class LeadExportService {
   /** Generate summary data for lead overview */

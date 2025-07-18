@@ -35,7 +35,7 @@ export interface AIResponse {
   };
   functionCall?: {
     name: string;
-    arguments: Record<string, any>;
+    arguments: Record<string, unknown>;
   };
 }
 
@@ -47,7 +47,7 @@ export interface LeadCaptureRequest {
     phone?: string;
     company?: string;
   };
-  qualificationData: Record<string, any>;
+  qualificationData: Record<string, unknown>;
 }
 
 export interface IAIConversationService {

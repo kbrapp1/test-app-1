@@ -10,14 +10,13 @@
  */
 
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
-import { ReadinessIndicatorDomainService } from '../../../domain/services/conversation-management/ReadinessIndicatorDomainService';
+import { ReadinessIndicatorDomainService, ReadinessEntityContext, ReadinessCalculationContext as DomainReadinessCalculationContext } from '../../../domain/services/conversation-management/ReadinessIndicatorDomainService';
 import { IChatbotLoggingService, ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { 
   UnifiedProcessingResult, 
   AIFlowDecision, 
-  LeadScoringEntities,
-  ReadinessCalculationContext
+  LeadScoringEntities
 } from './types/UnifiedResultTypes';
 
 export class ConversationFlowAnalyzerService {
@@ -63,7 +62,7 @@ export class ConversationFlowAnalyzerService {
       // AI: Create flow decision from simplified schema response
       const aiFlowDecision = this.createFlowDecisionFromSimplifiedResponse(unifiedResult, leadScore);
       const leadScoreEntities = this.convertAccumulatedEntitiesToLeadScoringFormat(
-        accumulatedEntities.toPlainObject()
+        accumulatedEntities.toPlainObject() as unknown as Record<string, unknown>
       );
       
       // Log AI flow decisions
@@ -107,13 +106,36 @@ export class ConversationFlowAnalyzerService {
   private calculateAndLogReadinessIndicators(
     logger: ISessionLogger,
     leadScore: number,
-    leadScoreEntities: LeadScoringEntities,
+    leadScoreEntities: LeadScoringEntities & Record<string, unknown>,
     aiFlowDecision: AIFlowDecision
   ): void {
-    // Calculate readiness indicators
-    const context: ReadinessCalculationContext = {
+    // Calculate readiness indicators - convert to domain context
+    const domainEntities: ReadinessEntityContext = {
+      goals: [],
+      decisionMakers: [],
+      painPoints: [],
+      integrationNeeds: [],
+      evaluationCriteria: [],
+      budget: null,
+      timeline: null,
+      eventType: '',
+      // Extract values from flattened leadScoreEntities structure (set by convertAccumulatedEntitiesToLeadScoringFormat)
+      urgency: this.getStringProperty(leadScoreEntities, 'urgency', ['low', 'medium', 'high']) as 'low' | 'medium' | 'high' | null,
+      contactMethod: this.getStringProperty(leadScoreEntities, 'contactMethod', ['email', 'phone', 'meeting']) as 'email' | 'phone' | 'meeting' | null,
+      visitorName: null, // Not available in flattened structure
+      role: this.getStringProperty(leadScoreEntities, 'role') ?? null,
+      industry: this.getStringProperty(leadScoreEntities, 'industry') ?? null,
+      company: this.getStringProperty(leadScoreEntities, 'company') ?? null,
+      teamSize: this.getStringProperty(leadScoreEntities, 'teamSize') ?? null,
+      productName: undefined,
+      featureName: this.getStringProperty(leadScoreEntities, 'role') || undefined,
+      preferredTime: this.getStringProperty(leadScoreEntities, 'timeline') || undefined,
+      severity: (this.getStringProperty(leadScoreEntities, 'urgency', ['low', 'medium', 'high', 'critical']) as 'low' | 'medium' | 'high' | 'critical') ?? 'low'
+    };
+
+    const context: DomainReadinessCalculationContext = {
       leadScore,
-      entities: leadScoreEntities,
+      entities: domainEntities,
       conversationPhase: aiFlowDecision.conversationPhase || 'discovery',
       engagementLevel: aiFlowDecision.engagementLevel || 'low'
     };
@@ -199,5 +221,19 @@ export class ConversationFlowAnalyzerService {
     if (leadScore >= 70) return 'high';
     if (leadScore >= 40) return 'medium';
     return 'low';
+  }
+
+  /** Helper method to safely access string properties with validation */
+  private getStringProperty(
+    obj: Record<string, unknown>, 
+    key: string, 
+    allowedValues?: string[]
+  ): string | null {
+    const value = obj[key];
+    if (typeof value !== 'string') return null;
+    
+    if (allowedValues && !allowedValues.includes(value)) return null;
+    
+    return value;
   }
 } 

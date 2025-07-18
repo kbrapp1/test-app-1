@@ -17,7 +17,7 @@ import { KnowledgeInsightsService } from './analytics/KnowledgeInsightsService';
 import { KnowledgeTrendsService } from './analytics/KnowledgeTrendsService';
 import { KnowledgeContentAnalysisService } from './analytics/KnowledgeContentAnalysisService';
 import { KnowledgeTagAnalysisService } from './analytics/KnowledgeTagAnalysisService';
-import { KnowledgeContentCoordinatorService } from './analytics/KnowledgeContentCoordinatorService';
+// import { KnowledgeContentCoordinatorService } from './analytics/KnowledgeContentCoordinatorService';
 import { KnowledgeContentPerformanceService } from './analytics/KnowledgeContentPerformanceService';
 import type { 
   QualityScoreResult,

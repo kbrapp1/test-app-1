@@ -55,15 +55,15 @@ export class UseCaseCompositionService {
       const intentClassificationService = await DomainServiceCompositionService.getIntentClassificationService();
       // Create ConversationContextOrchestrator with explicit dependency injection (following @golden-rule patterns)
       // Cache the import to avoid repeated dynamic imports
-      if (!(globalThis as any)[this.CONTEXT_CACHE_KEY]) {
+      if (!(globalThis as unknown as Record<string, Record<string, unknown>>)[this.CONTEXT_CACHE_KEY]) {
         const { result: orchestratorModule } = await perf.measureAsync(
           'ImportConversationContextOrchestrator',
           () => import('../../domain/services/conversation/ConversationContextOrchestrator'),
           { library: 'ConversationContextOrchestrator', operation: 'dynamic-import' }
         );
-        (globalThis as any)[this.CONTEXT_CACHE_KEY] = orchestratorModule;
+        (globalThis as unknown as Record<string, Record<string, unknown>>)[this.CONTEXT_CACHE_KEY] = orchestratorModule;
       }
-      const { ConversationContextOrchestrator } = (globalThis as any)[this.CONTEXT_CACHE_KEY];
+      const { ConversationContextOrchestrator } = (globalThis as unknown as Record<string, Record<string, unknown>>)[this.CONTEXT_CACHE_KEY] as { ConversationContextOrchestrator: typeof import('../../domain/services/conversation/ConversationContextOrchestrator').ConversationContextOrchestrator };
       const conversationContextOrchestrator = new ConversationContextOrchestrator(
         tokenCountingService,
         intentClassificationService,

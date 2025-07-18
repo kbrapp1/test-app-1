@@ -22,7 +22,7 @@ export interface KnowledgeRetrievalContext {
   userQuery: string;
   intentResult?: IntentResult;
   conversationHistory?: string[];
-  userPreferences?: Record<string, any>;
+  userPreferences?: Record<string, unknown>;
   maxResults?: number;
   minRelevanceScore?: number;
   sharedLogFile?: string;

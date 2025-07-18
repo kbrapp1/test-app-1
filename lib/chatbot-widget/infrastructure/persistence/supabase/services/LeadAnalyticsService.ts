@@ -11,39 +11,13 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { DatabaseError } from '../../../../domain/errors/ChatbotWidgetDomainErrors';
+// import { DatabaseError } from '../../../../domain/errors/ChatbotWidgetDomainErrors';
 import { Lead } from '../../../../domain/entities/Lead';
-import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
 import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
+import { LeadAnalytics } from '../../../../domain/repositories/ILeadRepository';
 
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
-
-export interface LeadAnalytics {
-  totalLeads: number;
-  qualifiedLeads: number;
-  highlyQualifiedLeads: number;
-  convertedLeads: number;
-  avgLeadScore: number;
-  conversionRate: number;
-  qualificationDistribution: {
-    not_qualified: number;
-    qualified: number;
-    highly_qualified: number;
-    disqualified: number;
-  };
-  followUpDistribution: {
-    new: number;
-    contacted: number;
-    in_progress: number;
-    converted: number;
-    lost: number;
-    nurturing: number;
-  };
-  sourceBreakdown: Array<{ source: string; count: number }>;
-  topCompanies: Array<{ company: string; count: number; avgScore: number }>;
-  leadTrends: Array<{ date: string; count: number; avgScore: number }>;
-}
 
 export interface FunnelMetrics {
   sessions: number;
@@ -110,15 +84,17 @@ export class LeadAnalyticsService {
     return {
       totalLeads,
       qualifiedLeads,
-      highlyQualifiedLeads,
       convertedLeads,
+      averageScore: Math.round(avgLeadScore * 100) / 100,
       avgLeadScore: Math.round(avgLeadScore * 100) / 100,
       conversionRate: Math.round(conversionRate * 100) / 100,
+      topSources: this.calculateSourceBreakdown(leads),
+      sourceBreakdown: this.calculateSourceBreakdown(leads),
+      scoreDistribution: this.calculateScoreDistribution(leads),
       qualificationDistribution: this.calculateQualificationDistribution(leads),
       followUpDistribution: this.calculateFollowUpDistribution(leads),
-      sourceBreakdown: this.calculateSourceBreakdown(leads),
-      topCompanies: this.calculateTopCompanies(leads),
-      leadTrends: this.calculateLeadTrends(leads),
+      monthlyTrends: this.calculateMonthlyTrends(leads),
+      highlyQualifiedLeads,
     };
   }
 
@@ -257,5 +233,42 @@ export class LeadAnalyticsService {
       converted: records.filter(r => r.follow_up_status === 'converted').length,
       new: records.filter(r => r.follow_up_status === 'new').length,
     };
+  }
+
+  /** Calculate score distribution */
+  private calculateScoreDistribution(leads: Lead[]) {
+    const ranges = [
+      { range: '0-20', min: 0, max: 20 },
+      { range: '21-40', min: 21, max: 40 },
+      { range: '41-60', min: 41, max: 60 },
+      { range: '61-80', min: 61, max: 80 },
+      { range: '81-100', min: 81, max: 100 },
+    ];
+
+    return ranges.map(({ range, min, max }) => ({
+      range,
+      count: leads.filter(l => l.leadScore >= min && l.leadScore <= max).length,
+    }));
+  }
+
+  /** Calculate monthly trends */
+  private calculateMonthlyTrends(leads: Lead[]) {
+    const trendsMap = new Map<string, { leads: number; conversions: number }>();
+    leads.forEach(l => {
+      const month = l.capturedAt.toISOString().substring(0, 7); // YYYY-MM
+      const existing = trendsMap.get(month) || { leads: 0, conversions: 0 };
+      trendsMap.set(month, {
+        leads: existing.leads + 1,
+        conversions: existing.conversions + (l.followUpStatus === 'converted' ? 1 : 0),
+      });
+    });
+
+    return Array.from(trendsMap.entries())
+      .map(([month, data]) => ({
+        month,
+        leads: data.leads,
+        conversions: data.conversions,
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month));
   }
 } 

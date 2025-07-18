@@ -82,7 +82,7 @@ export interface EntitySummary {
 }
 
 export interface SerializedEntityWithMetadata {
-  value: any;
+  value: unknown;
   extractedAt: string; // ISO string
   confidence: number;
   sourceMessageId: string;
