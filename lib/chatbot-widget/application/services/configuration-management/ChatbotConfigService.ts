@@ -11,7 +11,12 @@
  */
 
 import { ChatbotWidgetCompositionRoot } from '../../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { ChatbotConfigMapper } from '../../mappers/ChatbotConfigMapper';
+import { 
+  ChatbotConfigMapper,
+  PersonalitySettingsMapper,
+  KnowledgeBaseMapper,
+  OperatingHoursMapper
+} from '../../mappers';
 import {
   ChatbotConfigDto,
   CreateChatbotConfigDto,
@@ -84,7 +89,7 @@ export class ChatbotConfigService {
       if (updateDto.personalitySettings) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentPersonality = ChatbotConfigMapper.personalityToDto(updatedConfig.personalitySettings);
+        const currentPersonality = PersonalitySettingsMapper.toDto(updatedConfig.personalitySettings);
         const mergedPersonalityDto = {
           tone: updateDto.personalitySettings.tone ?? currentPersonality.tone,
           communicationStyle: updateDto.personalitySettings.communicationStyle ?? currentPersonality.communicationStyle,
@@ -94,14 +99,14 @@ export class ChatbotConfigService {
           conversationFlow: updateDto.personalitySettings.conversationFlow ?? currentPersonality.conversationFlow,
           customInstructions: updateDto.personalitySettings.customInstructions ?? currentPersonality.customInstructions,
         };
-        const personalityDomain = ChatbotConfigMapper.personalityFromDto(mergedPersonalityDto);
+        const personalityDomain = PersonalitySettingsMapper.fromDto(mergedPersonalityDto);
         updatedConfig = updatedConfig.updatePersonality(personalityDomain);
       }
 
       if (updateDto.knowledgeBase) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentKb = ChatbotConfigMapper.knowledgeBaseToDto(updatedConfig.knowledgeBase);
+        const currentKb = KnowledgeBaseMapper.toDto(updatedConfig.knowledgeBase);
         const mergedKbDto = {
           companyInfo: updateDto.knowledgeBase.companyInfo ?? currentKb.companyInfo,
           productCatalog: updateDto.knowledgeBase.productCatalog ?? currentKb.productCatalog,
@@ -111,21 +116,21 @@ export class ChatbotConfigService {
           websiteSources: updateDto.knowledgeBase.websiteSources ?? currentKb.websiteSources,
         };
         
-        const knowledgeBaseDomain = ChatbotConfigMapper.knowledgeBaseFromDto(mergedKbDto);
+        const knowledgeBaseDomain = KnowledgeBaseMapper.fromDto(mergedKbDto);
         updatedConfig = updatedConfig.updateKnowledgeBase(knowledgeBaseDomain);
       }
 
       if (updateDto.operatingHours) {
         // Convert DTO to domain value object following @golden-rule patterns
         // Handle partial DTO by merging with current values
-        const currentOperatingHours = ChatbotConfigMapper.operatingHoursToDto(updatedConfig.operatingHours);
+        const currentOperatingHours = OperatingHoursMapper.toDto(updatedConfig.operatingHours);
         const mergedOperatingHoursDto = {
           timezone: updateDto.operatingHours.timezone ?? currentOperatingHours.timezone,
           businessHours: updateDto.operatingHours.businessHours ?? currentOperatingHours.businessHours,
           holidaySchedule: updateDto.operatingHours.holidaySchedule ?? currentOperatingHours.holidaySchedule,
           outsideHoursMessage: updateDto.operatingHours.outsideHoursMessage ?? currentOperatingHours.outsideHoursMessage,
         };
-        const operatingHoursDomain = ChatbotConfigMapper.operatingHoursFromDto(mergedOperatingHoursDto);
+        const operatingHoursDomain = OperatingHoursMapper.fromDto(mergedOperatingHoursDto);
         updatedConfig = updatedConfig.updateOperatingHours(operatingHoursDomain);
       }
 
