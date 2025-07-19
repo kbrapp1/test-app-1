@@ -1,19 +1,15 @@
 'use server';
 
-import { revalidatePath as _revalidatePath } from 'next/cache';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { WebsiteSource as _WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
-import { DomainError as _DomainError } from '../../domain/errors/ChatbotWidgetDomainErrors';
-import { 
-  createWebsiteSourceFromFormData,
-  createErrorResult,
-  handleActionError,
-  revalidateWebsiteSourcesPaths,
-  updateWebsiteSourceStatus,
-  createCrawlSettingsFromFormData,
-  createCleanedKnowledgeBase,
-  WebsiteSourceFormData,
-  ActionResult
+import {
+    ActionResult,
+    createCleanedKnowledgeBase,
+    createCrawlSettingsFromFormData,
+    createErrorResult,
+    createWebsiteSourceFromFormData,
+    handleActionError,
+    updateWebsiteSourceStatus,
+    WebsiteSourceFormData
 } from '../utils/websiteSourcesHelpers';
 
 /**
@@ -24,7 +20,7 @@ import {
  * - Follow DDD principles with proper error handling
  */
 
-export type { WebsiteSourceFormData, ActionResult } from '../utils/websiteSourcesHelpers';
+export type { ActionResult, WebsiteSourceFormData } from '../utils/websiteSourcesHelpers';
 
 // Add Website Source Action
 export async function addWebsiteSource(
@@ -44,7 +40,7 @@ export async function addWebsiteSource(
     const updatedConfig = existingConfig.updateKnowledgeBase(updatedKnowledgeBase);
     
     await configRepository.update(updatedConfig);
-    revalidateWebsiteSourcesPaths();
+    // AI: Removed revalidateWebsiteSourcesPaths since SSE handles real-time updates
     return { success: true };
   } catch (error) {
     return handleActionError(error, 'adding website source');
@@ -75,18 +71,26 @@ export async function removeWebsiteSource(
     const updatedConfig = existingConfig.updateKnowledgeBase(updatedKnowledgeBase);
     
     await configRepository.update(updatedConfig);
-    revalidateWebsiteSourcesPaths();
+    // AI: Removed revalidateWebsiteSourcesPaths since SSE handles real-time updates
     return { success: true };
   } catch (error) {
     return handleActionError(error, 'removing website source');
   }
 }
 
+// Progress callback interface for server action
+interface CrawlProgressCallback {
+  onPageFound?: (count: number) => void;
+  onPageProcessed?: (count: number) => void;
+  onStatusUpdate?: (status: string, message?: string) => void;
+}
+
 // Crawl Website Source Action
 export async function crawlWebsiteSource(
   configId: string,
   organizationId: string,
-  sourceId: string
+  sourceId: string,
+  _progressCallback?: CrawlProgressCallback
 ): Promise<ActionResult<{ itemsProcessed: number; crawledPages?: unknown[] }>> {
   try {
     const configRepository = ChatbotWidgetCompositionRoot.getChatbotConfigRepository();
@@ -105,7 +109,7 @@ export async function crawlWebsiteSource(
     // AI: Update status to 'crawling' when starting
     await updateWebsiteSourceStatus(configId, sourceId, 'crawling');
     
-    // AI: Create status callback for vectorization progress tracking
+    // AI: Create status callback for all progress tracking
     const statusUpdateCallback = async (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => {
       if (status === 'vectorizing') {
         // Update website source status to 'vectorizing' with progress metadata
@@ -119,6 +123,36 @@ export async function crawlWebsiteSource(
           const updatedConfig = config.updateKnowledgeBase(updatedKnowledgeBase);
           await configRepository.update(updatedConfig);
         }
+      }
+    };
+
+    // AI: Create crawl progress callback for real-time database updates
+    const crawlProgressCallback = async (type: string, data: any) => {
+      try {
+        const config = await configRepository.findById(configId);
+        if (config) {
+          let updateData: any = {};
+          
+          switch (type) {
+            case 'pages_found':
+              updateData = { pageCount: data.pagesFound };
+              break;
+            case 'pages_processed':
+              updateData = { 
+                pageCount: data.pagesProcessed,
+                errorMessage: `Processing ${data.pagesProcessed} pages...`
+              };
+              break;
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            const updatedKnowledgeBase = config.knowledgeBase.updateWebsiteSource(sourceId, updateData);
+            const updatedConfig = config.updateKnowledgeBase(updatedKnowledgeBase);
+            await configRepository.update(updatedConfig);
+          }
+        }
+      } catch (error) {
+        // Silently handle database update failures
       }
     };
     
@@ -139,7 +173,7 @@ export async function crawlWebsiteSource(
     }
 
     await updateWebsiteSourceStatus(configId, sourceId, 'completed', result.crawledPages?.length || 0);
-    revalidateWebsiteSourcesPaths();
+    // AI: Removed revalidatePath since SSE handles real-time updates
     
     return {
       success: true,
@@ -179,7 +213,7 @@ export async function updateWebsiteSource(
     const updatedConfig = existingConfig.updateKnowledgeBase(updatedKnowledgeBase);
     await configRepository.update(updatedConfig);
     
-    revalidateWebsiteSourcesPaths();
+    // AI: Removed revalidateWebsiteSourcesPaths since SSE handles real-time updates
     return { success: true };
   } catch (error) {
     return handleActionError(error, 'updating website source');
@@ -246,7 +280,7 @@ export async function cleanupWebsiteSources(
     const updatedConfig = existingConfig.updateKnowledgeBase(cleanedKnowledgeBase);
     await configRepository.update(updatedConfig);
     
-    revalidateWebsiteSourcesPaths();
+    // AI: Removed revalidateWebsiteSourcesPaths since SSE handles real-time updates
     return {
       success: true,
       data: {

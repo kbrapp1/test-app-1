@@ -10,7 +10,9 @@
  * - Ensure 100% test coverage for business logic
  */
 
-import { EntityCorrections, EntityCorrectionsProps, RemovalOperation, CorrectionOperation } from '../EntityCorrections';
+import { EntityCorrections, EntityCorrectionsProps } from '../EntityCorrections';
+import { RemovalOperation, RemovalOperationProps } from '../RemovalOperation';
+import { CorrectionOperation, CorrectionOperationProps } from '../CorrectionOperation';
 import { BusinessRuleViolationError } from '../../../errors/ChatbotWidgetDomainErrors';
 
 describe('EntityCorrections', () => {
@@ -36,8 +38,7 @@ describe('EntityCorrections', () => {
           metadata: {
             timestamp: new Date(),
             sourceMessageId: 'msg-1',
-            confidence: 0.9,
-    
+            confidence: 0.9
           }
         }]
       };
@@ -46,7 +47,7 @@ describe('EntityCorrections', () => {
       
       expect(corrections.totalCorrections).toBe(1);
       expect(corrections.removedDecisionMakers).toHaveLength(1);
-      expect(corrections.removedDecisionMakers[0].entityValue).toBe('John Doe');
+      expect(corrections.removedDecisionMakers[0].value).toBe('John Doe');
     });
 
     it('should throw error for invalid session ID', () => {
@@ -72,7 +73,7 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.removedDecisionMakers).toHaveLength(1);
-      expect(result.removedDecisionMakers[0].entityValue).toBe('Jane Smith');
+      expect(result.removedDecisionMakers[0].value).toBe('Jane Smith');
       expect(result.removedDecisionMakers[0].metadata.confidence).toBe(0.95);
       expect(result.removedDecisionMakers[0].metadata.correctionReason).toBe('User explicitly stated Jane is not a decision maker');
       expect(result.totalCorrections).toBe(1);
@@ -87,7 +88,7 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.removedPainPoints).toHaveLength(1);
-      expect(result.removedPainPoints[0].entityValue).toBe('Legacy system integration');
+      expect(result.removedPainPoints[0].value).toBe('Legacy system integration');
       expect(result.totalCorrections).toBe(1);
     });
 
@@ -111,7 +112,7 @@ describe('EntityCorrections', () => {
     it('should trim entity values', () => {
       const result = corrections.withRemovedEntity('decisionMakers', '  John Doe  ', mockMessageId);
       
-      expect(result.removedDecisionMakers[0].entityValue).toBe('John Doe');
+      expect(result.removedDecisionMakers[0].value).toBe('John Doe');
     });
 
     it('should throw error for empty entity value', () => {
@@ -152,8 +153,8 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.correctedBudget).not.toBeNull();
-      expect(result.correctedBudget!.newValue).toBe('$200K');
-      expect(result.correctedBudget!.previousValue).toBe('$100K');
+      expect(result.correctedBudget!.value).toBe('$200K');
+      expect(result.correctedBudget!.previous).toBe('$100K');
       expect(result.correctedBudget!.metadata.confidence).toBe(0.95);
       expect(result.correctedBudget!.metadata.correctionReason).toBe('User corrected the budget amount');
       expect(result.totalCorrections).toBe(1);
@@ -169,8 +170,8 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.correctedUrgency).not.toBeNull();
-      expect(result.correctedUrgency!.newValue).toBe('high');
-      expect(result.correctedUrgency!.previousValue).toBe('medium');
+      expect(result.correctedUrgency!.value).toBe('high');
+      expect(result.correctedUrgency!.previous).toBe('medium');
     });
 
     it('should correct contact method with enum value', () => {
@@ -182,7 +183,7 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.correctedContactMethod).not.toBeNull();
-      expect(result.correctedContactMethod!.newValue).toBe('email');
+      expect(result.correctedContactMethod!.value).toBe('email');
     });
 
     it('should correct role entity', () => {
@@ -194,8 +195,8 @@ describe('EntityCorrections', () => {
       );
 
       expect(result.correctedRole).not.toBeNull();
-      expect(result.correctedRole!.newValue).toBe('Director');
-      expect(result.correctedRole!.previousValue).toBe('Manager');
+      expect(result.correctedRole!.value).toBe('Director');
+      expect(result.correctedRole!.previous).toBe('Manager');
     });
 
     it('should replace existing correction', () => {
@@ -203,7 +204,7 @@ describe('EntityCorrections', () => {
         .withCorrectedEntity('budget', '$100K', mockMessageId)
         .withCorrectedEntity('budget', '$200K', 'msg-2');
 
-      expect(result.correctedBudget!.newValue).toBe('$200K');
+      expect(result.correctedBudget!.value).toBe('$200K');
       expect(result.totalCorrections).toBe(2);
     });
 

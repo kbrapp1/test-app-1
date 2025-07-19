@@ -1,48 +1,20 @@
 /**
  * Crawl Progress Hook
  * 
- * AI INSTRUCTIONS:
- * - Manage crawl progress state with real database polling
- * - Poll database for actual crawl status updates
- * - Show real vectorization progress instead of simulation
- * - Keep crawl-specific logic isolated
- * - Provide clean progress management interface
+ * DDD Presentation Layer: Manages real-time crawl progress
+ * - Single responsibility: Handle real-time progress updates
+ * - Clean separation: Uses infrastructure providers, updates presentation state
+ * - Real-time updates: SSE stream with database polling fallback
  */
 
-import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { CrawlProgress } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
-// AI: Type definitions for cached data structures
-interface WebsiteSource {
-  id: string;
-  status: string;
-  pageCount?: number;
-  lastProcessed?: string;
-  errorMessage?: string;
-}
-
-interface CachedKnowledgeBase {
-  websiteSources?: WebsiteSource[];
-}
-
-interface CachedConfigData {
-  knowledgeBase?: CachedKnowledgeBase;
-}
-
-/**
- * Crawl Progress Hook with Database Polling
- * 
- * AI INSTRUCTIONS:
- * - Poll database every 2 seconds for real status updates
- * - Parse vectorization progress from database status
- * - Handle all crawl states: pending → crawling → vectorizing → completed
- * - Clean up polling when crawl completes or component unmounts
- */
 export function useCrawlProgress() {
   const [crawlProgress, setCrawlProgress] = useState<CrawlProgress | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
 
   const startCrawlProgress = (sourceId: string) => {
@@ -60,6 +32,41 @@ export function useCrawlProgress() {
     setCrawlProgress(prev => prev ? { ...prev, ...updates } : null);
   };
 
+  // Direct progress update methods for real-time callbacks
+  const updatePagesFound = (count: number) => {
+    setCrawlProgress(prev => prev ? { ...prev, pagesFound: count } : null);
+  };
+
+  const updatePagesProcessed = (count: number) => {
+    setCrawlProgress(prev => prev ? { ...prev, pagesProcessed: count } : null);
+  };
+
+  const updateStatus = (status: CrawlProgress['status'], message?: string) => {
+    setCrawlProgress(prev => prev ? { 
+      ...prev, 
+      status, 
+      message,
+      progress: getProgressForStatus(status, prev.pagesFound, prev.pagesProcessed)
+    } : null);
+  };
+
+  // Calculate progress percentage based on status and counts
+  const getProgressForStatus = (status: CrawlProgress['status'], pagesFound: number, pagesProcessed: number): number => {
+    switch (status) {
+      case 'starting': return 5;
+      case 'crawling': 
+        if (pagesFound > 0) {
+          return Math.min(20 + (pagesProcessed / pagesFound) * 40, 60); // 20-60% during crawling
+        }
+        return 25;
+      case 'processing': return 65;
+      case 'vectorizing': return 80;
+      case 'completed': return 100;
+      case 'error': return 0;
+      default: return 0;
+    }
+  };
+
   const completeCrawlProgress = (itemsProcessed: number) => {
     updateCrawlProgress({
       status: 'completed',
@@ -67,7 +74,12 @@ export function useCrawlProgress() {
       pagesProcessed: itemsProcessed,
       message: 'Crawl completed successfully!'
     });
-    stopPolling();
+    
+    // AI: Clear progress after brief delay to show final results immediately
+    setTimeout(() => {
+      setCrawlProgress(null);
+      stopProgressStream();
+    }, 2000); // Show completion for 2 seconds then clear to reveal results
   };
 
   const errorCrawlProgress = (error: string) => {
@@ -77,185 +89,111 @@ export function useCrawlProgress() {
       error,
       message: 'Crawl failed'
     });
-    stopPolling();
+    stopProgressStream();
   };
 
   const clearCrawlProgress = () => {
     setCrawlProgress(null);
-    stopPolling();
+    stopProgressStream();
   };
 
-  // AI: Start database polling for real progress updates
-  const startPolling = (organizationId: string, configId: string, sourceId: string) => {
-    if (pollIntervalRef.current) return; // Already polling
+  // Start Server-Sent Events stream for real-time progress
+  const startProgressStream = (sourceId: string) => {
+    if (eventSourceRef.current) return; // Already streaming
     
-    console.log('🔄 Starting polling for:', { organizationId, configId, sourceId });
-    setIsPolling(true);
-    let consecutiveUnchanged = 0;
+    setIsStreaming(true);
     
-    pollIntervalRef.current = setInterval(async () => {
+    const eventSource = new EventSource(`/api/chatbot/crawl-progress/${sourceId}`);
+    eventSourceRef.current = eventSource;
+    
+    eventSource.onmessage = (event) => {
       try {
-        // AI: First check cached data - no API call
-        let cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as CachedConfigData | undefined;
-        let websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: WebsiteSource) => ws.id === sourceId);
+        const update = JSON.parse(event.data);
         
-        // AI: Only refetch if no cached data or if status suggests change is likely
-        if (!websiteSource || websiteSource.status === 'pending' || websiteSource.status === 'crawling' || websiteSource.status === 'vectorizing') {
-          await queryClient.invalidateQueries({ 
-            queryKey: ['chatbot-config', organizationId] 
-          });
-          
-          // Get fresh data after invalidation
-          cachedData = queryClient.getQueryData(['chatbot-config', organizationId]) as CachedConfigData | undefined;
-          websiteSource = cachedData?.knowledgeBase?.websiteSources?.find((ws: WebsiteSource) => ws.id === sourceId);
-        }
-        
-        if (websiteSource) {
-          const realProgress = parseRealProgress(websiteSource);
-          const currentStatus = crawlProgress?.status;
-          
-          console.log('📊 Poll result:', { 
-            sourceId, 
-            dbStatus: websiteSource.status, 
-            currentStatus, 
-            pageCount: websiteSource.pageCount,
-            errorMessage: websiteSource.errorMessage 
-          });
-          
-          // AI: Only update if status actually changed
-          if (currentStatus !== realProgress.status) {
-            console.log('✅ Status changed, updating progress');
-            updateCrawlProgress(realProgress);
-            consecutiveUnchanged = 0;
-          } else {
-            consecutiveUnchanged++;
-          }
-          
-          // AI: Stop polling if crawl is complete, failed, or stuck too long
-          if (websiteSource.status === 'completed' || websiteSource.status === 'error' || consecutiveUnchanged > 10) {
-            stopPolling();
-          }
-        } else {
-          consecutiveUnchanged++;
-          // AI: Stop if source not found for too long
-          if (consecutiveUnchanged > 5) {
-            stopPolling();
-          }
+        switch (update.type) {
+          case 'status':
+            if (update.data.status && update.data.message) {
+              updateStatus(update.data.status as any, update.data.message);
+            }
+            break;
+            
+          case 'pages_found':
+            updatePagesFound(update.data.pagesFound || 0);
+            break;
+            
+          case 'pages_processed':
+            updatePagesProcessed(update.data.pagesProcessed || 0);
+            break;
+            
+          case 'complete':
+            updateCrawlProgress({
+              status: 'completed',
+              progress: 100,
+              pagesProcessed: update.data.pagesProcessed || 0,
+              message: 'Crawl completed successfully!'
+            });
+            stopProgressStream();
+            break;
+            
+          case 'error':
+            updateCrawlProgress({
+              status: 'error',
+              progress: 0,
+              error: update.data.error || 'Crawl failed',
+              message: 'Crawl failed'
+            });
+            stopProgressStream();
+            break;
         }
       } catch (error) {
-        console.error('Polling error:', error);
-        consecutiveUnchanged++;
-        // AI: Stop polling after too many consecutive errors
-        if (consecutiveUnchanged > 3) {
-          stopPolling();
-        }
+        // Silently handle SSE parsing errors
       }
-    }, 3000); // Poll every 3 seconds (reduced frequency)
-  };
-
-  // AI: Stop database polling
-  const stopPolling = () => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-    setIsPolling(false);
-  };
-
-  // AI: Parse real progress from database website source
-  const parseRealProgress = (websiteSource: unknown): Partial<CrawlProgress> => {
-    const source = websiteSource as Record<string, unknown>;
-    const status = source.status;
-    const pageCount = (source.pageCount as number) || 0;
-    const errorMessage = source.errorMessage as string | undefined;
+    };
     
-    switch (status) {
-      case 'pending':
-        return {
-          status: 'starting',
-          progress: 5,
-          message: 'Preparing to crawl...',
-          pagesFound: 0,
-          pagesProcessed: 0
-        };
-        
-      case 'crawling':
-        return {
-          status: 'crawling',
-          progress: 25,
-          message: 'Discovering and crawling pages...',
-          pagesFound: pageCount,
-          pagesProcessed: Math.floor(pageCount * 0.7) // Estimate in-progress
-        };
-        
-      case 'vectorizing':
-        // AI: Parse vectorization progress from errorMessage
-        // Format: "Vectorizing 3/10: Page Title"
-        const vectorMatch = errorMessage?.match(/Vectorizing (\d+)\/(\d+):/);
-        if (vectorMatch) {
-          const [, current, total] = vectorMatch;
-          const vectorProgress = Math.round((parseInt(current) / parseInt(total)) * 100);
-          const adjustedProgress = 60 + (vectorProgress * 0.35); // 60-95% range for vectorizing
-          
-          return {
-            status: 'vectorizing',
-            progress: Math.min(adjustedProgress, 95),
-            message: errorMessage,
-            pagesFound: parseInt(total),
-            pagesProcessed: parseInt(current)
-          };
-        }
-        
-        return {
-          status: 'vectorizing',
-          progress: 75,
-          message: 'Creating embeddings...',
-          pagesFound: pageCount,
-          pagesProcessed: pageCount
-        };
-        
-      case 'completed':
-        return {
-          status: 'completed',
-          progress: 100,
-          message: `Crawled ${pageCount} pages successfully`,
-          pagesFound: pageCount,
-          pagesProcessed: pageCount
-        };
-        
-      case 'error':
-        return {
-          status: 'error',
-          progress: 0,
-          error: String(errorMessage || 'Crawl failed'),
-          message: 'Crawl failed'
-        };
-        
-      default:
-        return {
-          status: 'starting',
-          progress: 0,
-          message: 'Initializing...'
-        };
-    }
+    eventSource.onerror = () => {
+      stopProgressStream();
+    };
   };
 
-  // AI: Cleanup polling on unmount
+  // Stop Server-Sent Events stream
+  const stopProgressStream = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    setIsStreaming(false);
+  };
+
+
+  // Cleanup SSE connection on unmount
   useEffect(() => {
     return () => {
-      stopPolling();
+      stopProgressStream();
     };
   }, []);
 
+  // Disabled polling to avoid extra API calls - using SSE instead
+  const startPolling = (_organizationId: string, _configId: string, sourceId: string) => {
+    // Just start SSE stream instead of polling
+    startProgressStream(sourceId);
+  };
+
   return {
     crawlProgress,
-    isPolling,
+    isStreaming,
     startCrawlProgress,
     updateCrawlProgress,
+    updatePagesFound,
+    updatePagesProcessed,
+    updateStatus,
     completeCrawlProgress,
     errorCrawlProgress,
     clearCrawlProgress,
+    startProgressStream,
+    stopProgressStream,
+    // Database polling approach
     startPolling,
-    stopPolling
+    stopPolling: stopProgressStream,
+    isPolling: isStreaming
   };
 } 

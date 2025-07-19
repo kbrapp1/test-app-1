@@ -3,8 +3,8 @@
  * 
  * AI INSTRUCTIONS:
  * - Pure domain logic for token budget management and context selection optimization
- * - Apply business rules for token allocation within constraints
- * - Follow @golden-rule patterns exactly - single responsibility for token budget optimization
+ * - Orchestrates specialized services for optimization, validation, and allocation
+ * - Follow @golden-rule patterns exactly - single responsibility for budget coordination
  * - Keep business logic isolated from external concerns
  */
 
@@ -17,6 +17,9 @@ import {
   ContextSelectionCriteria,
   EntityData
 } from '../interfaces/ContextInjectionTypes';
+import { ContextModuleOptimizationService } from './ContextModuleOptimizationService';
+import { TokenBudgetValidationService } from './TokenBudgetValidationService';
+import { TokenAllocationCalculatorService } from './TokenAllocationCalculatorService';
 
 export class ContextTokenBudgetDomainService {
   
@@ -34,9 +37,12 @@ export class ContextTokenBudgetDomainService {
     const selectedModules: ContextModule[] = [];
     let usedTokens = 0;
 
-    // Apply early conversation optimization
-    if (this.isEarlyConversation(criteria.messageCount)) {
-      return this.selectMinimalModulesForEarlyConversation(sortedModules, availableTokens);
+    // Apply early conversation optimization using specialized service
+    if (ContextModuleOptimizationService.isEarlyConversation(criteria.messageCount)) {
+      return ContextModuleOptimizationService.selectMinimalModulesForEarlyConversation(
+        sortedModules, 
+        availableTokens
+      );
     }
 
     // Greedy selection based on priority and token efficiency
@@ -47,7 +53,10 @@ export class ContextTokenBudgetDomainService {
       }
     }
 
-    const allocation = this.calculateTokenAllocation(selectedModules, availableTokens);
+    const allocation = TokenAllocationCalculatorService.calculateTokenAllocation(
+      selectedModules, 
+      availableTokens
+    );
     
     return { selectedModules, allocation };
   }
@@ -81,252 +90,62 @@ export class ContextTokenBudgetDomainService {
     };
   }
 
-  // Select modules based on token budget with early conversation optimization
+  // Delegate to specialized services for common operations
+  
+  // Legacy module selection - delegated to allocation calculator service
   static selectModulesForBudget(
     priorities: ModulePriority,
     tokenBudget: number,
     conversationHistory: ChatMessage[]
   ): SelectedModules {
-    // For greetings and early conversation, use minimal modules
-    if (conversationHistory.length <= 2) {
-      return {
-        corePersona: true,
-        highPriorityContext: false, // Skip for greetings
-        progressionModules: false,  // Skip for greetings
-        realTimeContext: true,
-        estimatedTokens: 900 // Much lower estimate
-      };
-    }
-    
-    // For longer conversations, use original logic
-    const baseTokens = 800; // Core persona
-    let currentTokens = baseTokens;
-    
-    const selected: SelectedModules = {
-      corePersona: true,
-      highPriorityContext: false,
-      progressionModules: false,
-      realTimeContext: false,
-      estimatedTokens: baseTokens
-    };
-    
-    // Add modules based on priority and available budget
-    if (currentTokens + 400 <= tokenBudget && priorities.highPriorityContext > 0.6) {
-      selected.highPriorityContext = true;
-      currentTokens += 400;
-    }
-    
-    if (currentTokens + 400 <= tokenBudget && priorities.progressionModules > 0.6) {
-      selected.progressionModules = true;
-      currentTokens += 400;
-    }
-    
-    if (currentTokens + 300 <= tokenBudget && priorities.realTimeContext > 0.5) {
-      selected.realTimeContext = true;
-      currentTokens += 300;
-    }
-    
-    selected.estimatedTokens = currentTokens;
-    return selected;
+    return TokenAllocationCalculatorService.selectModulesForBudget(
+      priorities, 
+      tokenBudget, 
+      conversationHistory
+    );
   }
 
-  // Optimize token allocation for maximum value
+  // Advanced optimization - delegated to optimization service
   static optimizeTokenAllocation(
     modules: ContextModule[],
     availableTokens: number,
     criteria: ContextSelectionCriteria
   ): ContextModule[] {
-    // Calculate value-to-token ratio for each module
-    const modulesWithRatio = modules.map(module => ({
-      ...module,
-      valueToTokenRatio: this.calculateValueToTokenRatio(module, criteria)
-    }));
-
-    // Sort by value-to-token ratio (highest first)
-    const optimizedModules = modulesWithRatio.sort((a, b) => 
-      b.valueToTokenRatio - a.valueToTokenRatio
+    return ContextModuleOptimizationService.optimizeTokenAllocation(
+      modules, 
+      availableTokens, 
+      criteria
     );
-
-    // Select modules using knapsack-like approach
-    const selectedModules: ContextModule[] = [];
-    let usedTokens = 0;
-
-    for (const contextModule of optimizedModules) {
-      if (usedTokens + contextModule.estimatedTokens <= availableTokens) {
-        selectedModules.push(contextModule);
-        usedTokens += contextModule.estimatedTokens;
-      }
-    }
-
-    return selectedModules;
   }
 
-  // Calculate token allocation breakdown
+  // Token allocation calculation - delegated to calculator service
   static calculateTokenAllocation(
     selectedModules: ContextModule[],
     totalAvailable: number
   ): TokenBudgetAllocation {
-    const allocation: TokenBudgetAllocation = {
-      corePersona: 0,
-      highPriorityContext: 0,
-      progressionModules: 0,
-      realTimeContext: 0,
-      totalUsed: 0,
+    return TokenAllocationCalculatorService.calculateTokenAllocation(
+      selectedModules, 
       totalAvailable
-    };
-
-    selectedModules.forEach(module => {
-      allocation.totalUsed += module.estimatedTokens;
-      
-      // Categorize modules for allocation tracking
-      switch (module.type) {
-        case 'userProfile':
-        case 'conversationPhase':
-          allocation.corePersona += module.estimatedTokens;
-          break;
-        case 'companyContext':
-        case 'knowledgeBase':
-          allocation.highPriorityContext += module.estimatedTokens;
-          break;
-        case 'leadScoring':
-        case 'industrySpecific':
-          allocation.progressionModules += module.estimatedTokens;
-          break;
-        case 'conversationHistory':
-        case 'businessHours':
-        case 'engagementOptimization':
-          allocation.realTimeContext += module.estimatedTokens;
-          break;
-      }
-    });
-
-    return allocation;
+    );
   }
 
-  // Validate token budget constraints
+  // Budget validation - delegated to validation service
   static validateTokenBudget(
     selectedModules: ContextModule[],
     availableTokens: number,
     minRequiredTokens: number = 500
-  ): { isValid: boolean; violations: string[]; recommendations: string[] } {
-    const violations: string[] = [];
-    const recommendations: string[] = [];
-    
-    const totalUsed = selectedModules.reduce((sum, module) => sum + module.estimatedTokens, 0);
-    
-    // Check budget constraints
-    if (totalUsed > availableTokens) {
-      violations.push(`Token usage (${totalUsed}) exceeds budget (${availableTokens})`);
-      recommendations.push('Remove lower-priority modules or increase token budget');
-    }
-    
-    // Check minimum requirements
-    if (totalUsed < minRequiredTokens) {
-      recommendations.push('Consider adding more context modules for better responses');
-    }
-    
-    // Check for essential modules
-    const hasUserProfile = selectedModules.some(m => m.type === 'userProfile');
-    const hasConversationPhase = selectedModules.some(m => m.type === 'conversationPhase');
-    
-    if (!hasUserProfile && !hasConversationPhase) {
-      violations.push('Missing essential context modules');
-      recommendations.push('Include at least user profile or conversation phase context');
-    }
-    
-    return {
-      isValid: violations.length === 0,
-      violations,
-      recommendations
-    };
+  ) {
+    return TokenBudgetValidationService.validateTokenBudget(
+      selectedModules, 
+      availableTokens, 
+      minRequiredTokens
+    );
   }
 
-  // Helper methods for token budget calculations
-  private static isEarlyConversation(messageCount: number): boolean {
-    return messageCount <= 2;
-  }
-
-  private static selectMinimalModulesForEarlyConversation(
-    modules: ContextModule[],
-    availableTokens: number
-  ): { selectedModules: ContextModule[]; allocation: TokenBudgetAllocation } {
-    // For early conversations, prioritize essential modules only
-    const essentialTypes = ['userProfile', 'conversationPhase', 'businessHours'];
-    const essentialModules = modules.filter(m => essentialTypes.includes(m.type));
-    
-    const selectedModules: ContextModule[] = [];
-    let usedTokens = 0;
-    
-    for (const contextModule of essentialModules) {
-      if (usedTokens + contextModule.estimatedTokens <= availableTokens) {
-        selectedModules.push(contextModule);
-        usedTokens += contextModule.estimatedTokens;
-      }
-    }
-    
-    const allocation = this.calculateTokenAllocation(selectedModules, availableTokens);
-    
-    return { selectedModules, allocation };
-  }
-
-  private static calculateValueToTokenRatio(
-    module: ContextModule,
-    criteria: ContextSelectionCriteria
-  ): number {
-    let baseValue = module.relevanceScore;
-    
-    // Apply business rules for value adjustment
-    if (module.type === 'userProfile' && criteria.entityData) {
-      baseValue *= 1.2; // User profile is highly valuable
-    }
-    
-    if (module.type === 'leadScoring' && criteria.leadScore && criteria.leadScore > 70) {
-      baseValue *= 1.3; // High-value leads get priority
-    }
-    
-    if (module.type === 'knowledgeBase' && criteria.messageCount <= 3) {
-      baseValue *= 1.1; // Knowledge base valuable early in conversation
-    }
-    
-    // Prevent division by zero
-    const tokenCost = Math.max(module.estimatedTokens, 1);
-    
-    return baseValue / tokenCost;
-  }
-
-  // Get recommended token budget based on conversation context
+  // Budget recommendations - delegated to validation service
   static getRecommendedTokenBudget(
     criteria: ContextSelectionCriteria
-  ): { recommended: number; minimum: number; maximum: number; reasoning: string[] } {
-    const reasoning: string[] = [];
-    let recommended = 1500; // Base recommendation
-    
-    // Adjust based on conversation length
-    if (criteria.messageCount <= 2) {
-      recommended = 800;
-      reasoning.push('Early conversation - minimal context needed');
-    } else if (criteria.messageCount > 10) {
-      recommended = 2000;
-      reasoning.push('Extended conversation - comprehensive context valuable');
-    }
-    
-    // Adjust based on lead value
-    if (criteria.leadScore && criteria.leadScore > 70) {
-      recommended += 300;
-      reasoning.push('High-value lead - enhanced context justified');
-    }
-    
-    // Adjust based on entity complexity
-    if (criteria.entityData && Object.keys(criteria.entityData).length > 3) {
-      recommended += 200;
-      reasoning.push('Complex entity data - additional context valuable');
-    }
-    
-    return {
-      recommended,
-      minimum: Math.max(500, recommended * 0.6),
-      maximum: recommended * 1.5,
-      reasoning
-    };
+  ) {
+    return TokenBudgetValidationService.getRecommendedTokenBudget(criteria);
   }
 } 

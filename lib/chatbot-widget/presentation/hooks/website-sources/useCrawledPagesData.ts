@@ -12,7 +12,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getCrawledPages } from '../../actions/websiteSourcesActions';
 import { CrawledPageInfo } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
-/** Transform Database Page to UI Format */
+/** Transform Database Page to UI Format
+ */
 function transformPageToUIFormat(page: unknown): CrawledPageInfo {
   const pageData = page as {
     url?: string;
@@ -43,7 +44,8 @@ function transformPageToUIFormat(page: unknown): CrawledPageInfo {
   };
 }
 
-/** Generate Unique Page ID */
+/** Generate Unique Page ID
+ */
 function generatePageId(): string {
   return `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
@@ -65,7 +67,8 @@ function extractBaseUrl(url: string): string {
   }
 }
 
-/** Group Pages by Base URL */
+/** Group Pages by Base URL
+ */
 function groupPagesByBaseUrl(pages: unknown[]): Record<string, CrawledPageInfo[]> {
   const groupedData: Record<string, CrawledPageInfo[]> = {};
   
@@ -83,7 +86,8 @@ function groupPagesByBaseUrl(pages: unknown[]): Record<string, CrawledPageInfo[]
   return groupedData;
 }
 
-/** Map Base URLs to Source IDs */
+/** Map Base URLs to Source IDs
+ */
 function mapPagesToSourceIds(
   groupedData: Record<string, CrawledPageInfo[]>,
   sources: unknown[]
@@ -107,7 +111,8 @@ function mapPagesToSourceIds(
   return sourceIdMappedData;
 }
 
-/** Crawled Pages Data Hook */
+/** Crawled Pages Data Hook
+ */
 export function useCrawledPagesData(organizationId: string, chatbotConfigId: string, existingConfig: unknown) {
   return useQuery({
     queryKey: ['crawled-pages', organizationId, chatbotConfigId],
@@ -129,7 +134,8 @@ export function useCrawledPagesData(organizationId: string, chatbotConfigId: str
       return mapPagesToSourceIds(groupedData, sources);
     },
     enabled: !!organizationId && !!chatbotConfigId,
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    staleTime: 5000, // AI: Reduced from 30s to 5s for more responsive updates during crawling
+    refetchOnWindowFocus: false,
+    refetchInterval: false // AI: Disable automatic refetch interval since we use manual invalidation
   });
 } 

@@ -27,13 +27,21 @@ import {
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
 
+/** Progress Callback Interface for Real-time Updates */
+export interface CrawlProgressCallback {
+  onPageFound?: (count: number) => void;
+  onPageProcessed?: (count: number) => void;
+  onStatusUpdate?: (status: string, message?: string) => void;
+}
+
 /** Web Crawler Provider Interface */
 export interface IWebCrawlerProvider {
   crawlWebsite(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
     organizationId: string,
-    onPageCrawled: (pageData: CrawledPageData, htmlParser: IHtmlParser) => Promise<void>
+    onPageCrawled: (pageData: CrawledPageData, htmlParser: IHtmlParser) => Promise<void>,
+    progressCallback?: CrawlProgressCallback
   ): Promise<CrawledPageData[]>;
 }
 
@@ -54,7 +62,8 @@ export class CrawlWebsiteUseCase {
   async execute(
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
-    organizationId: string
+    organizationId: string,
+    progressCallback?: CrawlProgressCallback
   ): Promise<CrawlResult> {
     try {
       // Step 1: Validate crawl parameters (domain validation)
@@ -92,6 +101,9 @@ export class CrawlWebsiteUseCase {
 
             crawledPages.push(processedPageData);
 
+            // Notify progress callback of processed page
+            progressCallback?.onPageProcessed?.(crawledPages.length);
+
           } catch (error) {
             if (error instanceof ContentExtractionError || error instanceof ContentCategorizationError) {
               throw error;
@@ -105,7 +117,8 @@ export class CrawlWebsiteUseCase {
               { url: pageData.url, originalError: error }
             );
           }
-        }
+        },
+        progressCallback
       );
 
       // Process results through domain service

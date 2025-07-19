@@ -94,7 +94,7 @@ export class ProcessChatMessageWorkflowOrchestrator {
         () => this.finalizeWorkflow(responseResult, startTime, logger)
       );
 
-      const processingTime = Date.now() - startTime;
+      const _processingTime = Date.now() - startTime;
       
 
       logger.logMessage('✨ CHAT MESSAGE PROCESSING COMPLETED SUCCESSFULLY');

@@ -9,28 +9,28 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useOrganization } from '../../../organization/application/providers/OrganizationProvider';
-import { 
-  getChatbotConfigByOrganization, 
-  updateChatbotConfig, 
-  createChatbotConfig,
-  getChatbotConfigById,
-  getActiveChatbotConfigs,
-  deleteChatbotConfig
-} from '../actions/configActions';
-import { 
-  CreateChatbotConfigDto, 
-  UpdateChatbotConfigDto 
-} from '../../application/dto/ChatbotConfigDto';
 import {
-  BotConfigurationFormData,
-  BotConfigurationViewState,
-  BotConfigurationActions,
-  DEFAULT_FORM_DATA,
-} from '../types/BotConfigurationTypes';
+    CreateChatbotConfigDto,
+    UpdateChatbotConfigDto
+} from '../../application/dto/ChatbotConfigDto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
+import {
+    createChatbotConfig,
+    deleteChatbotConfig,
+    getActiveChatbotConfigs,
+    getChatbotConfigById,
+    getChatbotConfigByOrganization,
+    updateChatbotConfig
+} from '../actions/configActions';
+import {
+    BotConfigurationActions,
+    BotConfigurationFormData,
+    BotConfigurationViewState,
+    DEFAULT_FORM_DATA,
+} from '../types/BotConfigurationTypes';
 
 export interface UseChatbotConfigurationOptions {
   configId?: string;
@@ -55,7 +55,7 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
     queryKey: ['chatbot-config', activeOrganizationId],
     queryFn: () => activeOrganizationId ? getChatbotConfigByOrganization(activeOrganizationId) : null,
     enabled: !!activeOrganizationId && autoLoad,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10000, // AI: Reduced from 5 minutes to 10 seconds for more responsive updates during crawling
   });
 
   const existingConfig = configResult?.success ? configResult.data : null;

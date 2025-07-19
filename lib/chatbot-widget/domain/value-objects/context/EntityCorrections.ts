@@ -3,56 +3,46 @@
  * 
  * AI INSTRUCTIONS:
  * - Immutable value object representing entity corrections and removals
- * - Handle both explicit corrections and removal operations
- * - Support metadata tracking for audit trails
+ * - Orchestrates correction and removal operations using dedicated value objects
+ * - Support audit trails and business rule enforcement
  * - Follow @golden-rule patterns exactly
- * - Keep under 200 lines with focused responsibility
+ * - Keep under 150 lines with focused responsibility
  * - Use domain-specific validation and errors
  * - Never expose mutable state
  */
 
-import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
-
-export interface CorrectionMetadata {
-  timestamp: Date;
-  sourceMessageId: string;
-  confidence: number;
-  correctionReason?: string;
-}
-
-export interface RemovalOperation {
-  entityValue: string;
-  metadata: CorrectionMetadata;
-}
-
-export interface CorrectionOperation<T = string> {
-  newValue: T;
-  previousValue?: T;
-  metadata: CorrectionMetadata;
-}
+import { RemovalOperation, RemovalOperationProps } from './RemovalOperation';
+import { CorrectionOperation, CorrectionOperationProps, UrgencyLevel, ContactMethod } from './CorrectionOperation';
+import { EntityCorrectionsValidationService } from '../../services/context/EntityCorrectionsValidationService';
 
 export interface EntityCorrectionsProps {
   // Array entity removals
-  removedDecisionMakers: RemovalOperation[];
-  removedPainPoints: RemovalOperation[];
-  removedIntegrationNeeds: RemovalOperation[];
-  removedEvaluationCriteria: RemovalOperation[];
+  removedDecisionMakers: RemovalOperationProps[];
+  removedPainPoints: RemovalOperationProps[];
+  removedIntegrationNeeds: RemovalOperationProps[];
+  removedEvaluationCriteria: RemovalOperationProps[];
   
   // Single entity corrections
-  correctedBudget: CorrectionOperation | null;
-  correctedTimeline: CorrectionOperation | null;
-  correctedUrgency: CorrectionOperation<'low'|'medium'|'high'> | null;
-  correctedContactMethod: CorrectionOperation<'email'|'phone'|'meeting'> | null;
-  correctedRole: CorrectionOperation | null;
-  correctedIndustry: CorrectionOperation | null;
-  correctedCompany: CorrectionOperation | null;
-  correctedTeamSize: CorrectionOperation | null;
+  correctedBudget: CorrectionOperationProps | null;
+  correctedTimeline: CorrectionOperationProps | null;
+  correctedUrgency: CorrectionOperationProps<UrgencyLevel> | null;
+  correctedContactMethod: CorrectionOperationProps<ContactMethod> | null;
+  correctedRole: CorrectionOperationProps | null;
+  correctedIndustry: CorrectionOperationProps | null;
+  correctedCompany: CorrectionOperationProps | null;
+  correctedTeamSize: CorrectionOperationProps | null;
   
   // Metadata
   totalCorrections: number;
   lastCorrectionAt: Date;
   correctionSessionId: string;
 }
+
+const ALLOWED_REMOVAL_TYPES = ['decisionMakers', 'painPoints', 'integrationNeeds', 'evaluationCriteria'] as const;
+const ALLOWED_CORRECTION_TYPES = ['budget', 'timeline', 'urgency', 'contactMethod', 'role', 'industry', 'company', 'teamSize'] as const;
+
+type RemovalEntityType = typeof ALLOWED_REMOVAL_TYPES[number];
+type CorrectionEntityType = typeof ALLOWED_CORRECTION_TYPES[number];
 
 export class EntityCorrections {
   private constructor(private readonly props: EntityCorrectionsProps) {
@@ -63,6 +53,8 @@ export class EntityCorrections {
     sessionId: string,
     props?: Partial<Omit<EntityCorrectionsProps, 'totalCorrections' | 'lastCorrectionAt' | 'correctionSessionId'>>
   ): EntityCorrections {
+    EntityCorrectionsValidationService.validateSessionId(sessionId);
+    
     const correctionProps: EntityCorrectionsProps = {
       removedDecisionMakers: [],
       removedPainPoints: [],
@@ -88,80 +80,87 @@ export class EntityCorrections {
     return new EntityCorrections(correctionProps);
   }
   
-  // Getters for immutable access
-  get removedDecisionMakers(): RemovalOperation[] { return [...this.props.removedDecisionMakers]; }
-  get removedPainPoints(): RemovalOperation[] { return [...this.props.removedPainPoints]; }
-  get removedIntegrationNeeds(): RemovalOperation[] { return [...this.props.removedIntegrationNeeds]; }
-  get removedEvaluationCriteria(): RemovalOperation[] { return [...this.props.removedEvaluationCriteria]; }
-  get correctedBudget(): CorrectionOperation | null { return this.props.correctedBudget; }
-  get correctedTimeline(): CorrectionOperation | null { return this.props.correctedTimeline; }
-  get correctedUrgency(): CorrectionOperation<'low'|'medium'|'high'> | null { return this.props.correctedUrgency; }
-  get correctedContactMethod(): CorrectionOperation<'email'|'phone'|'meeting'> | null { return this.props.correctedContactMethod; }
-  get correctedRole(): CorrectionOperation | null { return this.props.correctedRole; }
-  get correctedIndustry(): CorrectionOperation | null { return this.props.correctedIndustry; }
-  get correctedCompany(): CorrectionOperation | null { return this.props.correctedCompany; }
-  get correctedTeamSize(): CorrectionOperation | null { return this.props.correctedTeamSize; }
+  // Getters for immutable access (return value objects)
+  get removedDecisionMakers(): RemovalOperation[] { 
+    return this.props.removedDecisionMakers.map(props => RemovalOperation.fromProps(props)); 
+  }
+  get removedPainPoints(): RemovalOperation[] { 
+    return this.props.removedPainPoints.map(props => RemovalOperation.fromProps(props)); 
+  }
+  get removedIntegrationNeeds(): RemovalOperation[] { 
+    return this.props.removedIntegrationNeeds.map(props => RemovalOperation.fromProps(props)); 
+  }
+  get removedEvaluationCriteria(): RemovalOperation[] { 
+    return this.props.removedEvaluationCriteria.map(props => RemovalOperation.fromProps(props)); 
+  }
+  get correctedBudget(): CorrectionOperation | null { 
+    return this.props.correctedBudget ? CorrectionOperation.fromProps(this.props.correctedBudget) : null; 
+  }
+  get correctedTimeline(): CorrectionOperation | null { 
+    return this.props.correctedTimeline ? CorrectionOperation.fromProps(this.props.correctedTimeline) : null; 
+  }
+  get correctedUrgency(): CorrectionOperation<UrgencyLevel> | null { 
+    return this.props.correctedUrgency ? CorrectionOperation.fromProps(this.props.correctedUrgency) : null; 
+  }
+  get correctedContactMethod(): CorrectionOperation<ContactMethod> | null { 
+    return this.props.correctedContactMethod ? CorrectionOperation.fromProps(this.props.correctedContactMethod) : null; 
+  }
+  get correctedRole(): CorrectionOperation | null { 
+    return this.props.correctedRole ? CorrectionOperation.fromProps(this.props.correctedRole) : null; 
+  }
+  get correctedIndustry(): CorrectionOperation | null { 
+    return this.props.correctedIndustry ? CorrectionOperation.fromProps(this.props.correctedIndustry) : null; 
+  }
+  get correctedCompany(): CorrectionOperation | null { 
+    return this.props.correctedCompany ? CorrectionOperation.fromProps(this.props.correctedCompany) : null; 
+  }
+  get correctedTeamSize(): CorrectionOperation | null { 
+    return this.props.correctedTeamSize ? CorrectionOperation.fromProps(this.props.correctedTeamSize) : null; 
+  }
   get totalCorrections(): number { return this.props.totalCorrections; }
   get lastCorrectionAt(): Date { return this.props.lastCorrectionAt; }
   get correctionSessionId(): string { return this.props.correctionSessionId; }
   
   // Business methods for adding corrections
   withRemovedEntity(
-    entityType: 'decisionMakers'|'painPoints'|'integrationNeeds'|'evaluationCriteria',
+    entityType: RemovalEntityType,
     entityValue: string,
     messageId: string,
     confidence: number = 0.9,
     reason?: string
   ): EntityCorrections {
-    this.validateRemovalInput(entityValue, messageId, confidence);
+    EntityCorrectionsValidationService.validateEntityType(entityType, ALLOWED_REMOVAL_TYPES);
     
-    const removal: RemovalOperation = {
-      entityValue: entityValue.trim(),
-      metadata: {
-        timestamp: new Date(),
-        sourceMessageId: messageId,
-        confidence,
-        correctionReason: reason
-      }
-    };
+    const removal = RemovalOperation.create(entityValue, messageId, confidence, reason);
     
     const propertyKey = `removed${this.capitalizeFirst(entityType)}` as keyof EntityCorrectionsProps;
-    const existingRemovals = this.props[propertyKey] as RemovalOperation[];
+    const existingRemovals = this.props[propertyKey] as RemovalOperationProps[];
     
     return new EntityCorrections({
       ...this.props,
-      [propertyKey]: [...existingRemovals, removal],
+      [propertyKey]: [...existingRemovals, removal.toPlainObject()],
       totalCorrections: this.props.totalCorrections + 1,
       lastCorrectionAt: new Date()
     });
   }
   
-  withCorrectedEntity<T extends string | 'low'|'medium'|'high' | 'email'|'phone'|'meeting'>(
-    entityType: 'budget'|'timeline'|'urgency'|'contactMethod'|'role'|'industry'|'company'|'teamSize',
+  withCorrectedEntity<T extends string | UrgencyLevel | ContactMethod>(
+    entityType: CorrectionEntityType,
     newValue: T,
     messageId: string,
     previousValue?: T,
     confidence: number = 0.9,
     reason?: string
   ): EntityCorrections {
-    this.validateCorrectionInput(newValue as unknown, messageId, confidence);
+    EntityCorrectionsValidationService.validateEntityType(entityType, ALLOWED_CORRECTION_TYPES);
     
-    const correction: CorrectionOperation<T> = {
-      newValue,
-      previousValue,
-      metadata: {
-        timestamp: new Date(),
-        sourceMessageId: messageId,
-        confidence,
-        correctionReason: reason
-      }
-    };
+    const correction = CorrectionOperation.create(newValue, messageId, previousValue, confidence, reason);
     
     const propertyKey = `corrected${this.capitalizeFirst(entityType)}` as keyof EntityCorrectionsProps;
     
     return new EntityCorrections({
       ...this.props,
-      [propertyKey]: correction as CorrectionOperation<T>,
+      [propertyKey]: correction.toPlainObject(),
       totalCorrections: this.props.totalCorrections + 1,
       lastCorrectionAt: new Date()
     });
@@ -218,67 +217,10 @@ export class EntityCorrections {
     return new EntityCorrections(props);
   }
   
-  // Private validation methods
+  // Private helper methods
   private validateInvariants(): void {
-    if (!this.props.correctionSessionId || this.props.correctionSessionId.trim().length === 0) {
-      throw new BusinessRuleViolationError(
-        'Entity corrections must have a valid session ID',
-        { sessionId: this.props.correctionSessionId }
-      );
-    }
-    
-    if (this.props.totalCorrections < 0) {
-      throw new BusinessRuleViolationError(
-        'Total corrections cannot be negative',
-        { totalCorrections: this.props.totalCorrections }
-      );
-    }
-  }
-  
-  private validateRemovalInput(entityValue: string, messageId: string, confidence: number): void {
-    if (!entityValue || entityValue.trim().length === 0) {
-      throw new BusinessRuleViolationError(
-        'Entity value for removal cannot be empty',
-        { entityValue, messageId }
-      );
-    }
-    
-    if (!messageId || messageId.trim().length === 0) {
-      throw new BusinessRuleViolationError(
-        'Message ID is required for entity corrections',
-        { entityValue, messageId }
-      );
-    }
-    
-    if (confidence < 0 || confidence > 1) {
-      throw new BusinessRuleViolationError(
-        'Confidence must be between 0 and 1',
-        { confidence, entityValue, messageId }
-      );
-    }
-  }
-  
-  private validateCorrectionInput(newValue: unknown, messageId: string, confidence: number): void {
-    if (!newValue || (typeof newValue === 'string' && newValue.trim().length === 0)) {
-      throw new BusinessRuleViolationError(
-        'New value for correction cannot be empty',
-        { newValue, messageId }
-      );
-    }
-    
-    if (!messageId || messageId.trim().length === 0) {
-      throw new BusinessRuleViolationError(
-        'Message ID is required for entity corrections',
-        { newValue, messageId }
-      );
-    }
-    
-    if (confidence < 0 || confidence > 1) {
-      throw new BusinessRuleViolationError(
-        'Confidence must be between 0 and 1',
-        { confidence, newValue, messageId }
-      );
-    }
+    EntityCorrectionsValidationService.validateSessionId(this.props.correctionSessionId);
+    EntityCorrectionsValidationService.validateTotalCorrections(this.props.totalCorrections);
   }
   
   private capitalizeFirst(str: string): string {

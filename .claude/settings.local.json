@@ -62,7 +62,14 @@
       "Bash(export PATH=\"$PATH:./node_modules/.bin\")",
       "Bash(pnpm dlx:*)",
       "Bash(pnpm --package=typescript dlx tsc --noEmit)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Bash(pushd:*)",
+      "Bash(popd:*)",
+      "Bash(claude --version)",
+      "Bash(claude config list)",
+      "Bash(claude config set hooks.enabled true)",
+      "Bash(claude config set --global hooks.enabled true)",
+      "Bash(claude hooks:*)"
     ],
     "deny": []
   },
@@ -71,5 +78,64 @@
     "supabase",
     "context7",
     "playwright"
-  ]
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write(lib/**/*.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit --project tsconfig.json",
+            "timeout": 20000,
+            "description": "Type check TypeScript files after creation"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(lib/**/*.tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit --project tsconfig.json",
+            "timeout": 20000,
+            "description": "Type check TypeScript React files after creation"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(lib/**/*.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit --project tsconfig.json",
+            "timeout": 20000,
+            "description": "Type check TypeScript files after editing"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(lib/**/*.tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit --project tsconfig.json",
+            "timeout": 20000,
+            "description": "Type check TypeScript React files after editing"
+          }
+        ]
+      },
+      {
+        "matcher": "MultiEdit(lib/**/*.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx tsc --noEmit --project tsconfig.json",
+            "timeout": 20000,
+            "description": "Type check TypeScript files after multi-editing"
+          }
+        ]
+      }
+    ]
+  }
 }

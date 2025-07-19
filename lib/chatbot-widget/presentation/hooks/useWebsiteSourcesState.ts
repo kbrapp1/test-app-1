@@ -9,19 +9,19 @@
  * - Handle UI state coordination only
  */
 
+import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { 
-  addWebsiteSource, 
-  removeWebsiteSource, 
-  crawlWebsiteSource as crawlWebsiteSourceAction,
-  cleanupWebsiteSources
-} from '../actions/websiteSourcesActions';
 import { WebsiteSourceDto } from '../../application/dto/ChatbotConfigDto';
+import {
+    addWebsiteSource,
+    cleanupWebsiteSources,
+    crawlWebsiteSource as crawlWebsiteSourceAction,
+    removeWebsiteSource
+} from '../actions/websiteSourcesActions';
 import { useCrawledPagesData } from './website-sources/useCrawledPagesData';
+import { useCrawlProgress } from './website-sources/useCrawlProgress';
 import { useFormState } from './website-sources/useFormState';
 import { useUIState } from './website-sources/useUIState';
-import { useCrawlProgress } from './website-sources/useCrawlProgress';
-import { useToast } from '@/components/ui/use-toast';
 
 /** Main Website Sources State Hook */
 export function useWebsiteSourcesState(
@@ -131,7 +131,7 @@ export function useWebsiteSourcesState(
     }
   };
 
-  // AI: Crawl website source with real database polling
+  // AI: Crawl website source with real-time progress updates
   const crawlWebsiteSource = async (sourceId: string) => {
     const config = configData as { id?: string };
     if (!config?.id || !organizationId) return;
@@ -139,8 +139,8 @@ export function useWebsiteSourcesState(
     try {
       crawlProgressState.startCrawlProgress(sourceId);
       
-      // AI: Start database polling for real progress updates  
-      crawlProgressState.startPolling(organizationId, chatbotConfigId, sourceId);
+      // AI: Start SSE stream for real-time progress updates (no polling to avoid extra API calls)
+      crawlProgressState.startProgressStream(sourceId);
       
       // AI: Execute crawl in background - polling will show real progress
       const result = await crawlWebsiteSourceAction(config.id, organizationId, sourceId);
@@ -148,10 +148,7 @@ export function useWebsiteSourcesState(
       if (result.success && result.data) {
         crawlProgressState.completeCrawlProgress(result.data.itemsProcessed);
         
-        // AI: Refresh data to show final results
-        await queryClient.invalidateQueries({ 
-          queryKey: ['chatbot-config', organizationId] 
-        });
+        // AI: Data will be refreshed automatically by server-side revalidation
         
         toast({
           title: "Crawl Completed",
@@ -166,11 +163,12 @@ export function useWebsiteSourcesState(
           variant: "destructive"
         });
       }
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       crawlProgressState.errorCrawlProgress(errorMessage);
       toast({
-        title: "Crawl Failed",
+        title: "Crawl Failed", 
         description: errorMessage,
         variant: "destructive"
       });

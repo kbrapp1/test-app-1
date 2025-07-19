@@ -4,7 +4,7 @@
  * AI INSTRUCTIONS:
  * - Single responsibility: Orchestrate message processing workflow
  * - Delegate to specialized services for specific concerns
- * - Keep under 200-250 lines following @golden-rule patterns
+ * - Keep under 150 lines following @golden-rule patterns
  * - Focus on coordination, not implementation
  * - Follow DDD application service patterns
  */
@@ -13,7 +13,6 @@ import { WorkflowContext } from './MessageProcessingWorkflowService';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
-import { IntentResult } from '../../../domain/value-objects/message-processing/IntentResult';
 import { ProcessingConfig, ProcessingSession } from './types/UnifiedResultTypes';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
@@ -27,6 +26,9 @@ import { EntityMergeProcessorService } from './EntityMergeProcessorService';
 import { LeadScoreCalculatorService } from './LeadScoreCalculatorService';
 import { ConversationFlowAnalyzerService } from './ConversationFlowAnalyzerService';
 import { ErrorTrackingFacade } from '../ErrorTrackingFacade';
+import { MessageAnalysisExtractorService } from './MessageAnalysisExtractorService';
+import { MessageEntityConverterService } from './MessageEntityConverterService';
+import { KnowledgeRetrievalCoordinatorService } from './KnowledgeRetrievalCoordinatorService';
 
 export interface ProcessMessageRequest {
   userMessage: string;
@@ -62,6 +64,9 @@ export class ChatMessageProcessingService {
   private readonly conversationContextBuilder: ConversationContextBuilderService;
   private readonly unifiedResponseProcessor: UnifiedResponseProcessorService;
   private readonly sessionContextUpdater: SessionContextUpdateService;
+  private readonly messageAnalysisExtractor: MessageAnalysisExtractorService;
+  private readonly messageEntityConverter: MessageEntityConverterService;
+  private readonly knowledgeRetrievalCoordinator: KnowledgeRetrievalCoordinatorService;
 
   constructor(
     private readonly aiConversationService: IAIConversationService,
@@ -74,6 +79,9 @@ export class ChatMessageProcessingService {
     // Initialize specialized services with composition pattern
     this.conversationContextBuilder = new ConversationContextBuilderService(aiConversationService);
     this.unifiedResponseProcessor = new UnifiedResponseProcessorService(messageRepository, errorTrackingFacade);
+    this.messageAnalysisExtractor = new MessageAnalysisExtractorService(messageRepository);
+    this.messageEntityConverter = new MessageEntityConverterService(messageRepository);
+    this.knowledgeRetrievalCoordinator = new KnowledgeRetrievalCoordinatorService(knowledgeRetrievalService);
     
     // Initialize specialized services for SessionContextUpdateService
     const entityMergeProcessor = new EntityMergeProcessorService();
@@ -102,7 +110,7 @@ export class ChatMessageProcessingService {
     };
   }
 
-  /** Generate AI response using unified processing */
+  /** Generate AI response using unified processing with specialized service coordination */
   async generateAIResponse(analysisResult: AnalysisResult, sharedLogFile: string): Promise<ResponseResult> {
     const { session, userMessage, contextResult, config, enhancedContext } = analysisResult;
     
@@ -111,87 +119,42 @@ export class ChatMessageProcessingService {
       throw new Error('Unified processing service not available - chatbot cannot process messages without unified intent classification service');
     }
 
-    // AI: Convert plain message objects to ChatMessage entities using repository
-    // This follows @golden-rule.mdc by maintaining proper domain boundaries
-    const contextMessages = await this.convertPlainMessagesToEntities(contextResult.messages as Record<string, unknown>[], sharedLogFile);
-    
-    // Check if userMessage is already in context messages to avoid duplication
-    const isUserMessageInContext = contextMessages.some((msg: ChatMessage) => msg.id === userMessage.id);
-    const allMessages = isUserMessageInContext 
-      ? contextMessages 
-      : [...contextMessages, userMessage];
-
-    // Use the required shared log file for all logging
-    const logFileName = sharedLogFile;
-
-    // Build conversation context with compression and entity injection
-    const processingConfig: ProcessingConfig = {
-      organizationId: config.organizationId,
-      name: config.name
-    };
-    const processingSession: ProcessingSession = {
-      id: (session as Record<string, unknown>).id as string,
-      conversationId: (session as Record<string, unknown>).conversationId as string,
-      contextData: (session as Record<string, unknown>).contextData as Record<string, unknown>
-    };
-    const conversationContext = await this.conversationContextBuilder.buildConversationContext(
-      processingConfig,
-      processingSession,
-      contextMessages, // Use converted entities
-      userMessage,
-      contextResult.summary as string | undefined,
-      enhancedContext,
-      logFileName
+    // Convert plain message objects to ChatMessage entities using specialized service
+    const contextMessages = await this.messageEntityConverter.convertPlainMessagesToEntities(
+      contextResult.messages as Record<string, unknown>[], 
+      sharedLogFile
     );
+    
+    // Merge context messages with user message avoiding duplication
+    const allMessages = this.messageEntityConverter.mergeMessagesWithUserMessage(contextMessages, userMessage);
 
-    // Add shared log file to context for downstream services
-    (conversationContext as unknown as Record<string, unknown>).sharedLogFile = logFileName;
+    // Build conversation context through specialized service
+    const conversationContext = await this.buildConversationContext(
+      config, session, contextMessages, userMessage, contextResult, enhancedContext, sharedLogFile
+    );
 
     // Process unified AI interaction
-    const unifiedResult = await (this.intentClassificationService as IIntentClassificationService & { processChatbotInteractionComplete: (content: string, context: unknown) => Promise<unknown> }).processChatbotInteractionComplete(
-      userMessage.content,
-      conversationContext
-    );
+    const unifiedResult = await this.processUnifiedAIInteraction(userMessage.content, conversationContext);
 
-    // AI INSTRUCTIONS: Extract sentiment, urgency, engagement from unified response
-    // This replaces the 3 separate API calls that were causing 2.8s delay
-    // while preserving exact same data format for downstream processes
-    let updatedUserMessage = userMessage;
-    try {
-      // Extract analysis data directly without requiring MessageProcessingWorkflowService
-      const sentiment = this.extractSentimentFromUnified(unifiedResult as Record<string, unknown>);
-      const urgency = this.extractUrgencyFromUnified(unifiedResult as Record<string, unknown>);
-      const engagement = this.extractEngagementFromUnified(unifiedResult as Record<string, unknown>);
-      
-      // Update user message with extracted data (same as before)
-      const messageWithSentiment = userMessage.updateSentiment(sentiment);
-      const messageWithUrgency = messageWithSentiment.updateUrgency(urgency);
-      const messageWithEngagement = messageWithUrgency.updateEngagement(engagement);
-      
-      // Save updated message with analysis data
-      updatedUserMessage = await this.messageRepository.save(messageWithEngagement, logFileName);
-      
-      // Fallback to original message if save failed
-      if (!updatedUserMessage) {
-        updatedUserMessage = userMessage;
-      }
-    } catch (error) {
-      // If extraction fails, continue with original message
-      console.error('Failed to extract analysis from unified response:', error);
-      updatedUserMessage = userMessage; // Ensure we have a valid message object
-    }
+    // Extract analysis data from unified response using specialized service
+    const updatedUserMessage = await this.messageAnalysisExtractor.extractAndApplyAnalysis(
+      userMessage, 
+      unifiedResult as Record<string, unknown>, 
+      sharedLogFile
+    );
 
     // Process unified response and create bot message
     const botMessage = await this.unifiedResponseProcessor.createBotMessageFromUnifiedResult(
       session as unknown as ChatSession,
       unifiedResult as Record<string, unknown>,
-      logFileName,
+      sharedLogFile,
       config
     );
 
-    // Update allMessages array with the updated user message
-    const finalAllMessages = allMessages.map((msg: ChatMessage) => 
-      updatedUserMessage && msg.id === updatedUserMessage.id ? updatedUserMessage : msg
+    // Update message array with analyzed user message
+    const finalAllMessages = this.messageEntityConverter.updateMessagesWithAnalyzedMessage(
+      allMessages, 
+      updatedUserMessage
     );
 
     // Update session context with unified results
@@ -200,135 +163,84 @@ export class ChatMessageProcessingService {
       botMessage,
       finalAllMessages,
       unifiedResult as Record<string, unknown>,
-      logFileName
+      sharedLogFile
     );
 
     return {
       session: updatedSession,
-      userMessage: updatedUserMessage, // Return updated user message with analysis
+      userMessage: updatedUserMessage,
       botMessage,
       allMessages: finalAllMessages,
       config,
-      enhancedContext: {
-        ...enhancedContext,
-        unifiedAnalysis: (unifiedResult as Record<string, unknown>)?.analysis as Record<string, unknown> || { primaryIntent: 'unknown', primaryConfidence: 0 },
-        conversationFlow: null, // Will be set after session update
-        callToAction: ((unifiedResult as Record<string, unknown>)?.response as Record<string, unknown>)?.callToAction as Record<string, unknown> || { type: 'none', priority: 'low' }
-      }
+      enhancedContext: this.buildEnhancedContextResult(enhancedContext, unifiedResult as Record<string, unknown>)
     };
   }
 
-  /** Retrieve knowledge for query context */
+  /** Retrieve knowledge for query context - delegated to knowledge coordinator */
   async retrieveKnowledge(query: string, context?: Record<string, unknown>): Promise<unknown> {
-    if (!this.knowledgeRetrievalService) {
-      return null;
-    }
+    return this.knowledgeRetrievalCoordinator.retrieveKnowledge(query, context);
+  }
 
-    const searchContext = {
-      userQuery: query,
-      intentResult: context?.intentResult as IntentResult,
-      conversationHistory: context?.conversationHistory as string[],
-      userPreferences: context?.userPreferences as Record<string, unknown>,
-      maxResults: (context?.maxResults as number) || 5,
-      minRelevanceScore: (context?.minRelevanceScore as number) || 0.5
+  /** Helper: Build conversation context for unified processing */
+  private async buildConversationContext(
+    config: ChatbotConfig,
+    session: Record<string, unknown>,
+    contextMessages: ChatMessage[],
+    userMessage: ChatMessage,
+    contextResult: Record<string, unknown>,
+    enhancedContext: Record<string, unknown>,
+    logFileName: string
+  ): Promise<unknown> {
+    const processingConfig: ProcessingConfig = {
+      organizationId: config.organizationId,
+      name: config.name
+    };
+    const processingSession: ProcessingSession = {
+      id: session.id as string,
+      conversationId: session.conversationId as string,
+      contextData: session.contextData as Record<string, unknown>
     };
 
-    const result = await this.knowledgeRetrievalService.searchKnowledge(searchContext);
-    return result.items;
+    const conversationContext = await this.conversationContextBuilder.buildConversationContext(
+      processingConfig,
+      processingSession,
+      contextMessages,
+      userMessage,
+      contextResult.summary as string | undefined,
+      enhancedContext,
+      logFileName
+    );
+
+    // Add shared log file to context for downstream services
+    (conversationContext as unknown as Record<string, unknown>).sharedLogFile = logFileName;
+    return conversationContext;
   }
 
-  /** Extract sentiment from unified API response */
-  private extractSentimentFromUnified(unifiedResult: Record<string, unknown>): 'positive' | 'neutral' | 'negative' {
-    // Try multiple paths in unified response
-    const analysis = unifiedResult?.analysis as Record<string, unknown>;
-    const response = unifiedResult?.response as Record<string, unknown>;
-    const sentiment = analysis?.sentiment ||
-                     response?.sentiment ||
-                     'neutral'; // Default fallback
+  /** Helper: Process unified AI interaction with proper typing */
+  private async processUnifiedAIInteraction(content: string, context: unknown): Promise<unknown> {
+    const unifiedService = this.intentClassificationService as IIntentClassificationService & { 
+      processChatbotInteractionComplete: (content: string, context: unknown) => Promise<unknown> 
+    };
     
-    // Validate and normalize sentiment value
-    if (sentiment === 'positive' || sentiment === 'negative' || sentiment === 'neutral') {
-      return sentiment;
-    }
-    
-    return 'neutral'; // Safe fallback
+    return await unifiedService.processChatbotInteractionComplete(content, context);
   }
 
-  /** Extract urgency from unified API response */
-  private extractUrgencyFromUnified(unifiedResult: Record<string, unknown>): 'low' | 'medium' | 'high' {
-    // Try multiple paths in unified response
-    const analysis = unifiedResult?.analysis as Record<string, unknown>;
-    const entities = analysis?.entities as Record<string, unknown>;
-    const conversationFlow = unifiedResult?.conversationFlow as Record<string, unknown>;
-    const urgency = entities?.urgency ||
-                   conversationFlow?.urgency ||
-                   'low'; // Default fallback
-    
-    // Validate and normalize urgency value
-    if (urgency === 'high' || urgency === 'medium' || urgency === 'low') {
-      return urgency;
-    }
-    
-    return 'low'; // Safe fallback
-  }
-
-  /** Extract engagement from unified API response */
-  private extractEngagementFromUnified(unifiedResult: Record<string, unknown>): 'low' | 'medium' | 'high' {
-    // Try multiple paths in unified response
-    const conversationFlow = unifiedResult?.conversationFlow as Record<string, unknown>;
-    const analysis = unifiedResult?.analysis as Record<string, unknown>;
-    const engagement = conversationFlow?.engagementLevel ||
-                      analysis?.engagementLevel ||
-                      'low'; // Default fallback
-    
-    // Validate and normalize engagement value
-    if (engagement === 'high' || engagement === 'medium' || engagement === 'low') {
-      return engagement;
-    }
-    
-    return 'low'; // Safe fallback
-  }
-
-  /**
-   * Converts an array of plain message objects to ChatMessage entities using the repository.
-   * This ensures proper domain boundaries and consistency.
-   * 
-   * AI INSTRUCTIONS:
-   * - Uses repository to fetch existing entities when possible
-   * - Follows @golden-rule.mdc domain boundary patterns
-   * - Maintains type safety between application and domain layers
-   */
-  private async convertPlainMessagesToEntities(messages: Record<string, unknown>[], _logFileName: string): Promise<ChatMessage[]> {
-    const chatMessages: ChatMessage[] = [];
-    
-    for (const msg of messages) {
-      if (!msg.id) {
-        console.warn('Skipping message with missing ID:', msg);
-        continue;
+  /** Helper: Build enhanced context result with unified analysis data */
+  private buildEnhancedContextResult(
+    enhancedContext: Record<string, unknown>, 
+    unifiedResult: Record<string, unknown>
+  ): Record<string, unknown> {
+    return {
+      ...enhancedContext,
+      unifiedAnalysis: unifiedResult?.analysis as Record<string, unknown> || { 
+        primaryIntent: 'unknown', 
+        primaryConfidence: 0 
+      },
+      conversationFlow: null, // Will be set after session update
+      callToAction: ((unifiedResult?.response as Record<string, unknown>)?.callToAction as Record<string, unknown>) || { 
+        type: 'none', 
+        priority: 'low' 
       }
-      
-      try {
-        // First try to get the entity from repository (preferred approach)
-        const existingMessage = await this.messageRepository.findById(msg.id as string);
-        if (existingMessage) {
-          chatMessages.push(existingMessage);
-          continue;
-        }
-        
-        // If not found in repository, check if it's already a ChatMessage entity
-        if (msg.isFromUser && typeof msg.isFromUser === 'function') {
-          chatMessages.push(msg as unknown as ChatMessage);
-          continue;
-        }
-        
-        // Log warning for missing messages that should exist
-        console.warn(`Message ${msg.id} not found in repository and not a valid ChatMessage entity`);
-        
-      } catch (error) {
-        console.error(`Error converting message ${msg.id}:`, error);
-      }
-    }
-    
-    return chatMessages;
+    };
   }
 } 

@@ -28,7 +28,15 @@ export class WebsiteKnowledgeApplicationService {
     private validationService: WebsiteValidationService
   ) {}
 
-  /** Crawl single website source and convert to knowledge items */
+  /** 
+   * Crawl single website source and convert to knowledge items 
+   * 
+   * AI INSTRUCTIONS:
+   * - Accept and pass through progress callback to orchestration service
+   * - Maintain backward compatibility with existing interface
+   * - Handle errors gracefully with proper error types
+   * - Follow orchestration patterns from @golden-rule
+   */
   async crawlWebsiteSource(request: WebsiteCrawlRequest): Promise<WebsiteCrawlResponse> {
     return await this.crawlOrchestrationService.crawlWebsiteSource(request);
   }

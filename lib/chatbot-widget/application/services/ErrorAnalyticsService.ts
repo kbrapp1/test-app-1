@@ -1,365 +1,48 @@
 /**
- * Error Analytics Service
+ * Error Analytics Service (Legacy Adapter)
  * 
  * AI INSTRUCTIONS:
- * - Application layer service for error analytics
- * - Single responsibility: query and analyze error data
- * - Follow @golden-rule patterns exactly
- * - Keep under 250 lines
- * - Coordinate with infrastructure for data access
- * - No business logic - pure coordination
+ * - Maintains backward compatibility
+ * - Delegates to new DDD-structured services
+ * - Preserves existing API surface
+ * - Single responsibility: API compatibility
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ErrorAnalyticsApplicationService } from './analytics/ErrorAnalyticsApplicationService';
+import { ErrorAnalyticsFilterData } from '../../domain/value-objects/analytics/ErrorAnalyticsFilter';
+import { ErrorSummaryData } from '../../domain/value-objects/analytics/ErrorSummary';
+import { ErrorTrendData } from '../../domain/value-objects/analytics/ErrorTrend';
 
-interface ErrorRecord {
-  error_code: string;
-  error_message: string;
-  error_category: string;
-  severity: string;
-  created_at: string;
-}
-
-interface ErrorRecordWithTable extends ErrorRecord {
-  tableName: string;
-}
-
-export interface ErrorSummary {
-  totalErrors: number;
-  errorsByCode: Record<string, number>;
-  errorsBySeverity: Record<string, number>;
-  errorsByCategory: Record<string, number>;
-  errorsByTable: Record<string, number>;
-  recentErrors: Array<{
-    errorCode: string;
-    errorMessage: string;
-    errorCategory: string;
-    severity: string;
-    createdAt: string;
-    tableName: string;
-  }>;
-}
-
-export interface ErrorTrend {
-  period: string;
-  errorCount: number;
-  severity: string;
-  category: string;
-}
-
-export interface ErrorAnalyticsFilter {
-  organizationId: string;
-  timeRange: '1h' | '24h' | '7d' | '30d';
-  severity?: string[];
-  category?: string[];
-  errorCode?: string[];
-  sessionId?: string;
-  userId?: string;
-}
+// Legacy interfaces for backward compatibility
+export interface ErrorSummary extends ErrorSummaryData {}
+export interface ErrorTrend extends ErrorTrendData {}
+export interface ErrorAnalyticsFilter extends ErrorAnalyticsFilterData {}
 
 export class ErrorAnalyticsService {
-  /**
-   * AI INSTRUCTIONS:
-   * - Coordinate error analytics queries
-   * - Transform raw database results into domain objects
-   * - Handle multiple table queries efficiently
-   * - Provide rich analytics for monitoring
-   */
+  private readonly applicationService: ErrorAnalyticsApplicationService;
 
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(supabase: SupabaseClient) {
+    this.applicationService = new ErrorAnalyticsApplicationService(supabase);
+  }
 
   async getErrorSummary(filter: ErrorAnalyticsFilter): Promise<ErrorSummary> {
-    const timeFilter = this.getTimeFilter(filter.timeRange);
-    
-    // Query all three error tables in parallel
-    const [conversationErrors, knowledgeErrors, systemErrors] = await Promise.all([
-      this.queryErrorTable('chatbot_conversation_errors', filter, timeFilter),
-      this.queryErrorTable('chatbot_knowledge_errors', filter, timeFilter),
-      this.queryErrorTable('chatbot_system_errors', filter, timeFilter)
-    ]);
-
-    // Combine all errors with table names
-    const allErrors: ErrorRecordWithTable[] = [
-      ...conversationErrors.map(e => ({ ...e, tableName: 'conversation' as const })),
-      ...knowledgeErrors.map(e => ({ ...e, tableName: 'knowledge' as const })),
-      ...systemErrors.map(e => ({ ...e, tableName: 'system' as const }))
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    if (allErrors.length === 0) {
-      return this.getEmptyErrorSummary();
-    }
-
-    return this.buildErrorSummary(allErrors);
+    const summary = await this.applicationService.getErrorSummary(filter);
+    return summary.toData();
   }
 
   async getErrorTrends(filter: ErrorAnalyticsFilter): Promise<ErrorTrend[]> {
-    const timeFilter = this.getTimeFilter(filter.timeRange);
-    const interval = this.getIntervalForTimeRange(filter.timeRange);
-    
-    // Query error trends from all tables
-    const [conversationTrends, knowledgeTrends, systemTrends] = await Promise.all([
-      this.queryErrorTrends('chatbot_conversation_errors', filter, timeFilter, interval),
-      this.queryErrorTrends('chatbot_knowledge_errors', filter, timeFilter, interval),
-      this.queryErrorTrends('chatbot_system_errors', filter, timeFilter, interval)
-    ]);
-
-    // Combine and sort trends
-    const allTrends = [
-      ...conversationTrends,
-      ...knowledgeTrends,
-      ...systemTrends
-    ].sort((a, b) => new Date(a.period).getTime() - new Date(b.period).getTime());
-
-    return allTrends;
+    const trends = await this.applicationService.getErrorTrends(filter);
+    return trends.map(trend => trend.toData());
   }
 
   async getErrorsBySession(sessionId: string, organizationId: string): Promise<ErrorSummary> {
-    const filter: ErrorAnalyticsFilter = {
-      organizationId,
-      timeRange: '7d',
-      sessionId
-    };
-
-    return this.getErrorSummary(filter);
+    const summary = await this.applicationService.getErrorsBySession(sessionId, organizationId);
+    return summary.toData();
   }
 
   async getErrorsByUser(userId: string, organizationId: string): Promise<ErrorSummary> {
-    const filter: ErrorAnalyticsFilter = {
-      organizationId,
-      timeRange: '7d',
-      userId
-    };
-
-    return this.getErrorSummary(filter);
-  }
-
-  private async queryErrorTable(
-    tableName: string,
-    filter: ErrorAnalyticsFilter,
-    timeFilter: string
-  ): Promise<ErrorRecord[]> {
-    try {
-      let query = this.supabase
-        .from(tableName)
-        .select('error_code, error_message, error_category, severity, created_at')
-        .eq('organization_id', filter.organizationId)
-        .gte('created_at', timeFilter)
-        .order('created_at', { ascending: false });
-
-      // Apply additional filters
-      if (filter.severity && filter.severity.length > 0) {
-        query = query.in('severity', filter.severity);
-      }
-
-      if (filter.category && filter.category.length > 0) {
-        query = query.in('error_category', filter.category);
-      }
-
-      if (filter.errorCode && filter.errorCode.length > 0) {
-        query = query.in('error_code', filter.errorCode);
-      }
-
-      if (filter.sessionId) {
-        query = query.eq('session_id', filter.sessionId);
-      }
-
-      if (filter.userId) {
-        query = query.eq('user_id', filter.userId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error(`Error querying ${tableName}:`, error);
-        return [];
-      }
-
-      return this.validateErrorRecords(data || []);
-    } catch (err) {
-      console.error(`Error querying ${tableName}:`, err);
-      return [];
-    }
-  }
-
-  private async queryErrorTrends(
-    tableName: string,
-    filter: ErrorAnalyticsFilter,
-    timeFilter: string,
-    interval: string
-  ): Promise<ErrorTrend[]> {
-    try {
-      // Use PostgreSQL date_trunc for time grouping
-      const { data, error } = await this.supabase
-        .from(tableName)
-        .select(`
-          created_at,
-          error_category,
-          severity
-        `)
-        .eq('organization_id', filter.organizationId)
-        .gte('created_at', timeFilter);
-
-      if (error) {
-        console.error(`Error querying trends from ${tableName}:`, error);
-        return [];
-      }
-
-      if (!data || data.length === 0) {
-        return [];
-      }
-
-      // Group by time period, category, and severity
-      const trends: Record<string, ErrorTrend> = {};
-
-      data.forEach(row => {
-        if (this.isValidTrendRecord(row)) {
-          const period = this.truncateToInterval(row.created_at, interval);
-          const key = `${period}-${row.error_category}-${row.severity}`;
-
-          if (!trends[key]) {
-            trends[key] = {
-              period,
-              errorCount: 0,
-              severity: row.severity,
-              category: row.error_category
-            };
-          }
-
-          trends[key].errorCount++;
-        }
-      });
-
-      return Object.values(trends);
-    } catch (err) {
-      console.error(`Error querying trends from ${tableName}:`, err);
-      return [];
-    }
-  }
-
-  private validateErrorRecords(data: unknown[]): ErrorRecord[] {
-    return data.filter(this.isValidErrorRecord).map(record => ({
-      error_code: record.error_code,
-      error_message: record.error_message,
-      error_category: record.error_category,
-      severity: record.severity,
-      created_at: record.created_at
-    }));
-  }
-
-  private isValidErrorRecord(record: unknown): record is ErrorRecord {
-    return (
-      typeof record === 'object' &&
-      record !== null &&
-      'error_code' in record &&
-      'error_message' in record &&
-      'error_category' in record &&
-      'severity' in record &&
-      'created_at' in record &&
-      typeof (record as ErrorRecord).error_code === 'string' &&
-      typeof (record as ErrorRecord).error_message === 'string' &&
-      typeof (record as ErrorRecord).error_category === 'string' &&
-      typeof (record as ErrorRecord).severity === 'string' &&
-      typeof (record as ErrorRecord).created_at === 'string'
-    );
-  }
-
-  private isValidTrendRecord(record: unknown): record is { created_at: string; error_category: string; severity: string } {
-    if (typeof record !== 'object' || record === null) {
-      return false;
-    }
-    
-    const obj = record as Record<string, unknown>;
-    return (
-      'created_at' in obj &&
-      'error_category' in obj &&
-      'severity' in obj &&
-      typeof obj.created_at === 'string' &&
-      typeof obj.error_category === 'string' &&
-      typeof obj.severity === 'string'
-    );
-  }
-
-  private buildErrorSummary(allErrors: ErrorRecordWithTable[]): ErrorSummary {
-    const errorsByCode: Record<string, number> = {};
-    const errorsBySeverity: Record<string, number> = {};
-    const errorsByCategory: Record<string, number> = {};
-    const errorsByTable: Record<string, number> = {};
-
-    allErrors.forEach(error => {
-      errorsByCode[error.error_code] = (errorsByCode[error.error_code] || 0) + 1;
-      errorsBySeverity[error.severity] = (errorsBySeverity[error.severity] || 0) + 1;
-      errorsByCategory[error.error_category] = (errorsByCategory[error.error_category] || 0) + 1;
-      errorsByTable[error.tableName] = (errorsByTable[error.tableName] || 0) + 1;
-    });
-
-    return {
-      totalErrors: allErrors.length,
-      errorsByCode,
-      errorsBySeverity,
-      errorsByCategory,
-      errorsByTable,
-      recentErrors: allErrors.slice(0, 10).map(error => ({
-        errorCode: error.error_code,
-        errorMessage: error.error_message,
-        errorCategory: error.error_category,
-        severity: error.severity,
-        createdAt: error.created_at,
-        tableName: error.tableName
-      }))
-    };
-  }
-
-  private getEmptyErrorSummary(): ErrorSummary {
-    return {
-      totalErrors: 0,
-      errorsByCode: {},
-      errorsBySeverity: {},
-      errorsByCategory: {},
-      errorsByTable: {},
-      recentErrors: []
-    };
-  }
-
-  private getTimeFilter(timeRange: string): string {
-    const now = new Date();
-    const hours = {
-      '1h': 1,
-      '24h': 24,
-      '7d': 24 * 7,
-      '30d': 24 * 30
-    }[timeRange] || 24;
-
-    return new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
-  }
-
-  private getIntervalForTimeRange(timeRange: string): string {
-    const intervalMap: Record<string, string> = {
-      '1h': '5 minutes',
-      '24h': '1 hour',
-      '7d': '1 day',
-      '30d': '1 day'
-    };
-
-    return intervalMap[timeRange] || '1 hour';
-  }
-
-  private truncateToInterval(timestamp: string, interval: string): string {
-    const date = new Date(timestamp);
-    
-    switch (interval) {
-      case '5 minutes':
-        date.setMinutes(Math.floor(date.getMinutes() / 5) * 5, 0, 0);
-        break;
-      case '1 hour':
-        date.setMinutes(0, 0, 0);
-        break;
-      case '1 day':
-        date.setHours(0, 0, 0, 0);
-        break;
-      default:
-        date.setHours(0, 0, 0, 0);
-    }
-
-    return date.toISOString();
+    const summary = await this.applicationService.getErrorsByUser(userId, organizationId);
+    return summary.toData();
   }
 } 
