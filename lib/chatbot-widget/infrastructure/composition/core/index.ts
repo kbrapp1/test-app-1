@@ -12,6 +12,12 @@ export { InfrastructureServiceCompositionService } from './InfrastructureService
 export { KnowledgeServiceCompositionService } from './KnowledgeServiceCompositionService';
 export { ConversationFlowCompositionService } from './ConversationFlowCompositionService';
 
+// Conversation Flow specialized services
+export { ReadinessCalculationCompositionService } from './ReadinessCalculationCompositionService';
+export { FlowValidationCompositionService } from './FlowValidationCompositionService';
+export { FlowBatchProcessingCompositionService } from './FlowBatchProcessingCompositionService';
+export { ConversationFlowHealthCompositionService } from './ConversationFlowHealthCompositionService';
+
 // Main composition service (unified facade)
 export { CoreDomainServiceCompositionService } from './CoreDomainServiceCompositionService';
 
@@ -20,3 +26,8 @@ export { SessionManagementCompositionService } from './SessionManagementComposit
 export { ContentProcessingCompositionService } from './ContentProcessingCompositionService';
 export { LeadManagementCompositionService } from './LeadManagementCompositionService';
 export { CoreUtilityCompositionService } from './CoreUtilityCompositionService';
+
+// DDD-Aware Coordinators (refactored from main composition root)
+export { ChatbotServiceAccessCoordinator } from './ChatbotServiceAccessCoordinator';
+export { ChatbotInitializationCoordinator } from './ChatbotInitializationCoordinator';
+export { ChatbotTestingCoordinator } from './ChatbotTestingCoordinator';

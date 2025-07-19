@@ -3,6 +3,10 @@ import { InfrastructureServiceCompositionService } from './core/InfrastructureSe
 import { KnowledgeServiceCompositionService } from './core/KnowledgeServiceCompositionService';
 import { CoreDomainServiceCompositionService } from './core/CoreDomainServiceCompositionService';
 import { ConversationFlowCompositionService } from './core/ConversationFlowCompositionService';
+import { ReadinessCalculationCompositionService } from './core/ReadinessCalculationCompositionService';
+import { FlowValidationCompositionService } from './core/FlowValidationCompositionService';
+import { FlowBatchProcessingCompositionService } from './core/FlowBatchProcessingCompositionService';
+import { ConversationFlowHealthCompositionService } from './core/ConversationFlowHealthCompositionService';
 
 // Domain types
 import { AIConversationFlowDecision, ConversationFlowState } from '../../domain/services/conversation-management/ConversationFlowService';
@@ -129,19 +133,19 @@ export class DomainServiceCompositionService {
   }
 
   static calculateReadinessScore(flowDecision: AIConversationFlowDecision) {
-    return ConversationFlowCompositionService.calculateReadinessScore(flowDecision);
+    return ReadinessCalculationCompositionService.calculateReadinessScore(flowDecision);
   }
 
   static getReadinessIndicators(flowDecision: AIConversationFlowDecision) {
-    return ConversationFlowCompositionService.getReadinessIndicators(flowDecision);
+    return ReadinessCalculationCompositionService.getReadinessIndicators(flowDecision);
   }
 
   static validateFlowDecision(decision: AIConversationFlowDecision) {
-    return ConversationFlowCompositionService.validateFlowDecision(decision);
+    return FlowValidationCompositionService.validateFlowDecision(decision);
   }
 
   static batchProcessFlowDecisions(decisions: AIConversationFlowDecision[], currentStates: ConversationFlowState[]) {
-    return ConversationFlowCompositionService.batchProcessFlowDecisions(decisions, currentStates);
+    return FlowBatchProcessingCompositionService.batchProcessFlowDecisions(decisions, currentStates);
   }
 
   // ===== CACHE MANAGEMENT =====
@@ -159,7 +163,7 @@ export class DomainServiceCompositionService {
       InfrastructureServiceCompositionService.healthCheck(),
       Promise.resolve({ knowledgeCache: KnowledgeServiceCompositionService.getCacheStatistics() }),
       CoreDomainServiceCompositionService.healthCheck(),
-      ConversationFlowCompositionService.healthCheck()
+      ConversationFlowHealthCompositionService.healthCheck()
     ]);
 
     return {

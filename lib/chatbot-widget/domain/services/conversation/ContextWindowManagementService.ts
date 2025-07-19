@@ -1,9 +1,12 @@
 /**
  * Context Window Management Service
  * 
- * Single responsibility: Manage conversation context window sizing and compression
- * Handles token counting, message prioritization, and compression decisions
- * Follows DDD patterns with proper error handling and separation of concerns
+ * AI INSTRUCTIONS:
+ * - Orchestrate conversation context window management using specialized services
+ * - Single responsibility: Manage conversation context window sizing and compression
+ * - Delegate to specialized services for token analysis and compression
+ * - Follow DDD patterns with proper error handling and separation of concerns
+ * - Keep under 100 lines - focused on orchestration only
  */
 
 import { ChatMessage } from '../../entities/ChatMessage';
@@ -13,17 +16,19 @@ import { ITokenCountingService } from '../interfaces/ITokenCountingService';
 import { ContextRelevanceService } from '../utilities/ContextRelevanceService';
 import { RelevanceContext } from '../utilities/types/RelevanceTypes';
 import { IntentResult } from '../../value-objects/message-processing/IntentResult';
-import { SummaryExtractionService } from '../../utilities/SummaryExtractionService';
+import { TokenAnalysisService } from './TokenAnalysisService';
+import { MessageCompressionService } from './MessageCompressionService';
 
 interface LoggingContext {
   logEntry: (message: string) => void;
 }
 
 export class ContextWindowManagementService {
-  private tokenCountCache = new Map<string, number>();
-  private readonly maxCacheSize = 100;
+  private tokenAnalysisService: TokenAnalysisService;
 
-  constructor(private tokenCountingService: ITokenCountingService) {}
+  constructor(tokenCountingService: ITokenCountingService) {
+    this.tokenAnalysisService = new TokenAnalysisService(tokenCountingService);
+  }
 
   async getMessagesForContextWindow(
     messages: ChatMessage[],
@@ -44,13 +49,13 @@ export class ContextWindowManagementService {
     logEntry(`📈 RELEVANCE: Critical=${prioritizedMessages.criticalMessages.length}, High=${prioritizedMessages.highPriorityMessages.length}`);
 
     // Step 2: Token analysis
-    const tokenAnalysis = await this.analyzeTokenUsage(messages, existingSummary);
+    const tokenAnalysis = await this.tokenAnalysisService.analyzeTokenUsage(messages, existingSummary);
     const availableTokens = contextWindow.getAvailableTokensForMessages();
     
     logEntry(`🔧 TOKEN ANALYSIS: ${tokenAnalysis.messagesTokens} msg + ${tokenAnalysis.summaryTokens} summary = ${tokenAnalysis.totalTokens}/${availableTokens}`);
 
     // Step 3: Apply compression if needed
-    const compressionResult = this.applyCompressionIfNeeded(
+    const compressionResult = MessageCompressionService.applyCompressionIfNeeded(
       messages,
       prioritizedMessages,
       tokenAnalysis,
@@ -62,7 +67,7 @@ export class ContextWindowManagementService {
     }
 
     // Step 4: Final token calculation
-    const finalTokens = await this.calculateFinalTokenUsage(
+    const finalTokens = await this.tokenAnalysisService.calculateFinalTokenUsage(
       compressionResult.finalMessages,
       tokenAnalysis.summaryText
     );
@@ -97,56 +102,6 @@ export class ContextWindowManagementService {
     return ContextRelevanceService.prioritizeMessages(messages, relevanceContext);
   }
 
-  private async analyzeTokenUsage(messages: ChatMessage[], existingSummary?: string) {
-    const messagesTokens = await this.estimateTokenUsage(messages);
-    const summaryText = SummaryExtractionService.extractSummaryText(existingSummary);
-    const summaryTokens = summaryText 
-      ? await this.tokenCountingService.countTextTokens(summaryText)
-      : 0;
-
-    return {
-      messagesTokens,
-      summaryTokens,
-      totalTokens: messagesTokens + summaryTokens,
-      summaryText
-    };
-  }
-
-  private applyCompressionIfNeeded(
-    messages: ChatMessage[],
-    prioritizedMessages: ReturnType<typeof ContextRelevanceService.prioritizeMessages>,
-    tokenAnalysis: { totalTokens: number },
-    availableTokens: number
-  ) {
-    if (tokenAnalysis.totalTokens > availableTokens && messages.length > 5) {
-      const retentionRecommendation = prioritizedMessages.retentionRecommendation;
-      if (retentionRecommendation.shouldCompress) {
-        return {
-          finalMessages: retentionRecommendation.messagesToRetain,
-          wasCompressed: true
-        };
-      }
-    }
-
-    return {
-      finalMessages: messages,
-      wasCompressed: false
-    };
-  }
-
-  private async calculateFinalTokenUsage(messages: ChatMessage[], summaryText: string) {
-    const messagesTokens = await this.estimateTokenUsage(messages);
-    const summaryTokens = summaryText 
-      ? await this.tokenCountingService.countTextTokens(summaryText)
-      : 0;
-
-    return {
-      messagesTokens,
-      summaryTokens,
-      totalTokens: messagesTokens + summaryTokens
-    };
-  }
-
   private buildContextWindowResult(
     messages: ChatMessage[],
     summaryText: string,
@@ -170,35 +125,5 @@ export class ContextWindowManagementService {
       tokenUsage,
       wasCompressed
     };
-  }
-
-  private async estimateTokenUsage(messages: ChatMessage[]): Promise<number> {
-    try {
-      const cacheKey = messages.map(m => `${m.id}:${m.content.length}`).join('|');
-      
-      if (this.tokenCountCache.has(cacheKey)) {
-        return this.tokenCountCache.get(cacheKey)!;
-      }
-      
-      const tokenCount = await this.tokenCountingService.countMessagesTokens(messages);
-      this.updateTokenCache(cacheKey, tokenCount);
-      
-      return tokenCount;
-    } catch {
-      // Fallback to character-based estimation
-      return messages.reduce((total, msg) => total + Math.ceil(msg.content.length / 4), 0);
-    }
-  }
-
-  private updateTokenCache(key: string, value: number): void {
-    this.tokenCountCache.set(key, value);
-    
-    // Prevent memory leaks by limiting cache size
-    if (this.tokenCountCache.size > this.maxCacheSize) {
-      const firstKey = this.tokenCountCache.keys().next().value;
-      if (firstKey) {
-        this.tokenCountCache.delete(firstKey);
-      }
-    }
   }
 }

@@ -8,4 +8,8 @@
  * - Maintain clean separation between knowledge logic and presentation
  */
 
-export { KnowledgeBaseSection } from './KnowledgeBaseSection'; 
+export { KnowledgeBaseSection } from './KnowledgeBaseSection';
+export { CompanyInformationCard } from './CompanyInformationCard';
+export { CompanyInfoField } from './CompanyInfoField';
+export { CompanyFormHeader } from './CompanyFormHeader';
+export { ValidationStatusDisplay } from './ValidationStatusDisplay'; 

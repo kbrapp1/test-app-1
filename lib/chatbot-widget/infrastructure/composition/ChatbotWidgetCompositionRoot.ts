@@ -41,310 +41,228 @@ import { KnowledgeBaseService } from '../../domain/services/ai-configuration/Kno
 import { BusinessGuidanceService } from '../../domain/services/ai-configuration/BusinessGuidanceService';
 import { AdaptiveContextService } from '../../domain/services/ai-configuration/AdaptiveContextService';
 
-// Specialized composition services
-import { RepositoryCompositionService } from './RepositoryCompositionService';
-import { DomainServiceCompositionService } from './DomainServiceCompositionService';
-import { ApplicationServiceCompositionService } from './ApplicationServiceCompositionService';
-import { UseCaseCompositionService } from './UseCaseCompositionService';
-import { AIConfigurationCompositionService } from './AIConfigurationCompositionService';
-import { InfrastructureCompositionService } from './InfrastructureCompositionService';
-import { ErrorTrackingCompositionService } from './ErrorTrackingCompositionService';
-import { AppStartupService } from '../startup/AppStartupService';
+// Specialized coordination services
+import { ChatbotServiceAccessCoordinator } from './core/ChatbotServiceAccessCoordinator';
+import { ChatbotInitializationCoordinator } from './core/ChatbotInitializationCoordinator';
+import { ChatbotTestingCoordinator } from './core/ChatbotTestingCoordinator';
 
 /**
- * AI Instructions: Main Composition Root for Chatbot Widget Domain
- * - Central orchestration point for all chatbot widget dependencies
- * - Delegates to specialized composition services following DDD patterns
- * - Maintains clean separation between infrastructure and domain layers
- * - Provides unified interface for dependency access and testing support
+ * Main Composition Root for Chatbot Widget Domain
+ * - Clean facade that delegates to specialized coordinators following DDD patterns
+ * - Maintains unified interface for dependency access and testing support
+ * - Preserves all existing functionality while improving organization
+ * - Follows single responsibility principle with focused coordinators
  */
 export class ChatbotWidgetCompositionRoot {
-  private static isInitialized = false;
-  private static initializationPromise: Promise<void> | null = null;
-
-  // Repository access
+  // Repository access - delegate to service access coordinator
   
   static getChatbotConfigRepository(): IChatbotConfigRepository {
-    return RepositoryCompositionService.getChatbotConfigRepository();
+    return ChatbotServiceAccessCoordinator.getChatbotConfigRepository();
   }
 
   static getChatSessionRepository(): IChatSessionRepository {
-    return RepositoryCompositionService.getChatSessionRepository();
+    return ChatbotServiceAccessCoordinator.getChatSessionRepository();
   }
 
   static getChatMessageRepository(): IChatMessageRepository {
-    return RepositoryCompositionService.getChatMessageRepository();
+    return ChatbotServiceAccessCoordinator.getChatMessageRepository();
   }
 
   static getLeadRepository(): ILeadRepository {
-    return RepositoryCompositionService.getLeadRepository();
+    return ChatbotServiceAccessCoordinator.getLeadRepository();
   }
 
   static getVectorKnowledgeRepository(): IVectorKnowledgeRepository {
-    return InfrastructureCompositionService.getVectorKnowledgeRepository();
+    return ChatbotServiceAccessCoordinator.getVectorKnowledgeRepository();
   }
 
-  // Infrastructure services
+  // Infrastructure services - delegate to service access coordinator
   
   static getOpenAIProvider(): OpenAIProvider {
-    return InfrastructureCompositionService.getOpenAIProvider();
+    return ChatbotServiceAccessCoordinator.getOpenAIProvider();
   }
 
   static getEmbeddingService(): OpenAIEmbeddingService {
-    return InfrastructureCompositionService.getEmbeddingService();
+    return ChatbotServiceAccessCoordinator.getEmbeddingService();
   }
 
   static getCrawlAndStoreWebsiteUseCase(): CrawlAndStoreWebsiteUseCase {
-    return InfrastructureCompositionService.getCrawlAndStoreWebsiteUseCase();
+    return ChatbotServiceAccessCoordinator.getCrawlAndStoreWebsiteUseCase();
   }
 
   static getVectorKnowledgeApplicationService(): VectorKnowledgeApplicationService {
-    return InfrastructureCompositionService.getVectorKnowledgeApplicationService();
+    return ChatbotServiceAccessCoordinator.getVectorKnowledgeApplicationService();
   }
 
   static getWebsiteKnowledgeApplicationService(): WebsiteKnowledgeApplicationService {
-    return InfrastructureCompositionService.getWebsiteKnowledgeApplicationService();
+    return ChatbotServiceAccessCoordinator.getWebsiteKnowledgeApplicationService();
   }
 
   static getUrlNormalizationService(): UrlNormalizationService {
-    return InfrastructureCompositionService.getUrlNormalizationService();
+    return ChatbotServiceAccessCoordinator.getUrlNormalizationService();
   }
 
   static getContentDeduplicationService(): ContentDeduplicationService {
-    return InfrastructureCompositionService.getContentDeduplicationService();
+    return ChatbotServiceAccessCoordinator.getContentDeduplicationService();
   }
 
   static getDeduplicateWebsiteContentUseCase(): DeduplicateWebsiteContentUseCase {
-    return InfrastructureCompositionService.getDeduplicateWebsiteContentUseCase();
+    return ChatbotServiceAccessCoordinator.getDeduplicateWebsiteContentUseCase();
   }
 
   static getLoggingService(): IChatbotLoggingService {
-    return InfrastructureCompositionService.getLoggingService();
+    return ChatbotServiceAccessCoordinator.getLoggingService();
   }
 
-  // Domain services
+  // Domain services - delegate to service access coordinator
   
   static getSessionContextService() {
-    return DomainServiceCompositionService.getSessionContextService();
+    return ChatbotServiceAccessCoordinator.getSessionContextService();
   }
 
   static getSessionStateService() {
-    return DomainServiceCompositionService.getSessionStateService();
+    return ChatbotServiceAccessCoordinator.getSessionStateService();
   }
 
   static getContextWindowService() {
-    return DomainServiceCompositionService.getContextWindowService();
+    return ChatbotServiceAccessCoordinator.getContextWindowService();
   }
 
   static getChatSessionValidationService() {
-    return DomainServiceCompositionService.getChatSessionValidationService();
+    return ChatbotServiceAccessCoordinator.getChatSessionValidationService();
   }
 
   static getSessionLeadQualificationService() {
-    return DomainServiceCompositionService.getSessionLeadQualificationService();
+    return ChatbotServiceAccessCoordinator.getSessionLeadQualificationService();
   }
 
   static getEntityAccumulationService() {
-    return DomainServiceCompositionService.getEntityAccumulationService();
+    return ChatbotServiceAccessCoordinator.getEntityAccumulationService();
   }
 
   static getDebugInformationService() {
-    return DomainServiceCompositionService.getDebugInformationService();
+    return ChatbotServiceAccessCoordinator.getDebugInformationService();
   }
 
   static getKnowledgeRetrievalService(
     chatbotConfig: { id: string; organizationId: string; lastUpdated?: Date }
   ) {
-    const vectorRepository = this.getVectorKnowledgeRepository();
-    const embeddingService = this.getEmbeddingService();
-    return DomainServiceCompositionService.getKnowledgeRetrievalService(
-      chatbotConfig, 
-      vectorRepository, 
-      embeddingService
-    );
-  }
-
-  static processAIFlowDecision(decision: AIConversationFlowDecision, currentState: ConversationFlowState) {
-    return DomainServiceCompositionService.processAIFlowDecision(decision, currentState);
-  }
-
-  static shouldTriggerLeadCapture(decision: AIConversationFlowDecision) {
-    return DomainServiceCompositionService.shouldTriggerLeadCapture(decision);
+    return ChatbotServiceAccessCoordinator.getKnowledgeRetrievalService(chatbotConfig);
   }
 
   static getTokenCountingService() {
-    return DomainServiceCompositionService.getTokenCountingService();
+    return ChatbotServiceAccessCoordinator.getTokenCountingService();
   }
 
   static async getIntentClassificationService() {
-    return DomainServiceCompositionService.getIntentClassificationService();
+    return ChatbotServiceAccessCoordinator.getIntentClassificationService();
   }
 
   static getLeadExtractionService() {
-    return DomainServiceCompositionService.getLeadExtractionService();
+    return ChatbotServiceAccessCoordinator.getLeadExtractionService();
   }
 
   static getKnowledgeBaseFormService() {
-    return DomainServiceCompositionService.getKnowledgeBaseFormService();
+    return ChatbotServiceAccessCoordinator.getKnowledgeBaseFormService();
   }
 
-  // Application services
+  // Application services - delegate to service access coordinator
   
   static getLeadManagementService(): LeadManagementService {
-    return ApplicationServiceCompositionService.getLeadManagementService();
+    return ChatbotServiceAccessCoordinator.getLeadManagementService();
   }
 
-  // Use cases
+  static getKnowledgeBaseFormApplicationService() {
+    return ChatbotServiceAccessCoordinator.getKnowledgeBaseFormApplicationService();
+  }
+
+  // Use cases - delegate to service access coordinator
   
   static getConfigureChatbotUseCase(): ConfigureChatbotUseCase {
-    return UseCaseCompositionService.getConfigureChatbotUseCase();
-  }
-
-  static async getProcessChatMessageUseCase(): Promise<ProcessChatMessageUseCase> {
-    // Ensure cache warming and critical services are initialized
-    await this.ensureInitialized();
-    return UseCaseCompositionService.getProcessChatMessageUseCase();
-  }
-
-  // Pre-initialize critical services to avoid cold start delays
-  private static async preInitializeServices(): Promise<void> {
-    // Pre-cache the most expensive dynamic imports
-    await Promise.all([
-      // Pre-load tiktoken
-      import('tiktoken').catch(() => {}),
-      // Pre-load ConversationContextOrchestrator  
-      import('../../domain/services/conversation/ConversationContextOrchestrator').catch(() => {}),
-      // Pre-load logging service
-      import('../providers/logging/ChatbotFileLoggingService').catch(() => {})
-    ]);
+    return ChatbotServiceAccessCoordinator.getConfigureChatbotUseCase();
   }
 
   static getCaptureLeadUseCase(): CaptureLeadUseCase {
-    return UseCaseCompositionService.getCaptureLeadUseCase();
+    return ChatbotServiceAccessCoordinator.getCaptureLeadUseCase();
   }
 
-  // Knowledge base services
-  
-  static getKnowledgeBaseFormApplicationService() {
-    return ApplicationServiceCompositionService.getKnowledgeBaseFormApplicationService();
-  }
-
-  // Error tracking
+  // Error tracking - delegate to service access coordinator
   
   static getErrorCategorizationService(): ErrorCategorizationDomainService {
-    return ErrorTrackingCompositionService.getErrorCategorizationService();
+    return ChatbotServiceAccessCoordinator.getErrorCategorizationService();
   }
 
   static getErrorTrackingFacade(): ErrorTrackingFacade {
-    return ErrorTrackingCompositionService.getErrorTrackingFacade();
+    return ChatbotServiceAccessCoordinator.getErrorTrackingFacade();
   }
 
-  // AI configuration
+  // AI configuration - delegate to service access coordinator
   
   static getConversationAnalysisService(): ConversationAnalysisService {
-    return AIConfigurationCompositionService.getConversationAnalysisService();
+    return ChatbotServiceAccessCoordinator.getConversationAnalysisService();
   }
 
   static getPersonaGenerationService(): PersonaGenerationService {
-    return AIConfigurationCompositionService.getPersonaGenerationService();
+    return ChatbotServiceAccessCoordinator.getPersonaGenerationService();
   }
 
   static getKnowledgeBaseService(): KnowledgeBaseService {
-    return AIConfigurationCompositionService.getKnowledgeBaseService();
+    return ChatbotServiceAccessCoordinator.getKnowledgeBaseService();
   }
 
   static getBusinessGuidanceService(): BusinessGuidanceService {
-    return AIConfigurationCompositionService.getBusinessGuidanceService();
+    return ChatbotServiceAccessCoordinator.getBusinessGuidanceService();
   }
 
   static getAdaptiveContextService(): AdaptiveContextService {
-    return AIConfigurationCompositionService.getAdaptiveContextService();
+    return ChatbotServiceAccessCoordinator.getAdaptiveContextService();
   }
 
   static getSimplePromptService(): SimplePromptService {
-    return AIConfigurationCompositionService.getSimplePromptService();
+    return ChatbotServiceAccessCoordinator.getSimplePromptService();
   }
 
-  // Configuration and testing
+  // Initialization and flow processing - delegate to initialization coordinator
   
-  static configureWithSupabaseClient(client: SupabaseClient): void {
-    RepositoryCompositionService.configureWithSupabaseClient(client);
+  static processAIFlowDecision(decision: AIConversationFlowDecision, currentState: ConversationFlowState) {
+    return ChatbotInitializationCoordinator.processAIFlowDecision(decision, currentState);
   }
 
-  static resetForTesting(): void {
-    RepositoryCompositionService.reset();
-    DomainServiceCompositionService.clearCache();
-    ApplicationServiceCompositionService.reset();
-    UseCaseCompositionService.reset();
-    AIConfigurationCompositionService.reset();
-    InfrastructureCompositionService.reset();
-    ErrorTrackingCompositionService.reset();
-    
-    // Reset initialization flag to allow fresh pre-initialization
-    this.isInitialized = false;
+  static shouldTriggerLeadCapture(decision: AIConversationFlowDecision) {
+    return ChatbotInitializationCoordinator.shouldTriggerLeadCapture(decision);
   }
 
-  // Health checks and monitoring
+  static async getProcessChatMessageUseCase(): Promise<ProcessChatMessageUseCase> {
+    return ChatbotInitializationCoordinator.getProcessChatMessageUseCase();
+  }
+
+  // Health checks and monitoring - delegate to initialization coordinator
 
   static async healthCheck() {
-    return DomainServiceCompositionService.healthCheck();
+    return ChatbotInitializationCoordinator.healthCheck();
   }
 
   static getServiceStatistics() {
-    return DomainServiceCompositionService.getServiceStatistics();
+    return ChatbotInitializationCoordinator.getServiceStatistics();
   }
 
   static getCacheStatistics() {
-    return DomainServiceCompositionService.getCacheStatistics();
+    return ChatbotInitializationCoordinator.getCacheStatistics();
   }
 
   static async warmKnowledgeCache(
     chatbotConfigs: Array<{ id: string; organizationId: string; lastUpdated?: Date }>
   ) {
-    const vectorRepository = this.getVectorKnowledgeRepository();
-    const embeddingService = this.getEmbeddingService();
-    return DomainServiceCompositionService.warmKnowledgeCache(
-      chatbotConfigs, 
-      vectorRepository, 
-      embeddingService
-    );
+    return ChatbotInitializationCoordinator.warmKnowledgeCache(chatbotConfigs);
   }
 
-  /**
-   * Ensure application startup and cache warming
-   * AI: Call this before any chatbot operations to ensure cache is ready
-   */
-  private static async ensureInitialized(): Promise<void> {
-    if (this.isInitialized) {
-      return;
-    }
-
-    if (this.initializationPromise) {
-      return this.initializationPromise;
-    }
-
-    this.initializationPromise = this.performInitialization();
-    return this.initializationPromise;
+  // Configuration and testing - delegate to testing coordinator
+  
+  static configureWithSupabaseClient(client: SupabaseClient): void {
+    ChatbotTestingCoordinator.configureWithSupabaseClient(client);
   }
 
-  /**
-   * Perform lazy initialization for serverless environment
-   * AI: Trigger cache warming and wait for completion to ensure cache is ready
-   */
-  private static async performInitialization(): Promise<void> {
-    try {
-      // Pre-initialize critical services first to avoid cold starts
-      await this.preInitializeServices();
-      
-      // Wait for cache warming to complete before proceeding
-      // AI: This ensures the cache is ready before any user requests
-      await AppStartupService.initialize();
-      
-      this.isInitialized = true;
-    } catch (error) {
-      console.error('Composition root initialization failed:', error);
-      // Don't throw - allow app to continue even if cache warming fails
-      this.isInitialized = true;
-    }
+  static resetForTesting(): void {
+    ChatbotTestingCoordinator.resetForTesting();
   }
 } 

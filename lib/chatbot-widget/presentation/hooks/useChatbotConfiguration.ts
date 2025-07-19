@@ -1,36 +1,28 @@
 /**
- * AI Instructions: Consolidated chatbot configuration management hook
- * - Handle both form state and CRUD operations
- * - Encapsulate React Query logic and state management
- * - Provide clean interface for components
- * - Follow DDD patterns with proper validation
- * - Support multiple use cases with flexible options
+ * Chatbot Configuration Management Hook
+ * 
+ * AI INSTRUCTIONS:
+ * - Orchestrates all chatbot configuration concerns
+ * - Uses extracted services for separation of concerns
+ * - Preserves organization security boundaries
+ * - Provides clean interface for components
+ * - Follows DDD patterns with proper orchestration
  */
 
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { useOrganization } from '../../../organization/application/providers/OrganizationProvider';
-import {
-    CreateChatbotConfigDto,
-    UpdateChatbotConfigDto
-} from '../../application/dto/ChatbotConfigDto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import {
-    createChatbotConfig,
-    deleteChatbotConfig,
-    getActiveChatbotConfigs,
-    getChatbotConfigById,
-    getChatbotConfigByOrganization,
-    updateChatbotConfig
-} from '../actions/configActions';
+import { ConfigurationDataTransformService } from '../services/ConfigurationDataTransformService';
+import { ConfigurationValidationService, ConfigValidationResult } from '../services/ConfigurationValidationService';
 import {
     BotConfigurationActions,
     BotConfigurationFormData,
     BotConfigurationViewState,
-    DEFAULT_FORM_DATA,
 } from '../types/BotConfigurationTypes';
+import { useChatbotConfigurationMutations } from './useChatbotConfigurationMutations';
+import { useChatbotConfigurationQuery, useChatbotConfigs, useChatbotConfigById } from './useChatbotConfigurationQuery';
+import { createViewState, useConfigurationFormState } from './useConfigurationFormState';
 
 export interface UseChatbotConfigurationOptions {
   configId?: string;
@@ -38,229 +30,94 @@ export interface UseChatbotConfigurationOptions {
   autoLoad?: boolean;
 }
 
-export interface ConfigValidationResult {
-  isValid: boolean;
-  errors: Record<string, string>;
-}
-
 export function useChatbotConfiguration(options: UseChatbotConfigurationOptions = {}) {
   const { activeOrganizationId } = useOrganization();
-  const queryClient = useQueryClient();
-  const { configId: _configId, enableFormState = true, autoLoad = true } = options;
+  const { enableFormState = true, autoLoad = true } = options;
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<BotConfigurationFormData>(DEFAULT_FORM_DATA);
+  // Extract configuration data
+  const { config: existingConfig, isLoading, error } = useChatbotConfigurationQuery(
+    activeOrganizationId,
+    { autoLoad }
+  );
 
-  const { data: configResult, isLoading, error } = useQuery({
-    queryKey: ['chatbot-config', activeOrganizationId],
-    queryFn: () => activeOrganizationId ? getChatbotConfigByOrganization(activeOrganizationId) : null,
-    enabled: !!activeOrganizationId && autoLoad,
-    staleTime: 10000, // AI: Reduced from 5 minutes to 10 seconds for more responsive updates during crawling
+  // Extract form state management
+  const {
+    formData,
+    isEditing,
+    updateFormData,
+    startEditing,
+    cancelEditing,
+  } = useConfigurationFormState({
+    enableFormState,
+    existingConfig,
   });
 
-  const existingConfig = configResult?.success ? configResult.data : null;
+  // Extract mutation operations
+  const {
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    createConfig,
+    updateConfig,
+    deleteConfig,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isSaving,
+  } = useChatbotConfigurationMutations(activeOrganizationId);
 
-  useEffect(() => {
-    if (existingConfig && enableFormState) {
-      setFormData({
-        name: existingConfig.name || DEFAULT_FORM_DATA.name,
-        description: existingConfig.description || DEFAULT_FORM_DATA.description,
-        personality: existingConfig.personalitySettings?.tone || DEFAULT_FORM_DATA.personality,
-        operatingHours: { 
-          enabled: false, 
-          timezone: existingConfig.operatingHours?.timezone || DEFAULT_FORM_DATA.operatingHours.timezone,
-        },
-        isActive: existingConfig.isActive ?? DEFAULT_FORM_DATA.isActive,
-      });
-    }
-  }, [existingConfig, enableFormState]);
+  const handleSaveConfiguration = () => {
+    if (!activeOrganizationId) return;
 
-  const createMutation = useMutation({
-    mutationFn: (data: CreateChatbotConfigDto) => createChatbotConfig(data),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['chatbot-config', activeOrganizationId] });
-        queryClient.invalidateQueries({ queryKey: ['chatbot-configs', activeOrganizationId] });
-        setIsEditing(false);
-      }
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateChatbotConfigDto }) =>
-      updateChatbotConfig(id, data, activeOrganizationId || ''),
-    onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['chatbot-config', activeOrganizationId] });
-        queryClient.invalidateQueries({ queryKey: ['chatbot-configs', activeOrganizationId] });
-        if (result.data) {
-          queryClient.setQueryData(['chatbot-config', result.data.id], result.data);
+    const validation = ConfigurationValidationService.validateFormData(formData);
+    
+    if (!validation.isValid) {
+      console.error('Validation errors:', validation.errors);
+      
+      const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+      errorTrackingService.trackChatbotConfigurationError(
+        'form_validation_failed',
+        {
+          organizationId: activeOrganizationId,
+          metadata: {
+            validationErrors: validation.errors,
+            formData: {
+              name: formData.name,
+              description: formData.description,
+              personality: formData.personality
+            }
+          }
         }
-        setIsEditing(false);
-      }
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: ({ configId }: { configId: string }) => 
-      deleteChatbotConfig(configId, activeOrganizationId || ''),
-    onSuccess: (result, variables) => {
-      if (result.success) {
-        queryClient.removeQueries({ queryKey: ['chatbot-config', variables.configId] });
-        queryClient.invalidateQueries({ queryKey: ['chatbot-configs', activeOrganizationId] });
-      }
-    },
-  });
-
-  const transformToDto = (formData: BotConfigurationFormData) => ({
-    personalitySettings: {
-      tone: formData.personality,
-      communicationStyle: 'professional' as const,
-      responseLength: 'medium' as const,
-      escalationTriggers: [],
-      responseBehavior: {
-        useEmojis: false,
-        askFollowUpQuestions: true,
-        proactiveOffering: true,
-        personalizeResponses: true,
-        acknowledgePreviousInteractions: true,
-      },
-      conversationFlow: {
-        greetingMessage: 'Hello! How can I help you today?',
-        fallbackMessage: 'I\'m not sure about that. Could you rephrase your question?',
-        escalationMessage: 'Let me connect you with a team member.',
-        endConversationMessage: 'Thank you for chatting with us!',
-        leadCapturePrompt: 'Can I get your contact information to follow up?',
-        maxConversationTurns: 20,
-        inactivityTimeout: 300,
-      },
-      customInstructions: '',
-    },
-    operatingHours: {
-      timezone: formData.operatingHours.timezone,
-      businessHours: [],
-      holidaySchedule: [],
-      outsideHoursMessage: 'We\'re currently offline. Please leave a message!',
-    },
-  });
-
-  const validateConfig = (config: Partial<CreateChatbotConfigDto | UpdateChatbotConfigDto>): ConfigValidationResult => {
-    const errors: Record<string, string> = {};
-
-    if ('name' in config) {
-      if (!config.name || config.name.trim().length === 0) {
-        errors.name = 'Bot name is required';
-      } else if (config.name.length > 100) {
-        errors.name = 'Bot name must be less than 100 characters';
-      }
+      ).catch(err => console.error('Failed to track validation error:', err));
+      
+      return;
     }
 
-    if (config.personalitySettings?.conversationFlow?.greetingMessage) {
-      const greeting = config.personalitySettings.conversationFlow.greetingMessage;
-      if (greeting.length > 500) {
-        errors.greetingMessage = 'Greeting message must be less than 500 characters';
-      }
+    if (existingConfig) {
+      const updateData = ConfigurationDataTransformService.createUpdateDto(formData);
+      updateMutation.mutate({
+        id: existingConfig.id,
+        data: updateData,
+      });
+    } else {
+      const createData = ConfigurationDataTransformService.createCreateDto(formData, activeOrganizationId);
+      createMutation.mutate(createData);
     }
-
-    if (config.knowledgeBase?.companyInfo) {
-      const companyInfo = config.knowledgeBase.companyInfo;
-      if (companyInfo.length > 5000) {
-        errors.companyInfo = 'Company info must be less than 5000 characters';
-      }
-    }
-
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors,
-    };
   };
 
   const actions: BotConfigurationActions = {
-    startEditing: () => setIsEditing(true),
-    cancelEditing: () => {
-      setIsEditing(false);
-      if (existingConfig) {
-        setFormData({
-          name: existingConfig.name || DEFAULT_FORM_DATA.name,
-          description: existingConfig.description || DEFAULT_FORM_DATA.description,
-          personality: existingConfig.personalitySettings?.tone || DEFAULT_FORM_DATA.personality,
-          operatingHours: { 
-            enabled: false, 
-            timezone: existingConfig.operatingHours?.timezone || DEFAULT_FORM_DATA.operatingHours.timezone,
-          },
-          isActive: existingConfig.isActive ?? DEFAULT_FORM_DATA.isActive,
-        });
-      }
-    },
-    saveConfiguration: () => {
-      if (!activeOrganizationId) return;
-
-      const baseDto = transformToDto(formData);
-      const validation = validateConfig({ name: formData.name, ...baseDto });
-      
-      if (!validation.isValid) {
-        console.error('Validation errors:', validation.errors);
-        
-        const errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
-        errorTrackingService.trackChatbotConfigurationError(
-          'form_validation_failed',
-          {
-            organizationId: activeOrganizationId,
-            metadata: {
-              validationErrors: validation.errors,
-              formData: {
-                name: formData.name,
-                description: formData.description,
-                personality: formData.personality
-              }
-            }
-          }
-        ).catch(err => console.error('Failed to track validation error:', err));
-        
-        return;
-      }
-
-      if (existingConfig) {
-        updateMutation.mutate({
-          id: existingConfig.id,
-          data: {
-            name: formData.name,
-            description: formData.description,
-            isActive: formData.isActive,
-            ...baseDto,
-          },
-        });
-      } else {
-        createMutation.mutate({
-          organizationId: activeOrganizationId,
-          name: formData.name,
-          description: formData.description,
-          knowledgeBase: {
-            companyInfo: '',
-            productCatalog: '',
-            faqs: [],
-            supportDocs: '',
-            complianceGuidelines: '',
-            websiteSources: [],
-          },
-          leadQualificationQuestions: [],
-          ...baseDto,
-        });
-      }
-    },
-    updateFormData: (updates: Partial<BotConfigurationFormData>) => {
-      setFormData(prev => ({ ...prev, ...updates }));
-    },
+    startEditing,
+    cancelEditing,
+    saveConfiguration: handleSaveConfiguration,
+    updateFormData,
   };
 
-  const viewState: BotConfigurationViewState = {
+  const viewState: BotConfigurationViewState = createViewState(
     isEditing,
     isLoading,
-    hasExistingConfig: !!existingConfig,
-    error: error ? 'Failed to load chatbot configuration. Please try again.' : null,
-  };
-
-  const isSaving = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+    !!existingConfig,
+    error
+  );
 
   return {
     config: existingConfig,
@@ -274,39 +131,18 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
       isSaving,
     }),
     
-    createConfig: createMutation.mutateAsync,
-    updateConfig: updateMutation.mutateAsync,
-    deleteConfig: deleteMutation.mutateAsync,
+    createConfig,
+    updateConfig,
+    deleteConfig,
     
-    validateConfig,
-    transformToDto,
+    validateConfig: ConfigurationValidationService.validateConfig,
+    transformToDto: ConfigurationDataTransformService.transformToDto,
     
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    isCreating,
+    isUpdating,
+    isDeleting,
   };
 }
 
-export function useChatbotConfigs(organizationId?: string) {
-  return useQuery({
-    queryKey: ['chatbot-configs', organizationId],
-    queryFn: async () => {
-      const result = await getActiveChatbotConfigs(organizationId!);
-      return result.success ? result.data || [] : [];
-    },
-    enabled: !!organizationId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-export function useChatbotConfigById(configId?: string, organizationId?: string) {
-  return useQuery({
-    queryKey: ['chatbot-config', configId],
-    queryFn: async () => {
-      const result = await getChatbotConfigById(configId!, organizationId);
-      return result.success ? result.data : null;
-    },
-    enabled: !!configId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-} 
+export { useChatbotConfigs, useChatbotConfigById };
+export type { ConfigValidationResult }; 

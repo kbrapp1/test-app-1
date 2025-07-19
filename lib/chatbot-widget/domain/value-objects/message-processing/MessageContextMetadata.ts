@@ -1,9 +1,17 @@
 /**
  * Message Context Metadata Value Object
  * 
- * Handles conversation context, sentiment analysis, urgency tracking,
- * and lead qualification metadata for chat messages.
+ * AI INSTRUCTIONS:
+ * - Core immutable value object for conversation context metadata
+ * - Orchestrates domain services for validation, updates, and queries
+ * - Preserves value object immutability and domain layer compliance
+ * - Handles conversation context, sentiment analysis, urgency tracking, and lead qualification
  */
+
+import { MessageContextMetadataFactory } from '../../services/message-processing/MessageContextMetadataFactory';
+import { MessageContextValidationService } from '../../services/message-processing/MessageContextValidationService';
+import { MessageContextUpdateService } from '../../services/message-processing/MessageContextUpdateService';
+import { MessageContextQueryService } from '../../services/message-processing/MessageContextQueryService';
 
 export interface MessageContextMetadataProps {
   // Lead qualification metadata
@@ -33,24 +41,22 @@ export interface MessageContextMetadataProps {
 
 export class MessageContextMetadata {
   private constructor(private readonly props: MessageContextMetadataProps) {
-    this.validateProps(props);
+    MessageContextValidationService.validateProps(props);
   }
 
   static create(props: MessageContextMetadataProps): MessageContextMetadata {
-    return new MessageContextMetadata(props);
+    const validatedProps = MessageContextMetadataFactory.create(props);
+    return new MessageContextMetadata(validatedProps);
   }
 
   static createEmpty(): MessageContextMetadata {
-    return new MessageContextMetadata({
-      topicsDiscussed: [],
-    });
+    const props = MessageContextMetadataFactory.createEmpty();
+    return new MessageContextMetadata(props);
   }
 
   static createForUser(inputMethod: 'text' | 'voice' | 'button' = 'text'): MessageContextMetadata {
-    return new MessageContextMetadata({
-      topicsDiscussed: [],
-      inputMethod,
-    });
+    const props = MessageContextMetadataFactory.createForUser(inputMethod);
+    return new MessageContextMetadata(props);
   }
 
   static createForLeadCapture(
@@ -58,58 +64,20 @@ export class MessageContextMetadata {
     questionId?: string,
     expectedAnswerType?: 'text' | 'email' | 'phone' | 'select' | 'multiselect'
   ): MessageContextMetadata {
-    return new MessageContextMetadata({
-      topicsDiscussed: [],
+    const props = MessageContextMetadataFactory.createForLeadCapture(
       qualificationStep,
       questionId,
-      expectedAnswerType,
-    });
+      expectedAnswerType
+    );
+    return new MessageContextMetadata(props);
   }
 
   static createForError(errorType: string, errorCode?: string, errorMessage?: string): MessageContextMetadata {
-    return new MessageContextMetadata({
-      topicsDiscussed: [],
-      errorType,
-      errorCode,
-      errorMessage,
-    });
+    const props = MessageContextMetadataFactory.createForError(errorType, errorCode, errorMessage);
+    return new MessageContextMetadata(props);
   }
 
-  private validateProps(props: MessageContextMetadataProps): void {
-    if (!Array.isArray(props.topicsDiscussed)) {
-      throw new Error('Topics discussed must be an array');
-    }
-
-    if (props.qualificationStep !== undefined && (typeof props.qualificationStep !== 'number' || props.qualificationStep < 0)) {
-      throw new Error('Qualification step must be a non-negative number');
-    }
-
-    if (props.sentiment && !['positive', 'neutral', 'negative'].includes(props.sentiment)) {
-      throw new Error('Sentiment must be positive, neutral, or negative');
-    }
-
-    if (props.urgency && !['low', 'medium', 'high'].includes(props.urgency)) {
-      throw new Error('Urgency must be low, medium, or high');
-    }
-
-    if (props.engagement && !['low', 'medium', 'high'].includes(props.engagement)) {
-      throw new Error('Engagement must be low, medium, or high');
-    }
-
-    if (props.inputMethod && !['text', 'voice', 'button'].includes(props.inputMethod)) {
-      throw new Error('Input method must be text, voice, or button');
-    }
-
-    if (props.expectedAnswerType && !['text', 'email', 'phone', 'select', 'multiselect'].includes(props.expectedAnswerType)) {
-      throw new Error('Expected answer type must be text, email, phone, select, or multiselect');
-    }
-
-    if (props.version !== undefined && (typeof props.version !== 'number' || props.version < 1)) {
-      throw new Error('Version must be a positive number');
-    }
-  }
-
-  // Getters
+  // Getters for immutable property access
   get qualificationStep(): number | undefined { return this.props.qualificationStep; }
   get questionId(): string | undefined { return this.props.questionId; }
   get expectedAnswerType(): 'text' | 'email' | 'phone' | 'select' | 'multiselect' | undefined { return this.props.expectedAnswerType; }
@@ -125,42 +93,25 @@ export class MessageContextMetadata {
   get updatedAt(): Date | undefined { return this.props.updatedAt; }
   get version(): number | undefined { return this.props.version; }
 
-  // Business methods
+  // Immutable update business methods (delegated to update service)
   addTopicDiscussed(topic: string): MessageContextMetadata {
-    const trimmedTopic = topic.trim();
-    if (this.props.topicsDiscussed.includes(trimmedTopic)) {
-      return this;
-    }
-
-    return new MessageContextMetadata({
-      ...this.props,
-      topicsDiscussed: [...this.props.topicsDiscussed, trimmedTopic],
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.addTopicDiscussed(this.props, topic);
+    return updatedProps === this.props ? this : new MessageContextMetadata(updatedProps);
   }
 
   updateSentiment(sentiment: 'positive' | 'neutral' | 'negative'): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      sentiment,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.updateSentiment(this.props, sentiment);
+    return new MessageContextMetadata(updatedProps);
   }
 
   updateUrgency(urgency: 'low' | 'medium' | 'high'): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      urgency,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.updateUrgency(this.props, urgency);
+    return new MessageContextMetadata(updatedProps);
   }
 
   updateEngagement(engagement: 'low' | 'medium' | 'high'): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      engagement,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.updateEngagement(this.props, engagement);
+    return new MessageContextMetadata(updatedProps);
   }
 
   setQualificationData(
@@ -168,160 +119,105 @@ export class MessageContextMetadata {
     questionId?: string,
     expectedAnswerType?: 'text' | 'email' | 'phone' | 'select' | 'multiselect'
   ): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
+    const updatedProps = MessageContextUpdateService.setQualificationData(
+      this.props,
       qualificationStep,
       questionId,
-      expectedAnswerType,
-      updatedAt: new Date(),
-    });
+      expectedAnswerType
+    );
+    return new MessageContextMetadata(updatedProps);
   }
 
   setErrorData(errorType: string, errorCode?: string, errorMessage?: string): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      errorType,
-      errorCode,
-      errorMessage,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.setErrorData(this.props, errorType, errorCode, errorMessage);
+    return new MessageContextMetadata(updatedProps);
   }
 
   clearError(): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      errorType: undefined,
-      errorCode: undefined,
-      errorMessage: undefined,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.clearError(this.props);
+    return new MessageContextMetadata(updatedProps);
   }
 
   incrementVersion(): MessageContextMetadata {
-    return new MessageContextMetadata({
-      ...this.props,
-      version: (this.props.version || 0) + 1,
-      updatedAt: new Date(),
-    });
+    const updatedProps = MessageContextUpdateService.incrementVersion(this.props);
+    return new MessageContextMetadata(updatedProps);
   }
 
-  // Query methods
+  // Query methods (delegated to query service)
   hasTopics(): boolean {
-    return this.props.topicsDiscussed.length > 0;
+    return MessageContextQueryService.hasTopics(this.props);
   }
 
   hasTopic(topic: string): boolean {
-    return this.props.topicsDiscussed.includes(topic.trim());
+    return MessageContextQueryService.hasTopic(this.props, topic);
   }
 
   hasError(): boolean {
-    return !!this.props.errorType;
+    return MessageContextQueryService.hasError(this.props);
   }
 
   hasErrorDetails(): boolean {
-    return !!(this.props.errorType || this.props.errorCode || this.props.errorMessage);
+    return MessageContextQueryService.hasErrorDetails(this.props);
   }
 
   isLeadQualification(): boolean {
-    return this.props.qualificationStep !== undefined;
+    return MessageContextQueryService.isLeadQualification(this.props);
   }
 
   hasPositiveSentiment(): boolean {
-    return this.props.sentiment === 'positive';
+    return MessageContextQueryService.hasPositiveSentiment(this.props);
   }
 
   hasNegativeSentiment(): boolean {
-    return this.props.sentiment === 'negative';
+    return MessageContextQueryService.hasNegativeSentiment(this.props);
   }
 
   isHighUrgency(): boolean {
-    return this.props.urgency === 'high';
+    return MessageContextQueryService.isHighUrgency(this.props);
   }
 
   isLowUrgency(): boolean {
-    return this.props.urgency === 'low';
+    return MessageContextQueryService.isLowUrgency(this.props);
   }
 
   isHighEngagement(): boolean {
-    return this.props.engagement === 'high';
+    return MessageContextQueryService.isHighEngagement(this.props);
   }
 
   isLowEngagement(): boolean {
-    return this.props.engagement === 'low';
+    return MessageContextQueryService.isLowEngagement(this.props);
   }
 
   isVoiceInput(): boolean {
-    return this.props.inputMethod === 'voice';
+    return MessageContextQueryService.isVoiceInput(this.props);
   }
 
   isButtonInput(): boolean {
-    return this.props.inputMethod === 'button';
+    return MessageContextQueryService.isButtonInput(this.props);
   }
 
   requiresEmailAnswer(): boolean {
-    return this.props.expectedAnswerType === 'email';
+    return MessageContextQueryService.requiresEmailAnswer(this.props);
   }
 
   requiresPhoneAnswer(): boolean {
-    return this.props.expectedAnswerType === 'phone';
+    return MessageContextQueryService.requiresPhoneAnswer(this.props);
   }
 
   getTopicCount(): number {
-    return this.props.topicsDiscussed.length;
+    return MessageContextQueryService.getTopicCount(this.props);
   }
 
   getErrorSummary(): string | null {
-    if (!this.hasError()) return null;
-    
-    const parts = [this.props.errorType];
-    if (this.props.errorCode) parts.push(`(${this.props.errorCode})`);
-    if (this.props.errorMessage) parts.push(`: ${this.props.errorMessage}`);
-    
-    return parts.join('');
+    return MessageContextQueryService.getErrorSummary(this.props);
   }
 
   getContextSummary(): string {
-    const parts: string[] = [];
-    
-    if (this.hasTopics()) {
-      parts.push(`${this.getTopicCount()} topics`);
-    }
-    
-    if (this.props.sentiment) {
-      parts.push(`${this.props.sentiment} sentiment`);
-    }
-    
-    if (this.props.urgency) {
-      parts.push(`${this.props.urgency} urgency`);
-    }
-    
-    if (this.props.engagement) {
-      parts.push(`${this.props.engagement} engagement`);
-    }
-    
-    if (this.isLeadQualification()) {
-      parts.push(`qualification step ${this.props.qualificationStep}`);
-    }
-    
-    if (this.hasError()) {
-      parts.push('has error');
-    }
-    
-    return parts.length > 0 ? parts.join(', ') : 'no context data';
+    return MessageContextQueryService.getContextSummary(this.props);
   }
 
   equals(other: MessageContextMetadata): boolean {
-    return (
-      this.props.qualificationStep === other.props.qualificationStep &&
-      this.props.questionId === other.props.questionId &&
-      this.props.expectedAnswerType === other.props.expectedAnswerType &&
-      this.props.sentiment === other.props.sentiment &&
-      this.props.urgency === other.props.urgency &&
-      this.props.engagement === other.props.engagement &&
-      this.props.inputMethod === other.props.inputMethod &&
-      this.props.errorType === other.props.errorType &&
-      this.props.topicsDiscussed.length === other.props.topicsDiscussed.length
-    );
+    return MessageContextQueryService.equals(this.props, other.props);
   }
 
   toPlainObject(): MessageContextMetadataProps {
