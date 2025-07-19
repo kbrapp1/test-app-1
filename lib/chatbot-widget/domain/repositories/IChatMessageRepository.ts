@@ -100,4 +100,76 @@ export interface IChatMessageRepository {
     dateTo: Date,
     groupBy: 'hour' | 'day' | 'week'
   ): Promise<Array<{ period: string; avgResponseTime: number; messageCount: number }>>;
+
+  /** Create a new message */
+  create(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage>;
+
+  /** Get messages for organization within date range */
+  getMessagesForOrganization(
+    organizationId: string,
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]>;
+
+  /** Get messages by type within date range */
+  getMessagesByTypeWithDateRange(
+    organizationId: string,
+    messageType: 'user' | 'bot' | 'system',
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]>;
+
+  /** Find messages by detected intent */
+  findByIntentDetected(
+    organizationId: string,
+    intent: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
+
+  /** Find messages by sentiment */
+  findBySentiment(
+    organizationId: string,
+    sentiment: 'positive' | 'neutral' | 'negative',
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
+
+  /** Find messages by AI model used */
+  findMessagesByModel(
+    organizationId: string,
+    model: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
+
+  /** Find high-cost messages */
+  findHighCostMessages(
+    organizationId: string,
+    minCostCents: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
+
+  /** Find slow response messages */
+  findSlowResponseMessages(
+    organizationId: string,
+    minResponseTimeMs: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
+
+  /** Find messages by token usage */
+  findMessagesByTokenUsage(
+    organizationId: string,
+    minTokens: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]>;
 } 

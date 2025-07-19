@@ -846,6 +846,143 @@ export class MockChatMessageRepository implements IChatMessageRepository {
     ];
   }
 
+  async create(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    this.messages.set(message.id, message);
+    return message;
+  }
+
+  async getMessagesForOrganization(
+    organizationId: string,
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    // Mock implementation - just filter by date range
+    return Array.from(this.messages.values())
+      .filter(msg => msg.timestamp >= dateFrom && msg.timestamp <= dateTo);
+  }
+
+  async getMessagesByTypeWithDateRange(
+    organizationId: string,
+    messageType: 'user' | 'bot' | 'system',
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    return Array.from(this.messages.values())
+      .filter(msg => msg.messageType === messageType)
+      .filter(msg => msg.timestamp >= dateFrom && msg.timestamp <= dateTo);
+  }
+
+  async findByIntentDetected(
+    organizationId: string,
+    intent: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => msg.aiMetadata.intentDetected === intent);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
+  async findBySentiment(
+    organizationId: string,
+    sentiment: 'positive' | 'neutral' | 'negative',
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => msg.contextMetadata.sentiment === sentiment);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
+  async findMessagesByModel(
+    organizationId: string,
+    model: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => msg.aiMetadata.aiModel === model);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
+  async findHighCostMessages(
+    organizationId: string,
+    minCostCents: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => msg.getTokenCost() >= minCostCents);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
+  async findSlowResponseMessages(
+    organizationId: string,
+    minResponseTimeMs: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => (msg.processingTime || 0) >= minResponseTimeMs);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
+  async findMessagesByTokenUsage(
+    organizationId: string,
+    minTokens: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    if (this.shouldFail) throw new Error('Mock repository failure');
+    let results = Array.from(this.messages.values())
+      .filter(msg => ((msg.aiMetadata.promptTokens || 0) + (msg.aiMetadata.completionTokens || 0)) >= minTokens);
+    
+    if (dateFrom) results = results.filter(msg => msg.timestamp >= dateFrom);
+    if (dateTo) results = results.filter(msg => msg.timestamp <= dateTo);
+    if (limit) results = results.slice(0, limit);
+    
+    return results;
+  }
+
   // Helper methods
   addMessage(message: ChatMessage): void {
     this.messages.set(message.id, message);

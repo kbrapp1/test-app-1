@@ -1,0 +1,1 @@
+export { ChatMessageRepositoryFactory } from './ChatMessageRepositoryFactory';
