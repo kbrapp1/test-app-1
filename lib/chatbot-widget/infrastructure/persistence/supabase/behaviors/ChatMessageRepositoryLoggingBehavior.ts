@@ -24,7 +24,7 @@ export class ChatMessageRepositoryLoggingBehavior implements IChatMessageReposit
       const result = await this.innerRepository.save(message, sharedLogFile);
       const duration = Date.now() - startTime;
       
-      sessionLogger.logStep('Message saved successfully');
+      sessionLogger.logStep('🔄 Message saved successfully');
       sessionLogger.logMetrics('saveMessage', { duration });
       return result;
     } catch (error) {

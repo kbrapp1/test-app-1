@@ -2,6 +2,7 @@ import { createClient } from '../../../supabase/server';
 import { ErrorCategorizationDomainService } from '../../domain/services/ErrorCategorizationDomainService';
 import { ErrorPersistenceService } from '../persistence/supabase/ErrorPersistenceService';
 import { ErrorAnalyticsService } from '../../application/services/ErrorAnalyticsService';
+import { ErrorAnalyticsQueryService } from '../../application/services/ErrorAnalyticsQueryService';
 import { ErrorTrackingFacade } from '../../application/services/ErrorTrackingFacade';
 
 /**
@@ -20,6 +21,7 @@ export class ErrorTrackingCompositionService {
   private static errorCategorizationService: ErrorCategorizationDomainService | null = null;
   private static errorPersistenceService: ErrorPersistenceService | null = null;
   private static errorAnalyticsService: ErrorAnalyticsService | null = null;
+  private static errorAnalyticsQueryService: ErrorAnalyticsQueryService | null = null;
   private static errorTrackingFacade: ErrorTrackingFacade | null = null;
 
   /** Get error categorization service singleton
@@ -51,6 +53,16 @@ export class ErrorTrackingCompositionService {
     return this.errorAnalyticsService;
   }
 
+  /** Get error analytics query service singleton
+ */
+  static getErrorAnalyticsQueryService(): ErrorAnalyticsQueryService {
+    if (!this.errorAnalyticsQueryService) {
+      const analyticsService = this.getErrorAnalyticsService();
+      this.errorAnalyticsQueryService = new ErrorAnalyticsQueryService(analyticsService);
+    }
+    return this.errorAnalyticsQueryService;
+  }
+
   /** Get error tracking facade with all dependencies wired
  */
   static getErrorTrackingFacade(): ErrorTrackingFacade {
@@ -66,12 +78,12 @@ export class ErrorTrackingCompositionService {
   private static createErrorTrackingFacade(): ErrorTrackingFacade {
     const categorizationService = this.getErrorCategorizationService();
     const persistenceService = this.getErrorPersistenceService();
-    const analyticsService = this.getErrorAnalyticsService();
+    const analyticsQueryService = this.getErrorAnalyticsQueryService();
     
     return new ErrorTrackingFacade(
       categorizationService,
       persistenceService,
-      analyticsService
+      analyticsQueryService
     );
   }
 
@@ -81,6 +93,7 @@ export class ErrorTrackingCompositionService {
     this.errorCategorizationService = null;
     this.errorPersistenceService = null;
     this.errorAnalyticsService = null;
+    this.errorAnalyticsQueryService = null;
     this.errorTrackingFacade = null;
   }
 } 

@@ -1,14 +1,18 @@
 /**
- * Message Processing Services Index
+ * Message Processing Services Index - DDD Refactored
  * 
  * AI INSTRUCTIONS:
- * - Clean export interface for message processing services
- * - Group related exports logically
- * - Follow @golden-rule patterns exactly
+ * - REFACTORED: Updated to include specialized workflow components
+ * - Centralized export point for all message processing workflow components
+ * - Maintains clean import boundaries and dependency management
+ * - Supports DDD-aware modular architecture for workflow orchestration
  */
 
 export { MessageProcessingWorkflowService } from './MessageProcessingWorkflowService';
-export type { WorkflowContext, WorkflowFinalResult } from './MessageProcessingWorkflowService';
+export { WorkflowContextBuilder } from './WorkflowContextBuilder';
+export { WorkflowResultFinalizer } from './WorkflowResultFinalizer';
+export { JourneyStageMapper } from './JourneyStageMapper';
+export * from './WorkflowTypes';
 
 export { ChatMessageProcessingService } from './ChatMessageProcessingService';
-export type { MessageProcessingContext, ResponseResult } from './ChatMessageProcessingService'; 
+export type { MessageProcessingContext } from './ChatMessageProcessingService'; 

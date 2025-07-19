@@ -57,13 +57,8 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
   }
 
   async save(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
-    const existingMessage = await this.findById(message.id);
-    
-    if (existingMessage) {
-      return this.update(message, sharedLogFile);
-    } else {
-      return this.create(message, sharedLogFile);
-    }
+    // Optimize: Use database-level upsert instead of separate existence check
+    return this.crudService.upsert(message);
   }
 
   async update(message: ChatMessage, _sharedLogFile: string): Promise<ChatMessage> {

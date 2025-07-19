@@ -37,18 +37,18 @@ export class SitemapDiscoveryService {
     const { baseUrl, prioritizeCompressedSitemaps = false } = config;
     const candidates: SitemapUrlCandidate[] = [];
     
-    // Standard sitemap locations (highest priority)
-    candidates.push({
-      url: `${baseUrl}/sitemap.xml`,
-      priority: prioritizeCompressedSitemaps ? 2 : 1,
-      type: 'standard'
-    });
-    
-    // Sitemap index (often contains multiple sitemaps)
+    // Sitemap index (often contains multiple sitemaps) - highest priority
     candidates.push({
       url: `${baseUrl}/sitemap_index.xml`,
       priority: 1,
       type: 'index'
+    });
+    
+    // Standard sitemap locations
+    candidates.push({
+      url: `${baseUrl}/sitemap.xml`,
+      priority: 2,
+      type: 'standard'
     });
     
     // Compressed sitemap (faster download, but less common)
@@ -65,8 +65,18 @@ export class SitemapDiscoveryService {
       type: 'nested'
     });
     
-    // Sort by priority (lower number = higher priority)
-    return candidates.sort((a, b) => a.priority - b.priority);
+    // Sort by priority (lower number = higher priority), then by type for stability
+    return candidates.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      // When priorities are equal, maintain consistent order
+      // If compressed sitemaps are prioritized, compressed should come before index at same priority
+      const typeOrder = prioritizeCompressedSitemaps ? 
+        { compressed: 0, index: 1, standard: 2, nested: 3 } :
+        { index: 0, compressed: 1, standard: 2, nested: 3 };
+      return typeOrder[a.type] - typeOrder[b.type];
+    });
   }
   
   /**
@@ -81,6 +91,28 @@ export class SitemapDiscoveryService {
     
     // Domain rule: Must contain at least one URL or sitemap reference
     if (!xml.includes('<loc>') || !xml.includes('</loc>')) {
+      return false;
+    }
+    
+    // Domain rule: Check for basic XML wellformedness
+    // Count opening and closing tags to detect malformed XML
+    const locOpenCount = (xml.match(/<loc>/g) || []).length;
+    const locCloseCount = (xml.match(/<\/loc>/g) || []).length;
+    if (locOpenCount !== locCloseCount) {
+      return false;
+    }
+    
+    // Check for basic XML structure integrity
+    const urlsetOpen = (xml.match(/<urlset/g) || []).length;
+    const urlsetClose = (xml.match(/<\/urlset>/g) || []).length;
+    const sitemapindexOpen = (xml.match(/<sitemapindex/g) || []).length;
+    const sitemapindexClose = (xml.match(/<\/sitemapindex>/g) || []).length;
+    
+    // Either urlset or sitemapindex tags should be properly closed
+    if (urlsetOpen > 0 && urlsetOpen !== urlsetClose) {
+      return false;
+    }
+    if (sitemapindexOpen > 0 && sitemapindexOpen !== sitemapindexClose) {
       return false;
     }
     

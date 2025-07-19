@@ -13,9 +13,6 @@ import { SSEProgressStreamProvider } from '@/lib/chatbot-widget/infrastructure/p
 // Global stream provider instance for managing active streams
 const streamProvider = new SSEProgressStreamProvider();
 
-// Export the provider for use by crawling services
-export { streamProvider };
-
 /**
  * GET /api/chatbot/crawl-progress/[sourceId]
  * Establishes Server-Sent Events connection for crawl progress updates

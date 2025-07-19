@@ -5,246 +5,175 @@
  * - Facade pattern for unified error tracking API
  * - Single responsibility: coordinate error tracking services
  * - Follow @golden-rule patterns exactly
- * - Keep under 250 lines
+ * - Keep under 120 lines
  * - Delegate to specialized services
  * - Clean public API for consumers
  */
 
 import { ErrorCategorizationDomainService } from '../../domain/services/ErrorCategorizationDomainService';
 import { ErrorPersistenceService, ErrorPersistenceContext, ErrorPersistenceData } from '../../infrastructure/persistence/supabase/ErrorPersistenceService';
-import { ErrorAnalyticsService, ErrorSummary, ErrorAnalyticsFilter } from './ErrorAnalyticsService';
-import { 
-  MessageProcessingError,
-  ConversationFlowError,
-  SessionManagementError,
-  ContextExtractionError,
-  AIResponseGenerationError,
-  TokenLimitExceededError,
-  ModelConfigurationError,
-  EmbeddingGenerationError,
-  KnowledgeRetrievalError,
-  VectorSearchError,
-  KnowledgeIndexingError,
-  KnowledgeCacheError,
-  WebsiteCrawlingError,
-  ContentExtractionError,
-  ContentDeduplicationError,
-  UrlNormalizationError,
-  ChatbotConfigurationError,
-  IntegrationConfigurationError,
-  LeadCaptureError,
-  LeadQualificationError,
-  AnalyticsTrackingError,
-  ConversationAnalysisError,
-  WidgetRenderingError,
-  WidgetConfigurationError,
-  ExternalServiceError,
-  APIRateLimitError
-} from '../../domain/errors/ChatbotWidgetDomainErrors';
+import { ErrorCategoryTrackersService, ChatbotErrorContext } from './ErrorCategoryTrackersService';
+import { ErrorAnalyticsQueryService } from './ErrorAnalyticsQueryService';
+import { ErrorTrackingUtilitiesService } from './ErrorTrackingUtilitiesService';
+import { ErrorSummary } from './ErrorAnalyticsService';
 
-export interface ChatbotErrorContext {
-  sessionId?: string;
-  userId?: string;
-  organizationId: string; // AI: Required for RLS policies - should never be undefined
-  conversationId?: string;
-  messageId?: string;
-  modelName?: string;
-  tokenUsage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalCostCents: number;
-  };
-  performanceMetrics?: {
-    responseTime: number;
-    memoryUsage: number;
-    cpuUsage: number;
-  };
-  metadata?: Record<string, unknown>;
-  [key: string]: unknown;
-}
+// Re-export interface for consumers
+export type { ChatbotErrorContext } from './ErrorCategoryTrackersService';
 
 export class ErrorTrackingFacade {
   /**
    * AI INSTRUCTIONS:
-   * - Coordinate error tracking workflow
+   * - Coordinate error tracking workflow through specialized services
    * - Use domain service for categorization
    * - Use persistence service for database operations
-   * - Use analytics service for querying
+   * - Delegate specific operations to focused services
    * - Provide clean, simple API for consumers
    */
+
+  private readonly categoryTrackers: ErrorCategoryTrackersService;
+  private readonly analyticsQuery: ErrorAnalyticsQueryService;
+  private readonly utilities: ErrorTrackingUtilitiesService;
 
   constructor(
     private readonly categorizationService: ErrorCategorizationDomainService,
     private readonly persistenceService: ErrorPersistenceService,
-    private readonly analyticsService: ErrorAnalyticsService
-  ) {}
+    analyticsQueryService: ErrorAnalyticsQueryService
+  ) {
+    this.categoryTrackers = new ErrorCategoryTrackersService(this.trackError.bind(this));
+    this.analyticsQuery = analyticsQueryService;
+    this.utilities = new ErrorTrackingUtilitiesService();
+  }
 
-  // ===== CONVERSATION & MESSAGE PROCESSING ERRORS =====
+  // ===== DELEGATION TO CATEGORY TRACKERS =====
+  // All specific error tracking methods delegate to ErrorCategoryTrackersService
 
   async trackMessageProcessingError(reason: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new MessageProcessingError(reason, context as Record<string, unknown>);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackMessageProcessingError(reason, context);
   }
 
   async trackConversationFlowError(flowStep: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ConversationFlowError(flowStep, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackConversationFlowError(flowStep, context);
   }
 
   async trackSessionManagementError(operation: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new SessionManagementError(operation, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackSessionManagementError(operation, context);
   }
 
   async trackContextExtractionError(contextType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ContextExtractionError(contextType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackContextExtractionError(contextType, context);
   }
 
-  // ===== AI & LLM ERRORS =====
-
   async trackAIResponseGenerationError(modelName: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new AIResponseGenerationError(modelName, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackAIResponseGenerationError(modelName, context);
   }
 
   async trackTokenLimitExceededError(tokenCount: number, limit: number, context: ChatbotErrorContext): Promise<void> {
-    const error = new TokenLimitExceededError(tokenCount, limit, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackTokenLimitExceededError(tokenCount, limit, context);
   }
 
   async trackModelConfigurationError(configType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ModelConfigurationError(configType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackModelConfigurationError(configType, context);
   }
 
   async trackEmbeddingGenerationError(contentType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new EmbeddingGenerationError(contentType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackEmbeddingGenerationError(contentType, context);
   }
 
-  // ===== KNOWLEDGE BASE ERRORS =====
-
   async trackKnowledgeRetrievalError(queryType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new KnowledgeRetrievalError(queryType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackKnowledgeRetrievalError(queryType, context);
   }
 
   async trackVectorSearchError(searchType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new VectorSearchError(searchType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackVectorSearchError(searchType, context);
   }
 
   async trackKnowledgeIndexingError(contentType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new KnowledgeIndexingError(contentType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackKnowledgeIndexingError(contentType, context);
   }
 
   async trackKnowledgeCacheError(operation: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new KnowledgeCacheError(operation, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackKnowledgeCacheError(operation, context);
   }
 
-  // ===== WEBSITE CRAWLING ERRORS =====
-
   async trackWebsiteCrawlingError(url: string, reason: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new WebsiteCrawlingError(url, reason, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackWebsiteCrawlingError(url, reason, context);
   }
 
   async trackContentExtractionError(url: string, extractionType: string, context: ChatbotErrorContext): Promise<void> {
-    const reason = `${extractionType} extraction failed for ${url}`;
-    const enrichedContext = { ...context.metadata, url, extractionType };
-    const error = new ContentExtractionError(reason, enrichedContext);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackContentExtractionError(url, extractionType, context);
   }
 
   async trackContentDeduplicationError(algorithm: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ContentDeduplicationError(algorithm, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackContentDeduplicationError(algorithm, context);
   }
 
   async trackUrlNormalizationError(url: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new UrlNormalizationError(url, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackUrlNormalizationError(url, context);
   }
 
-  // ===== CONFIGURATION ERRORS =====
-
   async trackChatbotConfigurationError(configField: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ChatbotConfigurationError(configField, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackChatbotConfigurationError(configField, context);
   }
 
   async trackIntegrationConfigurationError(integrationType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new IntegrationConfigurationError(integrationType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackIntegrationConfigurationError(integrationType, context);
   }
 
-  // ===== LEAD MANAGEMENT ERRORS =====
-
   async trackLeadCaptureError(captureType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new LeadCaptureError(captureType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackLeadCaptureError(captureType, context);
   }
 
   async trackLeadQualificationError(qualificationStep: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new LeadQualificationError(qualificationStep, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackLeadQualificationError(qualificationStep, context);
   }
 
-  // ===== ANALYTICS & TRACKING ERRORS =====
-
   async trackAnalyticsTrackingError(eventType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new AnalyticsTrackingError(eventType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackAnalyticsTrackingError(eventType, context);
   }
 
   async trackConversationAnalysisError(analysisType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ConversationAnalysisError(analysisType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackConversationAnalysisError(analysisType, context);
   }
 
-  // ===== WIDGET RENDERING ERRORS =====
-
   async trackWidgetRenderingError(component: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new WidgetRenderingError(component, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackWidgetRenderingError(component, context);
   }
 
   async trackWidgetConfigurationError(configType: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new WidgetConfigurationError(configType, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackWidgetConfigurationError(configType, context);
   }
 
-  // ===== EXTERNAL SERVICE ERRORS =====
-
   async trackExternalServiceError(serviceName: string, operation: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new ExternalServiceError(serviceName, operation, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackExternalServiceError(serviceName, operation, context);
   }
 
   async trackAPIRateLimitError(apiProvider: string, context: ChatbotErrorContext): Promise<void> {
-    const error = new APIRateLimitError(apiProvider, context);
-    await this.trackError(error, context);
+    return this.categoryTrackers.trackAPIRateLimitError(apiProvider, context);
   }
 
-  // ===== ANALYTICS METHODS =====
+  // ===== DELEGATION TO ANALYTICS QUERY SERVICE =====
 
   async getErrorSummary(organizationId: string, timeRange: '1h' | '24h' | '7d' | '30d' = '24h'): Promise<ErrorSummary> {
-    const filter: ErrorAnalyticsFilter = { organizationId, timeRange };
-    return this.analyticsService.getErrorSummary(filter);
+    return this.analyticsQuery.getErrorSummary(organizationId, timeRange);
   }
 
   async getErrorsBySession(sessionId: string, organizationId: string): Promise<ErrorSummary> {
-    return this.analyticsService.getErrorsBySession(sessionId, organizationId);
+    return this.analyticsQuery.getErrorsBySession(sessionId, organizationId);
   }
 
   async getErrorsByUser(userId: string, organizationId: string): Promise<ErrorSummary> {
-    return this.analyticsService.getErrorsByUser(userId, organizationId);
+    return this.analyticsQuery.getErrorsByUser(userId, organizationId);
   }
 
-  // ===== PRIVATE HELPER METHODS =====
+  async getErrorTrends(organizationId: string, timeRange: '7d' | '30d' = '30d'): Promise<ErrorSummary> {
+    return this.analyticsQuery.getErrorTrends(organizationId, timeRange);
+  }
+
+  async getCriticalErrors(organizationId: string, timeRange: '1h' | '24h' | '7d' | '30d' = '24h'): Promise<ErrorSummary> {
+    return this.analyticsQuery.getCriticalErrors(organizationId, timeRange);
+  }
+
+  // ===== CORE TRACKING ORCHESTRATION =====
 
   private async trackError(error: Error & { code: string; context?: unknown; timestamp?: Date }, context: ChatbotErrorContext): Promise<void> {
     try {
@@ -286,62 +215,12 @@ export class ErrorTrackingFacade {
         await this.persistenceService.persistError(persistenceData, categorization, persistenceContext);
       }
 
-      // Always log to console based on severity
-      this.logError(error, categorization.severity, context);
+      // Always log to console based on severity using utilities service
+      this.utilities.logError(error, categorization.severity, context);
     } catch (err) {
       console.error('Failed to track error:', err);
       // Fallback logging
       console.error('Original error:', { code: error.code, message: error.message, context });
     }
-  }
-
-  private logError(error: Error & { code: string; timestamp?: Date }, severity: string, context: ChatbotErrorContext): void {
-    const logData = {
-      errorCode: error.code,
-      errorMessage: error.message,
-      severity,
-      sessionId: context.sessionId,
-      userId: context.userId,
-      organizationId: context.organizationId,
-      timestamp: error.timestamp?.toISOString() || new Date().toISOString()
-    };
-
-    switch (severity) {
-      case 'critical':
-        console.error('CRITICAL CHATBOT ERROR:', logData);
-        break;
-      case 'high':
-        console.error('HIGH CHATBOT ERROR:', logData);
-        break;
-      case 'medium':
-        console.warn('MEDIUM CHATBOT ERROR:', logData);
-        break;
-      case 'low':
-        console.info('LOW CHATBOT ERROR:', logData);
-        break;
-              default:
-          // AI: Removed console.log - use proper logging service in production
-          break;
-    }
-  }
-
-  private sanitizeUnifiedResult(result: unknown): Record<string, unknown> | null {
-    if (!result) return null;
-    
-    const resultObj = result as Record<string, unknown>;
-    
-    const analysis = resultObj.analysis as Record<string, unknown> | undefined;
-    const response = analysis?.response as Record<string, unknown> | undefined;
-    const content = response?.content as string | undefined;
-    
-    return {
-      hasAnalysis: !!analysis,
-      hasResponse: !!response,
-      hasContent: !!content,
-      contentLength: content?.length || 0,
-      structure: Object.keys(resultObj).join(', '),
-      analysisKeys: analysis ? Object.keys(analysis).join(', ') : null,
-      responseKeys: response ? Object.keys(response).join(', ') : null
-    };
   }
 } 

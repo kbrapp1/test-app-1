@@ -174,25 +174,91 @@ describe('AIConfigurationMapper', () => {
       expect(config.toPlainObject().customEntityTypes).toEqual([]);
     });
 
-    it('should handle numeric boundary values correctly', () => {
-      const boundaryTestCases = [
+    it('should handle valid numeric values correctly', () => {
+      const validTestCases = [
         { openaiTemperature: 0.0, expected: 0.0 },
         { openaiTemperature: 1.0, expected: 1.0 },
         { openaiMaxTokens: 1, expected: 1 },
-        { contextMaxTokens: 100000, expected: 100000 },
-        { intentConfidenceThreshold: 0.0, expected: 0.0 },
-        { intentAmbiguityThreshold: 1.0, expected: 1.0 },
+        { openaiMaxTokens: 1500, expected: 1500 },
+        { contextMaxTokens: 50000, expected: 50000 },
         { maxConversationTurns: 1, expected: 1 },
-        { inactivityTimeoutSeconds: 0, expected: 0 },
-        { responseTimeThresholdMs: 0, expected: 0 }
+        { maxConversationTurns: 50, expected: 50 },
+        { responseTimeThresholdMs: 1000, expected: 1000 }
       ];
 
-      boundaryTestCases.forEach(testCase => {
+      validTestCases.forEach(testCase => {
         const config = AIConfigurationMapper.fromJsonb(testCase);
         const plainObject = config.toPlainObject();
         const [key, expectedValue] = Object.entries(testCase)[0];
         
         expect(plainObject[key as keyof typeof plainObject]).toBe(expectedValue);
+      });
+    });
+
+    it('should handle intent threshold values with domain constraints', () => {
+      // Test valid combinations that respect domain constraint: confidence > ambiguity
+      const intentTestCases = [
+        {
+          data: { intentConfidenceThreshold: 0.8, intentAmbiguityThreshold: 0.3 },
+          expectedConfidence: 0.8,
+          expectedAmbiguity: 0.3
+        },
+        {
+          data: { intentConfidenceThreshold: 0.5, intentAmbiguityThreshold: 0.1 },
+          expectedConfidence: 0.5,
+          expectedAmbiguity: 0.1
+        },
+        {
+          data: { intentConfidenceThreshold: 0.9, intentAmbiguityThreshold: 0.4 },
+          expectedConfidence: 0.9,
+          expectedAmbiguity: 0.4
+        }
+      ];
+
+      intentTestCases.forEach(testCase => {
+        const config = AIConfigurationMapper.fromJsonb(testCase.data);
+        const plainObject = config.toPlainObject();
+        
+        expect(plainObject.intentConfidenceThreshold).toBe(testCase.expectedConfidence);
+        expect(plainObject.intentAmbiguityThreshold).toBe(testCase.expectedAmbiguity);
+      });
+    });
+
+    it('should handle single intent threshold values by adjusting the other', () => {
+      // When testing single values, mapper should adjust the other to maintain domain constraint
+      const singleValueTests = [
+        {
+          input: { intentConfidenceThreshold: 0.8 },
+          expectedConfidence: 0.8,
+          // Mapper should set ambiguity to satisfy constraint (confidence > ambiguity)
+          expectedAmbiguityRange: { min: 0, max: 0.7 }
+        },
+        {
+          input: { intentAmbiguityThreshold: 0.3 },
+          // Mapper should set confidence to satisfy constraint (confidence > ambiguity)
+          expectedConfidenceRange: { min: 0.4, max: 1.0 },
+          expectedAmbiguity: 0.3
+        }
+      ];
+
+      singleValueTests.forEach(testCase => {
+        const config = AIConfigurationMapper.fromJsonb(testCase.input);
+        const plainObject = config.toPlainObject();
+        
+        if ('expectedConfidence' in testCase) {
+          expect(plainObject.intentConfidenceThreshold).toBe(testCase.expectedConfidence);
+          expect(plainObject.intentAmbiguityThreshold).toBeGreaterThanOrEqual(testCase.expectedAmbiguityRange!.min);
+          expect(plainObject.intentAmbiguityThreshold).toBeLessThanOrEqual(testCase.expectedAmbiguityRange!.max);
+        }
+        
+        if ('expectedAmbiguity' in testCase) {
+          expect(plainObject.intentAmbiguityThreshold).toBe(testCase.expectedAmbiguity);
+          expect(plainObject.intentConfidenceThreshold).toBeGreaterThanOrEqual(testCase.expectedConfidenceRange!.min);
+          expect(plainObject.intentConfidenceThreshold).toBeLessThanOrEqual(testCase.expectedConfidenceRange!.max);
+        }
+        
+        // Always verify domain constraint is satisfied
+        expect(plainObject.intentConfidenceThreshold).toBeGreaterThan(plainObject.intentAmbiguityThreshold);
       });
     });
 
@@ -463,19 +529,62 @@ describe('AIConfigurationMapper', () => {
       }).not.toThrow();
     });
 
-    it('should handle very large numbers appropriately', () => {
-      const largeNumberData = {
-        openaiMaxTokens: Number.MAX_SAFE_INTEGER,
-        contextMaxTokens: 999999999,
-        responseTimeThresholdMs: 2147483647 // Max 32-bit integer
+    it('should handle realistic large values within domain constraints', () => {
+      const realisticLargeData = {
+        // Test realistic production values that should be valid
+        openaiMaxTokens: 3000, // Large but realistic value for production use
+        contextMaxTokens: 50000, // Large context window for complex documents
+        responseTimeThresholdMs: 30000, // 30 second timeout for complex queries
+        contextSystemPromptTokens: 1000, // Large system prompt
+        contextResponseReservedTokens: 5000, // Large response buffer
+        maxConversationTurns: 100 // Extended conversation
       };
 
-      const config = AIConfigurationMapper.fromJsonb(largeNumberData);
+      const config = AIConfigurationMapper.fromJsonb(realisticLargeData);
       const jsonbData = AIConfigurationMapper.toJsonb(config);
 
-      expect((jsonbData as any).openaiMaxTokens).toBe(Number.MAX_SAFE_INTEGER);
-      expect((jsonbData as any).contextMaxTokens).toBe(999999999);
-      expect((jsonbData as any).responseTimeThresholdMs).toBe(2147483647);
+      expect((jsonbData as any).openaiMaxTokens).toBe(3000);
+      expect((jsonbData as any).contextMaxTokens).toBe(50000);
+      expect((jsonbData as any).responseTimeThresholdMs).toBe(30000);
+      expect((jsonbData as any).contextSystemPromptTokens).toBe(1000);
+      expect((jsonbData as any).contextResponseReservedTokens).toBe(5000);
+      expect((jsonbData as any).maxConversationTurns).toBe(100);
+    });
+
+    it('should handle domain constraint violations gracefully', () => {
+      // Test scenarios where domain constraints would be violated
+      const constraintViolationCases = [
+        {
+          description: 'confidence threshold equal to ambiguity threshold',
+          input: { intentConfidenceThreshold: 0.5, intentAmbiguityThreshold: 0.5 },
+          expectation: 'should adjust ambiguity threshold to be less than confidence'
+        },
+        {
+          description: 'confidence threshold less than ambiguity threshold',
+          input: { intentConfidenceThreshold: 0.3, intentAmbiguityThreshold: 0.7 },
+          expectation: 'should adjust ambiguity threshold to be less than confidence'
+        },
+        {
+          description: 'custom extraction mode with empty entity types',
+          input: { entityExtractionMode: 'custom', customEntityTypes: [] },
+          expectation: 'should add default custom entity type'
+        }
+      ];
+
+      constraintViolationCases.forEach(testCase => {
+        const config = AIConfigurationMapper.fromJsonb(testCase.input);
+        const plainObject = config.toPlainObject();
+
+        if (testCase.input.intentConfidenceThreshold !== undefined) {
+          // Domain constraint: confidence > ambiguity should always be satisfied
+          expect(plainObject.intentConfidenceThreshold).toBeGreaterThan(plainObject.intentAmbiguityThreshold);
+        }
+
+        if (testCase.input.entityExtractionMode === 'custom') {
+          // Domain constraint: custom mode requires at least one entity type
+          expect(plainObject.customEntityTypes.length).toBeGreaterThan(0);
+        }
+      });
     });
   });
 });

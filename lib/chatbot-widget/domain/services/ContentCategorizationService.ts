@@ -14,19 +14,9 @@
 
 import { KnowledgeItem } from '../services/interfaces/IKnowledgeRetrievalService';
 import { ContentCategorizationError } from '../errors/ChatbotWidgetDomainErrors';
-
-/** Interface for AI provider abstraction */
-export interface IAiCategorizationProvider {
-  categorizeContent(content: string, title: string): Promise<string>;
-}
-
-/** Domain rules for content categorization */
-export interface CategoryRule {
-  readonly category: KnowledgeItem['category'];
-  readonly titlePatterns: RegExp[];
-  readonly contentPatterns: RegExp[];
-  readonly priority: number; // Higher priority = checked first
-}
+import { CategoryRules, CategoryRule } from '../value-objects/CategoryRule';
+import { IAiCategorizationProvider } from './interfaces/IAiCategorizationProvider';
+import { ContentCategorizationValidationService } from './ContentCategorizationValidationService';
 
 /**
  * Content Categorization Domain Service
@@ -38,14 +28,8 @@ export interface CategoryRule {
  * - Use domain-specific error handling
  */
 export class ContentCategorizationService {
-  private readonly categoryRules: CategoryRule[];
 
-  constructor() {
-    // Domain rules: Category identification patterns
-    this.categoryRules = this.initializeCategoryRules();
-  }
-
-  /** Categorize content using domain rules and AI fallback */
+  /** Categorize content using domain rules and AI fallback */
   async categorizeContent(
     content: string,
     title: string,
@@ -53,7 +37,7 @@ export class ContentCategorizationService {
   ): Promise<KnowledgeItem['category']> {
     try {
       // Domain rule: Validate input parameters
-      this.validateCategorizationInput(content, title);
+      ContentCategorizationValidationService.validateCategorizationInput(content, title);
       
       // Domain rule: First apply rule-based categorization
       const ruleBasedCategory = this.applyRuleBasedCategorization(content, title);
@@ -65,7 +49,7 @@ export class ContentCategorizationService {
       if (aiProvider) {
         try {
           const aiCategory = await this.categorizeWithAi(content, title, aiProvider);
-          if (this.isValidCategory(aiCategory)) {
+          if (CategoryRules.isValidCategory(aiCategory)) {
             return aiCategory as KnowledgeItem['category'];
           }
         } catch {
@@ -86,7 +70,7 @@ export class ContentCategorizationService {
     }
   }
 
-  /** Apply rule-based categorization using domain knowledge */
+  /** Apply rule-based categorization using domain knowledge */
   private applyRuleBasedCategorization(
     content: string,
     title: string
@@ -94,8 +78,8 @@ export class ContentCategorizationService {
     const lowerTitle = title.toLowerCase();
     const lowerContent = content.toLowerCase();
 
-    // Sort rules by priority (higher first)
-    const sortedRules = [...this.categoryRules].sort((a, b) => b.priority - a.priority);
+    // Get sorted rules by priority (higher first)
+    const sortedRules = CategoryRules.getAllRules();
 
     for (const rule of sortedRules) {
       // Check title patterns
@@ -113,7 +97,7 @@ export class ContentCategorizationService {
     return null;
   }
 
-  /** Check for strong content indicators beyond simple pattern matching */
+  /** Check for strong content indicators beyond simple pattern matching */
   private hasStrongContentIndicators(content: string, rule: CategoryRule): boolean {
     // Domain rule: Content must have multiple indicators for non-title matches
     const matchCount = rule.contentPatterns.reduce((count, pattern) => {
@@ -124,7 +108,7 @@ export class ContentCategorizationService {
     return matchCount >= 2;
   }
 
-  /** Categorize content using AI provider */
+  /** Categorize content using AI provider */
   private async categorizeWithAi(
     content: string,
     title: string,
@@ -132,7 +116,7 @@ export class ContentCategorizationService {
   ): Promise<string> {
     try {
       // Domain rule: Limit content length for AI processing
-      const truncatedContent = this.truncateContentForAi(content);
+      const truncatedContent = ContentCategorizationValidationService.truncateContentForAi(content);
       
       const category = await aiProvider.categorizeContent(truncatedContent, title);
       
@@ -175,132 +159,4 @@ export class ContentCategorizationService {
       return 'general';
     }
   }
-
-  /** Validate categorization input */
-  private validateCategorizationInput(content: string, title: string): void {
-    if (!content || typeof content !== 'string') {
-      throw new ContentCategorizationError(
-        'Content is required for categorization',
-        { contentType: typeof content }
-      );
-    }
-
-    if (!title || typeof title !== 'string') {
-      throw new ContentCategorizationError(
-        'Title is required for categorization',
-        { titleType: typeof title }
-      );
-    }
-
-    if (content.trim().length === 0) {
-      throw new ContentCategorizationError(
-        'Content cannot be empty',
-        { contentLength: content.length }
-      );
-    }
-  }
-
-  /** Check if category is valid */
-  private isValidCategory(category: string): boolean {
-    const validCategories: KnowledgeItem['category'][] = [
-      'general',
-      'faq',
-      'product_info',
-      'pricing',
-      'support'
-    ];
-
-    return validCategories.includes(category as KnowledgeItem['category']);
-  }
-
-  /** Truncate content for AI processing */
-  private truncateContentForAi(content: string): string {
-    const maxLength = 2000; // Domain rule: Limit AI input length
-    
-    if (content.length <= maxLength) {
-      return content;
-    }
-    
-    // Domain rule: Keep beginning and end of content for context
-    const halfLength = Math.floor(maxLength / 2);
-    return content.substring(0, halfLength) + 
-           '\n...\n' + 
-           content.substring(content.length - halfLength);
-  }
-
-  /** Initialize category rules based on domain knowledge */
-  private initializeCategoryRules(): CategoryRule[] {
-    return [
-      {
-        category: 'faq',
-        titlePatterns: [
-          /faq/i,
-          /frequently\s+asked/i,
-          /questions/i,
-          /help/i,
-          /support/i
-        ],
-        contentPatterns: [
-          /frequently\s+asked/i,
-          /common\s+questions/i,
-          /q:\s*|question:/i,
-          /a:\s*|answer:/i
-        ],
-        priority: 10
-      },
-      {
-        category: 'pricing',
-        titlePatterns: [
-          /pricing/i,
-          /price/i,
-          /cost/i,
-          /plans/i,
-          /subscription/i
-        ],
-        contentPatterns: [
-          /\$\d+/,
-          /pricing/i,
-          /monthly|annually/i,
-          /subscription/i,
-          /plan/i
-        ],
-        priority: 9
-      },
-      {
-        category: 'support',
-        titlePatterns: [
-          /support/i,
-          /help/i,
-          /documentation/i,
-          /troubleshoot/i,
-          /how\s+to/i
-        ],
-        contentPatterns: [
-          /troubleshoot/i,
-          /contact\s+support/i,
-          /help\s+desk/i,
-          /step\s+by\s+step/i
-        ],
-        priority: 8
-      },
-      {
-        category: 'product_info',
-        titlePatterns: [
-          /product/i,
-          /features/i,
-          /about/i,
-          /overview/i,
-          /what\s+is/i
-        ],
-        contentPatterns: [
-          /features/i,
-          /product/i,
-          /overview/i,
-          /capabilities/i,
-          /functionality/i
-        ],
-        priority: 7
-      }
-    ];
-  }
-} 
+}

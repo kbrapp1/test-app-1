@@ -116,6 +116,26 @@ export class ChatMessageCrudService {
     return ChatMessageMapper.toDomain(data as RawChatMessageDbRecord);
   }
 
+  async upsert(message: ChatMessage): Promise<ChatMessage> {
+    const insertData = ChatMessageMapper.toInsert(message);
+    
+    // Use Supabase upsert functionality for single database operation
+    const { data, error } = await this.supabase
+      .from(this.tableName)
+      .upsert(insertData, { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new DatabaseError('Failed to upsert chat message', error.message);
+    }
+
+    return ChatMessageMapper.toDomain(data as RawChatMessageDbRecord);
+  }
+
   async delete(id: string): Promise<void> {
     const { error } = await this.supabase
       .from(this.tableName)

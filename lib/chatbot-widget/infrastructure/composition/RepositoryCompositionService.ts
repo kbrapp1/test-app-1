@@ -13,6 +13,12 @@ import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRe
 import { IChatMessageRepository } from '../../domain/repositories/IChatMessageRepository';
 import { ILeadRepository } from '../../domain/repositories/ILeadRepository';
 
+// Infrastructure services
+import { KnowledgeContentService } from '../persistence/supabase/services/KnowledgeContentService';
+
+// Domain services  
+import { DomainServiceCompositionService } from './DomainServiceCompositionService';
+
 /**
  * Repository Composition Service
  * Domain Service: Manages repository creation and lifecycle
@@ -42,8 +48,16 @@ export class RepositoryCompositionService {
  */
   static getChatbotConfigRepository(): IChatbotConfigRepository {
     if (!this.chatbotConfigRepository) {
+      const supabaseClient = this.getSupabaseClient();
+      const knowledgeContentService = new KnowledgeContentService(
+        supabaseClient,
+        DomainServiceCompositionService.getUserContentSanitizationService(),
+        DomainServiceCompositionService.getContentValidationService()
+      );
+      
       this.chatbotConfigRepository = new ChatbotConfigSupabaseRepository(
-        this.getSupabaseClient()
+        supabaseClient,
+        knowledgeContentService
       );
     }
     return this.chatbotConfigRepository;

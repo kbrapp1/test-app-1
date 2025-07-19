@@ -10,8 +10,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '../../../../supabase/server';
 import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotConfigRepository';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
-import { UserContentSanitizationService } from '../../../domain/services/content-processing/UserContentSanitizationService';
-import { ContentValidationService } from '../../../domain/services/content-processing/ContentValidationService';
 import { DatabaseError } from './errors/DatabaseError';
 import { ChatbotConfigMapper } from './mappers/ChatbotConfigMapper';
 import { KnowledgeContentService } from './services/KnowledgeContentService';
@@ -24,15 +22,23 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
 
   constructor(
     supabaseClient?: SupabaseClient,
-    contentSanitizer?: UserContentSanitizationService,
-    contentValidator?: ContentValidationService
+    knowledgeContentService?: KnowledgeContentService
   ) {
     this.supabase = supabaseClient ?? createClient();
-    this.knowledgeContentService = new KnowledgeContentService(
-      this.supabase,
-      contentSanitizer ?? new UserContentSanitizationService(),
-      contentValidator ?? new ContentValidationService()
-    );
+    
+    if (knowledgeContentService) {
+      this.knowledgeContentService = knowledgeContentService;
+    } else {
+      // Import domain services dynamically to avoid circular dependency
+      const { UserContentSanitizationService } = require('../../../domain/services/content-processing/UserContentSanitizationService');
+      const { ContentValidationService } = require('../../../domain/services/content-processing/ContentValidationService');
+      
+      this.knowledgeContentService = new KnowledgeContentService(
+        this.supabase,
+        new UserContentSanitizationService(),
+        new ContentValidationService()
+      );
+    }
   }
 
   /** Find chatbot config by ID */

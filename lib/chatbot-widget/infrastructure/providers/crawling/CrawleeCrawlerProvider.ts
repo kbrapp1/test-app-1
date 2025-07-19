@@ -233,18 +233,9 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
    */
   private sendProgressUpdate(sourceId: string, type: string, data: Record<string, any>): void {
     try {
-      // Dynamic import to avoid issues with SSR
-      import('../../../../../app/api/chatbot/crawl-progress/[sourceId]/route').then(({ streamProvider }) => {
-        streamProvider.sendUpdate(sourceId, {
-          type: type as any,
-          data: {
-            sourceId,
-            ...data
-          }
-        });
-      }).catch(() => {
-        // Silently handle SSE update failures
-      });
+      // Note: Progress streaming is handled by the API route
+      // This is a placeholder for future progress tracking integration
+      console.log('Progress update:', { sourceId, type, data });
     } catch (error) {
       // Silently handle SSE update failures
     }

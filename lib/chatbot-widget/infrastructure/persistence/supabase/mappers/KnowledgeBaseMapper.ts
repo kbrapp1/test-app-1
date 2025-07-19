@@ -33,11 +33,11 @@ export class KnowledgeBaseMapper {
     }
     
     return KnowledgeBase.create({
-      companyInfo: (kb?.companyInfo as string) || '',
-      productCatalog: (kb?.productCatalog as string) || '',
+      companyInfo: this.safeString(kb?.companyInfo),
+      productCatalog: this.safeString(kb?.productCatalog),
       faqs: this.mapFaqs(kb?.faqs),
-      supportDocs: (kb?.supportDocs as string) || '',
-      complianceGuidelines: (kb?.complianceGuidelines as string) || '',
+      supportDocs: this.safeString(kb?.supportDocs),
+      complianceGuidelines: this.safeString(kb?.complianceGuidelines),
       websiteSources: this.mapWebsiteSources(kb?.websiteSources),
     });
   }
@@ -115,9 +115,9 @@ export class KnowledgeBaseMapper {
         description: (sourceRecord?.description as string) || '',
         isActive: (sourceRecord?.isActive as boolean) !== false, // Default true
         crawlSettings: this.mapCrawlSettings(sourceRecord?.crawlSettings),
-        lastCrawled: sourceRecord?.lastCrawled ? new Date(sourceRecord.lastCrawled as string) : undefined,
-        status: (sourceRecord?.status as 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error') || 'pending',
-        pageCount: (sourceRecord?.pageCount as number) || 0,
+        lastCrawled: this.safeDate(sourceRecord?.lastCrawled),
+        status: this.safeStatus(sourceRecord?.status),
+        pageCount: this.safeNumber(sourceRecord?.pageCount, 0),
         errorMessage: sourceRecord?.errorMessage as string,
       };
     });
@@ -140,14 +140,78 @@ export class KnowledgeBaseMapper {
     const settings = data as Record<string, unknown> | null | undefined;
     
     return {
-      maxPages: (settings?.maxPages as number) || 10,
-      maxDepth: (settings?.maxDepth as number) || 3,
-      includePatterns: (settings?.includePatterns as string[]) || [],
-      excludePatterns: (settings?.excludePatterns as string[]) || [],
+      maxPages: this.safeNumber(settings?.maxPages, 10),
+      maxDepth: this.safeNumber(settings?.maxDepth, 3),
+      includePatterns: this.safeStringArray(settings?.includePatterns),
+      excludePatterns: this.safeStringArray(settings?.excludePatterns),
       respectRobotsTxt: (settings?.respectRobotsTxt as boolean) !== false, // Default true
-      crawlFrequency: (settings?.crawlFrequency as 'manual' | 'daily' | 'weekly' | 'monthly') || 'weekly',
+      crawlFrequency: this.safeCrawlFrequency(settings?.crawlFrequency),
       includeImages: (settings?.includeImages as boolean) || false,
       includePDFs: (settings?.includePDFs as boolean) !== false, // Default true
     };
+  }
+
+  /**
+   * Safely convert unknown value to string with fallback
+   */
+  private static safeString(value: unknown): string {
+    if (typeof value === 'string') return value;
+    return '';
+  }
+
+  /**
+   * Safely convert unknown value to number with fallback
+   */
+  private static safeNumber(value: unknown, defaultValue: number): number {
+    if (typeof value === 'number' && !isNaN(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return defaultValue;
+  }
+
+  /**
+   * Safely convert unknown value to string array with fallback
+   */
+  private static safeStringArray(value: unknown): string[] {
+    if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
+      return value;
+    }
+    return [];
+  }
+
+  /**
+   * Safely convert unknown value to valid crawl frequency with fallback
+   */
+  private static safeCrawlFrequency(value: unknown): 'manual' | 'daily' | 'weekly' | 'monthly' {
+    const validFrequencies = ['manual', 'daily', 'weekly', 'monthly'] as const;
+    if (typeof value === 'string' && validFrequencies.includes(value as any)) {
+      return value as 'manual' | 'daily' | 'weekly' | 'monthly';
+    }
+    return 'weekly';
+  }
+
+  /**
+   * Safely convert unknown value to valid status with fallback
+   */
+  private static safeStatus(value: unknown): 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error' {
+    const validStatuses = ['pending', 'crawling', 'vectorizing', 'completed', 'error'] as const;
+    if (typeof value === 'string' && validStatuses.includes(value as any)) {
+      return value as 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error';
+    }
+    return 'pending';
+  }
+
+  /**
+   * Safely convert unknown value to Date with fallback
+   */
+  private static safeDate(value: unknown): Date | undefined {
+    if (value instanceof Date) return value;
+    if (typeof value === 'string') {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) return date;
+    }
+    return undefined;
   }
 }
