@@ -12,7 +12,8 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
-import { RawLeadDbRecord } from '../mappers/LeadMapper';
+import { LeadMapper, RawLeadDbRecord } from '../mappers/LeadMapper';
+import { Lead } from '../../../../domain/entities/Lead';
 
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
@@ -235,5 +236,10 @@ export class LeadQueryService {
     }
 
     return data || [];
+  }
+
+  /** Map database record to domain entity */
+  mapToDomain(record: RawLeadDbRecord): Lead {
+    return LeadMapper.toDomain(record);
   }
 } 

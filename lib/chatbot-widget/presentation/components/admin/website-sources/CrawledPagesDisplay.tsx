@@ -11,19 +11,11 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  ExternalLink, 
-  ChevronDown, 
-  ChevronRight, 
-  FileText, 
-  Clock as _Clock, 
-  Hash,
-  Eye,
-  EyeOff
-} from 'lucide-react';
+import { Hash, Eye, EyeOff } from 'lucide-react';
+import { CrawledPagesSummaryStats } from './CrawledPagesSummaryStats';
+import { CrawledPageItem } from './CrawledPageItem';
+import { CrawledPagesFailedSummary } from './CrawledPagesFailedSummary';
 
 export interface CrawledPageInfo {
   id: string;
@@ -70,13 +62,6 @@ export function CrawledPagesDisplay({
 
   const successfulPages = pages.filter(p => p.status === 'success');
   const failedPages = pages.filter(p => p.status === 'failed');
-  const _skippedPages = pages.filter(p => p.status === 'skipped');
-
-  const averageContentLength = successfulPages.length > 0 
-    ? Math.round(successfulPages.reduce((sum, p) => sum + p.contentLength, 0) / successfulPages.length)
-    : 0;
-
-  const hasContentLengthData = successfulPages.some(p => p.contentLength > 0);
 
   const pagesByDepth = pages.reduce((acc, page) => {
     const depth = page.depth;
@@ -130,26 +115,11 @@ export function CrawledPagesDisplay({
 
       <CardContent className="space-y-6">
         {/* Summary Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg">
-          <div className="text-center">
-            <div className="text-2xl font-semibold">{successfulPages.length}</div>
-            <div className="text-sm text-muted-foreground">Successful</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold">{Object.keys(pagesByDepth).length}</div>
-            <div className="text-sm text-muted-foreground">Depth Levels</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold">{hasContentLengthData ? averageContentLength.toLocaleString() : 'N/A'}</div>
-            <div className="text-sm text-muted-foreground">Avg Content Length</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold">
-              {pages.length > 0 ? Math.round((successfulPages.length / pages.length) * 100) : 0}%
-            </div>
-            <div className="text-sm text-muted-foreground">Success Rate</div>
-          </div>
-        </div>
+        <CrawledPagesSummaryStats 
+          pages={pages}
+          successfulPages={successfulPages}
+          pagesByDepth={pagesByDepth}
+        />
 
         {/* Pages by Depth */}
         <div className="space-y-4">
@@ -164,149 +134,12 @@ export function CrawledPagesDisplay({
                 
                 <div className="space-y-2 ml-5">
                   {depthPages.map((page) => (
-                    <Collapsible key={page.id}>
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start p-3 h-auto hover:bg-muted/50 border border-transparent hover:border-border/50 rounded-lg transition-colors"
-                          onClick={() => togglePageExpansion(page.id)}
-                        >
-                          <div className="flex items-start justify-between w-full">
-                            <div className="flex items-start space-x-3 flex-1 min-w-0 pr-4">
-                              {expandedPages.has(page.id) ? (
-                                <ChevronDown className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                              )}
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <span className="font-semibold text-foreground truncate flex-1 min-w-0 max-w-[60%] text-left">{page.title}</span>
-                                  <div className="flex items-center space-x-1 flex-shrink-0">
-                                    <Badge variant={
-                                      page.status === 'success' ? 'default' :
-                                      page.status === 'failed' ? 'destructive' : 'secondary'
-                                    } className="text-xs">
-                                      {page.status}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      {page.category}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <div 
-                                  className="text-xs text-muted-foreground/80 truncate w-full text-left"
-                                >
-                                  {(() => {
-                                    try {
-                                      const url = new URL(page.url);
-                                      const path = url.pathname === '/' ? '' : url.pathname;
-                                      return `${url.hostname}${path}`;
-                                    } catch {
-                                      return page.url;
-                                    }
-                                  })()}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2 ml-2 flex-shrink-0">
-                              {/* Only show content length if it's meaningful */}
-                              {page.contentLength > 0 && (
-                                <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                  {page.contentLength.toLocaleString()} chars
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Button>
-                      </CollapsibleTrigger>
-                      
-                      <CollapsibleContent className="ml-7 mt-2">
-                        <div className="bg-muted/20 rounded-lg p-4 space-y-3">
-                          {/* Page Metadata */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Status Code:</span>
-                              <span className="ml-2 font-medium">{page.statusCode || 'N/A'}</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Response Time:</span>
-                              <span className="ml-2 font-medium">
-                                {page.responseTime ? `${page.responseTime}ms` : 'N/A'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Crawled:</span>
-                              <span className="ml-2 font-medium">
-                                {page.crawledAt.toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Tags:</span>
-                              <span className="ml-2">
-                                {page.tags.map(tag => (
-                                  <Badge key={tag} variant="outline" className="text-xs mr-1">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Content Preview */}
-                          {page.content && page.content.trim().length > 0 ? (
-                            <div>
-                              <div className="flex items-center space-x-2 mb-2">
-                                <FileText className="w-4 h-4" />
-                                <span className="text-sm font-medium">Content Preview</span>
-                              </div>
-                              <div className="bg-background rounded border p-3 text-sm">
-                                <p className="text-muted-foreground line-clamp-3">
-                                  {page.content.substring(0, 300)}
-                                  {page.content.length > 300 && '...'}
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="flex items-center space-x-2 mb-2">
-                                <FileText className="w-4 h-4" />
-                                <span className="text-sm font-medium">Content Preview</span>
-                              </div>
-                              <div className="bg-muted/10 rounded border border-dashed p-3 text-sm">
-                                <p className="text-muted-foreground italic">
-                                  No content preview available
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Error Message (if failed) */}
-                          {page.status === 'failed' && page.errorMessage && (
-                            <div>
-                              <div className="text-sm font-medium text-destructive mb-2">Error</div>
-                              <div className="bg-destructive/10 border border-destructive/20 rounded p-3 text-sm text-destructive">
-                                {page.errorMessage}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* External Link */}
-                          <div className="pt-2 border-t border-border/30">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(page.url, '_blank')}
-                              className="text-xs hover:bg-primary/5"
-                            >
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              View Original Page
-                            </Button>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                    <CrawledPageItem
+                      key={page.id}
+                      page={page}
+                      isExpanded={expandedPages.has(page.id)}
+                      onToggleExpansion={togglePageExpansion}
+                    />
                   ))}
                 </div>
               </div>
@@ -314,25 +147,7 @@ export function CrawledPagesDisplay({
         </div>
 
         {/* Failed Pages Summary */}
-        {failedPages.length > 0 && (
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-sm text-destructive mb-2">
-              Failed Pages ({failedPages.length})
-            </h4>
-            <div className="space-y-1">
-              {failedPages.slice(0, 5).map((page) => (
-                <div key={page.id} className="text-sm text-muted-foreground">
-                  • {page.url} - {page.errorMessage || 'Unknown error'}
-                </div>
-              ))}
-              {failedPages.length > 5 && (
-                <div className="text-sm text-muted-foreground">
-                  ... and {failedPages.length - 5} more failed pages
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <CrawledPagesFailedSummary failedPages={failedPages} />
       </CardContent>
     </Card>
   );

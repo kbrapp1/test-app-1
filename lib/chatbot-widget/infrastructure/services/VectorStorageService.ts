@@ -16,32 +16,28 @@ import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDom
 import { ErrorTrackingFacade } from '../../application/services/ErrorTrackingFacade';
 import {
   VectorKnowledgeItem,
-  VectorStorageRecord,
   VectorQueryContext,
   VectorDeletionContext,
-  VectorOperationResult,
-  VectorStorageConfig
+  VectorOperationResult
 } from '../types/VectorRepositoryTypes';
+import { VectorStorageValidator } from './VectorStorageValidator';
+import { VectorDeletionService } from './VectorDeletionService';
+import { VectorInsertionService } from './VectorInsertionService';
 
 /** Specialized Service for Vector Storage Operations
  */
 export class VectorStorageService {
   
-  private static readonly DEFAULT_STORAGE_CONFIG: VectorStorageConfig = {
-    batchSize: 100,
-    maxRetries: 3,
-    retryDelay: 1000,
-    enableValidation: true,
-    dimensionConfig: {
-      expectedDimensions: 1536,
-      validateDimensions: true
-    }
-  };
+  private deletionService: VectorDeletionService;
+  private insertionService: VectorInsertionService;
 
   constructor(
     private supabase: SupabaseClient,
     private errorTrackingService: ErrorTrackingFacade
-  ) {}
+  ) {
+    this.deletionService = new VectorDeletionService(supabase, errorTrackingService);
+    this.insertionService = new VectorInsertionService(supabase);
+  }
 
   /** Store knowledge items with vectors in batch
  */
@@ -51,7 +47,7 @@ export class VectorStorageService {
   ): Promise<VectorOperationResult> {
     try {
       // Validate input items
-      const validation = this.validateStorageItems(items);
+      const validation = VectorStorageValidator.validateStorageItems(items);
       if (!validation.isValid) {
         throw new BusinessRuleViolationError(
           `Invalid storage items: ${validation.errors.join(', ')}`,
@@ -63,10 +59,10 @@ export class VectorStorageService {
       const knowledgeItemIds = items.map(item => item.knowledgeItemId);
 
       // Delete existing items to ensure clean upsert
-      await this.deleteExistingItems(context, knowledgeItemIds);
+      await this.deletionService.deleteExistingItems(context, knowledgeItemIds);
 
       // Insert new records with both content and vectors
-      await this.insertVectorRecords(context, items);
+      await this.insertionService.insertVectorRecords(context, items);
 
       return {
         success: true,
@@ -99,259 +95,9 @@ export class VectorStorageService {
   async deleteKnowledgeItemsBySource(
     deletionContext: VectorDeletionContext
   ): Promise<number> {
-    try {
-      // First, check what exists matching these criteria
-      const existingCount = await this.countExistingItems(deletionContext);
-      
-      if (existingCount === 0) {
-        return 0;
-      }
-
-      // Perform the actual deletion
-      const deletedCount = await this.performDeletion(deletionContext);
-
-      return deletedCount;
-    } catch (error) {
-      await this.trackDeletionError(deletionContext, error);
-      throw new BusinessRuleViolationError(
-        `Failed to delete knowledge vectors by source: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        deletionContext
-      );
-    }
+    return this.deletionService.deleteKnowledgeItemsBySource(deletionContext);
   }
 
-  /** Delete existing items by IDs
- */
-  private async deleteExistingItems(
-    context: VectorQueryContext,
-    knowledgeItemIds: string[]
-  ): Promise<void> {
-    const { error: deleteError } = await this.supabase
-      .from('chatbot_knowledge_vectors')
-      .delete()
-      .eq('organization_id', context.organizationId)
-      .eq('chatbot_config_id', context.chatbotConfigId)
-      .in('knowledge_item_id', knowledgeItemIds);
 
-    if (deleteError) {
-      throw new BusinessRuleViolationError(
-        `Failed to delete existing knowledge vectors before upsert: ${deleteError.message}`,
-        { ...context, itemCount: knowledgeItemIds.length }
-      );
-    }
-  }
 
-  /** Insert vector records in batch
- */
-  private async insertVectorRecords(
-    context: VectorQueryContext,
-    items: VectorKnowledgeItem[]
-  ): Promise<void> {
-    const records: VectorStorageRecord[] = items.map(item => ({
-      organization_id: context.organizationId,
-      chatbot_config_id: context.chatbotConfigId,
-      knowledge_item_id: item.knowledgeItemId,
-      title: item.title,
-      content: item.content,
-      category: item.category,
-      source_type: item.sourceType,
-      source_url: item.sourceUrl,
-      vector: item.embedding,
-      content_hash: item.contentHash,
-      metadata: item.metadata || {},
-      updated_at: new Date().toISOString()
-    }));
-
-    const { error: insertError } = await this.supabase
-      .from('chatbot_knowledge_vectors')
-      .insert(records);
-
-    if (insertError) {
-      throw new BusinessRuleViolationError(
-        `Failed to insert knowledge vectors: ${insertError.message}`,
-        { ...context, itemCount: items.length }
-      );
-    }
-  }
-
-  /**
-   * Count existing items for deletion validation
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide accurate counts before deletion
-   * - Support pattern matching for URLs
-   * - Handle multi-tenant filtering
-   * - Enable deletion validation and logging
-   * - Support both exact and pattern-based counting
-   */
-  private async countExistingItems(deletionContext: VectorDeletionContext): Promise<number> {
-    let countQuery = this.supabase
-      .from('chatbot_knowledge_vectors')
-      .select('id', { count: 'exact' })
-      .eq('organization_id', deletionContext.organizationId)
-      .eq('chatbot_config_id', deletionContext.chatbotConfigId)
-      .eq('source_type', deletionContext.sourceType);
-
-    if (deletionContext.sourceUrl) {
-      // Use pattern matching to catch all URLs from this domain
-      countQuery = countQuery.like('source_url', `${deletionContext.sourceUrl}%`);
-    }
-
-    const { count, error: countError } = await countQuery;
-
-    if (countError) {
-      await this.errorTrackingService.trackKnowledgeIndexingError(
-        'vector_storage_query_failed',
-        {
-          organizationId: deletionContext.organizationId,
-          metadata: {
-            chatbotConfigId: deletionContext.chatbotConfigId,
-            sourceType: deletionContext.sourceType,
-            sourceUrl: deletionContext.sourceUrl,
-            operation: 'check_existing_vectors',
-            errorCode: countError.code,
-            errorMessage: countError.message
-          }
-        }
-      );
-      
-      throw new Error(`Failed to check existing knowledge vectors: ${countError.message}`);
-    }
-
-    return count || 0;
-  }
-
-  /** Perform actual deletion operation
- */
-  private async performDeletion(deletionContext: VectorDeletionContext): Promise<number> {
-    let deleteQuery = this.supabase
-      .from('chatbot_knowledge_vectors')
-      .delete()
-      .eq('organization_id', deletionContext.organizationId)
-      .eq('chatbot_config_id', deletionContext.chatbotConfigId)
-      .eq('source_type', deletionContext.sourceType);
-
-    if (deletionContext.sourceUrl) {
-      // Use pattern matching to delete all URLs from this domain
-      deleteQuery = deleteQuery.like('source_url', `${deletionContext.sourceUrl}%`);
-    }
-
-    const { error: deleteError, count: deletedCount } = await deleteQuery;
-
-    if (deleteError) {
-      await this.errorTrackingService.trackKnowledgeIndexingError(
-        'vector_storage_delete_failed',
-        {
-          organizationId: deletionContext.organizationId,
-          metadata: {
-            chatbotConfigId: deletionContext.chatbotConfigId,
-            sourceType: deletionContext.sourceType,
-            sourceUrl: deletionContext.sourceUrl,
-            operation: 'delete_vectors_by_source',
-            errorCode: deleteError.code,
-            errorMessage: deleteError.message
-          }
-        }
-      );
-      
-      throw new Error(`Failed to delete knowledge vectors by source: ${deleteError.message}`);
-    }
-
-    return deletedCount || 0;
-  }
-
-  /**
-   * Validate storage items before insertion
-   * 
-   * AI INSTRUCTIONS:
-   * - Check vector dimensions and format
-   * - Validate required fields and data types
-   * - Provide detailed validation results
-   * - Support data integrity checks
-   * - Enable early error detection
-   */
-  private validateStorageItems(items: VectorKnowledgeItem[]): { isValid: boolean; errors: string[]; warnings: string[] } {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (!Array.isArray(items) || items.length === 0) {
-      errors.push('Items array is empty or invalid');
-      return { isValid: false, errors, warnings };
-    }
-
-    items.forEach((item, index) => {
-      // Validate required fields
-      if (!item.knowledgeItemId) {
-        errors.push(`Item ${index}: knowledge item ID is required`);
-      }
-      if (!item.title) {
-        errors.push(`Item ${index}: title is required`);
-      }
-      if (!item.content) {
-        errors.push(`Item ${index}: content is required`);
-      }
-      if (!item.category) {
-        errors.push(`Item ${index}: category is required`);
-      }
-      if (!item.contentHash) {
-        errors.push(`Item ${index}: content hash is required`);
-      }
-
-      // Validate vector dimensions
-      if (!Array.isArray(item.embedding)) {
-        errors.push(`Item ${index}: embedding must be an array`);
-      } else if (item.embedding.length !== VectorStorageService.DEFAULT_STORAGE_CONFIG.dimensionConfig.expectedDimensions) {
-        errors.push(
-          `Item ${index}: vector dimension mismatch (${item.embedding.length} vs ${VectorStorageService.DEFAULT_STORAGE_CONFIG.dimensionConfig.expectedDimensions})`
-        );
-      }
-
-      // Validate source type
-      const validSourceTypes = ['faq', 'company_info', 'product_catalog', 'support_docs', 'website_crawled'];
-      if (!validSourceTypes.includes(item.sourceType)) {
-        errors.push(`Item ${index}: invalid source type '${item.sourceType}'`);
-      }
-
-      // Check for optional warnings
-      if (!item.sourceUrl && item.sourceType === 'website_crawled') {
-        warnings.push(`Item ${index}: website crawled item missing source URL`);
-      }
-    });
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings
-    };
-  }
-
-  /**
-   * Track deletion errors for monitoring
-   * 
-   * AI INSTRUCTIONS:
-   * - Provide comprehensive error tracking
-   * - Include context and metadata for debugging
-   * - Support error monitoring and alerting
-   * - Handle error tracking failures gracefully
-   * - Enable operational insights
-   */
-  private async trackDeletionError(deletionContext: VectorDeletionContext, error: unknown): Promise<void> {
-    try {
-      await this.errorTrackingService.trackKnowledgeIndexingError(
-        'vector_storage_deletion_failed',
-        {
-          organizationId: deletionContext.organizationId,
-          metadata: {
-            chatbotConfigId: deletionContext.chatbotConfigId,
-            sourceType: deletionContext.sourceType,
-            sourceUrl: deletionContext.sourceUrl,
-            operation: 'delete_knowledge_items_by_source',
-            errorMessage: error instanceof Error ? error.message : String(error)
-          }
-        }
-      );
-    } catch {
-      // Error tracking failed - continue without it to avoid cascading failures
-    }
-  }
 } 

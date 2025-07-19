@@ -144,11 +144,37 @@ describe('ConversationContextOrchestrator', () => {
     });
 
     it('should handle medium engagement properly', () => {
-      const messages = Array.from({ length: 5 }, (_, i) => 
+      const messages = Array.from({ length: 4 }, (_, i) => 
         createTestMessage(`Message ${i + 1} about features and pricing`)
       );
 
-      const mockApiData = createMockApiAnalysisData(messages.length);
+      // Create mock data with fewer topics to avoid triggering high engagement
+      const mockApiData = {
+        entities: {
+          urgency: 'medium' as const,
+          painPoints: ['integration challenges'],
+          integrationNeeds: ['CRM integration'],
+          evaluationCriteria: ['pricing', 'features'], // Only 2 topics instead of 3
+          company: 'Test Company',
+          role: 'Decision Maker'
+        },
+        personaInference: {
+          role: 'Product Manager',
+          industry: 'Technology',
+          evidence: ['mentioned CRM', 'asked about features']
+        },
+        leadScore: {
+          scoreBreakdown: {
+            engagementLevel: 6 // Medium engagement level
+          }
+        },
+        conversationFlow: {
+          currentStage: 'discovery',
+          nextSteps: ['provide demo', 'send pricing'],
+          qualificationStatus: 'qualified'
+        }
+      };
+
       const analysis = orchestrator.analyzeContext(messages, undefined, mockApiData);
       
       expect(analysis.engagementLevel).toBe('medium');

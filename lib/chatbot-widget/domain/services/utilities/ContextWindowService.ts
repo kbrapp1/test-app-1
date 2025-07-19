@@ -6,9 +6,10 @@
  */
 
 import { ChatMessage } from '../../entities/ChatMessage';
+import { MessageValidationUtils } from '../../utilities/MessageValidationUtils';
+import { ContextWindowResult } from '../../value-objects/message-processing/ContextAnalysis';
 import { ConversationContextWindow } from '../../value-objects/session-management/ConversationContextWindow';
 import { ITokenCountingService } from '../interfaces/ITokenCountingService';
-import { ContextWindowResult } from '../../value-objects/message-processing/ContextAnalysis';
 
 export class ContextWindowService {
   constructor(
@@ -117,10 +118,9 @@ export class ContextWindowService {
   ): Promise<string> {
     if (messages.length === 0) return '';
 
-    // Safety check: Filter out any non-ChatMessage objects
-    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
-    const userMessages = validMessages.filter(m => m.isFromUser());
-    const botMessages = validMessages.filter(m => !m.isFromUser());
+    // Use consolidated message validation
+    const userMessages = MessageValidationUtils.getUserMessages(messages);
+    const botMessages = MessageValidationUtils.getBotMessages(messages);
 
     // Create a structured summary prompt
     const _summaryPrompt = `Summarize this conversation in ${maxTokens} tokens or less. Focus on:

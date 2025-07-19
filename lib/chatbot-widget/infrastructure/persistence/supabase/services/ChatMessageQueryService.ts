@@ -15,19 +15,22 @@ import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { 
   ChatMessageBasicQueryService,
   ChatMessageSearchService,
-  ChatMessageAnalyticsQueryService
+  ChatMessageAdvancedAnalyticsQueryService,
+  ChatMessagePerformanceQueryService
 } from './chat-message-queries';
 
 export class ChatMessageQueryService {
   private readonly basicQueryService: ChatMessageBasicQueryService;
   private readonly searchService: ChatMessageSearchService;
-  private readonly analyticsQueryService: ChatMessageAnalyticsQueryService;
+  private readonly analyticsQueryService: ChatMessageAdvancedAnalyticsQueryService;
+  private readonly performanceQueryService: ChatMessagePerformanceQueryService;
 
   constructor(supabaseClient?: SupabaseClient) {
     const supabase = supabaseClient ?? createClient();
     this.basicQueryService = new ChatMessageBasicQueryService(supabase);
     this.searchService = new ChatMessageSearchService(supabase);
-    this.analyticsQueryService = new ChatMessageAnalyticsQueryService(supabase);
+    this.analyticsQueryService = new ChatMessageAdvancedAnalyticsQueryService(supabase);
+    this.performanceQueryService = new ChatMessagePerformanceQueryService(supabase);
   }
 
   async findBySessionIdWithPagination(
@@ -90,7 +93,7 @@ export class ChatMessageQueryService {
     dateTo?: Date,
     limit: number = 50
   ): Promise<ChatMessage[]> {
-    return this.analyticsQueryService.findHighCostMessages(organizationId, minCostCents, dateFrom, dateTo, limit);
+    return this.performanceQueryService.findHighCostMessages(organizationId, minCostCents, dateFrom, dateTo, limit);
   }
 
   async findLowConfidenceMessages(

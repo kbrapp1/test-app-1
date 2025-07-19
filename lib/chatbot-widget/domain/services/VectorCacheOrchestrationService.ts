@@ -194,8 +194,8 @@ export class VectorCacheOrchestrationService {
       VectorCacheLoggingService.logCacheClear(
         logger,
         previousSize,
-        organizationId,
-        chatbotConfigId
+        0, // memoryFreedKB will be calculated later
+        `Cache clear for organization ${organizationId}`
       );
 
       // Execute cache clearing
@@ -239,8 +239,7 @@ export class VectorCacheOrchestrationService {
       VectorCacheLoggingService.logCacheState(
         logger,
         stats,
-        isInitialized,
-        cachedVectors.size
+        'status-check'
       );
 
       return stats;
@@ -274,8 +273,8 @@ export class VectorCacheOrchestrationService {
     try {
       VectorCacheLoggingService.logError(
         logger,
+        error instanceof Error ? error : new Error(String(error)),
         operation,
-        error,
         context
       );
     } catch (loggingError) {

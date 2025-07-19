@@ -195,8 +195,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       react-day-picker:
-        specifier: ^9.7.0
-        version: 9.7.0(react@19.1.0)
+        specifier: ^9.8.0
+        version: 9.8.0(react@19.1.0)
       react-dom:
         specifier: ^19.1.0
         version: 19.1.0(react@19.1.0)
@@ -5758,8 +5758,8 @@ packages:
   react-audio-spectrogram-player@2.0.1:
     resolution: {integrity: sha512-7RnQJYdSW7KBvnRLMWJxW3GIGVmNCzLzfar/+l/6n6txKH8B/o/DKvWuX7ra20f0zGmNoCQxnQnFxMCPWhLlsg==}
 
-  react-day-picker@9.7.0:
-    resolution: {integrity: sha512-urlK4C9XJZVpQ81tmVgd2O7lZ0VQldZeHzNejbwLWZSkzHH498KnArT0EHNfKBOWwKc935iMLGZdxXPRISzUxQ==}
+  react-day-picker@9.8.0:
+    resolution: {integrity: sha512-E0yhhg7R+pdgbl/2toTb0xBhsEAtmAx1l7qjIWYfcxOy8w4rTSVfbtBoSzVVhPwKP/5E9iL38LivzoE3AQDhCQ==}
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=16.8.0'
@@ -12669,7 +12669,7 @@ snapshots:
       colormap: 2.3.2
       rust-melspec-wasm: 0.1.0-alpha.2
 
-  react-day-picker@9.7.0(react@19.1.0):
+  react-day-picker@9.8.0(react@19.1.0):
     dependencies:
       '@date-fns/tz': 1.2.0
       date-fns: 4.1.0

@@ -5,14 +5,14 @@
  * Single responsibility: Handle context retrieval, token management, and conversation summaries.
  */
 
-import { ChatSession as _ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { ConversationContextWindow } from '../../../domain/value-objects/session-management/ConversationContextWindow';
+import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
+import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
 import { ConversationContextOrchestrator } from '../../../domain/services/conversation/ConversationContextOrchestrator';
 import { ITokenCountingService } from '../../../domain/services/interfaces/ITokenCountingService';
-import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
-import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ContextAnalysisInput } from '../../../domain/types/ChatbotTypes';
+import { SummaryExtractionService } from '../../../domain/utilities/SummaryExtractionService';
+import { ConversationContextWindow } from '../../../domain/value-objects/session-management/ConversationContextWindow';
 
 export interface TokenAwareContextResult {
   messages: ContextAnalysisInput['messages'];
@@ -28,6 +28,14 @@ export class ConversationContextManagementService {
     private readonly sessionRepository: IChatSessionRepository,
     private readonly messageRepository: IChatMessageRepository
   ) {}
+
+  /**
+   * Application Layer: Extract string from any conversation summary format
+   * This handles the data transformation concern properly at application boundary
+   */
+  private extractSummaryText(summary?: string | Record<string, unknown>): string {
+    return SummaryExtractionService.extractSummaryText(summary);
+  }
 
   /**
    * Get token-aware context for conversation
@@ -55,8 +63,8 @@ export class ConversationContextManagementService {
     const session = await this.sessionRepository.findById(sessionId);
     const existingSummary = session?.contextData.conversationSummary;
     
-    // Use enhanced object format only
-    const summaryText = existingSummary?.fullSummary;
+    // Application Layer: Extract string from any summary format (DDD-compliant data transformation)
+    const summaryText = this.extractSummaryText(existingSummary);
 
     // Use context orchestrator (enhanced method removed - now using API-driven compression)
     const contextResult = await this.conversationContextOrchestrator.getMessagesForContextWindow(

@@ -7,7 +7,13 @@
  * - Follow @golden-rule patterns exactly
  */
 
+// Basic query operations
 export { ChatMessageBasicQueryService } from './ChatMessageBasicQueryService';
+
+// Search functionality
 export { ChatMessageSearchService } from './ChatMessageSearchService';
 export type { SearchFilters } from './ChatMessageSearchService';
-export { ChatMessageAnalyticsQueryService } from './ChatMessageAnalyticsQueryService'; 
+
+// Analytics and specialized queries
+export { ChatMessageAdvancedAnalyticsQueryService } from './ChatMessageAdvancedAnalyticsQueryService';
+export { ChatMessagePerformanceQueryService } from './ChatMessagePerformanceQueryService'; 

@@ -12,8 +12,10 @@
  * - Maintain clean separation of concerns
  */
 
-import { ChatSession } from '../../entities/ChatSession';
 import { ChatMessage } from '../../entities/ChatMessage';
+import { ChatSession } from '../../entities/ChatSession';
+import { MessageValidationUtils } from '../../utilities/MessageValidationUtils';
+import { SummaryExtractionService } from '../../utilities/SummaryExtractionService';
 import { ContextAnalysis } from '../../value-objects/message-processing/ContextAnalysis';
 import { IntentPersistenceService } from '../session-management/IntentPersistenceService';
 import { ApiAnalysisData } from './ConversationContextOrchestrator';
@@ -97,28 +99,28 @@ export class ConversationSessionUpdateService {
    * AI INSTRUCTIONS: Simple summary without complex business rule dependencies
    */
   private createSimpleConversationSummary(messages: ChatMessage[]): string {
-    // Safety check: Filter out any non-ChatMessage objects
-    const validMessages = messages.filter(m => m && typeof m.isFromUser === 'function');
+    // Use consolidated message validation and statistics
+    const messageStats = MessageValidationUtils.getMessageStatistics(messages);
+    const userMessages = MessageValidationUtils.getUserMessages(messages);
     
-    if (validMessages.length === 0) {
+    if (messageStats.validMessages === 0) {
       return 'No valid messages yet';
     }
     
-    const userMessages = validMessages.filter(m => m.isFromUser());
-    const _botMessages = validMessages.filter(m => !m.isFromUser());
-    
-    if (userMessages.length === 0) {
+    if (messageStats.userMessages === 0) {
       return 'No user messages yet';
     }
     
-    const totalMessages = validMessages.length;
-    const conversationLength = userMessages.length;
+    // Get last user message content for preview
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    const lastMessageContent = lastUserMessage?.content;
     
-    // Simple summary based on message count and basic patterns
-    const summary = `Conversation with ${conversationLength} user messages (${totalMessages} total). ` +
-      `Latest user message: "${userMessages[userMessages.length - 1]?.content.substring(0, 100)}..."`;
-    
-    return summary;
+    // Use consolidated summary creation
+    return SummaryExtractionService.createSimpleSummary(
+      messageStats.userMessages,
+      messageStats.totalMessages,
+      lastMessageContent
+    );
   }
 
   /** Update conversation summary from messages */

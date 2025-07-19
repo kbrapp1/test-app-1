@@ -4,7 +4,12 @@ import { IChatMessageRepository } from '../../../domain/repositories/IChatMessag
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatMessageCrudService } from './services/ChatMessageCrudService';
 import { ChatMessageAnalyticsService } from './services/ChatMessageAnalyticsService';
-import { ChatMessageQueryService } from './services/ChatMessageQueryService';
+import { 
+  ChatMessageBasicQueryService, 
+  ChatMessageAdvancedAnalyticsQueryService,
+  ChatMessagePerformanceQueryService,
+  ChatMessageSearchService 
+} from './services/chat-message-queries';
 import { ChatMessageMapper } from './mappers/ChatMessageMapper';
 import { DatabaseError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
@@ -21,7 +26,10 @@ import { ChatbotWidgetCompositionRoot } from '../../composition/ChatbotWidgetCom
 export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   private crudService: ChatMessageCrudService;
   private analyticsService: ChatMessageAnalyticsService;
-  private queryService: ChatMessageQueryService;
+  private basicQueryService: ChatMessageBasicQueryService;
+  private advancedAnalyticsQueryService: ChatMessageAdvancedAnalyticsQueryService;
+  private performanceQueryService: ChatMessagePerformanceQueryService;
+  private searchService: ChatMessageSearchService;
   private supabase: SupabaseClient;
   private readonly loggingService: IChatbotLoggingService;
 
@@ -29,7 +37,10 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
     this.supabase = supabaseClient ?? createClient();
     this.crudService = new ChatMessageCrudService(this.supabase);
     this.analyticsService = new ChatMessageAnalyticsService(this.supabase);
-    this.queryService = new ChatMessageQueryService(this.supabase);
+    this.basicQueryService = new ChatMessageBasicQueryService(this.supabase);
+    this.advancedAnalyticsQueryService = new ChatMessageAdvancedAnalyticsQueryService(this.supabase);
+    this.performanceQueryService = new ChatMessagePerformanceQueryService(this.supabase);
+    this.searchService = new ChatMessageSearchService(this.supabase);
     
     // Initialize centralized logging service
     this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
@@ -48,7 +59,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
     return this.crudService.findVisibleBySessionId(sessionId);
   }
 
-  // Query operations - delegated to QueryService
+  // Query operations - delegated to BasicQueryService
   async findBySessionIdWithPagination(
     sessionId: string,
     page: number,
@@ -60,7 +71,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
     limit: number;
     totalPages: number;
   }> {
-    return this.queryService.findBySessionIdWithPagination(sessionId, page, limit);
+    return this.basicQueryService.findBySessionIdWithPagination(sessionId, page, limit);
   }
 
   // CRUD operations continued - delegated to CrudService
@@ -109,7 +120,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
   }
 
   async findRecentByOrganizationId(organizationId: string, limit: number): Promise<ChatMessage[]> {
-    return this.queryService.findRecentByOrganizationId(organizationId, limit);
+    return this.basicQueryService.findRecentByOrganizationId(organizationId, limit);
   }
 
   async searchByContent(
@@ -122,7 +133,87 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
       sessionId?: string;
     }
   ): Promise<ChatMessage[]> {
-    return this.queryService.searchByContent(organizationId, searchTerm, filters);
+    return this.searchService.searchByContent(organizationId, searchTerm, filters);
+  }
+
+  // Enhanced query operations - using refactored specialized services
+  async getMessagesForOrganization(
+    organizationId: string,
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]> {
+    return this.basicQueryService.getMessagesForOrganization(organizationId, dateFrom, dateTo);
+  }
+
+  async getMessagesByTypeWithDateRange(
+    organizationId: string,
+    messageType: 'user' | 'bot' | 'system',
+    dateFrom: Date,
+    dateTo: Date
+  ): Promise<ChatMessage[]> {
+    return this.basicQueryService.getMessagesByTypeWithDateRange(organizationId, messageType, dateFrom, dateTo);
+  }
+
+  // Advanced analytics queries - delegated to AdvancedAnalyticsQueryService
+  async findByIntentDetected(
+    organizationId: string,
+    intent: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.advancedAnalyticsQueryService.findByIntentDetected(organizationId, intent, dateFrom, dateTo, limit);
+  }
+
+  async findBySentiment(
+    organizationId: string,
+    sentiment: 'positive' | 'neutral' | 'negative',
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.advancedAnalyticsQueryService.findBySentiment(organizationId, sentiment, dateFrom, dateTo, limit);
+  }
+
+  async findMessagesByModel(
+    organizationId: string,
+    model: string,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.advancedAnalyticsQueryService.findMessagesByModel(organizationId, model, dateFrom, dateTo, limit);
+  }
+
+  // Performance analytics queries - delegated to PerformanceQueryService
+  async findHighCostMessages(
+    organizationId: string,
+    minCostCents: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.performanceQueryService.findHighCostMessages(organizationId, minCostCents, dateFrom, dateTo, limit);
+  }
+
+  async findSlowResponseMessages(
+    organizationId: string,
+    minResponseTimeMs: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.performanceQueryService.findSlowResponseMessages(organizationId, minResponseTimeMs, dateFrom, dateTo, limit);
+  }
+
+  async findMessagesByTokenUsage(
+    organizationId: string,
+    minTokens: number,
+    dateFrom?: Date,
+    dateTo?: Date,
+    limit?: number
+  ): Promise<ChatMessage[]> {
+    return this.performanceQueryService.findMessagesByTokenUsage(organizationId, minTokens, dateFrom, dateTo, limit);
   }
 
   // Analytics operations - delegated to AnalyticsService
@@ -168,7 +259,7 @@ export class ChatMessageSupabaseRepository implements IChatMessageRepository {
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatMessage[]> {
-    return this.analyticsService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
+    return this.basicQueryService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
   }
 
   async getResponseTimeMetrics(

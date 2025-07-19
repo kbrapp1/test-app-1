@@ -12,6 +12,7 @@
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { EntityAccumulationService } from '../../../domain/services/context/EntityAccumulationService';
+import { EntityMergeContext } from '../../../domain/value-objects/context/EntityMergeContext';
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
 import { ExtractedEntities } from '../../../domain/value-objects/message-processing/IntentResult';
 import { IChatbotLoggingService, ISessionLogger as _ISessionLogger } from '../../../domain/services/interfaces/IChatbotLoggingService';
@@ -85,15 +86,17 @@ export class EntityMergeProcessorService {
       : null;
 
     // Merge single entities
+    const mergeContext = EntityMergeContext.create({
+      messageId: botMessage.id,
+      defaultConfidence: 0.9,
+      enableDeduplication: true,
+      confidenceThreshold: 0.7
+    });
+    
     const entityMergeResult = EntityAccumulationService.mergeEntitiesWithCorrections(
       existingAccumulatedEntities,
       freshEntities,
-      {
-        messageId: botMessage.id,
-        defaultConfidence: 0.9,
-        enableDeduplication: true,
-        confidenceThreshold: 0.7
-      }
+      mergeContext
     );
 
     // Process array entities separately

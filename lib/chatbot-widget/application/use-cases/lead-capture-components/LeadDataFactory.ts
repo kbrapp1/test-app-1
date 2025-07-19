@@ -12,10 +12,11 @@
 
 import { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
-import { ContactInfo } from '../../../domain/value-objects/lead-management/ContactInfo';
-import { QualificationData } from '../../../domain/value-objects/lead-management/QualificationData';
-import { LeadSource } from '../../../domain/value-objects/lead-management/LeadSource';
+import { SummaryExtractionService } from '../../../domain/utilities/SummaryExtractionService';
 import { AccumulatedEntities } from '../../../domain/value-objects/context/AccumulatedEntities';
+import { ContactInfo } from '../../../domain/value-objects/lead-management/ContactInfo';
+import { LeadSource } from '../../../domain/value-objects/lead-management/LeadSource';
+import { QualificationData } from '../../../domain/value-objects/lead-management/QualificationData';
 
 export interface LeadDataFactoryInput {
   session: ChatSession;
@@ -94,19 +95,10 @@ export class LeadDataFactory {
 
   /** Create conversation summary from session */
   private static createConversationSummary(session: ChatSession): string {
-    const conversationSummary = session.contextData.conversationSummary;
-    
-    if (conversationSummary) {
-      // Use enhanced object format only
-      return conversationSummary.fullSummary;
-    }
-
-    const topics = session.contextData.topics || [];
-    if (topics.length > 0) {
-      return `Chatbot session discussing: ${topics.join(', ')}`;
-    }
-
-    return 'General chatbot conversation session';
+    return SummaryExtractionService.extractForLeadData(
+      session.contextData.conversationSummary,
+      session.contextData.topics
+    );
   }
 
   /** Extract pain points from session context */

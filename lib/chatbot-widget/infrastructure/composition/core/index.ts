@@ -10,5 +10,13 @@
 
 export { InfrastructureServiceCompositionService } from './InfrastructureServiceCompositionService';
 export { KnowledgeServiceCompositionService } from './KnowledgeServiceCompositionService';
-export { CoreDomainServiceCompositionService } from './CoreDomainServiceCompositionService';
 export { ConversationFlowCompositionService } from './ConversationFlowCompositionService';
+
+// Main composition service (unified facade)
+export { CoreDomainServiceCompositionService } from './CoreDomainServiceCompositionService';
+
+// Specialized composition services
+export { SessionManagementCompositionService } from './SessionManagementCompositionService';
+export { ContentProcessingCompositionService } from './ContentProcessingCompositionService';
+export { LeadManagementCompositionService } from './LeadManagementCompositionService';
+export { CoreUtilityCompositionService } from './CoreUtilityCompositionService';

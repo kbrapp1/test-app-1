@@ -1,3 +1,14 @@
+/**
+ * Vector Knowledge Retrieval Service (Refactored)
+ * 
+ * AI INSTRUCTIONS:
+ * - Single responsibility: Orchestrate knowledge search operations with delegation
+ * - Domain service focused on coordination between specialized services
+ * - Uses composition to delegate specific concerns to focused services
+ * - Keep under 200-250 lines per @golden-rule
+ * - Maintain interface compatibility while improving internal structure
+ */
+
 import { 
   IKnowledgeRetrievalService, 
   KnowledgeItem, 
@@ -7,38 +18,38 @@ import {
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
 import { IEmbeddingService } from './interfaces/IEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
-import { 
-  KnowledgeRetrievalError as _KnowledgeRetrievalError, 
-  VectorSearchError, 
-  EmbeddingGenerationError,
-  KnowledgeCacheError as _KnowledgeCacheError,
-  PerformanceThresholdError 
-} from '../errors/ChatbotWidgetDomainErrors';
-import { IEmbeddingService as _IEmbeddingService } from './interfaces/IEmbeddingService';
-import { IChatbotLoggingService, ISessionLogger } from './interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeCacheWarmingService, CacheWarmingMetrics } from './KnowledgeCacheWarmingService';
 import { KnowledgeManagementService, KnowledgeStatsResult, HealthCheckResult } from './KnowledgeManagementService';
 import { VectorKnowledgeCache } from './VectorKnowledgeCache';
 import { VectorCacheStats } from '../types/VectorCacheTypes';
 
+// Extracted specialized services
+import { KnowledgeSearchExecutionService } from './knowledge-processing/KnowledgeSearchExecutionService';
+import { VectorCacheInitializationService } from './knowledge-processing/VectorCacheInitializationService';
+import { SearchMetricsLoggingService } from './knowledge-processing/SearchMetricsLoggingService';
+
 /**
- * Vector Knowledge Retrieval Service
+ * Refactored Vector Knowledge Retrieval Service
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Knowledge search and retrieval with in-memory vector caching
- * - Domain service focused on semantic search operations
- * - Uses VectorKnowledgeCache for fast in-memory similarity search
- * - Delegate cache warming to KnowledgeCacheWarmingService
- * - Delegate management operations to KnowledgeManagementService
- * - Use structured logging for search operations
- * - Keep under 200-250 lines per @golden-rule
+ * - Orchestrates knowledge search through specialized services
+ * - Delegates cache initialization to VectorCacheInitializationService
+ * - Delegates search execution to KnowledgeSearchExecutionService
+ * - Delegates metrics logging to SearchMetricsLoggingService
+ * - Maintains backward compatibility with existing interface
+ * - Focuses on coordination rather than implementation details
  */
 export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalService {
   private readonly loggingService: IChatbotLoggingService;
   private readonly cacheWarmingService: KnowledgeCacheWarmingService;
   private readonly managementService: KnowledgeManagementService;
   private readonly vectorCache: VectorKnowledgeCache;
+  
+  // Extracted specialized services
+  private readonly searchExecutionService: KnowledgeSearchExecutionService;
+  private readonly cacheInitializationService: VectorCacheInitializationService;
   
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
@@ -57,12 +68,27 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
       {
         maxMemoryKB: 50 * 1024, // 50MB limit
         maxVectors: 10000, // Maximum 10k vectors
-        // AI: Removed LRU eviction - let serverless platform handle memory management
         evictionBatchSize: 100 // Evict 100 vectors at a time
       }
     );
     
-    // Initialize specialized services
+    // Initialize specialized services for core responsibilities
+    this.searchExecutionService = new KnowledgeSearchExecutionService(
+      this.embeddingService,
+      this.vectorCache,
+      this.organizationId,
+      this.chatbotConfigId
+    );
+    
+    this.cacheInitializationService = new VectorCacheInitializationService(
+      this.vectorRepository,
+      this.vectorCache,
+      this.loggingService,
+      this.organizationId,
+      this.chatbotConfigId
+    );
+    
+    // Initialize existing specialized services
     this.cacheWarmingService = new KnowledgeCacheWarmingService(
       this.vectorRepository,
       this.embeddingService,
@@ -77,28 +103,25 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     );
   }
 
+  /**
+   * Execute knowledge search with full delegation to specialized services
+   * 
+   * AI INSTRUCTIONS:
+   * - Coordinates search operation through specialized services
+   * - Handles cache initialization if needed
+   * - Delegates search execution and metrics logging
+   * - Maintains error handling and business rule validation
+   * - Provides comprehensive logging and performance tracking
+   */
   async searchKnowledge(context: KnowledgeRetrievalContext): Promise<KnowledgeSearchResult> {
     const startTime = Date.now();
     
-    if (!context.userQuery?.trim()) {
-      throw new BusinessRuleViolationError(
-        'Query is required for knowledge search',
-        { context, organizationId: this.organizationId }
-      );
-    }
-
     try {
-      // Create session logger with context - use a dummy session ID if not provided
+      // Create session logger with context
       const sessionId = (context as { sessionId?: string }).sessionId || 'unknown-session';
-      
-      // Shared log file is required for all logging operations
-      if (!context.sharedLogFile) {
-        throw new Error('SharedLogFile is required for knowledge search operations - all logging must be conversation-specific');
-      }
-      
       const logger = this.loggingService.createSessionLogger(
         sessionId,
-        context.sharedLogFile,
+        context.sharedLogFile!,
         {
           sessionId,
           operation: 'knowledge-search',
@@ -106,155 +129,70 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
         }
       );
 
-      // Initialize vector cache if not already done
-      // AI: Check if background warming completed first to avoid unnecessary initialization
-      if (!this.vectorCache.isReady()) {
-        logger.logMessage('⚠️ Vector cache not ready - initializing during user interaction (this may cause delay)');
-        await this.initializeVectorCache(context.sharedLogFile, logger);
-      }
-
-      // Log the embeddings step - use synchronous logging to ensure proper ordering
-      logger.logStep('3.1: Generate embeddings for user query');
-      
-      // Log user query without timestamp for cleaner format
-      logger.logRaw(`User query: "${context.userQuery}"`);
-      logger.logMessage(`Query length: ${context.userQuery.length} characters`);
-
-      // Set embedding service log context to capture cache hit/miss info
-      this.embeddingService.setLogContext({
-        logEntry: (message: string) => logger.logMessage(message)
-      });
-
-      const embeddingStartTime = Date.now();
-      
-      // Generate embedding for search query (with cache logging)
-      let queryEmbedding: number[];
-      try {
-        queryEmbedding = await this.embeddingService.generateEmbedding(context.userQuery);
-      } catch (error) {
-        // Track embedding generation error
-        throw new EmbeddingGenerationError('user_query', {
-          query: context.userQuery,
-          error: error instanceof Error ? error.message : String(error),
+      // Log search start with context
+      SearchMetricsLoggingService.logSearchStart(
+        logger,
+        {
           organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        });
-      }
-      
-      const embeddingTimeMs = Date.now() - embeddingStartTime;
-      
-      // Use synchronous logging for embedding completion to maintain order
-      if (typeof (logger as { logMessageSync?: (message: string) => void }).logMessageSync === 'function') {
-        (logger as { logMessageSync: (message: string) => void }).logMessageSync('✅ Embeddings generated successfully');
-        (logger as { logMessageSync: (message: string) => void }).logMessageSync(`Vector dimensions: ${queryEmbedding.length}`);
-        (logger as { logMessageSync: (message: string) => void }).logMessageSync(`Embedding time: ${embeddingTimeMs}ms`);
-      } else {
-        logger.logMessage('✅ Embeddings generated successfully');
-        logger.logMessage(`Vector dimensions: ${queryEmbedding.length}`);
-        logger.logMessage(`Embedding time: ${embeddingTimeMs}ms`);
-      }
-      
-      // Log cache statistics for performance monitoring
-      const embeddingCacheStats = this.embeddingService.getCacheStats();
-      logger.logMessage(`📊 Embedding Cache: ${embeddingCacheStats.size}/${embeddingCacheStats.maxSize} entries (${embeddingCacheStats.utilizationPercent}% full)`);
-
-      // Log the search step
-      logger.logStep('3.2: Search knowledge base using in-memory vector cache');
-      logger.logMessage(`Organization: ${this.organizationId}`);
-      logger.logMessage(`Chatbot Config: ${this.chatbotConfigId}`);
-      logger.logMessage(`Search threshold: ${context.minRelevanceScore || 0.15}`);
-      logger.logMessage(`Result limit: ${context.maxResults || 5}`);
-
-      // Get vector cache statistics
-      const vectorCacheStats = this.vectorCache.getCacheStats();
-      logger.logMessage(`📊 Vector Cache: ${vectorCacheStats.totalVectors} vectors (${vectorCacheStats.memoryUsageKB} KB)`);
-
-      const searchStartTime = Date.now();
-
-      // Search knowledge using in-memory vector cache
-      let searchResults;
-      try {
-        searchResults = await this.vectorCache.searchVectors(
-          queryEmbedding,
-          {
-            threshold: context.minRelevanceScore || 0.15,
-            limit: context.maxResults || 5
-          },
-          context.sharedLogFile
-        );
-      } catch (error) {
-        // Track vector search error
-        throw new VectorSearchError('in_memory_cache', {
-          query: context.userQuery,
-          threshold: context.minRelevanceScore || 0.15,
-          limit: context.maxResults || 5,
-          error: error instanceof Error ? error.message : String(error),
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        });
-      }
-
-      const searchTimeMs = Date.now() - searchStartTime;
-      const totalTimeMs = Date.now() - startTime;
-
-      // Track performance threshold violations
-      if (totalTimeMs > 5000) { // 5 second threshold
-        throw new PerformanceThresholdError('knowledge_search_duration', 5000, totalTimeMs, {
-          query: context.userQuery,
-          embeddingTimeMs,
-          searchTimeMs,
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        });
-      }
-
-      // Log search results with cache information
-      logger.logMessage(`✅ Search completed in ${searchTimeMs}ms`);
-      logger.logMessage(`Found ${searchResults.length} relevant items`);
-      logger.logMessage(`📊 Data Source: In-memory vector cache (${(vectorCacheStats.cacheHitRate * 100).toFixed(1)}% cache efficiency)`);
-      
-      if (searchResults.length > 0) {
-        logger.logMessage(`Best match similarity: ${searchResults[0].similarity.toFixed(3)}`);
-        logger.logMessage(`Worst match similarity: ${searchResults[searchResults.length - 1].similarity.toFixed(3)}`);
-        
-        // Log search result details
-        logger.logRaw('');
-        logger.logMessage('📋 Search Results Summary:');
-        searchResults.forEach((result, index) => {
-          logger.logMessage(`  ${index + 1}. "${result.item.title}" (similarity: ${result.similarity.toFixed(3)})`);
-          logger.logMessage(`     Category: ${result.item.category || 'none'}, Source: ${result.item.source}`);
-        });
-      } else {
-        logger.logMessage('⚠️ No relevant knowledge items found above threshold');
-      }
-
-      // Log performance metrics
-      logger.logRaw('');
-      logger.logMetrics('knowledge-search', {
-        duration: totalTimeMs,
-        customMetrics: {
-          embeddingTimeMs,
-          searchTimeMs,
-          resultsFound: searchResults.length,
-          queryLength: context.userQuery.length,
-          vectorDimensions: queryEmbedding.length,
-          vectorsCached: vectorCacheStats.totalVectors,
-          cacheMemoryKB: vectorCacheStats.memoryUsageKB
+          chatbotConfigId: this.chatbotConfigId,
+          sessionId,
+          userQuery: context.userQuery
         }
-      });
+      );
 
-      return {
-        items: searchResults.map(result => ({
-          ...result.item,
-          relevanceScore: result.similarity
-        })),
-        totalFound: searchResults.length,
-        searchQuery: context.userQuery,
-        searchTimeMs: totalTimeMs
-      };
+      // Check and initialize vector cache if needed
+      const isReady = this.cacheInitializationService.isReady();
+      SearchMetricsLoggingService.logCacheReadiness(logger, this.vectorCache, isReady);
+
+      if (!isReady) {
+        await this.cacheInitializationService.initializeWithLogger(
+          context.sharedLogFile!,
+          logger
+        );
+      }
+
+      // Execute search through specialized service
+      const { result, metrics } = await this.searchExecutionService.executeSearch(
+        context,
+        logger
+      );
+
+      // Log comprehensive metrics
+      SearchMetricsLoggingService.logSearchMetrics(
+        logger,
+        metrics,
+        this.vectorCache,
+        {
+          organizationId: this.organizationId,
+          chatbotConfigId: this.chatbotConfigId,
+          sessionId,
+          userQuery: context.userQuery
+        }
+      );
+
+      return result;
 
     } catch (error) {
       const errorTimeMs = Date.now() - startTime;
+      
+      // Log error with context
+      if (context.sharedLogFile) {
+        const logger = this.loggingService.createSessionLogger(
+          'search-error',
+          context.sharedLogFile,
+          { operation: 'knowledge-search-error', organizationId: this.organizationId }
+        );
+        
+        SearchMetricsLoggingService.logSearchError(
+          logger,
+          error instanceof Error ? error : new Error('Unknown search error'),
+          {
+            organizationId: this.organizationId,
+            chatbotConfigId: this.chatbotConfigId,
+            userQuery: context.userQuery
+          }
+        );
+      }
       
       if (error instanceof BusinessRuleViolationError) {
         throw error;
@@ -273,69 +211,23 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
     }
   }
 
-  /** Initialize vector cache with knowledge base vectors
- */
-  private async initializeVectorCache(sharedLogFile: string, logger: ISessionLogger): Promise<void> {
-    try {
-      logger.logStep('Vector Cache Initialization');
-      logger.logMessage('Loading knowledge vectors into memory cache...');
-
-      // Load all knowledge vectors with actual embeddings from database
-      const allVectors = await this.vectorRepository.getAllKnowledgeVectors(
-        this.organizationId,
-        this.chatbotConfigId
-      );
-
-      logger.logMessage(`Found ${allVectors.length} knowledge vectors in database`);
-
-      // Initialize cache with actual vectors
-      const initResult = await this.vectorCache.initialize(allVectors, sharedLogFile);
-
-      logger.logMessage(`✅ Vector cache initialized: ${initResult.vectorsLoaded} vectors loaded`);
-      logger.logMessage(`📊 Memory usage: ${initResult.memoryUsageKB} KB`);
-      
-    } catch (error) {
-      logger.logError(error instanceof Error ? error : new Error('Vector cache initialization failed'));
-      throw new BusinessRuleViolationError(
-        'Failed to initialize vector cache',
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
-      );
-    }
-  }
-
-  /** Public method to initialize vector cache during session startup
+  /**
+   * Initialize vector cache for session startup
    * 
    * AI INSTRUCTIONS:
-   * - Direct vector cache initialization for session startup
-   * - Avoids redundant dummy search approach
-   * - Ensures cache is ready before user interactions
-   * - Reuses existing initializeVectorCache logic
+   * - Delegates to VectorCacheInitializationService
+   * - Provides clean interface for session preparation
+   * - Maintains existing interface compatibility
    */
   async initializeVectorCacheForSession(sharedLogFile: string): Promise<void> {
-    if (this.vectorCache.isReady()) {
-      return; // Already initialized
-    }
-
-    const logger = this.loggingService.createSessionLogger(
-      'vector-cache-init',
-      sharedLogFile,
-      {
-        operation: 'initializeVectorCacheForSession',
-        organizationId: this.organizationId
-      }
-    );
-
-    await this.initializeVectorCache(sharedLogFile, logger);
+    await this.cacheInitializationService.initializeForSession(sharedLogFile);
   }
 
-  /** Check if vector cache is ready for use
+  /**
+   * Check if vector cache is ready for use
    */
   isVectorCacheReady(): boolean {
-    return this.vectorCache.isReady();
+    return this.cacheInitializationService.isReady();
   }
 
   // Delegate cache warming to specialized service
@@ -381,7 +273,7 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
   async healthCheck(sharedLogFile?: string): Promise<boolean> {
     try {
       const healthResult = await this.managementService.checkHealthStatus(sharedLogFile);
-      return healthResult.status === 'healthy' && this.vectorCache.isReady();
+      return healthResult.status === 'healthy' && this.cacheInitializationService.isReady();
     } catch {
       return false;
     }
@@ -404,4 +296,4 @@ export class VectorKnowledgeRetrievalService implements IKnowledgeRetrievalServi
   getVectorCacheStats(): VectorCacheStats {
     return this.vectorCache.getCacheStats();
   }
-} 
+}

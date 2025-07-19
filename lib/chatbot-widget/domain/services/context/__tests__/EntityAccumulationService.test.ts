@@ -10,19 +10,21 @@
  * - Ensure 100% test coverage for business logic
  */
 
-import { EntityAccumulationService, EntityMergeContext, EntityMergeResult } from '../EntityAccumulationService';
+import { EntityAccumulationService } from '../EntityAccumulationService';
+import { EntityMergeContext } from '../../../value-objects/context/EntityMergeContext';
+import { EntityMergeResult } from '../../../value-objects/context/EntityMergeResult';
 import { AccumulatedEntities } from '../../../value-objects/context/AccumulatedEntities';
 import { EntityCorrections } from '../../../value-objects/context/EntityCorrections';
 import { ExtractedEntities } from '../../../value-objects/message-processing/IntentResult';
 import { BusinessRuleViolationError } from '../../../errors/ChatbotWidgetDomainErrors';
 
 describe('EntityAccumulationService', () => {
-  const mockContext: EntityMergeContext = {
+  const mockContext = EntityMergeContext.create({
     messageId: 'msg-123',
     defaultConfidence: 0.9,
     enableDeduplication: true,
     confidenceThreshold: 0.7
-  };
+  });
 
   describe('mergeEntitiesWithCorrections', () => {
     it('should create new accumulated entities when none exist', () => {
@@ -109,21 +111,31 @@ describe('EntityAccumulationService', () => {
     });
 
     it('should validate merge context', () => {
-      const invalidContext = { ...mockContext, messageId: '' };
       const freshEntities: ExtractedEntities = { budget: '10000' };
 
-      expect(() => 
-        EntityAccumulationService.mergeEntitiesWithCorrections(null, freshEntities, invalidContext)
-      ).toThrow(BusinessRuleViolationError);
+      expect(() => {
+        const invalidContext = EntityMergeContext.create({
+          messageId: '',
+          defaultConfidence: 0.9,
+          enableDeduplication: true,
+          confidenceThreshold: 0.7
+        });
+        EntityAccumulationService.mergeEntitiesWithCorrections(null, freshEntities, invalidContext);
+      }).toThrow(BusinessRuleViolationError);
     });
 
     it('should validate confidence values', () => {
-      const invalidContext = { ...mockContext, defaultConfidence: 1.5 };
       const freshEntities: ExtractedEntities = { budget: '10000' };
 
-      expect(() => 
-        EntityAccumulationService.mergeEntitiesWithCorrections(null, freshEntities, invalidContext)
-      ).toThrow(BusinessRuleViolationError);
+      expect(() => {
+        const invalidContext = EntityMergeContext.create({
+          messageId: 'msg-123',
+          defaultConfidence: 1.5,
+          enableDeduplication: true,
+          confidenceThreshold: 0.7
+        });
+        EntityAccumulationService.mergeEntitiesWithCorrections(null, freshEntities, invalidContext);
+      }).toThrow(BusinessRuleViolationError);
     });
   });
 

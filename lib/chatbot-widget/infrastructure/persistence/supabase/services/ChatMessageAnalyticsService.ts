@@ -18,7 +18,7 @@ import {
   ResponseTimeAnalyticsService,
   CostAnalyticsService
 } from './analytics';
-import { ChatMessageAnalyticsQueryService } from './chat-message-queries';
+import { ChatMessageAdvancedAnalyticsQueryService, ChatMessageBasicQueryService } from './chat-message-queries';
 
 export interface ChatAnalyticsResult {
   totalMessages: number;
@@ -51,7 +51,8 @@ export interface CostAnalytics {
 }
 
 export class ChatMessageAnalyticsService {
-  private queryService: ChatMessageAnalyticsQueryService;
+  private basicQueryService: ChatMessageBasicQueryService;
+  private advancedQueryService: ChatMessageAdvancedAnalyticsQueryService;
   private calculationService: AnalyticsCalculationService;
   private responseTimeService: ResponseTimeAnalyticsService;
   private costService: CostAnalyticsService;
@@ -59,7 +60,8 @@ export class ChatMessageAnalyticsService {
   constructor(supabaseClient?: SupabaseClient) {
     const supabase = supabaseClient ?? createClient();
     
-    this.queryService = new ChatMessageAnalyticsQueryService(supabase);
+    this.basicQueryService = new ChatMessageBasicQueryService(supabase);
+    this.advancedQueryService = new ChatMessageAdvancedAnalyticsQueryService(supabase);
     this.calculationService = new AnalyticsCalculationService();
     this.responseTimeService = new ResponseTimeAnalyticsService();
     this.costService = new CostAnalyticsService();
@@ -70,7 +72,7 @@ export class ChatMessageAnalyticsService {
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatAnalyticsResult> {
-    const messages = await this.queryService.getMessagesForOrganization(
+    const messages = await this.basicQueryService.getMessagesForOrganization(
       organizationId,
       dateFrom,
       dateTo
@@ -84,7 +86,7 @@ export class ChatMessageAnalyticsService {
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatMessage[]> {
-    return this.queryService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
+    return this.basicQueryService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
   }
 
   async getResponseTimeMetrics(
@@ -93,7 +95,7 @@ export class ChatMessageAnalyticsService {
     dateTo: Date,
     groupBy: 'hour' | 'day' | 'week'
   ): Promise<ResponseTimeMetrics[]> {
-    const messages = await this.queryService.getMessagesForOrganization(
+    const messages = await this.basicQueryService.getMessagesForOrganization(
       organizationId,
       dateFrom,
       dateTo
@@ -107,7 +109,7 @@ export class ChatMessageAnalyticsService {
     dateFrom: Date,
     dateTo: Date
   ): Promise<CostAnalytics> {
-    const messages = await this.queryService.getMessagesForOrganization(
+    const messages = await this.basicQueryService.getMessagesForOrganization(
       organizationId,
       dateFrom,
       dateTo

@@ -11,64 +11,16 @@
  */
 
 import { Lead } from '../../../../domain/entities/Lead';
-import { ContactInfo } from '../../../../domain/value-objects/lead-management/ContactInfo';
-import { LeadSource } from '../../../../domain/value-objects/lead-management/LeadSource';
-import { QualificationData } from '../../../../domain/value-objects/lead-management/QualificationData';
 import { LeadNote } from '../../../../domain/value-objects/lead-management/LeadMetadata';
 import { FollowUpStatus } from '../../../../domain/entities/LeadLifecycleManager';
+import { ContactInfoDatabaseMapper, ContactInfoJsonb } from './ContactInfoDatabaseMapper';
+import { QualificationDataDatabaseMapper, QualificationDataJsonb } from './QualificationDataDatabaseMapper';
+import { LeadSourceDatabaseMapper, SourceJsonb } from './LeadSourceDatabaseMapper';
 
 // Define QualificationStatus locally since we removed LeadScoringService
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
-// JSONB Database Interfaces matching actual schema
-interface ContactInfoJsonb {
-  name?: string;
-  firstName?: string; 
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  jobTitle?: string;
-  website?: string;
-  linkedin?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-}
-
-interface QualificationDataJsonb {
-  answeredQuestions: Array<{
-    questionId: string;
-    question: string;
-    answer: string; // Domain allows string | string[], but JSONB stores as string
-    answeredAt: string; // ISO date
-    scoringWeight?: number; // Optional in JSONB, required in domain
-    scoreContribution?: number; // Optional in JSONB, required in domain
-  }>;
-  engagementLevel: 'low' | 'medium' | 'high';
-  budget?: string | null;
-  timeline?: string | null;
-  decisionMaker?: boolean | null;
-  currentSolution?: string | null;
-  painPoints: string[];
-  industry?: string | null;
-  companySize?: string | null;
-}
-
-interface SourceJsonb {
-  type: 'chatbot' | 'form' | 'api';
-  chatbotName?: string | null;
-  referrerUrl?: string | null;
-  campaignSource?: string | null;
-  medium: string;
-  ipAddress?: string | null;
-  userAgent?: string | null;
-}
-
+// JSONB Database Interface for LeadNote
 interface LeadNoteJsonb {
   id: string;
   content: string;
@@ -147,9 +99,9 @@ export class LeadMapper {
       organizationId: record.organization_id,
       sessionId: record.session_id,
       chatbotConfigId: record.chatbot_config_id,
-      contactInfo: this.mapContactInfo(record.contact_info),
-      qualificationData: this.mapQualificationData(record.qualification_data),
-      source: this.mapSource(record.source),
+      contactInfo: ContactInfoDatabaseMapper.mapContactInfo(record.contact_info),
+      qualificationData: QualificationDataDatabaseMapper.mapQualificationData(record.qualification_data),
+      source: LeadSourceDatabaseMapper.mapSource(record.source),
       metadata: this.mapMetadata(record.conversation_summary, record.tags, record.notes),
       leadScore: record.lead_score,
       qualificationStatus: record.qualification_status as QualificationStatus,
@@ -171,9 +123,9 @@ export class LeadMapper {
       organization_id: lead.organizationId,
       session_id: lead.sessionId,
       chatbot_config_id: lead.chatbotConfigId,
-      contact_info: this.domainContactInfoToJsonb(lead.contactInfo),
-      qualification_data: this.domainQualificationDataToJsonb(lead.qualificationData),
-      source: this.domainSourceToJsonb(lead.source),
+      contact_info: ContactInfoDatabaseMapper.domainContactInfoToJsonb(lead.contactInfo),
+      qualification_data: QualificationDataDatabaseMapper.domainQualificationDataToJsonb(lead.qualificationData),
+      source: LeadSourceDatabaseMapper.domainSourceToJsonb(lead.source),
       lead_score: lead.leadScore,
       qualification_status: lead.qualificationStatus,
       conversation_summary: lead.conversationSummary,
@@ -189,8 +141,8 @@ export class LeadMapper {
   /** Transform domain entity to update data */
   static toUpdate(lead: Lead): UpdateLeadData {
     return {
-      contact_info: this.domainContactInfoToJsonb(lead.contactInfo),
-      qualification_data: this.domainQualificationDataToJsonb(lead.qualificationData),
+      contact_info: ContactInfoDatabaseMapper.domainContactInfoToJsonb(lead.contactInfo),
+      qualification_data: QualificationDataDatabaseMapper.domainQualificationDataToJsonb(lead.qualificationData),
       lead_score: lead.leadScore,
       qualification_status: lead.qualificationStatus,
       conversation_summary: lead.conversationSummary,
@@ -203,65 +155,6 @@ export class LeadMapper {
     };
   }
 
-  /** Map JSONB contact info to domain props */
-  private static mapContactInfo(data: ContactInfoJsonb) {
-    return {
-      name: data.name,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      company: data.company,
-      jobTitle: data.jobTitle,
-      website: data.website,
-      linkedin: data.linkedin,
-      address: data.address ? {
-        street: data.address.street,
-        city: data.address.city,
-        state: data.address.state,
-        zipCode: data.address.zipCode,
-        country: data.address.country,
-      } : undefined,
-    };
-  }
-
-  /** Map JSONB qualification data to domain props */
-  private static mapQualificationData(data: QualificationDataJsonb) {
-    return {
-      budget: data.budget || undefined,
-      timeline: data.timeline || undefined,
-      decisionMaker: data.decisionMaker || undefined,
-      companySize: data.companySize || undefined,
-      industry: data.industry || undefined,
-      currentSolution: data.currentSolution || undefined,
-      painPoints: data.painPoints || [],
-      interests: [], // Not in JSONB schema, defaulting to empty
-      answeredQuestions: (data.answeredQuestions || []).map(q => ({
-        questionId: q.questionId,
-        question: q.question,
-        answer: q.answer, // Keep as string to match JSONB
-        answeredAt: new Date(q.answeredAt),
-        scoringWeight: q.scoringWeight || 0, // Provide default for required field
-        scoreContribution: q.scoreContribution || 0, // Provide default for required field
-      })),
-      engagementLevel: data.engagementLevel || 'low',
-    };
-  }
-
-  /** Map JSONB source to domain props */
-  private static mapSource(data: SourceJsonb) {
-    // Transform database schema to domain schema
-    return {
-      channel: 'chatbot_widget' as const,
-      campaign: data.campaignSource || undefined,
-      referrer: data.referrerUrl || undefined,
-      utmSource: undefined, // Not stored in current JSONB schema
-      utmMedium: data.medium || undefined,
-      utmCampaign: data.campaignSource || undefined,
-      pageUrl: data.referrerUrl || 'https://example.com', // Required field, provide fallback
-      pageTitle: data.chatbotName || undefined,
-    };
-  }
 
   /** Map metadata fields to domain props */
   private static mapMetadata(conversationSummary: string, tags: string[], notes: LeadNoteJsonb[]) {
@@ -286,66 +179,6 @@ export class LeadMapper {
     }));
   }
 
-  /** Transform domain ContactInfo to JSONB */
-  private static domainContactInfoToJsonb(contactInfo: ContactInfo): ContactInfoJsonb {
-    const props = contactInfo.toPlainObject();
-    return {
-      name: props.name,
-      firstName: props.firstName,
-      lastName: props.lastName,
-      email: props.email,
-      phone: props.phone,
-      company: props.company,
-      jobTitle: props.jobTitle,
-      website: props.website,
-      linkedin: props.linkedin,
-      address: props.address ? {
-        street: props.address.street,
-        city: props.address.city,
-        state: props.address.state,
-        zipCode: props.address.zipCode,
-        country: props.address.country,
-      } : undefined,
-    };
-  }
-
-  /** Transform domain QualificationData to JSONB */
-  private static domainQualificationDataToJsonb(qualificationData: QualificationData): QualificationDataJsonb {
-    const props = qualificationData.toPlainObject();
-    return {
-      answeredQuestions: (props.answeredQuestions || []).map(q => ({
-        questionId: q.questionId,
-        question: q.question,
-        answer: Array.isArray(q.answer) ? q.answer.join(', ') : q.answer, // Convert array to string
-        answeredAt: q.answeredAt.toISOString(),
-        scoringWeight: q.scoringWeight,
-        scoreContribution: q.scoreContribution,
-      })),
-      engagementLevel: props.engagementLevel || 'low',
-      budget: props.budget || null,
-      timeline: props.timeline || null,
-      decisionMaker: props.decisionMaker || null,
-      currentSolution: props.currentSolution || null,
-      painPoints: props.painPoints || [],
-      industry: props.industry || null,
-      companySize: props.companySize || null,
-    };
-  }
-
-  /** Transform domain LeadSource to JSONB */
-  private static domainSourceToJsonb(source: LeadSource): SourceJsonb {
-    const props = source.toPlainObject();
-    // Transform domain schema to database schema
-    return {
-      type: 'chatbot',
-      chatbotName: props.pageTitle || null,
-      referrerUrl: props.referrer || props.pageUrl || null,
-      campaignSource: props.campaign || props.utmCampaign || null,
-      medium: props.utmMedium || 'chat',
-      ipAddress: null, // Not available in domain
-      userAgent: null, // Not available in domain
-    };
-  }
 
   /** Transform domain LeadNote array to JSONB */
   private static domainNotesToJsonb(notes: LeadNote[]): LeadNoteJsonb[] {

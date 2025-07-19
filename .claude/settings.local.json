@@ -58,7 +58,11 @@
       "Bash(./node_modules/.bin/eslint.cmd:*)",
       "Bash(pnpm type-check:*)",
       "Bash(pnpm install:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(export PATH=\"$PATH:./node_modules/.bin\")",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm --package=typescript dlx tsc --noEmit)",
+      "Bash(diff:*)"
     ],
     "deny": []
   },
