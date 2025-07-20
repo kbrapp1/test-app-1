@@ -1,12 +1,22 @@
 /**
- * Knowledge Processing Error Logger
+ * Knowledge Processing Error Logger (Legacy Unified Interface)
  * 
- * Domain service responsible for logging errors in knowledge processing operations
- * following DDD principles for the chatbot domain.
+ * REFACTORED: This file now serves as a backward-compatible facade over specialized DDD domain services.
+ * New code should use the specialized loggers directly for better domain separation.
+ * 
+ * @deprecated Use specialized loggers: EmbeddingErrorLogger, VectorSearchErrorLogger, etc.
  */
 
 import { ISessionLogger } from '../../interfaces/IChatbotLoggingService';
+import { EmbeddingErrorLogger } from './EmbeddingErrorLogger';
+import { VectorSearchErrorLogger } from './VectorSearchErrorLogger';
+import { CacheErrorLogger } from './CacheErrorLogger';
+import { PerformanceErrorLogger } from './PerformanceErrorLogger';
+import { CriticalErrorLogger } from './CriticalErrorLogger';
+import { ErrorContext as DomainErrorContextVO } from '../../../value-objects/ErrorContext';
+import { ErrorImpact } from '../../../value-objects/ErrorImpact';
 
+// Legacy interface for backward compatibility
 export interface ErrorContext {
   operation: string;
   organizationId?: string;
@@ -18,10 +28,14 @@ export interface ErrorContext {
   searchOptions?: Record<string, unknown>;
 }
 
+/**
+ * @deprecated Use specialized domain loggers instead
+ */
 export class KnowledgeProcessingErrorLogger {
   
   /**
    * Log errors with comprehensive context
+   * @deprecated Use specialized loggers for better domain separation
    */
   static logError(
     logger: ISessionLogger,
@@ -43,6 +57,7 @@ export class KnowledgeProcessingErrorLogger {
 
   /**
    * Log embedding generation errors with specific context
+   * @deprecated Use EmbeddingErrorLogger.logEmbeddingError() instead
    */
   static logEmbeddingError(
     logger: ISessionLogger,
@@ -54,25 +69,13 @@ export class KnowledgeProcessingErrorLogger {
       attemptCount?: number;
     }
   ): void {
-    logger.logMessage('❌ Embedding Generation Error:');
-    logger.logMessage(`  Error: ${error.message}`);
-    logger.logMessage(`  Query Length: ${context.queryLength} chars`);
-    logger.logMessage(`  Organization: ${context.organizationId}`);
-    
-    if (context.attemptCount) {
-      logger.logMessage(`  Attempt: ${context.attemptCount}`);
-    }
-    
-    // Sanitize query for logging (remove sensitive info)
-    const sanitizedQuery = context.query.length > 100 ? 
-      context.query.substring(0, 100) + '...' : context.query;
-    logger.logMessage(`  Query Sample: "${sanitizedQuery}"`);
-    
-    logger.logError(error);
+    // Delegate to specialized logger
+    EmbeddingErrorLogger.logEmbeddingError(logger, error, context);
   }
 
   /**
    * Log vector search errors with detailed context
+   * @deprecated Use VectorSearchErrorLogger.logVectorSearchError() instead
    */
   static logVectorSearchError(
     logger: ISessionLogger,
@@ -85,22 +88,13 @@ export class KnowledgeProcessingErrorLogger {
       searchTimeMs?: number;
     }
   ): void {
-    logger.logMessage('❌ Vector Search Error:');
-    logger.logMessage(`  Error: ${error.message}`);
-    logger.logMessage(`  Cache Size: ${context.cacheSize} vectors`);
-    logger.logMessage(`  Query Dimensions: ${context.queryDimensions}`);
-    logger.logMessage(`  Threshold: ${context.threshold}`);
-    logger.logMessage(`  Limit: ${context.limit}`);
-    
-    if (context.searchTimeMs) {
-      logger.logMessage(`  Duration Before Error: ${context.searchTimeMs}ms`);
-    }
-    
-    logger.logError(error);
+    // Delegate to specialized logger
+    VectorSearchErrorLogger.logVectorSearchError(logger, error, context);
   }
 
   /**
    * Log cache initialization errors
+   * @deprecated Use CacheErrorLogger.logCacheInitializationError() instead
    */
   static logCacheInitializationError(
     logger: ISessionLogger,
@@ -112,18 +106,17 @@ export class KnowledgeProcessingErrorLogger {
       initializationStage: string;
     }
   ): void {
-    logger.logMessage('❌ Cache Initialization Error:');
-    logger.logMessage(`  Error: ${error.message}`);
-    logger.logMessage(`  Stage: ${context.initializationStage}`);
-    logger.logMessage(`  Vector Count: ${context.vectorCount}`);
-    logger.logMessage(`  Max Memory: ${context.maxMemoryKB} KB`);
-    logger.logMessage(`  Organization: ${context.organizationId}`);
-    
-    logger.logError(error);
+    // Delegate to specialized logger
+    CacheErrorLogger.logCacheInitializationError(logger, error, {
+      ...context,
+      cacheType: undefined,
+      storageBackend: undefined
+    });
   }
 
   /**
    * Log memory management errors
+   * @deprecated Use CacheErrorLogger.logMemoryError() instead
    */
   static logMemoryError(
     logger: ISessionLogger,
@@ -135,24 +128,13 @@ export class KnowledgeProcessingErrorLogger {
       vectorsAffected?: number;
     }
   ): void {
-    logger.logMessage('❌ Memory Management Error:');
-    logger.logMessage(`  Error: ${error.message}`);
-    logger.logMessage(`  Operation: ${context.operation}`);
-    logger.logMessage(`  Current Memory: ${context.currentMemoryKB} KB`);
-    
-    if (context.targetMemoryKB) {
-      logger.logMessage(`  Target Memory: ${context.targetMemoryKB} KB`);
-    }
-    
-    if (context.vectorsAffected) {
-      logger.logMessage(`  Vectors Affected: ${context.vectorsAffected}`);
-    }
-    
-    logger.logError(error);
+    // Delegate to specialized logger
+    CacheErrorLogger.logMemoryError(logger, error, context);
   }
 
   /**
    * Log configuration validation errors
+   * @deprecated Use domain-specific error handling instead
    */
   static logConfigurationError(
     logger: ISessionLogger,
@@ -185,6 +167,7 @@ export class KnowledgeProcessingErrorLogger {
 
   /**
    * Log performance threshold violations
+   * @deprecated Use PerformanceErrorLogger.logPerformanceError() instead
    */
   static logPerformanceError(
     logger: ISessionLogger,
@@ -195,20 +178,16 @@ export class KnowledgeProcessingErrorLogger {
       additionalMetrics?: Record<string, number>;
     }
   ): void {
-    logger.logMessage(`⚠️ Performance Threshold Exceeded [${operation}]:`);
-    logger.logMessage(`  Actual Time: ${context.actualTimeMs}ms`);
-    logger.logMessage(`  Max Allowed: ${context.maxAllowedTimeMs}ms`);
-    logger.logMessage(`  Overage: ${context.actualTimeMs - context.maxAllowedTimeMs}ms`);
-    
-    if (context.additionalMetrics) {
-      Object.entries(context.additionalMetrics).forEach(([key, value]) => {
-        logger.logMessage(`  ${key}: ${value}`);
-      });
-    }
+    // Delegate to specialized logger
+    PerformanceErrorLogger.logPerformanceError(logger, operation, {
+      ...context,
+      operation
+    });
   }
 
   /**
    * Log error recovery attempts
+   * @deprecated Use PerformanceErrorLogger.logErrorRecoveryPerformance() for performance impact tracking
    */
   static logErrorRecovery(
     logger: ISessionLogger,
@@ -244,6 +223,7 @@ export class KnowledgeProcessingErrorLogger {
 
   /**
    * Log critical system errors that require immediate attention
+   * @deprecated Use CriticalErrorLogger.logCriticalError() with proper domain value objects instead
    */
   static logCriticalError(
     logger: ISessionLogger,
@@ -255,39 +235,11 @@ export class KnowledgeProcessingErrorLogger {
       userFacing: boolean;
     }
   ): void {
-    logger.logMessage('🚨 CRITICAL ERROR DETECTED:');
-    logger.logMessage(`  Error: ${error.message}`);
-    logger.logMessage(`  Operation: ${context.operation}`);
-    logger.logMessage(`  Scope: ${impact.scope}`);
-    logger.logMessage(`  Severity: ${impact.severity}`);
-    logger.logMessage(`  User Facing: ${impact.userFacing ? 'Yes' : 'No'}`);
+    // Convert legacy interfaces to domain value objects
+    const errorContext = DomainErrorContextVO.create(context);
+    const errorImpact = ErrorImpact.create(impact);
     
-    if (context.organizationId) {
-      logger.logMessage(`  Organization: ${context.organizationId}`);
-    }
-    
-    if (context.sessionId) {
-      logger.logMessage(`  Session: ${context.sessionId}`);
-    }
-    
-    // Log additional context
-    Object.entries(context).forEach(([key, value]) => {
-      if (key !== 'operation' && value !== undefined) {
-        logger.logMessage(`  ${key}: ${String(value)}`);
-      }
-    });
-    
-    logger.logError(error);
-    
-    // Log structured metrics for alerting
-    logger.logMetrics('critical-error', {
-      duration: 0,
-      customMetrics: {
-        severityLevel: impact.severity === 'critical' ? 4 : impact.severity === 'high' ? 3 : impact.severity === 'medium' ? 2 : 1,
-        scopeLevel: impact.scope === 'system' ? 3 : impact.scope === 'organization' ? 2 : 1,
-        userFacing: impact.userFacing ? 1 : 0,
-        errorTypeHash: error.constructor.name.length
-      }
-    });
+    // Delegate to specialized logger
+    CriticalErrorLogger.logCriticalError(logger, error, errorContext, errorImpact);
   }
 }

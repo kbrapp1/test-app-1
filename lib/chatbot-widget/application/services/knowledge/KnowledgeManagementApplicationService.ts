@@ -210,13 +210,27 @@ export class KnowledgeManagementApplicationService {
   async getComprehensiveHealthAssessment(sharedLogFile?: string): Promise<{
     healthCheck: HealthCheckResult;
     statistics: KnowledgeStatsResult;
-    assessment: any;
+    assessment: {
+      totalItems: number;
+      healthScore: number;
+      recommendations: string[];
+    };
   }> {
-    return await this.statisticsService.getComprehensiveHealthAssessment(
+    const result = await this.statisticsService.getComprehensiveHealthAssessment(
       this.organizationId, // Security: Use validated organization context
       this.chatbotConfigId,
       sharedLogFile
     );
+
+    return {
+      healthCheck: result.healthCheck,
+      statistics: result.statistics,
+      assessment: {
+        totalItems: result.statistics.totalItems,
+        healthScore: result.assessment.score,
+        recommendations: result.assessment.recommendations
+      }
+    };
   }
 
   /**

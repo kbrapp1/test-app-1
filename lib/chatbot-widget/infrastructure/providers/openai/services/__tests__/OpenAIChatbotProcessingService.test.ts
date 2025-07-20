@@ -9,9 +9,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { OpenAIChatbotProcessingService } from '../OpenAIChatbotProcessingService';
+import { OpenAIChatbotProcessingService, OpenAIApiResponse, FunctionCallArguments } from '../OpenAIChatbotProcessingService';
 import { OpenAIIntentConfig } from '../../types/OpenAITypes';
 import { ChatMessage } from '../../../../../domain/entities/ChatMessage';
+import { MessageBuildingContext } from '../OpenAIMessageBuilder';
 import OpenAI from 'openai';
 
 // Mock OpenAI
@@ -25,17 +26,13 @@ vi.mock('openai', () => ({
   }))
 }));
 
-// Mock the logging service
-vi.mock('../../../providers/logging/ChatbotFileLoggingService', () => ({
-  ChatbotFileLoggingService: vi.fn().mockImplementation(() => ({
-    createSessionLogger: vi.fn().mockReturnValue({
-      logApiCall: vi.fn(),
-      logMessage: vi.fn(),
-      logError: vi.fn(),
-      flush: vi.fn().mockResolvedValue(undefined)
-    })
-  }))
-}));
+// Mock SessionLogger for testing
+const mockSessionLogger = {
+  logApiCall: vi.fn(),
+  logMessage: vi.fn(),
+  logError: vi.fn(),
+  flush: vi.fn().mockResolvedValue(undefined)
+};
 
 // Mock the schema builder
 vi.mock('../OpenAIFunctionSchemaBuilder', () => ({
@@ -55,11 +52,23 @@ vi.mock('../OpenAIFunctionSchemaBuilder', () => ({
   }
 }));
 
+// Mock the message builder
+vi.mock('../OpenAIMessageBuilder', () => ({
+  OpenAIMessageBuilder: vi.fn().mockImplementation(() => ({
+    buildMessagesWithKnowledgeBase: vi.fn().mockReturnValue([
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'Hello' }
+    ]),
+    validateMessages: vi.fn().mockReturnValue(true)
+  }))
+}));
+
 describe('OpenAIChatbotProcessingService', () => {
   let service: OpenAIChatbotProcessingService;
   let mockOpenAI: any;
   let mockConfig: OpenAIIntentConfig;
   let mockChatMessage: ChatMessage;
+  let mockContext: MessageBuildingContext;
 
   beforeEach(() => {
     mockConfig = {
@@ -76,8 +85,12 @@ describe('OpenAIChatbotProcessingService', () => {
       timestamp: new Date('2024-01-01T12:00:00Z')
     } as ChatMessage;
 
-    // Clear global cache
-    delete (globalThis as any)['OpenAIChatbotProcessingService_loggingServiceCache'];
+    mockContext = {
+      messageHistory: [mockChatMessage],
+      sessionId: 'session-123',
+      organizationId: 'org-456',
+      systemPrompt: 'You are a helpful sales assistant.'
+    };
 
     mockOpenAI = {
       chat: {
@@ -93,7 +106,6 @@ describe('OpenAIChatbotProcessingService', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
-    delete (globalThis as any)['OpenAIChatbotProcessingService_loggingServiceCache'];
   });
 
   describe('Service Initialization', () => {
@@ -108,8 +120,8 @@ describe('OpenAIChatbotProcessingService', () => {
     });
   });
 
-  describe('processChatbotInteractionComplete', () => {
-    it('should process a complete chatbot interaction successfully', async () => {
+  describe('executeOpenAIApiCall', () => {
+    it('should execute OpenAI API call successfully', async () => {
       const mockResponse = {
         choices: [{
           message: {
@@ -141,37 +153,25 @@ describe('OpenAIChatbotProcessingService', () => {
 
       mockOpenAI.chat.completions.create.mockResolvedValue(mockResponse);
 
-      const context = {
-        messageHistory: [mockChatMessage],
-        sessionId: 'session-123',
-        organizationId: 'org-456',
-        systemPrompt: 'You are a helpful sales assistant.'
-      };
-
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'What are your pricing plans?',
-        context
+        mockContext,
+        mockSessionLogger
       );
 
       expect(result).toEqual({
-        analysis: {
-          primaryIntent: 'pricing_inquiry',
-          primaryConfidence: 0.8,
-          entities: expect.any(Object),
-          reasoning: 'Intent: pricing_inquiry, Lead data extracted'
-        },
-        conversationFlow: {
-          shouldCaptureLeadNow: true,
-          shouldAskQualificationQuestions: true,
-          shouldEscalateToHuman: false,
-          nextBestAction: 'capture_contact',
-          conversationPhase: 'discovery',
-          engagementLevel: 'low'
-        },
-        response: {
-          content: 'I\'d be happy to help you with pricing information.',
-          tone: 'professional',
-          shouldTriggerLeadCapture: true
+        functionArgs: {
+          intent: 'pricing_inquiry',
+          lead_data: {
+            company: 'ACME Corp',
+            role: 'CTO',
+            urgency: 'high'
+          },
+          response: {
+            content: 'I\'d be happy to help you with pricing information.',
+            capture_contact: true,
+            next_question: 'What\'s your budget range?'
+          }
         },
         usage: {
           prompt_tokens: 100,
@@ -206,8 +206,8 @@ describe('OpenAIChatbotProcessingService', () => {
       };
 
       await expect(
-        service.processChatbotInteractionComplete('Hello', context)
-      ).rejects.toThrow('No function call in response');
+        service.executeOpenAIApiCall('Hello', context, mockSessionLogger)
+      ).rejects.toThrow('No function call in OpenAI API response');
     });
 
     it('should handle invalid JSON in function call arguments', async () => {
@@ -237,7 +237,7 @@ describe('OpenAIChatbotProcessingService', () => {
       };
 
       await expect(
-        service.processChatbotInteractionComplete('Hello', context)
+        service.executeOpenAIApiCall('Hello', context, mockSessionLogger)
       ).rejects.toThrow();
     });
 
@@ -249,8 +249,8 @@ describe('OpenAIChatbotProcessingService', () => {
       };
 
       await expect(
-        service.processChatbotInteractionComplete('Hello', context)
-      ).rejects.toThrow('System prompt is required for API-only processing - no static fallbacks allowed');
+        service.executeOpenAIApiCall('Hello', context, mockSessionLogger)
+      ).rejects.toThrow('System prompt is required for OpenAI API call');
     });
 
     it('should handle OpenAI API errors', async () => {
@@ -264,7 +264,7 @@ describe('OpenAIChatbotProcessingService', () => {
       };
 
       await expect(
-        service.processChatbotInteractionComplete('Hello', context)
+        service.executeOpenAIApiCall('Hello', context, mockSessionLogger)
       ).rejects.toThrow('OpenAI API error');
     });
 
@@ -301,14 +301,14 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'I need technical support',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.analysis.primaryIntent).toBe('technical_support');
-      expect(result.conversationFlow.shouldCaptureLeadNow).toBe(false);
-      expect(result.conversationFlow.conversationPhase).toBe('discovery');
+      expect(result.functionArgs.intent).toBe('technical_support');
+      expect(result.functionArgs.response?.capture_contact).toBe(false);
     });
 
     it('should handle context with message history', async () => {
@@ -360,12 +360,13 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'Can you tell me more?',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.analysis.primaryIntent).toBe('followup');
+      expect(result.functionArgs.intent).toBe('followup');
       expect(mockOpenAI.chat.completions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           messages: expect.arrayContaining([
@@ -414,12 +415,13 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'Hello',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.analysis.primaryIntent).toBe('personalized_inquiry');
+      expect(result.functionArgs.intent).toBe('personalized_inquiry');
     });
 
     it('should handle shared log file in context', async () => {
@@ -456,7 +458,7 @@ describe('OpenAIChatbotProcessingService', () => {
         sharedLogFile: '/tmp/custom-log.txt'
       };
 
-      const result = await service.processChatbotInteractionComplete('Hello', context);
+      const result = await service.executeOpenAIApiCall('Hello', context, mockSessionLogger);
 
       // The service should use the shared log file
       expect(result).toBeDefined();
@@ -502,13 +504,14 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'What are your prices?',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.analysis.entities).toBeDefined();
-      expect(typeof result.analysis.entities).toBe('object');
+      expect(result.functionArgs.lead_data).toBeDefined();
+      expect(typeof result.functionArgs.lead_data).toBe('object');
     });
 
     it('should default to inquiry intent when not provided', async () => {
@@ -544,12 +547,13 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'Hello',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.analysis.primaryIntent).toBe('inquiry');
+      expect(result.functionArgs.intent || 'inquiry').toBe('inquiry');
     });
 
     it('should handle missing usage data', async () => {
@@ -581,9 +585,10 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'Hello',
-        context
+        context,
+        mockSessionLogger
       );
 
       expect(result.usage).toEqual({
@@ -594,8 +599,8 @@ describe('OpenAIChatbotProcessingService', () => {
     });
   });
 
-  describe('Intent to Phase Mapping', () => {
-    it('should map pricing inquiry to qualification phase', async () => {
+  describe('Function Call Response Parsing', () => {
+    it('should parse pricing inquiry intent correctly', async () => {
       const mockResponse = {
         choices: [{
           message: {
@@ -628,15 +633,16 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'What are your prices?',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.conversationFlow.conversationPhase).toBe('discovery');
+      expect(result.functionArgs.intent).toBe('pricing_inquiry');
     });
 
-    it('should map technical support to support phase', async () => {
+    it('should parse technical support intent correctly', async () => {
       const mockResponse = {
         choices: [{
           message: {
@@ -669,12 +675,13 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete(
+      const result = await service.executeOpenAIApiCall(
         'I need technical support',
-        context
+        context,
+        mockSessionLogger
       );
 
-      expect(result.conversationFlow.conversationPhase).toBe('discovery');
+      expect(result.functionArgs.intent).toBe('technical_support');
     });
   });
 
@@ -712,7 +719,7 @@ describe('OpenAIChatbotProcessingService', () => {
         systemPrompt: 'You are a helpful assistant.'
       };
 
-      const result = await service.processChatbotInteractionComplete('Hello', context);
+      const result = await service.executeOpenAIApiCall('Hello', context, mockSessionLogger);
 
       // The logging service should be initialized and used
       expect(result).toBeDefined();

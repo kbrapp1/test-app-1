@@ -10,8 +10,8 @@
  */
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { ContentQualityScore } from '../../../../domain/value-objects/knowledge/ContentQualityScore';
-import { ContentMetrics } from '../../../../domain/value-objects/knowledge/ContentMetrics';
+// import { ContentQualityScore } from '../../../../domain/value-objects/knowledge/ContentQualityScore';
+// import { ContentMetrics } from '../../../../domain/value-objects/knowledge/ContentMetrics';
 import { QualityMeasurementService } from './QualityMeasurementService';
 
 export class KnowledgeQualityService {

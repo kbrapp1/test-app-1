@@ -4,7 +4,7 @@
  */
 
 import { SessionContext } from './SessionContextTypes';
-import { LeadQualificationState, SessionStatus, ContactInfo, SessionMetrics, AnsweredQuestion } from './SessionSupportTypes';
+import { LeadQualificationState, SessionStatus } from './SessionSupportTypes';
 
 // Re-export all types for backward compatibility
 export type { SessionContext } from './SessionContextTypes';

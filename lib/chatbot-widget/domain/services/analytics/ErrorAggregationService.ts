@@ -99,14 +99,14 @@ export class ErrorAggregationService {
    * Combine error records from multiple tables
    */
   public combineErrorRecords(
-    conversationErrors: any[],
-    knowledgeErrors: any[],
-    systemErrors: any[]
+    conversationErrors: ErrorRecordWithTable[],
+    knowledgeErrors: ErrorRecordWithTable[],
+    systemErrors: ErrorRecordWithTable[]
   ): ErrorRecordWithTable[] {
     const allErrors: ErrorRecordWithTable[] = [
-      ...conversationErrors.map(e => ({ ...e, tableName: 'conversation' as const })),
-      ...knowledgeErrors.map(e => ({ ...e, tableName: 'knowledge' as const })),
-      ...systemErrors.map(e => ({ ...e, tableName: 'system' as const }))
+      ...conversationErrors,
+      ...knowledgeErrors,
+      ...systemErrors
     ];
 
     // Sort by created_at descending (most recent first)

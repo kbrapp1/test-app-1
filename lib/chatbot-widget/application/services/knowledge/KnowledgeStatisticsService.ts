@@ -166,7 +166,14 @@ export class KnowledgeStatisticsService {
   ): Promise<{
     healthCheck: HealthCheckResult;
     statistics: KnowledgeStatsResult;
-    assessment: any;
+    assessment: {
+      overall: 'healthy' | 'warning' | 'unhealthy';
+      responseTime: 'excellent' | 'good' | 'acceptable' | 'poor';
+      contentQuantity: 'excellent' | 'good' | 'minimal' | 'insufficient';
+      contentFreshness: 'fresh' | 'recent' | 'stale' | 'unknown';
+      score: number;
+      recommendations: string[];
+    };
   }> {
     // Validate parameters
     this.validationService.validateCommonParameters(organizationId, chatbotConfigId, sharedLogFile);
@@ -186,12 +193,12 @@ export class KnowledgeStatisticsService {
       lastUpdated: statistics.lastUpdated
     };
 
-    const assessment = this.healthChecker.getComprehensiveAssessment(healthCheckInput);
+    const comprehensiveAssessment = this.healthChecker.getComprehensiveAssessment(healthCheckInput);
 
     return {
       healthCheck,
       statistics,
-      assessment
+      assessment: comprehensiveAssessment
     };
   }
 

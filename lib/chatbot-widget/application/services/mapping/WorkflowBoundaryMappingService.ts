@@ -22,7 +22,7 @@ import { WorkflowDataExtractor } from '../../../domain/services/mapping/Workflow
 import { WorkflowDefaultFactory } from '../../../domain/services/mapping/WorkflowDefaultFactory';
 import { JsonPathExtractor } from '../../../infrastructure/services/mapping/JsonPathExtractor';
 import { ProcessMessageRequestMapper } from '../../mappers/ProcessMessageRequestMapper';
-import { MappingResult } from '../../../domain/value-objects/mapping/MappingResult';
+import { MappingResult as _MappingResult } from '../../../domain/value-objects/mapping/MappingResult';
 
 export class WorkflowBoundaryMappingService {
   private readonly dataExtractor: WorkflowDataExtractor;

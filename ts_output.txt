@@ -1,7 +1,0 @@
-
-> my-v0-project@0.1.0 typecheck D:\Projects\test-app-1
-> tsc --noEmit
-
-lib/chatbot-widget/domain/services/conversation/ConversationContextOrchestrator.ts(177,7): error TS2322: Type 'string | { fullSummary?: string | undefined; } | undefined' is not assignable to type 'string | undefined'.
-  Type '{ fullSummary?: string | undefined; }' is not assignable to type 'string'.
- ELIFECYCLE  Command failed with exit code 1.

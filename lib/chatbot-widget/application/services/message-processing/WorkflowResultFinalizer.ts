@@ -8,9 +8,9 @@
  * - Preserves all organizationId security variables and context patterns
  */
 
-import { ChatSession } from '../../../domain/entities/ChatSession';
-import { ChatMessage } from '../../../domain/entities/ChatMessage';
-import { ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
+import { ChatSession as _ChatSession } from '../../../domain/entities/ChatSession';
+import { ChatMessage as _ChatMessage } from '../../../domain/entities/ChatMessage';
+import { ChatbotConfig as _ChatbotConfig } from '../../../domain/entities/ChatbotConfig';
 import { IDebugInformationService } from '../../../domain/services/interfaces/IDebugInformationService';
 import { ConversationMetricsService } from '../conversation-management/ConversationMetricsService';
 import { LeadCaptureDecisionService } from '../lead-management/LeadCaptureDecisionService';
@@ -21,9 +21,9 @@ import {
   ResponseResult, 
   WorkflowFinalResult, 
   EnhancedContext,
-  ConversationMetrics,
-  IntentAnalysis,
-  JourneyState
+  ConversationMetrics as _ConversationMetrics,
+  IntentAnalysis as _IntentAnalysis,
+  JourneyState as _JourneyState
 } from './WorkflowTypes';
 
 export class WorkflowResultFinalizer {

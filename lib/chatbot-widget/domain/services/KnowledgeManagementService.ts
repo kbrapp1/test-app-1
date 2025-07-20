@@ -13,15 +13,15 @@ import {
   KnowledgeRetrievalContext 
 } from './interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepository';
-import { IChatbotLoggingService } from './interfaces/IChatbotLoggingService';
+import { IChatbotLoggingService as _IChatbotLoggingService } from './interfaces/IChatbotLoggingService';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeManagementApplicationService } from '../../application/services/knowledge/KnowledgeManagementApplicationService';
 import { KnowledgeStatsData } from '../value-objects/knowledge/KnowledgeStatsResult';
 import { HealthCheckData } from '../value-objects/knowledge/HealthCheckResult';
 
 // Legacy interfaces for backward compatibility
-export interface KnowledgeStatsResult extends KnowledgeStatsData {}
-export interface HealthCheckResult extends HealthCheckData {}
+export type KnowledgeStatsResult = KnowledgeStatsData;
+export type HealthCheckResult = HealthCheckData;
 
 export class KnowledgeManagementService {
   private readonly applicationService: KnowledgeManagementApplicationService;

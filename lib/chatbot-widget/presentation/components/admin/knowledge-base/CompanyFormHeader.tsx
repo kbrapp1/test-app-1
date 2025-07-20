@@ -13,7 +13,7 @@ import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Book, HelpCircle, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import { useMultiContentValidation } from '../../../hooks/useContentValidation';
-import { ValidationStatusDisplay } from './ValidationStatusDisplay';
+// import { ValidationStatusDisplay } from './ValidationStatusDisplay';
 
 interface CompanyFormHeaderProps {
   isEditing: boolean;
@@ -28,7 +28,7 @@ export function CompanyFormHeader({
   isEditing,
   hasCompanyInfo,
   validation,
-  showGuidelines,
+  showGuidelines: _showGuidelines,
   onToggleEdit,
   onToggleGuidelines,
 }: CompanyFormHeaderProps) {

@@ -7,7 +7,7 @@
  * - Real-time updates: SSE stream with database polling fallback
  */
 
-import { useQueryClient } from '@tanstack/react-query';
+// import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { CrawlProgress } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
@@ -15,7 +15,7 @@ export function useCrawlProgress() {
   const [crawlProgress, setCrawlProgress] = useState<CrawlProgress | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const startCrawlProgress = (sourceId: string) => {
     setCrawlProgress({
@@ -113,7 +113,7 @@ export function useCrawlProgress() {
         switch (update.type) {
           case 'status':
             if (update.data.status && update.data.message) {
-              updateStatus(update.data.status as any, update.data.message);
+              updateStatus(update.data.status as 'starting' | 'crawling' | 'vectorizing' | 'completed' | 'error', update.data.message);
             }
             break;
             
@@ -145,7 +145,7 @@ export function useCrawlProgress() {
             stopProgressStream();
             break;
         }
-      } catch (error) {
+      } catch {
         // Silently handle SSE parsing errors
       }
     };

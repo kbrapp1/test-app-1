@@ -9,6 +9,7 @@
 import { WebsiteSource, WebsiteCrawlSettings } from '../../../domain/value-objects/ai-configuration/KnowledgeBase';
 import { IWebCrawlerProvider, CrawlProgressCallback } from '../../../application/use-cases/CrawlWebsiteUseCase';
 import { CrawledPageData, IRobotsTxtChecker } from '../../../domain/services/WebsiteCrawlingDomainService';
+import * as cheerio from 'cheerio';
 import { IHtmlParser } from '../../../domain/services/ContentExtractionService';
 import { WebsiteCrawlingError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { CheerioHtmlParserAdapter } from '../adapters/CheerioHtmlParserAdapter';
@@ -193,13 +194,14 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
    * Infrastructure operation: link extraction and queue management
    */
   private extractAndQueueLinks(
-    $: any,
+    $: cheerio.CheerioAPI,
     currentUrl: string,
     currentDepth: number,
     sourceUrl: string,
     crawlQueue: Array<{ url: string; depth: number }>,
     normalizedUrls: Set<string>
   ): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio Element type compatibility
     $('a[href]').each((_: number, element: any) => {
       const href = $(element).attr('href');
       if (href) {
@@ -231,12 +233,12 @@ export class CrawleeCrawlerProvider implements IWebCrawlerProvider {
    * Send progress update to SSE stream
    * Infrastructure operation: Real-time progress communication
    */
-  private sendProgressUpdate(sourceId: string, type: string, data: Record<string, any>): void {
+  private sendProgressUpdate(sourceId: string, type: string, data: Record<string, unknown>): void {
     try {
       // Note: Progress streaming is handled by the API route
       // This is a placeholder for future progress tracking integration
       console.log('Progress update:', { sourceId, type, data });
-    } catch (error) {
+    } catch {
       // Silently handle SSE update failures
     }
   }

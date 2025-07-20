@@ -84,7 +84,7 @@ export function createViewState(
   isEditing: boolean,
   isLoading: boolean,
   hasExistingConfig: boolean,
-  error: any
+  error: Error | string | null | undefined
 ): BotConfigurationViewState {
   return {
     isEditing,

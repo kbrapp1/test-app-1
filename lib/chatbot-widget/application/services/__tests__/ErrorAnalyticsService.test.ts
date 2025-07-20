@@ -502,8 +502,22 @@ describe('ErrorAnalyticsService', () => {
         timeRange: '1h' as const
       };
 
-      const mockSummary1 = ErrorSummary.create({ totalErrors: 5, errorsByCode: {}, errorsBySeverity: {}, errorsByCategory: {}, errorsByTable: {}, recentErrors: [] });
-      const mockSummary2 = ErrorSummary.create({ totalErrors: 10, errorsByCode: {}, errorsBySeverity: {}, errorsByCategory: {}, errorsByTable: {}, recentErrors: [] });
+      const mockSummary1 = ErrorSummary.create({
+        totalErrors: 5,
+        errorsByCode: {},
+        errorsBySeverity: {},
+        errorsByCategory: {},
+        errorsByTable: {},
+        recentErrors: []
+      });
+      const mockSummary2 = ErrorSummary.create({
+        totalErrors: 10,
+        errorsByCode: {},
+        errorsBySeverity: {},
+        errorsByCategory: {},
+        errorsByTable: {},
+        recentErrors: []
+      });
 
       mockApplicationService.getErrorSummary
         .mockResolvedValueOnce(mockSummary1)
@@ -522,7 +536,14 @@ describe('ErrorAnalyticsService', () => {
       const filter2 = { organizationId: 'org-456', timeRange: '24h' as const };
 
       const mockSummary1 = ErrorSummary.createEmpty();
-      const mockSummary2 = ErrorSummary.create({ totalErrors: 3, errorsByCode: {}, errorsBySeverity: {}, errorsByCategory: {}, errorsByTable: {}, recentErrors: [] });
+      const mockSummary2 = ErrorSummary.create({
+        totalErrors: 3,
+        errorsByCode: {},
+        errorsBySeverity: {},
+        errorsByCategory: {},
+        errorsByTable: {},
+        recentErrors: []
+      });
 
       mockApplicationService.getErrorSummary
         .mockImplementation(async (filter: any) => {

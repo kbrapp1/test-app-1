@@ -13,7 +13,6 @@ import {
   JourneyStateDto,
   RelevantKnowledgeItemDto,
   UnifiedAnalysisResultDto,
-  WorkflowResponseDto,
   CallToActionDto
 } from '../../../application/dto/WorkflowBoundaryTypes';
 import { MappingResult } from '../../value-objects/mapping/MappingResult';

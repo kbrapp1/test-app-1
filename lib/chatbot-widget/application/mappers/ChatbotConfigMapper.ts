@@ -78,7 +78,15 @@ export class ChatbotConfigMapper {
   }
 
   /** Map lead qualification questions to DTO format */
-  private static mapLeadQualificationQuestionsToDto(questions: any[]) {
+  private static mapLeadQualificationQuestionsToDto(questions: Array<{
+    id: string;
+    question: string;
+    type: string;
+    options?: string[];
+    isRequired: boolean;
+    order: number;
+    scoringWeight?: number;
+  }>) {
     return questions.map(q => ({
       id: q.id,
       question: q.question,
@@ -91,7 +99,15 @@ export class ChatbotConfigMapper {
   }
 
   /** Map lead qualification questions from DTO format */
-  private static mapLeadQualificationQuestionsFromDto(dtoQuestions: any[]) {
+  private static mapLeadQualificationQuestionsFromDto(dtoQuestions: Array<{
+    id: string;
+    question: string;
+    type: string;
+    options?: string[];
+    isRequired: boolean;
+    order: number;
+    scoringWeight?: number;
+  }>) {
     return dtoQuestions.map(q => ({
       id: q.id,
       question: q.question,

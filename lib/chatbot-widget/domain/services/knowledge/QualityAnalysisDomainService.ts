@@ -10,9 +10,18 @@
  * - Coordinate between value objects for complex analysis
  */
 
-import { KnowledgeItem } from '../interfaces/IKnowledgeRetrievalService';
 import { ContentQualityScore } from '../../value-objects/knowledge/ContentQualityScore';
-import { ContentMetrics, ContentCompletenessMetrics, ContentFreshnessMetrics } from '../../value-objects/knowledge/ContentMetrics';
+
+export interface ContentCompletenessMetrics {
+  completenessScore: number;
+  missingElements: string[];
+}
+
+export interface ContentFreshnessMetrics {
+  freshnessScore: number;
+  staleItems: number;
+  recommendations: string[];
+}
 
 export class QualityAnalysisDomainService {
   

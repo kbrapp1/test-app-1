@@ -18,7 +18,7 @@ import { StructuredKnowledgeContent } from './types/KnowledgeContentTypes';
 export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository {
   private readonly supabase: SupabaseClient;
   private readonly tableName = 'chatbot_configs';
-  private readonly knowledgeContentService: KnowledgeContentService;
+  private knowledgeContentService?: KnowledgeContentService;
 
   constructor(
     supabaseClient?: SupabaseClient,
@@ -29,16 +29,21 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
     if (knowledgeContentService) {
       this.knowledgeContentService = knowledgeContentService;
     } else {
-      // Import domain services dynamically to avoid circular dependency
-      const { UserContentSanitizationService } = require('../../../domain/services/content-processing/UserContentSanitizationService');
-      const { ContentValidationService } = require('../../../domain/services/content-processing/ContentValidationService');
-      
-      this.knowledgeContentService = new KnowledgeContentService(
-        this.supabase,
-        new UserContentSanitizationService(),
-        new ContentValidationService()
-      );
+      // Initialize with lazy loading to avoid circular dependency
+      this.initializeKnowledgeContentService();
     }
+  }
+
+  /** Initialize knowledge content service with dynamic imports to avoid circular dependency */
+  private async initializeKnowledgeContentService(): Promise<void> {
+    const { UserContentSanitizationService } = await import('../../../domain/services/content-processing/UserContentSanitizationService');
+    const { ContentValidationService } = await import('../../../domain/services/content-processing/ContentValidationService');
+    
+    this.knowledgeContentService = new KnowledgeContentService(
+      this.supabase,
+      new UserContentSanitizationService(),
+      new ContentValidationService()
+    );
   }
 
   /** Find chatbot config by ID */
@@ -93,7 +98,10 @@ export class ChatbotConfigSupabaseRepository implements IChatbotConfigRepository
 
   /** Get structured knowledge content with sanitization */
   async getStructuredKnowledgeContent(organizationId: string): Promise<StructuredKnowledgeContent> {
-    return this.knowledgeContentService.getStructuredKnowledgeContent(organizationId);
+    if (!this.knowledgeContentService) {
+      await this.initializeKnowledgeContentService();
+    }
+    return this.knowledgeContentService!.getStructuredKnowledgeContent(organizationId);
   }
 
   /** Find all active configs for organization */

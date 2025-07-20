@@ -1,8 +1,8 @@
-import { ChatbotConfig, LeadQualificationQuestion } from '../../../../domain/entities/ChatbotConfig';
-import { PersonalitySettings } from '../../../../domain/value-objects/ai-configuration/PersonalitySettings';
-import { KnowledgeBase } from '../../../../domain/value-objects/ai-configuration/KnowledgeBase';
-import { OperatingHours } from '../../../../domain/value-objects/session-management/OperatingHours';
-import { AIConfiguration } from '../../../../domain/value-objects/ai-configuration/AIConfiguration';
+import { ChatbotConfig } from '../../../../domain/entities/ChatbotConfig';
+// import { PersonalitySettings } from '../../../../domain/value-objects/ai-configuration/PersonalitySettings';
+// import { KnowledgeBase } from '../../../../domain/value-objects/ai-configuration/KnowledgeBase';
+// import { OperatingHours } from '../../../../domain/value-objects/session-management/OperatingHours';
+// import { AIConfiguration } from '../../../../domain/value-objects/ai-configuration/AIConfiguration';
 import { PersonalitySettingsMapper } from './PersonalitySettingsMapper';
 import { KnowledgeBaseMapper } from './KnowledgeBaseMapper';
 import { OperatingHoursMapper } from './OperatingHoursMapper';

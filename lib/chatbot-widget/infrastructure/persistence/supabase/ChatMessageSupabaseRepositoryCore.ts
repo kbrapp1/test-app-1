@@ -56,7 +56,7 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     return this.crudService.findVisibleBySessionId(sessionId);
   }
 
-  async save(message: ChatMessage, sharedLogFile: string): Promise<ChatMessage> {
+  async save(message: ChatMessage, _sharedLogFile: string): Promise<ChatMessage> {
     // Optimize: Use database-level upsert instead of separate existence check
     return this.crudService.upsert(message);
   }

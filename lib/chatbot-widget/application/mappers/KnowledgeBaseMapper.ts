@@ -8,18 +8,18 @@
  * - Preserves crawl settings, FAQ metadata, and content structure integrity
  */
 
-import { KnowledgeBase } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
-import { KnowledgeBaseDto } from '../dto/ChatbotConfigDto';
+import { KnowledgeBase, FAQ, WebsiteSource } from '../../domain/value-objects/ai-configuration/KnowledgeBase';
+import { KnowledgeBaseDto, FaqDto, WebsiteSourceDto } from '../dto/ChatbotConfigDto';
 
 export class KnowledgeBaseMapper {
   static toDto(kb: KnowledgeBase): KnowledgeBaseDto {
     return {
       companyInfo: kb.companyInfo,
       productCatalog: kb.productCatalog,
-      faqs: this.mapFaqsToDto(kb.faqs),
+      faqs: kb.faqs.map(faq => KnowledgeBaseMapper.mapFaqToDto(faq)),
       supportDocs: kb.supportDocs,
       complianceGuidelines: kb.complianceGuidelines,
-      websiteSources: this.mapWebsiteSourcesToDto(kb.websiteSources),
+      websiteSources: kb.websiteSources.map(ws => KnowledgeBaseMapper.mapWebsiteSourceToDto(ws)),
     };
   }
 
@@ -27,36 +27,36 @@ export class KnowledgeBaseMapper {
     return KnowledgeBase.create({
       companyInfo: dto.companyInfo,
       productCatalog: dto.productCatalog,
-      faqs: this.mapFaqsFromDto(dto.faqs),
+      faqs: dto.faqs.map(faq => KnowledgeBaseMapper.mapFaqFromDto(faq)),
       supportDocs: dto.supportDocs,
       complianceGuidelines: dto.complianceGuidelines,
-      websiteSources: this.mapWebsiteSourcesFromDto(dto.websiteSources),
+      websiteSources: dto.websiteSources.map(ws => KnowledgeBaseMapper.mapWebsiteSourceFromDto(ws)),
     });
   }
 
-  private static mapFaqsToDto(faqs: any[]) {
-    return faqs.map((faq) => ({
+  private static mapFaqToDto(faq: FAQ): FaqDto {
+    return {
       id: faq.id,
       question: faq.question,
       answer: faq.answer,
       category: faq.category,
       keywords: [], // TODO: Extract from FAQ content or add to domain
       priority: 1, // TODO: Add priority to domain or derive from category
-    }));
+    };
   }
 
-  private static mapFaqsFromDto(dtoFaqs: any[]) {
-    return dtoFaqs.map(faq => ({
+  private static mapFaqFromDto(faq: FaqDto): FAQ {
+    return {
       id: faq.id,
       question: faq.question,
       answer: faq.answer,
       category: faq.category,
       isActive: true,
-    }));
+    };
   }
 
-  private static mapWebsiteSourcesToDto(websiteSources: any[]) {
-    return websiteSources.map((ws) => ({
+  private static mapWebsiteSourceToDto(ws: WebsiteSource): WebsiteSourceDto {
+    return {
       id: ws.id,
       url: ws.url,
       name: ws.name,
@@ -76,30 +76,30 @@ export class KnowledgeBaseMapper {
       pageCount: ws.pageCount,
       status: ws.status,
       errorMessage: ws.errorMessage,
-    }));
+    };
   }
 
-  private static mapWebsiteSourcesFromDto(dtoWebsiteSources: any[]) {
-    return dtoWebsiteSources.map(ws => ({
-      id: ws.id,
-      url: ws.url,
-      name: ws.name,
-      description: ws.description,
-      isActive: ws.isActive,
+  private static mapWebsiteSourceFromDto(dto: WebsiteSourceDto): WebsiteSource {
+    return {
+      id: dto.id,
+      url: dto.url,
+      name: dto.name,
+      description: dto.description,
+      isActive: dto.isActive,
       crawlSettings: {
-        maxPages: ws.crawlSettings.maxPages,
-        maxDepth: ws.crawlSettings.maxDepth,
-        includePatterns: ws.crawlSettings.includePatterns,
-        excludePatterns: ws.crawlSettings.excludePatterns,
-        respectRobotsTxt: ws.crawlSettings.respectRobotsTxt,
-        crawlFrequency: ws.crawlSettings.crawlFrequency,
-        includeImages: ws.crawlSettings.includeImages,
-        includePDFs: ws.crawlSettings.includePDFs,
+        maxPages: dto.crawlSettings.maxPages,
+        maxDepth: dto.crawlSettings.maxDepth,
+        includePatterns: dto.crawlSettings.includePatterns,
+        excludePatterns: dto.crawlSettings.excludePatterns,
+        respectRobotsTxt: dto.crawlSettings.respectRobotsTxt,
+        crawlFrequency: dto.crawlSettings.crawlFrequency,
+        includeImages: dto.crawlSettings.includeImages,
+        includePDFs: dto.crawlSettings.includePDFs,
       },
-      lastCrawled: ws.lastCrawled ? new Date(ws.lastCrawled) : undefined,
-      pageCount: ws.pageCount,
-      status: ws.status,
-      errorMessage: ws.errorMessage,
-    }));
+      lastCrawled: dto.lastCrawled ? new Date(dto.lastCrawled) : undefined,
+      pageCount: dto.pageCount,
+      status: dto.status,
+      errorMessage: dto.errorMessage,
+    };
   }
 }

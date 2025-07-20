@@ -102,12 +102,12 @@ export class WorkflowDefaultFactory {
   /**
    * Get default values for specific types based on business rules
    */
-  public getDefaultForType<T>(type: 'string'): string;
-  public getDefaultForType<T>(type: 'number'): number;
-  public getDefaultForType<T>(type: 'boolean'): boolean;
-  public getDefaultForType<T>(type: 'array'): unknown[];
-  public getDefaultForType<T>(type: 'object'): Record<string, unknown>;
-  public getDefaultForType<T>(type: string): unknown {
+  public getDefaultForType(type: 'string'): string;
+  public getDefaultForType(type: 'number'): number;
+  public getDefaultForType(type: 'boolean'): boolean;
+  public getDefaultForType(type: 'array'): unknown[];
+  public getDefaultForType(type: 'object'): Record<string, unknown>;
+  public getDefaultForType(type: string): unknown {
     switch (type) {
       case 'string':
         return '';

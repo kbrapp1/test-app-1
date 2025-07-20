@@ -157,7 +157,8 @@ describe('ErrorAnalyticsApplicationService', () => {
 
       await service.getErrorSummary(filterData);
 
-      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>).mock.calls[0][0] as ErrorAnalyticsFilter;
+      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>)
+        .mock.calls[0][0] as ErrorAnalyticsFilter;
       expect(filterCall.organizationId).toBe('org-security-test');
     });
   });
@@ -276,7 +277,8 @@ describe('ErrorAnalyticsApplicationService', () => {
       );
       
       // Verify the filter contains session-specific data
-      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>).mock.calls[0][0] as ErrorAnalyticsFilter;
+      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>)
+        .mock.calls[0][0] as ErrorAnalyticsFilter;
       expect(filterCall.organizationId).toBe(organizationId);
       expect(filterCall.sessionId).toBe(sessionId);
       expect(filterCall.timeRange).toBe('7d'); // Default from factory method
@@ -306,7 +308,8 @@ describe('ErrorAnalyticsApplicationService', () => {
 
       await service.getErrorsBySession(sessionId, organizationId);
 
-      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>).mock.calls[0][0] as ErrorAnalyticsFilter;
+      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>)
+        .mock.calls[0][0] as ErrorAnalyticsFilter;
       expect(filterCall.organizationId).toBe(organizationId);
       expect(filterCall.sessionId).toBe(sessionId);
     });
@@ -354,7 +357,8 @@ describe('ErrorAnalyticsApplicationService', () => {
       );
       
       // Verify the filter contains user-specific data
-      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>).mock.calls[0][0] as ErrorAnalyticsFilter;
+      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>)
+        .mock.calls[0][0] as ErrorAnalyticsFilter;
       expect(filterCall.organizationId).toBe(organizationId);
       expect(filterCall.userId).toBe(userId);
       expect(filterCall.timeRange).toBe('7d'); // Default from factory method
@@ -384,7 +388,8 @@ describe('ErrorAnalyticsApplicationService', () => {
 
       await service.getErrorsByUser(userId, organizationId);
 
-      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>).mock.calls[0][0] as ErrorAnalyticsFilter;
+      const filterCall = (mockOrchestrator.getErrorSummary as MockedFunction<any>)
+        .mock.calls[0][0] as ErrorAnalyticsFilter;
       expect(filterCall.organizationId).toBe(organizationId);
       expect(filterCall.userId).toBe(userId);
     });

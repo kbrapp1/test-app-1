@@ -127,11 +127,11 @@ export async function crawlWebsiteSource(
     };
 
     // AI: Create crawl progress callback for real-time database updates
-    const crawlProgressCallback = async (type: string, data: any) => {
+    const _crawlProgressCallback = async (type: string, data: Record<string, unknown>) => {
       try {
         const config = await configRepository.findById(configId);
         if (config) {
-          let updateData: any = {};
+          let updateData: Record<string, unknown> = {};
           
           switch (type) {
             case 'pages_found':
@@ -151,7 +151,7 @@ export async function crawlWebsiteSource(
             await configRepository.update(updatedConfig);
           }
         }
-      } catch (error) {
+      } catch {
         // Silently handle database update failures
       }
     };

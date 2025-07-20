@@ -35,7 +35,7 @@ export class KnowledgeRetrievalOrchestrator {
    */
   async getKnowledgeByCategory(
     query: KnowledgeQuery,
-    context?: KnowledgeRetrievalContext
+    _context?: KnowledgeRetrievalContext
   ): Promise<KnowledgeItem[]> {
     // Validate query parameters
     this.validationService.validateCommonParameters(
@@ -99,7 +99,7 @@ export class KnowledgeRetrievalOrchestrator {
    */
   async getKnowledgeByTags(
     query: KnowledgeQuery,
-    context?: KnowledgeRetrievalContext
+    _context?: KnowledgeRetrievalContext
   ): Promise<KnowledgeItem[]> {
     // Validate query parameters
     this.validationService.validateCommonParameters(
@@ -223,7 +223,7 @@ export class KnowledgeRetrievalOrchestrator {
     this.validationService.validateCommonParameters(organizationId, chatbotConfigId, sharedLogFile);
 
     // Get all items and extract categories
-    const query = KnowledgeQuery.create({
+    const _query = KnowledgeQuery.create({
       organizationId,
       chatbotConfigId,
       limit: 10000,
@@ -258,7 +258,7 @@ export class KnowledgeRetrievalOrchestrator {
     this.validationService.validateCommonParameters(organizationId, chatbotConfigId, sharedLogFile);
 
     // Get all items and extract tags
-    const query = KnowledgeQuery.create({
+    const _query = KnowledgeQuery.create({
       organizationId,
       chatbotConfigId,
       limit: 10000,

@@ -82,7 +82,7 @@ export class LeadQualificationMapper {
   private static sanitizeQuestionType(value: unknown): 'text' | 'email' | 'phone' | 'select' | 'multiselect' {
     const validTypes = ['text', 'email', 'phone', 'select', 'multiselect'] as const;
     
-    if (typeof value === 'string' && validTypes.includes(value as any)) {
+    if (typeof value === 'string' && validTypes.includes(value as typeof validTypes[number])) {
       return value as 'text' | 'email' | 'phone' | 'select' | 'multiselect';
     }
     

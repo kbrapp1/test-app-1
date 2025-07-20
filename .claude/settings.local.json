@@ -1,138 +1,61 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run lint)",
-      "Bash(npm run test:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx vitest run:*)",
-      "Bash(ls:*)",
-      "Bash(npm test:*)",
-      "Bash(find:*)",
-      "WebFetch(domain:docs.anthropic.com)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(npm run lint:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npx next build:*)",
-      "Bash(grep:*)",
-      "Bash(sed:*)",
-      "Bash(node:*)",
-      "Bash(pnpm run lint:*)",
-      "Bash(tsc --version)",
-      "Bash(npx:*)",
-      "Bash(tsc:*)",
-      "Bash(timeout 10s npm run test -- --run lib/chatbot-widget/domain/value-objects/conversation-management/__tests__/ConversationFlow.test.ts)",
-      "Bash(timeout 5s npm run test -- --run lib/chatbot-widget/domain/value-objects/conversation-management/__tests__/ConversationObjectives.test.ts)",
-      "Bash(mv:*)",
-      "Bash(tree:*)",
-      "Bash(powershell:*)",
-      "Bash(rg:*)",
-      "Bash(npm run typecheck:*)",
-      "Bash(pnpm run test:*)",
-      "Bash(timeout 30 pnpm run dev)",
-      "mcp__supabase__list_projects",
-      "mcp__supabase__list_organizations",
-      "mcp__supabase__execute_sql",
-      "Bash(./node_modules/.bin/tsc:*)",
-      "Bash(yarn tsc:*)",
-      "WebFetch(domain:ironmarkusa.com)",
-      "Bash(pnpm test:*)",
-      "Bash(pnpm tsc:*)",
-      "Bash(pnpm exec tsc:*)",
-      "Bash(rm:*)",
-      "Bash(true)",
-      "mcp__supabase__list_tables",
-      "mcp__supabase__get_logs",
-      "Bash(D:)",
-      "Bash(pnpm eslint:*)",
-      "Bash(awk:*)",
-      "Bash(pnpm exec eslint:*)",
-      "Bash(next lint:*)",
-      "Bash(awk:*)",
-      "Bash(./node_modules/.bin/eslint lib/dam/application/actions/folder.actions.ts)",
-      "Bash(timeout:*)",
-      "Bash(awk:*)",
-      "Bash(cat:*)",
-      "Bash(pnpm lint:*)",
-      "Bash(./node_modules/.bin/eslint.cmd:*)",
-      "Bash(pnpm type-check:*)",
-      "Bash(pnpm install:*)",
+      "Bash(npx tsc:*)",
       "Bash(pnpm run:*)",
-      "Bash(export PATH=\"$PATH:./node_modules/.bin\")",
-      "Bash(pnpm dlx:*)",
-      "Bash(pnpm --package=typescript dlx tsc --noEmit)",
-      "Bash(diff:*)",
-      "Bash(pushd:*)",
-      "Bash(popd:*)",
-      "Bash(claude --version)",
-      "Bash(claude config list)",
-      "Bash(claude config set hooks.enabled true)",
-      "Bash(claude config set --global hooks.enabled true)",
-      "Bash(claude hooks:*)"
-    ],
-    "deny": []
+      "Bash(python:*)",
+      "Bash(npx eslint:*)",
+      "Bash(exit 0)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(echo $HOME)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint)",
+      "Bash(pnpm run:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)"
+    ]
   },
+  "model": "sonnet",
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase",
-    "context7",
-    "playwright"
+    "context7"
   ],
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write(lib/**/*.ts)",
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "npx tsc --noEmit --project tsconfig.json",
-            "timeout": 20000,
-            "description": "Type check TypeScript files after creation"
+            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
           }
         ]
       },
       {
-        "matcher": "Write(lib/**/*.tsx)",
+        "matcher": "MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "npx tsc --noEmit --project tsconfig.json",
-            "timeout": 20000,
-            "description": "Type check TypeScript React files after creation"
+            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
           }
         ]
       },
       {
-        "matcher": "Edit(lib/**/*.ts)",
+        "matcher": "Write",
         "hooks": [
           {
             "type": "command",
-            "command": "npx tsc --noEmit --project tsconfig.json",
-            "timeout": 20000,
-            "description": "Type check TypeScript files after editing"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit(lib/**/*.tsx)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx tsc --noEmit --project tsconfig.json",
-            "timeout": 20000,
-            "description": "Type check TypeScript React files after editing"
-          }
-        ]
-      },
-      {
-        "matcher": "MultiEdit(lib/**/*.ts)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx tsc --noEmit --project tsconfig.json",
-            "timeout": 20000,
-            "description": "Type check TypeScript files after multi-editing"
+            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
           }
         ]
       }

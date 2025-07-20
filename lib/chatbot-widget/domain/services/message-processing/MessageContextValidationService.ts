@@ -74,7 +74,7 @@ export class MessageContextValidationService {
     return typeof topic === 'string' && topic.trim().length > 0;
   }
 
-  static isValidErrorData(errorType: string, errorCode?: string, errorMessage?: string): boolean {
+  static isValidErrorData(errorType: string, _errorCode?: string, _errorMessage?: string): boolean {
     return typeof errorType === 'string' && errorType.trim().length > 0;
   }
 }

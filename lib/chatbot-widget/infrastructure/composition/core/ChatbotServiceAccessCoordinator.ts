@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+// import { SupabaseClient } from '@supabase/supabase-js';
 
 // Repository interfaces
 import { IChatbotConfigRepository } from '../../../domain/repositories/IChatbotConfigRepository';
@@ -17,7 +17,7 @@ import { VectorKnowledgeApplicationService } from '../../../application/services
 import { ErrorTrackingFacade } from '../../../application/services/ErrorTrackingFacade';
 
 // Application use cases
-import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
+// import { ProcessChatMessageUseCase } from '../../../application/use-cases/ProcessChatMessageUseCase';
 import { CaptureLeadUseCase } from '../../../application/use-cases/CaptureLeadUseCase';
 import { ConfigureChatbotUseCase } from '../../../application/use-cases/ConfigureChatbotUseCase';
 import { CrawlAndStoreWebsiteUseCase } from '../../../application/use-cases/CrawlAndStoreWebsiteUseCase';

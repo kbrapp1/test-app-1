@@ -83,7 +83,7 @@ export class ErrorTrackingUtilitiesService {
     return {
       name: error.name,
       stack: error.stack,
-      cause: (error as any).cause || null,
+      cause: (error as unknown as { cause?: unknown }).cause || null,
       timestamp: new Date().toISOString()
     };
   }

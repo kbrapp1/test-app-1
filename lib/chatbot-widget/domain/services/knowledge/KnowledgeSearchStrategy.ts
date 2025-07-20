@@ -231,7 +231,7 @@ export class KnowledgeSearchStrategy {
   public estimateSearchCost(
     totalItems: number,
     strategy: ReturnType<typeof this.determineSearchStrategy>,
-    options: SearchOptions
+    _options: SearchOptions
   ): 'low' | 'medium' | 'high' {
     // Business rule: Cost estimation based on strategy and data size
     if (strategy === 'semantic') {

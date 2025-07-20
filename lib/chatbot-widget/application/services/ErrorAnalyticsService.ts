@@ -15,9 +15,9 @@ import { ErrorSummaryData } from '../../domain/value-objects/analytics/ErrorSumm
 import { ErrorTrendData } from '../../domain/value-objects/analytics/ErrorTrend';
 
 // Legacy interfaces for backward compatibility
-export interface ErrorSummary extends ErrorSummaryData {}
-export interface ErrorTrend extends ErrorTrendData {}
-export interface ErrorAnalyticsFilter extends ErrorAnalyticsFilterData {}
+export type ErrorSummary = ErrorSummaryData;
+export type ErrorTrend = ErrorTrendData;
+export type ErrorAnalyticsFilter = ErrorAnalyticsFilterData;
 
 export class ErrorAnalyticsService {
   private readonly applicationService: ErrorAnalyticsApplicationService;

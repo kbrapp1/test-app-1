@@ -186,7 +186,7 @@ export class KnowledgeBaseMapper {
    */
   private static safeCrawlFrequency(value: unknown): 'manual' | 'daily' | 'weekly' | 'monthly' {
     const validFrequencies = ['manual', 'daily', 'weekly', 'monthly'] as const;
-    if (typeof value === 'string' && validFrequencies.includes(value as any)) {
+    if (typeof value === 'string' && validFrequencies.includes(value as typeof validFrequencies[number])) {
       return value as 'manual' | 'daily' | 'weekly' | 'monthly';
     }
     return 'weekly';
@@ -197,7 +197,7 @@ export class KnowledgeBaseMapper {
    */
   private static safeStatus(value: unknown): 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error' {
     const validStatuses = ['pending', 'crawling', 'vectorizing', 'completed', 'error'] as const;
-    if (typeof value === 'string' && validStatuses.includes(value as any)) {
+    if (typeof value === 'string' && validStatuses.includes(value as typeof validStatuses[number])) {
       return value as 'pending' | 'crawling' | 'vectorizing' | 'completed' | 'error';
     }
     return 'pending';

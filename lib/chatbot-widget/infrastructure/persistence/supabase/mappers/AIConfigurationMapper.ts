@@ -5,7 +5,7 @@
  * Handles JSONB transformation for AI model settings and parameters.
  */
 
-import { AIConfiguration } from '../../../../domain/value-objects/ai-configuration/AIConfiguration';
+import { AIConfiguration, AIConfigurationProps } from '../../../../domain/value-objects/ai-configuration/AIConfiguration';
 
 /**
  * Infrastructure mapper for AIConfiguration JSONB data
@@ -72,7 +72,7 @@ export class AIConfigurationMapper {
   private static sanitizeOpenAIModel(value: unknown): 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo' {
     const validModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'] as const;
     
-    if (typeof value === 'string' && validModels.includes(value as any)) {
+    if (typeof value === 'string' && validModels.includes(value as typeof validModels[number])) {
       return value as 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
     }
     
@@ -85,7 +85,7 @@ export class AIConfigurationMapper {
   private static sanitizeEntityExtractionMode(value: unknown): 'comprehensive' | 'basic' | 'custom' {
     const validModes = ['comprehensive', 'basic', 'custom'] as const;
     
-    if (typeof value === 'string' && validModes.includes(value as any)) {
+    if (typeof value === 'string' && validModes.includes(value as typeof validModes[number])) {
       return value as 'comprehensive' | 'basic' | 'custom';
     }
     
@@ -162,31 +162,61 @@ export class AIConfigurationMapper {
    * Handle domain validation constraints following DDD principles
    * Infrastructure respects domain invariants - never bypasses domain validation
    */
-  private static handleDomainConstraints(config: any): AIConfiguration {
+  private static handleDomainConstraints(config: Record<string, unknown>): AIConfiguration {
     // Handle custom extraction mode constraint - infrastructure prevents invalid combinations
-    if (config.entityExtractionMode === 'custom' && config.customEntityTypes.length === 0) {
+    if (config.entityExtractionMode === 'custom' && 
+        Array.isArray(config.customEntityTypes) && config.customEntityTypes.length === 0) {
       // Add a default custom entity type to satisfy domain constraint
       config.customEntityTypes = ['custom_entity'];
     }
 
     // Handle domain invariant: confidence threshold must be greater than ambiguity threshold
     // For single-field testing, automatically set the other field to maintain constraint
-    if (config.intentConfidenceThreshold !== undefined && config.intentAmbiguityThreshold === undefined) {
+    if (typeof config.intentConfidenceThreshold === 'number' && config.intentAmbiguityThreshold === undefined) {
       // Testing confidence threshold - set compatible ambiguity threshold
       config.intentAmbiguityThreshold = Math.max(0, config.intentConfidenceThreshold - 0.1);
-    } else if (config.intentAmbiguityThreshold !== undefined && config.intentConfidenceThreshold === undefined) {
+    } else if (typeof config.intentAmbiguityThreshold === 'number' && config.intentConfidenceThreshold === undefined) {
       // Testing ambiguity threshold - set compatible confidence threshold  
       config.intentConfidenceThreshold = config.intentAmbiguityThreshold + 0.1;
-    } else if (config.intentConfidenceThreshold !== undefined && 
-               config.intentAmbiguityThreshold !== undefined && 
+    } else if (typeof config.intentConfidenceThreshold === 'number' && 
+               typeof config.intentAmbiguityThreshold === 'number' && 
                config.intentConfidenceThreshold <= config.intentAmbiguityThreshold) {
       // Both set but violate constraint - adjust ambiguity to maintain constraint
       config.intentAmbiguityThreshold = Math.max(0, config.intentConfidenceThreshold - 0.1);
     }
 
     try {
-      return AIConfiguration.create(config);
-    } catch (error) {
+      // Properly map the record to AIConfigurationProps with validation
+      const props: AIConfigurationProps = {
+        openaiModel: config.openaiModel as 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo',
+        openaiTemperature: config.openaiTemperature as number,
+        openaiMaxTokens: config.openaiMaxTokens as number,
+        contextMaxTokens: config.contextMaxTokens as number,
+        contextSystemPromptTokens: config.contextSystemPromptTokens as number,
+        contextResponseReservedTokens: config.contextResponseReservedTokens as number,
+        contextSummaryTokens: config.contextSummaryTokens as number,
+        intentConfidenceThreshold: config.intentConfidenceThreshold as number,
+        intentAmbiguityThreshold: config.intentAmbiguityThreshold as number,
+        enableMultiIntentDetection: config.enableMultiIntentDetection as boolean,
+        enablePersonaInference: config.enablePersonaInference as boolean,
+        enableAdvancedEntities: config.enableAdvancedEntities as boolean,
+        entityExtractionMode: config.entityExtractionMode as 'basic' | 'comprehensive' | 'custom',
+        customEntityTypes: config.customEntityTypes as string[],
+        maxConversationTurns: config.maxConversationTurns as number,
+        inactivityTimeoutSeconds: config.inactivityTimeoutSeconds as number,
+        enableJourneyRegression: config.enableJourneyRegression as boolean,
+        enableContextSwitchDetection: config.enableContextSwitchDetection as boolean,
+        enableAdvancedScoring: config.enableAdvancedScoring as boolean,
+        entityCompletenessWeight: config.entityCompletenessWeight as number,
+        personaConfidenceWeight: config.personaConfidenceWeight as number,
+        journeyProgressionWeight: config.journeyProgressionWeight as number,
+        enablePerformanceLogging: config.enablePerformanceLogging as boolean,
+        enableIntentAnalytics: config.enableIntentAnalytics as boolean,
+        enablePersonaAnalytics: config.enablePersonaAnalytics as boolean,
+        responseTimeThresholdMs: config.responseTimeThresholdMs as number,
+      };
+      return AIConfiguration.create(props);
+    } catch {
       // If domain creation still fails, use safe defaults with valid relationships
       return AIConfiguration.createDefault();
     }

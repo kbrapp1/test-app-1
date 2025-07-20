@@ -12,7 +12,7 @@
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ContentQualityScore } from '../../../../domain/value-objects/knowledge/ContentQualityScore';
-import { ContentMetrics, ContentCompletenessMetrics, ContentFreshnessMetrics, ContentReadabilityMetrics, ContentDuplicationMetrics, ContentStructureMetrics, ContentGapMetrics } from '../../../../domain/value-objects/knowledge/ContentMetrics';
+import { ContentCompletenessMetrics, ContentFreshnessMetrics, ContentReadabilityMetrics, ContentDuplicationMetrics, ContentStructureMetrics, ContentGapMetrics } from '../../../../domain/value-objects/knowledge/ContentMetrics';
 import { QualityAnalysisDomainService } from '../../../../domain/services/knowledge/QualityAnalysisDomainService';
 import { ContentAnalysisUtilities } from './ContentAnalysisUtilities';
 

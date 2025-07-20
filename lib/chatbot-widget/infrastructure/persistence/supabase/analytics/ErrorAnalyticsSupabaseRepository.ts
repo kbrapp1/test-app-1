@@ -10,6 +10,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ErrorAnalyticsFilter } from '../../../../domain/value-objects/analytics/ErrorAnalyticsFilter';
+import { ErrorRecordWithTable } from '../../../../domain/services/analytics/ErrorAggregationService';
 import { ErrorDataValidator, ErrorRecord, TrendRecord } from './ErrorDataValidator';
 
 export class ErrorAnalyticsSupabaseRepository {
@@ -112,9 +113,9 @@ export class ErrorAnalyticsSupabaseRepository {
     filter: ErrorAnalyticsFilter,
     timeFilter: string
   ): Promise<{
-    conversationErrors: ErrorRecord[];
-    knowledgeErrors: ErrorRecord[];
-    systemErrors: ErrorRecord[];
+    conversationErrors: ErrorRecordWithTable[];
+    knowledgeErrors: ErrorRecordWithTable[];
+    systemErrors: ErrorRecordWithTable[];
   }> {
     const [conversationErrors, knowledgeErrors, systemErrors] = await Promise.all([
       this.queryErrorTable('chatbot_conversation_errors', filter, timeFilter),
@@ -123,9 +124,9 @@ export class ErrorAnalyticsSupabaseRepository {
     ]);
 
     return {
-      conversationErrors,
-      knowledgeErrors,
-      systemErrors
+      conversationErrors: conversationErrors.map(error => ({ ...error, tableName: 'chatbot_conversation_errors' as const })),
+      knowledgeErrors: knowledgeErrors.map(error => ({ ...error, tableName: 'chatbot_knowledge_errors' as const })),
+      systemErrors: systemErrors.map(error => ({ ...error, tableName: 'chatbot_system_errors' as const }))
     };
   }
 

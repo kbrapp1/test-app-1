@@ -17,7 +17,7 @@ import { ConfigurationDataTransformService } from '../services/ConfigurationData
 import { ConfigurationValidationService, ConfigValidationResult } from '../services/ConfigurationValidationService';
 import {
     BotConfigurationActions,
-    BotConfigurationFormData,
+    BotConfigurationFormData as _BotConfigurationFormData,
     BotConfigurationViewState,
 } from '../types/BotConfigurationTypes';
 import { useChatbotConfigurationMutations } from './useChatbotConfigurationMutations';
@@ -56,7 +56,7 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
   const {
     createMutation,
     updateMutation,
-    deleteMutation,
+    deleteMutation: _deleteMutation,
     createConfig,
     updateConfig,
     deleteConfig,
