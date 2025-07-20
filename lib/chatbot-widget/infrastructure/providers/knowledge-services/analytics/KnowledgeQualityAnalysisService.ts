@@ -1,12 +1,8 @@
-/**
- * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
- * - Single responsibility: Analyze knowledge quality issues and optimization opportunities
- * - Keep business logic pure, no external dependencies
- * - Keep under 250 lines per @golden-rule patterns
- * - Use static methods for efficiency and statelessness
- * - Handle domain errors with specific error types
- * - Focus on quality assessment and improvement recommendations
- */
+// Knowledge Quality Analysis Service
+//
+// AI INSTRUCTIONS:
+// - Single responsibility: Analyze knowledge quality issues and optimization opportunities
+// - Keep business logic pure, no external dependencies
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ContentSimilarityUtilities } from '../../../../domain/utilities/ContentSimilarityUtilities';

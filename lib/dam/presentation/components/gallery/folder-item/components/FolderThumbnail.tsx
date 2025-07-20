@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Folder } from 'lucide-react';
-import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 
 interface FolderThumbnailProps {
   folder: GalleryItemDto & { type: 'folder' };

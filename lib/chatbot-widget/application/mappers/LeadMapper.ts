@@ -1,13 +1,8 @@
-/**
- * Lead Application Mapper
- * 
- * AI INSTRUCTIONS:
- * - Application mapper for Lead domain-DTO transformations following DDD boundaries
- * - Handles complex object mapping between domain value objects and DTOs
- * - Manages contact info, qualification data, and lead source transformations
- * - Preserves domain integrity while enabling API serialization and deserialization
- * - Provides bidirectional mapping with proper data type conversions and validations
- */
+// Lead Application Mapper
+//
+// AI INSTRUCTIONS:
+// - Application mapper for Lead domain-DTO transformations following DDD boundaries
+// - Provides bidirectional mapping with proper data type conversions
 
 import { Lead } from '../../domain/entities/Lead';
 import { ContactInfo, ContactInfoProps } from '../../domain/value-objects/lead-management/ContactInfo';
@@ -16,7 +11,7 @@ import { LeadSource, LeadSourceProps } from '../../domain/value-objects/lead-man
 import { LeadDto, ContactInfoDto, QualificationDataDto, AnsweredQuestionDto, LeadSourceDto, CreateLeadDto } from '../dto/LeadDto';
 
 export class LeadMapper {
-  /** Convert domain entity to DTO */
+  // Convert domain entity to DTO
   toDto(lead: Lead): LeadDto {
     return {
       id: lead.id,

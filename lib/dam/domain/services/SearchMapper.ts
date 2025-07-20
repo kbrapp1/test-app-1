@@ -1,5 +1,5 @@
-import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
-import { GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
+import { GalleryItemDto } from '../value-objects/GalleryItem';
+import { GetDamDataResult } from '../value-objects/DamDataResult';
 import { Folder } from '../entities/Folder';
 import { Asset } from '../entities/Asset';
 import { Tag } from '../entities/Tag';

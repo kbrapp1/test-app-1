@@ -40,11 +40,11 @@ export class DebugInformationService implements IDebugInformationService {
     this.debugSessions.delete(sessionId);
   }
 
-  /** Initialize debug session */
+  // Initialize debug session
   initializeSession(sessionId: string, userMessageId: string, botMessageId: string): void {
     const existingSession = this.debugSessions.get(sessionId);
     if (existingSession) {
-      // Update existing session without losing API call data
+      // Update existing session without losing data
       existingSession.userMessageId = userMessageId;
       existingSession.botMessageId = botMessageId;
       this.debugSessions.set(sessionId, existingSession);

@@ -2,29 +2,9 @@ import { IAssetRepository } from '../../../domain/repositories/IAssetRepository'
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
 import { Asset } from '../../../domain/entities/Asset';
 import { Folder } from '../../../domain/entities/Folder';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { AppError, ValidationError, DatabaseError } from '@/lib/errors/base';
 
-// DTO to represent items in the folder listing (gallery view)
-export type GalleryItemDto = 
-  | { 
-      type: 'folder'; 
-      id: string; 
-      name: string; 
-      createdAt: Date; 
-    } 
-  | { 
-      type: 'asset'; 
-      id: string; 
-      name: string; 
-      createdAt: Date; 
-      mimeType: string; 
-      publicUrl?: string; 
-      size: number; 
-      userId: string; 
-      userFullName?: string | null; 
-      tags?: { id: string; name: string; color: string; }[]; 
-      folderName?: string | null; 
-    };
 
 interface ListFolderContentsUseCaseRequest {
   organizationId: string;

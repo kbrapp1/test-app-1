@@ -1,5 +1,5 @@
 import React from 'react';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { AssetListItem } from './AssetListItem';
 import { FolderItem } from './folder-item';
 import { SelectableEnhancedAssetGridItem } from '../assets/SelectableEnhancedAssetGridItem';

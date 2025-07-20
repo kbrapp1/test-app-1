@@ -3,7 +3,7 @@ import { IAssetRepository, CreateAssetData, UpdateAssetData } from '../../../dom
 import { Asset } from '../../../domain/entities/Asset';
 import { AssetMapper as _AssetMapper, RawAssetDbRecord as _RawAssetDbRecord } from './mappers/AssetMapper';
 import { createClient } from '@/lib/supabase/client';
-import type { AssetSearchCriteria, DamFilterParameters, DamSortParameters } from '../../../application/dto/SearchCriteriaDTO';
+import type { AssetSearchCriteria, SearchFilters, SearchSortParams } from '../../../application/dto/SearchCriteriaDTO';
 import { DatabaseError as _DatabaseError } from '@/lib/errors/base';
 import { 
   AssetQueryBuilder, 
@@ -49,8 +49,8 @@ export class SupabaseAssetRepository implements IAssetRepository {
   async findByFolderId(
     folderId: string | null, 
     organizationId: string,
-    sortParams?: DamSortParameters,
-    filters?: DamFilterParameters
+    sortParams?: SearchSortParams,
+    filters?: SearchFilters
   ): Promise<Asset[]> {
     // Build query using query builder service
     let query = this.queryBuilder.buildBaseQuery();

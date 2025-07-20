@@ -2,10 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { Generation } from '../../../domain/entities/Generation';
 import { GenerationRepository, GenerationFilters } from '../../../domain/repositories/GenerationRepository';
-import { Result, success, error } from '../../common/Result';
+import { Result, GenerationStats, success, error } from '../../../domain/value-objects';
 import { GenerationRowMapper, GenerationRow } from './mappers/GenerationRowMapper';
 import { GenerationQueryBuilder } from './services/GenerationQueryBuilder';
-import { GenerationStatsCalculator, GenerationStats, StatsRow } from './services/GenerationStatsCalculator';
+import { GenerationStatsCalculator, StatsRow } from './services/GenerationStatsCalculator';
 
 export class SupabaseGenerationRepository implements GenerationRepository {
   private tableName = 'image_generations';

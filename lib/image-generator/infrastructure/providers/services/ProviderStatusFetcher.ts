@@ -1,7 +1,7 @@
 import { ProviderConfig } from './ProviderConfigManager';
 import { ProviderStatusResponse } from './ProviderStatusCache';
 import { ReplicateProviderClient } from './ReplicateProviderClient';
-import { error, Result } from '../../common/Result';
+import { error, Result } from '../../../domain/value-objects';
 
 /**
  * Infrastructure Layer - ProviderStatusFetcher encapsulates retry and API call logic

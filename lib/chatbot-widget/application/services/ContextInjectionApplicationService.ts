@@ -1,9 +1,5 @@
-/**
- * Context Injection Application Service
- * 
- * Main orchestrator for context injection operations.
- * Pure orchestration - delegates to specialized services for validation, configuration, and criteria building.
- */
+// Context Injection Application Service
+// Main orchestrator for context injection operations
 
 import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';

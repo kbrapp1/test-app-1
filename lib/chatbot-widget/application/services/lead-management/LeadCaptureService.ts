@@ -1,16 +1,9 @@
-/**
- * Lead Capture Service
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Lead capture orchestration only
- * - Orchestrate domain objects, no business logic
- * - Handle workflow coordination, delegate all business logic
- * - Use domain-specific errors with proper context
- * - Stay under 200-250 lines
- * - Publish domain events for cross-aggregate communication
- * - UPDATED: Uses domain-calculated lead scores from session context
- * - Lead scores calculated via DomainConstants.calculateLeadScore()
- */
+// Lead Capture Service
+//
+// AI INSTRUCTIONS:
+// - Single responsibility: Lead capture orchestration only
+// - Orchestrate domain objects, no business logic
+// - Uses domain-calculated lead scores from session context
 
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
 import { IChatSessionRepository } from '../../../domain/repositories/IChatSessionRepository';
@@ -46,10 +39,7 @@ export class LeadCaptureService {
     private readonly leadMapper: LeadMapper
   ) {}
 
-  /**
-   * Capture a new lead from chat session
-   * Orchestrates validation, creation, and persistence
-   */
+  // Capture a new lead from chat session
   async captureLead(request: LeadCaptureRequest): Promise<LeadDto> {
     // Validate session exists
     const session = await this.sessionRepository.findById(request.sessionId);

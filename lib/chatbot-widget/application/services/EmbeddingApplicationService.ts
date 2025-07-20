@@ -32,8 +32,7 @@ export class EmbeddingApplicationService {
     private logContext?: EmbeddingLogContext
   ) {}
 
-  /** Generate embedding with intelligent caching
- */
+  // Generate embedding with intelligent caching
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
     const cacheKey = this.cacheService.generateCacheKey(text);
     

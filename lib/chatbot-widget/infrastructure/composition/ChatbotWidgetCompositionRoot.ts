@@ -49,15 +49,10 @@ import { ChatbotServiceAccessCoordinator } from './core/ChatbotServiceAccessCoor
 import { ChatbotInitializationCoordinator } from './core/ChatbotInitializationCoordinator';
 import { ChatbotTestingCoordinator } from './core/ChatbotTestingCoordinator';
 
-/**
- * Main Composition Root for Chatbot Widget Domain
- * - Clean facade that delegates to specialized coordinators following DDD patterns
- * - Maintains unified interface for dependency access and testing support
- * - Preserves all existing functionality while improving organization
- * - Follows single responsibility principle with focused coordinators
- */
+// Main Composition Root for Chatbot Widget Domain
+// Delegates to specialized coordinators following DDD patterns
 export class ChatbotWidgetCompositionRoot {
-  // Repository access - delegate to service access coordinator
+  // Repository access delegates to service coordinator
   
   static getChatbotConfigRepository(): IChatbotConfigRepository {
     return ChatbotServiceAccessCoordinator.getChatbotConfigRepository();

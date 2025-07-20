@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 import { useFolderItemState } from '../hooks/useFolderItemState';
 import { FolderThumbnail } from './FolderThumbnail';
 

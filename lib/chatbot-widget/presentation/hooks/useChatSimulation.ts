@@ -7,13 +7,9 @@ import {
   SimulationResults 
   } from '../types/ChatSimulationTypes';
 
-/**
- * AI Instructions: Custom hook for managing chatbot simulation state
- * - Handle live simulation testing with real AI responses
- * - Manage simulation lifecycle and conversation flow
- * - Provide quality assessment metrics and debug information
- * - Support user profile customization for testing scenarios
- */
+// Custom hook for managing chatbot simulation state
+// AI Instructions: Handle live simulation testing with real AI responses
+// Manage simulation lifecycle and conversation flow
 
 const defaultUserProfile: SimulatedUserProfile = {
   name: 'Test User',

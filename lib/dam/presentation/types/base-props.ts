@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../domain/value-objects/GalleryItem';
 
 // ===== CORE COMPONENT PROPS =====
 

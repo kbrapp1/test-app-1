@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+import type { SearchFilters as _SearchFilters, SearchSortParams } from '../../../../application/dto/SearchCriteriaDTO';
 
 type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
 
@@ -73,7 +73,7 @@ export class FolderQueryBuilder {
   /**
    * Apply sorting
    */
-  applySorting(query: SupabaseQueryBuilder, sortParams?: DamSortParameters): SupabaseQueryBuilder {
+  applySorting(query: SupabaseQueryBuilder, sortParams?: SearchSortParams): SupabaseQueryBuilder {
     const validSortColumns = ['name', 'created_at', 'updated_at'];
     let effectiveSortBy = sortParams?.sortBy || 'name';
     

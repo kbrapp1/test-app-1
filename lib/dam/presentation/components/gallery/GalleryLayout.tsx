@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Upload } from 'lucide-react';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { GalleryHeader } from './sections/GalleryHeader';
 import { UploadProgress } from './sections/UploadProgress';
 import { ContentSections } from './sections/ContentSections';

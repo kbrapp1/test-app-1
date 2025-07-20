@@ -7,7 +7,7 @@
 
 import { useCallback } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 
 import { DragOperationFactory } from './services/DragOperationFactory';
 // import { DragValidationService } from './services/DragValidationService';

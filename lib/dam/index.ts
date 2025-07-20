@@ -14,8 +14,8 @@ export type { Tag } from './domain/entities/Tag';
 // Export DTOs
 export type { UploadAssetDTO } from './application/dto/UploadAssetDTO';
 export type {
-  DamFilterParameters,
-  DamSortParameters,
+  SearchFilters,
+  SearchSortParams,
   LimitOptions,
   AssetSearchCriteria,
   FolderSearchCriteria

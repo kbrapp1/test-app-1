@@ -1,16 +1,17 @@
-import { SearchCriteria } from '../value-objects/SearchCriteria';
-import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
-import { GetDamDataUseCase, GetDamDataResult } from '../../application/use-cases/search/GetDamDataUseCase';
-import { DamApiRequestDto } from '../../application/dto/DamApiRequestDto';
-import { SearchMapper } from './SearchMapper';
-import { SearchValidation } from './SearchValidation';
-import { SearchCriteriaFactory } from './SearchCriteriaFactory';
-import { SearchUtilities } from './SearchUtilities';
+import { SearchCriteria } from '../../domain/value-objects/SearchCriteria';
+import { GalleryItemDto } from '../../domain/value-objects/GalleryItem';
+import { GetDamDataResult } from '../../domain/value-objects/DamDataResult';
+import { SearchMapper } from '../../domain/services/SearchMapper';
+import { SearchValidation } from '../../domain/services/SearchValidation';
+import { SearchCriteriaFactory } from '../../domain/services/SearchCriteriaFactory';
+import { SearchUtilities } from '../../domain/services/SearchUtilities';
+import { GetDamDataUseCase } from '../use-cases/search/GetDamDataUseCase';
+import { DamApiRequestDto } from '../dto/DamApiRequestDto';
 
 /**
- * Domain Service for Search Operations
+ * Application Service for Search Operations
  * 
- * Encapsulates search business logic and provides a clean interface
+ * Orchestrates search use cases and provides a clean interface
  * for search-related operations throughout the DAM system
  */
 
@@ -157,4 +158,4 @@ export class SearchService {
   generateSearchDescription(criteria: SearchCriteria): string {
     return SearchUtilities.generateSearchDescription(criteria);
   }
-} 
+}

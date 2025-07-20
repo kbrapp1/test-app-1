@@ -1,9 +1,5 @@
-/**
- * Conversation Context Management Service
- * 
- * Application service for managing conversation context and token-aware operations.
- * Single responsibility: Handle context retrieval, token management, and conversation summaries.
- */
+// Conversation Context Management Service
+// Application service for managing conversation context and token-aware operations
 
 import { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
@@ -29,18 +25,13 @@ export class ConversationContextManagementService {
     private readonly messageRepository: IChatMessageRepository
   ) {}
 
-  /**
-   * Application Layer: Extract string from any conversation summary format
-   * This handles the data transformation concern properly at application boundary
-   */
+  // Extract string from any conversation summary format
   private extractSummaryText(summary?: string | Record<string, unknown>): string {
     return SummaryExtractionService.extractSummaryText(summary);
   }
 
-  /**
-   * Get token-aware context for conversation
-   * AI INSTRUCTIONS: Enhanced with Phase 2 services for intelligent context management
-   */
+  // Get token-aware context for conversation
+  // AI INSTRUCTIONS: Enhanced with Phase 2 services for intelligent context management
   async getTokenAwareContext(
     sessionId: string, 
     newUserMessage: ChatMessage,

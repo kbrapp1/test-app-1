@@ -2,11 +2,8 @@
  * AI Configuration Value Object
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Coordinate AI configuration components
+ * - Coordinate AI configuration components using composition pattern
  * - Delegate specialized configuration to focused value objects
- * - Keep under 200-250 lines by extracting configuration sections
- * - Use composition pattern for complex configurations
- * - Follow @golden-rule patterns exactly
  */
 
 import { AIConfigurationValidationService } from '../../services/ai-configuration/AIConfigurationValidationService';

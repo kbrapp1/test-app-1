@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Loader2, Folder as FolderIconLucide, FileText as FileIconLucide } from 'lucide-react';
-import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 
 interface SearchDropdownMenuProps {
   items: GalleryItemDto[];

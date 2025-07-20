@@ -1,6 +1,6 @@
 import { Generation } from '../../../domain/entities/Generation';
 import { ProviderStatusResponse } from './ProviderStatusCache';
-import { success, error, Result } from '../../common/Result';
+import { success, error, Result } from '../../../domain/value-objects';
 
 /**
  * Infrastructure Layer - ProviderStatusUpdater applies provider responses to domain entities

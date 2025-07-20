@@ -1,6 +1,6 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { Result, success, error } from '../../domain/value-objects';
 import { SupabaseStorageService } from '../../../dam/infrastructure/storage/SupabaseStorageService';
 import { createClient } from '@supabase/supabase-js';
 import { GenerationDisplayService } from '../../domain/services/GenerationDisplayService';

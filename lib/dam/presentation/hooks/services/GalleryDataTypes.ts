@@ -1,4 +1,4 @@
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 
 // Domain interfaces for gallery data management
 export interface GalleryDataParams {

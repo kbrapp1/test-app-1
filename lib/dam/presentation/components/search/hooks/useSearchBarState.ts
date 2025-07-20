@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 import { useDamSearchInput } from '../../../hooks/search/useDamSearchInput';
 import { useDamSearchDropdown } from '../../../hooks/search/useDamSearchDropdown';
 import { useDamUrlManager } from '../../../hooks/navigation/useDamUrlManager';
@@ -10,7 +10,7 @@ import { useDamTagFilterHandler } from '../../../hooks/search/useDamTagFilterHan
 import { SearchInputHandler } from '../services/SearchInputHandler';
 import { SavedSearchHandler } from '../services/SavedSearchHandler';
 import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
-// import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+// import { SearchFilters, SearchSortParams } from '../../../../application/dto/SearchCriteriaDTO';
 
 interface UseSearchBarStateProps {
   currentFolderId: string | null;

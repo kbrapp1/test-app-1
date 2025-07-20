@@ -26,9 +26,6 @@ import { ChatSessionFactory } from '../services/session-management/ChatSessionFa
  * AI INSTRUCTIONS:
  * - Core domain entity representing chat session with rich conversational context
  * - Pure entity following DDD principles with business logic delegated to domain services
- * - Manages session state, context accumulation, and lead qualification workflow
- * - Handles activity tracking, page views, engagement metrics, and session lifecycle
- * - Immutable entity with state transitions through dedicated domain services
  */
 export class ChatSession {
   private constructor(private readonly props: ChatSessionProps) {
@@ -88,7 +85,7 @@ export class ChatSession {
     });
   }
 
-  // Update conversation summary with enhanced format - Phase 2 integration
+  // Enhanced conversation summary with phase breakdowns
   updateConversationSummaryEnhanced(summary: {
     fullSummary: string;
     phaseSummaries?: Array<{
@@ -213,7 +210,7 @@ export class ChatSession {
     });
   }
 
-  // Update session context data with new values - pure immutable method
+  // Update session context with new values (immutable)
   updateContextData(newContextData: Partial<SessionContext>): ChatSession {
     const updatedContext = SessionContextService.mergeContextData(
       this.props.contextData, 
@@ -245,7 +242,7 @@ export class ChatSession {
   isExpired(timeoutMinutes: number = 30): boolean {
     ChatSessionValidationService.validateTimeout(timeoutMinutes);
     
-    // Session expires when lastActivityAt exceeds timeout threshold
+    // Check if lastActivityAt exceeds timeout threshold
     const timeoutMs = timeoutMinutes * 60 * 1000;
     const now = new Date().getTime();
     return now - this.props.lastActivityAt.getTime() > timeoutMs;
@@ -257,7 +254,7 @@ export class ChatSession {
   }
 
   getSessionMetrics(): SessionMetrics {
-    // Pure business logic for calculating session analytics
+    // Calculate session analytics metrics
     const endTime = this.props.endedAt || new Date();
     const duration = endTime.getTime() - this.props.startedAt.getTime();
 

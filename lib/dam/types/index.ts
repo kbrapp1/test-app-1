@@ -5,8 +5,8 @@ export type { Asset, Folder, Tag } from './dam.types';
 
 // Re-export application DTOs
 export type {
-  DamFilterParameters,
-  DamSortParameters,
+  SearchFilters,
+  SearchSortParams,
   AssetSearchCriteria,
 } from '../application/dto/SearchCriteriaDTO';
 

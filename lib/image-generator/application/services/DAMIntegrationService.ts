@@ -2,7 +2,7 @@
 // Single Responsibility: Define contracts for DAM integration without infrastructure dependencies
 // Following Golden Rule: Application layer defines interfaces, infrastructure implements them
 
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { Result, success, error } from '../../domain/value-objects';
 import { 
   SaveAssetToDAMDto, 
   DAMAssetDto, 

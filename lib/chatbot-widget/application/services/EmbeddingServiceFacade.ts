@@ -1,13 +1,8 @@
-/**
- * Embedding Service Facade
- * 
- * AI INSTRUCTIONS:
- * - Clean unified interface for embedding operations
- * - Orchestrates all domain and application services
- * - Keep under 250 lines by focusing on coordination
- * - Follow @golden-rule patterns exactly
- * - Single responsibility: unified embedding interface
- */
+// Embedding Service Facade
+//
+// AI INSTRUCTIONS:
+// - Clean unified interface for embedding operations
+// - Single responsibility: unified embedding interface
 
 import { EmbeddingCacheDomainService } from '../../domain/services/embedding/EmbeddingCacheDomainService';
 import { EmbeddingSimilarityDomainService } from '../../domain/services/embedding/EmbeddingSimilarityDomainService';
@@ -135,20 +130,12 @@ export class EmbeddingServiceFacade implements IEmbeddingService {
     return this.applicationService.getCacheStats();
   }
 
-  /**
-   * Get detailed cache breakdown by type
-   * 
-   * AI INSTRUCTIONS:
-   * - Advanced cache analytics
-   * - Type-specific statistics
-   * - Useful for cache tuning
-   */
+  // Get detailed cache breakdown by type
   getDetailedCacheStats(): Record<CacheType, { size: number; maxSize: number | null; keys: string[] }> {
     return this.applicationService.getDetailedCacheStats();
   }
 
-  /** Clear embedding cache
- */
+  // Clear embedding cache
   clearCache(): void {
     this.applicationService.clearCache();
   }

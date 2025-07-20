@@ -14,8 +14,8 @@ import type { Tag } from '@/lib/dam/domain/entities/Tag';
 
 // Re-export modern types for backward compatibility
 export type { 
-  DamFilterParameters, 
-  DamSortParameters, 
+  SearchFilters, 
+  SearchSortParams, 
   LimitOptions 
 } from '@/lib/dam/application/dto/SearchCriteriaDTO';
 

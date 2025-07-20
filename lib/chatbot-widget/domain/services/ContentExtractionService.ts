@@ -1,28 +1,12 @@
-/**
- * Content Extraction Domain Service
- * 
- * AI INSTRUCTIONS:
- * - Keep business logic pure, no external dependencies
- * - Maintain single responsibility principle  
- * - Never exceed 250 lines - refactor into smaller services
- * - Follow @golden-rule patterns exactly
- * - Check for existing similar logic before creating new
- * - Always validate inputs using value objects
- * - Delegate complex calculations to separate methods
- * - Handle domain errors with specific error types
- * - No infrastructure concerns (Cheerio abstracted via interface)
- */
+// Content Extraction Domain Service
+//
+// AI INSTRUCTIONS:
+// - Keep business logic pure, no external dependencies
+// - Maintain single responsibility principle
 
 import { ContentExtractionError } from '../errors/ChatbotWidgetDomainErrors';
 
-/**
- * Interface for HTML parser abstraction
- * 
- * AI INSTRUCTIONS:
- * - Abstract external HTML parsing library from domain logic
- * - Enable testing with mock implementations
- * - Keep domain layer pure from infrastructure dependencies
- */
+// HTML parser abstraction interface for domain layer
 export interface IHtmlParser {
   removeElements(selectors: string[]): void;
   findElement(selector: string): IHtmlElement | null;

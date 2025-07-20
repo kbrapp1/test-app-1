@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useApiQuery } from '@/lib/infrastructure/query';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 
 interface UseDamSearchDropdownProps {
   debouncedSearchTerm: string;

@@ -4,7 +4,7 @@
 
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { Result, success, error } from '../../domain/value-objects';
 import { DAMIntegrationApplicationService } from '../services/DAMIntegrationService';
 import { GenerationDisplayService } from '../../domain/services/GenerationDisplayService';
 

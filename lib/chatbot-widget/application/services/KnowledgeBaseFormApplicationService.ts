@@ -23,16 +23,11 @@ import {
   validateFormData
 } from './KnowledgeBaseFormValidation';
 
-/**
- * Knowledge Base Form Application Service
- * 
- * AI INSTRUCTIONS:
- * - Application service for knowledge base form operations
- * - Orchestrates domain services and repositories
- * - No business logic - delegate to domain services and helpers
- * - Single responsibility: Knowledge base form workflow coordination
- * - Follow @golden-rule patterns - stay under 250 lines
- */
+// Knowledge Base Form Application Service
+//
+// AI INSTRUCTIONS:
+// - Application service for knowledge base form operations
+// - Single responsibility: Knowledge base form workflow coordination
 
 export class KnowledgeBaseFormApplicationService {
   constructor(

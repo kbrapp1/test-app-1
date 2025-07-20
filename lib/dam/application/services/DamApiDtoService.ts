@@ -3,7 +3,7 @@ import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
 import { DamApiResponseDto, CombinedDamItem, TransformedAsset, TransformedFolder } from '../dto/DamApiRequestDto';
 import { GetDamDataResult } from '../use-cases/search/GetDamDataUseCase';
-import { DamSortParameters, LimitOptions } from '../dto/SearchCriteriaDTO';
+import { SearchSortParams, LimitOptions } from '../dto/SearchCriteriaDTO';
 
 export class DamApiDtoService {
   constructor(private supabase: SupabaseClient) {}
@@ -11,7 +11,7 @@ export class DamApiDtoService {
   async transformToApiResponse(
     domainResult: GetDamDataResult,
     organizationId: string,
-    sortParams?: DamSortParameters,
+    sortParams?: SearchSortParams,
     limitOptions?: LimitOptions,
     searchTerm?: string
   ): Promise<DamApiResponseDto> {
@@ -113,7 +113,7 @@ export class DamApiDtoService {
   private combineAndSortData(
     assets: TransformedAsset[], 
     folders: TransformedFolder[], 
-    sortParams?: DamSortParameters
+    sortParams?: SearchSortParams
   ): CombinedDamItem[] {
     const combinedData: CombinedDamItem[] = [...folders, ...assets];
 

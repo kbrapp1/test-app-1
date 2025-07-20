@@ -1,13 +1,8 @@
-/**
- * Chatbot Configuration Entity
- * 
- * AI INSTRUCTIONS:
- * - Core domain entity representing complete chatbot configuration with business logic
- * - Coordinates value objects and delegates complex operations to domain services
- * - Immutable entity following @golden-rule patterns with business method delegation
- * - Manages personality, knowledge base, operating hours, and lead qualification settings
- * - Handles validation, state transitions, and configuration lifecycle management
- */
+// Chatbot Configuration Entity
+//
+// AI INSTRUCTIONS:
+// - Core domain entity representing complete chatbot configuration with business logic
+// - Coordinates value objects and delegates complex operations to domain services
 
 import { PersonalitySettings } from '../value-objects/ai-configuration/PersonalitySettings';
 import { KnowledgeBase } from '../value-objects/ai-configuration/KnowledgeBase';
@@ -57,7 +52,7 @@ export class ChatbotConfig {
   }
 
   static fromPersistence(props: ChatbotConfigProps): ChatbotConfig {
-    // Ensure AI configuration exists with defaults
+    // Apply default AI configuration if needed
     const propsWithAI = {
       ...props,
       aiConfiguration: props.aiConfiguration || this.getDefaultAIConfiguration(),
@@ -75,7 +70,7 @@ export class ChatbotConfig {
     if (props.name.length > 100) {
       throw new Error('Chatbot name must be 100 characters or less');
     }
-    // Lead qualification questions are optional during initial config creation
+    // Lead qualification questions are optional
     
     // Validate operating hours
     if (!props.operatingHours.timezone) {
@@ -152,7 +147,7 @@ export class ChatbotConfig {
     });
   }
 
-  // Static method to get default AI configuration
+  // Get default AI configuration
   static getDefaultAIConfiguration(): AIConfiguration {
     return AIConfiguration.createDefault();
   }

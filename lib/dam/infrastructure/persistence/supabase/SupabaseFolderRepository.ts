@@ -5,7 +5,7 @@ import { Asset } from '../../../domain/entities/Asset';
 import { FolderMapper } from './mappers/FolderMapper';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { ValidationError } from '@/lib/errors/base';
-import type { DamFilterParameters, DamSortParameters } from '../../../application/dto/SearchCriteriaDTO';
+import type { SearchFilters, SearchSortParams } from '../../../application/dto/SearchCriteriaDTO';
 import { 
   FolderQueryBuilder, 
   FolderDateFilter, 
@@ -58,8 +58,8 @@ export class SupabaseFolderRepository implements IFolderRepository {
   async findFoldersByParentId(
     parentId: string | null, 
     organizationId: string,
-    sortParams?: DamSortParameters,
-    filters?: DamFilterParameters,
+    sortParams?: SearchSortParams,
+    filters?: SearchFilters,
   ): Promise<Folder[]> {
     // Build query using query builder service
     let query = this.queryBuilder.buildBaseQuery(organizationId);

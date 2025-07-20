@@ -1,15 +1,8 @@
-/**
- * Vector Cache Orchestration Service
- * 
- * AI INSTRUCTIONS:
- * - Single responsibility: Delegate to specialized orchestration services
- * - Domain service focused on maintaining backward compatibility
- * - Keep business logic pure, no external dependencies beyond domain services
- * - Never exceed 250 lines per @golden-rule
- * - Delegate all operations to focused orchestration services
- * - Maintain existing API for backward compatibility
- * - Support comprehensive logging and monitoring
- */
+// Vector Cache Orchestration Service
+//
+// AI INSTRUCTIONS:
+// - Single responsibility: Delegate to specialized orchestration services
+// - Domain service focused on maintaining backward compatibility
 
 import { KnowledgeItem } from './interfaces/IKnowledgeRetrievalService';
 import { ISessionLogger } from './interfaces/IChatbotLoggingService';
@@ -26,17 +19,10 @@ import {
   VectorSearchResult
 } from '../types/VectorCacheTypes';
 
-/** Orchestration Service for Complex Vector Cache Operations */
+// Orchestration Service for Complex Vector Cache Operations
 export class VectorCacheOrchestrationService {
   
-  /**
-   * Orchestrate cache initialization workflow
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to specialized initialization orchestration service
-   * - Maintain backward compatibility with existing API
-   * - Preserve all security and organizational context
-   */
+  // Orchestrate cache initialization workflow
   static async orchestrateInitialization(
     vectors: Array<{ item: KnowledgeItem; vector: number[] }>,
     cachedVectors: Map<string, CachedKnowledgeVector>,
@@ -122,14 +108,7 @@ export class VectorCacheOrchestrationService {
     );
   }
 
-  /**
-   * Orchestrate error handling and logging
-   * 
-   * AI INSTRUCTIONS:
-   * - Delegate to specialized error orchestration service
-   * - Maintain backward compatibility with existing API
-   * - Preserve comprehensive error reporting
-   */
+  // Orchestrate error handling and logging
   static orchestrateErrorHandling(
     operation: string,
     error: Error,

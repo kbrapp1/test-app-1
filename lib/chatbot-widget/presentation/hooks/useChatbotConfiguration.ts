@@ -1,13 +1,8 @@
-/**
- * Chatbot Configuration Management Hook
- * 
- * AI INSTRUCTIONS:
- * - Orchestrates all chatbot configuration concerns
- * - Uses extracted services for separation of concerns
- * - Preserves organization security boundaries
- * - Provides clean interface for components
- * - Follows DDD patterns with proper orchestration
- */
+// Chatbot Configuration Management Hook
+//
+// AI INSTRUCTIONS:
+// - Orchestrates all chatbot configuration concerns
+// - Provides clean interface for components with proper orchestration
 
 'use client';
 
@@ -34,13 +29,13 @@ export function useChatbotConfiguration(options: UseChatbotConfigurationOptions 
   const { activeOrganizationId } = useOrganization();
   const { enableFormState = true, autoLoad = true } = options;
   
-  // Extract configuration data
+  // Get configuration data
   const { config: existingConfig, isLoading, error } = useChatbotConfigurationQuery(
     activeOrganizationId,
     { autoLoad }
   );
 
-  // Extract form state management
+  // Manage form state
   const {
     formData,
     isEditing,

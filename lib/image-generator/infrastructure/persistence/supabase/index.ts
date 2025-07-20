@@ -6,4 +6,4 @@ export { GenerationRowMapper, type GenerationRow } from './mappers/GenerationRow
 
 // Services
 export { GenerationQueryBuilder } from './services/GenerationQueryBuilder';
-export { GenerationStatsCalculator, type GenerationStats } from './services/GenerationStatsCalculator'; 
+export { GenerationStatsCalculator } from './services/GenerationStatsCalculator'; 

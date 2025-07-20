@@ -9,7 +9,7 @@
  * - Security-critical: organizationId fields must be preserved
  */
 
-import { GalleryItemDto } from '../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../domain/value-objects/GalleryItem';
 import { MultiSelectProps } from './base-props';
 
 /**

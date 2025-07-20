@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 
 export interface SelectableFolderProps {
   folder: GalleryItemDto;

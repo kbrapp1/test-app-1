@@ -1,6 +1,6 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationRepository, GenerationFilters } from '../../domain/repositories/GenerationRepository';
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { Result, success, error } from '../../domain/value-objects';
 
 export type GetGenerationsFilters = GenerationFilters & {
   // Additional filters can be added here

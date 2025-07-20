@@ -1,12 +1,12 @@
 import { Asset } from '../../../domain/entities/Asset';
 import { IAssetRepository } from '../../../domain/repositories/IAssetRepository';
-import { DamSortParameters, DamFilterParameters } from '../../../application/dto/SearchCriteriaDTO';
+import { SearchSortParams, SearchFilters } from '../../../application/dto/SearchCriteriaDTO';
 
 interface ListAssetsByFolderUseCaseParams {
   folderId: string | null; // Null for root-level assets
   organizationId: string;
-  sortParams?: DamSortParameters;
-  filters?: DamFilterParameters;
+  sortParams?: SearchSortParams;
+  filters?: SearchFilters;
   // Future considerations: pagination (limit, offset), sorting, specific filters
 }
 

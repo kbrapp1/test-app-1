@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 
 interface FolderItemStateProps {
   folder: GalleryItemDto & { type: 'folder' };

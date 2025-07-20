@@ -1,11 +1,6 @@
-/**
- * Conversation Context Orchestrator - Refactored
- * 
- * Single responsibility: Orchestrate conversation context operations
- * Delegates to specialized services for different concerns
- * Maintains clean boundaries between different operation types
- * Follows DDD patterns with proper dependency injection
- */
+// Conversation Context Orchestrator
+// Single responsibility: Orchestrate conversation context operations
+// Delegates to specialized services for different concerns
 
 import { ChatMessage } from '../../entities/ChatMessage';
 import { ChatSession } from '../../entities/ChatSession';

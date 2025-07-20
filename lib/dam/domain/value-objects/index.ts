@@ -2,6 +2,8 @@
 export * from './SearchCriteria';
 export * from './BulkOperation';
 export * from './TagColor';
+export * from './GalleryItem';
+export * from './DamDataResult';
 
 // Domain Services
 export { TagColorService } from '../services/TagColorService';

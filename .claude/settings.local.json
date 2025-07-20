@@ -43,7 +43,14 @@
       "Bash(pnpm remove:*)",
       "Bash(dir:*)",
       "Bash(mkdir:*)",
-      "Bash(npx vitest run:*)"
+      "Bash(npx vitest run:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(touch:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(npx tsx:*)"
     ]
   },
   "model": "sonnet",

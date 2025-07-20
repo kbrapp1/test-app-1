@@ -7,7 +7,7 @@
 
 import type { DragEndEvent } from '@dnd-kit/core';
 import type { DragOperation } from '../types';
-import type { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 
 export class DragOperationFactory {
   /**

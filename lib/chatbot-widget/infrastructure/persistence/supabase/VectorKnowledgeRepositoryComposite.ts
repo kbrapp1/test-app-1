@@ -8,16 +8,11 @@ import { VectorKnowledgeCommandRepository } from './VectorKnowledgeCommandReposi
 import { VectorKnowledgeAnalyticsRepository } from './VectorKnowledgeAnalyticsRepository';
 import { KnowledgeItem } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 
-/**
- * Vector Knowledge Repository Composite
- * 
- * AI INSTRUCTIONS:
- * - Maintains backward compatibility with original IVectorKnowledgeRepository
- * - Delegates operations to specialized CQRS repositories
- * - Preserves all existing functionality while improving internal structure
- * - Enables smooth transition to new repository architecture
- * - Follows DDD composite pattern for unified interface
- */
+// Vector Knowledge Repository Composite
+//
+// AI INSTRUCTIONS:
+// - Maintains backward compatibility with original IVectorKnowledgeRepository
+// - Delegates operations to specialized CQRS repositories
 export class VectorKnowledgeRepositoryComposite implements IVectorKnowledgeRepository {
   private readonly queryRepository: IVectorKnowledgeQueryRepository;
   private readonly commandRepository: IVectorKnowledgeCommandRepository;

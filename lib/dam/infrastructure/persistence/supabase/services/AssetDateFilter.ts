@@ -1,4 +1,4 @@
-import type { DamFilterParameters } from '../../../../application/dto/SearchCriteriaDTO';
+import type { SearchFilters } from '../../../../application/dto/SearchCriteriaDTO';
 
 type SupabaseQueryBuilder = ReturnType<ReturnType<import('@supabase/supabase-js').SupabaseClient['from']>['select']>;
 
@@ -10,7 +10,7 @@ export class AssetDateFilter {
   /**
    * Apply date filters to query based on filter parameters
    */
-  static applyDateFilters(query: SupabaseQueryBuilder, filters: DamFilterParameters): SupabaseQueryBuilder {
+  static applyDateFilters(query: SupabaseQueryBuilder, filters: SearchFilters): SupabaseQueryBuilder {
     if (!filters.creationDateOption) {
       return query;
     }
@@ -66,7 +66,7 @@ export class AssetDateFilter {
   /**
    * Validate date filter parameters
    */
-  static validateDateFilters(filters: DamFilterParameters): { valid: boolean; error?: string } {
+  static validateDateFilters(filters: SearchFilters): { valid: boolean; error?: string } {
     if (!filters.creationDateOption) {
       return { valid: true };
     }

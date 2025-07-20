@@ -3,11 +3,7 @@
  * 
  * AI INSTRUCTIONS:
  * - Single source of truth for all chatbot widget domain errors
- * - Follow @golden-rule DDD error handling patterns exactly
  * - Exports all error types from focused domain error files
- * - Maintains backward compatibility while improving organization
- * - Keep under 250 lines - focused on exports and re-exports
- * - Clean architecture: Each error category in separate focused file
  */
 
 // ===== BASE ERROR FOUNDATION =====

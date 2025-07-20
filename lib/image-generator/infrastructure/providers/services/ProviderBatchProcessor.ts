@@ -1,5 +1,5 @@
 import { Generation } from '../../../domain/entities/Generation';
-import { success, error, Result } from '../../common/Result';
+import { success, error, Result } from '../../../domain/value-objects';
 
 /**
  * Infrastructure Layer - ProviderBatchProcessor handles grouping and batch workflows

@@ -9,7 +9,7 @@ import { GalleryDialogs } from './GalleryDialogs';
 import { SelectionToolbar } from '../selection/SelectionToolbar';
 import { BulkOperationDialogs } from '../dialogs/BulkOperationDialogs';
 import { useCacheInvalidation } from '@/lib/infrastructure/query';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { GalleryMultiSelectState, RendererMultiSelectState } from '../../types/gallery-types';
 
 interface AssetGalleryClientProps {

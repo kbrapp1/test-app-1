@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 
 interface DragItem {
   type: 'asset' | 'folder';

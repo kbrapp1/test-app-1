@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { BulkOperationType } from '../../../../../domain/value-objects/BulkOperation';
 import type { UseMultiSelectReturn } from '../../../selection/multi-select/types';
-import type { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 
 interface BulkOperationDialogs {
   move: {

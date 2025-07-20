@@ -1,21 +1,8 @@
-/**
- * Vector Knowledge Retrieval Domain Service (Pure Domain Layer)
- * 
- * DOMAIN LAYER RESPONSIBILITIES:
- * - Pure business logic for knowledge retrieval validation
- * - Domain rules and constraints enforcement
- * - Business rule validation only
- * - No infrastructure, application, or cross-cutting concerns
- * 
- * DDD LAYER: Domain (pure business logic)
- * FILE SIZE: 60-80 lines
- * 
- * AI INSTRUCTIONS:
- * - Pure domain service with business validation only
- * - No logging, caching, orchestration, or external dependencies
- * - Enforces business constraints and domain rules
- * - Throws domain-specific errors for business rule violations
- */
+// Vector Knowledge Retrieval Domain Service
+//
+// AI INSTRUCTIONS:
+// - Pure domain service with business validation only
+// - Enforces business constraints and domain rules for knowledge retrieval
 
 import { 
   KnowledgeSearchResult, 
@@ -23,25 +10,14 @@ import {
 } from './interfaces/IKnowledgeRetrievalService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 
-/**
- * Pure Domain Service for Knowledge Retrieval Business Rules
- * 
- * DOMAIN RESPONSIBILITIES:
- * - Validate search context against business rules
- * - Validate search results integrity
- * - Enforce domain constraints and limits
- * - Business rule validation only
- */
+// Pure domain service for knowledge retrieval business rules
 export class VectorKnowledgeRetrievalDomainService {
   constructor(
     private readonly organizationId: string,
     private readonly chatbotConfigId: string
   ) {}
 
-  /**
-   * Domain validation for search context
-   * Enforces business rules for knowledge search operations
-   */
+  // Validate search context against business rules
   validateSearchContext(context: KnowledgeRetrievalContext): void {
     // Business rule: Query must not be empty
     if (!context.userQuery?.trim()) {
@@ -74,10 +50,7 @@ export class VectorKnowledgeRetrievalDomainService {
     }
   }
 
-  /**
-   * Domain validation for search results
-   * Enforces business rules for search result integrity
-   */
+  // Validate search results integrity
   validateSearchResults(result: KnowledgeSearchResult): void {
     // Business rule: Validate result integrity
     if (!result.items) {
@@ -103,9 +76,7 @@ export class VectorKnowledgeRetrievalDomainService {
     }
   }
 
-  /**
-   * Business rule: Knowledge modifications not allowed in retrieval service
-   */
+  // Business rule: No modifications allowed in retrieval service
   validateModificationOperation(): never {
     throw new BusinessRuleViolationError(
       'Knowledge modifications not supported by retrieval service',

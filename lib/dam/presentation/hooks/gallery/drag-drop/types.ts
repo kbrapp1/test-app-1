@@ -5,7 +5,7 @@
  * Following DDD principles with clear value objects
  */
 
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 
 // Value Objects
 export interface DragOperation {

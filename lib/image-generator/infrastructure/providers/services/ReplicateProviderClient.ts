@@ -1,4 +1,4 @@
-import { Result, success, error } from '../../common/Result';
+import { Result, success, error } from '../../../domain/value-objects';
 import { ProviderConfig } from './ProviderConfigManager';
 import { ProviderStatusResponse } from './ProviderStatusCache';
 

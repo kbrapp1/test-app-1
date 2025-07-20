@@ -1,6 +1,6 @@
 import React from 'react';
 import { Selection } from '../../../../domain/entities/Selection';
-import { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 import { BulkOperationType } from '../../../../domain/value-objects/BulkOperation';
 import { SelectionAction } from '../../../../application/use-cases/selection/UpdateSelectionUseCase';
 

@@ -1,22 +1,5 @@
-/**
- * Vector Knowledge Retrieval Application Service (Application Layer)
- * 
- * APPLICATION LAYER RESPONSIBILITIES:
- * - Use case orchestration and coordination
- * - Cache management and initialization
- * - Cross-domain service coordination
- * - Session and logging management
- * - Infrastructure service delegation
- * 
- * DDD LAYER: Application (orchestration and use cases)
- * FILE SIZE: 120-150 lines
- * 
- * AI INSTRUCTIONS:
- * - Application service handling use case orchestration
- * - Coordinates domain services with infrastructure
- * - Manages caching, logging, and session concerns
- * - Delegates to domain service for business validation
- */
+// Vector Knowledge Retrieval Application Service
+// Orchestrates knowledge search and cache management
 
 import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
@@ -45,16 +28,7 @@ import { VectorCacheInitializationService } from '../../domain/services/knowledg
 // Operations coordinator
 import { VectorKnowledgeOperationsCoordinator } from './VectorKnowledgeOperationsCoordinator';
 
-/**
- * Vector Knowledge Retrieval Application Service
- * 
- * APPLICATION RESPONSIBILITIES:
- * - Orchestrate knowledge search use cases
- * - Manage cache initialization and warming
- * - Coordinate infrastructure services
- * - Handle session logging and error management
- * - Delegate business validation to domain service
- */
+// Vector Knowledge Retrieval Application Service
 export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRetrievalService {
   private readonly domainService: VectorKnowledgeRetrievalDomainService;
   private readonly cacheWarmingService: KnowledgeCacheWarmingService;
@@ -107,6 +81,7 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
     this.cacheWarmingService = new KnowledgeCacheWarmingService(
       this.vectorRepository,
       this.embeddingService,
+      loggingService,
       this.organizationId,
       this.chatbotConfigId
     );
@@ -120,15 +95,7 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
     );
   }
 
-  /**
-   * Execute knowledge search use case
-   * 
-   * APPLICATION RESPONSIBILITIES:
-   * - Orchestrate search process
-   * - Ensure cache is ready
-   * - Coordinate domain validation with infrastructure
-   * - Handle errors and logging
-   */
+  // Execute knowledge search use case
   async searchKnowledge(context: KnowledgeRetrievalContext): Promise<KnowledgeSearchResult> {
     // Delegate business validation to domain service
     this.domainService.validateSearchContext(context);
@@ -180,9 +147,7 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
     }
   }
 
-  /**
-   * Create a session logger for the search operation using the proper logging service
-   */
+  // Create session logger for search operations
   private createSessionLogger(sharedLogFile: string): ISessionLogger {
     // AI: Use the same pattern as VectorKnowledgeOrchestrationService to create proper logger
     const loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
@@ -198,9 +163,7 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
     );
   }
 
-  /**
-   * Create minimal logger as fallback
-   */
+  // Create minimal logger as fallback
   private createMinimalLogger(): ISessionLogger {
     return {
       logMessage: (msg: string) => console.log(`[KNOWLEDGE-SEARCH] ${msg}`),
@@ -218,18 +181,14 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
     } as ISessionLogger;
   }
 
-  /**
-   * Initialize vector cache for session (application use case)
-   */
+  // Initialize vector cache for session
   async initializeVectorCacheForSession(sharedLogFile?: string): Promise<void> {
     // AI FIX: Provide a fallback log file name instead of empty string
     const logFile = sharedLogFile || 'fallback-cache-init.log';
     await this.cacheInitializationService.initializeForSession(logFile);
   }
 
-  /**
-   * Check if vector cache is ready for use
-   */
+  // Check if vector cache is ready
   isVectorCacheReady(): boolean {
     return this.cacheInitializationService.isReady();
   }

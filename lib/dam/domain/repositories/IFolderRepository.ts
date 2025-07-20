@@ -1,6 +1,6 @@
 import type { Folder } from '../entities/Folder';
 import { Asset } from '../entities/Asset';
-import type { DamSortParameters, DamFilterParameters, FolderSearchCriteria as _FolderSearchCriteria } from '../../application/dto/SearchCriteriaDTO';
+import type { SearchSortParams, SearchFilters, FolderSearchCriteria } from '../value-objects/SearchCriteria';
 
 // Define interfaces for repository input data
 export interface CreateFolderData {
@@ -26,8 +26,8 @@ export interface IFolderRepository {
   findFoldersByParentId(
     parentId: string | null, 
     organizationId: string,
-    sortParams?: DamSortParameters,
-    filters?: DamFilterParameters
+    sortParams?: SearchSortParams,
+    filters?: SearchFilters
   ): Promise<Folder[]>;
   findChildren(folderId: string, organizationId: string): Promise<(Folder | Asset)[]>; // Can return mixed content
   findByName(name: string, organizationId: string, parentFolderId?: string | null): Promise<Folder | null>;

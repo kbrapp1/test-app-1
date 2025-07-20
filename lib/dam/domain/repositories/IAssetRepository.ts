@@ -1,5 +1,5 @@
 import { Asset } from '../entities/Asset';
-import type { AssetSearchCriteria, DamSortParameters, DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
+import type { AssetSearchCriteria, SearchSortParams, SearchFilters } from '../value-objects/SearchCriteria';
 
 // Define interfaces for repository input data
 export interface CreateAssetData {
@@ -26,7 +26,7 @@ export interface UpdateAssetData {
 
 export interface IAssetRepository {
   findById(id: string): Promise<Asset | null>;
-  findByFolderId(folderId: string | null, organizationId: string, sortParams?: DamSortParameters, filters?: DamFilterParameters): Promise<Asset[]>;
+  findByFolderId(folderId: string | null, organizationId: string, sortParams?: SearchSortParams, filters?: SearchFilters): Promise<Asset[]>;
   findByName(name: string, organizationId: string, folderId?: string | null): Promise<Asset[]>;
   search(criteria: AssetSearchCriteria): Promise<Asset[]>;
   save(assetData: CreateAssetData): Promise<Asset>;

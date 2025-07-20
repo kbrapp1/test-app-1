@@ -22,8 +22,8 @@ export type { ITagRepository, CreateTagData, UpdateTagData } from '../domain/rep
 export type {
   AssetSearchCriteria,
   FolderSearchCriteria,
-  DamFilterParameters,
-  DamSortParameters,
+  SearchFilters,
+  SearchSortParams,
   LimitOptions,
 } from '../application/dto/SearchCriteriaDTO';
 

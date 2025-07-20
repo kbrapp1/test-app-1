@@ -1,11 +1,6 @@
-/**
- * Advanced Parameters Section
- * 
- * Main component for advanced chatbot parameters configuration.
- * Refactored following DDD principles with single responsibility components.
- * 
- * Single responsibility: Orchestrate parameter configuration UI and coordinate sub-components.
- */
+// Advanced Parameters Section
+// Main component for advanced chatbot parameters configuration
+// Single responsibility: Orchestrate parameter configuration UI
 
 'use client';
 

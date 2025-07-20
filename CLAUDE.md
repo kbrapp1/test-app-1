@@ -107,6 +107,19 @@ pnpm run storybook
 pnpm run lighthouse
 ```
 
+### Architecture Analysis
+```bash
+# Analyze DDD compliance for all domains
+/ddd-violations-audit
+
+# Analyze specific domain
+/ddd-violations-audit chatbot-widget
+/ddd-violations-audit dam
+/ddd-violations-audit auth
+
+# Results saved to docs/refactor/ddd-analysis-[domain]-[timestamp].md
+```
+
 ## Architecture Overview
 
 ### Domain-Driven Design Implementation

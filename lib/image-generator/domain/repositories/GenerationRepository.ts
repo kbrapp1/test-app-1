@@ -1,6 +1,5 @@
 import { Generation } from '../entities/Generation';
-import { Result } from '../../infrastructure/common/Result';
-import { GenerationStats } from '../../infrastructure/persistence/supabase/services/GenerationStatsCalculator';
+import { Result, GenerationStats } from '../value-objects';
 
 export interface GenerationFilters {
   status?: string;

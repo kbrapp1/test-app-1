@@ -2,15 +2,15 @@ import { Asset } from '../../../domain/entities/Asset';
 import { Folder } from '../../../domain/entities/Folder';
 import { IAssetRepository } from '../../../domain/repositories/IAssetRepository';
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
-import { DamFilterParameters, DamSortParameters, LimitOptions, AssetSearchCriteria, FolderSearchCriteria } from '../../../application/dto/SearchCriteriaDTO';
+import { SearchFilters, SearchSortParams, LimitOptions, AssetSearchCriteria, FolderSearchCriteria } from '../../../application/dto/SearchCriteriaDTO';
 import { ValidationError } from '@/lib/errors/base';
 
 export interface SearchDamItemsParams {
   organizationId: string;
   searchTerm?: string;
   tagIds?: string[]; 
-  filters?: DamFilterParameters;
-  sortParams?: DamSortParameters;
+  filters?: SearchFilters;
+  sortParams?: SearchSortParams;
   limitOptions?: LimitOptions; 
   // Consider if folderId/parentFolderId context is needed for global search
   // For instance, if search should be implicitly within a currentFolderId if provided,

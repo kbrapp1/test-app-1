@@ -6,7 +6,7 @@ import { ExternalProviderStatusService } from '../../../infrastructure/providers
 import { Generation } from '../../../domain/entities/Generation';
 import { GenerationStatus } from '../../../domain/value-objects/GenerationStatus';
 import { Prompt } from '../../../domain/value-objects/Prompt';
-import { success, error, Result } from '../../../infrastructure/common/Result';
+import { success, error, Result } from '../../../domain/value-objects';
 
 // Mock StatusCheckingRepository for testing
 class MockStatusCheckingRepository implements StatusCheckingRepository {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMultiSelect } from '../../../selection/useMultiSelect';
 import { Selection } from '../../../../../domain/entities/Selection';
-import { GalleryItemDto } from '../../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../../domain/value-objects/GalleryItem';
 
 interface GallerySelectionProps {
   enableMultiSelect?: boolean;

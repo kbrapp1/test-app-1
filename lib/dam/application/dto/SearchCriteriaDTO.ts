@@ -1,43 +1,20 @@
 /**
  * Data Transfer Objects for DAM search operations
+ * Re-exports domain types for application layer use
  */
 
-export interface DamFilterParameters {
-  type?: string | null;
-  creationDateOption?: string | null;
-  dateStart?: string | null;
-  dateEnd?: string | null;
-  ownerId?: string | null;
-  sizeOption?: string | null;
-  sizeMin?: string | null;
-  sizeMax?: string | null;
-}
+export type {
+  SearchFilters,
+  SearchSortParams,
+  LimitOptions,
+  AssetSearchCriteria,
+  FolderSearchCriteria
+} from '../../domain/value-objects/SearchCriteria';
 
-export interface DamSortParameters {
-  sortBy?: string | null;
-  sortOrder?: 'asc' | 'desc' | null;
-}
+export type {
+  GalleryItemDto
+} from '../../domain/value-objects/GalleryItem';
 
-export interface LimitOptions {
-  quickSearch: boolean;
-  parsedLimit?: number;
-}
-
-export interface AssetSearchCriteria {
-  organizationId: string;
-  searchTerm?: string;
-  folderId?: string | null;
-  tagIds?: string[];
-  filters?: DamFilterParameters;
-  sortParams?: DamSortParameters;
-  limitOptions?: LimitOptions;
-}
-
-export interface FolderSearchCriteria {
-  organizationId: string;
-  searchTerm?: string;
-  parentFolderId?: string | null;
-  filters?: DamFilterParameters;
-  sortParams?: DamSortParameters;
-  limitOptions?: LimitOptions;
-} 
+export type {
+  GetDamDataResult
+} from '../../domain/value-objects/DamDataResult'; 

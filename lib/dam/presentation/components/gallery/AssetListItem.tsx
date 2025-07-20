@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Eye, Edit3, Navigation, Trash2, Image, Video, Music, FileText, File } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { SelectionOverlay } from '../selection/SelectionOverlay';
 import { ColoredTag } from '../assets/ColoredTag';
 import { TagColorName } from '../../../domain/value-objects/TagColor';

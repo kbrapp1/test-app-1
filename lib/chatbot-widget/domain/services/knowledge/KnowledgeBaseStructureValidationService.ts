@@ -3,37 +3,26 @@ import { FAQStructureValidationService } from './FAQStructureValidationService';
 import { WebsiteSourceStructureValidationService } from './WebsiteSourceStructureValidationService';
 import { KnowledgeCollectionValidationService } from './KnowledgeCollectionValidationService';
 
-/**
- * Knowledge Base Structure Validation Service
- * 
- * AI INSTRUCTIONS:
- * - Main orchestration service that coordinates all validation types
- * - Delegates to specialized validation services for single responsibility
- * - Refactored from large monolithic service for better DDD structure
- * - No external dependencies - pure business logic
- * - Follow @golden-rule patterns exactly
- */
+// Knowledge Base Structure Validation Service
+//
+// AI INSTRUCTIONS:
+// - Main orchestration service that coordinates all validation types
+// - Delegates to specialized validation services for single responsibility
 export class KnowledgeBaseStructureValidationService {
-  /**
-   * Validates complete knowledge base structure and business rules
-   */
+  // Validates complete knowledge base structure and business rules
   static validateKnowledgeBaseStructure(props: KnowledgeBaseProps): void {
     this.validateFAQCollection(props.faqs);
     this.validateWebsiteSourceCollection(props.websiteSources);
     this.validateContentConsistency(props);
   }
 
-  /**
-   * Validates FAQ collection structure and business constraints
-   */
+  // Validates FAQ collection structure and business constraints
   static validateFAQCollection(faqs: FAQ[]): void {
     FAQStructureValidationService.validateFAQCollection(faqs);
     KnowledgeCollectionValidationService.validateFAQCollectionRules(faqs);
   }
 
-  /**
-   * Validates website source collection structure and business constraints
-   */
+  // Validates website source collection structure and business constraints
   static validateWebsiteSourceCollection(websiteSources: WebsiteSource[]): void {
     WebsiteSourceStructureValidationService.validateWebsiteSourceCollection(websiteSources);
     KnowledgeCollectionValidationService.validateWebsiteSourceCollectionRules(websiteSources);

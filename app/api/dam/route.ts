@@ -10,8 +10,8 @@ import { GetDamDataUseCase } from '@/lib/dam/application/use-cases/search';
 import { SupabaseAssetRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseFolderRepository } from '@/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository';
 import type { 
-  DamFilterParameters, 
-  DamSortParameters, 
+  SearchFilters, 
+  SearchSortParams, 
   LimitOptions 
 } from '@/lib/dam/application/dto/SearchCriteriaDTO';
 import { isDamFeatureEnabled } from '@/lib/dam/application/services/DamFeatureFlagService';
@@ -41,7 +41,7 @@ function parseRequestParameters(searchParams: URLSearchParams) {
 
   const tagIdsArray = tagIdsParam?.split(',').map(id => id.trim()).filter(id => id);
 
-  const filters: DamFilterParameters = {
+  const filters: SearchFilters = {
     type: searchParams.get('type'),
     creationDateOption: searchParams.get('creationDateOption'),
     dateStart: searchParams.get('dateStart'),
@@ -52,7 +52,7 @@ function parseRequestParameters(searchParams: URLSearchParams) {
     sizeMax: searchParams.get('sizeMax'),
   };
 
-  const sortParams: DamSortParameters = {
+  const sortParams: SearchSortParams = {
     sortBy: searchParams.get('sortBy'),
     sortOrder: searchParams.get('sortOrder') as 'asc' | 'desc' | null,
   };

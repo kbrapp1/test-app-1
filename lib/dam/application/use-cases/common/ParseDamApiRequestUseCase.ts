@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { ValidationError } from '@/lib/errors/base';
 import { getActiveOrganizationId } from '@/lib/auth';
 import { DamApiRequestDto } from '../../dto/DamApiRequestDto';
-import { DamFilterParameters, DamSortParameters, LimitOptions } from '../../dto/SearchCriteriaDTO';
+import { SearchFilters, SearchSortParams, LimitOptions } from '../../dto/SearchCriteriaDTO';
 
 export class ParseDamApiRequestUseCase {
   async execute(request: NextRequest, userId: string): Promise<DamApiRequestDto> {
@@ -27,7 +27,7 @@ export class ParseDamApiRequestUseCase {
     }
 
     // Parse filter parameters
-    const filters: DamFilterParameters = {
+    const filters: SearchFilters = {
       type: searchParams.get('type'),
       creationDateOption: searchParams.get('creationDateOption'),
       dateStart: searchParams.get('dateStart'),
@@ -39,7 +39,7 @@ export class ParseDamApiRequestUseCase {
     };
 
     // Parse sort parameters
-    const sortParams: DamSortParameters = {
+    const sortParams: SearchSortParams = {
       sortBy: searchParams.get('sortBy'),
       sortOrder: searchParams.get('sortOrder') as 'asc' | 'desc' | null,
     };

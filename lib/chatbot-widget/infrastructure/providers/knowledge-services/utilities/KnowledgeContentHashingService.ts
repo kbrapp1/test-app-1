@@ -1,12 +1,8 @@
-/**
- * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
- * - Single responsibility: Content hashing and deduplication utilities
- * - Uses ContentSimilarityUtilities for similarity calculations
- * - Keep under 250 lines per @golden-rule patterns
- * - Use static methods for efficiency and statelessness
- * - Handle domain errors with specific error types
- * - Focus on content hashing, fingerprinting, and domain-specific operations
- */
+// Knowledge Content Hashing Service
+//
+// AI INSTRUCTIONS:
+// - Single responsibility: Content hashing and deduplication utilities
+// - Uses ContentSimilarityUtilities for similarity calculations
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { ContentSimilarityUtilities } from '../../../../domain/utilities/ContentSimilarityUtilities';

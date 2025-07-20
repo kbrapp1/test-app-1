@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { DamFilterParameters as _DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+import type { SearchFilters as _SearchFilters, SearchSortParams } from '../../../../application/dto/SearchCriteriaDTO';
 
 type SupabaseQueryBuilder = ReturnType<ReturnType<SupabaseClient['from']>['select']>;
 
@@ -141,7 +141,7 @@ export class AssetQueryBuilder {
   /**
    * Apply sorting to query
    */
-  applySorting(query: SupabaseQueryBuilder, sortParams?: DamSortParameters): SupabaseQueryBuilder {
+  applySorting(query: SupabaseQueryBuilder, sortParams?: SearchSortParams): SupabaseQueryBuilder {
     const sortBy = sortParams?.sortBy || 'created_at';
     const sortOrderAsc = sortParams?.sortOrder === 'asc';
     const validSortColumns = ['name', 'created_at', 'updated_at', 'size', 'mime_type'];

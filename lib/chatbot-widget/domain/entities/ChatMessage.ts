@@ -28,7 +28,7 @@ export interface ChatMessageProps {
   costTracking: MessageCostTracking;
 }
 
-// Collision-resistant ID generator with timestamp-based uniqueness guarantee
+// Collision-resistant ID generator with timestamp-based uniqueness
 class ChatMessageIdGenerator {
   private static lastTimestamp = 0;
   private static counter = 0;
@@ -68,7 +68,7 @@ export class ChatMessage {
     return new ChatMessage(props);
   }
 
-  // Generate collision-resistant ID for chat messages
+  // Generate collision-resistant ID
   static generateId(): string {
     return ChatMessageIdGenerator.generate();
   }

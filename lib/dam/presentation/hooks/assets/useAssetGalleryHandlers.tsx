@@ -7,7 +7,7 @@ import { SupabaseAssetRepository } from '../../../infrastructure/persistence/sup
 import { SupabaseFolderRepository } from '../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
 import { createClient } from '@/lib/supabase/client';
 import { Asset as DomainAsset } from '../../../domain/entities/Asset';
-import { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../domain/value-objects/GalleryItem';
 import { useFolderNavigation } from '../navigation/useFolderNavigation';
 import { useGalleryDialogs } from '../navigation/useGalleryDialogs';
 import { useAssetItemDialogs } from './useAssetItemDialogs';

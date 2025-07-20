@@ -4,7 +4,7 @@ export interface Result<T, E> {
   getError(): E;
 }
 
-class SuccessResult<T, E> implements Result<T, E> {
+export class SuccessResult<T, E> implements Result<T, E> {
   constructor(private value: T) {}
   
   isSuccess(): boolean {
@@ -20,7 +20,7 @@ class SuccessResult<T, E> implements Result<T, E> {
   }
 }
 
-class ErrorResult<T, E> implements Result<T, E> {
+export class ErrorResult<T, E> implements Result<T, E> {
   constructor(private error: E) {}
   
   isSuccess(): boolean {
@@ -185,4 +185,15 @@ export class Prompt {
     if (this._wordCount <= 15) return 'moderate';
     return 'complex';
   }
-} 
+}
+
+// Factory functions for easier usage
+export const success = <T, E>(value: T): Result<T, E> => new SuccessResult(value);
+export const error = <T, E>(err: E): Result<T, E> => new ErrorResult(err);
+
+// Type guard functions
+export const isSuccess = <T, E>(result: Result<T, E>): result is SuccessResult<T, E> => 
+  result.isSuccess();
+
+export const isError = <T, E>(result: Result<T, E>): result is ErrorResult<T, E> => 
+  !result.isSuccess(); 

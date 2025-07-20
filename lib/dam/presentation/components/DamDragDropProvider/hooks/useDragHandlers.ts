@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { type DragStartEvent } from '@dnd-kit/core';
 import { DragDropOperations } from '../services/DragDropOperations';
-import type { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 
 interface DragItem {
   type: 'asset' | 'folder';

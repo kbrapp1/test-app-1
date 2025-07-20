@@ -3,7 +3,7 @@ import { Selection } from '../Selection';
 import { SelectionFactory } from '../SelectionFactory';
 import { BulkOperationFactory } from '../../value-objects/BulkOperationFactory';
 import { SelectionValidator, BulkOperationValidator, SelectionOperations } from '../../services';
-import type { GalleryItemDto } from '../../../application/use-cases/folders/ListFolderContentsUseCase';
+import type { GalleryItemDto } from '../../value-objects/GalleryItem';
 
 describe('Selection Domain Entity', () => {
   describe('Creation', () => {

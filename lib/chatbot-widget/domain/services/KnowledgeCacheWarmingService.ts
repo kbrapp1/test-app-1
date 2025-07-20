@@ -8,39 +8,29 @@ import { IVectorKnowledgeRepository } from '../repositories/IVectorKnowledgeRepo
 import { IEmbeddingService } from './interfaces/IEmbeddingService';
 import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { IChatbotLoggingService, IOperationLogger } from './interfaces/IChatbotLoggingService';
-import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 /**
  * Knowledge Cache Warming Service
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Cache warming optimization
- * - Domain service focused on cache performance
- * - No business logic beyond cache warming strategies
- * - Delegate to embedding service for vector operations
- * - Use structured logging for cache warming metrics
- * - Keep under 200-250 lines per @golden-rule
+ * - Domain service focused on cache performance optimization
  */
 export class KnowledgeCacheWarmingService {
-  private readonly loggingService: IChatbotLoggingService;
-  
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
     private readonly embeddingService: IEmbeddingService,
+    private readonly loggingService: IChatbotLoggingService,
     private readonly organizationId: string,
     private readonly chatbotConfigId: string
-  ) {
-    // Initialize centralized logging service
-    this.loggingService = ChatbotWidgetCompositionRoot.getLoggingService();
-  }
+  ) {}
 
   async warmCache(sharedLogFile?: string): Promise<{ success: boolean; itemsWarmed: number; timeMs: number; metrics: CacheWarmingMetrics }> {
     const startTime = Date.now();
 
     try {
-      // Create operation logger for cache warming - shared log file is required
+      // Create operation logger for cache warming
       if (!sharedLogFile) {
-        throw new Error('SharedLogFile is required for cache warming operations - all logging must be conversation-specific');
+        throw new Error('SharedLogFile is required for cache warming operations');
       }
       
       const logger = this.loggingService.createOperationLogger(

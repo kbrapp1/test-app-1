@@ -3,9 +3,7 @@
  * 
  * AI INSTRUCTIONS:
  * - Handles data transformation between form data and DTOs
- * - Pure transformation functions without side effects
- * - Focused on presentation layer data mapping
- * - Reusable across different components
+ * - Pure transformation functions for presentation layer
  */
 
 import {

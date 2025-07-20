@@ -3,7 +3,7 @@ import { GenerationFactory } from '../../domain/services/GenerationFactory';
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
 import { ProviderService } from '../services/ProviderService';
 import { ProviderFactory } from '../../infrastructure/providers/ProviderFactory';
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { Result, success, error } from '../../domain/value-objects';
 import { AutoSaveGenerationUseCase } from './AutoSaveGenerationUseCase';
 // import { GenerationStatusManager } from '../../domain/entities/services/GenerationStatusManager';
 import { GenerationFailureHandler } from '../../domain/services/GenerationFailureHandler';

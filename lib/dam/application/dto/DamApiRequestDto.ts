@@ -1,4 +1,4 @@
-import { DamFilterParameters, DamSortParameters, LimitOptions } from './SearchCriteriaDTO';
+import { SearchFilters, SearchSortParams, LimitOptions } from './SearchCriteriaDTO';
 
 // Re-export API response types for compatibility
 export type { TransformedAsset, TransformedFolder, PlainTag, CombinedDamItem } from './ApiResponseDto';
@@ -12,10 +12,10 @@ export interface DamApiRequestDto {
   tagIds?: string[];
   
   // Filter parameters
-  filters: DamFilterParameters;
+  filters: SearchFilters;
   
   // Sort parameters  
-  sortParams: DamSortParameters;
+  sortParams: SearchSortParams;
   
   // Computed options
   limitOptions: LimitOptions;

@@ -6,19 +6,19 @@
  */
 
 export interface SearchFilters {
-  type?: string;
-  creationDateOption?: string;
-  dateStart?: string;
-  dateEnd?: string;
-  ownerId?: string;
-  sizeOption?: string;
-  sizeMin?: string;
-  sizeMax?: string;
+  type?: string | null;
+  creationDateOption?: string | null;
+  dateStart?: string | null;
+  dateEnd?: string | null;
+  ownerId?: string | null;
+  sizeOption?: string | null;
+  sizeMin?: string | null;
+  sizeMax?: string | null;
 }
 
 export interface SearchSortParams {
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: string | null;
+  sortOrder?: 'asc' | 'desc' | null;
 }
 
 export interface SearchCriteriaParams {
@@ -29,6 +29,31 @@ export interface SearchCriteriaParams {
   sortParams?: SearchSortParams;
   limit?: number;
   quickSearch?: boolean;
+}
+
+
+export interface LimitOptions {
+  quickSearch: boolean;
+  parsedLimit?: number;
+}
+
+export interface AssetSearchCriteria {
+  organizationId: string;
+  searchTerm?: string;
+  folderId?: string | null;
+  tagIds?: string[];
+  filters?: SearchFilters;
+  sortParams?: SearchSortParams;
+  limitOptions?: LimitOptions;
+}
+
+export interface FolderSearchCriteria {
+  organizationId: string;
+  searchTerm?: string;
+  parentFolderId?: string | null;
+  filters?: SearchFilters;
+  sortParams?: SearchSortParams;
+  limitOptions?: LimitOptions;
 }
 
 export class SearchCriteria {

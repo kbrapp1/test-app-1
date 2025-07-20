@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { StatusCheckingRepository } from '../../../domain/repositories/StatusCheckingRepository';
 import { Generation } from '../../../domain/entities/Generation';
 import { GenerationRowMapper, GenerationRow } from './mappers/GenerationRowMapper';
-import { success, error, Result } from '../../common/Result';
+import { success, error, Result } from '../../../domain/value-objects';
 
 /**
  * Infrastructure Layer - Concrete implementation of StatusCheckingRepository using Supabase

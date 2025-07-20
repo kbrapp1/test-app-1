@@ -10,7 +10,7 @@ import {
   // DeduplicationKeyDto,
   PollingStrategyDto
 } from '../dto/StatusDto';
-// import { Result } from '../../infrastructure/common/Result';
+// import { Result } from '../../domain/value-objects';
 import { CheckStatusWithDeduplicationUseCase } from '../use-cases/CheckStatusWithDeduplicationUseCase';
 import { GetOptimalPollingStrategyUseCase } from '../use-cases/GetOptimalPollingStrategyUseCase';
 import { ProcessTimeoutsUseCase } from '../use-cases/ProcessTimeoutsUseCase';

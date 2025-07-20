@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Folder, File, CheckSquare } from 'lucide-react';
-import { GalleryItemDto } from '../../../../application/use-cases/folders/ListFolderContentsUseCase';
+import { GalleryItemDto } from '../../../../domain/value-objects/GalleryItem';
 import { GalleryMultiSelectState } from '../../../types/gallery-types';
 
 interface ContentSectionsProps {

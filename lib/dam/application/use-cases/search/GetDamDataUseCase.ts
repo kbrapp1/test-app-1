@@ -2,17 +2,16 @@ import { Asset as DomainAsset } from '../../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../../domain/entities/Folder';
 import { IAssetRepository } from '../../../domain/repositories/IAssetRepository';
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
+import { GetDamDataResult } from '../../../domain/value-objects/DamDataResult';
 import { DamApiRequestDto } from '../../dto/DamApiRequestDto';
 import { SearchDamItemsUseCase, SearchDamItemsResult } from './SearchDamItemsUseCase';
 import { ListAssetsByFolderUseCase } from '../assets/ListAssetsByFolderUseCase';
 import { ListFoldersUseCase } from '../folders/ListFoldersUseCase';
 import { DatabaseError } from '@/lib/errors/base';
-import { DamFilterParameters, DamSortParameters, LimitOptions } from '../../dto/SearchCriteriaDTO';
+import { SearchFilters, SearchSortParams, LimitOptions } from '../../dto/SearchCriteriaDTO';
 
-export interface GetDamDataResult {
-  assets: DomainAsset[];
-  folders: DomainFolder[];
-}
+// Re-export for backward compatibility
+export type { GetDamDataResult };
 
 export class GetDamDataUseCase {
   constructor(
@@ -82,8 +81,8 @@ export class GetDamDataUseCase {
       organizationId: string;
       searchTerm?: string;
       tagIds?: string[];
-      filters: DamFilterParameters;
-      sortParams: DamSortParameters;
+      filters: SearchFilters;
+      sortParams: SearchSortParams;
       limitOptions: LimitOptions;
       currentFolderIdForContext: string | null;
     },
@@ -109,8 +108,8 @@ export class GetDamDataUseCase {
     params: {
       folderId: string | null;
       organizationId: string;
-      filters: DamFilterParameters;
-      sortParams: DamSortParameters;
+      filters: SearchFilters;
+      sortParams: SearchSortParams;
       tagIds?: string[];
     },
     assetsOutput: DomainAsset[],

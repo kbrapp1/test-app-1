@@ -1,5 +1,5 @@
 import { Generation } from '../entities/Generation';
-import { Result } from '../../infrastructure/common/Result';
+import { Result } from '../value-objects';
 
 /**
  * Status Checking Repository Interface

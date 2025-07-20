@@ -1,7 +1,6 @@
 import { Generation } from '../../domain/entities/Generation';
 import { GenerationDto, GenerationStatusDto, GenerationStatsDto } from '../dto';
-import { GenerationStats } from '../../infrastructure/persistence/supabase/services/GenerationStatsCalculator';
-import { GenerationStatus } from '../../domain/value-objects/GenerationStatus';
+import { GenerationStats, GenerationStatus } from '../../domain/value-objects';
 
 /**
  * Mapper for converting between Generation domain entities and DTOs

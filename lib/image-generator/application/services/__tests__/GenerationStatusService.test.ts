@@ -15,7 +15,7 @@ import { AutoSaveGenerationUseCase } from '../../use-cases/AutoSaveGenerationUse
 import { Generation } from '../../../domain/entities/Generation';
 import { ProviderFactory } from '../../../infrastructure/providers/ProviderFactory';
 import { GenerationMapper } from '../../mappers/GenerationMapper';
-import { Result, success, error } from '../../../infrastructure/common/Result';
+import { Result, success, error } from '../../../domain/value-objects';
 
 // Mock dependencies
 vi.mock('../../../infrastructure/providers/ProviderFactory', () => ({

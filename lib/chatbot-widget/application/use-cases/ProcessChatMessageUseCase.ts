@@ -4,10 +4,6 @@
  * AI INSTRUCTIONS:
  * - Orchestrate complete chat message processing workflow
  * - Delegate complex logic to specialized services
- * - Handle input validation and error transformation
- * - Maintain clean separation between application and domain layers
- * - Keep focused on single responsibility - message processing coordination
- * - Use domain events for cross-aggregate communication
  */
 
 import { IChatSessionRepository } from '../../domain/repositories/IChatSessionRepository';
@@ -48,7 +44,7 @@ export class ProcessChatMessageUseCase {
     private readonly knowledgeRetrievalService?: IKnowledgeRetrievalService,
     private readonly debugInformationService?: IDebugInformationService
   ) {
-    // AI: Initialize specialized services
+    // Initialize specialized services
     const workflowService = new MessageProcessingWorkflowService(
       sessionRepository,
       messageRepository,
@@ -75,7 +71,7 @@ export class ProcessChatMessageUseCase {
       messageRepository
     );
 
-    // AI: Create workflow orchestrator with all dependencies
+    // Create workflow orchestrator with dependencies
     this.workflowOrchestrator = new ProcessChatMessageWorkflowOrchestrator(
       workflowService,
       processingService,
@@ -84,23 +80,23 @@ export class ProcessChatMessageUseCase {
   }
 
   async execute(request: ProcessChatMessageRequest): Promise<ProcessChatMessageResult> {
-    // AI: Clear performance profiler for fresh metrics
+    // Clear performance profiler for fresh metrics
     PerformanceProfiler.clear();
     
     try {
-      // AI: Validate input using dedicated validator
+      // Validate input using dedicated validator
       const validatedRequest = this.validateRequest(request);
       
-      // AI: Delegate to workflow orchestrator
+      // Delegate to workflow orchestrator
       const result = await this.workflowOrchestrator.orchestrate(validatedRequest);
       
-      // AI: Print performance report if profiling is enabled
+      // Print performance report if enabled
       PerformanceProfiler.printReport();
       
       return result;
       
     } catch (error) {
-      // AI: Print performance report even on error for debugging
+      // Print performance report on error for debugging
       PerformanceProfiler.printReport();
       
       // AI: Transform domain errors for presentation layer

@@ -1,5 +1,5 @@
 import { CurrentSearchCriteria } from '../../../hooks/search/useSavedSearches';
-// import { DamFilterParameters, DamSortParameters } from '../../../../application/dto/SearchCriteriaDTO';
+// import { SearchFilters, SearchSortParams } from '../../../../application/dto/SearchCriteriaDTO';
 
 /**
  * SavedSearchHandler Service

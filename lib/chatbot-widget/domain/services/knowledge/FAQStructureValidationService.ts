@@ -3,20 +3,13 @@ import type { FAQ } from '../../value-objects/ai-configuration/KnowledgeBase';
 import { ValidationUtilities } from './ValidationUtilities';
 import { ContentSimilarityUtilities } from '../../utilities/ContentSimilarityUtilities';
 
-/**
- * FAQ Structure Validation Service
- * 
- * AI INSTRUCTIONS:
- * - Pure domain service for FAQ validation logic
- * - Handles individual FAQ validation and FAQ-specific business rules
- * - Extracted from KnowledgeBaseStructureValidationService for single responsibility
- * - No external dependencies - pure business logic
- * - Follow @golden-rule patterns exactly
- */
+// FAQ Structure Validation Service
+//
+// AI INSTRUCTIONS:
+// - Pure domain service for FAQ validation logic
+// - Handles individual FAQ validation and FAQ-specific business rules
 export class FAQStructureValidationService {
-  /**
-   * Validates FAQ collection structure and business constraints
-   */
+  // Validates FAQ collection structure and business constraints
   static validateFAQCollection(faqs: FAQ[]): void {
     ValidationUtilities.validateArrayInput(faqs, 'FAQs');
 
@@ -26,9 +19,7 @@ export class FAQStructureValidationService {
     });
   }
 
-  /**
-   * Validates FAQ uniqueness before adding new FAQ
-   */
+  // Validates FAQ uniqueness before adding new FAQ
   static validateFAQUniqueness(existingFAQs: FAQ[], newFAQ: FAQ): void {
     const duplicateId = existingFAQs.find(existing => existing.id === newFAQ.id);
     if (duplicateId) {

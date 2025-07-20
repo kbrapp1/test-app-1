@@ -1,14 +1,9 @@
-/**
- * Lead Domain Entity
- * 
- * AI INSTRUCTIONS:
- * - Core lead business object with identity following DDD entity patterns
- * - Lead coordination and core business logic with value objects and domain services
- * - UPDATED: Removed domain lead scoring - using API-only approach with external scores
- * - Manages contact info, qualification data, lead source, and metadata coordination
- * - Handles lead lifecycle, follow-up status, assignment, and business state transitions
- * - Keep under 250 lines following @golden-rule patterns with immutable entity design
- */
+// Lead Domain Entity
+//
+// AI INSTRUCTIONS:
+// - Core lead business object with identity following DDD entity patterns
+// - Lead coordination and core business logic with value objects and domain services
+// - UPDATED: Removed domain lead scoring - using API-only approach with external scores
 
 import { ContactInfo, ContactInfoProps } from '../value-objects/lead-management/ContactInfo';
 import { QualificationData, QualificationDataProps } from '../value-objects/lead-management/QualificationData';
@@ -19,7 +14,7 @@ import { LeadExportService } from '../services/lead-management/LeadExportService
 import { LeadQueryService } from '../services/lead-management/LeadQueryService';
 import { LeadBusinessService } from '../services/lead-management/LeadBusinessService';
 
-// Define QualificationStatus locally since we removed LeadScoringService
+// Define QualificationStatus locally
 export type QualificationStatus = 'not_qualified' | 'qualified' | 'highly_qualified' | 'disqualified';
 
 export interface LeadProps {
@@ -139,7 +134,7 @@ export class Lead {
   get tags(): string[] { return this.props.metadata.tags; }
   get notes(): LeadNote[] { return this.props.metadata.notes; }
 
-  // Business methods (delegated to LeadBusinessService)
+  // Business methods delegated to domain services
   updateContactInfo(contactInfoProps: Partial<ContactInfoProps>): Lead {
     const result = LeadBusinessService.updateContactInfo(this.props.contactInfo, contactInfoProps);
     return this.createUpdatedLead(result);
@@ -185,14 +180,14 @@ export class Lead {
     return this.createUpdatedLead(result);
   }
 
-  // Status transition shortcuts (delegated to lifecycle manager)
+  // Status transition shortcuts
   markAsContacted(): Lead { return this.updateFollowUpStatus('contacted'); }
   markAsConverted(): Lead { return this.updateFollowUpStatus('converted'); }
   markAsLost(): Lead { return this.updateFollowUpStatus('lost'); }
   markAsNurturing(): Lead { return this.updateFollowUpStatus('nurturing'); }
   markAsInProgress(): Lead { return this.updateFollowUpStatus('in_progress'); }
 
-  // Query methods (delegated to LeadQueryService)
+  // Query methods delegated to domain services
   isQualified(): boolean {
     return LeadQueryService.isQualified(this.props.qualificationStatus);
   }

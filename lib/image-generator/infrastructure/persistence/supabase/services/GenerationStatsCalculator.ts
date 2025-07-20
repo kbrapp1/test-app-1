@@ -1,17 +1,10 @@
+import { GenerationStats } from '../../../../domain/value-objects';
+
 export interface StatsRow {
   status: string;
   cost_cents: number;
   generation_time_seconds: number | null;
   saved_to_dam: boolean;
-}
-
-export interface GenerationStats {
-  totalGenerations: number;
-  completedGenerations: number;
-  failedGenerations: number;
-  totalCostCents: number;
-  avgGenerationTimeSeconds: number;
-  savedToDAMCount: number;
 }
 
 export class GenerationStatsCalculator {

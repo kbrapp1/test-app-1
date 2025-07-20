@@ -1,13 +1,13 @@
 import { Folder } from '../../../domain/entities/Folder';
 import { IFolderRepository } from '../../../domain/repositories/IFolderRepository';
 import { ValidationError } from '@/lib/errors/base';
-import type { DamSortParameters, DamFilterParameters } from '../../../application/dto/SearchCriteriaDTO';
+import type { SearchSortParams, SearchFilters } from '../../../application/dto/SearchCriteriaDTO';
 
 interface ListFoldersUseCaseParams {
   parentId: string | null; // ID of the parent folder, or null for root folders
   organizationId: string;
-  sortParams?: DamSortParameters;
-  filters?: DamFilterParameters;
+  sortParams?: SearchSortParams;
+  filters?: SearchFilters;
 }
 
 export class ListFoldersUseCase {

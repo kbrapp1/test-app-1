@@ -1,10 +1,6 @@
-/**
- * AI Instructions: Custom hook for managing advanced chatbot parameters
- * - Encapsulate state management logic for advanced parameters
- * - Handle parameter updates and synchronization with backend
- * - Follow single responsibility principle for focused functionality
- * - Use React Query for optimistic updates and cache management
- */
+// Custom hook for managing advanced chatbot parameters
+// AI Instructions: Encapsulate state management logic for advanced parameters
+// Follow single responsibility principle for focused functionality
 
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

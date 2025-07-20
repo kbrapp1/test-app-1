@@ -1,15 +1,9 @@
-/**
- * Chat Session Mapper
- * 
- * Maps between ChatSession domain entities and DTOs.
- * Following DDD principle: Application layer handles transformations
- * between domain entities and external contracts (DTOs).
- * 
- * AI INSTRUCTIONS:
- * - UPDATED: Removed leadScore mapping - using API-only approach
- * - Lead scores are now handled externally, not in domain entities
- * - Keep under 200 lines following @golden-rule patterns
- */
+// Chat Session Mapper
+// Maps between ChatSession domain entities and DTOs
+//
+// AI INSTRUCTIONS:
+// - UPDATED: Removed leadScore mapping - using API-only approach
+// - Lead scores are now handled externally, not in domain entities
 
 import { ChatSession } from '../../domain/entities/ChatSession';
 import {

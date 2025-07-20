@@ -12,7 +12,7 @@
 
 import { Asset as DomainAsset } from '../../domain/entities/Asset';
 import { Folder as DomainFolder } from '../../domain/entities/Folder';
-import { DamFilterParameters } from '../../application/dto/SearchCriteriaDTO';
+import { SearchFilters } from '../../application/dto/SearchCriteriaDTO';
 import { 
   BaseComponentProps,
   SelectableAssetItemProps,
@@ -87,7 +87,7 @@ export interface DamEventHandlers {
   onRenameAsset: (assetId: string, newName: string) => Promise<void>;
   onRenameFolder: (folderId: string, newName: string) => Promise<void>;
   onSearch: (searchTerm: string) => Promise<void>;
-  onFilterChange: (filters: DamFilterParameters) => Promise<void>;
+  onFilterChange: (filters: SearchFilters) => Promise<void>;
 }
 
 // ===== VIEW MODELS =====
@@ -126,7 +126,7 @@ export interface DamGalleryState {
   viewMode: 'grid' | 'list';
   sortBy: string;
   sortOrder: 'asc' | 'desc';
-  filters: DamFilterParameters;
+  filters: SearchFilters;
 }
 
 // ===== SPECIALIZED INTERFACES =====
@@ -135,8 +135,8 @@ export interface DamGalleryState {
  * DAM-specific filter props
  */
 export interface DamFilterProps extends FilterComponentProps {
-  filters: DamFilterParameters;
-  onFilterChange: (filters: DamFilterParameters) => void;
+  filters: SearchFilters;
+  onFilterChange: (filters: SearchFilters) => void;
 }
 
 /**

@@ -1,6 +1,5 @@
 import { GenerationRepository } from '../../domain/repositories/GenerationRepository';
-import { GenerationStats } from '../../infrastructure/persistence/supabase/services/GenerationStatsCalculator';
-import { Result, success, error } from '../../infrastructure/common/Result';
+import { GenerationStats, Result, success, error } from '../../domain/value-objects';
 
 export class GetGenerationStatsUseCase {
   constructor(private repository: GenerationRepository) {}
