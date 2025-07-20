@@ -21,4 +21,16 @@ export * from './configuration-management';
 export * from './analysis';
 
 // Simulation Services
-export * from './simulation'; 
+export * from './simulation';
+
+// Vector Knowledge Services
+export { VectorKnowledgeApplicationService } from './VectorKnowledgeApplicationService';
+export { VectorKnowledgeOrchestrationService } from './VectorKnowledgeOrchestrationService';
+
+// Website Source Management Services
+export { WebsiteSourceProgressService } from './WebsiteSourceProgressService';
+
+// Crawl and Store Services
+export { KnowledgeItemPreparationService } from './KnowledgeItemPreparationService';
+export { EmbeddingOrchestrationService } from './EmbeddingOrchestrationService';
+export { StorageCoordinationService } from './StorageCoordinationService'; 

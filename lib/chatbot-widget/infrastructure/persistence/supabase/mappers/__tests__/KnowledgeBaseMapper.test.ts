@@ -113,7 +113,7 @@ describe('KnowledgeBaseMapper', () => {
       expect(knowledgeBase.companyInfo).toBe('Partial Company Info');
       expect(knowledgeBase.productCatalog).toBe(''); // Default
       expect(knowledgeBase.faqs).toHaveLength(1);
-      expect(knowledgeBase.faqs[0].id).toBe(mockUUID); // Generated UUID
+      expect(knowledgeBase.faqs[0].id).toMatch(/^[a-f0-9-]+-\d+$/); // Generated UUID with counter
       expect(knowledgeBase.faqs[0].category).toBe('general'); // Default
       expect(knowledgeBase.faqs[0].isActive).toBe(true); // Default
     });
@@ -153,7 +153,7 @@ describe('KnowledgeBaseMapper', () => {
       expect(knowledgeBase.faqs[0].isActive).toBe(true);
       
       // Incomplete FAQ with generated ID
-      expect(knowledgeBase.faqs[1].id).toBe(mockUUID);
+      expect(knowledgeBase.faqs[1].id).toMatch(/^[a-f0-9-]+-\d+$/); // Generated UUID with counter
       expect(knowledgeBase.faqs[1].category).toBe('general'); // Default
       expect(knowledgeBase.faqs[1].isActive).toBe(false);
       
@@ -222,7 +222,7 @@ describe('KnowledgeBaseMapper', () => {
       
       // Minimal source with defaults
       const minimalSource = knowledgeBase.websiteSources[1];
-      expect(minimalSource.id).toBe(mockUUID); // Generated UUID
+      expect(minimalSource.id).toMatch(/^[a-f0-9-]+-\d+$/); // Generated UUID with counter
       expect(minimalSource.url).toBe('https://minimal-example.com');
       expect(minimalSource.description).toBe(''); // Default
       expect(minimalSource.isActive).toBe(true); // Default

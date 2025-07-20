@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import { WebsiteSourceDto } from '../../../../application/dto/ChatbotConfigDto';
-import { WebsiteSourceFormData } from '../../../actions/websiteSourcesActions';
+import { WebsiteSourceFormData } from '../../../actions/websiteSourceActions';
 
 interface WebsiteSourcesDialogsProps {
   isDeletingSource: string | null;

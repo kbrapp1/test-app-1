@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { SimplePromptService } from '../SimplePromptService';
 import { PersonaGenerationService } from '../PersonaGenerationService';
 import { KnowledgeBaseService } from '../KnowledgeBaseService';
 import { BusinessGuidanceService } from '../BusinessGuidanceService';
 import { AdaptiveContextService } from '../AdaptiveContextService';
 import { PromptGenerationInput, PromptGenerationOptions } from '../types/SimplePromptTypes';
+import { KnowledgeBase } from '../../../value-objects/ai-configuration/KnowledgeBase';
 
 /**
  * Integration Test for SimplePromptService Performance
@@ -17,6 +18,26 @@ import { PromptGenerationInput, PromptGenerationOptions } from '../types/SimpleP
 
 describe('SimplePromptService Integration Tests', () => {
   let simplePromptService: SimplePromptService;
+
+  // Helper function to create a proper KnowledgeBase instance
+  const createTestKnowledgeBase = (companyInfo: string): KnowledgeBase => {
+    return KnowledgeBase.create({
+      companyInfo,
+      productCatalog: 'Test products and services',
+      supportDocs: 'Test documentation',
+      complianceGuidelines: 'Test guidelines',
+      faqs: [
+        {
+          id: 'test-faq-1',
+          question: 'What do you do?',
+          answer: 'We provide test services',
+          category: 'general',
+          isActive: true
+        }
+      ],
+      websiteSources: []
+    });
+  };
 
   beforeEach(() => {
     // Create real domain services for integration testing
@@ -40,7 +61,7 @@ describe('SimplePromptService Integration Tests', () => {
          chatbotConfig: {
            id: 'test-config',
            businessContext: 'Software development company',
-           knowledgeBase: 'We provide custom software solutions',
+           knowledgeBase: createTestKnowledgeBase('We provide custom software solutions'),
            personalitySettings: {
              tone: 'Professional',
              approach: 'Consultative',
@@ -94,7 +115,7 @@ describe('SimplePromptService Integration Tests', () => {
          chatbotConfig: {
            id: 'test-config',
            businessContext: 'Software development company',
-           knowledgeBase: 'We provide custom software solutions',
+           knowledgeBase: createTestKnowledgeBase('We provide custom software solutions'),
            personalitySettings: {
              tone: 'Professional',
              approach: 'Consultative',
@@ -134,7 +155,7 @@ describe('SimplePromptService Integration Tests', () => {
          chatbotConfig: {
            id: 'test-config',
            businessContext: 'E-commerce platform',
-           knowledgeBase: 'We sell premium products online',
+           knowledgeBase: createTestKnowledgeBase('We sell premium products online'),
            personalitySettings: {
              tone: 'Professional',
              approach: 'Consultative',
@@ -159,15 +180,14 @@ describe('SimplePromptService Integration Tests', () => {
         PromptGenerationOptions.default()
       );
 
-             // Verify content structure
+             // Verify content structure based on actual prompt sections
        expect(result.content).toContain('Role & Persona');
-       expect(result.content).toContain('Knowledge Base');
+       expect(result.content).toContain('Core Business Context'); // Actual section name in prompt
        expect(result.content).toContain('Conversation Management'); // Actual section name
        expect(result.content).toContain('Conversation Context');
 
-             // Verify business context inclusion (check what's actually in the prompt)
-       console.log('Generated prompt:', result.content);
-       // For now, just verify the prompt is generated successfully
+             // Verify business context inclusion
+       expect(result.content).toContain('We sell premium products online'); // Our test knowledge base content
        expect(result.content.length).toBeGreaterThan(200);
 
              // Verify metadata exists
@@ -182,7 +202,7 @@ describe('SimplePromptService Integration Tests', () => {
          chatbotConfig: {
            id: 'test-config',
            businessContext: 'Consulting firm',
-           knowledgeBase: 'We provide business consulting',
+           knowledgeBase: createTestKnowledgeBase('We provide business consulting'),
            personalitySettings: {
              tone: 'Professional',
              approach: 'Consultative',

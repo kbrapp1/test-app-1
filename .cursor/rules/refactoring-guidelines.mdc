@@ -6,7 +6,7 @@
 Please refactor this code following these DDD-aware rules:
 
 REFACTORING GOALS:
-1. **Break down large files** - Split 350+ line files into multiple smaller files (50-150 lines each)
+1. **Break down large files** - Split 250+ line files into multiple smaller files (50-150 lines each)
 2. **Single responsibility** - Each new file should do ONE thing well
 3. **Follow DDD layers** - Respect domain, application, infrastructure, presentation boundaries
 4. **Keep it simple** - Don't add complexity, just organize existing code

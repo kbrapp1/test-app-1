@@ -10,6 +10,7 @@
 
 import { useState, useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useOrganizationContext } from '@/lib/organization/application/hooks/useOrganizationContext';
 import { useChatbotConfiguration } from '../../../hooks/useChatbotConfiguration';
 import { useKnowledgeBaseSettings } from '../../../hooks/useKnowledgeBaseSettings';
 import { CompanyInformationCard } from './CompanyInformationCard';
@@ -20,10 +21,12 @@ export function KnowledgeBaseSection() {
   const [isEditing, setIsEditing] = useState(false);
   const faqManagementCardRef = useRef<FaqManagementCardRef>(null);
 
+  const { activeOrganizationId, isLoading: orgLoading } = useOrganizationContext();
   const { config: existingConfig, isLoading, error } = useChatbotConfiguration({ 
     enableFormState: false 
   });
   
+  // Always call the hook but handle null organizationId inside the hook
   const {
     formData,
     updateMutation,
@@ -32,7 +35,7 @@ export function KnowledgeBaseSection() {
     updateFormData,
     addFaq,
     removeFaq
-  } = useKnowledgeBaseSettings(existingConfig || null, existingConfig?.organizationId || null);
+  } = useKnowledgeBaseSettings(existingConfig || null, activeOrganizationId);
 
   const handleSave = async () => {
     // Check if there's a pending FAQ that needs to be added first
@@ -52,7 +55,7 @@ export function KnowledgeBaseSection() {
     setIsEditing(false);
   };
 
-  if (isLoading) {
+  if (isLoading || orgLoading || !activeOrganizationId) {
     return <div>Loading knowledge base...</div>;
   }
 

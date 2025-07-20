@@ -11,19 +11,19 @@
 
 import { EmbeddingCacheDomainService } from '../../domain/services/embedding/EmbeddingCacheDomainService';
 import { EmbeddingSimilarityDomainService } from '../../domain/services/embedding/EmbeddingSimilarityDomainService';
-import { OpenAIEmbeddingProviderService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingProviderService';
 import {
-  EmbeddingResult,
-  SimilarityMatch,
-  SimilaritySearchRequest,
-  BatchProcessingOptions,
-  KnowledgeItem,
-  PDFChunk,
-  CacheStats,
-  CacheType,
-  EmbeddingLogContext,
-  EMBEDDING_CONSTANTS
+    BatchProcessingOptions,
+    CacheStats,
+    CacheType,
+    EMBEDDING_CONSTANTS,
+    EmbeddingLogContext,
+    EmbeddingResult,
+    KnowledgeItem,
+    PDFChunk,
+    SimilarityMatch,
+    SimilaritySearchRequest
 } from '../../domain/services/interfaces/EmbeddingTypes';
+import { OpenAIEmbeddingProviderService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingProviderService';
 
 export class EmbeddingApplicationService {
   constructor(
@@ -32,7 +32,8 @@ export class EmbeddingApplicationService {
     private logContext?: EmbeddingLogContext
   ) {}
 
-  /** Generate embedding with intelligent caching */
+  /** Generate embedding with intelligent caching
+ */
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
     const cacheKey = this.cacheService.generateCacheKey(text);
     
@@ -43,18 +44,22 @@ export class EmbeddingApplicationService {
       return cached;
     }
 
-    // Generate via API
+    // Generate via API with detailed logging like original
     this.log('🔄 Embedding not cached - API call required');
+    this.log('🔄 Single embedding API call initiated');
     const result = await this.providerService.generateSingleEmbedding(text);
     
     // Store in cache
     const cacheType = this.cacheService.storeEmbedding(cacheKey, result);
-    this.log(`💾 Embedding cached as ${cacheType}: ${this.cacheService.getCacheStats().size} total entries`);
+    const cacheStats = this.cacheService.getCacheStats();
+    this.log(`💾 Embedding cached as ${cacheType}: ${cacheStats.size} total entries`);
+    this.log(`📊 Embedding Cache: ${cacheStats.size}/-1 entries (0% full)`);
     
     return result;
   }
 
-  /** Generate embeddings for multiple texts with batch optimization */
+  /** Generate embeddings for multiple texts with batch optimization
+ */
   async generateEmbeddings(texts: string[]): Promise<EmbeddingResult[]> {
     const uniqueTexts = Array.from(new Set(texts.filter(t => t.trim().length > 0)));
     const results: EmbeddingResult[] = [];
@@ -103,7 +108,8 @@ export class EmbeddingApplicationService {
     });
   }
 
-  /** Perform semantic similarity search */
+  /** Perform semantic similarity search
+ */
   async performSimilaritySearch(request: SimilaritySearchRequest): Promise<SimilarityMatch[]> {
     if (request.candidateTexts.length === 0) {
       return [];
@@ -134,7 +140,8 @@ export class EmbeddingApplicationService {
     return similarities;
   }
 
-  /** Precompute embeddings for knowledge base */
+  /** Precompute embeddings for knowledge base
+ */
   async precomputeKnowledgeBaseEmbeddings(items: KnowledgeItem[]): Promise<void> {
     const texts = items.map(item => item.content);
     this.log(`🔄 Precomputing embeddings for ${texts.length} knowledge base items`);
@@ -189,12 +196,14 @@ export class EmbeddingApplicationService {
     this.log(`✅ PDF embedding processing completed: ${processed}/${total} chunks`);
   }
 
-  /** Get comprehensive cache statistics */
+  /** Get comprehensive cache statistics
+ */
   getCacheStats(): CacheStats {
     return this.cacheService.getCacheStats();
   }
 
-  /** Get detailed cache breakdown by type */
+  /** Get detailed cache breakdown by type
+ */
   getDetailedCacheStats(): Record<CacheType, { size: number; maxSize: number | null; keys: string[] }> {
     return this.cacheService.getDetailedCacheStats();
   }
@@ -225,13 +234,15 @@ export class EmbeddingApplicationService {
     this.log(`🗑️  ${cacheType} cache cleared`);
   }
 
-  /** Set logging context */
+  /** Set logging context
+ */
   setLogContext(logContext: EmbeddingLogContext): void {
     this.logContext = logContext;
     this.providerService.setLogContext(logContext);
   }
 
-  /** Log entry with fallback to no-op if no context */
+  /** Log entry with fallback to no-op if no context
+ */
   private log(message: string): void {
     if (this.logContext) {
       this.logContext.logEntry(message);

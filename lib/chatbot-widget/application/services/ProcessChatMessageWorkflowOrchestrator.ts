@@ -149,7 +149,8 @@ export class ProcessChatMessageWorkflowOrchestrator {
     
     logger.logMessage('💬 MESSAGE CONTEXT', {
       sessionId: result.session.id,
-      userMessageId: result.userMessage.id
+      userMessageId: result.userMessage.id,
+      userPrompt: request.userMessage
     });
     
     return result as unknown as MessageContext;

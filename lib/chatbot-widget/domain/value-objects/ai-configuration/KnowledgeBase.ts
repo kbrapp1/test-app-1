@@ -1,4 +1,5 @@
-import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
+import { KnowledgeBaseStructureValidationService } from '../../services/knowledge/KnowledgeBaseStructureValidationService';
+import { KnowledgeBaseSearchService } from '../../services/knowledge/KnowledgeBaseSearchService';
 
 /**
  * Knowledge Base Value Object
@@ -74,25 +75,8 @@ export class KnowledgeBase {
   }
 
   private validateProps(props: KnowledgeBaseProps): void {
-    if (!Array.isArray(props.faqs)) {
-      throw new Error('FAQs must be an array');
-    }
-    
-    // Validate FAQ structure
-    props.faqs.forEach((faq, index) => {
-      if (!faq.id?.trim()) {
-        throw new Error(`FAQ at index ${index} must have an ID`);
-      }
-      if (!faq.question?.trim()) {
-        throw new Error(`FAQ at index ${index} must have a question`);
-      }
-      if (!faq.answer?.trim()) {
-        throw new Error(`FAQ at index ${index} must have an answer`);
-      }
-      if (!faq.category?.trim()) {
-        throw new Error(`FAQ at index ${index} must have a category`);
-      }
-    });
+    // Delegate validation to domain service
+    KnowledgeBaseStructureValidationService.validateKnowledgeBaseStructure(props);
   }
 
   // Getters
@@ -133,13 +117,8 @@ export class KnowledgeBase {
   }
 
   addFAQ(faq: FAQ): KnowledgeBase {
-    // Check for duplicate ID
-    if (this.props.faqs.some(existing => existing.id === faq.id)) {
-      throw new BusinessRuleViolationError(
-        'FAQ with duplicate ID cannot be added',
-        { faqId: faq.id, existingFAQs: this.props.faqs.length }
-      );
-    }
+    // Validate uniqueness using domain service
+    KnowledgeBaseStructureValidationService.validateFAQUniqueness(this.props.faqs, faq);
 
     return new KnowledgeBase({
       ...this.props,
@@ -148,14 +127,10 @@ export class KnowledgeBase {
   }
 
   updateFAQ(faqId: string, updates: Partial<Omit<FAQ, 'id'>>): KnowledgeBase {
-    const faqIndex = this.props.faqs.findIndex(faq => faq.id === faqId);
-    if (faqIndex === -1) {
-      throw new BusinessRuleViolationError(
-        'FAQ not found for update',
-        { faqId, availableFAQs: this.props.faqs.map(f => f.id) }
-      );
-    }
+    // Validate FAQ exists using domain service
+    KnowledgeBaseStructureValidationService.validateFAQExistsForUpdate(this.props.faqs, faqId);
 
+    const faqIndex = this.props.faqs.findIndex(faq => faq.id === faqId);
     const updatedFAQs = [...this.props.faqs];
     updatedFAQs[faqIndex] = { ...updatedFAQs[faqIndex], ...updates };
 
@@ -187,40 +162,23 @@ export class KnowledgeBase {
   }
 
   getFAQsByCategory(category: string): FAQ[] {
-    return this.props.faqs.filter(faq => faq.category === category && faq.isActive);
+    return KnowledgeBaseSearchService.searchFAQsByCategory(this.props.faqs, category);
   }
 
   searchFAQs(query: string): FAQ[] {
-    // NOTE: This is a simple fallback for basic filtering
-    // For semantic search, use KnowledgeRetrievalService instead
-    const lowerQuery = query.toLowerCase();
-    return this.props.faqs.filter(faq => 
-      faq.isActive && (
-        faq.question.toLowerCase().includes(lowerQuery) ||
-        faq.answer.toLowerCase().includes(lowerQuery) ||
-        faq.category.toLowerCase().includes(lowerQuery)
-      )
-    );
+    // Delegate to domain search service for enhanced search capabilities
+    // NOTE: For semantic search, use VectorKnowledgeQueryRepository instead
+    return KnowledgeBaseSearchService.searchFAQs(this.props.faqs, query);
   }
 
   getCategories(): string[] {
-    const categories = new Set(this.props.faqs.map(faq => faq.category));
-    return Array.from(categories).sort();
+    return KnowledgeBaseSearchService.searchFAQCategories(this.props.faqs);
   }
 
   // Website source management methods
   addWebsiteSource(websiteSource: WebsiteSource): KnowledgeBase {
-    // Check for duplicate URL
-    if (this.props.websiteSources.some(existing => existing.url === websiteSource.url)) {
-      throw new BusinessRuleViolationError(
-        'Website source with duplicate URL cannot be added',
-        { 
-          url: websiteSource.url, 
-          existingSources: this.props.websiteSources.length,
-          existingUrls: this.props.websiteSources.map(s => s.url)
-        }
-      );
-    }
+    // Validate uniqueness using domain service
+    KnowledgeBaseStructureValidationService.validateWebsiteSourceUniqueness(this.props.websiteSources, websiteSource);
 
     return new KnowledgeBase({
       ...this.props,
@@ -229,17 +187,10 @@ export class KnowledgeBase {
   }
 
   updateWebsiteSource(sourceId: string, updates: Partial<Omit<WebsiteSource, 'id'>>): KnowledgeBase {
-    const sourceIndex = this.props.websiteSources.findIndex(source => source.id === sourceId);
-    if (sourceIndex === -1) {
-      throw new BusinessRuleViolationError(
-        'Website source not found for update',
-        { 
-          sourceId, 
-          availableSources: this.props.websiteSources.map(s => ({ id: s.id, url: s.url }))
-        }
-      );
-    }
+    // Validate source exists using domain service
+    KnowledgeBaseStructureValidationService.validateWebsiteSourceExistsForUpdate(this.props.websiteSources, sourceId);
 
+    const sourceIndex = this.props.websiteSources.findIndex(source => source.id === sourceId);
     const updatedSources = [...this.props.websiteSources];
     updatedSources[sourceIndex] = { ...updatedSources[sourceIndex], ...updates };
 
@@ -268,6 +219,31 @@ export class KnowledgeBase {
 
   getActiveWebsiteSources(): WebsiteSource[] {
     return this.props.websiteSources.filter(source => source.isActive);
+  }
+
+  searchWebsiteSources(query: string): WebsiteSource[] {
+    return KnowledgeBaseSearchService.searchWebsiteSources(this.props.websiteSources, query);
+  }
+
+  findSimilarFAQs(targetFAQ: FAQ, limit: number = 5): FAQ[] {
+    return KnowledgeBaseSearchService.findSimilarFAQs(this.props.faqs, targetFAQ, limit);
+  }
+
+  searchAllContent(query: string): {
+    faqs: FAQ[];
+    sources: WebsiteSource[];
+    hasCompanyInfoMatch: boolean;
+    hasProductCatalogMatch: boolean;
+    hasSupportDocsMatch: boolean;
+  } {
+    return KnowledgeBaseSearchService.searchAllContent(
+      this.props.faqs,
+      this.props.websiteSources,
+      this.props.companyInfo,
+      this.props.productCatalog,
+      this.props.supportDocs,
+      query
+    );
   }
 
   updateWebsiteCrawlStatus(sourceId: string, status: WebsiteSource['status'], errorMessage?: string): KnowledgeBase {

@@ -430,7 +430,7 @@ describe('ChatbotConfigMapper', () => {
       expect(config.leadQualificationQuestions[3].question).toBe('Valid question');
     });
 
-    it('should handle corrupted website sources in knowledge base', () => {
+    it('should reject corrupted website sources in knowledge base', () => {
       const recordWithCorruptedSources = {
         ...validDbRecord,
         knowledge_base: {
@@ -447,10 +447,36 @@ describe('ChatbotConfigMapper', () => {
         },
       };
 
-      const config = ChatbotConfigMapper.toDomainEntity(recordWithCorruptedSources);
-      expect(config.knowledgeBase.websiteSources).toHaveLength(3);
-      // Should provide defaults for missing fields
-      expect(config.knowledgeBase.websiteSources[2].url).toBe('https://valid.com');
+      // Domain validation should reject invalid website sources
+      expect(() => {
+        ChatbotConfigMapper.toDomainEntity(recordWithCorruptedSources);
+      }).toThrow('Business rule violated: Item at index 0 must have a non-empty URL');
+    });
+
+    it('should handle website sources with missing optional fields', () => {
+      const recordWithMissingOptionalFields = {
+        ...validDbRecord,
+        knowledge_base: {
+          ...(validDbRecord.knowledge_base as any),
+          websiteSources: [
+            {
+              id: 'source-1',
+              url: 'https://example.com',
+              name: 'Test Source',
+              description: '', // Empty description should be handled
+              isActive: true,
+              // Missing crawlSettings and other optional fields
+            }
+          ],
+        },
+      };
+
+      const config = ChatbotConfigMapper.toDomainEntity(recordWithMissingOptionalFields);
+      expect(config.knowledgeBase.websiteSources).toHaveLength(1);
+      expect(config.knowledgeBase.websiteSources[0].url).toBe('https://example.com');
+      expect(config.knowledgeBase.websiteSources[0].name).toBe('Test Source');
+      // Should provide defaults for missing optional fields
+      expect(config.knowledgeBase.websiteSources[0].crawlSettings).toBeDefined();
     });
   });
 

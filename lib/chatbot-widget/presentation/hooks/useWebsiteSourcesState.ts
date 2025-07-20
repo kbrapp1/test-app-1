@@ -17,7 +17,7 @@ import {
     cleanupWebsiteSources,
     crawlWebsiteSource as crawlWebsiteSourceAction,
     removeWebsiteSource
-} from '../actions/websiteSourcesActions';
+} from '../actions/websiteSourceActions';
 import { useCrawledPagesData } from './website-sources/useCrawledPagesData';
 import { useCrawlProgress } from './website-sources/useCrawlProgress';
 import { useFormState } from './website-sources/useFormState';

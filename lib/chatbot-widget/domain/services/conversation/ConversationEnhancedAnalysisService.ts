@@ -10,10 +10,10 @@
  * - PERFORMANCE: Coordinate async operations efficiently
  */
 
-import { ContextAnalysis } from '../../value-objects/message-processing/ContextAnalysis';
-import { ChatMessage } from '../../entities/ChatMessage';
 import { ChatbotConfig } from '../../entities/ChatbotConfig';
+import { ChatMessage } from '../../entities/ChatMessage';
 import { ChatSession } from '../../entities/ChatSession';
+import { ContextAnalysis } from '../../value-objects/message-processing/ContextAnalysis';
 // Removed UserJourneyState import - using pure API-driven approach
 import { IntentResult } from '../../value-objects/message-processing/IntentResult';
 import { IIntentClassificationService } from '../interfaces/IIntentClassificationService';
@@ -105,7 +105,21 @@ export class ConversationEnhancedAnalysisService {
         content: item.content,
         relevanceScore: item.relevanceScore
       }));
-    } catch {
+    } catch (error) {
+      // AI INSTRUCTIONS: Log the actual error for debugging instead of silently failing
+      if (sharedLogFile) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        
+        // Use simple console logging since we don't have access to proper logger here
+        console.error(`[${new Date().toISOString()}] 🚨 KNOWLEDGE RETRIEVAL ERROR:`, {
+          error: errorMessage,
+          stack: errorStack,
+          query: message.content,
+          sharedLogFile
+        });
+      }
+      
       // Knowledge retrieval failed - continuing without knowledge
       return undefined;
     }

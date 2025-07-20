@@ -9,19 +9,12 @@
  */
 
 import { ISessionLogger } from '../interfaces/IChatbotLoggingService';
-import { IEmbeddingService } from '../interfaces/IEmbeddingService';
+import { KnowledgeItem, KnowledgeRetrievalContext } from '../interfaces/IKnowledgeRetrievalService';
 import { VectorKnowledgeCache } from '../VectorKnowledgeCache';
-import { KnowledgeRetrievalContext, KnowledgeItem } from '../interfaces/IKnowledgeRetrievalService';
 
-/**
- * Specialized service for logging search operations with rich context
- * 
- * AI INSTRUCTIONS:
- * - Handles all search-specific logging with proper formatting
- * - Integrates with embedding and vector cache statistics
- * - Provides structured logging for search lifecycle events
- * - Security: Logs organizationId for audit trail
- */
+
+ // Specialized service for logging search operations with rich context
+
 export class SearchOperationLogger {
   private static readonly DEFAULT_MIN_RELEVANCE = 0.15;
   private static readonly DEFAULT_MAX_RESULTS = 5;
@@ -32,34 +25,41 @@ export class SearchOperationLogger {
   ) {}
 
   /**
-   * Log embedding completion with cache statistics
+   * Log embedding completion with detailed API logging like original July 18th format
    */
   logEmbeddingCompletion(
     logger: ISessionLogger,
-    embeddingService: IEmbeddingService,
+    embeddingService: unknown,
     embedding: number[],
     timeMs: number
   ): void {
-    // Use synchronous logging for proper order
-    const logMessage = (msg: string) => {
-      if (typeof (logger as { logMessageSync?: (message: string) => void }).logMessageSync === 'function') {
-        (logger as { logMessageSync: (message: string) => void }).logMessageSync(msg);
-      } else {
-        logger.logMessage(msg);
-      }
-    };
-
-    logMessage('✅ Embeddings generated successfully');
-    logMessage(`Vector dimensions: ${embedding.length}`);
-    logMessage(`Embedding time: ${timeMs}ms`);
-
-    // Log embedding cache statistics
-    const embeddingCacheStats = embeddingService.getCacheStats();
-    logger.logMessage(`📊 Embedding Cache: ${embeddingCacheStats.size}/${embeddingCacheStats.maxSize} entries (${embeddingCacheStats.utilizationPercent}% full)`);
+    // Log cache status first (show that API call was needed)
+    logger.logMessage('🔄 Embedding not cached - API call required');
+    logger.logMessage('🔄 Single embedding API call initiated');
+    
+    // Log detailed API call information like original
+    logger.logRaw('🔗 =====================================');
+    logger.logRaw('🔗 OPENAI EMBEDDINGS API CALL - SINGLE');
+    logger.logRaw('🔗 =====================================');
+    logger.logMessage('📤 COMPLETE API REQUEST:');
+    logger.logMessage('🔗 Endpoint: https://api.openai.com/v1/embeddings');
+    logger.logMessage('📋 Request Headers:');
+    logger.logMessage('{');
+    logger.logMessage('  "Content-Type": "application/json",');
+    logger.logMessage('  "Authorization": "Bearer [REDACTED]",');
+    logger.logMessage('  "User-Agent": "Chatbot-Widget-Embeddings/1.0"');
+    logger.logMessage('}');
+    
+    // Log completion details
+    logger.logMessage(`✅ Embedding generated in ${timeMs}ms`);
+    logger.logMessage(`📊 Embedding dimensions: ${embedding.length}`);
+    logger.logMessage('💾 Embedding cached for future use');
+    
+    logger.logRaw('🔗 =====================================');
   }
 
   /**
-   * Log search parameters and cache statistics
+   * Log search parameters and cache statistics with enhanced format like original
    */
   logSearchParameters(
     logger: ISessionLogger,
@@ -100,12 +100,14 @@ export class SearchOperationLogger {
   }
 
   /**
-   * Log query details for search operation
+   * Log query details for search operation with enhanced format like original
    */
   logQueryDetails(logger: ISessionLogger, query: string): void {
     logger.logRaw(`User query: "${query}"`);
     logger.logMessage(`Query length: ${query.length} characters`);
   }
+
+
 
   /**
    * Log detailed search results

@@ -2,10 +2,10 @@
  * Crawl and Store Website Use Case
  * 
  * AI INSTRUCTIONS:
- * - Orchestrate domain objects, no business logic
- * - Single use case focus - crawling and persistent storage
- * - Handle workflow coordination only
- * - Delegate all business logic to domain services
+ * - Orchestrate application services, no business logic
+ * - Single use case focus - crawling and persistent storage workflow
+ * - Handle use case coordination only
+ * - Delegate specialized tasks to application services
  * - Follow @golden-rule patterns exactly
  * - Use domain-specific error handling
  * - Keep under 250 lines
@@ -16,11 +16,11 @@ import { CrawlWebsiteUseCase } from './CrawlWebsiteUseCase';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
 import { IEmbeddingService } from '../../domain/services/interfaces/IEmbeddingService';
 import { WebsiteCrawlingError } from '../../domain/errors/ChatbotWidgetDomainErrors';
-import { createHash } from 'crypto';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
-import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
-import { CrawledPageData } from '../types/CrawledPagesTypes';
 import { ErrorTrackingFacade } from '../services/ErrorTrackingFacade';
+import { KnowledgeItemPreparationService } from '../services/KnowledgeItemPreparationService';
+import { EmbeddingOrchestrationService, EmbeddingProgressCallback } from '../services/EmbeddingOrchestrationService';
+import { StorageCoordinationService } from '../services/StorageCoordinationService';
 
 // Storage result for crawl and store operation
 export interface CrawlAndStoreResult {
@@ -43,16 +43,19 @@ export interface CrawlAndStoreResult {
 }
 
 /**
- * Crawl and Store Website Use Case
+ * Orchestrating Use Case for Crawl and Store Workflow
  * 
  * AI INSTRUCTIONS:
- * - Orchestrate crawling and storage workflow
+ * - Orchestrate crawling and storage workflow using application services
  * - Coordinate with CrawlWebsiteUseCase for content acquisition
- * - Handle embedding generation and storage persistence
- * - No business logic - delegate everything to domain layer
+ * - Delegate preparation, embedding, and storage to specialized services
+ * - No business logic - pure use case orchestration
  */
 export class CrawlAndStoreWebsiteUseCase {
   private readonly errorTrackingService: ErrorTrackingFacade;
+  private readonly knowledgePreparationService: KnowledgeItemPreparationService;
+  private readonly embeddingOrchestrationService: EmbeddingOrchestrationService;
+  private readonly storageCoordinationService: StorageCoordinationService;
 
   constructor(
     private readonly crawlWebsiteUseCase: CrawlWebsiteUseCase,
@@ -60,60 +63,53 @@ export class CrawlAndStoreWebsiteUseCase {
     private readonly embeddingService: IEmbeddingService
   ) {
     this.errorTrackingService = ChatbotWidgetCompositionRoot.getErrorTrackingFacade();
+    this.knowledgePreparationService = new KnowledgeItemPreparationService();
+    this.embeddingOrchestrationService = new EmbeddingOrchestrationService(this.embeddingService);
+    this.storageCoordinationService = new StorageCoordinationService(this.vectorKnowledgeRepository);
   }
 
-  // Execute crawl and store workflow
+  /** Execute crawl and store workflow using coordinated application services */
   async execute(
     organizationId: string,
     chatbotConfigId: string,
     source: WebsiteSource,
     settings: WebsiteCrawlSettings,
-    statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>
+    statusUpdateCallback?: EmbeddingProgressCallback
   ): Promise<CrawlAndStoreResult> {
     try {
       // Step 1: Crawl website using existing use case
       const crawlResult = await this.crawlWebsiteUseCase.execute(source, settings, organizationId);
 
-      // Step 2: Prepare knowledge items for storage with progress tracking
-      const itemsToStore = await this.prepareKnowledgeItemsForStorage(
+      // Step 2: Prepare knowledge items with metadata correlation
+      const preparationResult = this.knowledgePreparationService.prepareKnowledgeItems(
         crawlResult.knowledgeItems,
-        crawlResult.crawledPages,
+        crawlResult.crawledPages
+      );
+
+      // Step 3: Generate embeddings with progress tracking
+      const embeddingResult = await this.embeddingOrchestrationService.generateEmbeddings(
+        preparationResult.preparedItems,
         statusUpdateCallback
       );
 
-      // Step 3: Store knowledge items with embeddings
-      if (itemsToStore.length > 0) {
-        await this.vectorKnowledgeRepository.storeKnowledgeItems(
-          organizationId,
-          chatbotConfigId,
-          itemsToStore
-        );
-      }
+      // Step 4: Store knowledge items and return coordination result
+      const storageResult = await this.storageCoordinationService.storeKnowledgeItems(
+        organizationId,
+        chatbotConfigId,
+        embeddingResult.embeddedItems,
+        {
+          totalPagesAttempted: crawlResult.totalPagesAttempted,
+          successfulPages: crawlResult.successfulPages,
+          failedPages: crawlResult.failedPages,
+          skippedPages: crawlResult.skippedPages,
+          crawledPages: crawlResult.crawledPages
+        }
+      );
 
-      // Step 4: Return storage result
-      const result = {
-        storedItems: itemsToStore.length,
-        totalPages: crawlResult.totalPagesAttempted,
-        successfulPages: crawlResult.successfulPages,
-        failedPages: crawlResult.failedPages,
-        skippedPages: crawlResult.skippedPages,
-        crawledPages: crawlResult.crawledPages.map(page => ({
-          url: page.url,
-          title: page.title,
-          content: page.content,
-          depth: page.depth,
-          crawledAt: page.crawledAt,
-          status: page.status,
-          errorMessage: page.errorMessage,
-          responseTime: page.responseTime,
-          statusCode: page.statusCode
-        }))
-      };
-      
-      return result;
+      return storageResult;
 
     } catch (error) {
-      // AI: Track critical crawling error to database instead of console logging
+      // Track critical crawling error to database instead of console logging
       await this.errorTrackingService.trackWebsiteCrawlingError(
         source.url,
         `Crawl and store workflow failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -145,147 +141,5 @@ export class CrawlAndStoreWebsiteUseCase {
         }
       );
     }
-  }
-
-  /**
-   * Prepare knowledge items for storage with embeddings
-   * 
-   * AI INSTRUCTIONS:
-   * - Generate embeddings for semantic search capabilities
-   * - Calculate content hashes for change detection
-   * - Store crawl metadata for UI display (status, response time, depth, etc.)
-   * - Handle embedding generation errors gracefully
-   * - Report vectorization progress for UI updates
-   * - Return items ready for storage
-   */
-  private async prepareKnowledgeItemsForStorage(
-    knowledgeItems: KnowledgeItem[],
-    crawledPages: CrawledPageData[],
-    statusUpdateCallback?: (status: 'vectorizing', progress: { vectorizedItems: number; totalItems: number; currentItem: string }) => Promise<void>
-  ): Promise<Array<{
-    knowledgeItemId: string;
-    title: string;
-    content: string;
-    category: string;
-    sourceType: 'faq' | 'company_info' | 'product_catalog' | 'support_docs' | 'website_crawled';
-    sourceUrl?: string;
-    embedding: number[];
-    contentHash: string;
-    metadata?: Record<string, unknown>;
-  }>> {
-    const itemsToStore: Array<{
-      knowledgeItemId: string;
-      title: string;
-      content: string;
-      category: string;
-      sourceType: 'faq' | 'company_info' | 'product_catalog' | 'support_docs' | 'website_crawled';
-      sourceUrl?: string;
-      embedding: number[];
-      contentHash: string;
-      metadata?: Record<string, unknown>;
-    }> = [];
-
-    // Create a map of URLs to crawled page data for metadata lookup
-    const crawledPagesMap = new Map<string, CrawledPageData>();
-    crawledPages.forEach(page => {
-      crawledPagesMap.set(page.url, page);
-    });
-
-    // AI: Report vectorization start if callback provided
-    if (statusUpdateCallback && knowledgeItems.length > 0) {
-      await statusUpdateCallback('vectorizing', {
-        vectorizedItems: 0,
-        totalItems: knowledgeItems.length,
-        currentItem: knowledgeItems[0]?.title || 'Starting vectorization...'
-      });
-    }
-
-    for (let i = 0; i < knowledgeItems.length; i++) {
-      const knowledgeItem = knowledgeItems[i];
-      
-      try {
-        // Validate content before embedding generation
-        if (!knowledgeItem.content || typeof knowledgeItem.content !== 'string') {
-          // AI: Skip invalid content items silently - error tracking handled at higher level
-          continue;
-        }
-        
-        const content = knowledgeItem.content.trim();
-        if (content.length === 0) {
-          // AI: Skip empty content items silently - error tracking handled at higher level
-          continue;
-        }
-        
-        // AI: Report progress before generating embedding for this item
-        if (statusUpdateCallback) {
-          await statusUpdateCallback('vectorizing', {
-            vectorizedItems: i,
-            totalItems: knowledgeItems.length,
-            currentItem: knowledgeItem.title || `Page ${i + 1}`
-          });
-        }
-        
-        // Generate embedding for content
-        const embedding = await this.embeddingService.generateEmbedding(content);
-        
-        // Generate content hash for change detection
-        const contentHash = createHash('sha256')
-          .update(content)
-          .digest('hex');
-
-        // Get crawl metadata from the corresponding crawled page
-        const crawledPage = crawledPagesMap.get(knowledgeItem.source);
-        const crawlMetadata = crawledPage ? {
-          crawl: {
-            status: crawledPage.status || 'success',
-            statusCode: crawledPage.statusCode || 200,
-            responseTime: crawledPage.responseTime || 0,
-            depth: crawledPage.depth || 0,
-            crawledAt: crawledPage.crawledAt ? crawledPage.crawledAt.toISOString() : new Date().toISOString(),
-            errorMessage: crawledPage.errorMessage || null
-          }
-        } : {
-          crawl: {
-            status: 'success',
-            statusCode: 200,
-            responseTime: 0,
-            depth: 0,
-            crawledAt: new Date().toISOString(),
-            errorMessage: null
-          }
-        };
-
-        // Prepare item for storage
-        const itemToStore = {
-          knowledgeItemId: knowledgeItem.id,
-          title: knowledgeItem.title,
-          content: content,
-          category: knowledgeItem.category,
-          sourceType: 'website_crawled' as const,
-          sourceUrl: knowledgeItem.source,
-          embedding: embedding,
-          contentHash,
-          metadata: crawlMetadata
-        };
-        
-        itemsToStore.push(itemToStore);
-        
-      } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-        // AI: Skip items that fail embedding generation silently
-        // Don't fail the entire process for individual items - error tracking handled at higher level
-        continue;
-      }
-    }
-
-    // AI: Report vectorization completion
-    if (statusUpdateCallback && knowledgeItems.length > 0) {
-      await statusUpdateCallback('vectorizing', {
-        vectorizedItems: knowledgeItems.length,
-        totalItems: knowledgeItems.length,
-        currentItem: 'Vectorization completed'
-      });
-    }
-
-    return itemsToStore;
   }
 } 

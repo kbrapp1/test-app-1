@@ -9,7 +9,7 @@
  */
 
 import { useState } from 'react';
-import { WebsiteSourceFormData } from '../../actions/websiteSourcesActions';
+import { WebsiteSourceFormData } from '../../actions/websiteSourceActions';
 
 /** Validate Form Data
  */

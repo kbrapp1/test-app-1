@@ -11,10 +11,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdvancedParameters, ParameterUpdateHandler } from '../types/AdvancedParametersTypes';
 import { updateChatbotConfig } from '../actions/configActions';
 import { UpdateChatbotConfigDto } from '../../application/dto/ChatbotConfigDto';
+import { useOrganization } from '@/lib/organization/application/providers/OrganizationProvider';
 
 interface UseAdvancedParametersProps {
   existingConfig: unknown;
-  activeOrganizationId: string | null;
 }
 
 interface UseAdvancedParametersReturn {
@@ -65,17 +65,19 @@ const DEFAULT_PARAMETERS: AdvancedParameters = {
 };
 
 export function useAdvancedParameters({
-  existingConfig,
-  activeOrganizationId
+  existingConfig
 }: UseAdvancedParametersProps): UseAdvancedParametersReturn {
-  // AI: Security validation - activeOrganizationId must be provided
-  if (!activeOrganizationId) {
-    throw new Error('Active organization ID is required for advanced parameters management');
-  }
-
+  // AI: ALWAYS call hooks first to avoid Rules of Hooks violations
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [parameters, setParameters] = useState<AdvancedParameters>(DEFAULT_PARAMETERS);
+  
+  // AI: Get organization context directly like other working components
+  const { activeOrganizationId } = useOrganization();
+  
+  // AI: Security validation - activeOrganizationId must be provided
+  // Use defensive programming to avoid breaking React's Rules of Hooks
+  const isValidOrganization = Boolean(activeOrganizationId?.trim());
 
   useEffect(() => {
     if (existingConfig) {
@@ -113,7 +115,7 @@ export function useAdvancedParameters({
   };
 
   const handleSave = () => {
-    if (!activeOrganizationId || !existingConfig) return;
+    if (!isValidOrganization || !activeOrganizationId || !existingConfig) return;
     
     const config = existingConfig as {
       id: string;
@@ -147,12 +149,25 @@ export function useAdvancedParameters({
     });
   };
 
+  // Return functions that are disabled when organization is invalid
+  const safeUpdateParameter: ParameterUpdateHandler = !isValidOrganization ? 
+    () => {} : updateParameter;
+  
+  const safeSetIsEditing = !isValidOrganization ? 
+    () => {} : setIsEditing;
+    
+  const safeHandleSave = !isValidOrganization ? 
+    () => {} : handleSave;
+
   return {
     parameters,
-    updateParameter,
-    isEditing,
-    setIsEditing,
-    handleSave,
-    updateMutation,
+    updateParameter: safeUpdateParameter,
+    isEditing: isValidOrganization ? isEditing : false,
+    setIsEditing: safeSetIsEditing,
+    handleSave: safeHandleSave,
+    updateMutation: {
+      isPending: isValidOrganization ? updateMutation.isPending : false,
+      mutate: !isValidOrganization ? () => {} : updateMutation.mutate
+    },
   };
 } 

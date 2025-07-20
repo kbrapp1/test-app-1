@@ -191,10 +191,8 @@ export class ChatMessageProcessingService {
     enhancedContext: Record<string, unknown>,
     logFileName: string
   ): Promise<unknown> {
-    const processingConfig: ProcessingConfig = {
-      organizationId: config.organizationId,
-      name: config.name
-    };
+    // Use full ChatbotConfig instead of creating minimal ProcessingConfig
+    // This preserves knowledge base and other important configuration data
     const processingSession: ProcessingSession = {
       id: session.id as string,
       conversationId: session.conversationId as string,
@@ -202,7 +200,7 @@ export class ChatMessageProcessingService {
     };
 
     const conversationContext = await this.conversationContextBuilder.buildConversationContext(
-      processingConfig,
+      config as unknown as ProcessingConfig,
       processingSession,
       contextMessages,
       userMessage,

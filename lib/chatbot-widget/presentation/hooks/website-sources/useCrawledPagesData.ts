@@ -9,7 +9,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { getCrawledPages } from '../../actions/websiteSourcesActions';
+import { getCrawledPages } from '../../actions/websiteSourceActions';
 import { CrawledPageInfo } from '../../components/admin/website-sources/WebsiteSourcesSection';
 
 /** Transform Database Page to UI Format

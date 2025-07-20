@@ -131,8 +131,21 @@ export class SimplePromptService implements ISimplePromptService {
     const persona = this.buildPersonaSection(personaVariables);
 
     // AI: Generate knowledge base content
+    const knowledgeBaseData = input.chatbotConfig.knowledgeBase?.toPlainObject();
+    if (!knowledgeBaseData) {
+      input.logger?.logMessage('⚠️ Knowledge base is undefined - using empty fallback');
+    } else {
+      input.logger?.logMessage(`✅ Knowledge base loaded: companyInfo=${!!knowledgeBaseData.companyInfo?.trim()}, productCatalog=${!!knowledgeBaseData.productCatalog?.trim()}, faqs=${knowledgeBaseData.faqs?.length || 0}`);
+    }
     const knowledgeBase = this.knowledgeBaseService.buildMinimalKnowledgeBase(
-      input.chatbotConfig.knowledgeBase
+      knowledgeBaseData || {
+        companyInfo: '',
+        productCatalog: '',
+        faqs: [],
+        supportDocs: '',
+        complianceGuidelines: '',
+        websiteSources: [],
+      }
     );
 
     // AI: Generate business guidance

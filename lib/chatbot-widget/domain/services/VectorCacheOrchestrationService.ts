@@ -2,22 +2,21 @@
  * Vector Cache Orchestration Service
  * 
  * AI INSTRUCTIONS:
- * - Single responsibility: Orchestrate complex vector cache workflows
- * - Domain service focused on coordinating initialization and search operations
+ * - Single responsibility: Delegate to specialized orchestration services
+ * - Domain service focused on maintaining backward compatibility
  * - Keep business logic pure, no external dependencies beyond domain services
  * - Never exceed 250 lines per @golden-rule
- * - Delegate all specialized operations to focused services
- * - Handle complex workflows with proper error handling
+ * - Delegate all operations to focused orchestration services
+ * - Maintain existing API for backward compatibility
  * - Support comprehensive logging and monitoring
  */
 
 import { KnowledgeItem } from './interfaces/IKnowledgeRetrievalService';
-import { BusinessRuleViolationError } from '../errors/ChatbotWidgetDomainErrors';
 import { ISessionLogger } from './interfaces/IChatbotLoggingService';
-import { VectorMemoryManagementService } from './VectorMemoryManagementService';
-import { VectorSimilarityService } from './VectorSimilarityService';
-import { VectorCacheStatisticsService } from './VectorCacheStatisticsService';
-import { VectorCacheLoggingService } from './VectorCacheLoggingService';
+import { VectorCacheInitializationOrchestrationService } from './VectorCacheInitializationOrchestrationService';
+import { VectorCacheSearchOrchestrationService } from './VectorCacheSearchOrchestrationService';
+import { VectorCacheManagementOrchestrationService } from './VectorCacheManagementOrchestrationService';
+import { VectorCacheErrorOrchestrationService } from './VectorCacheErrorOrchestrationService';
 import {
   CachedKnowledgeVector,
   VectorCacheStats,
@@ -27,17 +26,16 @@ import {
   VectorSearchResult
 } from '../types/VectorCacheTypes';
 
-/** Orchestration Service for Complex Vector Cache Operations */
+/** Orchestration Service for Complex Vector Cache Operations */
 export class VectorCacheOrchestrationService {
   
   /**
    * Orchestrate cache initialization workflow
    * 
    * AI INSTRUCTIONS:
-   * - Coordinate initialization across multiple specialized services
-   * - Handle comprehensive logging and error tracking
-   * - Manage memory limits and eviction during initialization
-   * - Return detailed initialization results
+   * - Delegate to specialized initialization orchestration service
+   * - Maintain backward compatibility with existing API
+   * - Preserve all security and organizational context
    */
   static async orchestrateInitialization(
     vectors: Array<{ item: KnowledgeItem; vector: number[] }>,
@@ -49,66 +47,19 @@ export class VectorCacheOrchestrationService {
     loadVectorsCallback: (vectors: Array<{ item: KnowledgeItem; vector: number[] }>) => void,
     clearCacheCallback: () => void
   ): Promise<VectorCacheInitializationResult> {
-    const startTime = Date.now();
-
-    try {
-      // Log initialization start
-      VectorCacheLoggingService.logInitializationStart(
-        logger,
-        vectors.length,
-        config,
-        organizationId
-      );
-
-      // Clear existing cache and load vectors
-      clearCacheCallback();
-      loadVectorsCallback(vectors);
-
-      // Enforce memory limits using specialized service
-      const evictionResult = VectorMemoryManagementService.enforceMemoryLimits(
-        cachedVectors,
-        config,
-        logger
-      );
-
-      // Calculate final metrics and log results
-      const timeMs = Date.now() - startTime;
-      const initializationMetrics = VectorCacheStatisticsService.generateInitializationMetrics(
-        timeMs,
-        cachedVectors.size,
-        evictionResult.evictedCount,
-        evictionResult.memoryUsageKB,
-        config.maxMemoryKB,
-        vectors.length > 0 ? vectors[0].vector.length : 0
-      );
-
-      VectorCacheLoggingService.logInitializationResults(logger, initializationMetrics);
-
-      return {
-        success: true,
-        vectorsLoaded: cachedVectors.size,
-        vectorsEvicted: evictionResult.evictedCount,
-        memoryUsageKB: evictionResult.memoryUsageKB,
-        timeMs
-      };
-
-    } catch (error) {
-      const timeMs = Date.now() - startTime;
-      
-      throw new BusinessRuleViolationError(
-        'Vector cache initialization orchestration failed',
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          organizationId,
-          chatbotConfigId,
-          vectorCount: vectors.length,
-          timeMs
-        }
-      );
-    }
+    return VectorCacheInitializationOrchestrationService.orchestrateInitialization(
+      vectors,
+      cachedVectors,
+      config,
+      logger,
+      organizationId,
+      chatbotConfigId,
+      loadVectorsCallback,
+      clearCacheCallback
+    );
   }
 
-  /** Orchestrate cache search workflow */
+  /** Orchestrate cache search workflow */
   static async orchestrateSearch(
     queryEmbedding: number[],
     options: VectorSearchOptions,
@@ -119,69 +70,19 @@ export class VectorCacheOrchestrationService {
     incrementSearchStats: () => void,
     getCacheStats: () => VectorCacheStats
   ): Promise<VectorSearchResult[]> {
-    const startTime = Date.now();
-
-    try {
-      // Update search statistics
-      incrementSearchStats();
-
-      // Log search start
-      VectorCacheLoggingService.logSearchStart(
-        logger,
-        cachedVectors.size,
-        options,
-        queryEmbedding.length
-      );
-
-      // Perform similarity search using specialized service
-      const { results, debugInfo } = VectorSimilarityService.searchVectors(
-        queryEmbedding,
-        cachedVectors,
-        options
-      );
-
-      const timeMs = Date.now() - startTime;
-      const stats = getCacheStats();
-
-      // Log search results and performance metrics
-      VectorCacheLoggingService.logSearchResults(
-        logger,
-        options,
-        results,
-        debugInfo,
-        timeMs,
-        stats
-      );
-
-      VectorCacheLoggingService.logSearchMetrics(
-        logger,
-        timeMs,
-        cachedVectors.size,
-        results.length,
-        stats.cacheHitRate,
-        stats.memoryUtilization,
-        options.threshold || VectorSimilarityService.DEFAULT_THRESHOLD
-      );
-
-      return results;
-
-    } catch (error) {
-      const timeMs = Date.now() - startTime;
-      
-      throw new BusinessRuleViolationError(
-        'Vector cache search orchestration failed',
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          organizationId,
-          chatbotConfigId,
-          searchTimeMs: timeMs,
-          cacheSize: cachedVectors.size
-        }
-      );
-    }
+    return VectorCacheSearchOrchestrationService.orchestrateSearch(
+      queryEmbedding,
+      options,
+      cachedVectors,
+      logger,
+      organizationId,
+      chatbotConfigId,
+      incrementSearchStats,
+      getCacheStats
+    );
   }
 
-  /** Orchestrate cache clearing workflow */
+  /** Orchestrate cache clearing workflow */
   static orchestrateCacheClear(
     previousSize: number,
     organizationId: string,
@@ -189,32 +90,16 @@ export class VectorCacheOrchestrationService {
     logger: ISessionLogger,
     clearCacheCallback: () => void
   ): void {
-    try {
-      // Log cache clearing operation
-      VectorCacheLoggingService.logCacheClear(
-        logger,
-        previousSize,
-        0, // memoryFreedKB will be calculated later
-        `Cache clear for organization ${organizationId}`
-      );
-
-      // Execute cache clearing
-      clearCacheCallback();
-
-    } catch (error) {
-      throw new BusinessRuleViolationError(
-        'Vector cache clear orchestration failed',
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          organizationId,
-          chatbotConfigId,
-          previousSize
-        }
-      );
-    }
+    return VectorCacheManagementOrchestrationService.orchestrateCacheClear(
+      previousSize,
+      organizationId,
+      chatbotConfigId,
+      logger,
+      clearCacheCallback
+    );
   }
 
-  /** Orchestrate cache state monitoring */
+  /** Orchestrate cache state monitoring */
   static orchestrateStateMonitoring(
     cachedVectors: Map<string, CachedKnowledgeVector>,
     config: Required<VectorCacheConfig>,
@@ -225,44 +110,25 @@ export class VectorCacheOrchestrationService {
     isInitialized: boolean,
     logger: ISessionLogger
   ): VectorCacheStats {
-    try {
-      const stats = VectorCacheStatisticsService.calculateCacheStats(
-        cachedVectors,
-        config,
-        searchCount,
-        cacheHits,
-        evictionsPerformed,
-        initializationTime
-      );
-
-      // Log current cache state
-      VectorCacheLoggingService.logCacheState(
-        logger,
-        stats,
-        'status-check'
-      );
-
-      return stats;
-
-    } catch (error) {
-      throw new BusinessRuleViolationError(
-        'Vector cache state monitoring failed',
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          cacheSize: cachedVectors.size,
-          isInitialized
-        }
-      );
-    }
+    return VectorCacheManagementOrchestrationService.orchestrateStateMonitoring(
+      cachedVectors,
+      config,
+      searchCount,
+      cacheHits,
+      evictionsPerformed,
+      initializationTime,
+      isInitialized,
+      logger
+    );
   }
 
   /**
    * Orchestrate error handling and logging
    * 
    * AI INSTRUCTIONS:
-   * - Coordinate comprehensive error reporting
-   * - Handle error context and debugging information
-   * - Support troubleshooting and monitoring
+   * - Delegate to specialized error orchestration service
+   * - Maintain backward compatibility with existing API
+   * - Preserve comprehensive error reporting
    */
   static orchestrateErrorHandling(
     operation: string,
@@ -270,17 +136,11 @@ export class VectorCacheOrchestrationService {
     context: Record<string, unknown>,
     logger: ISessionLogger
   ): void {
-    try {
-      VectorCacheLoggingService.logError(
-        logger,
-        error instanceof Error ? error : new Error(String(error)),
-        operation,
-        context
-      );
-    } catch (loggingError) {
-      // If logging fails, at least preserve the original error
-      console.error('Failed to log vector cache error:', loggingError);
-      console.error('Original error:', error);
-    }
+    return VectorCacheErrorOrchestrationService.orchestrateErrorHandling(
+      operation,
+      error,
+      context,
+      logger
+    );
   }
-} 
+}

@@ -57,7 +57,7 @@ export function AdvancedParametersSection() {
     enableFormState: false 
   });
 
-  // Use custom hook for parameters management
+  // Use custom hook for parameters management - now follows same pattern as other working components
   const {
     parameters,
     updateParameter,
@@ -66,8 +66,7 @@ export function AdvancedParametersSection() {
     handleSave,
     updateMutation,
   } = useAdvancedParameters({
-    existingConfig,
-    activeOrganizationId: null, // Will be handled by the hook internally
+    existingConfig
   });
 
   if (isLoading) {

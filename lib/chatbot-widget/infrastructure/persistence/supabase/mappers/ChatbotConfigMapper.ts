@@ -67,6 +67,7 @@ export class ChatbotConfigMapper {
   /** Transform database record to domain entity using specialized mappers */
   static toDomainEntity(data: unknown): ChatbotConfig {
     const record = data as RawChatbotConfigDbRecord;
+    
     return ChatbotConfig.fromPersistence({
       id: record.id,
       organizationId: record.organization_id, // SECURITY-CRITICAL: Organization isolation

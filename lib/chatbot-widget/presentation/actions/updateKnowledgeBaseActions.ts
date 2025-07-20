@@ -8,9 +8,13 @@
  * - Handle domain errors appropriately
  */
 
-import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 import { KnowledgeItem } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { BusinessRuleViolationError } from '../../domain/errors/ChatbotWidgetDomainErrors';
+import { VectorKnowledgeApplicationService } from '../../application/services/VectorKnowledgeApplicationService';
+import { createClient } from '@/lib/supabase/server';
+import { VectorKnowledgeRepositoryComposite } from '../../infrastructure/persistence/supabase/VectorKnowledgeRepositoryComposite';
+import { OpenAIEmbeddingService } from '../../infrastructure/providers/openai/services/OpenAIEmbeddingService';
+import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
 
 
 
@@ -82,7 +86,13 @@ export async function storeKnowledgeItems(
   error?: string;
 }> {
   try {
-    const knowledgeService = ChatbotWidgetCompositionRoot.getVectorKnowledgeApplicationService();
+    // Create service instances directly for server action context
+    const supabase = createClient();
+    const vectorRepository = new VectorKnowledgeRepositoryComposite(supabase);
+    const embeddingService = new OpenAIEmbeddingService(
+      process.env.OPENAI_API_KEY || ''
+    );
+    const knowledgeService = new VectorKnowledgeApplicationService(vectorRepository, embeddingService);
     
     await knowledgeService.storeKnowledgeItems(
       organizationId,
@@ -92,6 +102,7 @@ export async function storeKnowledgeItems(
     
     return { success: true };
   } catch (error) {
+    
     if (error instanceof BusinessRuleViolationError) {
       return {
         success: false,
@@ -101,7 +112,7 @@ export async function storeKnowledgeItems(
     
     return {
       success: false,
-      error: 'An unexpected error occurred while storing knowledge items'
+      error: `Detailed error: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }

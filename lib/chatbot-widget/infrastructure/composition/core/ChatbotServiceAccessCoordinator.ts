@@ -6,6 +6,9 @@ import { IChatSessionRepository } from '../../../domain/repositories/IChatSessio
 import { IChatMessageRepository } from '../../../domain/repositories/IChatMessageRepository';
 import { ILeadRepository } from '../../../domain/repositories/ILeadRepository';
 import { IVectorKnowledgeRepository } from '../../../domain/repositories/IVectorKnowledgeRepository';
+import { IVectorKnowledgeQueryRepository } from '../../../domain/repositories/IVectorKnowledgeQueryRepository';
+import { IVectorKnowledgeCommandRepository } from '../../../domain/repositories/IVectorKnowledgeCommandRepository';
+import { IVectorKnowledgeAnalyticsRepository } from '../../../domain/repositories/IVectorKnowledgeAnalyticsRepository';
 
 // Domain service interfaces
 import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
@@ -76,6 +79,19 @@ export class ChatbotServiceAccessCoordinator {
 
   static getVectorKnowledgeRepository(): IVectorKnowledgeRepository {
     return InfrastructureCompositionService.getVectorKnowledgeRepository();
+  }
+
+  // CQRS Vector Knowledge Repositories
+  static getVectorKnowledgeQueryRepository(): IVectorKnowledgeQueryRepository {
+    return InfrastructureCompositionService.getVectorKnowledgeQueryRepository();
+  }
+
+  static getVectorKnowledgeCommandRepository(): IVectorKnowledgeCommandRepository {
+    return InfrastructureCompositionService.getVectorKnowledgeCommandRepository();
+  }
+
+  static getVectorKnowledgeAnalyticsRepository(): IVectorKnowledgeAnalyticsRepository {
+    return InfrastructureCompositionService.getVectorKnowledgeAnalyticsRepository();
   }
 
   // Infrastructure services

@@ -14,6 +14,7 @@ import { createClient } from '../../../../../supabase/server';
 import { ChatMessage } from '../../../../domain/entities/ChatMessage';
 import { 
   ChatMessageBasicQueryService,
+  ChatMessagePaginationQueryService,
   ChatMessageSearchService,
   ChatMessageAdvancedAnalyticsQueryService,
   ChatMessagePerformanceQueryService
@@ -21,6 +22,7 @@ import {
 
 export class ChatMessageQueryService {
   private readonly basicQueryService: ChatMessageBasicQueryService;
+  private readonly paginationQueryService: ChatMessagePaginationQueryService;
   private readonly searchService: ChatMessageSearchService;
   private readonly analyticsQueryService: ChatMessageAdvancedAnalyticsQueryService;
   private readonly performanceQueryService: ChatMessagePerformanceQueryService;
@@ -28,6 +30,7 @@ export class ChatMessageQueryService {
   constructor(supabaseClient?: SupabaseClient) {
     const supabase = supabaseClient ?? createClient();
     this.basicQueryService = new ChatMessageBasicQueryService(supabase);
+    this.paginationQueryService = new ChatMessagePaginationQueryService(supabase);
     this.searchService = new ChatMessageSearchService(supabase);
     this.analyticsQueryService = new ChatMessageAdvancedAnalyticsQueryService(supabase);
     this.performanceQueryService = new ChatMessagePerformanceQueryService(supabase);
@@ -44,7 +47,7 @@ export class ChatMessageQueryService {
     limit: number;
     totalPages: number;
   }> {
-    return this.basicQueryService.findBySessionIdWithPagination(sessionId, page, limit);
+    return this.paginationQueryService.findBySessionIdWithPagination(sessionId, page, limit);
   }
 
   async findRecentByOrganizationId(organizationId: string, limit: number): Promise<ChatMessage[]> {

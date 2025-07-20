@@ -11,16 +11,18 @@
 import { KnowledgeItem, KnowledgeRetrievalContext } from '../../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { IVectorKnowledgeRepository } from '../../../domain/repositories/IVectorKnowledgeRepository';
 import { IChatbotLoggingService } from '../../../domain/services/interfaces/IChatbotLoggingService';
-import { BusinessRuleViolationError } from '../../../domain/errors/ChatbotWidgetDomainErrors';
 import { KnowledgeQuery } from '../../../domain/value-objects/knowledge/KnowledgeQuery';
 import { KnowledgeStatsResult } from '../../../domain/value-objects/knowledge/KnowledgeStatsResult';
 import { HealthCheckResult } from '../../../domain/value-objects/knowledge/HealthCheckResult';
+import { KnowledgeSecurityDomainService } from '../../../domain/services/knowledge/KnowledgeSecurityDomainService';
 import { KnowledgeRetrievalOrchestrator } from './KnowledgeRetrievalOrchestrator';
 import { KnowledgeStatisticsService } from './KnowledgeStatisticsService';
+import { KnowledgeErrorHandler } from './KnowledgeErrorHandler';
 
 export class KnowledgeManagementApplicationService {
   private readonly retrievalOrchestrator: KnowledgeRetrievalOrchestrator;
   private readonly statisticsService: KnowledgeStatisticsService;
+  private readonly securityService: KnowledgeSecurityDomainService;
 
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
@@ -28,8 +30,11 @@ export class KnowledgeManagementApplicationService {
     private readonly chatbotConfigId: string,
     loggingService: IChatbotLoggingService
   ) {
+    // Initialize domain services
+    this.securityService = new KnowledgeSecurityDomainService();
+    
     // Security: Validate organization context during construction
-    this.validateSecurityContext();
+    this.securityService.validateSecurityContext(this.organizationId, this.chatbotConfigId);
 
     this.retrievalOrchestrator = new KnowledgeRetrievalOrchestrator(
       vectorRepository,
@@ -60,25 +65,16 @@ export class KnowledgeManagementApplicationService {
       return await this.retrievalOrchestrator.getKnowledgeByCategory(query, context);
 
     } catch (error) {
-      if (error instanceof Error && error.message.includes('required')) {
-        throw new BusinessRuleViolationError(
-          error.message,
-          { 
-            category, 
-            organizationId: this.organizationId,
-            chatbotConfigId: this.chatbotConfigId
-          }
-        );
-      }
+      const errorContext = KnowledgeErrorHandler.createCategoryOperationContext(
+        this.organizationId,
+        this.chatbotConfigId,
+        category
+      );
       
-      throw new BusinessRuleViolationError(
-        'Failed to retrieve knowledge by category',
-        { 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          category,
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
+      KnowledgeErrorHandler.handleKnowledgeRetrievalError(
+        error,
+        errorContext,
+        'retrieve knowledge by category'
       );
     }
   }
@@ -102,25 +98,16 @@ export class KnowledgeManagementApplicationService {
       return await this.retrievalOrchestrator.getKnowledgeByTags(query, context);
 
     } catch (error) {
-      if (error instanceof Error && error.message.includes('required')) {
-        throw new BusinessRuleViolationError(
-          error.message,
-          { 
-            tags, 
-            organizationId: this.organizationId,
-            chatbotConfigId: this.chatbotConfigId
-          }
-        );
-      }
+      const errorContext = KnowledgeErrorHandler.createTagOperationContext(
+        this.organizationId,
+        this.chatbotConfigId,
+        tags
+      );
       
-      throw new BusinessRuleViolationError(
-        'Failed to retrieve knowledge by tags',
-        { 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          tags,
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
+      KnowledgeErrorHandler.handleKnowledgeRetrievalError(
+        error,
+        errorContext,
+        'retrieve knowledge by tags'
       );
     }
   }
@@ -137,14 +124,13 @@ export class KnowledgeManagementApplicationService {
       );
 
     } catch (error) {
-      throw new BusinessRuleViolationError(
-        'Failed to retrieve knowledge statistics',
-        { 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
+      const errorContext = KnowledgeErrorHandler.createKnowledgeOperationContext(
+        this.organizationId,
+        this.chatbotConfigId,
+        'getKnowledgeStats'
       );
+      
+      KnowledgeErrorHandler.handleKnowledgeStatisticsError(error, errorContext);
     }
   }
 
@@ -168,28 +154,14 @@ export class KnowledgeManagementApplicationService {
       return await this.retrievalOrchestrator.deleteKnowledgeBySource(query);
 
     } catch (error) {
-      if (error instanceof Error && error.message.includes('required')) {
-        throw new BusinessRuleViolationError(
-          error.message,
-          { 
-            sourceType, 
-            sourceUrl,
-            organizationId: this.organizationId,
-            chatbotConfigId: this.chatbotConfigId
-          }
-        );
-      }
-      
-      throw new BusinessRuleViolationError(
-        'Failed to delete knowledge by source',
-        { 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          sourceType,
-          sourceUrl,
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
+      const errorContext = KnowledgeErrorHandler.createSourceOperationContext(
+        this.organizationId,
+        this.chatbotConfigId,
+        sourceType,
+        sourceUrl
       );
+      
+      KnowledgeErrorHandler.handleKnowledgeDeletionError(error, errorContext);
     }
   }
 
@@ -272,43 +244,4 @@ export class KnowledgeManagementApplicationService {
     );
   }
 
-  /**
-   * Security: Validate organization and chatbot config context
-   */
-  private validateSecurityContext(): void {
-    if (!this.organizationId?.trim()) {
-      throw new BusinessRuleViolationError(
-        'Organization ID is required for knowledge management service initialization',
-        { providedOrganizationId: this.organizationId }
-      );
-    }
-
-    if (!this.chatbotConfigId?.trim()) {
-      throw new BusinessRuleViolationError(
-        'Chatbot config ID is required for knowledge management service initialization',
-        { 
-          organizationId: this.organizationId,
-          providedChatbotConfigId: this.chatbotConfigId
-        }
-      );
-    }
-
-    // Security: Additional validation for organization ID format
-    if (!/^[a-zA-Z0-9\-_]+$/.test(this.organizationId)) {
-      throw new BusinessRuleViolationError(
-        'Invalid organization ID format',
-        { organizationId: this.organizationId }
-      );
-    }
-
-    if (!/^[a-zA-Z0-9\-_]+$/.test(this.chatbotConfigId)) {
-      throw new BusinessRuleViolationError(
-        'Invalid chatbot config ID format',
-        { 
-          organizationId: this.organizationId,
-          chatbotConfigId: this.chatbotConfigId
-        }
-      );
-    }
-  }
 }

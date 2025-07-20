@@ -6,6 +6,8 @@ import { ChatMessageCrudService } from './services/ChatMessageCrudService';
 import { ChatMessageAnalyticsService } from './services/ChatMessageAnalyticsService';
 import { 
   ChatMessageBasicQueryService, 
+  ChatMessageAnalyticsQueryService,
+  ChatMessagePaginationQueryService,
   ChatMessageAdvancedAnalyticsQueryService,
   ChatMessagePerformanceQueryService,
   ChatMessageSearchService 
@@ -28,6 +30,8 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
   private crudService: ChatMessageCrudService;
   private analyticsService: ChatMessageAnalyticsService;
   private basicQueryService: ChatMessageBasicQueryService;
+  private analyticsQueryService: ChatMessageAnalyticsQueryService;
+  private paginationQueryService: ChatMessagePaginationQueryService;
   private advancedAnalyticsQueryService: ChatMessageAdvancedAnalyticsQueryService;
   private performanceQueryService: ChatMessagePerformanceQueryService;
   private searchService: ChatMessageSearchService;
@@ -38,6 +42,8 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     this.crudService = new ChatMessageCrudService(this.supabase);
     this.analyticsService = new ChatMessageAnalyticsService(this.supabase);
     this.basicQueryService = new ChatMessageBasicQueryService(this.supabase);
+    this.analyticsQueryService = new ChatMessageAnalyticsQueryService(this.supabase);
+    this.paginationQueryService = new ChatMessagePaginationQueryService(this.supabase);
     this.advancedAnalyticsQueryService = new ChatMessageAdvancedAnalyticsQueryService(this.supabase);
     this.performanceQueryService = new ChatMessagePerformanceQueryService(this.supabase);
     this.searchService = new ChatMessageSearchService(this.supabase);
@@ -116,7 +122,7 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     limit: number;
     totalPages: number;
   }> {
-    return this.basicQueryService.findBySessionIdWithPagination(sessionId, page, limit);
+    return this.paginationQueryService.findBySessionIdWithPagination(sessionId, page, limit);
   }
 
   async findRecentByOrganizationId(organizationId: string, limit: number): Promise<ChatMessage[]> {
@@ -128,7 +134,7 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatMessage[]> {
-    return this.basicQueryService.getMessagesForOrganization(organizationId, dateFrom, dateTo);
+    return this.analyticsQueryService.getMessagesForOrganization(organizationId, dateFrom, dateTo);
   }
 
   async getMessagesByTypeWithDateRange(
@@ -137,7 +143,7 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatMessage[]> {
-    return this.basicQueryService.getMessagesByTypeWithDateRange(organizationId, messageType, dateFrom, dateTo);
+    return this.analyticsQueryService.getMessagesByTypeWithDateRange(organizationId, messageType, dateFrom, dateTo);
   }
 
   async findMessagesWithErrors(
@@ -145,7 +151,7 @@ export class ChatMessageSupabaseRepositoryCore implements IChatMessageRepository
     dateFrom: Date,
     dateTo: Date
   ): Promise<ChatMessage[]> {
-    return this.basicQueryService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
+    return this.analyticsQueryService.findMessagesWithErrors(organizationId, dateFrom, dateTo);
   }
 
   // Search operations - delegated to SearchService

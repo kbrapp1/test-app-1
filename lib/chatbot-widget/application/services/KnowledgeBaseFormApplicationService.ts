@@ -156,7 +156,7 @@ export class KnowledgeBaseFormApplicationService {
 
     // Process compliance guidelines
     if (formData.complianceGuidelines?.trim()) {
-      processedChunks.push(createChunkDto('compliance-guidelines', 'Compliance Guidelines', formData.complianceGuidelines, ['compliance', 'legal', 'guidelines'], 'general', 'compliance', 0, hashFn));
+      processedChunks.push(createChunkDto('compliance-guidelines', 'Compliance Guidelines', formData.complianceGuidelines, ['compliance', 'legal', 'guidelines'], 'general', 'support_docs', 0, hashFn));
     }
 
     // Process FAQs
@@ -194,10 +194,29 @@ export class KnowledgeBaseFormApplicationService {
 
     try {
       const vectorItems = createVectorItems(processingResult.processedChunks);
-      // Store vector items (this would typically call the vector service)
+      
+      // Actually store the vector items in the database
+      const storeKnowledgeItems = (await import('../../presentation/actions/updateKnowledgeBaseActions')).storeKnowledgeItems;
+      const storeResult = await storeKnowledgeItems(
+        request.organizationId,
+        request.configId,
+        vectorItems.map(item => ({
+          knowledgeItemId: item.knowledgeItemId,
+          title: item.title,
+          content: item.content,
+          category: item.category,
+          sourceType: item.sourceType as 'faq' | 'company_info' | 'product_catalog' | 'support_docs' | 'website_crawled',
+          sourceUrl: item.sourceUrl,
+          contentHash: item.contentHash
+        }))
+      );
+
+      if (!storeResult.success) {
+        throw new Error(storeResult.error || 'Failed to store vectors');
+      }
+
       return { vectorsGenerated: true, affectedItems: vectorItems.length };
-    } catch (_vectorError) {
-      void _vectorError;
+    } catch {
       return { vectorsGenerated: false, affectedItems: 0 };
     }
   }

@@ -21,7 +21,17 @@
       "Bash(npm run lint)",
       "Bash(pnpm run:*)",
       "Bash(ls:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rm:*)",
+      "Bash(node:*)",
+      "Bash(mv:*)",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__get_logs"
     ]
   },
   "model": "sonnet",
@@ -33,25 +43,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
-          }
-        ]
-      },
-      {
-        "matcher": "MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",

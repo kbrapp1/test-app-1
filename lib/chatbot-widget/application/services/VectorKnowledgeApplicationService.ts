@@ -86,16 +86,21 @@ export class VectorKnowledgeApplicationService {
     }>
   ): Promise<void> {
     try {
-      // Generate embeddings for all items
-      const itemsWithEmbeddings = await Promise.all(
-        items.map(async (item) => {
-          const embedding = await this.embeddingService.generateEmbedding(item.content);
-          return {
-            ...item,
-            embedding
-          };
-        })
-      );
+      if (items.length === 0) {
+        return;
+      }
+
+      // Use batch embedding generation for efficiency (1 API call instead of N calls)
+      const contentTexts = items.map(item => item.content);
+      
+      // Generate embeddings in batch (1 OpenAI API call for all FAQs)
+      const batchEmbeddings = await this.embeddingService.generateEmbeddings(contentTexts);
+      
+      // Map batch results back to items with embeddings
+      const itemsWithEmbeddings = items.map((item, index) => ({
+        ...item,
+        embedding: batchEmbeddings[index] || []
+      }));
 
       // Store in unified vector table
       await this.vectorKnowledgeRepository.storeKnowledgeItems(

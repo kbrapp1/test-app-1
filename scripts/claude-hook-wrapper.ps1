@@ -1,55 +1,48 @@
-# Claude Code Hook Wrapper
-# This script captures hook context and calls hook-test.ps1 with proper file path
+# Claude Code Hook - Simple File Detection
+# Detects recently changed files and sends webhook
 
 param()
 
-# Get all environment variables for debugging
-$allEnvVars = Get-ChildItem env: | Where-Object Name -like "*CLAUDE*" | ForEach-Object { "$($_.Name)=$($_.Value)" }
-
-# Try to get file path from various sources
-$filePath = "unknown"
-$toolName = "unknown"
-
-# Check for Claude environment variables
-if ($env:CLAUDE_FILE_PATHS) {
-    $filePath = $env:CLAUDE_FILE_PATHS
-}
-
-if ($env:CLAUDE_TOOL_NAME) {
-    $toolName = $env:CLAUDE_TOOL_NAME
-}
-
-# If still unknown, try to extract from command line arguments or context
-if ($filePath -eq "unknown") {
-    # Look for file paths in the current working directory's recent file changes
+# Try to get file path from Claude environment variables first
+$filePath = if ($env:CLAUDE_FILE_PATHS) { 
+    $env:CLAUDE_FILE_PATHS 
+} else {
+    # Find the most recently modified TypeScript file (within 15 seconds)
+    # Exclude build/cache directories
     $recentFiles = Get-ChildItem -Path . -Recurse -File | 
-        Where-Object { $_.LastWriteTime -gt (Get-Date).AddSeconds(-10) } |
+        Where-Object { 
+            $_.LastWriteTime -gt (Get-Date).AddSeconds(-15) -and 
+            $_.Extension -in @('.ts', '.tsx', '.js', '.jsx') -and
+            $_.FullName -notmatch '\\\.next\\' -and
+            $_.FullName -notmatch '\\node_modules\\' -and
+            $_.FullName -notmatch '\\\.git\\' -and
+            $_.FullName -notmatch '\\dist\\' -and
+            $_.FullName -notmatch '\\build\\' -and
+            $_.FullName -notmatch '\\coverage\\'
+        } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
-
+    
     if ($recentFiles) {
-        $filePath = $recentFiles.FullName
+        # Convert full path to relative path from project root
+        $projectRoot = (Get-Location).Path
+        $relativePath = $recentFiles.FullName.Replace($projectRoot, "").TrimStart('\')
+        $relativePath
+    } else {
+        "No recent file changes detected"
     }
 }
 
-# Debug information
-$debugInfo = @{
-    wrapper_script = "claude-hook-wrapper.ps1"
-    detected_file_path = $filePath
-    detected_tool_name = $toolName
-    all_claude_env_vars = $allEnvVars
-    recent_file_detection = $filePath -ne "unknown" -and $filePath -ne $env:CLAUDE_FILE_PATHS
-    command_line = [Environment]::CommandLine
-    working_directory = (Get-Location).Path
-    timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
-}
+# Send simple webhook with just the file name
+$timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
 
-# Log debug info to file for troubleshooting
-$debugInfo | ConvertTo-Json -Depth 3 | Out-File -FilePath "claude-hook-debug.json" -Encoding UTF8
-
-# Call the original hook-test.ps1 with the detected file path
-if (Test-Path "scripts/hook-test.ps1") {
-    & "scripts/hook-test.ps1" -file_path $filePath
-} else {
-    Write-Host "Error: hook-test.ps1 not found" -ForegroundColor Red
+try {
+    $body = @{
+        file = $filePath
+        timestamp = $timestamp
+    } | ConvertTo-Json
+    
+    Invoke-RestMethod -Uri "http://localhost:3000/api/hook-log" -Method POST -Body $body -ContentType "application/json"
+} catch {
+    # Silently fail - don't spam console with errors
 }

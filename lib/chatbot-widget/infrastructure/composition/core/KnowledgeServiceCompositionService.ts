@@ -3,8 +3,8 @@ import { IKnowledgeRetrievalService } from '../../../domain/services/interfaces/
 import { IVectorKnowledgeRepository } from '../../../domain/repositories/IVectorKnowledgeRepository';
 import { IEmbeddingService } from '../../../domain/services/interfaces/IEmbeddingService';
 
-// Infrastructure service implementations
-import { VectorKnowledgeRetrievalService } from '../../../domain/services/VectorKnowledgeRetrievalService';
+// Application service implementations (DDD-compliant)
+import { VectorKnowledgeRetrievalApplicationService } from '../../../application/services/VectorKnowledgeRetrievalApplicationService';
 
 // Dependencies injected to avoid circular imports - following @golden-rule patterns
 
@@ -85,7 +85,7 @@ export class KnowledgeServiceCompositionService {
         );
       }
       
-      const service = new VectorKnowledgeRetrievalService(
+      const service = new VectorKnowledgeRetrievalApplicationService(
         vectorRepository as unknown as IVectorKnowledgeRepository,
         embeddingService as unknown as IEmbeddingService,
         organizationId,

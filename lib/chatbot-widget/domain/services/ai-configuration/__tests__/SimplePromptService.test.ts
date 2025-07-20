@@ -14,6 +14,7 @@ import { ChatbotConfig } from '../../../entities/ChatbotConfig';
 import { ChatSession } from '../../../entities/ChatSession';
 import { ChatMessage } from '../../../entities/ChatMessage';
 import { BusinessRuleViolationError } from '../../../errors/ChatbotWidgetDomainErrors';
+import { KnowledgeBase } from '../../../value-objects/ai-configuration/KnowledgeBase';
 
 /**
  * SimplePromptService Unit Tests
@@ -34,10 +35,30 @@ describe('SimplePromptService', () => {
   let mockAdaptiveContextService: AdaptiveContextService;
   let mockLogger: any;
 
+  // AI: Helper function to create a proper KnowledgeBase instance
+  const createTestKnowledgeBase = (companyInfo: string): KnowledgeBase => {
+    return KnowledgeBase.create({
+      companyInfo,
+      productCatalog: 'Test products and services',
+      supportDocs: 'Test documentation',
+      complianceGuidelines: 'Test guidelines',
+      faqs: [
+        {
+          id: 'test-faq-1',
+          question: 'What do you do?',
+          answer: 'We provide test services',
+          category: 'general',
+          isActive: true
+        }
+      ],
+      websiteSources: []
+    });
+  };
+
   // AI: Test fixtures following DDD patterns
   const mockChatbotConfig = {
     id: 'test-config',
-    knowledgeBase: 'Test knowledge base content',
+    knowledgeBase: createTestKnowledgeBase('Test knowledge base content'),
     businessContext: 'Test business context'
   } as unknown as ChatbotConfig;
 

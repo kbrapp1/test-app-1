@@ -40,9 +40,28 @@ export class KnowledgeBaseMapper {
       question: faq.question,
       answer: faq.answer,
       category: faq.category,
-      keywords: [], // TODO: Extract from FAQ content or add to domain
-      priority: 1, // TODO: Add priority to domain or derive from category
+      keywords: this.extractKeywordsFromFAQ(faq),
+      priority: this.derivePriorityFromCategory(faq.category),
     };
+  }
+
+  private static extractKeywordsFromFAQ(faq: FAQ): string[] {
+    const text = `${faq.question} ${faq.answer}`.toLowerCase();
+    const words = text.match(/\b\w{3,}\b/g) || [];
+    const uniqueWords = [...new Set(words)];
+    return uniqueWords.slice(0, 10);
+  }
+
+  private static derivePriorityFromCategory(category: string): number {
+    const categoryPriorities: Record<string, number> = {
+      urgent: 5,
+      important: 4,
+      billing: 4,
+      technical: 3,
+      general: 2,
+      other: 1,
+    };
+    return categoryPriorities[category.toLowerCase()] || 2;
   }
 
   private static mapFaqFromDto(faq: FaqDto): FAQ {

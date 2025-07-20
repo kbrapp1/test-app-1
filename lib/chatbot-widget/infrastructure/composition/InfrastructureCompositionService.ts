@@ -1,6 +1,12 @@
 import { createClient } from '../../../supabase/server';
 import { IVectorKnowledgeRepository } from '../../domain/repositories/IVectorKnowledgeRepository';
-import { SupabaseVectorKnowledgeRepository } from '../persistence/supabase/SupabaseVectorKnowledgeRepository';
+import { IVectorKnowledgeQueryRepository } from '../../domain/repositories/IVectorKnowledgeQueryRepository';
+import { IVectorKnowledgeCommandRepository } from '../../domain/repositories/IVectorKnowledgeCommandRepository';
+import { IVectorKnowledgeAnalyticsRepository } from '../../domain/repositories/IVectorKnowledgeAnalyticsRepository';
+import { VectorKnowledgeRepositoryComposite } from '../persistence/supabase/VectorKnowledgeRepositoryComposite';
+import { VectorKnowledgeQueryRepository } from '../persistence/supabase/VectorKnowledgeQueryRepository';
+import { VectorKnowledgeCommandRepository } from '../persistence/supabase/VectorKnowledgeCommandRepository';
+import { VectorKnowledgeAnalyticsRepository } from '../persistence/supabase/VectorKnowledgeAnalyticsRepository';
 import { OpenAIEmbeddingService } from '../providers/openai/services/OpenAIEmbeddingService';
 import { OpenAIProvider } from '../providers/openai/OpenAIProvider';
 import { CrawlAndStoreWebsiteUseCase } from '../../application/use-cases/CrawlAndStoreWebsiteUseCase';
@@ -31,6 +37,9 @@ import { ChatbotFileLoggingService } from '../providers/logging/ChatbotFileLoggi
 export class InfrastructureCompositionService {
   // Infrastructure service singletons
   private static vectorKnowledgeRepository: IVectorKnowledgeRepository | null = null;
+  private static vectorKnowledgeQueryRepository: IVectorKnowledgeQueryRepository | null = null;
+  private static vectorKnowledgeCommandRepository: IVectorKnowledgeCommandRepository | null = null;
+  private static vectorKnowledgeAnalyticsRepository: IVectorKnowledgeAnalyticsRepository | null = null;
   private static embeddingService: OpenAIEmbeddingService | null = null;
   private static openAIProvider: OpenAIProvider | null = null;
   private static crawlAndStoreWebsiteUseCase: CrawlAndStoreWebsiteUseCase | null = null;
@@ -46,9 +55,36 @@ export class InfrastructureCompositionService {
   static getVectorKnowledgeRepository(): IVectorKnowledgeRepository {
     if (!this.vectorKnowledgeRepository) {
       const supabase = createClient();
-      this.vectorKnowledgeRepository = new SupabaseVectorKnowledgeRepository(supabase);
+      this.vectorKnowledgeRepository = new VectorKnowledgeRepositoryComposite(supabase);
     }
     return this.vectorKnowledgeRepository;
+  }
+
+  /** Get vector knowledge query repository singleton */
+  static getVectorKnowledgeQueryRepository(): IVectorKnowledgeQueryRepository {
+    if (!this.vectorKnowledgeQueryRepository) {
+      const supabase = createClient();
+      this.vectorKnowledgeQueryRepository = new VectorKnowledgeQueryRepository(supabase);
+    }
+    return this.vectorKnowledgeQueryRepository;
+  }
+
+  /** Get vector knowledge command repository singleton */
+  static getVectorKnowledgeCommandRepository(): IVectorKnowledgeCommandRepository {
+    if (!this.vectorKnowledgeCommandRepository) {
+      const supabase = createClient();
+      this.vectorKnowledgeCommandRepository = new VectorKnowledgeCommandRepository(supabase);
+    }
+    return this.vectorKnowledgeCommandRepository;
+  }
+
+  /** Get vector knowledge analytics repository singleton */
+  static getVectorKnowledgeAnalyticsRepository(): IVectorKnowledgeAnalyticsRepository {
+    if (!this.vectorKnowledgeAnalyticsRepository) {
+      const supabase = createClient();
+      this.vectorKnowledgeAnalyticsRepository = new VectorKnowledgeAnalyticsRepository(supabase);
+    }
+    return this.vectorKnowledgeAnalyticsRepository;
   }
 
   /** Get OpenAI provider singleton

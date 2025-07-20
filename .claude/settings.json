@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm run:*)",
+      "Bash(python:*)",
+      "Bash(npx eslint:*)",
+      "Bash(exit 0)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(find:*)",
+      "Bash(echo $HOME)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint)",
+      "Bash(pnpm run:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rm:*)",
+      "Bash(node:*)"
+    ]
+  },
+  "model": "sonnet",
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase",
+    "context7"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File scripts/claude-hook-wrapper.ps1"
+          }
+        ]
+      }
+    ]
+  }
+}

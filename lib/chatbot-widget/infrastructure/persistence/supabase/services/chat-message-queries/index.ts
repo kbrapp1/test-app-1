@@ -15,5 +15,10 @@ export { ChatMessageSearchService } from './ChatMessageSearchService';
 export type { SearchFilters } from './ChatMessageSearchService';
 
 // Analytics and specialized queries
+export { ChatMessageAnalyticsQueryService } from './ChatMessageAnalyticsQueryService';
 export { ChatMessageAdvancedAnalyticsQueryService } from './ChatMessageAdvancedAnalyticsQueryService';
-export { ChatMessagePerformanceQueryService } from './ChatMessagePerformanceQueryService'; 
+export { ChatMessagePerformanceQueryService } from './ChatMessagePerformanceQueryService';
+
+// Pagination services
+export { ChatMessagePaginationQueryService } from './ChatMessagePaginationQueryService';
+export type { PaginatedChatMessages } from './ChatMessagePaginationQueryService'; 

@@ -12,6 +12,7 @@ import { KnowledgeBase } from '../../../../domain/value-objects/ai-configuration
  * Handles complex nested arrays and objects with proper defaults
  */
 export class KnowledgeBaseMapper {
+  private static idCounter = 0;
   
   /**
    * Map JSONB knowledge base data to domain value object
@@ -68,7 +69,7 @@ export class KnowledgeBaseMapper {
     return data.map((faq: unknown) => {
       const faqRecord = faq as Record<string, unknown>;
       return {
-        id: (faqRecord?.id as string) || crypto.randomUUID(),
+        id: (faqRecord?.id as string) || `${crypto.randomUUID()}-${++this.idCounter}`,
         question: (faqRecord?.question as string) || '',
         answer: (faqRecord?.answer as string) || '',
         category: (faqRecord?.category as string) || 'general',
@@ -109,9 +110,9 @@ export class KnowledgeBaseMapper {
     return data.map((source: unknown) => {
       const sourceRecord = source as Record<string, unknown>;
       return {
-        id: (sourceRecord?.id as string) || crypto.randomUUID(),
+        id: (sourceRecord?.id as string) || `${crypto.randomUUID()}-${++this.idCounter}`,
         url: (sourceRecord?.url as string) || '',
-        name: (sourceRecord?.name as string) || '',
+        name: (sourceRecord?.name as string) || `Website Source ${crypto.randomUUID().slice(0, 8)}`,
         description: (sourceRecord?.description as string) || '',
         isActive: (sourceRecord?.isActive as boolean) !== false, // Default true
         crawlSettings: this.mapCrawlSettings(sourceRecord?.crawlSettings),

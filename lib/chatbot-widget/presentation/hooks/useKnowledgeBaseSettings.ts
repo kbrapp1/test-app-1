@@ -52,10 +52,8 @@ export function useKnowledgeBaseSettings(
   existingConfig: ChatbotConfigDto | null,
   organizationId: string | null
 ) {
-  // AI: Security validation - organizationId must be provided
-  if (!organizationId) {
-    throw new Error('Organization ID is required for knowledge base settings management');
-  }
+  // AI: Handle null organizationId gracefully during loading
+  const isReady = Boolean(organizationId);
 
   const queryClient = useQueryClient();
 
@@ -85,7 +83,10 @@ export function useKnowledgeBaseSettings(
   }, [existingConfig]);
 
   const handleSave = useCallback(async () => {
-    if (!organizationId || !existingConfig) return;
+    // Early return if not ready (no organizationId)
+    if (!isReady || !organizationId || !existingConfig) {
+      return { success: false, error: 'Organization context not ready' };
+    }
 
     // Get the current form data from ref to avoid stale closure
     const currentFormData = formDataRef.current;
@@ -110,12 +111,14 @@ export function useKnowledgeBaseSettings(
     queryClient.invalidateQueries({ queryKey: ['chatbot-config', organizationId] });
     
     return { success: true, data: result.data };
-  }, [organizationId, existingConfig, queryClient]);
+  }, [isReady, organizationId, existingConfig, queryClient]);
 
   const updateMutation = useMutation({
     mutationFn: handleSave,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatbot-config', organizationId] });
+      if (organizationId) {
+        queryClient.invalidateQueries({ queryKey: ['chatbot-config', organizationId] });
+      }
     },
   });
 
