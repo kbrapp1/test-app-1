@@ -31,7 +31,19 @@
       "mcp__supabase__list_projects",
       "mcp__supabase__execute_sql",
       "mcp__supabase__list_tables",
-      "mcp__supabase__get_logs"
+      "mcp__supabase__get_logs",
+      "Bash(pnpm add:*)",
+      "Bash(mv:*)",
+      "Bash(rename:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(npx stryker:*)",
+      "Bash(del:*)",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx vitest run:*)"
     ]
   },
   "model": "sonnet",

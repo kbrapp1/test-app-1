@@ -1,6 +1,7 @@
 # DDD-Aware Refactoring Guidelines
 
-## 🎯 Quick Refactoring Prompt
+## 🎯 Code Refactoring Prompt
+- purpose: ensure DDD behavrios and feature parity for any refactoring requests
 
 ```
 Please refactor this code following these DDD-aware rules:
@@ -47,6 +48,8 @@ OUTPUT:
 - List the new files and their purpose (1-2 sentences each)
 - Confirm all functionality is preserved
 - Verify DDD layer separation is maintained
+- describe how the user can manually UI test the changes
+- critical: if there are any TODOs, hack/fallbacks, please let the user know.
 ```
 
 ## 📐 **DDD Layer Architecture for Refactoring**

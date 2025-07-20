@@ -43,8 +43,7 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<SimulatedUserProfile>(defaultUserProfile);
-  const [testingGoals, _setTestingGoals] = useState<TestingGoal[]>(defaultTestingGoals);
-  const [responseMode, _setResponseMode] = useState<'mock' | 'live'>('live');
+  const [testingGoals] = useState<TestingGoal[]>(defaultTestingGoals);
   const [simulationResults, setSimulationResults] = useState<SimulationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiDebugInfo, setApiDebugInfo] = useState<DebugInfoDto | null>(null);
@@ -85,7 +84,7 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
       setMessages([{
         id: 'system_start',
         messageType: 'system',
-        content: `✅ Simulation started with ${responseMode === 'live' ? 'Live AI' : 'Mock'} responses. Session ID: ${sessionData.sessionId}`,
+        content: `✅ Simulation started with Live AI responses. Session ID: ${sessionData.sessionId}`,
         timestamp: new Date(),
       }]);
       
@@ -146,7 +145,7 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
         ).length / botMessages.length) * 100 : 0,
       };
       
-      const realResults: SimulationResults = {
+      const results: SimulationResults = {
         completedSuccessfully: true,
         totalMessages: messages.length,
         leadCaptured,
@@ -160,8 +159,8 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
         qualityAssessment,
       };
       
-      setSimulationResults(realResults);
-      onComplete?.(realResults);
+      setSimulationResults(results);
+      onComplete?.(results);
       setIsActive(false);
       setSimulationId(null);
       
@@ -187,54 +186,43 @@ export function useChatSimulation(chatbotConfigId: string, onComplete?: (results
     setIsLoading(true);
 
     try {
-      let botResponse: string;
-      let processingTime: number;
+      const startTime = Date.now();
+      const response = await fetch('/api/chatbot-widget/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          sessionId: simulationId,
+          chatbotConfigId: chatbotConfigId,
+        }),
+      });
       
-      if (responseMode === 'live') {
-        const startTime = Date.now();
-        const response = await fetch('/api/chatbot-widget/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: userMessage.content,
-            sessionId: simulationId,
-            chatbotConfigId: chatbotConfigId,
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to get AI response');
-        }
-        
-        const data = await response.json();
-        botResponse = data.botResponse;
-        processingTime = Date.now() - startTime;
-        
-        if (data.debugInfo) {
-          setApiDebugInfo(data.debugInfo);
-        } else {
-          setApiDebugInfo({
-            session: {
-              sessionId: data.sessionId,
-              userMessageId: data.userMessageId,
-              botMessageId: data.botMessageId,
-              conversationMetrics: data.conversationMetrics || {
-                messageCount: 0,
-                sessionDuration: 0,
-                engagementScore: 0,
-                leadQualificationProgress: 0,
-              },
-              performanceMetrics: {
-                processingTimeMs: data.processingTimeMs,
-              },
-            },
-            intentClassification: data.intentAnalysis,
-            journeyProgression: data.journeyState,
-          });
-        }
-      } else {
-        throw new Error('Mock mode has been disabled. Please use Live AI mode only.');
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
       }
+      
+      const data = await response.json();
+      const botResponse = data.botResponse;
+      const processingTime = Date.now() - startTime;
+      
+      setApiDebugInfo(data.debugInfo || {
+        session: {
+          sessionId: data.sessionId,
+          userMessageId: data.userMessageId,
+          botMessageId: data.botMessageId,
+          conversationMetrics: data.conversationMetrics || {
+            messageCount: 0,
+            sessionDuration: 0,
+            engagementScore: 0,
+            leadQualificationProgress: 0,
+          },
+          performanceMetrics: {
+            processingTimeMs: data.processingTimeMs,
+          },
+        },
+        intentClassification: data.intentAnalysis,
+        journeyProgression: data.journeyState,
+      });
       
       const botMessage: ChatMessage = {
         id: `bot_${Date.now()}`,

@@ -1,12 +1,8 @@
 /**
  * Context Injection Application Service
  * 
- * AI Instructions:
- * - Orchestrate context selection workflow using domain services
- * - Validate inputs and delegate to appropriate domain services
- * - Keep this service under 250 lines - pure orchestration only
- * - Use helper functions for complex logic
- * - Always validate inputs before processing
+ * Main orchestrator for context injection operations.
+ * Pure orchestration - delegates to specialized services for validation, configuration, and criteria building.
  */
 
 import { ChatSession } from '../../domain/entities/ChatSession';
@@ -18,42 +14,37 @@ import { ContextTokenBudgetDomainService } from '../../domain/services/context-i
 import { ContextEffectivenessDomainService } from '../../domain/services/context-injection/ContextEffectivenessDomainService';
 import { ContextRecommendationDomainService } from '../../domain/services/context-injection/ContextRecommendationDomainService';
 import {
-  ContextModule,
   ContextSelectionCriteria,
   EntityData,
-  TokenBudgetAllocation,
-  ContextGenerationOptions,
-  ContextRelevanceFactors,
-  ConversationPhase
+  ContextGenerationOptions
 } from '../../domain/services/interfaces/ContextInjectionTypes';
 
-import { buildSelectionCriteria, getUseCaseOptions, adjustTokensForUseCase } from './ContextInjectionHelpers';
-import { validateInputs, validateCriteria, validateUseCase, validateAnalysisInputs } from './ContextInjectionValidation';
+// Application service types
+import { 
+  ContextInjectionResult, 
+  TokenBudgetRecommendation, 
+  UseCase 
+} from '../types/ContextInjectionApplicationTypes';
 
-type UseCase = 'greeting' | 'qualification' | 'demonstration' | 'closing';
-
-export interface ContextInjectionResult {
-  selectedModules: ContextModule[];
-  allocation: TokenBudgetAllocation;
-  relevanceFactors: ContextRelevanceFactors;
-  conversationPhase: ConversationPhase;
-  recommendations: string[];
-}
-
-export interface TokenBudgetRecommendation {
-  recommended: number;
-  minimum: number;
-  maximum: number;
-  reasoning: string[];
-  adjustmentFactors: string[];
-}
+// Extracted application services
+import { ContextInjectionValidationService } from './context-injection/ContextInjectionValidationService';
+import { ContextInjectionUseCaseConfigurationService } from './context-injection/ContextInjectionUseCaseConfigurationService';
+import { ContextInjectionCriteriaBuilder } from './context-injection/ContextInjectionCriteriaBuilder';
 
 export class ContextInjectionApplicationService {
+  private readonly validationService: ContextInjectionValidationService;
+  private readonly useCaseConfigurationService: ContextInjectionUseCaseConfigurationService;
+  private readonly criteriaBuilder: ContextInjectionCriteriaBuilder;
   
   constructor(
     private readonly contextEffectivenessService: ContextEffectivenessDomainService,
     private readonly contextRecommendationService: ContextRecommendationDomainService
-  ) {}
+  ) {
+    // Initialize extracted application services
+    this.validationService = new ContextInjectionValidationService();
+    this.useCaseConfigurationService = new ContextInjectionUseCaseConfigurationService();
+    this.criteriaBuilder = new ContextInjectionCriteriaBuilder();
+  }
   
   // Select optimal context for conversation
   async selectOptimalContext(
@@ -66,9 +57,9 @@ export class ContextInjectionApplicationService {
     qualificationStatus?: string,
     options?: ContextGenerationOptions
   ): Promise<ContextInjectionResult> {
-    validateInputs(session, chatbotConfig, availableTokens);
+    this.validationService.validateInputs(session, chatbotConfig, availableTokens);
 
-    const criteria = buildSelectionCriteria(
+    const criteria = this.criteriaBuilder.buildSelectionCriteria(
       availableTokens,
       conversationHistory,
       entityData,
@@ -138,7 +129,7 @@ export class ContextInjectionApplicationService {
   async getRecommendedTokenBudget(
     criteria: ContextSelectionCriteria
   ): Promise<TokenBudgetRecommendation> {
-    validateCriteria(criteria);
+    this.validationService.validateCriteria(criteria);
     
     const budgetRecommendation = ContextTokenBudgetDomainService.getRecommendedTokenBudget(criteria);
     const adjustmentFactors = this.contextRecommendationService.calculateAdjustmentFactors(criteria);
@@ -159,11 +150,11 @@ export class ContextInjectionApplicationService {
     entityData?: EntityData,
     leadScore?: number
   ): Promise<ContextInjectionResult> {
-    validateInputs(session, chatbotConfig, availableTokens);
-    validateUseCase(useCase);
+    this.validationService.validateInputs(session, chatbotConfig, availableTokens);
+    this.validationService.validateUseCase(useCase);
     
-    const options = getUseCaseOptions(useCase);
-    const adjustedTokens = adjustTokensForUseCase(useCase, availableTokens, leadScore);
+    const options = this.useCaseConfigurationService.getUseCaseOptions(useCase);
+    const adjustedTokens = this.useCaseConfigurationService.adjustTokensForUseCase(useCase, availableTokens, leadScore);
     
     return this.selectOptimalContext(
       session,
@@ -187,7 +178,7 @@ export class ContextInjectionApplicationService {
     weaknesses: string[];
     optimizationSuggestions: string[];
   }> {
-    validateAnalysisInputs(result, criteria);
+    this.validationService.validateAnalysisInputs(result, criteria);
     
     const utilization = {
       totalUsed: result.allocation.totalUsed,

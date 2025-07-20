@@ -1,14 +1,15 @@
 /**
  * AI INSTRUCTIONS: (Only need AI instruction at the top of the file ONCE)
  * - Single responsibility: Content hashing and deduplication utilities
- * - Keep business logic pure, no external dependencies
+ * - Uses ContentSimilarityUtilities for similarity calculations
  * - Keep under 250 lines per @golden-rule patterns
  * - Use static methods for efficiency and statelessness
  * - Handle domain errors with specific error types
- * - Focus on content hashing, normalization, and deduplication
+ * - Focus on content hashing, fingerprinting, and domain-specific operations
  */
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { ContentSimilarityUtilities } from '../../../../domain/utilities/ContentSimilarityUtilities';
 
 export class KnowledgeContentHashingService {
 
@@ -20,7 +21,7 @@ export class KnowledgeContentHashingService {
     
     // Simple hash function for content deduplication
     let hash = 0;
-    const normalizedContent = content.toLowerCase().replace(/\s+/g, ' ').trim();
+    const normalizedContent = ContentSimilarityUtilities.normalizeContent(content);
     
     for (let i = 0; i < normalizedContent.length; i++) {
       const char = normalizedContent.charCodeAt(i);
@@ -50,17 +51,13 @@ export class KnowledgeContentHashingService {
     return this.generateContentHash(combinedContent);
   }
 
-  // Content Normalization Operations
+  // Content Normalization Operations - Domain-specific extensions
   static normalizeContent(content: string): string {
-    return content
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return ContentSimilarityUtilities.normalizeContent(content);
   }
 
   static normalizeForComparison(content: string): string {
-    return this.normalizeContent(content)
+    return ContentSimilarityUtilities.normalizeContent(content)
       .replace(/\b(the|a|an|and|or|but|in|on|at|to|for|of|with|by)\b/g, '') // Remove common words
       .replace(/\s+/g, ' ')
       .trim();
@@ -139,7 +136,7 @@ export class KnowledgeContentHashingService {
     return nearDuplicates.sort((a, b) => b.similarity - a.similarity);
   }
 
-  // Content Similarity Operations
+  // Content Similarity Operations using ContentSimilarityUtilities
   static calculateContentSimilarity(item1: KnowledgeItem, item2: KnowledgeItem): number {
     const content1 = this.normalizeForComparison(item1.content || '');
     const content2 = this.normalizeForComparison(item2.content || '');
@@ -148,18 +145,7 @@ export class KnowledgeContentHashingService {
       return 0;
     }
     
-    // Simple Jaccard similarity based on word sets
-    const words1 = new Set(content1.split(' ').filter(word => word.length > 2));
-    const words2 = new Set(content2.split(' ').filter(word => word.length > 2));
-    
-    if (words1.size === 0 || words2.size === 0) {
-      return 0;
-    }
-    
-    const intersection = new Set([...words1].filter(word => words2.has(word)));
-    const union = new Set([...words1, ...words2]);
-    
-    return intersection.size / union.size;
+    return ContentSimilarityUtilities.calculateJaccardSimilarity(content1, content2, 2);
   }
 
   static calculateTitleSimilarity(item1: KnowledgeItem, item2: KnowledgeItem): number {
@@ -170,17 +156,7 @@ export class KnowledgeContentHashingService {
       return 0;
     }
     
-    const words1 = new Set(title1.split(' ').filter(word => word.length > 2));
-    const words2 = new Set(title2.split(' ').filter(word => word.length > 2));
-    
-    if (words1.size === 0 || words2.size === 0) {
-      return 0;
-    }
-    
-    const intersection = new Set([...words1].filter(word => words2.has(word)));
-    const union = new Set([...words1, ...words2]);
-    
-    return intersection.size / union.size;
+    return ContentSimilarityUtilities.calculateJaccardSimilarity(title1, title2, 2);
   }
 
   // Hash Validation Operations

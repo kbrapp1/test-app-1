@@ -1,25 +1,19 @@
-# DDD-Aware Refactoring Guidelines
+# DDD-Aware Redundancy Guidelines
 
-## 🎯 Quick Refactoring Prompt
+## 🎯 Quick Redundancy-refactoring Prompt
+- purpose: before making code changes, this prompt helps to avoid over engineering and redundancy
 
 ```
-Please refactor this code following these DDD-aware rules:
+Please review your work for DDD-aware rules:
 
-REFACTORING GOALS:
-1. **Break down large files** - Split 250+ line files into multiple smaller files (50-150 lines each)
+Redundancy GOALS:
+1. **Remove any redundant code that can be removed**
+2. **Remove deprecated code and unneeded fallback code**
 2. **Single responsibility** - Each new file should do ONE thing well
 3. **Follow DDD layers** - Respect domain, application, infrastructure, presentation boundaries
 4. **Keep it simple** - Don't add complexity, just organize existing code
 5. **Preserve security** - NEVER remove organizationId, activeOrganizationId, or auth variables
 6. **Maintain functionality** - All existing behavior must work exactly the same
-
-DDD SPLITTING STRATEGY:
-- Split by DOMAIN LAYER first (domain/application/infrastructure/presentation)
-- Then by FEATURE/RESPONSIBILITY within each layer
-- Extract related functions/components into their own files
-- Keep imports/exports simple and clear
-- Use descriptive file names that explain the purpose
-- Follow established DDD patterns exactly
 
 SECURITY RULES:
 - NEVER remove organization/auth variables (even if ESLint says "unused")
@@ -47,6 +41,7 @@ OUTPUT:
 - List the new files and their purpose (1-2 sentences each)
 - Confirm all functionality is preserved
 - Verify DDD layer separation is maintained
+- give the user steps on how to test manually in the UI
 ```
 
 ## 📐 **DDD Layer Architecture for Refactoring**

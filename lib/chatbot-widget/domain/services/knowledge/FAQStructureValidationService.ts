@@ -1,6 +1,7 @@
 import { BusinessRuleViolationError } from '../../errors/ChatbotWidgetDomainErrors';
 import type { FAQ } from '../../value-objects/ai-configuration/KnowledgeBase';
 import { ValidationUtilities } from './ValidationUtilities';
+import { ContentSimilarityUtilities } from '../../utilities/ContentSimilarityUtilities';
 
 /**
  * FAQ Structure Validation Service
@@ -88,17 +89,10 @@ export class FAQStructureValidationService {
   }
 
   private static areQuestionsSimilar(question1: string, question2: string): boolean {
-    // Simple similarity check - normalize and compare
-    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normalized1 = normalize(question1);
-    const normalized2 = normalize(question2);
-    
-    // Check if one is contained in the other (basic similarity)
-    if (normalized1.length < 10 || normalized2.length < 10) {
-      return normalized1 === normalized2;
-    }
-    
-    return normalized1.includes(normalized2.substring(0, Math.min(20, normalized2.length))) ||
-           normalized2.includes(normalized1.substring(0, Math.min(20, normalized1.length)));
+    // Use domain-specific FAQ similarity algorithm
+    return ContentSimilarityUtilities.areContentsSimilar(question1, question2, {
+      algorithm: 'normalized',
+      threshold: 0.8
+    });
   }
 }

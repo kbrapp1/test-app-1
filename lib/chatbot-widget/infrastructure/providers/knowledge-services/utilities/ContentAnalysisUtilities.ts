@@ -11,6 +11,7 @@
  */
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { ContentSimilarityUtilities } from '../../../../domain/utilities/ContentSimilarityUtilities';
 
 export class ContentAnalysisUtilities {
   
@@ -37,7 +38,9 @@ export class ContentAnalysisUtilities {
     const staleThreshold = new Date(now.getTime() - (monthsThreshold * 30 * 24 * 60 * 60 * 1000));
     
     return items.filter(item => {
+      if (!item.lastUpdated) return false;
       const lastUpdated = new Date(item.lastUpdated);
+      if (isNaN(lastUpdated.getTime())) return false; // Invalid date check
       return lastUpdated < staleThreshold;
     }).length;
   }
@@ -73,22 +76,12 @@ export class ContentAnalysisUtilities {
     duplicateGroups: string[][]; 
     duplicateCount: number 
   } {
-    const contentMap = new Map<string, string[]>();
+    const { duplicateGroups, duplicateCount } = ContentSimilarityUtilities.findExactDuplicates(items);
     
-    items.forEach(item => {
-      if (item.content) {
-        const normalized = item.content.toLowerCase().trim();
-        if (!contentMap.has(normalized)) {
-          contentMap.set(normalized, []);
-        }
-        contentMap.get(normalized)!.push(item.id);
-      }
-    });
-    
-    const duplicateGroups = Array.from(contentMap.values()).filter(group => group.length > 1);
-    const duplicateCount = duplicateGroups.reduce((sum, group) => sum + group.length - 1, 0);
-    
-    return { duplicateGroups, duplicateCount };
+    return {
+      duplicateGroups: duplicateGroups.map(group => group.items.map(item => item.id)),
+      duplicateCount
+    };
   }
   
   static categorizeContentType(content: string): 'technical' | 'procedural' | 'descriptive' | 'conversational' | 'unknown' {

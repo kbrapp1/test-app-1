@@ -9,6 +9,7 @@
  */
 
 import { KnowledgeItem } from '../../../../domain/services/interfaces/IKnowledgeRetrievalService';
+import { ContentSimilarityUtilities } from '../../../../domain/utilities/ContentSimilarityUtilities';
 
 export class KnowledgeQualityAnalysisService {
 
@@ -125,26 +126,8 @@ export class KnowledgeQualityAnalysisService {
   }
 
   private static findDuplicateContent(items: KnowledgeItem[]): string[] {
-    const contentMap = new Map<string, string[]>();
-    const duplicates: string[] = [];
-    
-    items.forEach(item => {
-      if (!item.content) return;
-      
-      const normalizedContent = item.content.toLowerCase().trim();
-      if (!contentMap.has(normalizedContent)) {
-        contentMap.set(normalizedContent, []);
-      }
-      contentMap.get(normalizedContent)!.push(item.id);
-    });
-    
-    contentMap.forEach((itemIds, _content) => {
-      if (itemIds.length > 1) {
-        duplicates.push(...itemIds.slice(1)); // Keep first, mark rest as duplicates
-      }
-    });
-    
-    return duplicates;
+    const { duplicateIds } = ContentSimilarityUtilities.findExactDuplicates(items);
+    return duplicateIds;
   }
 
   private static findInconsistentTags(items: KnowledgeItem[]): string[] {

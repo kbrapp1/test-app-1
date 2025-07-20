@@ -1,6 +1,7 @@
 # Code Improvement Guidelines - Anti-Over-Engineering
 
-## 🎯 Quick Improvement Prompt
+## 🎯 Code Improvement Prompt
+- purpose: review request files/code for prescribed improvements
 
 ```
 Please suggest code improvements following these pragmatic rules:

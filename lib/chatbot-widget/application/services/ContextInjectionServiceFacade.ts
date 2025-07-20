@@ -12,7 +12,8 @@
 import { ChatSession } from '../../domain/entities/ChatSession';
 import { ChatbotConfig } from '../../domain/entities/ChatbotConfig';
 import { ChatMessage } from '../../domain/entities/ChatMessage';
-import { ContextInjectionApplicationService, ContextInjectionResult } from './ContextInjectionApplicationService';
+import { ContextInjectionApplicationService } from './ContextInjectionApplicationService';
+import { ContextInjectionResult } from '../types/ContextInjectionApplicationTypes';
 import { ContextEffectivenessDomainService } from '../../domain/services/context-injection/ContextEffectivenessDomainService';
 import { ContextRecommendationDomainService } from '../../domain/services/context-injection/ContextRecommendationDomainService';
 import {

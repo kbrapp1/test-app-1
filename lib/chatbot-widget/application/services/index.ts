@@ -26,6 +26,8 @@ export * from './simulation';
 // Vector Knowledge Services
 export { VectorKnowledgeApplicationService } from './VectorKnowledgeApplicationService';
 export { VectorKnowledgeOrchestrationService } from './VectorKnowledgeOrchestrationService';
+export { VectorKnowledgeRetrievalApplicationService } from './VectorKnowledgeRetrievalApplicationService';
+export { VectorKnowledgeOperationsCoordinator } from './VectorKnowledgeOperationsCoordinator';
 
 // Website Source Management Services
 export { WebsiteSourceProgressService } from './WebsiteSourceProgressService';

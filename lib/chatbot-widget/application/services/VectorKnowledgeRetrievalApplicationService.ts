@@ -29,7 +29,8 @@ import {
   KnowledgeSearchResult
 } from '../../domain/services/interfaces/IKnowledgeRetrievalService';
 import { CacheWarmingMetrics, KnowledgeCacheWarmingService } from '../../domain/services/KnowledgeCacheWarmingService';
-import { HealthCheckResult, KnowledgeManagementService, KnowledgeStatsResult } from '../../domain/services/KnowledgeManagementService';
+import { KnowledgeStatsData } from '../../domain/value-objects/knowledge/KnowledgeStatsResult';
+import { HealthCheckData } from '../../domain/value-objects/knowledge/HealthCheckResult';
 import { VectorKnowledgeCache } from '../../domain/services/VectorKnowledgeCache';
 import { VectorCacheStats } from '../../domain/types/VectorCacheTypes';
 import { ChatbotWidgetCompositionRoot } from '../../infrastructure/composition/ChatbotWidgetCompositionRoot';
@@ -40,6 +41,9 @@ import { VectorKnowledgeRetrievalDomainService } from '../../domain/services/Vec
 // Specialized domain services
 import { KnowledgeSearchExecutionService } from '../../domain/services/knowledge-processing/KnowledgeSearchExecutionService';
 import { VectorCacheInitializationService } from '../../domain/services/knowledge-processing/VectorCacheInitializationService';
+
+// Operations coordinator
+import { VectorKnowledgeOperationsCoordinator } from './VectorKnowledgeOperationsCoordinator';
 
 /**
  * Vector Knowledge Retrieval Application Service
@@ -54,10 +58,10 @@ import { VectorCacheInitializationService } from '../../domain/services/knowledg
 export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRetrievalService {
   private readonly domainService: VectorKnowledgeRetrievalDomainService;
   private readonly cacheWarmingService: KnowledgeCacheWarmingService;
-  private readonly managementService: KnowledgeManagementService;
   private readonly vectorCache: VectorKnowledgeCache;
   private readonly searchExecutionService: KnowledgeSearchExecutionService;
   private readonly cacheInitializationService: VectorCacheInitializationService;
+  private readonly operationsCoordinator: VectorKnowledgeOperationsCoordinator;
   
   constructor(
     private readonly vectorRepository: IVectorKnowledgeRepository,
@@ -107,8 +111,10 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
       this.chatbotConfigId
     );
     
-    this.managementService = new KnowledgeManagementService(
+    this.operationsCoordinator = new VectorKnowledgeOperationsCoordinator(
       this.vectorRepository,
+      this.embeddingService,
+      this.vectorCache,
       this.organizationId,
       this.chatbotConfigId
     );
@@ -235,26 +241,19 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
 
   // Management operations delegation
   async getKnowledgeByCategory(category: KnowledgeItem['category'], limit?: number, sharedLogFile?: string): Promise<KnowledgeItem[]> {
-    return this.managementService.getKnowledgeByCategory(category, undefined, sharedLogFile);
+    return this.operationsCoordinator.getKnowledgeByCategory(category, limit, sharedLogFile);
   }
 
   async getKnowledgeByTags(tags: string[], limit?: number, sharedLogFile?: string): Promise<KnowledgeItem[]> {
-    return this.managementService.getKnowledgeByTags(tags, undefined, sharedLogFile);
+    return this.operationsCoordinator.getKnowledgeByTags(tags, limit, sharedLogFile);
   }
 
   async getFrequentlyAskedQuestions(limit?: number): Promise<KnowledgeItem[]> {
-    return this.getKnowledgeByCategory('faq', limit);
+    return this.operationsCoordinator.getFrequentlyAskedQuestions(limit);
   }
 
   async findSimilarContent(query: string, excludeIds?: string[], limit?: number): Promise<KnowledgeItem[]> {
-    const searchContext: KnowledgeRetrievalContext = {
-      userQuery: query,
-      maxResults: limit || 10,
-      minRelevanceScore: 0.6
-    };
-    
-    const result = await this.searchKnowledge(searchContext);
-    return result.items.filter(item => !excludeIds?.includes(item.id));
+    return this.operationsCoordinator.findSimilarContent(query, (context) => this.searchKnowledge(context), excludeIds, limit);
   }
 
   async upsertKnowledgeItem(_item: Omit<KnowledgeItem, 'id' | 'lastUpdated'>): Promise<KnowledgeItem> {
@@ -263,7 +262,7 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
 
   async healthCheck(sharedLogFile?: string): Promise<boolean> {
     try {
-      const healthResult = await this.managementService.checkHealthStatus(sharedLogFile);
+      const healthResult = await this.operationsCoordinator.checkHealthStatus(sharedLogFile);
       return healthResult.status === 'healthy' && this.cacheInitializationService.isReady();
     } catch {
       return false;
@@ -271,20 +270,20 @@ export class VectorKnowledgeRetrievalApplicationService implements IKnowledgeRet
   }
 
   // Extended management operations
-  async getKnowledgeStats(sharedLogFile?: string): Promise<KnowledgeStatsResult> {
-    return this.managementService.getKnowledgeStats(sharedLogFile);
+  async getKnowledgeStats(sharedLogFile?: string): Promise<KnowledgeStatsData> {
+    return this.operationsCoordinator.getKnowledgeStats(sharedLogFile);
   }
 
   async deleteKnowledgeBySource(sourceType: string, sourceUrl?: string, sharedLogFile?: string): Promise<number> {
-    return this.managementService.deleteKnowledgeBySource(sourceType, sourceUrl, sharedLogFile);
+    return this.operationsCoordinator.deleteKnowledgeBySource(sourceType, sourceUrl, sharedLogFile);
   }
 
-  async checkHealthStatus(sharedLogFile?: string): Promise<HealthCheckResult> {
-    return this.managementService.checkHealthStatus(sharedLogFile);
+  async checkHealthStatus(sharedLogFile?: string): Promise<HealthCheckData> {
+    return this.operationsCoordinator.checkHealthStatus(sharedLogFile);
   }
 
   // Vector cache specific methods
   getVectorCacheStats(): VectorCacheStats {
-    return this.vectorCache.getCacheStats();
+    return this.operationsCoordinator.getVectorCacheStats();
   }
 }
