@@ -5,12 +5,12 @@ Analyzes Domain Layer violations and DDD compliance focused on domain boundary i
 ## Usage
 
 ```
-/ddd-domain-violations-audit [domain]
+/domain-violations-audit [domain]
 ```
 
 ## Script Execution
 
-**Claude should run:** `node scripts/ddd-domain-analyzer.js [domain]`
+**Claude should run:** `node scripts/domain-analyzer.js [domain]`
 
 ## Parameters
 
@@ -21,12 +21,12 @@ Analyzes Domain Layer violations and DDD compliance focused on domain boundary i
 
 ```bash
 # Analyze all domains
-/ddd-domain-violations-audit
+/domain-violations-audit
 
 # Analyze specific domain
-/ddd-domain-violations-audit chatbot-widget
-/ddd-domain-violations-audit dam
-/ddd-domain-violations-audit auth
+/domain-violations-audit chatbot-widget
+/domain-violations-audit dam
+/domain-violations-audit auth
 ```
 
 ## What It Analyzes (Domain Layer Focus)
@@ -48,7 +48,7 @@ Analyzes Domain Layer violations and DDD compliance focused on domain boundary i
 
 ## Output
 
-Results are saved to `docs/refactor/ddd-domain-analysis-[timestamp].md` and `docs/refactor/ddd-domain-analysis-[timestamp].json`
+Results are saved to `docs/refactor/domain-analysis-[timestamp].md` and `docs/refactor/domain-analysis-[timestamp].json`
 
 ## Reports Include
 

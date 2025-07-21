@@ -1,26 +1,47 @@
-import { createClient } from '@/lib/supabase/client';
-import type { SupabaseClient, User } from '@supabase/supabase-js';
-
-export interface AuthContext {
-  supabase: SupabaseClient;
-  user: User | null;
-  activeOrgId: string;
-}
+import type { 
+  IAuthContextRepository, 
+  AuthContext, 
+  AuthContextResult 
+} from '../repositories/IAuthContextRepository';
 
 /**
  * Domain service for authentication context
  * Provides reusable authentication logic across DAM operations
+ * Uses dependency injection for clean architecture compliance
  */
 export class AuthContextService {
-  static async getContext(): Promise<AuthContext> {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+  constructor(private readonly authRepository: IAuthContextRepository) {}
 
-    // Use database-first organization context (single source of truth)
-    const { data: activeOrgId, error } = await supabase.rpc('get_active_organization_id');
-    if (error || !activeOrgId) throw new Error('No active organization found');
+  /**
+   * Gets authenticated context for DAM operations
+   * @returns Promise resolving to authentication context
+   * @throws Error if authentication fails
+   */
+  async getContext(): Promise<AuthContext> {
+    const result = await this.authRepository.getAuthContext();
+    
+    if (!result.success || !result.context) {
+      throw new Error(result.error || 'Authentication failed');
+    }
+    
+    return result.context;
+  }
 
-    return { supabase, user, activeOrgId };
+  /**
+   * Validates user access to organization
+   * @param userId - User identifier
+   * @param organizationId - Organization identifier
+   * @returns Promise resolving to boolean indicating access
+   */
+  async validateAccess(userId: string, organizationId: string): Promise<boolean> {
+    return this.authRepository.validateUserAccess(userId, organizationId);
+  }
+
+  /**
+   * Gets authentication context result with error handling
+   * @returns Promise resolving to authentication context result
+   */
+  async getContextResult(): Promise<AuthContextResult> {
+    return this.authRepository.getAuthContext();
   }
 } 

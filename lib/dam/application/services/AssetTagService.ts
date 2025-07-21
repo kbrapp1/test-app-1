@@ -4,7 +4,7 @@ import { RemoveTagFromAssetUseCase } from '../use-cases/tags/RemoveTagFromAssetU
 import { SupabaseAssetRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetRepository';
 import { SupabaseTagRepository } from '../../infrastructure/persistence/supabase/SupabaseTagRepository';
 import { SupabaseAssetTagRepository } from '../../infrastructure/persistence/supabase/SupabaseAssetTagRepository';
-import { AuthContextService } from '../../domain/services/AuthContextService';
+import { AuthContextFactory } from '../../infrastructure/composition/AuthContextFactory';
 
 /**
  * Application service for asset tag operations
@@ -16,7 +16,7 @@ export class AssetTagService {
       throw new Error('Asset ID or Tag ID is missing');
     }
 
-    const { supabase, activeOrgId } = await AuthContextService.getContext();
+    const { supabase, activeOrgId } = await AuthContextFactory.getLegacyContext();
     
     const assetRepository = new SupabaseAssetRepository(supabase);
     const tagRepository = new SupabaseTagRepository(supabase);

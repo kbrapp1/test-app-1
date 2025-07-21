@@ -345,7 +345,10 @@ class DDDAnalyzerCommand {
     console.log("-".repeat(40));
     
     const domainFiles = this.project.getSourceFiles()
-      .filter(file => file.getFilePath().includes("/domain/"));
+      .filter(file => file.getFilePath().includes("/domain/") && 
+                     !file.getFilePath().includes("__tests__") &&
+                     !file.getFilePath().includes(".test.") &&
+                     !file.getFilePath().includes(".spec."));
     
     let violations = 0;
     

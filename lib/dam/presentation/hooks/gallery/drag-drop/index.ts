@@ -21,7 +21,6 @@ export type {
 // Services (for advanced usage)
 export { DragOperationFactory } from './services/DragOperationFactory';
 export { DragValidationService } from './services/DragValidationService';
-export { AuthContextService } from './services/AuthContextService';
 export { SelectionStateService } from './services/SelectionStateService';
 
 // Operations (for advanced usage)

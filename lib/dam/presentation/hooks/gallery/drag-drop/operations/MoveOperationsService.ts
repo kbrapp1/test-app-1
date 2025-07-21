@@ -7,7 +7,7 @@
 
 import { MoveFolderUseCase } from '../../../../../application/use-cases/folders/MoveFolderUseCase';
 import { SupabaseFolderRepository } from '../../../../../infrastructure/persistence/supabase/SupabaseFolderRepository';
-import { AuthContextService } from '../services/AuthContextService';
+import { AuthContextFactory } from '../../../../../infrastructure/composition/AuthContextFactory';
 import type { DragOperation } from '../types';
 
 export class MoveOperationsService {
@@ -44,7 +44,7 @@ export class MoveOperationsService {
    * @param operation - The drag operation containing move details
    */
   static async executeFolderMove(operation: DragOperation): Promise<void> {
-    const { supabase, activeOrgId } = await AuthContextService.getContext();
+    const { supabase, activeOrgId } = await AuthContextFactory.getLegacyContext();
     const folderRepository = new SupabaseFolderRepository(supabase);
     const moveUseCase = new MoveFolderUseCase(folderRepository);
     

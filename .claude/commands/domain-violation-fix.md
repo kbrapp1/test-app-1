@@ -1,6 +1,6 @@
-# Boundary Violation Fix
+# Domain Boundary Violation Fix
 
-**Usage:** `/boundary-violation-fix [file_path]: [description]`
+**Usage:** `/domain-violation-fix [file_path]: [description]`
 
 **Purpose:** Check and fix DDD boundary violations in the codebase.
 
@@ -23,11 +23,11 @@ This command helps identify and fix Domain-Driven Design (DDD) boundary violatio
 ## Examples
 
 ```
-/boundary-violation-fix SearchValidator.ts: imports from ../../application/use-cases/SearchUseCase
+/domain-violation-fix SearchValidator.ts: imports from ../../application/use-cases/SearchUseCase
 
-/boundary-violation-fix lib/dam/domain/services/UserService.ts: depends on application DTO
+/domain-violation-fix lib/dam/domain/services/UserService.ts: depends on application DTO
 
-/boundary-violation-fix IRepository.ts: imports from infrastructure layer
+/domain-violation-fix IRepository.ts: imports from infrastructure layer
 ```
 
 ## Output Format
