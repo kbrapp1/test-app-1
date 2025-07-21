@@ -13,7 +13,7 @@
 
 import { User } from '@supabase/supabase-js';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { OrganizationContextService } from '@/lib/organization/domain/services/OrganizationContextService';
+import { OrganizationContextFactory } from '@/lib/organization/infrastructure/composition/OrganizationContextFactory';
 import { PermissionValidationService } from '@/lib/organization/domain/services/PermissionValidationService';
 
 // Note interface matching database structure
@@ -126,7 +126,7 @@ export class NotesUnifiedContextService {
       const supabaseServer = createSupabaseServerClient();
       
       // Initialize services with server-side client
-      const organizationService = new OrganizationContextService(supabaseServer);
+      const organizationService = OrganizationContextFactory.createWithClient(supabaseServer);
       const permissionService = new PermissionValidationService(supabaseServer);
 
       // Execute all services in parallel (was 3+ separate API calls)

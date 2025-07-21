@@ -2,27 +2,12 @@
 // Single Responsibility: Handle compliance and security logging
 // DDD: Enterprise audit capabilities with performance optimization
 
-import { createClient } from '@/lib/supabase/client';
-
-export interface AuditLogEntry {
-  id: string;
-  user_id: string;
-  organization_id: string | null;
-  action: string;
-  details: Record<string, unknown>;
-  ip_address: string | null;
-  user_agent: string | null;
-  session_id: string | null;
-  created_at: string;
-}
-
-export interface AuditMetadata {
-  ipAddress?: string;
-  userAgent?: string;
-  sessionId?: string;
-  source?: string;
-  correlationId?: string;
-}
+import type { 
+  IAuditTrailRepository,
+  AuditLogEntry,
+  AuditMetadata,
+  AuditTrailFilters
+} from '../repositories/IAuditTrailRepository';
 
 export interface AuditTrailError extends Error {
   code: 'UNAUTHORIZED' | 'VALIDATION_ERROR' | 'DATABASE_ERROR' | 'EXPORT_ERROR';
@@ -30,7 +15,7 @@ export interface AuditTrailError extends Error {
 }
 
 export class AuditTrailService {
-  private supabase = createClient();
+  constructor(private readonly auditRepository: IAuditTrailRepository) {}
 
   /**
    * Log access or action with comprehensive metadata
@@ -50,35 +35,24 @@ export class AuditTrailService {
     }
 
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
-      if (authError) {
-        return;
-      }
-      if (!user) {
-        return;
+      const authResult = await this.auditRepository.getAuthContext();
+      if (!authResult.success || !authResult.context) {
+        return; // Don't throw - audit failures shouldn't break main functionality
       }
 
-      const auditEntry = {
-        user_id: user.id,
-        organization_id: organizationId,
-        action: action.toLowerCase(),
-        details: {
-          ...details,
-          timestamp: new Date().toISOString(),
-          correlation_id: metadata?.correlationId || crypto.randomUUID()
-        },
-        ip_address: metadata?.ipAddress || null,
-        user_agent: metadata?.userAgent || this.getUserAgent() || null,
-        session_id: metadata?.sessionId || this.getSessionId(),
+      const enhancedDetails = {
+        ...details,
+        timestamp: new Date().toISOString(),
+        correlation_id: metadata?.correlationId || crypto.randomUUID()
       };
 
-      const { error: insertError } = await this.supabase
-        .from('organization_access_log')
-        .insert(auditEntry);
-
-      if (insertError) {
-        throw new Error(`Audit logging failed: ${insertError.message}`);
-      }
+      await this.auditRepository.logEntry(
+        authResult.context.userId,
+        organizationId,
+        action,
+        enhancedDetails,
+        metadata
+      );
     } catch {
       // Don't throw audit errors to avoid breaking main operations
     }
@@ -90,71 +64,16 @@ export class AuditTrailService {
    * @returns Array of audit log entries
    * @throws AuditTrailError for authentication or database errors
    */
-  async getAuditTrail(
-    filters: {
-      organizationId?: string;
-      userId?: string;
-      startDate?: Date;
-      endDate?: Date;
-      action?: string;
-      limit?: number;
-      offset?: number;
-    } = {}
-  ): Promise<{ entries: AuditLogEntry[]; total: number }> {
+  async getAuditTrail(filters: AuditTrailFilters = {}): Promise<{ entries: AuditLogEntry[]; total: number }> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const authResult = await this.auditRepository.getAuthContext();
       
-      if (authError) {
-        throw new Error(`Authentication error: ${authError.message}`);
+      if (!authResult.success || !authResult.context) {
+        throw this.createError('UNAUTHORIZED', authResult.error || 'User not authenticated');
       }
 
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Build base query
-      let query = this.supabase
-        .from('organization_access_log')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
-
-      // Apply filters
-      if (filters.organizationId) {
-        query = query.eq('organization_id', filters.organizationId);
-      }
-
-      if (filters.userId) {
-        query = query.eq('user_id', filters.userId);
-      }
-
-      if (filters.action) {
-        query = query.eq('action', filters.action.toLowerCase());
-      }
-
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate.toISOString());
-      }
-
-      if (filters.endDate) {
-        query = query.lte('created_at', filters.endDate.toISOString());
-      }
-
-      // Apply pagination
-      const limit = Math.min(filters.limit || 100, 1000); // Cap at 1000 for performance
-      const offset = filters.offset || 0;
-
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        throw this.createError('DATABASE_ERROR', `Failed to get audit trail: ${error.message}`, { error });
-      }
-
-      return {
-        entries: data || [],
-        total: count || 0
-      };
+      const result = await this.auditRepository.getAuditTrail(filters);
+      return result;
     } catch (error) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
@@ -175,21 +94,24 @@ export class AuditTrailService {
     dateRange?: { start: Date; end: Date }
   ): Promise<AuditLogEntry[]> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const authResult = await this.auditRepository.getAuthContext();
       
-      if (authError || !user) {
-        throw this.createError('UNAUTHORIZED', 'User not authenticated', { authError });
+      if (!authResult.success || !authResult.context) {
+        throw this.createError('UNAUTHORIZED', authResult.error || 'User not authenticated');
       }
 
       // Validate user has permission to export (admin/owner role required)
       if (organizationId) {
-        const hasPermission = await this.validateExportPermission(organizationId);
-        if (!hasPermission) {
+        const permissionResult = await this.auditRepository.validateExportPermission(
+          authResult.context.userId, 
+          organizationId
+        );
+        if (!permissionResult.hasPermission) {
           throw this.createError('UNAUTHORIZED', 'Insufficient permissions for audit export');
         }
       }
 
-      const filters: Record<string, unknown> = { 
+      const filters: AuditTrailFilters = { 
         limit: 10000, // Large limit for export
         offset: 0 
       };
@@ -231,52 +153,14 @@ export class AuditTrailService {
     dateRange: { oldest: string; newest: string };
   }> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const authResult = await this.auditRepository.getAuthContext();
       
-      if (authError || !user) {
-        throw this.createError('UNAUTHORIZED', 'User not authenticated', { authError });
+      if (!authResult.success || !authResult.context) {
+        throw this.createError('UNAUTHORIZED', authResult.error || 'User not authenticated');
       }
 
-      // Build queries with proper typing
-      const baseFilter = organizationId 
-        ? { organization_id: organizationId }
-        : {};
-
-      // Get summary data in parallel
-      const [countResult, actionsResult, usersResult, dateResult] = await Promise.all([
-        this.supabase
-          .from('organization_access_log')
-          .select('*', { count: 'exact', head: true })
-          .match(baseFilter),
-        this.supabase
-          .from('organization_access_log')
-          .select('action')
-          .match(baseFilter)
-          .limit(10),
-        this.supabase
-          .from('organization_access_log')
-          .select('user_id')
-          .match(baseFilter),
-        this.supabase
-          .from('organization_access_log')
-          .select('created_at')
-          .match(baseFilter)
-          .order('created_at', { ascending: true })
-          .limit(1)
-      ]);
-
-      const totalEntries = countResult.count || 0;
-      const recentActions = [...new Set((actionsResult.data || []).map(item => item.action))];
-      const uniqueUsers = new Set((usersResult.data || []).map(item => item.user_id)).size;
-      const oldest = dateResult.data?.[0]?.created_at || new Date().toISOString();
-      const newest = new Date().toISOString();
-
-      return {
-        totalEntries,
-        recentActions,
-        uniqueUsers,
-        dateRange: { oldest, newest }
-      };
+      const summary = await this.auditRepository.getAuditSummary(organizationId);
+      return summary;
     } catch (error) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
@@ -285,61 +169,6 @@ export class AuditTrailService {
     }
   }
 
-  /**
-   * Validate user has permission to export audit data
-   * @param organizationId - Organization to check
-   * @returns boolean indicating export permission
-   * @private
-   */
-  private async validateExportPermission(organizationId: string): Promise<boolean> {
-    try {
-      const { data: { user } } = await this.supabase.auth.getUser();
-      if (!user) return false;
-
-      const { data, error } = await this.supabase
-        .from('organization_memberships')
-        .select(`
-          roles!inner(name)
-        `)
-        .eq('user_id', user.id)
-        .eq('organization_id', organizationId)
-        .single();
-
-      if (error) return false;
-
-      const roleName = (data?.roles as { name: string }[])?.[0]?.name;
-      return ['admin', 'owner', 'compliance_officer'].includes(roleName);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Get user agent from browser or default
-   * @private
-   */
-  private getUserAgent(): string | null {
-    if (typeof window !== 'undefined' && window.navigator) {
-      return window.navigator.userAgent;
-    }
-    return null;
-  }
-
-  /**
-   * Generate or get session ID for audit correlation
-   * @private
-   */
-  private getSessionId(): string {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      let sessionId = window.sessionStorage.getItem('audit_session_id');
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        window.sessionStorage.setItem('audit_session_id', sessionId);
-      }
-      return sessionId;
-    }
-    return crypto.randomUUID();
-  }
 
   /**
    * Create a standardized error with proper typing

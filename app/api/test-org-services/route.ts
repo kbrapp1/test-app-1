@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { OrganizationContextService } from '@/lib/organization/domain/services/OrganizationContextService';
+import { OrganizationContextFactory } from '@/lib/organization/infrastructure/composition/OrganizationContextFactory';
 import { PermissionValidationService } from '@/lib/organization/domain/services/PermissionValidationService';
-import { AuditTrailService } from '@/lib/organization/domain/services/AuditTrailService';
+import { AuditTrailFactory } from '@/lib/organization/infrastructure/composition/AuditTrailFactory';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -13,9 +13,9 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const contextService = new OrganizationContextService();
+    const contextService = await OrganizationContextFactory.createServerSide();
     const permissionService = new PermissionValidationService();
-    const _auditService = new AuditTrailService();
+    const _auditService = AuditTrailFactory.createService();
 
     // Run all service tests
     const results = {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const contextService = new OrganizationContextService();
+    const contextService = await OrganizationContextFactory.createServerSide();
     const permissionService = new PermissionValidationService();
 
     let result: unknown;

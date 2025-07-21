@@ -1,0 +1,1 @@
+export { AuditTrailFactory } from './AuditTrailFactory';

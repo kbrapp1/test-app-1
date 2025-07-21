@@ -11,6 +11,7 @@
  */
 
 import { OrganizationContext, OrganizationContextService } from '../domain/services/OrganizationContextService';
+import { OrganizationContextFactory } from './composition/OrganizationContextFactory';
 
 interface CachedOrganizationContext {
   context: OrganizationContext;
@@ -30,7 +31,7 @@ export class OrganizationContextCache {
   private contextService: OrganizationContextService;
 
   private constructor() {
-    this.contextService = new OrganizationContextService();
+    this.contextService = OrganizationContextFactory.createClientSide();
   }
 
   static getInstance(): OrganizationContextCache {

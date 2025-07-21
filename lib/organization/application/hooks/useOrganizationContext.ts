@@ -12,9 +12,10 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuthentication } from '@/lib/auth';
-import { OrganizationContext, OrganizationContextService } from '../../domain/services/OrganizationContextService';
+import { OrganizationContext } from '../../domain/services/OrganizationContextService';
 import { OrganizationPermission } from '../../domain/services/PermissionValidationService';
-import { AuditTrailService } from '../../domain/services/AuditTrailService';
+import { OrganizationContextFactory } from '../../infrastructure/composition/OrganizationContextFactory';
+import { AuditTrailFactory } from '../../infrastructure/composition/AuditTrailFactory';
 import { ClientSideOrganizationCache } from '../../infrastructure/ClientSideOrganizationCache';
 import { toast } from 'sonner';
 
@@ -44,8 +45,8 @@ export function useOrganizationContext(): UseOrganizationContextResult {
   const { user, isAuthenticated, isLoading: authLoading } = useAuthentication();
   
   // Services - memoized to prevent infinite re-renders
-  const contextService = useMemo(() => new OrganizationContextService(), []);
-  const auditService = useMemo(() => new AuditTrailService(), []);
+  const contextService = useMemo(() => OrganizationContextFactory.createClientSide(), []);
+  const auditService = useMemo(() => AuditTrailFactory.createService(), []);
   const organizationCache = useMemo(() => ClientSideOrganizationCache.getInstance(), []);
 
   // State

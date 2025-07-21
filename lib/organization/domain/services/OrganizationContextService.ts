@@ -2,8 +2,7 @@
 // Single Responsibility: Handle user organization context operations
 // DDD: Clean domain logic separation with proper error handling
 
-import { createClient as createClientSide } from '@/lib/supabase/client';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { IOrganizationContextRepository } from '../repositories';
 
 export interface OrganizationContext {
   id?: string;
@@ -22,70 +21,24 @@ export interface OrganizationContextError extends Error {
 }
 
 export class OrganizationContextService {
-  private supabase: SupabaseClient;
-
-  /**
-   * AI INSTRUCTIONS:
-   * - Accept Supabase client to support both client-side and server-side usage
-   * - Client-side: pass createClient() from @/lib/supabase/client
-   * - Server-side: pass createClient() from @/lib/supabase/server
-   * - This fixes 'Auth session missing!' error in server actions
-   */
-  constructor(supabaseClient?: SupabaseClient) {
-    this.supabase = supabaseClient || createClientSide();
-  }
+  constructor(private readonly repository: IOrganizationContextRepository) {}
 
   // Get current user's organization context
   async getCurrentContext(): Promise<OrganizationContext | null> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const userId = await this.repository.getCurrentUserId();
       
-      if (authError) {
-        throw new Error(`Authentication error: ${authError.message}`);
+      if (!userId) {
+        throw this.createError('UNAUTHORIZED', 'User not authenticated');
       }
 
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get the current organization context for the user
-      const { data, error } = await this.supabase
-        .from('user_organization_context')
-        .select(`
-          id,
-          user_id,
-          active_organization_id,
-          last_accessed_at,
-          created_at,
-          updated_at,
-          organizations!inner(
-            name,
-            feature_flags
-          )
-        `)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      if (!data) {
-        return null;
-      }
-
-      return {
-        id: data.id,
-        user_id: data.user_id,
-        active_organization_id: data.active_organization_id,
-        last_accessed_at: data.last_accessed_at,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        organization_name: data.organizations?.[0]?.name || 'Unknown',
-        feature_flags: data.organizations?.[0]?.feature_flags || {}
-      };
+      const context = await this.repository.getCurrentContext(userId);
+      return context;
     } catch (error: unknown) {
-      throw error;
+      if (error instanceof Error && 'code' in error) {
+        throw error; // Re-throw our custom errors
+      }
+      throw this.createError('DATABASE_ERROR', 'Failed to get current context', { error });
     }
   }
 
@@ -96,48 +49,13 @@ export class OrganizationContextService {
     }
 
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const userId = await this.repository.getCurrentUserId();
       
-      if (authError) {
-        throw this.createError('UNAUTHORIZED', `Authentication failed: ${authError.message}`, { authError });
-      }
-      
-      if (!user) {
+      if (!userId) {
         throw this.createError('UNAUTHORIZED', 'User not authenticated');
       }
 
-      // Validate user has access to the organization
-      const hasAccess = await this.supabase.rpc('user_has_org_access', {
-        org_id: organizationId
-      });
-
-      if (hasAccess.error) {
-        throw this.createError('DATABASE_ERROR', `Access validation failed: ${hasAccess.error.message}`);
-      }
-
-      if (!hasAccess.data) {
-        throw this.createError('ACCESS_DENIED', 'User does not have access to this organization');
-      }
-
-      // Update or insert organization context
-      const { error: upsertError } = await this.supabase
-        .from('user_organization_context')
-        .upsert({
-          user_id: user.id,
-          active_organization_id: organizationId,
-          last_accessed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (upsertError) {
-        throw this.createError('DATABASE_ERROR', `Failed to switch organization: ${upsertError.message}`, { 
-          error: upsertError, 
-          userId: user.id, 
-          organizationId 
-        });
-      }
+      await this.repository.switchOrganization(userId, organizationId);
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
@@ -149,20 +67,13 @@ export class OrganizationContextService {
   // Clear user's organization context
   async clearContext(): Promise<void> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const userId = await this.repository.getCurrentUserId();
       
-      if (authError || !user) {
-        throw this.createError('UNAUTHORIZED', 'User not authenticated', { authError });
+      if (!userId) {
+        throw this.createError('UNAUTHORIZED', 'User not authenticated');
       }
 
-      const { error } = await this.supabase
-        .from('user_organization_context')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) {
-        throw this.createError('DATABASE_ERROR', `Failed to clear context: ${error.message}`, { error });
-      }
+      await this.repository.clearContext(userId);
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
@@ -174,20 +85,13 @@ export class OrganizationContextService {
   // Update last accessed timestamp for current context
   async updateLastAccessed(): Promise<void> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      const userId = await this.repository.getCurrentUserId();
       
-      if (authError || !user) {
-        throw this.createError('UNAUTHORIZED', 'User not authenticated', { authError });
+      if (!userId) {
+        throw this.createError('UNAUTHORIZED', 'User not authenticated');
       }
 
-      const { error } = await this.supabase
-        .from('user_organization_context')
-        .update({ last_accessed_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-
-      if (error) {
-        throw this.createError('DATABASE_ERROR', `Failed to update last accessed: ${error.message}`, { error });
-      }
+      await this.repository.updateLastAccessed(userId);
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors
@@ -197,16 +101,15 @@ export class OrganizationContextService {
   }
 
   // Verify user has access to specific organization
-  private async verifyOrganizationAccess(organizationId: string): Promise<boolean> {
+  async verifyOrganizationAccess(organizationId: string): Promise<boolean> {
     try {
-      const { data, error } = await this.supabase
-        .rpc('user_has_org_access', { org_id: organizationId });
-
-      if (error) {
-        throw this.createError('DATABASE_ERROR', `Access verification failed: ${error.message}`, { error });
+      const userId = await this.repository.getCurrentUserId();
+      
+      if (!userId) {
+        throw this.createError('UNAUTHORIZED', 'User not authenticated');
       }
 
-      return data === true;
+      return await this.repository.verifyOrganizationAccess(userId, organizationId);
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error) {
         throw error; // Re-throw our custom errors

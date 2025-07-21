@@ -1,5 +1,5 @@
 import { OptimizationGap } from '../../value-objects/OptimizationGap';
-import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { PerformanceTrackingState } from '../../value-objects/PerformanceTrackingState';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
 import { SpecificCauseAnalysis } from '../../value-objects/SpecificCauseAnalysis';
 import { IRuntimeDetectionService } from '../interfaces/IRuntimeDetectionService';
