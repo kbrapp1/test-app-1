@@ -90,9 +90,12 @@ export class NotesSupabaseRepository implements INotesRepository {
     try {
       const dbFormat = note.toDatabaseFormat();
       
+      // Exclude created_at and updated_at from insert - let database set defaults
+      const { created_at, updated_at, ...insertData } = dbFormat;
+      
       const { error } = await this.supabase
         .from('notes')
-        .insert(dbFormat);
+        .insert(insertData);
 
       if (error) {
         throw new BusinessRuleViolationError(

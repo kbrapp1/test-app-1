@@ -11,11 +11,8 @@
 
 import { NoteId } from '../value-objects/NoteId';
 import { BusinessRuleViolationError, InvalidNoteDataError } from '../errors/NotesDomainError';
-import { Permission } from '@/lib/auth/domain/value-objects/Permission';
-import { UserRole } from '@/lib/auth/domain/value-objects/UserRole';
-import { UserAggregate } from '@/lib/auth/domain/aggregates/UserAggregate';
-import { OrganizationId } from '@/lib/auth/domain/value-objects/OrganizationId';
-import { NotesOrderingService } from '../services/NotesOrderingService';
+import { DomainEvent, NoteCreatedEvent, NoteUpdatedEvent } from '../events/NoteEvents';
+import { CompleteNoteValidSpec, NotePositionValidSpec } from '../specifications/NoteSpecifications';
 
 export interface NoteData {
   title: string | null;
@@ -29,6 +26,10 @@ export interface NoteData {
 }
 
 export class NoteAggregate {
+  private _domainEvents: DomainEvent[] = [];
+  private static readonly contentValidator = new CompleteNoteValidSpec();
+  private static readonly positionValidator = new NotePositionValidSpec();
+
   private constructor(
     private readonly _id: NoteId,
     private _title: string | null,
@@ -55,7 +56,7 @@ export class NoteAggregate {
     const id = NoteId.generate();
     const now = new Date();
     
-    return new NoteAggregate(
+    const note = new NoteAggregate(
       id,
       title,
       content,
@@ -66,6 +67,17 @@ export class NoteAggregate {
       now,
       null
     );
+    
+    // Publish domain event for creation
+    note.addDomainEvent(new NoteCreatedEvent(
+      id.value,
+      title,
+      content,
+      userId,
+      organizationId
+    ));
+    
+    return note;
   }
 
   public static fromExisting(
@@ -129,83 +141,41 @@ export class NoteAggregate {
     return this._updatedAt;
   }
 
-  /**
-   * Validates permissions for creating a note
-   * AI: Domain-level permission validation for note creation
-   */
-  static validateCreatePermissions(
-    user: UserAggregate,
-    userRole: UserRole,
-    organizationId: OrganizationId
-  ): void {
-    NotesOrderingService.validateNotePermissions(
-      user,
-      userRole,
-      organizationId,
-      [Permission.CREATE_NOTE]
-    );
+  // Domain Events
+  public getDomainEvents(): DomainEvent[] {
+    return [...this._domainEvents];
   }
 
-  /**
-   * Validates permissions for updating this note
-   * AI: Domain-level permission validation for note updates
-   */
-  validateUpdatePermissions(
-    user: UserAggregate,
-    userRole: UserRole,
-    organizationId: OrganizationId
-  ): void {
-    NotesOrderingService.validateNotePermissions(
-      user,
-      userRole,
-      organizationId,
-      [Permission.UPDATE_NOTE]
-    );
+  public clearDomainEvents(): void {
+    this._domainEvents = [];
   }
 
-  /**
-   * Validates permissions for deleting this note
-   * AI: Domain-level permission validation for note deletion
-   */
-  validateDeletePermissions(
-    user: UserAggregate,
-    userRole: UserRole,
-    organizationId: OrganizationId
-  ): void {
-    NotesOrderingService.validateNotePermissions(
-      user,
-      userRole,
-      organizationId,
-      [Permission.DELETE_NOTE]
-    );
+  private addDomainEvent(event: DomainEvent): void {
+    this._domainEvents.push(event);
   }
 
-  /**
-   * Validates permissions for viewing this note
-   * AI: Domain-level permission validation for note viewing
-   */
-  validateViewPermissions(
-    user: UserAggregate,
-    userRole: UserRole,
-    organizationId: OrganizationId
-  ): void {
-    NotesOrderingService.validateNotePermissions(
-      user,
-      userRole,
-      organizationId,
-      [Permission.VIEW_NOTE]
-    );
-  }
 
   // Business methods
   public updateContent(title: string | null, content: string | null): void {
     this.validateContentUpdate(title, content);
+    
+    const oldTitle = this._title;
+    const oldContent = this._content;
     
     this._title = title?.trim() || null;
     this._content = content || null;
     this._updatedAt = new Date();
     
     this.validateInvariants();
+    
+    // Publish domain event for content changes
+    const changes: Record<string, { from: string | null; to: string | null }> = {};
+    if (oldTitle !== this._title) changes.title = { from: oldTitle, to: this._title };
+    if (oldContent !== this._content) changes.content = { from: oldContent, to: this._content };
+    
+    if (Object.keys(changes).length > 0) {
+      this.addDomainEvent(new NoteUpdatedEvent(this._id.value, changes));
+    }
   }
 
   public updatePosition(newPosition: number): void {
@@ -278,50 +248,28 @@ export class NoteAggregate {
   }
 
   private validateContentUpdate(title: string | null, content: string | null): void {
-    // At least one of title or content should have meaningful content
-    const hasTitle = title && title.trim().length > 0;
-    const hasContent = content && content.trim().length > 0;
+    const candidate = { title, content };
     
-    if (!hasTitle && !hasContent) {
-      throw new BusinessRuleViolationError(
-        'Note must have either title or content',
-        { title, content }
-      );
-    }
-
-    // Title length validation
-    if (title && title.trim().length > 255) {
-      throw new InvalidNoteDataError(
-        'title',
-        title,
-        { reason: 'Title cannot exceed 255 characters', length: title.length }
-      );
-    }
-
-    // Content length validation (reasonable limit)
-    if (content && content.length > 10000) {
-      throw new InvalidNoteDataError(
-        'content',
-        content,
-        { reason: 'Content cannot exceed 10000 characters', length: content.length }
-      );
+    if (!NoteAggregate.contentValidator.isSatisfiedBy(candidate)) {
+      const reason = NoteAggregate.contentValidator.getFailureReason!(candidate);
+      
+      // Throw appropriate error type based on validation failure
+      if (reason.includes('Title cannot exceed') && title) {
+        throw new InvalidNoteDataError('title', title, { reason });
+      } else if (reason.includes('Content cannot exceed') && content) {
+        throw new InvalidNoteDataError('content', content, { reason });
+      } else {
+        throw new BusinessRuleViolationError(reason, { title, content });
+      }
     }
   }
 
   private validatePosition(position: number): void {
-    if (position < 0) {
+    if (!NoteAggregate.positionValidator.isSatisfiedBy(position)) {
       throw new InvalidNoteDataError(
         'position',
         position,
-        { reason: 'Position cannot be negative' }
-      );
-    }
-
-    if (!Number.isInteger(position)) {
-      throw new InvalidNoteDataError(
-        'position',
-        position,
-        { reason: 'Position must be an integer' }
+        { reason: NoteAggregate.positionValidator.getFailureReason!() }
       );
     }
   }

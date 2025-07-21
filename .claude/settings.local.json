@@ -51,7 +51,8 @@
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm exec eslint:*)",
       "Bash(npx tsx:*)",
-      "Bash(./node_modules/.bin/eslint:*)"
+      "Bash(./node_modules/.bin/eslint:*)",
+      "Bash(npm test:*)"
     ]
   },
   "model": "sonnet",

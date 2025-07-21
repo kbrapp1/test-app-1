@@ -287,20 +287,8 @@ export class NotesUnifiedContextService {
           const compositionRoot = NotesCompositionRoot.getInstance();
           const applicationService = compositionRoot.getNotesApplicationService();
           
-          const noteAggregates = await applicationService.getNotes(currentUser.id, organizationId);
-          
-          // Convert domain aggregates to presentation format
-          notes = noteAggregates.map(aggregate => ({
-            id: aggregate.id.value,
-            user_id: aggregate.userId,
-            organization_id: aggregate.organizationId,
-            title: aggregate.title,
-            content: aggregate.content,
-            color_class: aggregate.colorClass,
-            position: aggregate.position,
-            created_at: aggregate.createdAt.toISOString(),
-            updated_at: aggregate.updatedAt?.toISOString() || null
-          }));
+          // Application service now returns DTOs directly
+          notes = await applicationService.getNotes(currentUser.id, organizationId);
         } catch (notesError) {
           console.error('[NOTES_UNIFIED_CONTEXT] Notes fetch failed:', notesError);
           // Continue with empty notes rather than failing entire context

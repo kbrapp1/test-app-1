@@ -49,12 +49,6 @@ export enum Permission {
   DELETE_FOLDER = 'delete:folder',
   VIEW_FOLDER = 'view:folder',
   
-  // Notes management
-  CREATE_NOTE = 'create:note',
-  UPDATE_NOTE = 'update:note',
-  DELETE_NOTE = 'delete:note',
-  VIEW_NOTE = 'view:note',
-  
   // Organization management
   MANAGE_ORGANIZATION = 'manage:organization',
   VIEW_ORGANIZATION = 'view:organization',
@@ -82,6 +76,12 @@ export enum Permission {
   SAVE_IMAGE_TO_DAM = 'save:image_to_dam',
   CONFIGURE_IMAGE_SETTINGS = 'configure:image_settings',
   VIEW_IMAGE_USAGE = 'view:image_usage',
+  
+  // Notes permissions
+  CREATE_NOTE = 'create:note',
+  UPDATE_NOTE = 'update:note',
+  DELETE_NOTE = 'delete:note',
+  VIEW_NOTE = 'view:note',
   
   // Chatbot permissions
   VIEW_CHATBOT = 'view:chatbot',

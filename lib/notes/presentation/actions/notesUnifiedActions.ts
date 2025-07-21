@@ -129,20 +129,8 @@ export async function getNotesData(): Promise<NotesDataResult> {
         try {
           const compositionRoot = NotesCompositionRoot.getInstance();
           const applicationService = compositionRoot.getNotesApplicationService();
-          const noteAggregates = await applicationService.getNotes(user.id, organizationId);
-          
-          // Convert domain aggregates to presentation format
-          const notes: Note[] = noteAggregates.map((aggregate) => ({
-            id: aggregate.id.value,
-            user_id: aggregate.userId,
-            organization_id: aggregate.organizationId,
-            title: aggregate.title,
-            content: aggregate.content,
-            color_class: aggregate.colorClass,
-            position: aggregate.position,
-            created_at: aggregate.createdAt.toISOString(),
-            updated_at: aggregate.updatedAt?.toISOString() || null
-          }));
+          // Application service now returns DTOs directly
+          const notes: Note[] = await applicationService.getNotes(user.id, organizationId);
 
           return {
             success: true,
@@ -240,8 +228,7 @@ export async function createNote(noteData: {
           colorClass: noteData.color_class || 'bg-yellow-100'
         };
 
-        const noteAggregate = await applicationService.createNote(command);
-        const data = noteAggregate.toDatabaseFormat();
+        const noteDto = await applicationService.createNote(command);
 
         // ✅ SECURITY: Log audit trail for note creation
         // TODO: Implement proper audit trail service
@@ -251,7 +238,7 @@ export async function createNote(noteData: {
           organization_id: organizationId,
           action: 'note_created',
           details: {
-            note_id: data.id,
+            note_id: noteDto.id,
             title: command.title,
             feature: 'notes'
           }
@@ -263,7 +250,7 @@ export async function createNote(noteData: {
 
         return { 
           success: true, 
-          data: data as Note 
+          note: noteDto as Note 
         };
 
       } catch (error) {
@@ -314,10 +301,9 @@ export async function updateNote(noteUpdate: {
           organizationId
         };
 
-        const noteAggregate = await applicationService.updateNote(command);
-        const data = noteAggregate.toDatabaseFormat();
+        const noteDto = await applicationService.updateNote(command);
 
-        return { success: true, note: data };
+        return { success: true, note: noteDto as Note };
 
       } catch (error) {
         console.error('[UPDATE_NOTE] Unexpected error:', error);
@@ -397,9 +383,8 @@ export async function updateNoteOrder(orderedNoteIds: string[]): Promise<NotesAc
 
         // Fetch updated notes
         const updatedNotes = await applicationService.getNotes(user.id, organizationId);
-        const notesData = updatedNotes.map(note => note.toDatabaseFormat());
 
-        return { success: true, notes: notesData || [] };
+        return { success: true, notes: updatedNotes as Note[] };
 
       } catch (error) {
         console.error('[UPDATE_NOTE_ORDER] Unexpected error:', error);

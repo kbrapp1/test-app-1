@@ -69,6 +69,15 @@ export class NotePositionConflictError extends NotesDomainError {
   }
 }
 
+export class NotePermissionDeniedError extends NotesDomainError {
+  readonly code = 'NOTE_PERMISSION_DENIED';
+  readonly severity = ErrorSeverity.HIGH;
+  
+  constructor(operation: string, context: Record<string, unknown> = {}) {
+    super(`Permission denied for note operation: ${operation}`, { ...context, operation });
+  }
+}
+
 export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',

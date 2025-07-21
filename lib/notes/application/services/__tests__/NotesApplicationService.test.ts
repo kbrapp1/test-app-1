@@ -10,8 +10,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type MockedFunction } from 'vitest';
-import { NotesApplicationService, CreateNoteCommand, UpdateNoteCommand, ReorderNotesCommand } from '../NotesApplicationService';
+import { NotesApplicationService, CreateNoteCommand, UpdateNoteCommand, ReorderNotesCommand, NoteDto } from '../NotesApplicationService';
 import { INotesRepository } from '../../../domain/repositories/INotesRepository';
+import { IPermissionService } from '../../../domain/services/IPermissionService';
 import { NoteAggregate } from '../../../domain/aggregates/NoteAggregate';
 import { NoteId } from '../../../domain/value-objects/NoteId';
 import { NotesOrderingService } from '../../../domain/services/NotesOrderingService';
@@ -54,14 +55,19 @@ vi.mock('@/lib/supabase/server', () => ({
   }))
 }));
 
-// Vitest mock type for the repository
+// Vitest mock types
 type MockedRepository = {
   [K in keyof INotesRepository]: MockedFunction<INotesRepository[K]>
+};
+
+type MockedPermissionService = {
+  [K in keyof IPermissionService]: MockedFunction<IPermissionService[K]>
 };
 
 describe('NotesApplicationService', () => {
   let service: NotesApplicationService;
   let mockRepository: MockedRepository;
+  let mockPermissionService: MockedPermissionService;
   
   const userId = '550e8400-e29b-41d4-a716-446655440000';
   const orgId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -84,10 +90,14 @@ describe('NotesApplicationService', () => {
       getNextPosition: vi.fn()
     } as MockedRepository;
 
-    service = new NotesApplicationService(mockRepository);
+    // Mock permission service
+    mockPermissionService = {
+      validateNotePermissions: vi.fn().mockResolvedValue(undefined),
+      isSuperAdmin: vi.fn().mockResolvedValue(false),
+      getCurrentUserId: vi.fn().mockResolvedValue('test-user-123')
+    } as MockedPermissionService;
 
-    // Mock the private validatePermissions method to always pass
-    vi.spyOn(service as any, 'validatePermissions').mockResolvedValue(undefined);
+    service = new NotesApplicationService(mockRepository, mockPermissionService);
   });
 
   // Helper function to create test note
@@ -120,16 +130,17 @@ describe('NotesApplicationService', () => {
 
       const result = await service.createNote(validCreateCommand);
 
-      expect(result).toBeInstanceOf(NoteAggregate);
-      expect(result.title).toBe(validCreateCommand.title);
-      expect(result.content).toBe(validCreateCommand.content);
-      expect(result.position).toBe(validCreateCommand.position);
-      expect(result.colorClass).toBe(validCreateCommand.colorClass);
-      expect(result.userId).toBe(userId);
-      expect(result.organizationId).toBe(orgId);
+      expect(result).toMatchObject({
+        title: validCreateCommand.title,
+        content: validCreateCommand.content,
+        position: validCreateCommand.position,
+        color_class: validCreateCommand.colorClass,
+        user_id: userId,
+        organization_id: orgId
+      });
 
       expect(mockRepository.save).toHaveBeenCalledOnce();
-      expect(mockRepository.save).toHaveBeenCalledWith(result);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.any(NoteAggregate));
     });
 
     it('creates note with next available position when not provided', async () => {
@@ -144,7 +155,7 @@ describe('NotesApplicationService', () => {
 
       expect(result.position).toBe(nextPosition);
       expect(mockRepository.getNextPosition).toHaveBeenCalledWith(userId, orgId);
-      expect(mockRepository.save).toHaveBeenCalledWith(result);
+      expect(mockRepository.save).toHaveBeenCalledWith(expect.any(NoteAggregate));
     });
 
     it('creates note with default color when not provided', async () => {
@@ -157,7 +168,7 @@ describe('NotesApplicationService', () => {
 
       const result = await service.createNote(commandWithoutColor);
 
-      expect(result.colorClass).toBe('bg-yellow-100'); // Default from aggregate
+      expect(result.color_class).toBe('bg-yellow-100'); // Default from aggregate
     });
 
     it('propagates domain validation errors', async () => {
@@ -214,14 +225,14 @@ describe('NotesApplicationService', () => {
       expect(result.title).toBe(validUpdateCommand.title);
       expect(result.content).toBe(validUpdateCommand.content);
       expect(result.position).toBe(validUpdateCommand.position);
-      expect(result.colorClass).toBe(validUpdateCommand.colorClass);
+      expect(result.color_class).toBe(validUpdateCommand.colorClass);
 
       expect(mockRepository.findById).toHaveBeenCalledWith(
         NoteId.create(noteId),
         userId,
         orgId
       );
-      expect(mockRepository.update).toHaveBeenCalledWith(result);
+      expect(mockRepository.update).toHaveBeenCalledWith(expect.any(NoteAggregate));
     });
 
     it('updates only title when only title provided', async () => {
@@ -240,7 +251,7 @@ describe('NotesApplicationService', () => {
       expect(result.title).toBe(partialCommand.title);
       expect(result.content).toBe(existingNote.content); // Unchanged
       expect(result.position).toBe(existingNote.position); // Unchanged
-      expect(result.colorClass).toBe(existingNote.colorClass); // Unchanged
+      expect(result.color_class).toBe(existingNote.colorClass); // Unchanged
     });
 
     it('updates only content when only content provided', async () => {
@@ -291,7 +302,7 @@ describe('NotesApplicationService', () => {
 
       const result = await service.updateNote(partialCommand);
 
-      expect(result.colorClass).toBe(partialCommand.colorClass);
+      expect(result.color_class).toBe(partialCommand.colorClass);
       expect(result.title).toBe(existingNote.title); // Unchanged
       expect(result.content).toBe(existingNote.content); // Unchanged
     });
@@ -391,7 +402,10 @@ describe('NotesApplicationService', () => {
 
       const result = await service.getNotes(userId, orgId);
 
-      expect(result).toEqual(notes);
+      expect(result).toHaveLength(3);
+      expect(result[0]).toMatchObject({ id: 'note-1', position: 0 });
+      expect(result[1]).toMatchObject({ id: 'note-2', position: 1 });
+      expect(result[2]).toMatchObject({ id: 'note-3', position: 2 });
       expect(mockRepository.findByUserAndOrganization).toHaveBeenCalledWith(userId, orgId);
     });
 
@@ -429,7 +443,7 @@ describe('NotesApplicationService', () => {
 
       const result = await service.getNote(noteId, userId, orgId);
 
-      expect(result).toEqual(existingNote);
+      expect(result).toMatchObject({ id: noteId, title: 'Test Note', content: 'Test content' });
       expect(mockRepository.findById).toHaveBeenCalledWith(
         NoteId.create(noteId),
         userId,
@@ -440,7 +454,7 @@ describe('NotesApplicationService', () => {
     it('throws error when note not found', async () => {
       mockRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(service.getNote(noteId, userId, orgId)).rejects.toThrow(NoteNotFoundError);
+      await expect(service.getNote(noteId, userId, orgId)).rejects.toThrow(BusinessRuleViolationError);
     });
 
     it('wraps repository errors in domain errors', async () => {
@@ -610,9 +624,11 @@ describe('NotesApplicationService', () => {
         expect(error).toBeInstanceOf(BusinessRuleViolationError);
         expect((error as BusinessRuleViolationError).context).toEqual({
           error: 'Delete failed',
-          noteId,
-          userId,
-          organizationId: orgId
+          command: {
+            noteId,
+            userId,
+            organizationId: orgId
+          }
         });
       }
     });
@@ -650,32 +666,34 @@ describe('NotesApplicationService', () => {
       const createdNote = await service.createNote(createCommand);
       expect(createdNote.title).toBe(createCommand.title);
 
-      // Read
-      mockRepository.findById.mockResolvedValueOnce(createdNote);
-      const fetchedNote = await service.getNote(createdNote.id.value, userId, orgId);
-      expect(fetchedNote).toEqual(createdNote);
+      // Read - Need to create a test aggregate for the mock since getNote returns DTO
+      const noteAggregate = createTestNote(createdNote.id, 0);
+      mockRepository.findById.mockResolvedValueOnce(noteAggregate);
+      const fetchedNote = await service.getNote(createdNote.id, userId, orgId);
+      expect(fetchedNote.title).toBe(createdNote.title);
 
       // Update
       const updateCommand: UpdateNoteCommand = {
-        id: createdNote.id.value,
+        id: createdNote.id,
         title: 'Updated Title',
         userId,
         organizationId: orgId
       };
 
-      mockRepository.findById.mockResolvedValueOnce(createdNote);
+      mockRepository.findById.mockResolvedValueOnce(noteAggregate);
       mockRepository.update.mockResolvedValueOnce(undefined);
 
       const updatedNote = await service.updateNote(updateCommand);
       expect(updatedNote.title).toBe(updateCommand.title);
 
       // Delete
-      mockRepository.findById.mockResolvedValueOnce(updatedNote);
+      const updateAggregate = createTestNote(updatedNote.id, 0);
+      mockRepository.findById.mockResolvedValueOnce(updateAggregate);
       mockRepository.delete.mockResolvedValueOnce(undefined);
 
-      await service.deleteNote(updatedNote.id.value, userId, orgId);
+      await service.deleteNote(updatedNote.id, userId, orgId);
       expect(mockRepository.delete).toHaveBeenCalledWith(
-        updatedNote.id,
+        NoteId.create(updatedNote.id),
         userId,
         orgId
       );
