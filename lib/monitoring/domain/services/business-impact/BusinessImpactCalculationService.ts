@@ -1,5 +1,5 @@
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { PerformanceTrackingState, WebVitalsMetrics } from '../../value-objects';
 
 export class BusinessImpactCalculationService {
   static calculateFrontendBusinessImpact(
@@ -20,7 +20,7 @@ export class BusinessImpactCalculationService {
   private static determineImpactLevel(
     renderCount: number,
     cacheHitRate: number,
-    webVitals: import('../../../application/dto/PerformanceTrackingDTO').WebVitalsMetrics | null,
+    webVitals: WebVitalsMetrics | null,
     metrics: PerformanceMetrics,
     trackingState: PerformanceTrackingState
   ): string {

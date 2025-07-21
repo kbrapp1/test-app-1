@@ -1,6 +1,6 @@
 import type { Folder } from '../entities/Folder';
 import { Asset } from '../entities/Asset';
-import type { SearchSortParams, SearchFilters, FolderSearchCriteria } from '../value-objects/SearchCriteria';
+import type { SearchSortParams, SearchFilters, FolderSearchCriteria as _FolderSearchCriteria } from '../value-objects/SearchCriteria';
 
 // Define interfaces for repository input data
 export interface CreateFolderData {

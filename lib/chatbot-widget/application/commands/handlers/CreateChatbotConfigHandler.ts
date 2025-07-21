@@ -1,13 +1,8 @@
-/**
- * Create Chatbot Config Command Handler
- * 
- * AI INSTRUCTIONS:
- * - CQRS Command Handler processing chatbot configuration creation commands with clean delegation
- * - Coordinates between command layer and use case layer following hexagonal architecture patterns
- * - Handles command validation, use case orchestration, and structured result transformation
- * - Implements proper error handling with contextual information for debugging and monitoring
- * - Maintains separation of concerns between command processing and business logic execution
- */
+// Create Chatbot Config Command Handler
+//
+// AI INSTRUCTIONS:
+// - CQRS Command Handler processing chatbot configuration creation commands
+// - Coordinates between command layer and use case layer
 
 import { CreateChatbotConfigCommand, CreateChatbotConfigResult } from '../CreateChatbotConfigCommand';
 import { ConfigureChatbotUseCase } from '../../use-cases/ConfigureChatbotUseCase';

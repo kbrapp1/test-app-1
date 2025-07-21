@@ -8,3 +8,4 @@
 export * from './EntityValueObject';
 export * from './LeadScoringValueObjects';
 export * from './ChatSessionValueObjects';
+export * from './workflow';

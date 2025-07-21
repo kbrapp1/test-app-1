@@ -1,13 +1,8 @@
-/**
- * Create Chatbot Config Command
- * 
- * AI INSTRUCTIONS:
- * - CQRS command for chatbot configuration creation with complete domain data
- * - Encapsulates write operation request with personality, knowledge base, and operating hours
- * - Includes lead qualification questions and validation result structure
- * - Pure data container following command pattern with no business logic
- * - Provides typed interface for command handlers and application services
- */
+// Create Chatbot Config Command
+//
+// AI INSTRUCTIONS:
+// - CQRS command for chatbot configuration creation with complete domain data
+// - Pure data container following command pattern with no business logic
 
 import { LeadQualificationQuestion } from '../../domain/entities/ChatbotConfig';
 import { PersonalitySettings } from '../../domain/value-objects/ai-configuration/PersonalitySettings';

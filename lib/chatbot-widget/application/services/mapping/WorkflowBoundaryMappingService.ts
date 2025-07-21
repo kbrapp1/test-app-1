@@ -9,14 +9,14 @@
  */
 
 import { 
-  ProcessMessageRequestDto, 
-  IntentAnalysisDto,
-  JourneyStateDto,
-  RelevantKnowledgeItemDto,
-  UnifiedAnalysisResultDto,
-  WorkflowResponseDto,
-  CallToActionDto
-} from '../../dto/WorkflowBoundaryTypes';
+  ProcessMessageRequest, 
+  IntentAnalysis,
+  JourneyState,
+  RelevantKnowledgeItem,
+  UnifiedAnalysisResult,
+  WorkflowResponse,
+  CallToAction
+} from '../../../domain/value-objects/workflow';
 import { ProcessChatMessageRequest } from '../../dto/ProcessChatMessageRequest';
 import { WorkflowDataExtractor } from '../../../domain/services/mapping/WorkflowDataExtractor';
 import { WorkflowDefaultFactory } from '../../../domain/services/mapping/WorkflowDefaultFactory';
@@ -38,7 +38,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Convert ProcessChatMessageRequest with organization security preservation
    */
-  public toProcessMessageRequest(request: ProcessChatMessageRequest): ProcessMessageRequestDto {
+  public toProcessMessageRequest(request: ProcessChatMessageRequest): ProcessMessageRequest {
     const result = ProcessMessageRequestMapper.toProcessMessageRequest(request);
     
     if (!result.isValid) {
@@ -51,7 +51,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract intent analysis from unknown result with fallback
    */
-  public toIntentAnalysis(result: unknown): IntentAnalysisDto {
+  public toIntentAnalysis(result: unknown): IntentAnalysis {
     const extractionResult = this.dataExtractor.extractIntentAnalysis(result);
     return extractionResult.getValueOrDefault(this.defaultFactory.createDefaultIntentAnalysis());
   }
@@ -59,7 +59,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract journey state from unknown result with fallback
    */
-  public toJourneyState(result: unknown): JourneyStateDto {
+  public toJourneyState(result: unknown): JourneyState {
     const extractionResult = this.dataExtractor.extractJourneyState(result);
     return extractionResult.getValueOrDefault(this.defaultFactory.createDefaultJourneyState());
   }
@@ -67,7 +67,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract relevant knowledge from unknown result with fallback
    */
-  public toRelevantKnowledge(result: unknown): RelevantKnowledgeItemDto[] {
+  public toRelevantKnowledge(result: unknown): RelevantKnowledgeItem[] {
     const extractionResult = this.dataExtractor.extractRelevantKnowledge(result);
     return extractionResult.getValueOrDefault([]);
   }
@@ -75,7 +75,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract unified analysis from unknown result with fallback
    */
-  public toUnifiedAnalysis(result: unknown): UnifiedAnalysisResultDto {
+  public toUnifiedAnalysis(result: unknown): UnifiedAnalysisResult {
     const extractionResult = this.dataExtractor.extractUnifiedAnalysis(result);
     return extractionResult.getValueOrDefault(this.defaultFactory.createDefaultUnifiedAnalysis());
   }
@@ -83,7 +83,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract workflow response from unknown result with complex path extraction
    */
-  public toWorkflowResponse(result: unknown): WorkflowResponseDto {
+  public toWorkflowResponse(result: unknown): WorkflowResponse {
     if (!this.isObject(result)) {
       return this.defaultFactory.createDefaultWorkflowResponse();
     }
@@ -118,7 +118,7 @@ export class WorkflowBoundaryMappingService {
   /**
    * Extract call to action from unknown result with fallback
    */
-  public toCallToAction(result: unknown): CallToActionDto | undefined {
+  public toCallToAction(result: unknown): CallToAction | undefined {
     const extractionResult = this.dataExtractor.extractCallToAction(result);
     return extractionResult.getValueOrDefault(undefined);
   }

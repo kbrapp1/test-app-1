@@ -9,14 +9,14 @@
  */
 
 import { ProcessChatMessageRequest } from '../dto/ProcessChatMessageRequest';
-import { ProcessMessageRequestDto, MessageMetadataDto } from '../dto/WorkflowBoundaryTypes';
+import { ProcessMessageRequest, MessageMetadata } from '../../domain/value-objects/workflow';
 import { MappingResult } from '../../domain/value-objects/mapping/MappingResult';
 
 export class ProcessMessageRequestMapper {
   /**
    * Convert ProcessChatMessageRequest to ProcessMessageRequestDto with security preservation
    */
-  public static toProcessMessageRequest(request: ProcessChatMessageRequest): MappingResult<ProcessMessageRequestDto> {
+  public static toProcessMessageRequest(request: ProcessChatMessageRequest): MappingResult<ProcessMessageRequest> {
     try {
       // Preserve organization security - this is critical
       if (!request.organizationId) {
@@ -31,7 +31,7 @@ export class ProcessMessageRequestMapper {
         return MappingResult.failure('userMessage is required');
       }
 
-      const mapped: ProcessMessageRequestDto = {
+      const mapped: ProcessMessageRequest = {
         userMessage: request.userMessage,
         sessionId: request.sessionId,
         organizationId: request.organizationId, // Security: Preserve organization isolation
@@ -51,7 +51,7 @@ export class ProcessMessageRequestMapper {
    */
   private static mapMessageMetadata(
     metadata: NonNullable<ProcessChatMessageRequest['metadata']>
-  ): MessageMetadataDto {
+  ): MessageMetadata {
     return {
       userId: metadata.userId, // Preserve user context for security
       timestamp: metadata.timestamp ? new Date(metadata.timestamp) : undefined,

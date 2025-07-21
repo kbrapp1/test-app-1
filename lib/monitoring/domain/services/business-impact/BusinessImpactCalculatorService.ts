@@ -1,6 +1,6 @@
 import { OptimizationGap } from '../../value-objects/OptimizationGap';
 import { PerformanceMetrics } from '../../entities/PerformanceMetrics';
-import { PerformanceTrackingState } from '../../../application/dto/PerformanceTrackingDTO';
+import { PerformanceTrackingState } from '../../value-objects';
 import { OptimizationPriority } from '../optimization/OptimizationPriorityAssessmentService';
 
 /**

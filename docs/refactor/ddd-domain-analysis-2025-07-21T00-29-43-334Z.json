@@ -1,0 +1,2978 @@
+{
+  "timestamp": "2025-07-21T00:29:43.037Z",
+  "domain": "dam",
+  "summary": {
+    "totalFiles": 398,
+    "domainServicesCount": 10,
+    "entitiesCount": 16,
+    "valueObjectsCount": 8,
+    "layerViolationsCount": 0,
+    "layerWarningsCount": 0,
+    "repositoryViolationsCount": 2,
+    "crossDomainDependenciesCount": 0,
+    "anemicEntitiesCount": 1,
+    "valueObjectViolationsCount": 13,
+    "businessRulesCount": 28,
+    "largeFilesCount": 8,
+    "averageFileSize": 93
+  },
+  "domainServices": [
+    {
+      "name": "AuthContextService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/AuthContextService.ts",
+      "domain": "dam",
+      "lines": 27,
+      "type": "class",
+      "methods": 1,
+      "asyncMethods": 1
+    },
+    {
+      "name": "BulkOperationValidator.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/BulkOperationValidator.ts",
+      "domain": "dam",
+      "lines": 96,
+      "type": "class",
+      "methods": 5,
+      "asyncMethods": 0
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/index.ts",
+      "domain": "dam",
+      "lines": 14,
+      "type": "unknown",
+      "methods": 0,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SearchCriteriaFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchCriteriaFactory.ts",
+      "domain": "dam",
+      "lines": 63,
+      "type": "class",
+      "methods": 3,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SearchMapper.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchMapper.ts",
+      "domain": "dam",
+      "lines": 70,
+      "type": "class",
+      "methods": 3,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SearchUtilities.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchUtilities.ts",
+      "domain": "dam",
+      "lines": 75,
+      "type": "class",
+      "methods": 5,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SearchValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchValidation.ts",
+      "domain": "dam",
+      "lines": 44,
+      "type": "class",
+      "methods": 2,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SelectionOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionOperations.ts",
+      "domain": "dam",
+      "lines": 224,
+      "type": "class",
+      "methods": 7,
+      "asyncMethods": 0
+    },
+    {
+      "name": "SelectionValidator.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionValidator.ts",
+      "domain": "dam",
+      "lines": 64,
+      "type": "class",
+      "methods": 3,
+      "asyncMethods": 0
+    },
+    {
+      "name": "TagColorService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/TagColorService.ts",
+      "domain": "dam",
+      "lines": 98,
+      "type": "class",
+      "methods": 6,
+      "asyncMethods": 0
+    }
+  ],
+  "fileSizes": [
+    {
+      "name": "AssetGalleryClient.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/AssetGalleryClient.tsx",
+      "domain": "dam",
+      "lines": 303
+    },
+    {
+      "name": "DamTypes.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/types/DamTypes.ts",
+      "domain": "dam",
+      "lines": 286
+    },
+    {
+      "name": "AssetListItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/AssetListItem.tsx",
+      "domain": "dam",
+      "lines": 285
+    },
+    {
+      "name": "DamWorkspaceView.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/workspace/DamWorkspaceView.tsx",
+      "domain": "dam",
+      "lines": 264
+    },
+    {
+      "name": "SearchCriteria.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/SearchCriteria.ts",
+      "domain": "dam",
+      "lines": 263
+    },
+    {
+      "name": "base-props.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/types/base-props.ts",
+      "domain": "dam",
+      "lines": 262
+    },
+    {
+      "name": "useSearchBarState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/hooks/useSearchBarState.ts",
+      "domain": "dam",
+      "lines": 254
+    },
+    {
+      "name": "SupabaseSavedSearchRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseSavedSearchRepository.ts",
+      "domain": "dam",
+      "lines": 253
+    },
+    {
+      "name": "AssetUploader.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/upload/AssetUploader.tsx",
+      "domain": "dam",
+      "lines": 248
+    },
+    {
+      "name": "FormDataExtractionService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/services/FormDataExtractionService.ts",
+      "domain": "dam",
+      "lines": 248
+    },
+    {
+      "name": "EnhancedAssetGridItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/enhanced/EnhancedAssetGridItem.tsx",
+      "domain": "dam",
+      "lines": 248
+    },
+    {
+      "name": "savedSearches.actions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/savedSearches.actions.ts",
+      "domain": "dam",
+      "lines": 242
+    },
+    {
+      "name": "folder.actions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/folder.actions.ts",
+      "domain": "dam",
+      "lines": 240
+    },
+    {
+      "name": "useSavedSearches.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useSavedSearches.ts",
+      "domain": "dam",
+      "lines": 240
+    },
+    {
+      "name": "SelectableEnhancedAssetGridItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/SelectableEnhancedAssetGridItem.tsx",
+      "domain": "dam",
+      "lines": 239
+    },
+    {
+      "name": "useAssetItemActions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetItemActions.ts",
+      "domain": "dam",
+      "lines": 239
+    },
+    {
+      "name": "DamApiDtoService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/DamApiDtoService.ts",
+      "domain": "dam",
+      "lines": 234
+    },
+    {
+      "name": "Selection.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Selection.ts",
+      "domain": "dam",
+      "lines": 233
+    },
+    {
+      "name": "useAssetUpload.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetUpload.ts",
+      "domain": "dam",
+      "lines": 230
+    },
+    {
+      "name": "BulkOperationValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/BulkOperationValidation.ts",
+      "domain": "dam",
+      "lines": 228
+    },
+    {
+      "name": "BulkOperationHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/handlers/BulkOperationHandler.ts",
+      "domain": "dam",
+      "lines": 228
+    },
+    {
+      "name": "Asset.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Asset.ts",
+      "domain": "dam",
+      "lines": 224
+    },
+    {
+      "name": "SelectionOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionOperations.ts",
+      "domain": "dam",
+      "lines": 224
+    },
+    {
+      "name": "Folder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Folder.ts",
+      "domain": "dam",
+      "lines": 223
+    },
+    {
+      "name": "Folder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/Folder.ts",
+      "domain": "dam",
+      "lines": 223
+    },
+    {
+      "name": "TagColor.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/TagColor.ts",
+      "domain": "dam",
+      "lines": 221
+    },
+    {
+      "name": "useAssetGalleryHandlers.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetGalleryHandlers.tsx",
+      "domain": "dam",
+      "lines": 219
+    },
+    {
+      "name": "SelectionToolbar.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/SelectionToolbar.tsx",
+      "domain": "dam",
+      "lines": 214
+    },
+    {
+      "name": "BulkMoveAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/BulkMoveAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 213
+    },
+    {
+      "name": "AssetService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/AssetService.ts",
+      "domain": "dam",
+      "lines": 209
+    },
+    {
+      "name": "BulkMoveDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/BulkMoveDialog.tsx",
+      "domain": "dam",
+      "lines": 209
+    },
+    {
+      "name": "GalleryLayout.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/GalleryLayout.tsx",
+      "domain": "dam",
+      "lines": 207
+    },
+    {
+      "name": "BulkDeleteAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/BulkDeleteAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 206
+    },
+    {
+      "name": "AssetSelectorModal.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/AssetSelectorModal.tsx",
+      "domain": "dam",
+      "lines": 206
+    },
+    {
+      "name": "textAsset.actions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/textAsset.actions.ts",
+      "domain": "dam",
+      "lines": 202
+    },
+    {
+      "name": "AssetGalleryRenderer.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/AssetGalleryRenderer.tsx",
+      "domain": "dam",
+      "lines": 198
+    },
+    {
+      "name": "index.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/sections/index.tsx",
+      "domain": "dam",
+      "lines": 198
+    },
+    {
+      "name": "SelectionFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SelectionFactory.ts",
+      "domain": "dam",
+      "lines": 197
+    },
+    {
+      "name": "SupabaseFolderRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseFolderRepository.ts",
+      "domain": "dam",
+      "lines": 193
+    },
+    {
+      "name": "AssetThumbnail.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/AssetThumbnail.tsx",
+      "domain": "dam",
+      "lines": 193
+    },
+    {
+      "name": "SupabaseAssetRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseAssetRepository.ts",
+      "domain": "dam",
+      "lines": 192
+    },
+    {
+      "name": "FolderService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/FolderService.ts",
+      "domain": "dam",
+      "lines": 191
+    },
+    {
+      "name": "SizeFilter.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/SizeFilter.tsx",
+      "domain": "dam",
+      "lines": 189
+    },
+    {
+      "name": "BulkDeleteDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/BulkDeleteDialog.tsx",
+      "domain": "dam",
+      "lines": 188
+    },
+    {
+      "name": "useAssetDetailsModal.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetDetailsModal.ts",
+      "domain": "dam",
+      "lines": 187
+    },
+    {
+      "name": "BatchDownloadOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/operations/BatchDownloadOperation.ts",
+      "domain": "dam",
+      "lines": 185
+    },
+    {
+      "name": "Tag.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Tag.ts",
+      "domain": "dam",
+      "lines": 184
+    },
+    {
+      "name": "UpdateSelectionUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/UpdateSelectionUseCase.ts",
+      "domain": "dam",
+      "lines": 184
+    },
+    {
+      "name": "FolderQueryExecutor.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/FolderQueryExecutor.ts",
+      "domain": "dam",
+      "lines": 184
+    },
+    {
+      "name": "navigation.actions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/navigation.actions.ts",
+      "domain": "dam",
+      "lines": 177
+    },
+    {
+      "name": "useDamFilters.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useDamFilters.ts",
+      "domain": "dam",
+      "lines": 177
+    },
+    {
+      "name": "FolderSidebar.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/FolderSidebar.tsx",
+      "domain": "dam",
+      "lines": 176
+    },
+    {
+      "name": "BulkDownloadAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/BulkDownloadAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 175
+    },
+    {
+      "name": "DragOverlay.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/components/DragOverlay.tsx",
+      "domain": "dam",
+      "lines": 175
+    },
+    {
+      "name": "useDropHandlers.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/hooks/useDropHandlers.ts",
+      "domain": "dam",
+      "lines": 174
+    },
+    {
+      "name": "FolderHierarchy.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderHierarchy.ts",
+      "domain": "dam",
+      "lines": 173
+    },
+    {
+      "name": "DialogShowcase.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/DialogShowcase.tsx",
+      "domain": "dam",
+      "lines": 173
+    },
+    {
+      "name": "AssetQueryBuilder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetQueryBuilder.ts",
+      "domain": "dam",
+      "lines": 173
+    },
+    {
+      "name": "AssetDetailsModal.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/AssetDetailsModal.tsx",
+      "domain": "dam",
+      "lines": 172
+    },
+    {
+      "name": "useTagEditor.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/useTagEditor.tsx",
+      "domain": "dam",
+      "lines": 168
+    },
+    {
+      "name": "AssetQueryExecutor.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetQueryExecutor.ts",
+      "domain": "dam",
+      "lines": 168
+    },
+    {
+      "name": "useBulkOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useBulkOperations.ts",
+      "domain": "dam",
+      "lines": 167
+    },
+    {
+      "name": "interfaces.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/types/interfaces.ts",
+      "domain": "dam",
+      "lines": 167
+    },
+    {
+      "name": "GetDamDataUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/GetDamDataUseCase.ts",
+      "domain": "dam",
+      "lines": 167
+    },
+    {
+      "name": "DomainTagEditor.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/DomainTagEditor.tsx",
+      "domain": "dam",
+      "lines": 166
+    },
+    {
+      "name": "useDragEndHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/useDragEndHandler.ts",
+      "domain": "dam",
+      "lines": 166
+    },
+    {
+      "name": "BatchValidationService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/services/BatchValidationService.ts",
+      "domain": "dam",
+      "lines": 166
+    },
+    {
+      "name": "FolderCollectionService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/services/FolderCollectionService.ts",
+      "domain": "dam",
+      "lines": 165
+    },
+    {
+      "name": "useDamGalleryData.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/useDamGalleryData.ts",
+      "domain": "dam",
+      "lines": 164
+    },
+    {
+      "name": "NavigateToFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/NavigateToFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 162
+    },
+    {
+      "name": "SearchService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/SearchService.ts",
+      "domain": "dam",
+      "lines": 161
+    },
+    {
+      "name": "ColoredTag.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/ColoredTag.tsx",
+      "domain": "dam",
+      "lines": 161
+    },
+    {
+      "name": "SupabaseTagRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseTagRepository.ts",
+      "domain": "dam",
+      "lines": 160
+    },
+    {
+      "name": "GetAssetDetailsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/GetAssetDetailsUseCase.ts",
+      "domain": "dam",
+      "lines": 159
+    },
+    {
+      "name": "AssetMapper.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/mappers/AssetMapper.ts",
+      "domain": "dam",
+      "lines": 159
+    },
+    {
+      "name": "useTagFilter.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useTagFilter.ts",
+      "domain": "dam",
+      "lines": 154
+    },
+    {
+      "name": "InputDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/InputDialog.tsx",
+      "domain": "dam",
+      "lines": 153
+    },
+    {
+      "name": "NewFolderDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/NewFolderDialog.tsx",
+      "domain": "dam",
+      "lines": 153
+    },
+    {
+      "name": "BulkTagAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/BulkTagAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 151
+    },
+    {
+      "name": "FolderListItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/FolderListItem.tsx",
+      "domain": "dam",
+      "lines": 150
+    },
+    {
+      "name": "FolderNavigationItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/FolderNavigationItem.tsx",
+      "domain": "dam",
+      "lines": 150
+    },
+    {
+      "name": "FolderMapper.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/mappers/FolderMapper.ts",
+      "domain": "dam",
+      "lines": 150
+    },
+    {
+      "name": "ConfirmationDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/ConfirmationDialog.tsx",
+      "domain": "dam",
+      "lines": 149
+    },
+    {
+      "name": "useDateFilter.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/hooks/useDateFilter.ts",
+      "domain": "dam",
+      "lines": 146
+    },
+    {
+      "name": "SupabaseAssetTagRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseAssetTagRepository.ts",
+      "domain": "dam",
+      "lines": 144
+    },
+    {
+      "name": "useMultiSelectOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/operations/useMultiSelectOperations.ts",
+      "domain": "dam",
+      "lines": 144
+    },
+    {
+      "name": "BatchMoveOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/operations/BatchMoveOperation.ts",
+      "domain": "dam",
+      "lines": 142
+    },
+    {
+      "name": "UpdateAssetMetadataUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/UpdateAssetMetadataUseCase.ts",
+      "domain": "dam",
+      "lines": 141
+    },
+    {
+      "name": "RenameFolderDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/RenameFolderDialog.tsx",
+      "domain": "dam",
+      "lines": 140
+    },
+    {
+      "name": "FolderTreeService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/FolderTreeService.ts",
+      "domain": "dam",
+      "lines": 139
+    },
+    {
+      "name": "GalleryDialogs.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/GalleryDialogs.tsx",
+      "domain": "dam",
+      "lines": 138
+    },
+    {
+      "name": "BatchDeleteOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/operations/BatchDeleteOperation.ts",
+      "domain": "dam",
+      "lines": 137
+    },
+    {
+      "name": "useAssetMutations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useAssetMutations.ts",
+      "domain": "dam",
+      "lines": 136
+    },
+    {
+      "name": "SearchDamItemsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/SearchDamItemsUseCase.ts",
+      "domain": "dam",
+      "lines": 135
+    },
+    {
+      "name": "FolderOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderOperations.ts",
+      "domain": "dam",
+      "lines": 135
+    },
+    {
+      "name": "AssetActionDropdownMenu.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/AssetActionDropdownMenu.tsx",
+      "domain": "dam",
+      "lines": 135
+    },
+    {
+      "name": "DragDropOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/services/DragDropOperations.ts",
+      "domain": "dam",
+      "lines": 135
+    },
+    {
+      "name": "AssetDetailsHeader.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/sections/AssetDetailsHeader.tsx",
+      "domain": "dam",
+      "lines": 132
+    },
+    {
+      "name": "useFolderNavigation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/useFolderNavigation.ts",
+      "domain": "dam",
+      "lines": 130
+    },
+    {
+      "name": "useDragDropState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/hooks/useDragDropState.ts",
+      "domain": "dam",
+      "lines": 130
+    },
+    {
+      "name": "CustomDateRangePicker.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/components/CustomDateRangePicker.tsx",
+      "domain": "dam",
+      "lines": 128
+    },
+    {
+      "name": "useGalleryBulkOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/state/useGalleryBulkOperations.ts",
+      "domain": "dam",
+      "lines": 128
+    },
+    {
+      "name": "WorkspaceFilters.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/workspace/layout/WorkspaceFilters.tsx",
+      "domain": "dam",
+      "lines": 127
+    },
+    {
+      "name": "BulkDeleteDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/components/BulkDeleteDialog.tsx",
+      "domain": "dam",
+      "lines": 127
+    },
+    {
+      "name": "UXComparison.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/enhanced/UXComparison.tsx",
+      "domain": "dam",
+      "lines": 126
+    },
+    {
+      "name": "useAssetGalleryState.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/useAssetGalleryState.tsx",
+      "domain": "dam",
+      "lines": 126
+    },
+    {
+      "name": "useFolderItemState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/hooks/useFolderItemState.ts",
+      "domain": "dam",
+      "lines": 126
+    },
+    {
+      "name": "useMultiSelectState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/state/useMultiSelectState.ts",
+      "domain": "dam",
+      "lines": 126
+    },
+    {
+      "name": "TagEditorDataService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/TagEditorDataService.ts",
+      "domain": "dam",
+      "lines": 123
+    },
+    {
+      "name": "SelectionCheckbox.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/SelectionCheckbox.tsx",
+      "domain": "dam",
+      "lines": 121
+    },
+    {
+      "name": "useDamSearchDropdown.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useDamSearchDropdown.ts",
+      "domain": "dam",
+      "lines": 121
+    },
+    {
+      "name": "AssetPreviewSection.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/sections/AssetPreviewSection.tsx",
+      "domain": "dam",
+      "lines": 121
+    },
+    {
+      "name": "SavedSearchSaveTab.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SavedSearchSaveTab.tsx",
+      "domain": "dam",
+      "lines": 121
+    },
+    {
+      "name": "useDamPageHandlers.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/useDamPageHandlers.ts",
+      "domain": "dam",
+      "lines": 120
+    },
+    {
+      "name": "useDamPageState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/useDamPageState.ts",
+      "domain": "dam",
+      "lines": 120
+    },
+    {
+      "name": "BulkOperationFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/BulkOperationFactory.ts",
+      "domain": "dam",
+      "lines": 118
+    },
+    {
+      "name": "FolderPickerDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/FolderPickerDialog.tsx",
+      "domain": "dam",
+      "lines": 118
+    },
+    {
+      "name": "CreationDateFilter.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/CreationDateFilter.tsx",
+      "domain": "dam",
+      "lines": 118
+    },
+    {
+      "name": "useDragDropValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/hooks/useDragDropValidation.ts",
+      "domain": "dam",
+      "lines": 118
+    },
+    {
+      "name": "DamTagFilter.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/DamTagFilter.tsx",
+      "domain": "dam",
+      "lines": 116
+    },
+    {
+      "name": "index.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/index.tsx",
+      "domain": "dam",
+      "lines": 115
+    },
+    {
+      "name": "DamErrorBoundary.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/error/DamErrorBoundary.tsx",
+      "domain": "dam",
+      "lines": 115
+    },
+    {
+      "name": "BulkMoveOperationsService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/operations/BulkMoveOperationsService.ts",
+      "domain": "dam",
+      "lines": 115
+    },
+    {
+      "name": "FolderValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderValidation.ts",
+      "domain": "dam",
+      "lines": 114
+    },
+    {
+      "name": "DamSearchBar.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/DamSearchBar.tsx",
+      "domain": "dam",
+      "lines": 114
+    },
+    {
+      "name": "UrlParameterService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/UrlParameterService.ts",
+      "domain": "dam",
+      "lines": 113
+    },
+    {
+      "name": "EmptyState.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/sections/EmptyState.tsx",
+      "domain": "dam",
+      "lines": 113
+    },
+    {
+      "name": "FolderBreadcrumbs.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/FolderBreadcrumbs.tsx",
+      "domain": "dam",
+      "lines": 112
+    },
+    {
+      "name": "RepositoryFactoryService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/services/RepositoryFactoryService.ts",
+      "domain": "dam",
+      "lines": 112
+    },
+    {
+      "name": "useGalleryDialogs.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/useGalleryDialogs.ts",
+      "domain": "dam",
+      "lines": 111
+    },
+    {
+      "name": "DeleteFolderDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/DeleteFolderDialog.tsx",
+      "domain": "dam",
+      "lines": 110
+    },
+    {
+      "name": "useBulkDownloadHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/useBulkDownloadHandler.ts",
+      "domain": "dam",
+      "lines": 110
+    },
+    {
+      "name": "OwnerFilter.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/OwnerFilter.tsx",
+      "domain": "dam",
+      "lines": 108
+    },
+    {
+      "name": "BatchStatsOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/operations/BatchStatsOperation.ts",
+      "domain": "dam",
+      "lines": 108
+    },
+    {
+      "name": "ApiResponseDto.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/dto/ApiResponseDto.ts",
+      "domain": "dam",
+      "lines": 107
+    },
+    {
+      "name": "BulkDownloadDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/components/BulkDownloadDialog.tsx",
+      "domain": "dam",
+      "lines": 107
+    },
+    {
+      "name": "SelectableFolderGrid.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/components/SelectableFolderGrid.tsx",
+      "domain": "dam",
+      "lines": 107
+    },
+    {
+      "name": "SelectableFolderList.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/components/SelectableFolderList.tsx",
+      "domain": "dam",
+      "lines": 107
+    },
+    {
+      "name": "FolderQueryBuilder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/FolderQueryBuilder.ts",
+      "domain": "dam",
+      "lines": 106
+    },
+    {
+      "name": "DateFilterService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/services/DateFilterService.ts",
+      "domain": "dam",
+      "lines": 106
+    },
+    {
+      "name": "ExecuteSavedSearchUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/ExecuteSavedSearchUseCase.ts",
+      "domain": "dam",
+      "lines": 105
+    },
+    {
+      "name": "folderPickerUtils.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/folderPickerUtils.ts",
+      "domain": "dam",
+      "lines": 105
+    },
+    {
+      "name": "FilterActionsService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/FilterActionsService.ts",
+      "domain": "dam",
+      "lines": 105
+    },
+    {
+      "name": "GalleryHeader.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/sections/GalleryHeader.tsx",
+      "domain": "dam",
+      "lines": 105
+    },
+    {
+      "name": "UpdateFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/UpdateFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 104
+    },
+    {
+      "name": "UpdateAssetTextUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/UpdateAssetTextUseCase.ts",
+      "domain": "dam",
+      "lines": 103
+    },
+    {
+      "name": "AssetProfileService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetProfileService.ts",
+      "domain": "dam",
+      "lines": 103
+    },
+    {
+      "name": "BulkOperationManager.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/BulkOperationManager.tsx",
+      "domain": "dam",
+      "lines": 103
+    },
+    {
+      "name": "SearchForm.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SearchForm.tsx",
+      "domain": "dam",
+      "lines": 101
+    },
+    {
+      "name": "useGallerySelection.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/state/useGallerySelection.ts",
+      "domain": "dam",
+      "lines": 101
+    },
+    {
+      "name": "SavedSearch.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SavedSearch.ts",
+      "domain": "dam",
+      "lines": 100
+    },
+    {
+      "name": "CreateTextAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/CreateTextAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 100
+    },
+    {
+      "name": "useDamUrlManager.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/useDamUrlManager.ts",
+      "domain": "dam",
+      "lines": 100
+    },
+    {
+      "name": "UploadProgress.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/sections/UploadProgress.tsx",
+      "domain": "dam",
+      "lines": 100
+    },
+    {
+      "name": "GetAssetContentUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/GetAssetContentUseCase.ts",
+      "domain": "dam",
+      "lines": 99
+    },
+    {
+      "name": "SelectionModeToggle.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/SelectionModeToggle.tsx",
+      "domain": "dam",
+      "lines": 99
+    },
+    {
+      "name": "AssetUrlService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetUrlService.ts",
+      "domain": "dam",
+      "lines": 99
+    },
+    {
+      "name": "useFolderPicker.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/hooks/useFolderPicker.ts",
+      "domain": "dam",
+      "lines": 99
+    },
+    {
+      "name": "TagColorService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/TagColorService.ts",
+      "domain": "dam",
+      "lines": 98
+    },
+    {
+      "name": "FolderTreeRenderer.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/components/FolderTreeRenderer.tsx",
+      "domain": "dam",
+      "lines": 98
+    },
+    {
+      "name": "PatternDemo.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/enhanced/PatternDemo.tsx",
+      "domain": "dam",
+      "lines": 98
+    },
+    {
+      "name": "SelectionOverlay.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/SelectionOverlay.tsx",
+      "domain": "dam",
+      "lines": 97
+    },
+    {
+      "name": "AssetTypeChecker.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetTypeChecker.ts",
+      "domain": "dam",
+      "lines": 96
+    },
+    {
+      "name": "BulkOperationValidator.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/BulkOperationValidator.ts",
+      "domain": "dam",
+      "lines": 96
+    },
+    {
+      "name": "useGalleryEventHandlers.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/handlers/useGalleryEventHandlers.ts",
+      "domain": "dam",
+      "lines": 96
+    },
+    {
+      "name": "useFolderOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useFolderOperations.ts",
+      "domain": "dam",
+      "lines": 95
+    },
+    {
+      "name": "ListTextAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/ListTextAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 95
+    },
+    {
+      "name": "ListFolderContentsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/ListFolderContentsUseCase.ts",
+      "domain": "dam",
+      "lines": 95
+    },
+    {
+      "name": "SortControl.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/SortControl.tsx",
+      "domain": "dam",
+      "lines": 94
+    },
+    {
+      "name": "SelectionActions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/SelectionActions.ts",
+      "domain": "dam",
+      "lines": 93
+    },
+    {
+      "name": "BatchStorageService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/BatchStorageService.ts",
+      "domain": "dam",
+      "lines": 93
+    },
+    {
+      "name": "FolderTreeItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/FolderTreeItem.tsx",
+      "domain": "dam",
+      "lines": 93
+    },
+    {
+      "name": "BatchCopyOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/operations/BatchCopyOperation.ts",
+      "domain": "dam",
+      "lines": 93
+    },
+    {
+      "name": "SavedSearchDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SavedSearchDialog.tsx",
+      "domain": "dam",
+      "lines": 92
+    },
+    {
+      "name": "AssetCollectionService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/services/AssetCollectionService.ts",
+      "domain": "dam",
+      "lines": 92
+    },
+    {
+      "name": "AssetDateFilter.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetDateFilter.ts",
+      "domain": "dam",
+      "lines": 91
+    },
+    {
+      "name": "AssetFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetFactory.ts",
+      "domain": "dam",
+      "lines": 90
+    },
+    {
+      "name": "FolderDateFilter.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/FolderDateFilter.ts",
+      "domain": "dam",
+      "lines": 89
+    },
+    {
+      "name": "useFolderNavigation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/hooks/useFolderNavigation.ts",
+      "domain": "dam",
+      "lines": 89
+    },
+    {
+      "name": "SearchDropdownMenu.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/SearchDropdownMenu.tsx",
+      "domain": "dam",
+      "lines": 88
+    },
+    {
+      "name": "TagValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagValidation.ts",
+      "domain": "dam",
+      "lines": 86
+    },
+    {
+      "name": "RenameAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/RenameAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 86
+    },
+    {
+      "name": "FolderThumbnail.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/FolderThumbnail.tsx",
+      "domain": "dam",
+      "lines": 86
+    },
+    {
+      "name": "FileNameGenerator.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/utils/FileNameGenerator.ts",
+      "domain": "dam",
+      "lines": 86
+    },
+    {
+      "name": "useAssetQueries.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useAssetQueries.ts",
+      "domain": "dam",
+      "lines": 85
+    },
+    {
+      "name": "AssetThumbnail.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/enhanced/AssetThumbnail.tsx",
+      "domain": "dam",
+      "lines": 85
+    },
+    {
+      "name": "FolderItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/FolderItem.tsx",
+      "domain": "dam",
+      "lines": 85
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/index.ts",
+      "domain": "dam",
+      "lines": 84
+    },
+    {
+      "name": "MoveFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/MoveFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "ListSavedSearchesUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/ListSavedSearchesUseCase.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "SaveSearchUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/SaveSearchUseCase.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "TagSuggestionList.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/TagSuggestionList.tsx",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "BatchDeleteOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/operations/BatchDeleteOperation.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "DownloadValidationService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/services/DownloadValidationService.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "useGalleryData.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/state/useGalleryData.ts",
+      "domain": "dam",
+      "lines": 83
+    },
+    {
+      "name": "BulkMoveDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/components/BulkMoveDialog.tsx",
+      "domain": "dam",
+      "lines": 82
+    },
+    {
+      "name": "useServerActionDebounce.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/useServerActionDebounce.ts",
+      "domain": "dam",
+      "lines": 81
+    },
+    {
+      "name": "DeleteAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/DeleteAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 81
+    },
+    {
+      "name": "FolderActionMenu.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/components/FolderActionMenu.tsx",
+      "domain": "dam",
+      "lines": 81
+    },
+    {
+      "name": "SelectionUpdateHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/handlers/SelectionUpdateHandler.ts",
+      "domain": "dam",
+      "lines": 80
+    },
+    {
+      "name": "BulkTagDialog.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/components/BulkTagDialog.tsx",
+      "domain": "dam",
+      "lines": 80
+    },
+    {
+      "name": "TypeFilter.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/TypeFilter.tsx",
+      "domain": "dam",
+      "lines": 79
+    },
+    {
+      "name": "TagEditorComputationService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/TagEditorComputationService.ts",
+      "domain": "dam",
+      "lines": 79
+    },
+    {
+      "name": "AssetDataProcessor.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetDataProcessor.ts",
+      "domain": "dam",
+      "lines": 79
+    },
+    {
+      "name": "TagUtilities.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagUtilities.ts",
+      "domain": "dam",
+      "lines": 78
+    },
+    {
+      "name": "useAssetDragAndDrop.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetDragAndDrop.ts",
+      "domain": "dam",
+      "lines": 77
+    },
+    {
+      "name": "SizeFilterCustomView.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/SizeFilterCustomView.tsx",
+      "domain": "dam",
+      "lines": 76
+    },
+    {
+      "name": "SearchUtilities.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchUtilities.ts",
+      "domain": "dam",
+      "lines": 75
+    },
+    {
+      "name": "useCacheManagement.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useCacheManagement.ts",
+      "domain": "dam",
+      "lines": 73
+    },
+    {
+      "name": "UpdateTagUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/UpdateTagUseCase.ts",
+      "domain": "dam",
+      "lines": 73
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/types.ts",
+      "domain": "dam",
+      "lines": 73
+    },
+    {
+      "name": "AddTagToAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/AddTagToAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 72
+    },
+    {
+      "name": "useSelectableFolderState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/hooks/useSelectableFolderState.ts",
+      "domain": "dam",
+      "lines": 72
+    },
+    {
+      "name": "UploadAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/UploadAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 71
+    },
+    {
+      "name": "DragOperationFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/services/DragOperationFactory.ts",
+      "domain": "dam",
+      "lines": 71
+    },
+    {
+      "name": "AssetValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetValidation.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "SearchMapper.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchMapper.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "ParseDamApiRequestUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/common/ParseDamApiRequestUseCase.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "CreateFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/CreateFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "FilterTypes.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/FilterTypes.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "FolderFetcher.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/services/FolderFetcher.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "ContentSections.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/sections/ContentSections.tsx",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "ZipDownloadStrategy.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/strategies/ZipDownloadStrategy.ts",
+      "domain": "dam",
+      "lines": 70
+    },
+    {
+      "name": "SupabaseStorageService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/SupabaseStorageService.ts",
+      "domain": "dam",
+      "lines": 69
+    },
+    {
+      "name": "MoveAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/MoveAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 68
+    },
+    {
+      "name": "DeleteTagUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/DeleteTagUseCase.ts",
+      "domain": "dam",
+      "lines": 68
+    },
+    {
+      "name": "SavedSearchHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/services/SavedSearchHandler.ts",
+      "domain": "dam",
+      "lines": 68
+    },
+    {
+      "name": "BulkOperation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/BulkOperation.ts",
+      "domain": "dam",
+      "lines": 67
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/types.ts",
+      "domain": "dam",
+      "lines": 67
+    },
+    {
+      "name": "FolderNotFoundHandler.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/error/FolderNotFoundHandler.tsx",
+      "domain": "dam",
+      "lines": 67
+    },
+    {
+      "name": "SavedSearchList.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SavedSearchList.tsx",
+      "domain": "dam",
+      "lines": 67
+    },
+    {
+      "name": "IAssetTagRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/IAssetTagRepository.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "RemoveTagFromAssetUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/RemoveTagFromAssetUseCase.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "useDamSearchInput.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useDamSearchInput.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "SupabaseBatchRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/SupabaseBatchRepository.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "TagMapper.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/mappers/TagMapper.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "FolderActionMenu.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/components/FolderActionMenu.tsx",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "MoveOperationsService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/operations/MoveOperationsService.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "useMultiSelectEventHandlers.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/handlers/useMultiSelectEventHandlers.ts",
+      "domain": "dam",
+      "lines": 65
+    },
+    {
+      "name": "SelectionValidator.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionValidator.ts",
+      "domain": "dam",
+      "lines": 64
+    },
+    {
+      "name": "SearchCriteriaFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchCriteriaFactory.ts",
+      "domain": "dam",
+      "lines": 63
+    },
+    {
+      "name": "DragValidationService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/services/DragValidationService.ts",
+      "domain": "dam",
+      "lines": 63
+    },
+    {
+      "name": "DamBreadcrumbs.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/DamBreadcrumbs.tsx",
+      "domain": "dam",
+      "lines": 62
+    },
+    {
+      "name": "TagCreationOption.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/TagCreationOption.tsx",
+      "domain": "dam",
+      "lines": 61
+    },
+    {
+      "name": "useAssetItemDialogs.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/useAssetItemDialogs.ts",
+      "domain": "dam",
+      "lines": 61
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/types.ts",
+      "domain": "dam",
+      "lines": 61
+    },
+    {
+      "name": "useBulkOperationState.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/useBulkOperationState.ts",
+      "domain": "dam",
+      "lines": 61
+    },
+    {
+      "name": "AssetTagService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/AssetTagService.ts",
+      "domain": "dam",
+      "lines": 60
+    },
+    {
+      "name": "dam.types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/types/dam.types.ts",
+      "domain": "dam",
+      "lines": 59
+    },
+    {
+      "name": "SavedSearchBrowseTab.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SavedSearchBrowseTab.tsx",
+      "domain": "dam",
+      "lines": 59
+    },
+    {
+      "name": "useMultiSelect.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/useMultiSelect.ts",
+      "domain": "dam",
+      "lines": 59
+    },
+    {
+      "name": "SelectionOverlay.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/components/SelectionOverlay.tsx",
+      "domain": "dam",
+      "lines": 59
+    },
+    {
+      "name": "getAssetDownloadUrl.action.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/getAssetDownloadUrl.action.ts",
+      "domain": "dam",
+      "lines": 58
+    },
+    {
+      "name": "SavedSearchButton.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/SavedSearchButton.tsx",
+      "domain": "dam",
+      "lines": 58
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/types.ts",
+      "domain": "dam",
+      "lines": 58
+    },
+    {
+      "name": "TagFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagFactory.ts",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "CreateTagUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/CreateTagUseCase.ts",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "useDamTagFilterHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/useDamTagFilterHandler.ts",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "GalleryDataTypes.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/GalleryDataTypes.ts",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "useDragHandlers.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider/hooks/useDragHandlers.ts",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "FolderItemList.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/components/FolderItemList.tsx",
+      "domain": "dam",
+      "lines": 57
+    },
+    {
+      "name": "GetAssetDownloadUrlUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/GetAssetDownloadUrlUseCase.ts",
+      "domain": "dam",
+      "lines": 56
+    },
+    {
+      "name": "WorkspaceHeader.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/workspace/layout/WorkspaceHeader.tsx",
+      "domain": "dam",
+      "lines": 56
+    },
+    {
+      "name": "FolderActionsMenu.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/components/FolderActionsMenu.tsx",
+      "domain": "dam",
+      "lines": 55
+    },
+    {
+      "name": "useDragClickSeparation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/hooks/useDragClickSeparation.ts",
+      "domain": "dam",
+      "lines": 55
+    },
+    {
+      "name": "useBulkDeleteHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/useBulkDeleteHandler.ts",
+      "domain": "dam",
+      "lines": 54
+    },
+    {
+      "name": "AssetOperationsService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/AssetOperationsService.ts",
+      "domain": "dam",
+      "lines": 53
+    },
+    {
+      "name": "AssetTagService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/AssetTagService.ts",
+      "domain": "dam",
+      "lines": 53
+    },
+    {
+      "name": "DateOptionsList.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/components/DateOptionsList.tsx",
+      "domain": "dam",
+      "lines": 53
+    },
+    {
+      "name": "GalleryStateManager.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/services/GalleryStateManager.ts",
+      "domain": "dam",
+      "lines": 53
+    },
+    {
+      "name": "InteractionHint.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/components/InteractionHint.tsx",
+      "domain": "dam",
+      "lines": 52
+    },
+    {
+      "name": "FolderItemGrid.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/components/FolderItemGrid.tsx",
+      "domain": "dam",
+      "lines": 52
+    },
+    {
+      "name": "GetFolderPathUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/GetFolderPathUseCase.ts",
+      "domain": "dam",
+      "lines": 51
+    },
+    {
+      "name": "AuthenticationService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/services/AuthenticationService.ts",
+      "domain": "dam",
+      "lines": 51
+    },
+    {
+      "name": "SearchActions.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SearchActions.tsx",
+      "domain": "dam",
+      "lines": 51
+    },
+    {
+      "name": "IFolderRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/IFolderRepository.ts",
+      "domain": "dam",
+      "lines": 50
+    },
+    {
+      "name": "SizeFilterListView.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/SizeFilterListView.tsx",
+      "domain": "dam",
+      "lines": 50
+    },
+    {
+      "name": "IndividualDownloadStrategy.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/strategies/IndividualDownloadStrategy.ts",
+      "domain": "dam",
+      "lines": 50
+    },
+    {
+      "name": "dateFormatters.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/utils/dateFormatters.ts",
+      "domain": "dam",
+      "lines": 50
+    },
+    {
+      "name": "useDamDragAndDrop.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/useDamDragAndDrop.ts",
+      "domain": "dam",
+      "lines": 49
+    },
+    {
+      "name": "useBulkMoveHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/useBulkMoveHandler.ts",
+      "domain": "dam",
+      "lines": 49
+    },
+    {
+      "name": "ISavedSearchRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/ISavedSearchRepository.ts",
+      "domain": "dam",
+      "lines": 48
+    },
+    {
+      "name": "FolderExpandButton.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/components/FolderExpandButton.tsx",
+      "domain": "dam",
+      "lines": 48
+    },
+    {
+      "name": "MultiSelectToggle.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/MultiSelectToggle.tsx",
+      "domain": "dam",
+      "lines": 47
+    },
+    {
+      "name": "FolderThumbnail.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/components/FolderThumbnail.tsx",
+      "domain": "dam",
+      "lines": 47
+    },
+    {
+      "name": "useFolderItemActions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/hooks/useFolderItemActions.ts",
+      "domain": "dam",
+      "lines": 47
+    },
+    {
+      "name": "useMultiSelectValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/validation/useMultiSelectValidation.ts",
+      "domain": "dam",
+      "lines": 47
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/index.ts",
+      "domain": "dam",
+      "lines": 46
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/types.ts",
+      "domain": "dam",
+      "lines": 46
+    },
+    {
+      "name": "DeleteFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/DeleteFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 45
+    },
+    {
+      "name": "SearchValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchValidation.ts",
+      "domain": "dam",
+      "lines": 44
+    },
+    {
+      "name": "gallery-types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/types/gallery-types.ts",
+      "domain": "dam",
+      "lines": 44
+    },
+    {
+      "name": "SelectionStateService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/services/SelectionStateService.ts",
+      "domain": "dam",
+      "lines": 44
+    },
+    {
+      "name": "ListFolderChildrenUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/ListFolderChildrenUseCase.ts",
+      "domain": "dam",
+      "lines": 43
+    },
+    {
+      "name": "TagEditorEmptyState.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/TagEditorEmptyState.tsx",
+      "domain": "dam",
+      "lines": 43
+    },
+    {
+      "name": "FolderLink.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/components/FolderLink.tsx",
+      "domain": "dam",
+      "lines": 43
+    },
+    {
+      "name": "ListFoldersUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/ListFoldersUseCase.ts",
+      "domain": "dam",
+      "lines": 42
+    },
+    {
+      "name": "TagEditorTypes.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/TagEditorTypes.ts",
+      "domain": "dam",
+      "lines": 42
+    },
+    {
+      "name": "SearchInputHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/services/SearchInputHandler.ts",
+      "domain": "dam",
+      "lines": 42
+    },
+    {
+      "name": "useBulkTagHandler.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/useBulkTagHandler.ts",
+      "domain": "dam",
+      "lines": 42
+    },
+    {
+      "name": "DamUploadButton.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/upload/DamUploadButton.tsx",
+      "domain": "dam",
+      "lines": 41
+    },
+    {
+      "name": "FolderTreeFetcher.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/services/FolderTreeFetcher.ts",
+      "domain": "dam",
+      "lines": 41
+    },
+    {
+      "name": "SearchCriteriaPreview.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/SearchCriteriaPreview.tsx",
+      "domain": "dam",
+      "lines": 39
+    },
+    {
+      "name": "AuthContextService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/services/AuthContextService.ts",
+      "domain": "dam",
+      "lines": 39
+    },
+    {
+      "name": "IAssetRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/IAssetRepository.ts",
+      "domain": "dam",
+      "lines": 38
+    },
+    {
+      "name": "IStorageService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/IStorageService.ts",
+      "domain": "dam",
+      "lines": 38
+    },
+    {
+      "name": "DamApiRequestDto.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/dto/DamApiRequestDto.ts",
+      "domain": "dam",
+      "lines": 37
+    },
+    {
+      "name": "ListAssetsByFolderUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/ListAssetsByFolderUseCase.ts",
+      "domain": "dam",
+      "lines": 36
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection/index.ts",
+      "domain": "dam",
+      "lines": 34
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/index.ts",
+      "domain": "dam",
+      "lines": 34
+    },
+    {
+      "name": "TagEditorAuthService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/TagEditorAuthService.ts",
+      "domain": "dam",
+      "lines": 32
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/drag-drop/index.ts",
+      "domain": "dam",
+      "lines": 32
+    },
+    {
+      "name": "ListTagsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/ListTagsUseCase.ts",
+      "domain": "dam",
+      "lines": 31
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/bulk-download/index.ts",
+      "domain": "dam",
+      "lines": 29
+    },
+    {
+      "name": "LoadingSpinner.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/sections/LoadingSpinner.tsx",
+      "domain": "dam",
+      "lines": 29
+    },
+    {
+      "name": "types.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/types.ts",
+      "domain": "dam",
+      "lines": 28
+    },
+    {
+      "name": "AuthContextService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/AuthContextService.ts",
+      "domain": "dam",
+      "lines": 27
+    },
+    {
+      "name": "GalleryItem.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/GalleryItem.ts",
+      "domain": "dam",
+      "lines": 27
+    },
+    {
+      "name": "SelectableFolderItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/SelectableFolderItem.tsx",
+      "domain": "dam",
+      "lines": 27
+    },
+    {
+      "name": "ITagRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/ITagRepository.ts",
+      "domain": "dam",
+      "lines": 26
+    },
+    {
+      "name": "DamFeatureFlagService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/DamFeatureFlagService.ts",
+      "domain": "dam",
+      "lines": 24
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/index.ts",
+      "domain": "dam",
+      "lines": 24
+    },
+    {
+      "name": "useAssets.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/hooks/useAssets.ts",
+      "domain": "dam",
+      "lines": 23
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/index.ts",
+      "domain": "dam",
+      "lines": 23
+    },
+    {
+      "name": "FolderThumbnail.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/components/FolderThumbnail.tsx",
+      "domain": "dam",
+      "lines": 23
+    },
+    {
+      "name": "SearchCriteriaDTO.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/dto/SearchCriteriaDTO.ts",
+      "domain": "dam",
+      "lines": 21
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/index.ts",
+      "domain": "dam",
+      "lines": 21
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/index.ts",
+      "domain": "dam",
+      "lines": 20
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/index.ts",
+      "domain": "dam",
+      "lines": 20
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/services/index.ts",
+      "domain": "dam",
+      "lines": 19
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/index.ts",
+      "domain": "dam",
+      "lines": 19
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/types/index.ts",
+      "domain": "dam",
+      "lines": 19
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/services/index.ts",
+      "domain": "dam",
+      "lines": 19
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/index.ts",
+      "domain": "dam",
+      "lines": 18
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/index.ts",
+      "domain": "dam",
+      "lines": 18
+    },
+    {
+      "name": "selection.actions.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/actions/selection.actions.ts",
+      "domain": "dam",
+      "lines": 15
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/assets/index.ts",
+      "domain": "dam",
+      "lines": 15
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/index.ts",
+      "domain": "dam",
+      "lines": 15
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/index.ts",
+      "domain": "dam",
+      "lines": 15
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/types/index.ts",
+      "domain": "dam",
+      "lines": 14
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/index.ts",
+      "domain": "dam",
+      "lines": 14
+    },
+    {
+      "name": "DamDataResult.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/DamDataResult.ts",
+      "domain": "dam",
+      "lines": 14
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/assets/index.ts",
+      "domain": "dam",
+      "lines": 14
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/services/index.ts",
+      "domain": "dam",
+      "lines": 14
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/multi-select/index.ts",
+      "domain": "dam",
+      "lines": 13
+    },
+    {
+      "name": "UploadAssetDTO.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/dto/UploadAssetDTO.ts",
+      "domain": "dam",
+      "lines": 12
+    },
+    {
+      "name": "useMultiSelect.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/selection/useMultiSelect.ts",
+      "domain": "dam",
+      "lines": 12
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/folder-item/index.ts",
+      "domain": "dam",
+      "lines": 12
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/folders/index.ts",
+      "domain": "dam",
+      "lines": 11
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/components/index.ts",
+      "domain": "dam",
+      "lines": 11
+    },
+    {
+      "name": "dateFormatters.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/selectable-folder/utils/dateFormatters.ts",
+      "domain": "dam",
+      "lines": 11
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/selection/index.ts",
+      "domain": "dam",
+      "lines": 10
+    },
+    {
+      "name": "useDamDragAndDrop.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/useDamDragAndDrop.ts",
+      "domain": "dam",
+      "lines": 10
+    },
+    {
+      "name": "SelectableFolderItem.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/folders/SelectableFolderItem.tsx",
+      "domain": "dam",
+      "lines": 9
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/workspace/index.ts",
+      "domain": "dam",
+      "lines": 9
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/workspace/layout/index.ts",
+      "domain": "dam",
+      "lines": 9
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/gallery/index.ts",
+      "domain": "dam",
+      "lines": 9
+    },
+    {
+      "name": "BulkDownloadAssetsUseCase.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/BulkDownloadAssetsUseCase.ts",
+      "domain": "dam",
+      "lines": 8
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/tags/index.ts",
+      "domain": "dam",
+      "lines": 8
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/assets/index.ts",
+      "domain": "dam",
+      "lines": 8
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/search/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/selection/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/search/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/gallery/enhanced/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/components/index.ts",
+      "domain": "dam",
+      "lines": 7
+    },
+    {
+      "name": "SupabaseBatchRepository.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/SupabaseBatchRepository.ts",
+      "domain": "dam",
+      "lines": 6
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/navigation/index.ts",
+      "domain": "dam",
+      "lines": 6
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/persistence/supabase/batch/index.ts",
+      "domain": "dam",
+      "lines": 6
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/services/index.ts",
+      "domain": "dam",
+      "lines": 6
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/hooks/index.ts",
+      "domain": "dam",
+      "lines": 6
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/batch/operations/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/hooks/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/navigation/services/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/search/hooks/index.ts",
+      "domain": "dam",
+      "lines": 5
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/index.ts",
+      "domain": "dam",
+      "lines": 4
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/hooks/gallery/index.ts",
+      "domain": "dam",
+      "lines": 4
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/bulk-operations/components/index.ts",
+      "domain": "dam",
+      "lines": 4
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/application/use-cases/common/index.ts",
+      "domain": "dam",
+      "lines": 3
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/error/index.ts",
+      "domain": "dam",
+      "lines": 3
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/components/index.ts",
+      "domain": "dam",
+      "lines": 3
+    },
+    {
+      "name": "SupabaseBatchStorageService.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/infrastructure/storage/SupabaseBatchStorageService.ts",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "DamDragDropProvider.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/DamDragDropProvider.tsx",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "BulkOperationDialogs.tsx",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/BulkOperationDialogs.tsx",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/components/index.ts",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/hooks/index.ts",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/dialogs/services/index.ts",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/hooks/index.ts",
+      "domain": "dam",
+      "lines": 2
+    },
+    {
+      "name": "index.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/presentation/components/filters/services/index.ts",
+      "domain": "dam",
+      "lines": 2
+    }
+  ],
+  "layerViolations": [],
+  "entities": [
+    {
+      "name": "Asset.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Asset.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 0
+    },
+    {
+      "name": "AssetFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetFactory.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 2
+    },
+    {
+      "name": "AssetTypeChecker.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetTypeChecker.ts",
+      "domain": "dam",
+      "properties": 2,
+      "methods": 8
+    },
+    {
+      "name": "AssetValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetValidation.ts",
+      "domain": "dam",
+      "properties": 2,
+      "methods": 5
+    },
+    {
+      "name": "Folder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Folder.ts",
+      "domain": "dam",
+      "properties": 8,
+      "methods": 13
+    },
+    {
+      "name": "SavedSearch.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SavedSearch.ts",
+      "domain": "dam",
+      "properties": 11,
+      "methods": 3
+    },
+    {
+      "name": "Selection.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Selection.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 20
+    },
+    {
+      "name": "SelectionFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SelectionFactory.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 10
+    },
+    {
+      "name": "Tag.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Tag.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 0
+    },
+    {
+      "name": "TagFactory.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagFactory.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 2
+    },
+    {
+      "name": "TagUtilities.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagUtilities.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 5
+    },
+    {
+      "name": "TagValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagValidation.ts",
+      "domain": "dam",
+      "properties": 2,
+      "methods": 4
+    },
+    {
+      "name": "Folder.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/Folder.ts",
+      "domain": "dam",
+      "properties": 8,
+      "methods": 13
+    },
+    {
+      "name": "FolderHierarchy.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderHierarchy.ts",
+      "domain": "dam",
+      "properties": 1,
+      "methods": 5
+    },
+    {
+      "name": "FolderOperations.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderOperations.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 9
+    },
+    {
+      "name": "FolderValidation.ts",
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderValidation.ts",
+      "domain": "dam",
+      "properties": 0,
+      "methods": 0
+    }
+  ],
+  "valueObjects": 8,
+  "repositoryViolations": [
+    {
+      "file": "AuthContextService.ts",
+      "domain": "dam",
+      "issue": "Direct infrastructure dependency in domain",
+      "module": "@/lib/supabase/client",
+      "type": "database"
+    },
+    {
+      "file": "AuthContextService.ts",
+      "domain": "dam",
+      "issue": "Direct infrastructure dependency in domain",
+      "module": "@supabase/supabase-js",
+      "type": "database"
+    }
+  ],
+  "crossDomainDependencies": [],
+  "anemicEntities": [
+    {
+      "name": "AssetTypeChecker.ts",
+      "domain": "dam",
+      "properties": 2,
+      "businessMethods": 0,
+      "accessorMethods": 8,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetTypeChecker.ts"
+    }
+  ],
+  "valueObjectViolations": [
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 3
+    },
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 3
+    },
+    {
+      "file": "BulkOperation.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 3
+    },
+    {
+      "file": "DamDataResult.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 8
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 7
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 2
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 7
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "issue": "Value object interface has mutable properties",
+      "mutableProperties": 6
+    }
+  ],
+  "businessRules": [
+    {
+      "file": "Asset.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Asset.ts"
+    },
+    {
+      "file": "AssetTypeChecker.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetTypeChecker.ts"
+    },
+    {
+      "file": "AssetValidation.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 10,
+      "hasBusinessExceptions": true,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/AssetValidation.ts"
+    },
+    {
+      "file": "Folder.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Folder.ts"
+    },
+    {
+      "file": "index.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/index.ts"
+    },
+    {
+      "file": "SavedSearch.ts",
+      "domain": "dam",
+      "hasValidation": false,
+      "hasBusinessLogic": false,
+      "conditionalCount": 5,
+      "hasBusinessExceptions": false,
+      "complexityScore": 0,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SavedSearch.ts"
+    },
+    {
+      "file": "Selection.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 7,
+      "hasBusinessExceptions": false,
+      "complexityScore": 4,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Selection.ts"
+    },
+    {
+      "file": "SelectionFactory.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 16,
+      "hasBusinessExceptions": true,
+      "complexityScore": 5,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/SelectionFactory.ts"
+    },
+    {
+      "file": "Tag.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/Tag.ts"
+    },
+    {
+      "file": "TagFactory.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagFactory.ts"
+    },
+    {
+      "file": "TagUtilities.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 3,
+      "hasBusinessExceptions": false,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagUtilities.ts"
+    },
+    {
+      "file": "TagValidation.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 10,
+      "hasBusinessExceptions": true,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/TagValidation.ts"
+    },
+    {
+      "file": "IAssetTagRepository.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/repositories/IAssetTagRepository.ts"
+    },
+    {
+      "file": "BulkOperationValidator.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 7,
+      "hasBusinessExceptions": false,
+      "complexityScore": 2,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/BulkOperationValidator.ts"
+    },
+    {
+      "file": "SearchUtilities.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 4,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchUtilities.ts"
+    },
+    {
+      "file": "SearchValidation.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 3,
+      "hasBusinessExceptions": false,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SearchValidation.ts"
+    },
+    {
+      "file": "SelectionOperations.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 9,
+      "hasBusinessExceptions": false,
+      "complexityScore": 2,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionOperations.ts"
+    },
+    {
+      "file": "SelectionValidator.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 4,
+      "hasBusinessExceptions": false,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/SelectionValidator.ts"
+    },
+    {
+      "file": "TagColorService.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/services/TagColorService.ts"
+    },
+    {
+      "file": "DamTypes.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/types/DamTypes.ts"
+    },
+    {
+      "file": "BulkOperationFactory.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 4,
+      "hasBusinessExceptions": true,
+      "complexityScore": 2,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/BulkOperationFactory.ts"
+    },
+    {
+      "file": "BulkOperationValidation.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 19,
+      "hasBusinessExceptions": false,
+      "complexityScore": 2,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/BulkOperationValidation.ts"
+    },
+    {
+      "file": "SearchCriteria.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 11,
+      "hasBusinessExceptions": true,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/SearchCriteria.ts"
+    },
+    {
+      "file": "TagColor.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 3,
+      "hasBusinessExceptions": true,
+      "complexityScore": 2,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/value-objects/TagColor.ts"
+    },
+    {
+      "file": "Folder.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 0,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/Folder.ts"
+    },
+    {
+      "file": "FolderHierarchy.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": true,
+      "conditionalCount": 13,
+      "hasBusinessExceptions": false,
+      "complexityScore": 4,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderHierarchy.ts"
+    },
+    {
+      "file": "FolderOperations.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 1,
+      "hasBusinessExceptions": false,
+      "complexityScore": 1,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderOperations.ts"
+    },
+    {
+      "file": "FolderValidation.ts",
+      "domain": "dam",
+      "hasValidation": true,
+      "hasBusinessLogic": false,
+      "conditionalCount": 9,
+      "hasBusinessExceptions": true,
+      "complexityScore": 3,
+      "path": "D:/Projects/test-app-1/lib/dam/domain/entities/folder/FolderValidation.ts"
+    }
+  ],
+  "recommendations": [
+    "📏 Refactor 8 files over 250 lines to improve maintainability",
+    "🗄️ Fix 2 direct infrastructure dependencies - use repository pattern",
+    "🩸 Enrich 1 anemic entities with business logic",
+    "🔒 Make 13 value objects immutable with readonly properties",
+    "💼 Refactor 3 highly complex business rules (complexity 4+/5)",
+    "⚡ Review 1 services with async methods for potential infrastructure leaks"
+  ]
+}

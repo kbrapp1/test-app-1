@@ -9,12 +9,12 @@
  */
 
 import { 
-  IntentAnalysisDto,
-  JourneyStateDto,
-  RelevantKnowledgeItemDto,
-  UnifiedAnalysisResultDto,
-  CallToActionDto
-} from '../../../application/dto/WorkflowBoundaryTypes';
+  IntentAnalysis,
+  JourneyState,
+  RelevantKnowledgeItem,
+  UnifiedAnalysisResult,
+  CallToAction
+} from '../../value-objects/workflow';
 import { MappingResult } from '../../value-objects/mapping/MappingResult';
 import { WorkflowTypeValidator } from './WorkflowTypeValidator';
 import { WorkflowDefaultFactory } from './WorkflowDefaultFactory';
@@ -31,7 +31,7 @@ export class WorkflowDataExtractor {
   /**
    * Extract intent analysis with business validation
    */
-  public extractIntentAnalysis(result: unknown): MappingResult<IntentAnalysisDto> {
+  public extractIntentAnalysis(result: unknown): MappingResult<IntentAnalysis> {
     if (!this.validator.isObject(result)) {
       return MappingResult.success(this.factory.createDefaultIntentAnalysis());
     }
@@ -57,7 +57,7 @@ export class WorkflowDataExtractor {
   /**
    * Extract journey state with business validation
    */
-  public extractJourneyState(result: unknown): MappingResult<JourneyStateDto> {
+  public extractJourneyState(result: unknown): MappingResult<JourneyState> {
     if (!this.validator.isObject(result)) {
       return MappingResult.success(this.factory.createDefaultJourneyState());
     }
@@ -83,7 +83,7 @@ export class WorkflowDataExtractor {
   /**
    * Extract relevant knowledge with business validation
    */
-  public extractRelevantKnowledge(result: unknown): MappingResult<RelevantKnowledgeItemDto[]> {
+  public extractRelevantKnowledge(result: unknown): MappingResult<RelevantKnowledgeItem[]> {
     if (!this.validator.isObject(result)) {
       return MappingResult.success([]);
     }
@@ -101,7 +101,7 @@ export class WorkflowDataExtractor {
     const validItems = items
       .filter(this.validator.isObject.bind(this.validator))
       .map(item => this.extractKnowledgeItem(item))
-      .filter(Boolean) as RelevantKnowledgeItemDto[];
+      .filter(Boolean) as RelevantKnowledgeItem[];
 
     return MappingResult.success(validItems);
   }
@@ -109,7 +109,7 @@ export class WorkflowDataExtractor {
   /**
    * Extract unified analysis with business validation
    */
-  public extractUnifiedAnalysis(result: unknown): MappingResult<UnifiedAnalysisResultDto> {
+  public extractUnifiedAnalysis(result: unknown): MappingResult<UnifiedAnalysisResult> {
     if (!this.validator.isObject(result)) {
       return MappingResult.success(this.factory.createDefaultUnifiedAnalysis());
     }
@@ -137,7 +137,7 @@ export class WorkflowDataExtractor {
   /**
    * Extract call to action with business validation
    */
-  public extractCallToAction(result: unknown): MappingResult<CallToActionDto | undefined> {
+  public extractCallToAction(result: unknown): MappingResult<CallToAction | undefined> {
     if (!this.validator.isObject(result)) {
       return MappingResult.success(undefined);
     }
@@ -195,7 +195,7 @@ export class WorkflowDataExtractor {
     return this.validator.isValidSentiment(value) ? value : 'neutral';
   }
 
-  private extractKnowledgeItem(item: Record<string, unknown>): RelevantKnowledgeItemDto | null {
+  private extractKnowledgeItem(item: Record<string, unknown>): RelevantKnowledgeItem | null {
     const id = this.extractStringWithDefault(item, 'id', 'unknown');
     const title = this.extractStringWithDefault(item, 'title', 'Unknown');
     const content = this.extractStringWithDefault(item, 'content', '');

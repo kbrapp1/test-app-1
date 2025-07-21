@@ -9,14 +9,14 @@
  */
 
 import { 
-  ProcessMessageRequestDto, 
-  IntentAnalysisDto,
-  JourneyStateDto,
-  RelevantKnowledgeItemDto,
-  UnifiedAnalysisResultDto,
-  WorkflowResponseDto,
-  CallToActionDto
-} from '../dto/WorkflowBoundaryTypes';
+  ProcessMessageRequest, 
+  IntentAnalysis,
+  JourneyState,
+  RelevantKnowledgeItem,
+  UnifiedAnalysisResult,
+  WorkflowResponse,
+  CallToAction
+} from '../../domain/value-objects/workflow';
 import { ProcessChatMessageRequest } from '../dto/ProcessChatMessageRequest';
 import { WorkflowBoundaryMappingService } from '../services/mapping/WorkflowBoundaryMappingService';
 
@@ -26,49 +26,49 @@ export class WorkflowBoundaryMapper {
   /**
    * Convert ProcessChatMessageRequest to ProcessMessageRequestDto with security preservation
    */
-  static toProcessMessageRequest(request: ProcessChatMessageRequest): ProcessMessageRequestDto {
+  static toProcessMessageRequest(request: ProcessChatMessageRequest): ProcessMessageRequest {
     return this.mappingService.toProcessMessageRequest(request);
   }
 
   /**
    * Safely extract intent analysis from unknown result
    */
-  static toIntentAnalysis(result: unknown): IntentAnalysisDto {
+  static toIntentAnalysis(result: unknown): IntentAnalysis {
     return this.mappingService.toIntentAnalysis(result);
   }
 
   /**
    * Safely extract journey state from unknown result
    */
-  static toJourneyState(result: unknown): JourneyStateDto {
+  static toJourneyState(result: unknown): JourneyState {
     return this.mappingService.toJourneyState(result);
   }
 
   /**
    * Safely extract relevant knowledge from unknown result
    */
-  static toRelevantKnowledge(result: unknown): RelevantKnowledgeItemDto[] {
+  static toRelevantKnowledge(result: unknown): RelevantKnowledgeItem[] {
     return this.mappingService.toRelevantKnowledge(result);
   }
 
   /**
    * Safely extract unified analysis from unknown result
    */
-  static toUnifiedAnalysis(result: unknown): UnifiedAnalysisResultDto {
+  static toUnifiedAnalysis(result: unknown): UnifiedAnalysisResult {
     return this.mappingService.toUnifiedAnalysis(result);
   }
 
   /**
    * Safely extract workflow response from unknown result
    */
-  static toWorkflowResponse(result: unknown): WorkflowResponseDto {
+  static toWorkflowResponse(result: unknown): WorkflowResponse {
     return this.mappingService.toWorkflowResponse(result);
   }
 
   /**
    * Safely extract call to action from unknown result
    */
-  static toCallToAction(result: unknown): CallToActionDto | undefined {
+  static toCallToAction(result: unknown): CallToAction | undefined {
     return this.mappingService.toCallToAction(result);
   }
 }

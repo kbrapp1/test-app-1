@@ -9,18 +9,18 @@
  */
 
 import { 
-  IntentAnalysisDto,
-  JourneyStateDto,
-  UnifiedAnalysisResultDto,
-  WorkflowResponseDto,
-  CallToActionDto
-} from '../../../application/dto/WorkflowBoundaryTypes';
+  IntentAnalysis,
+  JourneyState,
+  UnifiedAnalysisResult,
+  WorkflowResponse,
+  CallToAction
+} from '../../value-objects/workflow';
 
 export class WorkflowDefaultFactory {
   /**
    * Create default intent analysis with business-appropriate values
    */
-  public createDefaultIntentAnalysis(): IntentAnalysisDto {
+  public createDefaultIntentAnalysis(): IntentAnalysis {
     return {
       primaryIntent: 'general_inquiry',
       confidence: 0,
@@ -32,7 +32,7 @@ export class WorkflowDefaultFactory {
   /**
    * Create default journey state for new interactions
    */
-  public createDefaultJourneyState(): JourneyStateDto {
+  public createDefaultJourneyState(): JourneyState {
     return {
       currentStage: 'initial',
       completedStages: [],
@@ -43,7 +43,7 @@ export class WorkflowDefaultFactory {
   /**
    * Create default unified analysis for fallback scenarios
    */
-  public createDefaultUnifiedAnalysis(): UnifiedAnalysisResultDto {
+  public createDefaultUnifiedAnalysis(): UnifiedAnalysisResult {
     return {
       primaryIntent: 'general_inquiry',
       primaryConfidence: 0,
@@ -54,7 +54,7 @@ export class WorkflowDefaultFactory {
   /**
    * Create default workflow response with helpful fallback message
    */
-  public createDefaultWorkflowResponse(): WorkflowResponseDto {
+  public createDefaultWorkflowResponse(): WorkflowResponse {
     return {
       content: "I'm having trouble processing your message right now, but I'm here to help! Please try again in a moment.",
       confidence: 0,
@@ -66,7 +66,7 @@ export class WorkflowDefaultFactory {
   /**
    * Create default call to action for no-action scenarios
    */
-  public createDefaultCallToAction(): CallToActionDto {
+  public createDefaultCallToAction(): CallToAction {
     return {
       type: 'none',
       text: '',
